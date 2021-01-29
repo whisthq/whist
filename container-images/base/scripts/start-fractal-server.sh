@@ -73,18 +73,38 @@ fi
 # Create a google_drive folder in the user's home
 ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
-# Check whether the '.exists' file is in the user app config folder
-# If no, then copy default configs to the synced app config folder
+# The .exists file indicates whether these configs have been copied from S3
 existsFile=/fractal/userConfigs/$IDENTIFIER/.exists
-if [ ! -f "$existsFile" ]; then
-   cp -rT /home/fractal/.config/google-chrome /fractal/userConfigs/$IDENTIFIER/google-chrome
-   touch $existsFile
-fi
 
-# Create symlinks between all local configs and the target locations for the running application
-rm -rf /home/fractal/.config/google-chrome
-ln -sfnT /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/google-chrome
-chown -R fractal /fractal/userConfigs/$IDENTIFIER/google-chrome
+# cp -rT /home/fractal/.config/google-chrome /fractal/userConfigs/$IDENTIFIER/google-chrome
+# While perhaps counterintuitive, "source" is the path in the userConfigs directory
+#   and "destination" is the original location of the config file/folder.
+#   This is because when creating symlinks, the userConfig path is the source
+#   and the original location is the destination
+# Iterate through the possible configuration locations and copy
+for row in $(cat app-config-map.json | jq -rc '.[]'); do
+    SOURCE_CONFIG_SUBPATH=$(${row} | jq -r '.source')
+    SOURCE_CONFIG_PATH=/fractal/userConfigs/$IDENTIFIER/SOURCE_CONFIG_PATH
+    DEST_CONFIG_PATH=$(${row} | jq -r '.destination')
+
+    # If no, then copy default configs to the synced app config folder
+    if [ ! -f "$existsFile" ]; then
+        cp -rT $SOURCE_CONFIG_PATH
+    done
+
+    # Remove the original configs and symlink the new ones to the original locations
+    rm -rf $DEST_CONFIG_PATH
+    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
+    chown -R fractal $SOURCE_CONFIG_PATH
+done
+
+# Create the .exists file now, in case it doesn't already exist
+touch $existsFile
+
+# # Create symlinks between all local configs and the target locations for the running application
+# rm -rf /home/fractal/.config/google-chrome
+# ln -sfnT /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/google-chrome
+# chown -R fractal /fractal/userConfigs/$IDENTIFIER/google-chrome
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
