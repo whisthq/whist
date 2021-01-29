@@ -5,11 +5,6 @@ import time
 from celery import shared_task
 from flask import current_app
 
-from app.constants.http_codes import (
-    INTERNAL_SERVER_ERROR,
-    REQUEST_TIMEOUT,
-    SUCCESS,
-)
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
