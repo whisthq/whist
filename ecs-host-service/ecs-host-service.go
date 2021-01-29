@@ -559,8 +559,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	}
 */
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
-	// Retrieve app config from S3, except for the created ".exists file"
-	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath, "--exclude", ".exists")
+	// Retrieve app config from S3
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath)
 
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
