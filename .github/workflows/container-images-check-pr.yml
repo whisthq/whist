@@ -39,7 +39,7 @@ jobs:
               run: hadolint **/Dockerfile
               
             - name: Check if Container Images Dockerfiles Follow Hadolint Standards
-              run: hadolint **/Dockerfile.20
+              run: hadolint **/"Dockerfile.20"
 
     # Docker images building
     # Checks that the Docker images build successfully.
