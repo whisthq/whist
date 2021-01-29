@@ -41,6 +41,11 @@ def delete_container(self, container_name, aes_key):
     Returns:
         None
     """
+    self.update_state(
+        state="PENDING",
+        meta={"msg": f"Deleting container {container_name}"},
+    )
+
     task_start_time = time.time()
 
     if spin_lock(container_name) < 0:
@@ -125,7 +130,9 @@ def delete_container(self, container_name, aes_key):
 
         raise Exception("SQL update failed.")
 
+    fractal_log("delete_container", None, "ALMOST AT END OF DELETE CONTAINER")
     if not current_app.testing:
+        fractal_log("delete_container", None, "NOT TESTING???")
         task_time_taken = time.time() - task_start_time
         try:
             datadogEvent_containerDelete(
@@ -133,6 +140,11 @@ def delete_container(self, container_name, aes_key):
             )
         except KeyError:
             pass
+
+    self.update_state(
+        state="SUCCESS",
+        meta={"msg": f"Successfully deleted container {container_name}"},
+    )
 
 
 @shared_task(bind=True)
