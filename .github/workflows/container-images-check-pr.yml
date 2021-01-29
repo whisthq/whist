@@ -35,11 +35,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Check if Container Images Dockerfiles Follow Hadolint Standards
-              run: hadolint ./**/*Dockerfile
-
             - name: Check if Development Dockerfiles Follow Hadolint Standards
-              run: hadolint container-images/base/Dockerfile.20
+              run: hadolint ./**/*Dockerfile
+              
+
+
+
+            - name: Check if Container Images Dockerfiles Follow Hadolint Standards
+              run: hadolint container-images/*/Dockerfile.20
 
     # Docker images building
     # Checks that the Docker images build successfully.
