@@ -11,7 +11,11 @@ on:
             - master
             - staging
             - dev
-            # - mia/packer-ami # TODO: remove after testing
+            - mia/packer-ami # TODO: remove after testing
+        paths-ignore:
+            - "README.md"
+            - "**/README.md"
+            - ".github/workflows/README.md"
     workflow_dispatch:
 
 jobs:
@@ -84,7 +88,7 @@ jobs:
                   | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
                   | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
                   | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
-                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
+                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}" # no quotes because ami_regions expects list
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json ami_config.json
 
@@ -95,9 +99,11 @@ jobs:
               run: |
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
                   packer -machine-readable build ami_config.json
+
+                  # if packer fails, manifest.json does not get created and the entire workflow fails here
                   new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
-                  
-                  for artifact in ${new_ami_ids//,/ }
+
+                  for artifact in ${new_ami_ids//,/ } # replace comma with space for delimiting
                   do
                     ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
                     region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
