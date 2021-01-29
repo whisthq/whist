@@ -28,22 +28,20 @@ jobs:
     # Checks for formatting and Dockerfile standards using Hadolint.
     container-images-lint-images:
         name: Linting
-        runs-on: ubuntu-20.04
+        runs-on: macos-10.15
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
             - name: Install Hadolint
-              run: |
-                sudo wget -O hadolint https://github.com/hadolint/hadolint/releases/download/v1.19.0/hadolint-Linux-x86_64 && \
-                sudo chmod +x hadolint
+              run: brew install hadolint
 
             - name: Check if Container Images Dockerfiles Follows Hadolint Standards
-              run: ./hadolint ./**/*Dockerfile.20
+              run: hadolint ./**/*Dockerfile.20
 
             - name: Check if Development Dockerfiles Follows Hadolint Standards
-              run: ./hadolint ./**/*Dockerfile
+              run: hadolint ./**/*Dockerfile
 
     # Docker images building
     # Checks that the Docker images build successfully.
