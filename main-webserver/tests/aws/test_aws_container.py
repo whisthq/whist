@@ -197,7 +197,11 @@ def test_delete_container(client):
         ),
     )
 
+    fractal_log("test_delete_container", None, "querying status...")
+
     task = queryStatus(client, resp, timeout=10)
+
+    fractal_log("test_delete_container", None, "task queried!")
 
     if task["status"] < 1:
         fractal_log(
