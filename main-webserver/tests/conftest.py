@@ -112,7 +112,7 @@ def authorized(user, monkeypatch):
     return user
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def celery_config():
     """Configure the Celery application for testing.
 
