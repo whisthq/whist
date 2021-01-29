@@ -1,7 +1,7 @@
 better-profanity==0.6.1
 blinker==1.4
 boto3==1.16.0
-celery==5.0.5
+celery==5.0.1
 click==7.1.2
 cryptography==3.3.1
 dropbox==11.0.0
@@ -27,5 +27,3 @@ stripe==2.55.0
 waitress==1.4.4
 datadog==0.39.0
 gevent==20.12.1
-pytest==6.1.1
-pytest-celery==0.0.0.a1
