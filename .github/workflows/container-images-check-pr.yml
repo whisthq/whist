@@ -26,7 +26,7 @@ on:
 jobs:
     # Linting
     # Checks for formatting and Dockerfile standards using Hadolint.
-    container-images-lint-images:
+    container-images-lint-dockerfiles:
         name: Linting
         runs-on: ubuntu-20.04
         container: hadolint/hadolint
@@ -39,7 +39,7 @@ jobs:
               run: hadolint ./**/*Dockerfile
 
             - name: Check if Development Dockerfiles Follow Hadolint Standards
-              run: hadolint ./**/*Dockerfile.20
+              run: hadolint container-images/base/Dockerfile.20
 
     # Docker images building
     # Checks that the Docker images build successfully.
