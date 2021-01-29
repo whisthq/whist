@@ -35,9 +35,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Install Hadolint
-              run: brew install hadolint
-
             - name: Check if Container Images Dockerfiles Follow Hadolint Standards
               run: hadolint ./**/*Dockerfile.20
 
