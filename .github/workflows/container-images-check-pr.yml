@@ -37,10 +37,13 @@ jobs:
             - name: Install Hadolint
               run: brew install hadolint
 
-            - name: Check if Container Images Dockerfiles Follows Hadolint Standards
-              run: ls **/*Dockerfile.20
+            - name: Check if Container Images Dockerfiles Follow Hadolint Standards
+              run: |
+                pwd
+                ls
+                ls **/*Dockerfile.20
 
-            - name: Check if Development Dockerfiles Follows Hadolint Standards
+            - name: Check if Development Dockerfiles Follow Hadolint Standards
               run: hadolint **/*Dockerfile
 
     # Docker images building
