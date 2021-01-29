@@ -76,6 +76,16 @@ jobs:
         runs-on: ubuntu-20.04
 
         steps:
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
+
             - name: Notify Slack
               run: |
                   curl -X POST \
