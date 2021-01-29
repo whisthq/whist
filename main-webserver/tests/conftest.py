@@ -112,7 +112,7 @@ def authorized(user, monkeypatch):
     return user
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def celery_config():
     """Configure the Celery application for testing.
 
@@ -132,7 +132,7 @@ def celery_config():
             "redis_backend_use_ssl": {
                 "ssl_cert_reqs": ssl.CERT_NONE,
             },
-            "broker_pool_limit": None,
+            # "broker_pool_limit": None,
         }
 
     elif redis_url[:5] == "redis":
@@ -140,7 +140,7 @@ def celery_config():
         return {
             "broker_url": redis_url,
             "result_backend": redis_url,
-            "broker_pool_limit": None,
+            # "broker_pool_limit": None,
         }
 
     # unexpected input, fail out
