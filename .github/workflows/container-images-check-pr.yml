@@ -38,10 +38,10 @@ jobs:
               run: sudo wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.19.0/hadolint-Linux-x86_64
 
             - name: Check if Container Images Dockerfiles Follows Hadolint Standards
-              run: sudo /bin/hadolint ./**/*Dockerfile.20
+              run: ./usr/bin/hadolint ./**/*Dockerfile.20
 
             - name: Check if Development Dockerfiles Follows Hadolint Standards
-              run: sudo /bin/hadolint ./**/*Dockerfile
+              run: ./usr/bin/hadolint ./**/*Dockerfile
 
     # Docker images building
     # Checks that the Docker images build successfully.
