@@ -192,6 +192,11 @@ Private Function Implementations
 ============================
 */
 
+int multithreaded_destroy_decoder(VideoDecoder* decoder) {
+    destroy_video_decoder(decoder);
+    return 0;
+}
+
 void update_decoder_parameters(int width, int height, CodecType codec_type) {
     /*
         Update video decoder parameters
@@ -205,7 +210,8 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     LOG_INFO("Updating Width & Height to %dx%d and Codec to %d", width, height, codec_type);
 
     if (video_context.decoder) {
-        destroy_video_decoder(video_context.decoder);
+        SDL_CreateThread(multithreaded_destroy_decoder, "multithreaded_destroy_decoder",
+                         video_context.decoder);
     }
 
     VideoDecoder* decoder = create_video_decoder(width, height, USE_HARDWARE, codec_type);
