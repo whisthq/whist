@@ -25,8 +25,6 @@ echo "================================================"
 # Attempt to remove potentially oudated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove docker docker-engine docker.io containerd runc ||:
-
-
 sudo apt-get clean
 sudo apt-get upgrade
 sudo apt-get update
@@ -55,7 +53,7 @@ echo "================================================"
 sudo apt-get install -y awscli
 
 echo "================================================"
-echo "Installing Nvidia drivers..."
+echo "Installing NVIDIA drivers..."
 echo "================================================"
 
 # Install Linux headers

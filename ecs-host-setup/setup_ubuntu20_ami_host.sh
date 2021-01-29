@@ -6,6 +6,12 @@
 
 set -Eeuo pipefail
 
+# Prevent user from running script as root
+if [ "$EUID" -eq 0 ]; then
+    echo "This script cannot be run as root!"
+    exit
+fi
+
 # Create directories for ECS agent
 sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 

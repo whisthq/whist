@@ -192,7 +192,7 @@ jobs:
             - name: Retrieve Branch HEAD Git Hash as Env Variable
               run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-            - name: Store GitHub container registry base URI as env variable
+            - name: Store GitHub Container Registry base URI as env variable
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
