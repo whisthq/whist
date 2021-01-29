@@ -37,6 +37,26 @@ repos:
         entry: beautysh
         types: [shell]
 
+  # To use Hadolint, you first need to install it locally via your package manager (i.e. brew install hadolint)
+  - repo: local
+    hooks:
+      - id: hadolint
+        name: "Hadolint (for all repositories)"
+        language: docker_image
+        entry: hadolint ./**/*Dockerfile
+
+
+
+
+- id: hadolint
+  name: Hadolint
+  description: Haskell-based Docker Image Linter
+  language: docker_image
+  entry: hadolint ./**/*Dockerfile
+  
+  --entrypoint /bin/hadolint hadolint/hadolint:latest --ignore DL3013 --ignore DL3018 --ignore DL3008 -
+
+
   #
   # Hooks that only run on specific repositories/subfolders
   #
