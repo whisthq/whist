@@ -66,12 +66,15 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_ERROR("Invalid width/height of %d/%d", width, height);
         return -1;
     }
-    device->width = width & ~0xF;
+    device->width = width;
     device->height = height;
 
     if (!is_same_wh(device)) {
         char modename[128];
         char cmd[1024];
+
+        LOG_INFO("DIMENSIONS %dx%d", width, height);
+        LOG_INFO("PROFILE_DIMENSION setting xrandr");
 
         snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
 
@@ -96,6 +99,8 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd(cmd, NULL);
 
         free(display_name);
+
+        LOG_INFO("PROFILE_DIMENSION done setting xrandr");
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
