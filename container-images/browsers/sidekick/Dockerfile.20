@@ -26,4 +26,4 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/sidekick \
     && touch /home/fractal/.config/sidekick/'First Run'"
 
 # Setup Fractal application symlink
-RUN ln -sf $(which sidekick-browser) /usr/bin/fractal-application
+RUN ln -sf "$(which sidekick-browser)" /usr/bin/fractal-application

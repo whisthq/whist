@@ -28,4 +28,4 @@ RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh
 
 # Setup Fractal application symlink
-RUN ln -sf $(which brave-browser) /usr/bin/fractal-application
+RUN ln -sf "$(which brave-browser)" /usr/bin/fractal-application

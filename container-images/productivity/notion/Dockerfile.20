@@ -4,7 +4,7 @@ FROM fractal/browsers/chrome:current-build
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 # Install Notion dependencies explicitly
-RUN curl -sL https://deb.nodesource.com/setup_current.x | sudo -E bash -
+RUN curl -sL https://deb.nodesource.com/setup_current.x | bash -E -
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     unzip \
     p7zip-full \

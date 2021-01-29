@@ -37,8 +37,11 @@ jobs:
             - name: Install Hadolint
               run: wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
 
-            - name: Check if Code Follows Hadolint Standards
+            - name: Check if Container Images Dockerfiles Follows Hadolint Standards
               run: hadolint ./**/*Dockerfile.20
+
+            - name: Check if Development Dockerfiles Follows Hadolint Standards
+              run: hadolint ./**/*Dockerfile
 
     # Docker images building
     # Checks that the Docker images build successfully.

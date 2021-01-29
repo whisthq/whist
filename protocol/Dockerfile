@@ -22,7 +22,15 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get install -y apt-transport-https ca-certificates gnupg software-properties-common
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    software-properties-common \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
 RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 
@@ -31,12 +39,22 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN dpkg --configure -a && apt-get install -y -f
+RUN dpkg --configure -a && apt-get install --allow-downgrades --no-install-recommends -y -f
 
 # Install build tools
-RUN apt-get install -y make gcc g++
-RUN apt-get install -y cmake=3.18.4-0kitware1ubuntu20.04.1 cmake-data=3.18.4-0kitware1ubuntu20.04.1 --allow-downgrades
-RUN apt-get install -y cppcheck sudo clang-format
+RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
+    make \
+    gcc \
+    g++ \
+    cppcheck \
+    cmake=3.18.4-0kitware1ubuntu20.04.1 \
+    cmake-data=3.18.4-0kitware1ubuntu20.04.1 \
+    sudo \
+    clang-format \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 
 # Install Fractal protocol Linux dependencies

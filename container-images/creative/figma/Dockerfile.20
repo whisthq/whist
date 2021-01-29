@@ -69,7 +69,7 @@ COPY figma-font-bindings figma-font-bindings
 RUN ELECTRON_V="$(cat electron.v)" \
     && cd figma-font-bindings \
     && npm install \
-    && npx electron-build-env --electron $ELECTRON_V -- neon build --release \
+    && npx electron-build-env --electron "$ELECTRON_V" -- neon build --release \
     && cd .. \
     && mv figma-font-bindings/native/index.node bindings.node \
     && rm -rf figma-font-bindings electron.v
