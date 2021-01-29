@@ -41,8 +41,18 @@ def get_redis_url():
         redis_url = "redis://"
 
     if try_redis_url(redis_tls_url):
+        fractal_log(
+            "get_redis_url",
+            None,
+            f"REDIS_URL: {redis_tls_url}",
+        )
         return redis_tls_url
     if try_redis_url(redis_url):
+        fractal_log(
+            "get_redis_url",
+            None,
+            f"REDIS_URL: {redis_url}",
+        )
         return redis_url
     else:
         raise ValueError("No valid redis URL could be found.")
