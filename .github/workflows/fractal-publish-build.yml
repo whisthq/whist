@@ -177,7 +177,7 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
-                    
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
