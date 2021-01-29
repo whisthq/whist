@@ -32,8 +32,8 @@ def check_test_database():
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
 def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
@@ -77,8 +77,8 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
 def test_assign_container(client, admin, monkeypatch):
@@ -135,8 +135,8 @@ def test_assign_container(client, admin, monkeypatch):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
 @pytest.mark.usefixtures("admin")
@@ -171,8 +171,8 @@ def test_send_commands(client):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 def test_delete_container(client):
     fractal_log(
         function="test_delete_container",
@@ -223,8 +223,8 @@ def test_delete_container(client):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("admin")
 def test_delete_cluster(client, cluster=pytest.cluster_name):
@@ -252,7 +252,7 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
             logs=task["output"],
             level=logging.ERROR,
         )
-        # assert False # tech debt: spurious test failures caused by AWS API change
+        assert False
     if ClusterInfo.query.get(cluster):
         fractal_log(
             function="test_delete_cluster",
@@ -260,7 +260,7 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
             logs="Cluster was not deleted in database",
             level=logging.ERROR,
         )
-        # assert False # tech debt: spurious test failures caused by AWS API change
+        assert False
     assert True
 
 
