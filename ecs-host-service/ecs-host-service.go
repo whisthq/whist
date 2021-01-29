@@ -455,25 +455,7 @@ func saveUserConfig(hostPort uint16) {
 	hostPortString := logger.Sprintf("%v", hostPort)
 	configPath := userConfigsDirectory + hostPortString + "/"
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
-/*
-	tarPath := configPath + "fractal-app-config.tar.gz"
 
-	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
-	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
-	} else {
-		logger.Infof("Tar config directory output: %s", tarConfigOutput);
-	}
-
-	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
-	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Could not run \"aws s3 cp\" command: %s. Output: %s", err, saveConfigOutput)
-	} else {
-		logger.Infof("Ran \"aws s3 cp\" command with output: %s", saveConfigOutput)
-	}
-*/
 	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", configPath, s3ConfigPath)
 
 	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
@@ -546,18 +528,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// store app name and user ID in maps
 	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
-/*
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 
-	// Retrieve app config from S3
-	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
-	getConfigOutput, err := getConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Info("Ran \"aws s3 cp\" command: %s and file doesn't exist. Output: %s", err, getConfigOutput)
-	} else {
-		logger.Info("Ran \"aws s3 cp\" command with output: %s", getConfigOutput)
-	}
-*/
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 	// Retrieve app config from S3
 	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath)
