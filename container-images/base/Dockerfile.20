@@ -9,7 +9,10 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
-RUN apt-get update
+RUN apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install systemd
 # Note that all installations need to be prefixed by an `apt-get update` to

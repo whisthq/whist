@@ -1,5 +1,8 @@
 FROM fractal/base:current-build
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Download Sidekick installer
 RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb
 

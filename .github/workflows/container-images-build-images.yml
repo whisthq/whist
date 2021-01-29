@@ -1,9 +1,9 @@
-# workflows/container-images-build-images.yml
+# workflows/container-images-check-pr.yml
 #
-# Container Images: Build Images
-# Build Docker container images to test that they actually build.
+# Container Images: Check PR
+# Check a container-images/protocol PR for Dockerfile linting and Docker images building success.
 
-name: "Container Images: Build Images"
+name: "Container Images: Check PR"
 
 on:
     pull_request:
@@ -24,8 +24,26 @@ on:
     workflow_dispatch:
 
 jobs:
-    container-images-build-images-main:
-        name: Build Docker Images for Testing
+    # Linting
+    # Checks for formatting and Dockerfile standards using Hadolint.
+    container-images-lint-images:
+        name: Linting
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Install Hadolint
+              run: wget -O /bin/hadolint https://github.com/hadolint/hadolint/releases/download/v1.16.3/hadolint-Linux-x86_64
+
+            - name: Check if Code Follows Hadolint Standards
+              run: hadolint ./**/*Dockerfile.20
+
+    # Docker images building
+    # Checks that the Docker images build successfully.
+    container-images-build-images:
+        name: Building
         runs-on: ubuntu-20.04
 
         steps:
