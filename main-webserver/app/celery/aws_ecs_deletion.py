@@ -5,11 +5,6 @@ import time
 from celery import shared_task
 from flask import current_app
 
-from app.constants.http_codes import (
-    INTERNAL_SERVER_ERROR,
-    REQUEST_TIMEOUT,
-    SUCCESS,
-)
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
@@ -133,48 +128,6 @@ def delete_container(self, container_name, aes_key):
             )
         except KeyError:
             pass
-
-
-@shared_task(bind=True)
-def drain_container(self, container_name):
-    if spin_lock(container_name) < 0:
-        return {"status": REQUEST_TIMEOUT}
-    container = UserContainer.query.get(container_name)
-    fractal_log(
-        function="delete_container",
-        label=str(container_name),
-        logs="Beginning to drain Container {container_name}. Goodbye, {container_name}!".format(
-            container_name=container_name
-        ),
-    )
-
-    lock_container_and_update(
-        container_name=container_name, state="DRAINING", lock=True, temporary_lock=10
-    )
-    container_cluster = container.cluster
-    ecs_client = ECSClient(base_cluster=container_cluster, grab_logs=False)
-    try:
-        container_arn = ecs_client.get_container_for_tasks(
-            [container_name], cluster=container_cluster
-        )
-        ecs_client.set_containers_to_draining([container_arn], cluster=container_cluster)
-    except Exception as e:
-        fractal_log(
-            function="drain_container",
-            label=str(container_name),
-            logs="ran into deletion error {}".format(e),
-        )
-
-        self.update_state(
-            state="FAILURE",
-            meta={
-                "msg": "Error stopping Container {container_name}".format(
-                    container_name=container_name
-                )
-            },
-        )
-        return {"status": INTERNAL_SERVER_ERROR}
-    return {"status": SUCCESS}
 
 
 @shared_task(bind=True)
