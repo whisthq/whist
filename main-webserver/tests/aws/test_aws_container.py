@@ -178,8 +178,8 @@ def test_send_commands(client):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_update_cluster(client):
-    # call end function directly. right now we have manually verified this actually does something
-    # and AWS/boto3 *should* error out if something went wrong.
+    # right now we have manually verified this actually does something on AWS.
+    # AWS/boto3 *should* error out if something went wrong.
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name="test-cluster-b6395d6e-4fe9-47ec-8a5f-93aac4fcdd60",  # pytest.cluster_name,
