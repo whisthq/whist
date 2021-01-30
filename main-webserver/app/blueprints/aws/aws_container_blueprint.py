@@ -6,11 +6,10 @@ from app import fractal_pre_process
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
-    create_new_container,
     send_commands,
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
-from app.celery.aws_ecs_deletion import delete_cluster, delete_container, drain_container
+from app.celery.aws_ecs_deletion import delete_cluster, delete_container
 from app.celery.aws_ecs_modification import update_region
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
@@ -300,9 +299,7 @@ def aws_container_assign(**kwargs):
 def aws_container_post(action, **kwargs):
     """
     General aws container post. Handles:
-    - create
     - delete
-    - drain
     - stun
     """
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
@@ -313,31 +310,7 @@ def aws_container_post(action, **kwargs):
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
-        if action == "create":
-            # Access required keys.
-            try:
-                app = body.pop("app")
-                region = body.pop("region")
-                dpi = body.get("dpi", 96)
-            except KeyError:
-                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-            else:
-                # Create a container.
-                try:
-                    task_arn, _, sample_cluster = preprocess_task_info(app)
-                except BadAppError:
-                    response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-                else:
-                    task = create_new_container.delay(
-                        user,
-                        task_arn,
-                        region_name=region,
-                        cluster_name=sample_cluster,
-                        webserver_url=kwargs["webserver_url"],
-                        dpi=dpi,
-                    )
-                    response = jsonify({"ID": task.id}), ACCEPTED
-        elif action == "delete":
+        if action == "delete":
             try:
                 container = body.pop("container_id")
             except KeyError:
@@ -347,17 +320,7 @@ def aws_container_post(action, **kwargs):
                 task = delete_container.delay(user, container)
                 response = jsonify({"ID": task.id}), ACCEPTED
 
-        elif action == "drain":
-            try:
-                container = body.pop("container_id")
-            except KeyError:
-                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-            else:
-                # Delete the container
-                task = drain_container.delay(user, container)
-                response = jsonify({"ID": task.id}), ACCEPTED
-
-        elif action == "stun":
+        if action == "stun":
             try:
                 container_id = body.pop("container_id")
                 using_stun = body.pop("stun")
