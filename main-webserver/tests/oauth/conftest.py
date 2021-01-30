@@ -80,6 +80,19 @@ def make_token():
     return _token
 
 
+@pytest.fixture
+def oauth_client_disabled(app, monkeypatch):
+    """Delete the test application's dummy OAuth client credentials.
+
+    Returns:
+        None
+    """
+
+    monkeypatch.setitem(app.config, "DROPBOX_APP_KEY", None)
+    monkeypatch.setitem(app.config, "DROPBOX_APP_SECRET", None)
+    monkeypatch.setitem(app.config, "GOOGLE_CLIENT_SECRET_OBJECT", {})
+
+
 @pytest.fixture(params=("dropbox", "google"))
 def provider(request):
     return request.param
