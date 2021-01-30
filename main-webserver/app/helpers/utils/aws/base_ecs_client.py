@@ -227,7 +227,6 @@ class ECSClient:
         Args:
             cluster: cluster todescribe
 
-        TODO: decide if cluster needs to be passed as an arg or stored by class
         """
         return self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
 
