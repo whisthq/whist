@@ -1,5 +1,6 @@
 #!/bin/sh
 
+<<<<<<< HEAD
 # This script starts the Fractal protocol server, and assumes that it is
 # being run within a Fractal Docker container.
 
@@ -39,6 +40,8 @@
 # rstudio: .rstudio-desktop, .config/rstudio (nv)
 # slack: .config/Slack (nv)
 
+=======
+>>>>>>> bc868cbfd... after pinpointing and having solved the issue with tarred configs, revert to tarring configs and using aws s3 cp instead of aws s3 sync once again
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
@@ -73,10 +76,12 @@ fi
 # Create a google_drive folder in the user's home
 ln -sf /fractal/cloudStorage/$IDENTIFIER/google_drive /home/fractal/
 
-# The .exists file indicates whether these configs have been copied from S3
-existsFile=/fractal/userConfigs/$IDENTIFIER/.exists
+# This tar file, if it exists, has been retrieved from S3 and must be extracted
+tarFile=/fractal/userConfigs/$IDENTIFIER/fractal-app-config.tar.gz
+if [ -f "$tarFile" ]; then
+    tar -xzf $tarFile -C /fractal/userConfigs/$IDENTIFIER/
+fi
 
-# cp -rT /home/fractal/.config/google-chrome /fractal/userConfigs/$IDENTIFIER/google-chrome
 # While perhaps counterintuitive, "source" is the path in the userConfigs directory
 #   and "destination" is the original location of the config file/folder.
 #   This is because when creating symlinks, the userConfig path is the source
@@ -94,7 +99,7 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
     fi
 
     # If no, then copy default configs to the synced app config folder
-    if [ ! -f "$existsFile" ]; then
+    if [ ! -f "$tarFile" ]; then
 	cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
     fi
 
@@ -104,9 +109,16 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
     chown -R fractal $SOURCE_CONFIG_PATH
 done
 
+# Delete broken symlinks from config
+find /fractal/userConfigs/$IDENTIFIER/ -xtype l -delete
+
+# To assist the tar tool's "exclude" option, create a dummy tar file if it does not already exist
+if [ ! -f "$tarFile" ]; then
+    touch $tarFile
+fi
+
 # Create a .configready file that forces the display to wait until configs are synced
 #     We are also forced to wait until the display has started
-touch $existsFile
 touch /fractal/userConfigs/$IDENTIFIER/.configready
 until [ ! -f /fractal/userConfigs/$IDENTIFIER/.configready ]
 do
