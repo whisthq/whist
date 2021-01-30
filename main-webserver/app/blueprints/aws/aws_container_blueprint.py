@@ -287,7 +287,7 @@ def aws_container_assign(**kwargs):
                 webserver_url=kwargs["webserver_url"],
                 dpi=dpi,
             )
-        response = jsonify({"ID": task.id}), ACCEPTED
+            response = jsonify({"ID": task.id}), ACCEPTED
 
     return response
 
