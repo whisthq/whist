@@ -456,15 +456,23 @@ func saveUserConfig(hostPort uint16) {
 	configPath := userConfigsDirectory + hostPortString + "/"
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 
-	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", configPath, s3ConfigPath)
+	tarPath := configPath + "fractal-app-config.tar.gz"
 
+	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+	} else {
+		logger.Infof("Tar config directory output: %s", tarConfigOutput);
+	}
+	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
 	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
 	if err != nil {
-		logger.Errorf("Could not run \"aws s3 sync\" command: %s. Output: %s", err, saveConfigOutput)
+		logger.Errorf("Could not run \"aws s3 cp\" command: %s. Output: %s", err, saveConfigOutput)
 	} else {
-		logger.Infof("aws s3 sync with output: %s", saveConfigOutput)
+		logger.Infof("Ran \"aws s3 cp\" command with output: %s", saveConfigOutput)
 	}
-
+	
 	// remove app name mapping for container on hostPort
 	delete(containerAppNames, hostPort)
 
@@ -529,15 +537,14 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 	// Retrieve app config from S3
-	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "sync", s3ConfigPath, configPath)
-
+	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not run \"aws s3 sync\" command: %s. Output: %s", err, getConfigOutput)
+		logger.Info("Ran \"aws s3 cp\" command: %s and file doesn't exist. Output: %s", err, getConfigOutput)
 	} else {
-		logger.Infof("aws s3 sync with output: %s", getConfigOutput)
+		logger.Info("Ran \"aws s3 cp\" command with output: %s", getConfigOutput)
 	}
 
 	return nil
