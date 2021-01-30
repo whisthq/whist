@@ -189,8 +189,6 @@ def test_update_cluster(client):
     # wait for operation to finish
     res.get(timeout=30)
 
-    fractal_log("test_update_cluster", None, f"GOT: {res}")
-
     assert res.successful()
     assert res.state == "SUCCESS"
 
@@ -322,7 +320,7 @@ def test_update_region(client, admin, monkeypatch):
         ),
     )
 
-    task = queryStatus(client, resp, timeout=10)
+    task = queryStatus(client, resp, timeout=30)
     if task["status"] < 1:
         fractal_log(
             function="test_update_region",
