@@ -82,6 +82,7 @@ existsFile=/fractal/userConfigs/$IDENTIFIER/.exists
 #   This is because when creating symlinks, the userConfig path is the source
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
+mkdir /home/fractal/.config/Slack # Slack doesn't create a configuration folder until after it has been launched for the first time
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
     SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
     SOURCE_CONFIG_PATH=/fractal/userConfigs/$IDENTIFIER/$SOURCE_CONFIG_SUBPATH
@@ -94,8 +95,8 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
 
     # If no, then copy default configs to the synced app config folder
     if [ ! -f "$existsFile" ]; then
-        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
-    fi 
+	cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+    fi
 
     # Remove the original configs and symlink the new ones to the original locations
     rm -rf $DEST_CONFIG_PATH
@@ -103,13 +104,15 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
     chown -R fractal $SOURCE_CONFIG_PATH
 done
 
-# Create the .exists file now, in case it doesn't already exist
+# Create a .configready file that forces the display to wait until configs are synced
+#     We are also forced to wait until the display has started
 touch $existsFile
-
-# # Create symlinks between all local configs and the target locations for the running application
-# rm -rf /home/fractal/.config/google-chrome
-# ln -sfnT /fractal/userConfigs/$IDENTIFIER/google-chrome /home/fractal/.config/google-chrome
-# chown -R fractal /fractal/userConfigs/$IDENTIFIER/google-chrome
+touch /fractal/userConfigs/$IDENTIFIER/.configready
+until [ ! -f /fractal/userConfigs/$IDENTIFIER/.configready ]
+do
+    sleep 0.1
+done
+sleep 1 # a sore attempt to wait for the display to start before launching FractalServer
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
