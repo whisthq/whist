@@ -41,6 +41,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         ami = region_to_ami[region_name]
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+
     self.update_state(
         state="SUCCESS",
         meta={
