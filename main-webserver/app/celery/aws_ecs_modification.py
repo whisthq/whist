@@ -2,6 +2,7 @@ import math
 import logging
 
 from celery import shared_task
+from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
@@ -11,8 +12,6 @@ from app.models import (
     RegionToAmi,
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-
-from flask import current_app
 
 
 @shared_task(bind=True)
@@ -200,8 +199,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         fractal_log(
             "manual_scale_cluster",
             None,
-            f"""Cluster {cluster} had {num_instances} instances but should have 
-                {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance 
+            f"""Cluster {cluster} had {num_instances} instances but should have
+                {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance
                 is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally
                 distributed tasks onto instances.""",
             level=logging.INFO,
@@ -223,11 +222,12 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
         asg = asg_list[0]
         # keep whichever instances are not empty
-        ecs_client.set_auto_scaling_group_capacity(asg, num_instances - empty_instances)
+        desired_capacity = num_instances - empty_instances
+        ecs_client.set_auto_scaling_group_capacity(asg, desired_capacity)
 
         self.update_state(
             state="SUCCESS",
             meta={
-                "msg": f"Scaled cluster {cluster} from {num_instances} to {num_instances - empty_instances}.",
+                "msg": f"Scaled cluster {cluster} from {num_instances} to {desired_capacity}.",
             },
         )
