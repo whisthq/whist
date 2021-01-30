@@ -41,9 +41,7 @@ jobs:
             - name: Check if Container Images Dockerfiles Follow Hadolint Standards
               run: |
                 hadolint ./container-images/*/Dockerfile.20
-                hadolint ./container-images/browsers/*/Dockerfile.20
-                hadolint ./container-images/creative/*/Dockerfile.20
-                hadolint ./container-images/productivity/*/Dockerfile.20
+                hadolint ./container-images/*/*/Dockerfile.20
 
     # Docker images building
     # Checks that the Docker images build successfully.
