@@ -179,10 +179,10 @@ def test_send_commands(client):
 @pytest.mark.usefixtures("celery_worker")
 def test_update_cluster(client):
     # right now we have manually verified this actually does something on AWS.
-    # AWS/boto3 *should* error out if something went wrong.
+    # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
         region_name="us-east-1",
-        cluster_name="test-cluster-b6395d6e-4fe9-47ec-8a5f-93aac4fcdd60",  # pytest.cluster_name,
+        cluster_name=pytest.cluster_name,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
     )
 
@@ -249,11 +249,6 @@ def test_delete_container(client):
 
 @shared_task(bind=True)
 def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
-    fractal_log(
-        mock_update_cluster,
-        None,
-        "woot here",
-    )
     success = True
     # check that the arguments are as expected
     if cluster_name != pytest.cluster_name:
@@ -283,7 +278,7 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 
     # tests looks for this attribute on the function
     if hasattr(mock_update_cluster, "test_passed"):
-        # this means this being called twice, which should not happen
+        # this means this func has been called twice, which should not happen
         setattr(mock_update_cluster, "test_passed", False)
         raise ValueError(
             f"mock_update_cluster called twice, second time with cluster {cluster_name}"

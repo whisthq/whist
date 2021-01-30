@@ -67,12 +67,6 @@ def update_region(self, region_name="us-east-1", ami=None):
         },
     )
 
-    fractal_log(
-        "update_region",
-        None,
-        "in update region",
-    )
-
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
     ).first()
