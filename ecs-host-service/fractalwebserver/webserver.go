@@ -51,7 +51,7 @@ type heartbeatRequest struct {
 	TotalRAMinKB     string // Total amount of RAM on the host, in kilobytes
 	FreeRAMinKB      string // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
 	AvailRAMinKB     string // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
-	IsDyingHeartbeat bool   // Whether this
+	IsDyingHeartbeat bool   // Whether this heartbeat is sent by the host service during its death
 }
 
 var authToken string
