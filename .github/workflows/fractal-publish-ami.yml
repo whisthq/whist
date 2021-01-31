@@ -1,7 +1,7 @@
 # workflows/fractal-publish-ami.yml
 #
 # Fractal: Build & Publish AMI
-# Build and publish Linux AMI to all AWS regions.
+# Build and publish the Fractal Linux AMI to all AWS regions.
 
 name: "Fractal: Build & Publish AMI"
 

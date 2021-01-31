@@ -48,8 +48,8 @@ echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
 
-# we don't need to configure this because it runs on an EC2 instance, 
-# which have awscli automatically configured
+# We don't need to configure the AWS CLI (only install it) because this script runs
+# on an AWS EC2 instance, which have awscli automatically configured
 sudo apt-get install -y awscli
 
 echo "================================================"

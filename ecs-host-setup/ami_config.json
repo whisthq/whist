@@ -1,18 +1,18 @@
 {
   "builders": [
     {
-      "access_key": "PLACEHOLDER",
-      "secret_key": "PLACEHOLDER",
       "name": "Fractal AWS AMI Builder",
       "type": "amazon-ebs",
+      "access_key": "PLACEHOLDER",
+      "secret_key": "PLACEHOLDER",
       "region": "PLACEHOLDER",
       "source_ami": "PLACEHOLDER",
       "ami_regions": "PLACEHOLDER",
       "instance_type": "PLACEHOLDER",
-      "iam_instance_profile": "PackerAMIBuilder",
-      "ssh_username": "ubuntu",
       "ami_name": "PLACEHOLDER",
       "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
+      "iam_instance_profile": "PackerAMIBuilder",
+      "ssh_username": "ubuntu",
       "launch_block_device_mappings": [
         {
           "volume_type": "gp2",
