@@ -100,4 +100,4 @@ Previously, the Docker daemon and ECS Agent would start up on host machine at bo
 
 ## Publishing
 
-The Fractal AMIs get automatically published to AWS EC2 through the `fractal-publish-ami.yml` GitHub Actions workflow. See `.github/workflows/fractal-publish-ami.yml` for the exact list of AWS regions supported and the AMI parameters. 
+The Fractal AMIs get automatically published to AWS EC2 through the `fractal-publish-ami.yml` GitHub Actions workflow. See `.github/workflows/fractal-publish-ami.yml` for the exact list of AWS regions supported and the AMI parameters.
