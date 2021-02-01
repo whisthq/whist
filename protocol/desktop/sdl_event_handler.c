@@ -88,9 +88,12 @@ int handle_window_size_changed(SDL_Event *event) {
         fmsg.dimensions.width = output_width;
         fmsg.dimensions.height = output_height;
         fmsg.dimensions.codec_type = (CodecType)output_codec_type;
+        int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
         float dpi;
-        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
+        SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
         fmsg.dimensions.dpi = (int)dpi;
+        LOG_INFO("Sending MESSAGE_DIMENSIONS: %dx%d, DPI=%d", output_width, output_height,
+                 (int)dpi);
         send_fmsg(&fmsg);
 
         start_timer(&window_resize_timer);
