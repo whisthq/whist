@@ -12,9 +12,9 @@ on:
             - staging
             - dev
             - mia/packer-ami # TODO: REMOVE WHEN DONE TESTING
-        paths:
-            - ecs-host-service/
-            - ecs-host-setup/
+        # paths:
+        #     - ecs-host-service/
+        #     - ecs-host-setup/
     workflow_dispatch:
 
 jobs:
