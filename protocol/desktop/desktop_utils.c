@@ -588,6 +588,7 @@ void send_message_dimensions() {
     float dpi;
     SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
     fmsg.dimensions.dpi = (int)dpi;
-    LOG_INFO("Sending MESSAGE_DIMENSIONS: %dx%d, DPI=%d", output_width, output_height, (int)dpi);
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", output_width,
+             output_height, (int)dpi, output_codec_type);
     send_fmsg(&fmsg);
 }
