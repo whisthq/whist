@@ -77,7 +77,7 @@ sudo reboot
 cd ~/fractal/ecs-host-setup
 ./setup_ubuntu20_ami_host.sh
 
-# VERY IMPORTANT: remove all Fractal code !
+# VERY IMPORTANT: remove all Fractal code!
 cd ~
 rm -rf fractal
 ```
@@ -100,4 +100,4 @@ Previously, the Docker daemon and ECS Agent would start up on host machine at bo
 
 ## Publishing
 
-We are currently building a pipeline to automatically build and deploy new AMIs to all supported AWS regions through the `build-and-publish.yml` GitHub Actions workflow, as with the other components of Fractal, when pushing to `dev`, `staging` and `master`. Once it is completed, this section will be updated.
+The Fractal AMIs get automatically published to AWS EC2 through the `fractal-publish-ami.yml` GitHub Actions workflow. See `.github/workflows/fractal-publish-ami.yml` for the exact list of AWS regions supported and the AMI parameters.
