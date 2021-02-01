@@ -5,6 +5,8 @@
  **/
 #include "dxgicapture.h"
 
+#include "dxgicudacapturetransfer.h"
+
 #include <windows.h>
 
 // To link IID_'s
