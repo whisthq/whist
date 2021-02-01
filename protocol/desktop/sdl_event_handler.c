@@ -92,7 +92,7 @@ int handle_window_size_changed(SDL_Event *event) {
     int desired_height = output_height - (output_height % 2);
     if (output_width != desired_width || output_height != desired_height) {
         SDL_SetWindowSize((SDL_Window *)window, desired_width, desired_height);
-        set_video_active_resizing(false); // this updates output_width/height
+        set_video_active_resizing(false);  // this updates output_width/height
 
         if (output_width != desired_width || output_height != desired_height) {
             LOG_WARNING(
