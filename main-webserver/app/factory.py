@@ -106,8 +106,8 @@ def register_blueprints(app):
 
     from .blueprints.oauth import oauth_bp
 
-    bp = build_hirefire_blueprint(os.environ["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"])
-    app.register_blueprint(bp)
+    hirefire_bp = build_hirefire_blueprint(os.environ["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"])
+    app.register_blueprint(hirefire_bp)
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
