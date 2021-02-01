@@ -7,6 +7,8 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
+from hirefire.contrib.flask.blueprint import build_hirefire_blueprint
+from hirefire.procs.celery import CeleryProc
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 
@@ -18,6 +20,11 @@ PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 jwtManager = JWTManager()
 ma = Marshmallow()
 mail = SendGrid()
+
+
+class WorkerProc(CeleryProc):
+    name = "worker"
+    queues = ["celery"]
 
 
 def create_app(app_name=PKG_NAME, testing=False, **kwargs):
@@ -98,6 +105,9 @@ def register_blueprints(app):
     from .blueprints.host_service.host_service_blueprint import host_service_bp
 
     from .blueprints.oauth import oauth_bp
+
+    bp = build_hirefire_blueprint(os.environ["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"])
+    app.register_blueprint(bp)
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
