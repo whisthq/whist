@@ -191,8 +191,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
                 f"""Expected key runningTasksCount in AWS describe_container_instances response.
                     Got: {instance_task_data}"""
             )
-        num_tasks = instance_task_data["runningTasksCount"]
-        if num_tasks == 0:
+        rtc = instance_task_data["runningTasksCount"]
+        if rtc == 0:
             empty_instances += 1
 
     if empty_instances == 0:

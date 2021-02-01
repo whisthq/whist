@@ -70,7 +70,7 @@ def delete_container(self, container_name, aes_key):
     fractal_log(
         function="delete_container",
         label=str(container_name),
-        logs="Beginning to delete Container {container_name}. Goodbye, {container_name}!".format(
+        logs="Beginning to delete container {container_name}. Goodbye!".format(
             container_name=container_name
         ),
     )
@@ -87,6 +87,7 @@ def delete_container(self, container_name, aes_key):
 
     ecs_client.add_task(container_name)
 
+    #TODO: just pass task as param
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
         self.update_state(
