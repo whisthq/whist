@@ -219,16 +219,7 @@ void update() {
     if (!update_data.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height ||
          server_codec_type != output_codec_type)) {
-        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d", output_width,
-                 output_height, output_codec_type);
-        fmsg.type = MESSAGE_DIMENSIONS;
-        fmsg.dimensions.width = (int)output_width;
-        fmsg.dimensions.height = (int)output_height;
-        fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        float dpi;
-        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
-        fmsg.dimensions.dpi = (int)dpi;
-        send_fmsg(&fmsg);
+        send_message_dimensions();
         update_data.tried_to_update_dimension = true;
     }
 
