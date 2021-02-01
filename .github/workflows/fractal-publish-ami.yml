@@ -121,7 +121,7 @@ jobs:
                   # Log in as Admin to get Bearer Token for Update Region API call
                   token=$(curl -X POST \
                     -H "Content-Type: application/json" \
-                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
                     "${{ env.webserver_url }}admin/login" | jq ".access_token")
 
                   echo $token
