@@ -134,8 +134,8 @@ jobs:
                     "${{ env.webserver_url }}aws_container/update_region")
 
                   echo $celery
-                  
-                    if [[ ${celery} =~ {\"ID\":\"[0-9a-z-]+\"} ]]; then 
+
+                    if [[ ${celery} =~ {ID:[0-9a-z-]+} ]]; then 
                       echo "Updated region $region"
                     else 
                       echo "Failed to update region $region" && false
