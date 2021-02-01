@@ -262,6 +262,7 @@ class LocalConfig(DeploymentConfig):
         """
 
         # create URI from components
+        return "postgres://rlnfbbubneswty:6e7449fd17a90cda268704ed69b7b3ceb5ca16d3defe628b8f145bfdb7e973f0@ec2-54-166-114-48.compute-1.amazonaws.com:5432/de8j5pcs4uhrfs"
         return (
             f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
             f"{self.db_name}"
