@@ -241,7 +241,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 #         )
 #         assert False
 
-    # assert True
+# assert True
 
 
 @pytest.mark.container_serial
@@ -291,6 +291,7 @@ def test_update_region(client, admin, monkeypatch):
         class FakeReturn:
             def __init__(self):
                 self.id = "this-is-a-fake-test-id"
+
         return FakeReturn()
 
     # do monkeypatching
