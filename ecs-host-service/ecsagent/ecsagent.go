@@ -3,6 +3,7 @@ package ecsagent
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"math/rand"
 	"net/http"
 	"os"
@@ -41,6 +42,9 @@ func init() {
 	// FractalRandomHexes
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
 	ecsengine.SetFractalHostServiceMappingSender(
 		func(containerID, fractalRandomHex string) error {
