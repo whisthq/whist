@@ -118,7 +118,6 @@ jobs:
               run: |
                   region=eu-west-1
                   curl -X POST \
-                    -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
                     --data-raw "{\"region_name\": \"${region}\"}" \
                     ${{ env.graphql_db_url }}
