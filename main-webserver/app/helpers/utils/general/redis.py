@@ -75,8 +75,6 @@ def try_redis_url(redis_url):
     if redis_url[:6] == "rediss":
         # use SSL
         redis_conn = redis.from_url(redis_url, ssl_cert_reqs=ssl.CERT_NONE)
-        # port = int(redis_url.split(":")[-1])
-        # redis_url = "redis" + redis_url[6:-len(port)] + str(port - 1)
 
     elif redis_url[:5] == "redis":
         # use regulaar Redis
