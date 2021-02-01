@@ -19,7 +19,7 @@ var webserverAuthSecret string
 // Constants for use in setting up the HTTPS server
 const (
 	// We listen on the port "HOST" converted to a telephone number
-	portToListen       = ":4678"
+	PortToListen       = ":4678"
 	FractalPrivatePath = "/fractalprivate/"
 	certPath           = FractalPrivatePath + "cert.pem"
 	privatekeyPath     = FractalPrivatePath + "key.pem"
@@ -163,6 +163,53 @@ func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue
 	res.send(w)
 }
 
+// SetContainerIDToFractalRandomHexMappingRequest defines the (unauthenticated)
+// `set_container_id_to_fractal_random_hex_mapping` endpoint, which is used by
+// the ecs-agent (built into the host service, in package `ecsagent`) to tell
+// us the mapping between Docker container IDs and `FractalRandomHex` values
+// (which are used to dynamically provide each container with a directory that
+// only that container has access to).
+type SetContainerIDToFractalRandomHexMappingRequest struct {
+	ContainerID      string             `json:"container_id"`       // Docker runtime ID of this container
+	FractalRandomHex string             `json:"fractal_random_hex"` // FractalRandomHex corresponding to this container
+	resultChan       chan requestResult // Channel to pass result between goroutines
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler
+func (s *SetContainerIDToFractalRandomHexMappingRequest) ReturnResult(result string, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass request result
+// back to the HTTP request handler via ReturnResult
+func (s *SetContainerIDToFractalRandomHexMappingRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+// Process an HTTP request for setting the mapping of Container ID to a FractalRandomHex, to be handled in ecs-host-service.go
+func processSetContainerIDToFractalRandomHexMappingRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is a POST
+	if verifyRequestType(w, r, http.MethodPost) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata SetContainerIDToFractalRandomHexMappingRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+		logger.Infof(err.Error())
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
@@ -283,9 +330,10 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	http.HandleFunc("/set_container_dpi", createHandler(processSetContainerDPIRequest))
+	http.HandleFunc("/set_container_id_to_fractal_random_hex_mapping", createHandler(processSetContainerIDToFractalRandomHexMappingRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
-		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+portToListen, certPath, privatekeyPath, nil))
+		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+PortToListen, certPath, privatekeyPath, nil))
 	}()
 
 	return events, nil
