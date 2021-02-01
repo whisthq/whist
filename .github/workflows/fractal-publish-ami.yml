@@ -11,11 +11,9 @@ on:
             - master
             - staging
             - dev
-            - mia/packer-ami # TODO: REMOVE WHEN DONE TESTING
-        # TODO: UNCOMMENT WHEN DONE TESTING
-        # paths:
-        #     - ecs-host-service/
-        #     - ecs-host-setup/
+        paths:
+            - ecs-host-service/
+            - ecs-host-setup/
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -86,7 +84,7 @@ jobs:
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json 
                   ami_config.json
-            
+
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -117,9 +115,6 @@ jobs:
                     --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
                     ${{ env.graphql_db_url }}
 
-                    # -- TODO: REMOVE WHEN DONE TESTING (temporarily set region to unused one bc update region is currently not working)
-                    region=eu-west-1
-
                     # run update_region on each region
                     celery=$(curl -X POST \
                       -H "Content-Type: application/json" \
@@ -133,7 +128,7 @@ jobs:
                     else 
                       echo "Failed to update region $region" && false
                     fi
-            
+
                   done
 
     notify-slack:
