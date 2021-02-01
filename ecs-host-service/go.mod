@@ -9,7 +9,7 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/fractal/ecs-agent/agent v0.0.0-20210128182524-3e06f2d0ffaf
+	github.com/fractal/ecs-agent/agent v0.0.0-20210201154650-5f29eb184a95
 	github.com/getsentry/sentry-go v0.7.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
