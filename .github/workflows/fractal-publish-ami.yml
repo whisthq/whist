@@ -65,7 +65,7 @@ jobs:
                   else
                     echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://fractal-dev-server.herokuapp.com/" >> $GITHUB_ENV
+                    echo "webserver_url=https://fractal-dev-server.herokuapp.com/admin/login" >> $GITHUB_ENV
                   fi
 
             # no quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list
@@ -121,17 +121,17 @@ jobs:
                   # Log in as Admin to get Bearer Token for Update Region API call
                   token=$(curl -X POST \
                     -H "Content-Type: application/json" \
-                    --data "{ \"username\": \"fractal-admin\", \password\": \"A5bzJGnRbURpyd7t1wsw8bUPxE97Ao\" }" \
-                    -L "${{ env.webserver_url }}admin/login")
+                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                    ${{ env.webserver_url }})
                   
                   echo $token
                   region=eu-west-1
 
-                  curl -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "Authorization: Bearer ${token}" \
-                    --data "{\"region_name\": \"${region}\"}" \
-                    -L "${{ env.webserver_url }}aws_container/update_region"
+                  # curl -X POST \
+                  #   -H "Content-Type: application/json" \
+                  #   -H "Authorization: Bearer ${token}" \
+                  #   --data "{\"region_name\": \"${region}\"}" \
+                  #   "${{ env.webserver_url }}aws_container/update_region"
 
 
     # notify-slack:
