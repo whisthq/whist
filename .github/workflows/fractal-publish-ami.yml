@@ -119,9 +119,9 @@ jobs:
                   region=eu-west-1
                   curl -X POST \
                     -H "Content-Type: application/json" \
-                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+                    -H "Authorization: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}" \
                     --data "{\"region_name\": \"${region}\"}" \
-                    "${{ env.graphql_db_url }}/aws_container/update_region"
+                    'https://fractal-dev-server.herokuapp.com/aws_container/update_region'
 
     # notify-slack:
     #     name: Notify Slack
