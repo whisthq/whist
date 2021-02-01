@@ -100,6 +100,7 @@ func addFractalRandomHexMapping(req *httpserver.SetContainerIDToFractalRandomHex
 	}
 
 	fractalRandomHexes[req.ContainerID] = req.FractalRandomHex
+	logger.Infof("Added mapping from ContainerID %s to FractalRandomHex %s", req.ContainerID, req.FractalRandomHex)
 	return nil
 }
 

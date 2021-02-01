@@ -210,6 +210,27 @@ func processSetContainerIDToFractalRandomHexMappingRequest(w http.ResponseWriter
 	res.send(w)
 }
 
+// Create the necessary body for a createContainer request, including authentication
+func CreateSetContainerIDToFractalRandomHexMappingRequestBody(r SetContainerIDToFractalRandomHexMappingRequest) ([]byte, error) {
+	body, err := json.Marshal(
+		struct {
+			AuthSecret       string `json:"auth_secret"`
+			ContainerID      string `json:"container_id"`
+			FractalRandomHex string `json:"fractal_random_hex"`
+		}{
+			AuthSecret:       webserverAuthSecret,
+			ContainerID:      r.ContainerID,
+			FractalRandomHex: r.FractalRandomHex,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
