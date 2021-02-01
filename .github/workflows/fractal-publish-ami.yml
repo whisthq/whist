@@ -11,10 +11,9 @@ on:
             - master
             - staging
             - dev
-            - mia/packer-ami # TODO: REMOVE WHEN DONE TESTING
-        # paths:
-        #     - ecs-host-service/
-        #     - ecs-host-setup/
+        paths:
+            - "ecs-host-service/"
+            - "ecs-host-setup/"
     workflow_dispatch:
 
 jobs:
@@ -111,9 +110,6 @@ jobs:
                     -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
                     --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
                     ${{ env.graphql_db_url }}
-
-                    # TODO: REMOVE AFTER TESTING
-                    region=eu-west-1
 
                     # run update_region on each region
                     celery=$(curl -X POST \
