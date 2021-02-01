@@ -122,17 +122,22 @@ jobs:
                   token=$(curl -X POST \
                     -H "Content-Type: application/json" \
                     --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                    "${{ env.webserver_url }}admin/login" | jq ".access_token")
+                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
 
                   echo $token
                   region=eu-west-1
 
-                  curl -X POST \
+                  celery=$(curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "Authorization: Bearer ${token}" \
                     --data "{\"region_name\": \"${region}\"}" \
-                    "${{ env.webserver_url }}aws_container/update_region"
-
+                    "${{ env.webserver_url }}aws_container/update_region")
+                  
+                    if [[ ${celery} =~ {\"ID\":\"[0-9a-z-]+\"} ]]; then 
+                      echo "Updated region $region"
+                    else 
+                      echo "Failed to update region $region" && false
+                    fi
 
     # notify-slack:
     #     name: Notify Slack
