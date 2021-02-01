@@ -65,20 +65,6 @@ jobs:
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
                   fi
 
-            - name: Install Latest Packer version
-              run: |
-                  # delete current Packer installation
-                  sudo rm -rf /usr/local/bin/packer
-
-                  # reinstall Packer to latest version
-                  PACKER_VERSION=$(curl -s https://checkpoint-api.hashicorp.com/v1/check/packer | jq -r .current_version)
-                  curl -LO "https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip"
-                  sudo unzip "packer_${PACKER_VERSION}_linux_amd64.zip" -d /usr/local/bin
-                  rm -f "packer_${PACKER_VERSION}_linux_amd64.zip"
-
-                  # confirm Packer version
-                  packer --version
-
             # no quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
