@@ -22,5 +22,11 @@ RUN wget -qO rstudio.deb "https://download1.rstudio.org/desktop/${RSTUDIO_DISTRO
     && dpkg -i rstudio.deb \
     && rm rstudio.deb
 
+# Create default config paths
+RUN su - fractal -c "mkdir -p \
+    /home/fractal/.config/rstudio \
+    /home/fractal/.rstudio-desktop \
+    /home/fractal/.local/share/rstudio"
+
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/rstudio /usr/bin/fractal-application
