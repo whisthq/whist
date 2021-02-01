@@ -57,12 +57,15 @@ jobs:
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                     echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
+                    echo "HEROKU_APP_NAME=fractal-prod-server" >> $GITHUB_ENV
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                     echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
+                    echo "HEROKU_APP_NAME=fractal-staging-server" >> $GITHUB_ENV
                   else
                     echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
+                    echo "HEROKU_APP_NAME=fractal-dev-server" >> $GITHUB_ENV
                   fi
 
             # no quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list
@@ -82,6 +85,23 @@ jobs:
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json 
                   ami_config.json
+
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
+            - name: Add Heroku Remote
+              run: |
+                  heroku git:remote --app ${{ env.HEROKU_APP_NAME }} --remote heroku-fractal-server
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
 
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
@@ -118,7 +138,6 @@ jobs:
               run: |
                   region=eu-west-1
                   curl -X POST \
-                    -H ${{ secrets.JWT_SECRET_KEY }} \
                     --data "{\"region_name\": \"${region}\"}" \
                     'https://fractal-dev-server.herokuapp.com/aws_container/update_region'
 
