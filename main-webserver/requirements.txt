@@ -27,3 +27,6 @@ stripe==2.55.0
 waitress==1.4.4
 datadog==0.39.0
 gevent==20.12.1
+ndg-httpsclient==0.5.1
+pyOpenSSL==20.0.1
+pyasn1==0.4.8
