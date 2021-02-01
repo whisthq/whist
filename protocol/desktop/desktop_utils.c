@@ -39,6 +39,7 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile char *program_name;
 extern volatile CodecType output_codec_type;
+extern volatile SDL_Window *window;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
@@ -573,4 +574,20 @@ int update_mouse_motion() {
         mouse_state.y_rel = 0;
     }
     return 0;
+}
+
+void send_message_dimensions() {
+    // Let the server know the new dimensions so that it
+    // can change native dimensions for monitor
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_DIMENSIONS;
+    fmsg.dimensions.width = output_width;
+    fmsg.dimensions.height = output_height;
+    fmsg.dimensions.codec_type = (CodecType)output_codec_type;
+    int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
+    float dpi;
+    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
+    fmsg.dimensions.dpi = (int)dpi;
+    LOG_INFO("Sending MESSAGE_DIMENSIONS: %dx%d, DPI=%d", output_width, output_height, (int)dpi);
+    send_fmsg(&fmsg);
 }
