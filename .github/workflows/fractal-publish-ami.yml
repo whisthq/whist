@@ -14,10 +14,6 @@ on:
         paths:
             - ecs-host-service/
             - ecs-host-setup/
-        paths-ignore:
-            - "README.md"
-            - "**/README.md"
-            - ".github/workflows/README.md"
     workflow_dispatch:
 
 jobs:
