@@ -128,7 +128,6 @@ jobs:
               run: |
                   region=eu-west-1
                   curl -X POST \
-                    -H "Authorization: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}" \
                     --data "{\"region_name\": \"${region}\"}" \
                     'https://fractal-dev-server.herokuapp.com/aws_container/update_region'
 
