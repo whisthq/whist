@@ -95,6 +95,10 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
         runcmd(cmd, NULL);
+        // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
+        snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
+        runcmd(cmd, NULL);
+        // while this command sets the font DPI setting
         snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
         runcmd(cmd, NULL);
 
