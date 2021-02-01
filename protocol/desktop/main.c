@@ -110,7 +110,13 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
+// Window resizing state
+SDL_mutex* window_resize_mutex;            // protects pending_resize_message
+const float window_resize_interval = 0.2;  // seconds in between sending resize requests
 clock window_resize_timer;
+volatile bool pending_resize_message =
+    false;  // should be set to true if sdl event handler was not able to process resize event due
+            // to throttling, so the main loop should process it
 
 // Function Declarations
 
@@ -694,6 +700,7 @@ int main(int argc, char* argv[]) {
             SDL_CreateThread(send_clipboard_packets, "SendClipboardPackets", NULL);
 
         start_timer(&window_resize_timer);
+        window_resize_mutex = safe_SDL_CreateMutex();
 
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
@@ -747,6 +754,21 @@ int main(int argc, char* argv[]) {
                 }
                 start_timer(&keyboard_sync_timer);
             }
+
+            // Check if window resize message should be sent to server
+            if (pending_resize_message &&
+                get_timer(window_resize_timer) >= window_resize_interval) {
+                safe_SDL_LockMutex(window_resize_mutex);
+                if (pending_resize_message &&
+                    get_timer(window_resize_timer) >=
+                        window_resize_interval) {  // double checked locking
+                    pending_resize_message = false;
+                    send_message_dimensions();
+                    start_timer(&window_resize_timer);
+                }
+                safe_SDL_UnlockMutex(window_resize_mutex);
+            }
+
             int events = SDL_PollEvent(&sdl_msg);
 
             if (events && handle_sdl_event(&sdl_msg) != 0) {
