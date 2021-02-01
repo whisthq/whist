@@ -41,5 +41,8 @@ RUN mkdir -p /etc/opt/chrome/policies/managed \
     | jq '.URLWhitelist=["slack://*"]' \
     > /etc/opt/chrome/policies/managed/whitelist.json
 
+# Create default config paths
+RUN su - fractal -c "mkdir -p /home/fractal/.config/Slack"
+
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/slack /usr/bin/fractal-application

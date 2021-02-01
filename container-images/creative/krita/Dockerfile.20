@@ -21,5 +21,13 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Create default config paths
+RUN su - fractal -c "mkdir -p \
+    /home/fractal/.local/share/krita \
+    /home/fractal/.config"
+RUN su - fractal -c "touch \
+    /home/fractal/.config/kritadisplayrc \
+    /home/fractal/.config/kritarc"
+
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/krita /usr/bin/fractal-application

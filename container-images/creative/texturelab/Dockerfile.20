@@ -34,5 +34,8 @@ RUN git clone https://github.com/njbrown/texturelab \
     && rm -rf texturelab \
     && ln -sf /opt/texturelab/texturelab /usr/bin/texturelab
 
+# Create default config paths
+RUN su - fractal -c "mkdir -p /home/fractal/.config/sidekick"
+
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/texturelab /usr/bin/fractal-application
