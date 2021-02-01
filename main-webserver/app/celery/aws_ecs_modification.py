@@ -136,7 +136,7 @@ def update_region(self, region_name="us-east-1", ami=None):
 def manual_scale_cluster(self, cluster: str, region_name: str):
     """
     Manually scales the cluster according the the following logic:
-        1. see if active_tasks + pending_tasks > num_instances * AWS_TASKS_PER_INSTANCE. if so, 
+        1. see if active_tasks + pending_tasks > num_instances * AWS_TASKS_PER_INSTANCE. if so,
             we should trigger a scale down.
         2. check if there are instances with 0 tasks. sometimes AWS can suboptimally distribute
             our workloads, so we want to make sure there are instances we can actually delete.
