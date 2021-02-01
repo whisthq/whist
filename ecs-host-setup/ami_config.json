@@ -1,32 +1,18 @@
 {
   "builders": [
     {
-<<<<<<< HEAD
-      "access_key": "PLACEHOLDER",
-      "secret_key": "PLACEHOLDER",
-      "name": "Fractal AWS AMI Builder",
-      "type": "amazon-ebs",
-=======
       "name": "Fractal AWS AMI Builder",
       "type": "amazon-ebs",
       "access_key": "PLACEHOLDER",
       "secret_key": "PLACEHOLDER",
->>>>>>> 5e695fe666c5ec0e8967bafd5d83b5c303aea834
       "region": "PLACEHOLDER",
       "source_ami": "PLACEHOLDER",
       "ami_regions": "PLACEHOLDER",
       "instance_type": "PLACEHOLDER",
-<<<<<<< HEAD
-      "iam_instance_profile": "PackerAMIBuilder",
-      "ssh_username": "ubuntu",
-      "ami_name": "PLACEHOLDER",
-      "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
-=======
       "ami_name": "PLACEHOLDER",
       "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
       "iam_instance_profile": "PackerAMIBuilder",
       "ssh_username": "ubuntu",
->>>>>>> 5e695fe666c5ec0e8967bafd5d83b5c303aea834
       "launch_block_device_mappings": [
         {
           "volume_type": "gp2",
