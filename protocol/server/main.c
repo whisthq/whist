@@ -351,9 +351,15 @@ int32_t send_video(void* opaque) {
             }
 
             device = &rdevice;
+            // YUV pixel format requires the width to be a multiple of 4 and the height to be a
+            // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
+            // implicitly rounded up, but for some reason it looks better if we explicitly set the
+            // size.
+            int true_width = client_width + 3 - ((client_width + 3) % 4);
+            int true_height = client_height + 1 - ((client_height + 1) % 2);
             LOG_INFO("PROFILE_DIMENSION creating capture device");
-            if (create_capture_device(device, client_width, client_height, client_dpi,
-                                      current_bitrate, client_codec_type) < 0) {
+            if (create_capture_device(device, true_width, true_height, client_dpi, current_bitrate,
+                                      client_codec_type) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
