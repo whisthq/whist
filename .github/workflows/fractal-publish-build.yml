@@ -149,6 +149,7 @@ jobs:
                   echo "::set-output name=task-definitions-apps-json::$apps_json"
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publishing)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
@@ -230,6 +231,7 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publishing)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
@@ -283,6 +285,7 @@ jobs:
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publishing)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":athletic_shoe: ECS Host Service build pushed to production via S3 upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
@@ -361,6 +364,7 @@ jobs:
               run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publishing)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
