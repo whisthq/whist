@@ -111,10 +111,8 @@ jobs:
             #         ${{ env.graphql_db_url }}
 
             #         # run update_region
-            #         curl -X POST \
-            #         -H "Content-Type: application/json" \
-            #         -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-            #         --data "{\"region_name\": \"${region}\"}"
+  
+            
             #       done
 
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -126,11 +124,12 @@ jobs:
                     --data "{ \"username\": \"fractal-admin\", \password\": \"A5bzJGnRbURpyd7t1wsw8bUPxE97Ao\" }" \
                     -L "${{ env.webserver_url }}admin/login")
                   
+                  echo $token
                   region=eu-west-1
 
                   curl -X POST \
                     -H "Content-Type: application/json" \
-                    -H "Authorization: Bearer ${token}"
+                    -H "Authorization: Bearer ${token}" \
                     --data "{\"region_name\": \"${region}\"}" \
                     -L "${{ env.webserver_url }}aws_container/update_region"
 
