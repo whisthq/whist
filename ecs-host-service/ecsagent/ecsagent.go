@@ -57,7 +57,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "localhost" + fractalhttpserver.PortToListen + "/set_container_id_to_fractal_random_hex_mapping"
+			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/set_container_id_to_fractal_random_hex_mapping"
 
 			_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			return err
