@@ -376,11 +376,13 @@ func initializeTLS() error {
 		"-x509",
 		"-subj",
 		"/C=US/ST=./L=./O=./CN=.",
+		"-addext", "subjectAltName=IP:127.0.0.1",
 		"-keyout",
 		privatekeyPath,
 		"-out",
 		certPath,
 	)
+	logger.Infof("Openssl command: %s", cmd.String())
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
