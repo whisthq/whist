@@ -32,6 +32,9 @@ Includes
 
 #define USE_HARDWARE true
 
+#define MAX_SCREEN_WIDTH 8192
+#define MAX_SCREEN_HEIGHT 4096
+
 // Global Variables
 extern volatile SDL_Window* window;
 
@@ -61,7 +64,6 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
-volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 
 static enum AVPixelFormat sws_input_fmt;
@@ -174,6 +176,7 @@ Private Functions
 ============================
 */
 
+int32_t mulithreaded_destroy_decoder(void* opaque);
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 int32_t render_screen(SDL_Renderer* renderer);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
@@ -181,7 +184,6 @@ void nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
 void update_pixel_format();
-void update_texture();
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
 int init_multithreaded_video(void* opaque);
@@ -192,7 +194,8 @@ Private Function Implementations
 ============================
 */
 
-int multithreaded_destroy_decoder(VideoDecoder* decoder) {
+int32_t multithreaded_destroy_decoder(void* opaque) {
+    VideoDecoder* decoder = (VideoDecoder*)opaque;
     destroy_video_decoder(decoder);
     return 0;
 }
@@ -257,8 +260,14 @@ int32_t render_screen(SDL_Renderer* renderer) {
         int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
         safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
-            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture, NULL,
-                           NULL);
+            // User is in the middle of resizing the window
+            SDL_Rect output_rect;
+            output_rect.x = 0;
+            output_rect.y = 0;
+            output_rect.w = output_width;
+            output_rect.h = output_height;
+            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture,
+                           &output_rect, NULL);
             SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
         }
         safe_SDL_UnlockMutex(render_mutex);
@@ -344,7 +353,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
             clock sws_timer;
             start_timer(&sws_timer);
 
-            update_texture();
+            pending_resize_render = false;
 
             if (video_context.sws) {
                 sws_scale(
@@ -381,10 +390,21 @@ int32_t render_screen(SDL_Renderer* renderer) {
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
-            SDL_UpdateYUVTexture(video_context.texture, NULL, video_context.data[0],
-                                 video_context.linesize[0], video_context.data[1],
-                                 video_context.linesize[1], video_context.data[2],
-                                 video_context.linesize[2]);
+            // The texture object we allocate is larger than the frame (unless
+            // MAX_SCREEN_WIDTH/HEIGHT) are violated, so we only copy the valid section of the frame
+            // into the texture.
+            SDL_Rect texture_rect;
+            texture_rect.x = 0;
+            texture_rect.y = 0;
+            texture_rect.w = video_context.decoder->width;
+            texture_rect.h = video_context.decoder->height;
+            ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect, video_context.data[0],
+                                       video_context.linesize[0], video_context.data[1],
+                                       video_context.linesize[1], video_context.data[2],
+                                       video_context.linesize[2]);
+            if (ret == -1) {
+                LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
+            }
 
             if (!video_context.sws) {
                 // Clear out bits that aren't used from av_alloc_frame
@@ -437,7 +457,30 @@ int32_t render_screen(SDL_Renderer* renderer) {
             // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
             // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
 
-            SDL_RenderCopy((SDL_Renderer*)renderer, video_context.texture, NULL, NULL);
+            // Subsection of texture that should be rendered to screen.
+            SDL_Rect output_rect;
+            output_rect.x = 0;
+            output_rect.y = 0;
+            if (server_width >= output_width && server_width <= output_width + 8 &&
+                server_height >= output_height && server_height <= output_height + 2) {
+                // Since RenderCopy scales the texture to the size of the window by default, we use
+                // this to truncate the frame to the size of the window to avoid scaling
+                // artifacts (blurriness). The frame may be larger than the window because the
+                // video encoder rounds the width up to a multiple of 4, and the height to a
+                // multiple of 2.
+                output_rect.w = output_width;
+                output_rect.h = output_height;
+                LOG_INFO("TRUNCATING from %dx%d to %dx%d", server_width, server_height,
+                         output_width, output_height);
+            } else {
+                // If the condition is false, most likely that means the server has not yet updated
+                // to use the new dimensions, so we render the entire frame. This makes resizing
+                // look more consistent.
+                output_rect.w = server_width;
+                output_rect.h = server_height;
+            }
+            SDL_RenderCopy((SDL_Renderer*)renderer, video_context.texture, &output_rect, NULL);
+
             if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) !=
                 0) {
                 LOG_ERROR("Failed to render peers.");
@@ -599,17 +642,15 @@ void update_sws_context() {
 
     memset(video_context.data, 0, sizeof(video_context.data));
 
-    if (sws_input_fmt != AV_PIX_FMT_YUV420P || decoder->width != output_width ||
-        decoder->height != output_height) {
-        av_image_alloc(video_context.data, video_context.linesize, output_width, output_height,
-                       AV_PIX_FMT_YUV420P, 32);
-
-        LOG_INFO("Will be resizing from %dx%d to %dx%d", decoder->width, decoder->height,
-                 output_width, output_height);
-        video_context.sws =
-            sws_getContext(decoder->width, decoder->height, sws_input_fmt, output_width,
-                           output_height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
-    }
+    // Rather than scaling the video frame data to the size of the window, we keep its original
+    // dimensions so we can truncate it later.
+    av_image_alloc(video_context.data, video_context.linesize, decoder->width, decoder->height,
+                   AV_PIX_FMT_YUV420P, 32);
+    LOG_INFO("Will be converting pixel format from %s to %s", av_get_pix_fmt_name(sws_input_fmt),
+             av_get_pix_fmt_name(AV_PIX_FMT_YUV420P));
+    video_context.sws =
+        sws_getContext(decoder->width, decoder->height, sws_input_fmt, decoder->width,
+                       decoder->height, AV_PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL);
 }
 
 void update_pixel_format() {
@@ -621,28 +662,6 @@ void update_pixel_format() {
         sws_input_fmt = video_context.decoder->sw_frame->format;
         pending_sws_update = false;
         update_sws_context();
-    }
-}
-
-void update_texture() {
-    /*
-        Update the SDL video texture
-    */
-
-    if (pending_texture_update) {
-        LOG_INFO("Beginning to use %d x %d", output_width, output_height);
-        SDL_Texture* texture =
-            SDL_CreateTexture((SDL_Renderer*)video_context.renderer, SDL_PIXELFORMAT_YV12,
-                              SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
-        if (!texture) {
-            LOG_ERROR("SDL: could not create texture - exiting");
-            exit(1);
-        }
-
-        SDL_DestroyTexture(video_context.texture);
-        pending_resize_render = false;
-        video_context.texture = texture;
-        pending_texture_update = false;
     }
 }
 
@@ -755,9 +774,11 @@ int init_multithreaded_video(void* opaque) {
     SDL_Texture* texture;
 
     SDL_SetRenderDrawBlendMode((SDL_Renderer*)renderer, SDL_BLENDMODE_BLEND);
-    // Allocate a place to put our YUV image on that screen
+    // Allocate a place to put our YUV image on that screen.
+    // Rather than allocating a new texture every time the dimensions change, we instead allocate
+    // the texture once and render sub-rectangles of it.
     texture = SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
-                                SDL_TEXTUREACCESS_STREAMING, output_width, output_height);
+                                SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
     if (!texture) {
         LOG_FATAL("SDL: could not create texture - exiting");
     }
@@ -1189,7 +1210,6 @@ void set_video_active_resizing(bool is_resizing) {
         int new_width = get_window_pixel_width((SDL_Window*)window);
         int new_height = get_window_pixel_height((SDL_Window*)window);
         if (new_width != output_width || new_height != output_height) {
-            pending_texture_update = true;
             pending_sws_update = true;
             output_width = new_width;
             output_height = new_height;
