@@ -124,7 +124,7 @@ jobs:
                   token=$(curl -X POST \
                     -H "Content-Type: application/json" \
                     --data "{ \"username\": \"fractal-admin\", \password\": \"A5bzJGnRbURpyd7t1wsw8bUPxE97Ao\" }" \
-                    "${{ env.webserver_url }}/admin/login")
+                    "${{ env.webserver_url }}admin/login")
                   
                   region=eu-west-1
 
@@ -132,7 +132,7 @@ jobs:
                     -H "Content-Type: application/json" \
                     -H "Authorization: Bearer ${token}"
                     --data "{\"region_name\": \"${region}\"}" \
-                    "${{ env.webserver_url }}/aws_container/update_region"
+                    "${{ env.webserver_url }}aws_container/update_region"
 
 
     # notify-slack:
