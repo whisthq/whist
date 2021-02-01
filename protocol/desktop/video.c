@@ -466,12 +466,16 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 // Since RenderCopy scales the texture to the size of the window by default, we use
                 // this to truncate the frame to the size of the window to avoid scaling
                 // artifacts (blurriness). The frame may be larger than the window because the
-                // video encoder rounds the width up to a multiple of 4, and the height to a
+                // video encoder rounds the width up to a multiple of 8, and the height to a
                 // multiple of 2.
                 output_rect.w = output_width;
                 output_rect.h = output_height;
-                LOG_INFO("TRUNCATING from %dx%d to %dx%d", server_width, server_height,
-                         output_width, output_height);
+                if (server_width > output_width || server_height > output_height) {
+                    // We failed to force the window dimensions to be multiples of 8, 2 in
+                    // `handle_window_size_changed`
+                    LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
+                                server_height, output_width, output_height);
+                }
             } else {
                 // If the condition is false, most likely that means the server has not yet updated
                 // to use the new dimensions, so we render the entire frame. This makes resizing
