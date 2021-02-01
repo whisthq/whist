@@ -245,54 +245,6 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     # assert True
 
 
-@shared_task(bind=True)
-def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
-    success = True
-    # check that the arguments are as expected
-    if cluster_name != pytest.cluster_name:
-        fractal_log(
-            "mock_update_cluster",
-            None,
-            f"Expected cluster {pytest.cluster_name}, got {cluster_name}",
-            logging.ERROR,
-        )
-        success = False
-    elif region_name != "us-east-1":
-        fractal_log(
-            "mock_update_cluster",
-            None,
-            f"Expected region us-east-1, got {region_name}",
-            logging.ERROR,
-        )
-        success = False
-    elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
-        fractal_log(
-            "mock_update_cluster",
-            None,
-            f"Expected ami ami-0ff8a91507f77f867, got {ami}",
-            logging.ERROR,
-        )
-        success = False
-
-    # tests looks for this attribute on the function
-    if hasattr(mock_update_cluster, "test_passed"):
-        # this means this func has been called twice, which should not happen
-        setattr(mock_update_cluster, "test_passed", False)
-        raise ValueError(
-            f"mock_update_cluster called twice, second time with cluster {cluster_name}"
-        )
-    setattr(mock_update_cluster, "test_passed", success)
-
-    if success:
-        self.update_state(
-            state="SUCCESS",
-        )
-    else:
-        self.update_state(
-            state="FAILURE",
-        )
-
-
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
@@ -300,7 +252,50 @@ def mock_update_cluster(self, region_name="us-east-1", cluster_name=None, ami=No
 def test_update_region(client, admin, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
-    monkeypatch.setattr(update_cluster, "delay", mock_update_cluster.delay)
+    def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
+        success = True
+        # check that the arguments are as expected
+        if cluster_name != pytest.cluster_name:
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected cluster {pytest.cluster_name}, got {cluster_name}",
+                logging.ERROR,
+            )
+            success = False
+        elif region_name != "us-east-1":
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected region us-east-1, got {region_name}",
+                logging.ERROR,
+            )
+            success = False
+        elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected ami ami-0ff8a91507f77f867, got {ami}",
+                logging.ERROR,
+            )
+            success = False
+
+        # tests looks for this attribute on the function
+        if hasattr(mock_update_cluster, "test_passed"):
+            # this means this func has been called twice, which should not happen
+            setattr(mock_update_cluster, "test_passed", False)
+            raise ValueError(
+                f"mock_update_cluster called twice, second time with cluster {cluster_name}"
+            )
+        setattr(mock_update_cluster, "test_passed", success)
+
+        class FakeReturn:
+            def __init__(self):
+                self.id = "this-is-a-fake-test-id"
+        return FakeReturn()
+
+    # do monkeypatching
+    monkeypatch.setattr(update_cluster, "delay", mock_update_cluster)
 
     fractal_log(
         function="test_update_region",
