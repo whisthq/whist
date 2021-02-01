@@ -124,7 +124,7 @@ jobs:
             #         curl -X POST \
             #         -H "Content-Type: application/json" \
             #         -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-            #         --data '{\"region_name\": \\\"${region}\\\"}' 
+            #         --data "{\"region_name\": \"${region}\"}"
             #       done
 
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -134,7 +134,7 @@ jobs:
                   curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                    --data '{\"region_name\": \"${region}\"}' \
+                    --data "{\"region_name\": \"${region}\"}" \
                     ${{ env.graphql_db_url }}
 
     # notify-slack:
