@@ -2,7 +2,9 @@ package ecsagent
 
 import (
 	"bufio"
+	"bytes"
 	"math/rand"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -37,7 +39,30 @@ func init() {
 	// Tell the ecs-agent where the host service is listening for HTTP requests
 	// so it can pass along mappings between Docker container IDs and
 	// FractalRandomHexes
-	ecsengine.SetFractalHostServiceListeningAddr(fractalhttpserver.PortToListen)
+	httpClient := http.Client{
+		Timeout: 10 * time.Second,
+	}
+	ecsengine.SetFractalHostServiceMappingSender(
+		func(containerID, fractalRandomHex string) error {
+			body, err := fractalhttpserver.CreateSetContainerIDToFractalRandomHexMappingRequestBody(
+				fractalhttpserver.SetContainerIDToFractalRandomHexMappingRequest{
+					ContainerID:      containerID,
+					FractalRandomHex: fractalRandomHex,
+				},
+			)
+			if err != nil {
+				err := fractallogger.MakeError("Error creating SetContainerIDToFractalRandomHexMappingRequest: %s", err)
+				fractallogger.Error(err)
+				return err
+			}
+
+			// We have the request body, now just need to actually make the request
+			requestURL := "localhost" + fractalhttpserver.PortToListen + "/set_container_id_to_fractal_random_hex_mapping"
+
+			_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			return err
+		},
+	)
 }
 
 func ECSAgentMain() {
