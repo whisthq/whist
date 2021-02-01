@@ -134,7 +134,8 @@ jobs:
                   curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                    --data '{\"region_name\": \\\"${region}\\\"}' 
+                    --data '{\"region_name\": \\\"${region}\\\"}' \
+                    ${{ env.graphql_db_url }}
 
     notify-slack:
         name: Notify Slack
