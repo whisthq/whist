@@ -320,11 +320,6 @@ int32_t send_video(void* opaque) {
     pending_encoder = false;
     encoder_finished = false;
 
-    // TODO: Make this an attribute of device, to abstract it away
-#ifdef _WIN32
-    // bool dxgi_cuda_available = false;
-#endif
-
     while (!exiting) {
         if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
             SDL_Delay(5);
@@ -335,13 +330,6 @@ int32_t send_video(void* opaque) {
         if (update_device) {
             LOG_INFO("PROFILE_DIMENSION updating device");
             update_device = false;
-
-            /* TODO: This should be done inside of destroy_capture_device
-            #ifdef _WIN32
-                        // need to reinitialize this, so close it
-                        dxgi_cuda_close_transfer_context();
-            #endif
-            */
 
             if (device) {
                 LOG_INFO("PROFILE_DIMENSION destroying capture device");
@@ -454,20 +442,17 @@ int32_t send_video(void* opaque) {
                 // encoder.
                 // TODO: Create this function using the comments below
                 // reinitialize_transfer_context(device, encoder);
-
-                /*
 #ifdef _WIN32
                 if (encoder->type == NVENC_ENCODE) {
                     // initialize the transfer context
                     if (!dxgi_cuda_start_transfer_context(device)) {
-                        dxgi_cuda_available = true;
+                        device->dxgi_cuda_available = true;
                     }
-                } else if (dxgi_cuda_available) {
+                } else if (device->dxgi_cuda_available) {
                     // end the transfer context
                     dxgi_cuda_close_transfer_context();
                 }
 #endif
-                */
             }
         }
 
@@ -510,11 +495,11 @@ int32_t send_video(void* opaque) {
 
             // TODO: Make a function that does the following
             // transfer_device_encoder(device, encoder);
-
             // transfer the screen to a buffer
             int transfer_res = 2;  // haven't tried anything yet
 #if defined(_WIN32)
-            if (encoder->type == NVENC_ENCODE && dxgi_cuda_available && device->texture_on_gpu) {
+            if (encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
+                device->texture_on_gpu) {
                 // if dxgi_cuda is setup and we have a dxgi texture on the gpu
                 transfer_res = dxgi_cuda_transfer_capture(device, encoder);
             }

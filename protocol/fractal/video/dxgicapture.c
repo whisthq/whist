@@ -16,9 +16,12 @@ ID3D11Texture2D* create_texture(CaptureDevice* device);
 #define USE_GPU 0
 #define USE_MONITOR 0
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
+                          CodecType codec) {
     // tech debt: don't ignore dpi
     UNUSED(dpi);
+    UNUSED(bitrate);
+    UNUSED(codec);
 
     LOG_INFO("Creating capture device for resolution %dx%d...", width, height);
     memset(device, 0, sizeof(CaptureDevice));
@@ -258,6 +261,9 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
 
     device->screenshot.staging_texture = create_texture(device);
 
+    device->using_nvidia = false;
+    device->dxgi_cuda_available = false;
+
     return 0;
 }
 
@@ -442,6 +448,9 @@ void release_screen(CaptureDevice* device) {
 }
 
 void destroy_capture_device(CaptureDevice* device) {
+    // need to reinitialize this, so close it
+    dxgi_cuda_close_transfer_context();
+
     HRESULT hr;
 
     hr = device->duplication->lpVtbl->ReleaseFrame(device->duplication);
