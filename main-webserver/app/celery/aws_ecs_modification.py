@@ -188,8 +188,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     for instance_task_data in instances_tasks:
         if "runningTasksCount" not in instance_task_data:
             raise ValueError(
-                f"""Expected key {k} in AWS describe_container_instances API response:
-                 {instance_task_data}"""
+                f"""Expected key runningTasksCount in AWS describe_container_instances response.
+                    Got: {instance_task_data}"""
             )
         num_tasks = instance_task_data["runningTasksCount"]
         if num_tasks == 0:
