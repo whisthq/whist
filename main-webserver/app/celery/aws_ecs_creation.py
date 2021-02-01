@@ -553,14 +553,14 @@ def assign_container(
         logs=f"""Success, task ID is {self.request.id} and container is ready.""",
     )
 
-    for _ in range(num_extra):
-        create_new_container.delay(
-            "Unassigned",
-            task_definition_arn,
-            region_name=region_name,
-            webserver_url=webserver_url,
-        )
     if not current_app.testing:
+        for _ in range(num_extra):
+            create_new_container.delay(
+                "Unassigned",
+                task_definition_arn,
+                region_name=region_name,
+                webserver_url=webserver_url,
+            )
         task_time_taken = time.time() - task_start_time
         datadogEvent_containerAssign(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
