@@ -112,22 +112,13 @@ jobs:
             #         -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
             #         --data "{\"region_name\": \"${region}\"}"
             #       done
-            - name: Authenticate Heroku
-              run: |
-                  cat > ~/.netrc << EOF
-                  machine api.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  machine git.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  EOF
 
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               working-directory: ecs-host-setup
               run: |
                   region=eu-west-1
                   curl -X POST \
+                    -H "Authorization: ${{ secrets.JWT_SECRET_KEY }}" \
                     --data "{\"region_name\": \"${region}\"}" \
                     'https://fractal-dev-server.herokuapp.com/aws_container/update_region'
 
