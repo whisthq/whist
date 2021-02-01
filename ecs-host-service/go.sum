@@ -84,8 +84,8 @@ github.com/etcd-io/bbolt v1.3.3/go.mod h1:ZF2nL25h33cCyBtcyWeZ2/I3HQOfTP+0PIEvHj
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4/go.mod h1:T9YF2M40nIgbVgp3rreNmTged+9HrbNTIQf1PsaIiTA=
-github.com/fractal/ecs-agent/agent v0.0.0-20210128182524-3e06f2d0ffaf h1:pDxH9wsjMtZWJzCa8d080KwHvHlONjPP8+wRdflytOg=
-github.com/fractal/ecs-agent/agent v0.0.0-20210128182524-3e06f2d0ffaf/go.mod h1:blz8GuLhNJUKERQ+T6yXAwXmo6wgLKPEvTeoagC9Xac=
+github.com/fractal/ecs-agent/agent v0.0.0-20210201154650-5f29eb184a95 h1:OHgEsyUBo3Sw0xfVydFPjexevy6vEcJ3iq0q1HqDB98=
+github.com/fractal/ecs-agent/agent v0.0.0-20210201154650-5f29eb184a95/go.mod h1:blz8GuLhNJUKERQ+T6yXAwXmo6wgLKPEvTeoagC9Xac=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/gavv/httpexpect v2.0.0+incompatible/go.mod h1:x+9tiU1YnrOvnB725RkpoLv1M62hOWzwo5OXotisrKc=

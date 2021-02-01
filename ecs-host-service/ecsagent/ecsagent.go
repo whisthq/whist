@@ -8,9 +8,11 @@ import (
 	"time"
 
 	ecsapp "github.com/fractal/ecs-agent/agent/app"
+	ecsengine "github.com/fractal/ecs-agent/agent/engine"
 	ecslogger "github.com/fractal/ecs-agent/agent/logger"
 
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 )
 
 func init() {
@@ -31,6 +33,11 @@ func init() {
 	if err != nil {
 		fractallogger.Panicf("Could not make directory /etc/ecs: Error: %s", err)
 	}
+
+	// Tell the ecs-agent where the host service is listening for HTTP requests
+	// so it can pass along mappings between Docker container IDs and
+	// FractalRandomHexes
+	ecsengine.SetFractalHostServiceListeningAddr(fractalhttpserver.PortToListen)
 }
 
 func ECSAgentMain() {
