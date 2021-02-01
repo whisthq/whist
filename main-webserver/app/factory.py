@@ -23,6 +23,12 @@ mail = SendGrid()
 
 
 class WorkerProc(CeleryProc):
+    """
+    This is the class that gives hirefire visibility into our
+    celery workers.  These are the default settings from
+    their docs.
+    """
+
     name = "worker"
     queues = ["celery"]
     simple_queues = True
@@ -108,6 +114,9 @@ def register_blueprints(app):
     from .blueprints.oauth import oauth_bp
 
     if not app.testing:
+        """
+        Here we enable hirefire to get the status of our celery tasks and the task queue size
+        """
         hirefire_bp = build_hirefire_blueprint(
             app.config["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"]
         )
