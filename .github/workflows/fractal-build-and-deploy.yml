@@ -3,7 +3,7 @@
 # Fractal: Build & Publish
 # Build and publish each of the relevant Fractal projects.
 
-name: "Fractal: Build & Publish"
+name: "Fractal: Build & Deploy"
 
 on:
     push:
