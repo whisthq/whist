@@ -19,8 +19,6 @@ on:
             - "!container-images/run_container_image.sh"
             - "!container-images/run_local_container_image.sh"
             - "!container-images/run_remote_container_image.sh"
-            - "protocol/**"
-            - "!protocol/README.md"
     workflow_dispatch:
 
 jobs:
@@ -65,17 +63,7 @@ jobs:
             - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
-
-
-            - name: Test to see paths resolving with GHA
-              run: |
-                echo ${{ github.event.pull_request }}[0]
-                echo ${{ github.event.pull_request.paths }}[0]
-                echo "${{ github.event.pull_request.paths }}[0] == protocol/**"
-
-
             - name: Build Container Images
-              if: false
               run: |
                   for app in ${{ env.apps }}
                   do

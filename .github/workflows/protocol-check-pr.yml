@@ -38,7 +38,7 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            # Necessary for downloading protocol libs from AWS S3
+            # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
             - name: Configure AWS S3 CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -189,3 +189,9 @@ jobs:
               shell: bash
               working-directory: protocol
               run: ./build_protocol.sh release
+
+            - name: Build Container Base Image to Ensure it Builds
+              if: runner.os == 'Linux'
+              shell: bash
+              working-directory: container-images
+              run: ./build_container_image.sh base
