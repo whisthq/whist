@@ -4,6 +4,8 @@
 # This script calls docker-create-builder.sh and docker-run-builder.sh, which build and run the Docker container
 # defined by Dockerfile
 
+
+
 set -Eeuo pipefail
 
 # Retrieve source directory of this script

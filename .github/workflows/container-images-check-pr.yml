@@ -65,7 +65,17 @@ jobs:
             - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
               run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
+
+
+            - name: Test to see paths resolving with GHA
+              run: |
+                echo ${{ github.event.pull_request }}
+                echo ${{ github.event.pull_request.paths }}
+                echo "${{ github.event.pull_request.paths }} == protocol/**"
+
+
             - name: Build Container Images
+              if: false
               run: |
                   for app in ${{ env.apps }}
                   do
