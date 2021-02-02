@@ -2,6 +2,7 @@ import logging
 import traceback
 import time
 
+from botocore.exceptions import ClientError
 from celery import shared_task
 from flask import current_app
 
@@ -189,7 +190,12 @@ def delete_cluster(self, cluster, region_name):
             ecs_client.auto_scaling_client.delete_launch_configuration(
                 LaunchConfigurationName=launch_config_name
             )
-            ecs_client.ecs_client.delete_cluster(cluster=cluster)
+            try:
+                ecs_client.ecs_client.delete_cluster(cluster=cluster)
+            except Exception as _e:
+                # sometimes metadata takes time to update
+                time.sleep(30)
+                ecs_client.ecs_client.delete_cluster(cluster=cluster)
     except Exception as error:
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
