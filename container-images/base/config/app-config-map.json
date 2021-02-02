@@ -58,7 +58,7 @@
         "source": "godot-localshare",
         "destination": "/home/fractal/.local/godot",
         "type": "folder"
-    }
+    },
     {
         "source": "google-chrome",
         "destination": "/home/fractal/.config/google-chrome",
