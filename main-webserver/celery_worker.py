@@ -4,5 +4,4 @@ from app.celery_utils import init_celery
 
 
 app = create_app()
-app = register_blueprints(app)
 init_celery(celery_instance, app)
