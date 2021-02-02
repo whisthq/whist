@@ -24,10 +24,6 @@ A celery task is one way to asynchronously execute some code — this is useful 
 
 Celery tasks should never make their own API calls or direct SQL statements, instead wrapping those calls in one of our helpers. Helpers for APIs live in the helpers directory, and for SQL use fractalSQLCommit, fractalSQLUpdate, and fractalSQLDelete. Any exceptions raised by helpers should be directly reraised to aid debugging (that means that you should not wrap helpers in a try-catch block unless you anticipate some exception, and even then you should try to rewrite the code or the helper to detect that exception-causing condition without raising it, exceptions as control flow are an antipattern). For helpers that do not raise exceptions and instead have special error return values, check for those values and fail immediately after those helpers return a failing error code, again to aid debugging. All failures should both change the state of the celery worker and use fractalLog to log the error.
 
-### Scaling (WIP):
-
-Right now, Heroku handles scaling our web workers, but we need to scale our celery workers -- for that, we use Hirefire (hirefire.io) which is a plug-and-play solution that scales of measured task queue length.
-
 ## Helpers
 
 Our helpers are divided into 2 sections — blueprint-helpers, which directly perform blueprint tasks that don't belong in Celery (generally, querying our DB for information), and utils, which contain all our client wrappers and API callers. Nothing in utils should interact with fractal DBs unless explicitly necessary. In fact, none of your tests for those utils should in any way require fractal to work unless explicitly necessary — any code that interacts with fractal DBs should live in celery tasks or the blueprint helpers. This makes helpers tests significantly easier to mock, as the entire DB doesn't need to be mocked.
