@@ -24,7 +24,7 @@ The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-a
 
 3. Once `fractal-entrypoint.service` finishes, `fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our containers can only be run on GPU-powered hosts.
 
-4. `fractal-audio.service`, meanwhile, can start as soon as `fractal-display.service` *begins* running (which is important because the lifecycle of fractal-display is the lifecycle of our containerized applications). It starts a virtual Pulse Audio soundcard in the container, enabling sound.
+4. `fractal-audio.service`, meanwhile, can start as soon as `fractal-display.service` _begins_ running (which is important because the lifecycle of fractal-display is the lifecycle of our containerized applications). It starts a virtual Pulse Audio soundcard in the container, enabling sound.
 
 5. `fractal-protocol.service` can start as soon as `fractal-display.service` and `fractal-audio.service` are both running, running the Fractal protocol and configuring some environment variables to work correctly with the X Server.
 
