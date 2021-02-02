@@ -451,13 +451,13 @@ func saveUserConfig(hostPort uint16) {
 		return
 	}
 
-	// Only tar and save the config back to S3 if the user ID is set
-	if userID {
-		// Save app config back to s3 - first tar, then upload
-		hostPortString := logger.Sprintf("%v", hostPort)
-		configPath := userConfigsDirectory + hostPortString + "/"
-		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
+	// Save app config back to s3 - first tar, then upload
+	hostPortString := logger.Sprintf("%v", hostPort)
+	configPath := userConfigsDirectory + hostPortString + "/"
+	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 
+	// Only tar and save the config back to S3 if the user ID is set
+	if userID != "" {
 		tarPath := configPath + "fractal-app-config.tar.gz"
 
 		tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
@@ -465,7 +465,7 @@ func saveUserConfig(hostPort uint16) {
 		// tar is only fatal when exit status is 2 -
 		//		exit status 1 just means that some files have changed while tarring,
 		//		which is an ignorable error
-		if err != nil && !strings.Contains(tarConfigOutput, "file changed") {
+		if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
 			logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
 		} else {
 			logger.Infof("Tar config directory output: %s", tarConfigOutput);
@@ -545,7 +545,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
 	// if userID is not set, we don't want to try to retrieve configs from S3
-	if userID {
+	if userID != "" {
 		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 		// Retrieve app config from S3
 		getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
@@ -553,7 +553,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
 		//		this means that it's the user's first run and they dont' have any settings
 		//		stored for this application yet.
-		if err != nil && !strings.Contains(getConfigOutput, "does not exist") {
+		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
 			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
 		} else {
 			logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
