@@ -451,28 +451,35 @@ func saveUserConfig(hostPort uint16) {
 		return
 	}
 
-	// Save app config back to s3 - first tar, then upload
-	hostPortString := logger.Sprintf("%v", hostPort)
-	configPath := userConfigsDirectory + hostPortString + "/"
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
+	// Only tar and save the config back to S3 if the user ID is set
+	if userID {
+		// Save app config back to s3 - first tar, then upload
+		hostPortString := logger.Sprintf("%v", hostPort)
+		configPath := userConfigsDirectory + hostPortString + "/"
+		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 
-	tarPath := configPath + "fractal-app-config.tar.gz"
+		tarPath := configPath + "fractal-app-config.tar.gz"
 
-	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
-	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
-	} else {
-		logger.Infof("Tar config directory output: %s", tarConfigOutput);
+		tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
+		// tar is only fatal when exit status is 2 -
+		//		exit status 1 just means that some files have changed while tarring,
+		//		which is an ignorable error
+		if err != nil && !strings.Contains(tarConfigOutput, "file changed") {
+			logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+		} else {
+			logger.Infof("Tar config directory output: %s", tarConfigOutput);
+		}
+
+		saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
+		saveConfigOutput, err := saveConfigCmd.CombinedOutput()
+		if err != nil {
+			logger.Errorf("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
+		} else {
+			logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
+		}
 	}
-	saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
-	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Could not run \"aws s3 cp\" command: %s. Output: %s", err, saveConfigOutput)
-	} else {
-		logger.Infof("Ran \"aws s3 cp\" command with output: %s", saveConfigOutput)
-	}
-	
+
 	// remove app name mapping for container on hostPort
 	delete(containerAppNames, hostPort)
 
@@ -494,11 +501,11 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Get needed vars and create path for config
 	userID := req.UserID
-        containerID := containerIDs[(uint16)(req.HostPort)]
+    containerID := containerIDs[(uint16)(req.HostPort)]
 	hostPort := logger.Sprintf("%v", req.HostPort)
 	configPath := userConfigsDirectory + hostPort + "/"
 
-        // Make directory to mount in
+    // Make directory to move configs to
 	err := os.MkdirAll(configPath, 0777)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", configPath, err)
@@ -537,14 +544,20 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
-	// Retrieve app config from S3
-	getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
-	getConfigOutput, err := getConfigCmd.CombinedOutput()
-	if err != nil {
-		logger.Info("Ran \"aws s3 cp\" command: %s and file doesn't exist. Output: %s", err, getConfigOutput)
-	} else {
-		logger.Info("Ran \"aws s3 cp\" command with output: %s", getConfigOutput)
+	// if userID is not set, we don't want to try to retrieve configs from S3
+	if userID {
+		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
+		// Retrieve app config from S3
+		getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
+		getConfigOutput, err := getConfigCmd.CombinedOutput()
+		// If aws s3 cp errors out due to the file not existing, don't log an error because
+		//		this means that it's the user's first run and they dont' have any settings
+		//		stored for this application yet.
+		if err != nil && !strings.Contains(getConfigOutput, "does not exist") {
+			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+		} else {
+			logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
+		}
 	}
 
 	return nil
