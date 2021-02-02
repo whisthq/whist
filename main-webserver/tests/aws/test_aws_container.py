@@ -6,11 +6,14 @@ import uuid
 from collections import defaultdict
 
 import pytest
+import celery
+from celery import shared_task
 
+from app.celery.aws_ecs_modification import update_cluster
 from app.celery.aws_ecs_creation import _poll
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.models import ClusterInfo, db, UserContainer
+from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
@@ -173,6 +176,25 @@ def test_send_commands(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
+def test_update_cluster(client):
+    # right now we have manually verified this actually does something on AWS.
+    # AWS/boto3 _should_ error out if something went wrong.
+    res = update_cluster.delay(
+        region_name="us-east-1",
+        cluster_name=pytest.cluster_name,
+        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+    )
+
+    # wait for operation to finish
+    res.get(timeout=30)
+
+    assert res.successful()
+    assert res.state == "SUCCESS"
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 def test_delete_container(client):
     fractal_log(
         function="test_delete_container",
@@ -220,6 +242,107 @@ def test_delete_container(client):
         assert False
 
     assert True
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+@pytest.mark.usefixtures("_save_user")
+def test_update_region(client, admin, monkeypatch):
+    # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
+    # we use update_cluster.delay in update_region, but here we override with a mock
+    def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
+        success = True
+        # check that the arguments are as expected
+        if cluster_name != pytest.cluster_name:
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected cluster {pytest.cluster_name}, got {cluster_name}",
+                logging.ERROR,
+            )
+            success = False
+        elif region_name != "us-east-1":
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected region us-east-1, got {region_name}",
+                logging.ERROR,
+            )
+            success = False
+        elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
+            fractal_log(
+                "mock_update_cluster",
+                None,
+                f"Expected ami ami-0ff8a91507f77f867, got {ami}",
+                logging.ERROR,
+            )
+            success = False
+
+        # tests looks for this attribute on the function
+        if hasattr(mock_update_cluster, "test_passed"):
+            # this means this func has been called twice, which should not happen
+            setattr(mock_update_cluster, "test_passed", False)
+            raise ValueError(
+                f"mock_update_cluster called twice, second time with cluster {cluster_name}"
+            )
+        setattr(mock_update_cluster, "test_passed", success)
+
+        class FakeReturn:
+            def __init__(self):
+                self.id = "this-is-a-fake-test-id"
+
+        return FakeReturn()
+
+    # do monkeypatching
+    monkeypatch.setattr(update_cluster, "delay", mock_update_cluster)
+
+    fractal_log(
+        function="test_update_region",
+        label=None,
+        logs="Calling update_region with monkeypatched update_cluster",
+    )
+
+    db.session.expire_all()
+    all_regions_pre = RegionToAmi.query.all()
+    region_to_ami_pre = {region.region_name: region.ami_id for region in all_regions_pre}
+
+    resp = client.post(
+        "/aws_container/update_region",
+        json=dict(
+            region_name="us-east-1",
+            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ),
+    )
+
+    task = queryStatus(client, resp, timeout=30)
+    if task["status"] < 1:
+        fractal_log(
+            function="test_update_region",
+            label=None,
+            logs=task["output"],
+            level=logging.ERROR,
+        )
+        assert False
+
+    db.session.expire_all()
+    all_regions_post = RegionToAmi.query.all()
+    region_to_ami_post = {region.region_name: region.ami_id for region in all_regions_post}
+    for region in region_to_ami_post:
+        if region == "us-east-1":
+            assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+            # restore db to old (correct) AMI in case any future tests need it
+            region_to_ami = RegionToAmi.query.filter_by(
+                region_name="us-east-1",
+            ).first()
+            region_to_ami.ami_id = region_to_ami_pre["us-east-1"]
+            fractal_sql_commit(db)
+        else:
+            # nothing else in db should change
+            assert region_to_ami_post[region] == region_to_ami_pre[region]
+
+    assert hasattr(mock_update_cluster, "test_passed"), "mock_update_cluster was never called!"
+    assert getattr(mock_update_cluster, "test_passed")
 
 
 @pytest.mark.container_serial

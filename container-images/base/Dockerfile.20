@@ -9,7 +9,10 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
 
-RUN apt-get update
+RUN apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Install systemd
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -24,6 +27,7 @@ RUN apt-get install --no-install-recommends -y \
 # Remove all sysinit.target systemd services except tmpfile cleaners (and
 # switch back workdir)
 WORKDIR /lib/systemd/system/sysinit.target.wants/
+# hadolint ignore=SC2010
 RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f
 WORKDIR /
 
@@ -246,7 +250,7 @@ RUN echo "Set disable_coredump false" >> /etc/sudo.conf
 # Create fractal user with dynamic, random password and do NOT add to sudo group
 RUN useradd --create-home fractal \
     && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
-    && echo fractal:${password} | chpasswd
+    && echo fractal:"${password}" | chpasswd
 
 # Install Pulse Audio
 # Note that all installations need to be prefixed by an `apt-get update` to
@@ -405,7 +409,7 @@ RUN mkdir /usr/share/fractal/bin
 RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
 
 # Setup Fractal application symlink (xterm by default)
-RUN ln -sf $(which xterm) /usr/bin/fractal-application
+RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
 
 # Grab pre-compiled Fractal Protocol
 COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
