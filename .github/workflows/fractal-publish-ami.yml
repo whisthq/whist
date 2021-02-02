@@ -31,15 +31,11 @@ jobs:
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+            aws_additional_supported_regions: [\\\"us-east-2\\\",\\\"us-west-1\\\",\\\"us-west-2\\\",\\\"ca-central-1\\\",\\\"eu-west-1\\\",\\\"eu-central-1\\\"] # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-
-            # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-            # We define them as a Bash environment variable array directly since it is not supported in the GHA env context
-            - name: Define Supported AWS Regions (in addition to aws_new_ami_source_region, defined above)
-              run: echo "aws_additional_supported_regions=[\\\"us-east-2\\\",\\\"us-west-1\\\",\\\"us-west-2\\\",\\\"ca-central-1\\\",\\\"eu-west-1\\\",\\\"eu-central-1\\\"]" >> $GITHUB_ENV
 
             - name: Retrieve Current Git Hash as Environment Variable
               run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -56,15 +52,15 @@ jobs:
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                     echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://fractal-prod-server.herokuapp.com/" >> $GITHUB_ENV
+                    echo "webserver_url=https://prod-server.fractal.co/" >> $GITHUB_ENV
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                     echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://fractal-staging-server.herokuapp.com/" >> $GITHUB_ENV
+                    echo "webserver_url=https://staging-server.fractal.co/" >> $GITHUB_ENV
                   else
                     echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://fractal-dev-server.herokuapp.com/" >> $GITHUB_ENV
+                    echo "webserver_url=https://dev-server.fractal.co/" >> $GITHUB_ENV
                   fi
 
             # no quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list
@@ -85,71 +81,75 @@ jobs:
                   && mv ami_config_tmp.json 
                   ami_config.json
 
-            # This spins up an AWS EC2 instance to create the AMI, and then deletes it
-            # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
-            - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+            - name: temp
               working-directory: ecs-host-setup
-              run: |
-                  # Log in as Admin to get Bearer Token for Update Region API call
-                  token=$(curl -X POST \
-                    -H "Content-Type: application/json" \
-                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+              run: echo ami_config.json
 
-                  # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
-                  packer -machine-readable build ami_config.json
+    #         # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+    #         # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+    #         - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+    #           working-directory: ecs-host-setup
+    #           run: |
+    #               # Log in as Admin to get Bearer Token for Update Region API call
+    #               token=$(curl -X POST \
+    #                 -H "Content-Type: application/json" \
+    #                 --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+    #                 "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
 
-                  # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+    #               # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
+    #               packer -machine-readable build ami_config.json
 
-                  # loop through each region, replace comma with space for delimiting
-                  for artifact in ${new_ami_ids//,/ }
-                  do
-                    ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
-                    region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
+    #               # if packer fails, manifest.json does not get created and the entire workflow fails here
+    #               new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
 
-                    # update appropriate database with new AMI IDs
-                    curl -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                    --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
-                    ${{ env.graphql_db_url }}
+    #               # loop through each region, replace comma with space for delimiting
+    #               for artifact in ${new_ami_ids//,/ }
+    #               do
+    #                 ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
+    #                 region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
 
-                    # run update_region on each region
-                    celery=$(curl -X POST \
-                      -H "Content-Type: application/json" \
-                      -H "Authorization: Bearer ${token}" \
-                      --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region")
+    #                 # update appropriate database with new AMI IDs
+    #                 curl -X POST \
+    #                 -H "Content-Type: application/json" \
+    #                 -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
+    #                 --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
+    #                 ${{ env.graphql_db_url }}
 
-                    # verify update region suceeded
-                    if [[ ${celery} =~ \{\"ID\":\"[0-9a-z-]+\"\} ]]; then 
-                      echo "Updated region $region"
-                    else 
-                      echo "Failed to update region $region" && false
-                    fi
+    #                 # run update_region on each region
+    #                 celery_task_output_id=$(curl -X POST \
+    #                   -H "Content-Type: application/json" \
+    #                   -H "Authorization: Bearer ${token}" \
+    #                   --data "{\"region_name\": \"${region}\"}" \
+    #                   "${{ env.webserver_url }}aws_container/update_region")
 
-                  done
+    #                 # verify update_region succeeded
+    #                 if [[ ${celery_task_output_id} =~ \{\"ID\":\"[0-9a-z-]+\"\} ]]; then 
+    #                   echo "Updated region $region"
+    #                 else 
+    #                   echo "Failed to update region $region" && false
+    #                 fi
 
-    notify-slack:
-        name: Notify Slack
-        needs: [fractal-build-and-publish-ami-main]
-        if: success()
-        runs-on: ubuntu-20.04
+    #               done
 
-        steps:
-            - name: Notify Slack
-              run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  else
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
+    # notify-slack:
+    #     name: Notify Slack
+    #     needs: [fractal-build-and-publish-ami-main]
+    #     if: success()
+    #     runs-on: ubuntu-20.04
+
+    #     steps:
+    #         - name: Notify Slack
+    #           run: |
+    #               if [ "${GITHUB_REF##*/}" == "master" ]; then
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Production AMIs Deployed to All Supported AWS Regions from fractal/fractal \`master\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Staging AMIs Deployed to All Supported AWS Regions from fractal/fractal \`staging\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               else
+    #                   curl -X POST \
+    #                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Development AMIs Deployed to All Supported AWS Regions from fractal/fractal \`dev\` branch.\", \"icon_emoji\": \":fractal:\"}" \
+    #                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    #               fi
