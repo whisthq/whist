@@ -2,7 +2,6 @@ import logging
 import traceback
 import time
 
-from botocore.exceptions import ClientError
 from celery import shared_task
 from flask import current_app
 
