@@ -31,7 +31,7 @@
     },
     {
         "source": "firefox-mozilla",
-        "destination": "/home/fractal/.mozilla/",
+        "destination": "/home/fractal/.mozilla",
         "type": "folder"
     },
     {
@@ -41,7 +41,7 @@
     },
     {
         "source": "gegl-0.4",
-        "destination": "/home/fractal/.local/gegl-0.4",
+        "destination": "/home/fractal/.local/share/gegl-0.4",
         "type": "folder"
     },
     {
@@ -56,7 +56,7 @@
     },
     {
         "source": "godot-localshare",
-        "destination": "/home/fractal/.local/godot",
+        "destination": "/home/fractal/.local/share/godot",
         "type": "folder"
     },
     {
@@ -115,7 +115,7 @@
         "type": "folder"
     },
     {
-        "source": ".rstudio-desktop",
+        "source": "rstudio-desktop",
         "destination": "/home/fractal/.rstudio-desktop",
         "type": "folder"
     },
