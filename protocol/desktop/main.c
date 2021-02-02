@@ -111,8 +111,8 @@ bool rgui_pressed = false;
 MouseMotionAccumulation mouse_state = {0};
 
 // Window resizing state
-SDL_mutex* window_resize_mutex;            // protects pending_resize_message
-const float window_resize_interval = 0.2;  // seconds in between sending resize requests
+SDL_mutex* window_resize_mutex;             // protects pending_resize_message
+const float window_resize_interval = 0.2F;  // seconds in between sending resize requests
 clock window_resize_timer;
 volatile bool pending_resize_message =
     false;  // should be set to true if sdl event handler was not able to process resize event due

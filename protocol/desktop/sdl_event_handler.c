@@ -90,21 +90,38 @@ int handle_window_size_changed(SDL_Event *event) {
     // past the size of the display.
     int desired_width = output_width - (output_width % 8);
     int desired_height = output_height - (output_height % 2);
+    static int prev_desired_width = 0;
+    static int prev_desired_height = 0;
+    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
     if (output_width != desired_width || output_height != desired_height) {
-        SDL_SetWindowSize((SDL_Window *)window, desired_width, desired_height);
-        set_video_active_resizing(false);  // this updates output_width/height
+        // Avoid trying to force the window size forever, stop after 4 attempts
+        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
+              tries > 4)) {
+            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
+                tries++;
+            } else {
+                prev_desired_width = desired_width;
+                prev_desired_height = desired_height;
+                tries = 0;
+            }
 
-        if (output_width != desired_width || output_height != desired_height) {
-            LOG_WARNING(
-                "Unable to change window size to match desired dimensions using SDL_SetWindowSize: "
-                "actual output=%dx%d, desired output=%dx%d",
-                output_width, output_height, desired_width, desired_height);
+            SDL_SetWindowSize((SDL_Window *)window, desired_width, desired_height);
+            set_video_active_resizing(false);  // this updates output_width/height
+
+            if (output_width != desired_width || output_height != desired_height) {
+                LOG_WARNING(
+                    "Unable to change window size to match desired dimensions using "
+                    "SDL_SetWindowSize: "
+                    "actual output=%dx%d, desired output=%dx%d",
+                    output_width, output_height, desired_width, desired_height);
+            }
         }
     }
 
     safe_SDL_LockMutex(window_resize_mutex);
     if (get_timer(window_resize_timer) >= 0.2) {
         pending_resize_message = false;
+        LOG_INFO("Calling send_message_dimensions %dx%d", output_width, output_height);
         send_message_dimensions();
         start_timer(&window_resize_timer);
     } else {
