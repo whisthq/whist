@@ -14,6 +14,7 @@ on:
         paths:
             - "ecs-host-service/"
             - "ecs-host-setup/"
+            - ".github/workflows/fractal-publish-ami.yml
             - "!README.md"
             - "!**/README.md"
             - "!.github/workflows/README.md"
