@@ -815,11 +815,11 @@ class ECSClient:
         """
         container_instances = []
         while container_instances:
-            while container_instances:
-                container_instances = self.get_containers_in_cluster(cluster_name)
-                time.sleep(time_delay)
-            time.sleep(10)
             container_instances = self.get_containers_in_cluster(cluster_name)
+            time.sleep(time_delay)
+
+        # let AWS info propagate
+        time.sleep(10)
 
     def spin_til_command_executed(self, command_id, time_delay=5):
         """
