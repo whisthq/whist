@@ -1,5 +1,8 @@
 FROM fractal/base:current-build
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Install Brave Browser dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     apt-transport-https \
@@ -25,4 +28,4 @@ RUN chmod +x /usr/bin/install-extensions.sh
 RUN /usr/bin/install-extensions.sh
 
 # Setup Fractal application symlink
-RUN ln -sf $(which brave-browser) /usr/bin/fractal-application
+RUN ln -sf "$(which brave-browser)" /usr/bin/fractal-application

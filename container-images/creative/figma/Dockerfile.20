@@ -6,6 +6,9 @@
 ##########################################################
 FROM fractal/browsers/chrome:current-build as figma-1
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Install Figma build dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     unzip \
@@ -40,6 +43,9 @@ RUN ELECTRON_V="v$(cat electron.v)" \
 ###################################################################
 FROM ubuntu:20.04 as bindings-builder
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Install Figma Font Bindings build dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     npm \
@@ -63,7 +69,7 @@ COPY figma-font-bindings figma-font-bindings
 RUN ELECTRON_V="$(cat electron.v)" \
     && cd figma-font-bindings \
     && npm install \
-    && npx electron-build-env --electron $ELECTRON_V -- neon build --release \
+    && npx electron-build-env --electron "$ELECTRON_V" -- neon build --release \
     && cd .. \
     && mv figma-font-bindings/native/index.node bindings.node \
     && rm -rf figma-font-bindings electron.v
@@ -77,6 +83,9 @@ RUN ELECTRON_V="$(cat electron.v)" \
 # EXPOSES all of figma-2 as the final image
 ##########################################################
 FROM figma-1 as figma-2
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 # Copy bindings.node from bindings-builder stage into Figma directory
 COPY --from=bindings-builder bindings.node tmp/build/build/Release/bindings.node

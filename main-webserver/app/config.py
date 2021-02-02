@@ -284,7 +284,10 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
 
         config_table = "dev"
 
+        DROPBOX_APP_KEY = "dropbox-client-id"
+        DROPBOX_APP_SECRET = "dropbox-client-secret"
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+
         # This logic is a bit convoluted. Here's what's happening:
         # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
         # and DeploymentConfig respectively. In local testing, LocalConfig already defines
@@ -297,7 +300,12 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         @property
         def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
             # Test deployments should not be able to act as OAuth clients.
-            return {}
+            return {
+                "web": {
+                    "client_id": "google-client-id",
+                    "client_secret": "google-client-secret",
+                }
+            }
 
     return TestConfig
 

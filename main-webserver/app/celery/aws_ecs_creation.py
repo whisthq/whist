@@ -35,9 +35,6 @@ from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY
 
-# from app.helpers.utils.aws.aws_general import build_base_from_image
-
-
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -49,74 +46,79 @@ def _mount_cloud_storage(user, container):
     Arguments:
         user: An instance of the User model representing the user who owns the container.
         container: An instance of the UserContainer model.
+
+    Returns:
+        None
     """
 
-    oauth_client_credentials = {
-        k: v
-        for k, v in current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).items()
-        if k.startswith("client")
-    }
     schema = CredentialSchema()
-    credential = None
+    oauth_client_credentials = {
+        "dropbox": (
+            current_app.config["DROPBOX_APP_KEY"],
+            current_app.config["DROPBOX_APP_SECRET"],
+        ),
+        "google": (
+            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).get("client_id"),
+            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).get("client_secret"),
+        ),
+    }
 
-    for cred in user.credentials:
-        if cred.provider_id == "google":
-            credential = cred
-            break
+    for credential in user.credentials:
+        assert credential.provider_id in oauth_client_credentials
 
-    if not credential:
-        log_kwargs = {
-            "logs": f"No cloud storage credentials found for user '{user}'.",
-            "level": logging.WARNING,
-        }
-    elif not oauth_client_credentials:
-        log_kwargs = {
-            "logs": "OAuth client not configured. Not checking for cloud storage credentials.",
-            "level": logging.WARNING,
-        }
-    else:
-        # Mount a cloud storage folder to the container.
-        try:
-            response = requests.post(
-                (
-                    f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-                    "/mount_cloud_storage"
-                ),
-                json=dict(
-                    auth_secret=current_app.config["HOST_SERVICE_SECRET"],
-                    host_port=container.port_32262,
-                    provider="google_drive",
-                    **schema.dump(credential),
-                    **oauth_client_credentials,
-                ),
-                verify=False,
-            )
-        except (ConnectionError, Timeout, TooManyRedirects) as error:
-            # Don't just explode if there's a problem connecting to the ECS host service.
-            log_kwargs = {
-                "logs": (
-                    "Encountered an error while attempting to connect to the ECS host service "
-                    f"running on {container.ip}: {error}"
-                ),
-                "level": logging.ERROR,
-            }
-        else:
-            if response.ok:
+        oauth_client_id, oauth_client_secret = oauth_client_credentials[credential.provider_id]
+
+        if oauth_client_id and oauth_client_secret:
+            try:
+                response = requests.post(
+                    (
+                        f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                        "/mount_cloud_storage"
+                    ),
+                    json=dict(
+                        auth_secret=current_app.config["HOST_SERVICE_SECRET"],
+                        host_port=container.port_32262,
+                        client_id=oauth_client_id,
+                        client_secret=oauth_client_secret,
+                        **schema.dump(credential),
+                    ),
+                    verify=False,
+                )
+            except (ConnectionError, Timeout, TooManyRedirects) as error:
+                # Don't just explode if there's a problem connecting to the ECS host service.
                 log_kwargs = {
-                    "logs": "Cloud storage folder mounted successfully.",
-                    "level": logging.INFO,
-                }
-            else:
-                log_kwargs = {
-                    "logs": f"Cloud storage folder failed to mount: {response.text}",
+                    "logs": (
+                        "Encountered an error while attempting to connect to the ECS host service "
+                        f"on {container.ip}: {error}"
+                    ),
                     "level": logging.ERROR,
                 }
+            else:
+                if response.ok:
+                    log_kwargs = {
+                        "logs": (
+                            f"{credential.provider_id} cloud storage folder mounted successfully."
+                        ),
+                    }
+                else:
+                    log_kwargs = {
+                        "logs": (
+                            f"{credential.provider_id} cloud storage folder failed to mount: "
+                            f"{response.text}"
+                        ),
+                        "level": logging.ERROR,
+                    }
+        else:
+            log_kwargs = {
+                "logs": f"{credential.provider_id} OAuth client not configured.",
+                "level": logging.WARNING,
+            }
 
-    fractal_log(
-        function="_mount_cloud_storage",
-        label=container.container_id,
-        **log_kwargs,
-    )
+        fractal_log(
+            function="_mount_cloud_storage",
+            label=container.container_id,
+            **log_kwargs,
+        )
 
 
 def _pass_start_dpi_to_instance(ip, port, dpi):

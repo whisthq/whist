@@ -37,7 +37,7 @@ jobs:
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
             job: ${{ steps.detect-job.outputs.job }}
-            publishing: ${{ steps.detect-publishing.outputs.publishing }}
+            publish: ${{ steps.detect-publish.outputs.publish }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -53,7 +53,7 @@ jobs:
                   else
                       BRANCH_NAME=null
                   fi
-                  echo "branch is $BRANCH_NAME"
+                  echo "branch is set to: $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
             - name: Detect Job(s)
@@ -68,7 +68,7 @@ jobs:
                     JOB_NAME=all
                   fi
 
-                  echo "job is $JOB_NAME"
+                  echo "Job is set to: $JOB_NAME"
                   echo "::set-output name=job::$JOB_NAME"
 
             - name: Detect Whether to Publish the Job(s) or Not
@@ -76,15 +76,15 @@ jobs:
               run: |
                   # if running from workflow_dispatch, publish will be set, so we set it as environment variable
                   # if running from push, publish will not be set and PUBLISH will be empty
-                  PUBLISHING=${{ github.event.inputs.publish }}
+                  PUBLISH=${{ github.event.inputs.publish }}
 
-                  # if PUBLISHING is empty, this workflow was triggered by push, so we want to publish all jobs
-                  if [[ -z $PUBLISHING && ${{ github.event_name }} == 'push' ]]; then
-                    PUBLISHING=true
+                  # if PUBLISH is empty, this workflow was triggered by push, so we want to publish all jobs
+                  if [[ -z $PUBLISH && ${{ github.event_name }} == 'push' ]]; then
+                    PUBLISH=true
                   fi
 
-                  echo "publishing is $PUBLISHING"
-                  echo "::set-output name=publishing::$PUBLISHING"
+                  echo "Publish is set to: $PUBLISH"
+                  echo "::set-output name=publish::$PUBLISH"
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -126,7 +126,7 @@ jobs:
 
             - name: Push container images
               working-directory: container-images
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   for app in ${{ env.apps }}
                   do
@@ -149,6 +149,7 @@ jobs:
                   echo "::set-output name=task-definitions-apps-json::$apps_json"
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to production via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
@@ -213,7 +214,7 @@ jobs:
                   image: ${{ env.ghcr_base_uri }}/fractal/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               uses: aws-actions/amazon-ecs-deploy-task-definition@v1
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
@@ -230,6 +231,7 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to production via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
@@ -279,10 +281,11 @@ jobs:
               run: make build
 
             - name: Upload binary to S3
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: aws s3 cp ${{ env.binary-location }}/${{ env.binary-name }} ${{ env.s3-bucket-uri }}/${{ env.binary-name }}
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":athletic_shoe: ECS Host Service build pushed to production via S3 upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
@@ -357,10 +360,11 @@ jobs:
                   git checkout workflows-private/main-webserver
 
             - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
