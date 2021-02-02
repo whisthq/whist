@@ -264,8 +264,8 @@ int32_t render_screen(SDL_Renderer* renderer) {
             SDL_Rect output_rect;
             output_rect.x = 0;
             output_rect.y = 0;
-            output_rect.w = output_width;
-            output_rect.h = output_height;
+            output_rect.w = server_width;
+            output_rect.h = server_height;
             SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture,
                            &output_rect, NULL);
             SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
