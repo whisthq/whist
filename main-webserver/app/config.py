@@ -232,6 +232,7 @@ class LocalConfig(DeploymentConfig):
 
     REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+    LOCAL = True
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
