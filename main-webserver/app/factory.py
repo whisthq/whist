@@ -25,7 +25,6 @@ mail = SendGrid()
 class WorkerProc(CeleryProc):
     name = "worker"
     queues = ["celery"]
-    simple_queues = True
 
 
 def create_app(app_name=PKG_NAME, testing=False, **kwargs):
