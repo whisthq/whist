@@ -1,5 +1,8 @@
 FROM fractal/base:current-build
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Install Gimp and its dependencies explicitly
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
     libgimp2.0 \
@@ -13,4 +16,4 @@ COPY --chown=fractal gimprc /home/fractal/.config/GIMP/2.10/gimprc
 COPY gimprc /root/.config/GIMP/2.10/gimprc
 
 # Setup Fractal application symlink
-RUN ln -sf $(which gimp) /usr/bin/fractal-application
+RUN ln -sf "$(which gimp)" /usr/bin/fractal-application

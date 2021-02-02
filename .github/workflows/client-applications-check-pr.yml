@@ -38,7 +38,7 @@ jobs:
               working-directory: client-applications/desktop
               run: yarn -i
 
-            - name: Check if code follows ESLint standards
+            - name: Check if Code Follows ESLint Standards
               working-directory: client-applications/desktop
               run: yarn lint-check
 

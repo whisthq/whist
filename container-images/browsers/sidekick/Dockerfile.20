@@ -1,5 +1,8 @@
 FROM fractal/base:current-build
 
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
 # Download Sidekick installer
 RUN wget -qO sidekick.deb https://api.meetsidekick.com/downloads/df/linux/deb
 
@@ -23,4 +26,4 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/sidekick \
     && touch /home/fractal/.config/sidekick/'First Run'"
 
 # Setup Fractal application symlink
-RUN ln -sf $(which sidekick-browser) /usr/bin/fractal-application
+RUN ln -sf "$(which sidekick-browser)" /usr/bin/fractal-application
