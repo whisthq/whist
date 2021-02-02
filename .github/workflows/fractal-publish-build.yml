@@ -467,7 +467,7 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
             - name: Retrieve Desktop App Version from Config Database, Increment Minor Version, and Update Config Database Version
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: bash
               run: |
                   # curl GraphQL API to retrieve version number from config database
@@ -516,13 +516,13 @@ jobs:
                   fi
 
             - name: Publish the Windows Electron Application
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true' && runner.os == 'Windows'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
               run: .\publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
             - name: Publish the macOS/Linux Ubuntu Electron Applications
-              if: needs.fractal-publish-build-config.outputs.publishing == 'true' && runner.os == 'macOS'
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
@@ -553,6 +553,7 @@ jobs:
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Delpoyed to Production via S3 Upload.\", \"icon_emoji\": \":fractal:\"}" \
