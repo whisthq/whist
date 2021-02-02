@@ -262,11 +262,10 @@ class LocalConfig(DeploymentConfig):
         """
 
         # create URI from components
-        return "rediss://:p9052b96dcdaa48dad91c88f2d5f062972de1eb6bcae558ed7cc89089744b0a53@ec2-3-218-225-172.compute-1.amazonaws.com:19269"
-        # return (
-        #     f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
-        #     f"{self.db_name}"
-        # )
+        return (
+            f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
+            f"{self.db_name}"
+        )
 
 
 def _TestConfig(BaseConfig):  # pylint: disable=invalid-name

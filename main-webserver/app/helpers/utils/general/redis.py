@@ -20,6 +20,9 @@ def get_redis_url():
 
     redis_tls_url = os.environ.get("REDIS_TLS_URL", "")
     redis_url = os.environ.get("REDIS_URL", "")
+    #TODO: remove
+    redis_tls_url = "rediss://:p9052b96dcdaa48dad91c88f2d5f062972de1eb6bcae558ed7cc89089744b0a53@ec2-3-218-225-172.compute-1.amazonaws.com:19269"
+    redis_url = redis_tls_url
     if redis_tls_url == "":
         fractal_log(
             "get_redis_url",
