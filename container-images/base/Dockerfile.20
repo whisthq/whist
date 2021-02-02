@@ -27,7 +27,8 @@ RUN apt-get install --no-install-recommends -y \
 # Remove all sysinit.target systemd services except tmpfile cleaners (and
 # switch back workdir)
 WORKDIR /lib/systemd/system/sysinit.target.wants/
-RUN rm -f "!(*systemd-tmpfiles-setup*)"
+# hadolint ignore=SC2010
+RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f
 WORKDIR /
 
 # Remove some more systemd services to minimize what's running on our images
