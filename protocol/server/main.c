@@ -328,13 +328,10 @@ int32_t send_video(void* opaque) {
 
         // Update device with new parameters
         if (update_device) {
-            LOG_INFO("PROFILE_DIMENSION updating device");
             update_device = false;
 
             if (device) {
-                LOG_INFO("PROFILE_DIMENSION destroying capture device");
                 destroy_capture_device(device);
-                LOG_INFO("PROFILE_DIMENSION done destroying capture device");
                 device = NULL;
             }
 
@@ -345,7 +342,6 @@ int32_t send_video(void* opaque) {
             // size. Also for some reason it actually rounds the width to a multiple of 8.
             int true_width = client_width + 7 - ((client_width + 7) % 8);
             int true_height = client_height + 1 - ((client_height + 1) % 2);
-            LOG_INFO("PROFILE_DIMENSION creating capture device");
             if (create_capture_device(device, true_width, true_height, client_dpi, current_bitrate,
                                       client_codec_type) < 0) {
                 LOG_WARNING("Failed to create capture device");
@@ -355,7 +351,6 @@ int32_t send_video(void* opaque) {
                 SDL_Delay(100);
                 continue;
             }
-            LOG_INFO("PROFILE_DIMENSION done creating capture device");
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
@@ -391,11 +386,9 @@ int32_t send_video(void* opaque) {
         // Update encoder with new parameters
         if (update_encoder) {
             if (device->using_nvidia) {
-                LOG_INFO("PROFILE_DIMENSION updating encoder");
                 // If this device uses a device encoder, then we should update it
                 update_capture_encoder(device, current_bitrate, client_codec_type);
                 // We keep the dummy encoder as-is
-                LOG_INFO("PROFILE_DIMENSION done updating encoder");
                 update_encoder = false;
             } else {
                 // Otherwise, this capture device must use an external encoder,
