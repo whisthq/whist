@@ -132,7 +132,6 @@ def celery_config():
             "redis_backend_use_ssl": {
                 "ssl_cert_reqs": ssl.CERT_NONE,
             },
-            "celery_redis_max_connections": 40,
         }
 
     elif redis_url[:5] == "redis":
