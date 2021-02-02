@@ -11,7 +11,7 @@ on:
             - master
             - staging
             - dev
-            - mia/packer-ami # TODO: REMOVE AFTER TESTING
+            - mia/auto-ami-creation # TODO: REMOVE AFTER TESTING
         paths:
             - "ecs-host-service/"
             - "ecs-host-setup/"
@@ -32,7 +32,7 @@ jobs:
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
-            
+
             # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
             # defined as a formatted json array to be copied into ami_config.json directly
             aws_additional_supported_regions: "[\\\"us-east-2\\\",\\\"us-west-1\\\",\\\"us-west-2\\\",\\\"ca-central-1\\\",\\\"eu-west-1\\\",\\\"eu-central-1\\\"]"
