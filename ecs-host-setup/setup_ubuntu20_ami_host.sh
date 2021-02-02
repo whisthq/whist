@@ -1,15 +1,23 @@
 #!/bin/bash
 
-# This script takes an EC2 instance set up for running Fractal manually (for development) via setup_ubuntu20_host.sh
-# and sets it up to run Fractal automatically (for production).
+# This script takes an EC2 instance already set up for running Fractal manually
+# (for development) via setup_ubuntu20_host.sh and sets it up to run Fractal
+# automatically (for production).
 
 set -Eeuo pipefail
 
-# Create directories for the ECS agent
+# Prevent user from running script as root, to guarantee that all steps are
+# associated with the fractal user.
+if [ "$EUID" -eq 0 ]; then
+    echo "This script cannot be run as root!"
+    exit
+fi
+
+# Create directories for ECS agent
 sudo mkdir -p /var/log/ecs /var/lib/ecs/{data,gpu} /etc/ecs
 
 # Install jq to build JSON
-sudo apt install -y jq
+sudo apt-get install -y jq
 
 # Create list of GPU devices for mounting to containers
 DEVICES=""
