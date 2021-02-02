@@ -191,7 +191,7 @@ def delete_cluster(self, cluster, region_name):
             )
             try:
                 ecs_client.ecs_client.delete_cluster(cluster=cluster)
-            except Exception as _e:
+            except ecs_client.ecs_client.exceptions.ClusterContainsContainerInstancesException:
                 # sometimes metadata takes time to update
                 time.sleep(30)
                 ecs_client.ecs_client.delete_cluster(cluster=cluster)
