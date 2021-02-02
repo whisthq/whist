@@ -70,8 +70,8 @@ jobs:
             - name: Test to see paths resolving with GHA
               run: |
                 echo ${{ github.event.pull_request }}
-                echo ${{ github.event.pull_request.paths }}
-                echo "${{ github.event.pull_request.paths }} == protocol/**"
+                echo ${{ github.event.pull_request.paths }}[0]
+                echo "${{ github.event.pull_request.paths }}[0] == protocol/**"
 
 
             - name: Build Container Images
