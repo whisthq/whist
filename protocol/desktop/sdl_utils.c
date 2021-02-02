@@ -19,7 +19,10 @@ Includes
 
 #include "sdl_utils.h"
 #include "../fractal/utils/png.h"
+
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include "native_window_utils.h"
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 extern volatile int output_width;
 extern volatile int output_height;
@@ -200,7 +203,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
         set_window_icon_from_png(sdl_window, icon_filename);
     }
 
-    set_native_window_color(sdl_window, 222, 226, 229);
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+    set_native_window_color(sdl_window, 0, 0, 0);
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+
     if (!is_fullscreen) {
         // Resize event handling
         SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
