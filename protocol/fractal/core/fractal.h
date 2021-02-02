@@ -107,6 +107,16 @@ Defines
 
 #endif
 
+#ifdef __APPLE__
+
+#define CAN_UPDATE_WINDOW_TITLEBAR_COLOR true
+
+#else
+
+#define CAN_UPDATE_WINDOW_TITLEBAR_COLOR false
+
+#endif  // __APPLE__
+
 #define MAXIMUM_BITRATE 30000000
 #define MINIMUM_BITRATE 2000000
 #define ACK_REFRESH_MS 50
