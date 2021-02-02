@@ -116,7 +116,7 @@ def register_blueprints(app):
     if not app.testing:
         """
         Here we enable hirefire to get the status of our celery tasks and the task queue size.
-        Arguments are defaults in the hirefire docs.
+        Again, arguments are defaults in the docs.
         """
         hirefire_bp = build_hirefire_blueprint(
             app.config["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"]
