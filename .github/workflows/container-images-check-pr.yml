@@ -19,8 +19,6 @@ on:
             - "!container-images/run_container_image.sh"
             - "!container-images/run_local_container_image.sh"
             - "!container-images/run_remote_container_image.sh"
-            - "protocol/**"
-            - "!protocol/README.md"
     workflow_dispatch:
 
 jobs:
