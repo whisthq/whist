@@ -18,13 +18,15 @@ The base container, specified by Dockerfile.20, is oriented around **systemd**, 
 
 The services `fractal-entrypoint.service`, `fractal-display.service`, `fractal-audio.service` and `fractal-protocol.service` must run successfully for the container to be functional. These services run in the order written above and are run by systemd on container start.
 
-`fractal-entrypoint.service` runs the contents of the `entry.sh` script as root -- this is where configuration that has to occur during runtime can normally go.
+1. `docker-entrypoint.sh` starts up and calls `exec` to become systemd (with pid 1)
 
-`fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our containers can only be run on GPU-powered hosts.
+2. systemd runs `fractal-entrypoint.service`, which waits until a `.ready` file is written -- this is configured as a oneshot, meaning that `fractal-display.service` only starts after `fractal-entrypoint.service` finishes. This means that everything waits for `.ready` file to be written, which contains the parameters necessary to for the container to start properly (DPI, user ID, cloud storage folders, etc.).
 
-`fractal-audio.service` starts a virtual Pulse Audio soundcard in the container.
+3. Once `fractal-entrypoint.service` finishes, `fractal-display.service` starts an X Server with the proper configuration that we need. Note that this starts an X Server that is powered by an Nvidia GPU, meaning our containers can only be run on GPU-powered hosts.
 
-`fractal-protocol.service` runs the protocol and configures some environment variables so that it works correctly with the X Server.
+4. `fractal-audio.service`, meanwhile, can start as soon as `fractal-display.service` *begins* running (which is important because the lifecycle of fractal-display is the lifecycle of our containerized applications). It starts a virtual Pulse Audio soundcard in the container, enabling sound.
+
+5. `fractal-protocol.service` can start as soon as `fractal-display.service` and `fractal-audio.service` are both running, running the Fractal protocol and configuring some environment variables to work correctly with the X Server.
 
 ### Useful Debugging Practices
 
