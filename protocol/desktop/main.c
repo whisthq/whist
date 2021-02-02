@@ -43,9 +43,14 @@ Includes
 #include "handle_server_message.h"
 #include "video.h"
 #include "SDL_syswm.h"
+
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+#include "native_window_utils.h"
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+
 #ifdef __APPLE__
 #include "../fractal/utils/mac_utils.h"
-#endif
+#endif  // __APPLE__
 
 volatile int audio_frequency = -1;
 
@@ -71,6 +76,13 @@ volatile bool is_timing_latency;
 volatile clock latency_timer;
 volatile int ping_id;
 volatile int ping_failures;
+
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+volatile uint native_window_color_red = 0;
+volatile uint native_window_color_green = 0;
+volatile uint native_window_color_blue = 0;
+volatile bool native_window_color_update = false;
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 volatile int output_width;
 volatile int output_height;
@@ -720,6 +732,15 @@ int main(int argc, char* argv[]) {
                 }
                 should_update_window_title = false;
             }
+
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+            if (native_window_color_update) {
+                set_native_window_color((SDL_Window*)window, (uint)native_window_color_red,
+                                        (uint)native_window_color_green,
+                                        (uint)native_window_color_blue);
+                native_window_color_update = false;
+            }
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
             if (get_timer(keyboard_sync_timer) > 50.0 / MS_IN_SECOND) {
                 if (sync_keyboard_state() != 0) {
