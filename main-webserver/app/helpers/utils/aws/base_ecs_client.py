@@ -818,9 +818,6 @@ class ECSClient:
             container_instances = self.get_containers_in_cluster(cluster_name)
             time.sleep(time_delay)
 
-        # wait another 30 seconds just to be safe
-        time.sleep(30)
-
     def spin_til_command_executed(self, command_id, time_delay=5):
         """
         spinpolls until command has been executed
