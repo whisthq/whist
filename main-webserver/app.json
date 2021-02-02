@@ -39,7 +39,7 @@
           "as": "REDIS"
         },
         {
-          "plan": "heroku-postgresql:in-dyno",
+          "plan": "heroku-postgresql:standard-0",
           "as": "HEROKU_POSTGRES",
           "options": {
             "version": "12"
