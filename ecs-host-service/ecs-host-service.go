@@ -602,15 +602,6 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
 	}
 
-	// TODO: remove this - the file is unneeded
-	// Write user ID information to file
-	struserid := logger.Sprintf("%v", req.UserID)
-	filename = datadir + "UserID"
-	err = writeAssignmentToFile(filename, struserid)
-	if err != nil {
-		return logger.MakeError("Could not write value %v to UserID file %v. Error: %s", struserid, filename, err)
-	}
-
 	// Populate the user config folder for the container's app
 	err = getUserConfig(req)
 	if err != nil {
@@ -917,11 +908,6 @@ func uninitializeFilesystem() {
 		logger.Panicf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
-	}
-
-	// Sync app configs back to S3
-	for port := range containerAppNames {
-		saveUserConfig(port)
 	}
 
 	// Unmount all cloud-storage folders
