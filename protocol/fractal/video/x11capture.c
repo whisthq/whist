@@ -73,9 +73,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         char modename[128];
         char cmd[1024];
 
-        LOG_INFO("DIMENSIONS %dx%d", width, height);
-        LOG_INFO("PROFILE_DIMENSION setting xrandr");
-
         snprintf(modename, sizeof(modename), "Fractal-%dx%d", width, height);
 
         char* display_name;
@@ -103,8 +100,6 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd(cmd, NULL);
 
         free(display_name);
-
-        LOG_INFO("PROFILE_DIMENSION done setting xrandr");
 
         // If it's still not the correct dimensions
         if (!is_same_wh(device)) {
