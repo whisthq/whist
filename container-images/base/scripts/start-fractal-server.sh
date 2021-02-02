@@ -54,13 +54,13 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
     SOURCE_CONFIG_PATH=/fractal/userConfigs/$IDENTIFIER/$SOURCE_CONFIG_SUBPATH
     DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
 
-    # if config path does not exist, then continue
+    # If original config path does not exist, then continue
     if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
         continue
     fi
 
-    # If no, then copy default configs to the synced app config folder
-    if [ ! -f "$tarFile" ]; then
+    # If the source path doesn't exist, then copy default configs to the synced app config folder
+    if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
 	   cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
     fi
 
