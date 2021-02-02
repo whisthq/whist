@@ -1,10 +1,10 @@
-# redis:
-# Matches version being used by staging as of 2020-07-08
-# image: madflojo/redis-tls
-# ports:
-#   - "6379:6379" # Proxy redis on localhost:7810
-# volumes:
-#   - ../../dummy_certs:/certs
+redis:
+  # Matches version being used by staging as of 2020-07-08
+  image: madflojo/redis-tls
+  ports:
+    - "6379:6379" # Proxy redis on localhost:7810
+  volumes:
+    - ../../dummy_certs:/certs
 
 postgres_db:
   image: postgres:12.5

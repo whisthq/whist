@@ -35,11 +35,11 @@
     "test": {
       "addons": [
         {
-          "plan": "heroku-redis:premium-0",
+          "plan": "heroku-redis:in-dyno",
           "as": "REDIS"
         },
         {
-          "plan": "heroku-postgresql:standard-0",
+          "plan": "heroku-postgresql:in-dyno",
           "as": "HEROKU_POSTGRES",
           "options": {
             "version": "12"
