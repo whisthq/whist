@@ -108,9 +108,9 @@ The argument `TAG` is the full Git commit hash to run. All other configuration i
 
 ### Connecting to Images
 
-Before connecting to the server protocol that runs in the container, the host service needs to receive a DPI request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`.
+Before connecting to the server protocol that runs in the container, the host service needs to receive a starting values request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`. This request sets the DPI and User ID
 
-If you are using a high-DPI screen, you may want to pass in the optional DPI argument
+If you are using a high-DPI screen, you may want to pass in the optional DPI argument by setting the `FRACTAL_DPI` environment variable on your host. Additionally, if you want to save your configs between sessions, then set the `FRACTAL_USER_ID` environment variable on your host.
 
 Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
