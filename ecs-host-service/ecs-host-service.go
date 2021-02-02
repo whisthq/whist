@@ -76,7 +76,7 @@ func startECSAgent() {
 	)
 	err := cmd.Run()
 	if err != nil {
-		logger.Panicf("Unable to stop docker-container@ecs-agent. Error: %v", err)
+		logger.Infof("Unable to stop docker-container@ecs-agent. Error: %v", err)
 	} else {
 		logger.Info("Successfully stopped the ECS agent systemd service.")
 	}
