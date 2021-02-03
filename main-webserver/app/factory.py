@@ -27,6 +27,9 @@ class WorkerProc(CeleryProc):
     This is the class that gives hirefire visibility into our
     celery workers.  These are the default settings from
     their docs.
+    The name and queues settings both need to be celery--
+    Name because it's our heroku worker name, queues because
+    that's the queue backend.
     """
 
     name = "celery"
