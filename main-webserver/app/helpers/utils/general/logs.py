@@ -18,7 +18,7 @@ def fractal_log(label, logs, level=logging.INFO):
     if not logs.endswith(".") and not logs.endswith("!") and not logs.endswith("?"):
         logs = "{logs}.".format(logs=logs)
 
-    output = "{filename}:{function}#{lineno} | {label} | {logs}".format(
+    output = "{filename}:{function}#L{lineno} | {label} | {logs}".format(
         filename=caller_filename,
         function=str(caller_funcname),
         lineno=caller_lineno,
