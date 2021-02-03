@@ -17,6 +17,9 @@ from app.models import ClusterInfo, db, UserContainer, RegionToAmi
 
 from ..helpers.general.progress import fractalJobRunner, queryStatus
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.celery.aws_ecs_modification import manual_scale_cluster
+
 
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
@@ -195,7 +198,7 @@ def test_update_cluster(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_delete_container(client):
+def test_delete_container(client, monkeypatch):
     fractal_log(
         function="test_delete_container",
         label="container/delete",
@@ -210,6 +213,14 @@ def test_delete_container(client):
             logs="No containers returned by UserContainer db",
         )
         assert False
+
+    # delete_container will call manual_scale_cluster
+    # it should follow through the logic until it actually tries to kill the instance,
+    # which we don't need to do since delete_cluster handles it. hence we mock it.
+    def mock_set_capacity(self, asg_name: str, desired_capacity: int):
+        setattr(mock_set_capacity, "test_passed", desired_capacity == 0)
+
+    monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
 
     resp = client.post(
         "/container/delete",
@@ -241,7 +252,8 @@ def test_delete_container(client):
         )
         assert False
 
-    assert True
+    assert hasattr(mock_set_capacity, "test_passed")  # make sure function was called
+    assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
 
 
 @pytest.mark.container_serial
