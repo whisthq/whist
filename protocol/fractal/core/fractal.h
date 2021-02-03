@@ -63,6 +63,7 @@ Includes
 #include "../../include/SDL2/SDL.h"
 #include "../../include/SDL2/SDL_thread.h"
 #include "../clipboard/clipboard_synchronizer.h"
+#include "../utils/color.h"
 #include "../cursor/cursor.h"
 #include "../network/network.h"
 #include "../utils/clock.h"
@@ -349,12 +350,6 @@ typedef enum FractalMouseButton {
     MOUSE_X2 = 5,      ///< Extra mouse button 2.
     MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
-
-typedef struct FractalFractalRGBColor {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} FractalRGBColor;
 
 /// @brief Cursor properties.
 /// @details Track important information on cursor.

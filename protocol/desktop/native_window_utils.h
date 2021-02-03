@@ -41,6 +41,6 @@ Public Functions
  *
  * @returns                        Returns -1 on failure, 0 on success.
  */
-int set_native_window_color(SDL_Window *window, RGBColor color);
+int set_native_window_color(SDL_Window *window, FractalRGBColor color);
 
 #endif  // NATIVE_WINDOW_UTILS_H

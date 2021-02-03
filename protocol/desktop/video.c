@@ -52,7 +52,7 @@ extern volatile CodecType output_codec_type;
 extern volatile int running_ci;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-extern volatile RGBColor* native_window_color;
+extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
@@ -353,21 +353,21 @@ int32_t render_screen(SDL_Renderer* renderer) {
             }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-            YUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
+            FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
                                       video_context.data[2][0]};
 
-            RGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
+            FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
-            if ((RGBColor*)native_window_color == NULL) {
+            if ((FractalRGBColor*)native_window_color == NULL) {
                 // no window color has been set; create it!
-                RGBColor* new_native_window_color = safe_malloc(sizeof(RGBColor));
+                FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
                 *new_native_window_color = new_rgb_color;
                 native_window_color = new_native_window_color;
                 native_window_color_update = true;
-            } else if (new_rgb_color != *(RGBColor*)native_window_color) {
+            } else if (rgb_compare(new_rgb_color, *(FractalRGBColor*)native_window_color)) {
                 // window color has changed; update it!
-                RGBColor* old_native_window_color = (RGBColor*)native_window_color;
-                RGBColor* new_native_window_color = safe_malloc(sizeof(RGBColor));
+                FractalRGBColor* old_native_window_color = (FractalRGBColor*)native_window_color;
+                FractalRGBColor* new_native_window_color = safe_malloc(sizeof(FractalRGBColor));
                 *new_native_window_color = new_rgb_color;
                 native_window_color = new_native_window_color;
                 free(old_native_window_color);
@@ -456,7 +456,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
     }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    free((RGBColor*)native_window_color);
+    free((FractalRGBColor*)native_window_color);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
     SDL_Delay(5);
@@ -664,7 +664,7 @@ static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t 
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (draw_peer_cursor(renderer, x, y, msgs->color.r, msgs->color.g, msgs->color.b) != 0) {
+        if (draw_peer_cursor(renderer, x, y, msgs->color.red, msgs->color.green, msgs->color.blue) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }
