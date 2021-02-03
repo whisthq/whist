@@ -18,6 +18,7 @@ add_library(fractalUtils STATIC
         lodepng.c
         mouse.c
         rwlock.c
+        color.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

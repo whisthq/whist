@@ -26,6 +26,7 @@ Includes
 #include "../fractal/cursor/peercursor.h"
 #include "../fractal/utils/sdlscreeninfo.h"
 #include "SDL.h"
+#include "utils/color.h"
 #include "utils/png.h"
 #include "network.h"
 
@@ -51,9 +52,7 @@ extern volatile CodecType output_codec_type;
 extern volatile int running_ci;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-extern volatile uint native_window_color_red;
-extern volatile uint native_window_color_green;
-extern volatile uint native_window_color_blue;
+extern volatile RGBColor native_window_color;
 extern volatile bool native_window_color_update;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
@@ -354,42 +353,17 @@ int32_t render_screen(SDL_Renderer* renderer) {
             }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-            {  // native window title setting
-                uint yuv_counts[3][256] = {0};
-                uint yuv_modes[3] = {0};
+            YUVColor new_yuv_color = {
+                video_context.data[0][0],
+                video_context.data[1][0],
+                video_context.data[2][0]
+            };
 
-                for (int component = 0; component < 3; ++component) {
-                    for (int i = 0; i < video_context.linesize[component]; ++i) {
-                        ++yuv_counts[component][video_context.data[component][i]];
-                    }
-                    uint mode_value = 0;
-                    for (uint value = 0; value < 256; ++value) {
-                        if (yuv_counts[component][value] > yuv_counts[component][mode_value]) {
-                            mode_value = value;
-                        }
-                    }
-                    yuv_modes[component] = mode_value;
-                }
+            RGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
-                float y = (float)yuv_modes[0] - 16.;
-                float u = (float)yuv_modes[1] - 128.;
-                float v = (float)yuv_modes[2] - 128.;
-
-                float r = 1.164 * y + 1.596 * v;
-                float g = 1.164 * y - 0.392 * u - 0.813 * v;
-                float b = 1.164 * y + 2.017 * u;
-
-                uint red = r < 0. ? 0 : round(r);
-                uint green = g < 0. ? 0 : round(g);
-                uint blue = b < 0. ? 0 : round(b);
-
-                if (red != native_window_color_red || green != native_window_color_green ||
-                    blue != native_window_color_blue) {
-                    native_window_color_red = red;
-                    native_window_color_green = green;
-                    native_window_color_blue = blue;
-                    native_window_color_update = true;
-                }
+            if (new_rgb_color != native_window_color) {
+                native_window_color = new_rgb_color;
+                native_window_color_update = true;
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
