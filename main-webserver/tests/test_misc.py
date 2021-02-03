@@ -5,7 +5,6 @@ from flask import current_app
 import pytest
 
 from app.config import _callback_webserver_hostname
-from app.helpers.utils.general.time import timeout, TimeoutError
 
 
 def test_callback_webserver_hostname_localhost():

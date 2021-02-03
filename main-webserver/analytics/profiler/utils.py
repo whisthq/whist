@@ -4,51 +4,8 @@ from functools import wraps
 import errno
 import ssl
 
+from func_timeout import func_set_timeout, FunctionTimedOut
 import redis
-
-
-# from https://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
-class TimeoutError(Exception):
-    """
-    Generic Timeout class. This is called if any function using the @timeout decorator
-    times out. It inherits from Exception, so any args passed go right to the parent class.
-    """
-
-
-# from https://stackoverflow.com/questions/2281850/timeout-function-if-it-takes-too-long-to-finish
-def timeout(seconds, error_message=os.strerror(errno.ETIMEDOUT)):
-    """
-    Decorator to make a timeout for long-running functions. This is necessary
-    because Python's SSL library seems to not handle handshake timeouts (see:
-    https://stackoverflow.com/questions/19938593/web-app-hangs-for-several-hours-in-ssl-py-at-self-sslobj-do-handshake
-    )
-    Unfortunately, this means we need to do the timeout ourselves.
-    Args:
-        TODO: higher res timers (https://docs.python.org/3/library/signal.html#signal.setitimer)
-        seconds (int): seconds to before TimeoutError raised
-        error_message (str): what to print after an error
-    Usage:
-    @timeout(seconds=NUM_SEC, error_message="Whatever you want")
-    def long_running_func()
-    """
-
-    def timer_decorator(func):
-        def _handle_timeout(signum, frame):
-            raise TimeoutError(error_message)
-
-        @wraps(func)
-        def wrapper(*args, **kwargs):
-            signal.signal(signal.SIGALRM, _handle_timeout)
-            signal.alarm(seconds)
-            try:
-                result = func(*args, **kwargs)
-            finally:
-                signal.alarm(0)
-            return result
-
-        return wrapper
-
-    return timer_decorator
 
 
 def get_redis_url():
@@ -80,7 +37,7 @@ def get_redis_url():
         raise ValueError("No valid redis URL could be found.")
 
 
-@timeout(seconds=1)
+@func_set_timeout(timeout=1)
 def try_redis_url(redis_url):
     """
     Tries a redis_url. Can be SSL supported (redis://) or regular (redis://).
@@ -111,7 +68,7 @@ def try_redis_url(redis_url):
         redis_conn.ping()
         redis_conn.close()
         return True
-    except TimeoutError:
+    except FunctionTimedOut:
         # this can happen with SSL. Just return False.
         return False
     except redis.exceptions.ConnectionError:
