@@ -133,9 +133,9 @@ jobs:
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: protocol
               run: |
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "NMake Makefiles"
-                  nmake FractalClient
-                  nmake FractalServer
+                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "NMake Makefiles" || EXIT /B 1
+                  nmake FractalClient || EXIT /B 1
+                  nmake FractalServer || EXIT /B 1
 
             - name: Build Protocol Client on macOS/Linux Ubuntu
               if: runner.os == 'macOS' || runner.os == 'Linux'
