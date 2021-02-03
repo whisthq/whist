@@ -34,12 +34,12 @@ jobs:
               with:
                   node-version: 12
 
-            - name: Run yarn -i in /browser
-              working-directory: client-applications/browser
+            - name: Run yarn -i in /desktop
+              working-directory: client-applications/desktop
               run: yarn -i
 
             - name: Check if Code Follows ESLint Standards
-              working-directory: client-applications/browser
+              working-directory: client-applications/desktop
               run: yarn lint-check
 
     # Building
@@ -131,7 +131,7 @@ jobs:
             - name: Build the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              working-directory: client-applications\browser
+              working-directory: client-applications\desktop
               run: .\publish.bat -branch=${{ env.current_git_branch }} -version=1.0.0 -bucket=not-applicable -publish=false
 
             - name: Build the macOS Electron Application
@@ -139,7 +139,7 @@ jobs:
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
-              working-directory: client-applications/browser
+              working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
