@@ -78,7 +78,7 @@ def fractal_pre_process(func):
         )
 
         # If a post body is malformed, we should treat it as an empty dict
-        # that way trying to pop from it raises a KeyError
+        # that way trying to pop from it raises a KeyError, which we have proper error handling for
 
         try:
             body = json.loads(request.data) if request.method == "POST" else dict()
