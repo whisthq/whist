@@ -3,6 +3,7 @@ import time
 
 from flask import current_app
 import pytest
+from func_timeout import func_set_timeout, FunctionTimedOut
 
 from app.config import _callback_webserver_hostname
 
@@ -31,7 +32,7 @@ def test_callback_webserver_hostname_localhost_with_port():
 
 
 def test_timeout_decorator_no_timeout():
-    @timeout(seconds=1)
+    @func_set_timeout(timeout=1)
     def fast_func():
         time.sleep(0.5)
 
@@ -42,9 +43,9 @@ def test_timeout_decorator_no_timeout():
 
 
 def test_timeout_decorator_yes_timeout():
-    @timeout(seconds=1)
+    @func_set_timeout(timeout=1)
     def slow_func():
         time.sleep(1.5)
 
-    with pytest.raises(TimeoutError):
+    with pytest.raises(FunctionTimedOut):
         slow_func()
