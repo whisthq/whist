@@ -79,7 +79,7 @@ volatile int ping_id;
 volatile int ping_failures;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-volatile RGBColor native_window_color = {0};
+volatile RGBColor* native_window_color = NULL;
 volatile bool native_window_color_update = false;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
@@ -733,8 +733,8 @@ int main(int argc, char* argv[]) {
             }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-            if (native_window_color_update) {
-                set_native_window_color((SDL_Window*)window, native_window_color);
+            if (native_window_color_update && native_window_color) {
+                set_native_window_color((SDL_Window*)window, *(RGBColor*)native_window_color);
                 native_window_color_update = false;
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
