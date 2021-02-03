@@ -84,23 +84,23 @@ var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "rese
 // keep track of the mapping from hostPort to Docker container ID
 var containerIDs map[uint16]string = make(map[uint16]string)
 
-// keep track of the mapping from Docker container ID to FractalRandomHex (a
+// keep track of the mapping from Docker container ID to FractalID (a
 // unique identifier for each container created by our modified ecs-agent
-var fractalRandomHexes map[string]string = make(map[string]string)
+var fractalIDs map[string]string = make(map[string]string)
 
 // keys: hostPort, values: slice containing all cloud storage directories that
 // are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
-// Updates the fractalRandomHexes mapping with a request from the ecs-agent
-func addFractalRandomHexMapping(req *httpserver.SetContainerIDToFractalRandomHexMappingRequest) error {
-	if req.ContainerID == "" || req.FractalRandomHex == "" {
-		return logger.MakeError("Got a SetContainerIDToFractalRandomHexMappingRequest with an empty field!. req.ContainerID: \"%s\", req.FractalRandomHex: \"%s\"",
-			req.ContainerID, req.FractalRandomHex)
+// Updates the fractalIDs mapping with a request from the ecs-agent
+func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error {
+	if req.ContainerID == "" || req.FractalID == "" {
+		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.ContainerID: \"%s\", req.FractalID: \"%s\"",
+			req.ContainerID, req.FractalID)
 	}
 
-	fractalRandomHexes[req.ContainerID] = req.FractalRandomHex
-	logger.Infof("Added mapping from ContainerID %s to FractalRandomHex %s", req.ContainerID, req.FractalRandomHex)
+	fractalIDs[req.ContainerID] = req.FractalID
+	logger.Infof("Added mapping from ContainerID %s to FractalID %s", req.ContainerID, req.FractalID)
 	return nil
 }
 
@@ -706,8 +706,8 @@ eventLoop:
 				}
 				serverevent.ReturnResult("", err)
 
-			case *httpserver.SetContainerIDToFractalRandomHexMappingRequest:
-				err := addFractalRandomHexMapping(serverevent.(*httpserver.SetContainerIDToFractalRandomHexMappingRequest))
+			case *httpserver.RegisterDockerContainerIDRequest:
+				err := addFractalIDMapping(serverevent.(*httpserver.RegisterDockerContainerIDRequest))
 				if err != nil {
 					logger.Error(err)
 				}

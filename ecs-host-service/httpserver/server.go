@@ -163,41 +163,42 @@ func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue
 	res.send(w)
 }
 
-// SetContainerIDToFractalRandomHexMappingRequest defines the (unauthenticated)
-// `set_container_id_to_fractal_random_hex_mapping` endpoint, which is used by
-// the ecs-agent (built into the host service, in package `ecsagent`) to tell
-// us the mapping between Docker container IDs and `FractalRandomHex` values
-// (which are used to dynamically provide each container with a directory that
-// only that container has access to).
-type SetContainerIDToFractalRandomHexMappingRequest struct {
-	ContainerID      string             `json:"container_id"`       // Docker runtime ID of this container
-	FractalRandomHex string             `json:"fractal_random_hex"` // FractalRandomHex corresponding to this container
-	resultChan       chan requestResult // Channel to pass result between goroutines
+// RegisterDockerContainerIDRequest defines the (unauthenticated)
+// `register_docker_container_id` endpoint, which is used by the ecs-agent
+// (built into the host service, in package `ecsagent`) to tell us the mapping
+// between Docker container IDs and FractalIDs (which are used track containers
+// before they are actually started, and therefore assigned a Docker runtime
+// ID). FractalIDs are also used to dynamically provide each container with a
+// directory that only that container has access to).
+type RegisterDockerContainerIDRequest struct {
+	ContainerID string             `json:"container_id"` // Docker runtime ID of this container
+	FractalID   string             `json:"fractal_id"`   // FractalID corresponding to this container
+	resultChan  chan requestResult // Channel to pass result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
-func (s *SetContainerIDToFractalRandomHexMappingRequest) ReturnResult(result string, err error) {
+func (s *RegisterDockerContainerIDRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass request result
 // back to the HTTP request handler via ReturnResult
-func (s *SetContainerIDToFractalRandomHexMappingRequest) createResultChan() {
+func (s *RegisterDockerContainerIDRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
-// Process an HTTP request for setting the mapping of Container ID to a FractalRandomHex, to be handled in ecs-host-service.go
-func processSetContainerIDToFractalRandomHexMappingRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+// Process an HTTP request for setting the mapping of Container ID to a FractalID, to be handled in ecs-host-service.go
+func processRegisterDockerContainerIDRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is a POST
 	if verifyRequestType(w, r, http.MethodPost) != nil {
 		return
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata SetContainerIDToFractalRandomHexMappingRequest
+	var reqdata RegisterDockerContainerIDRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
 		logger.Infof(err.Error())
 		return
@@ -210,17 +211,17 @@ func processSetContainerIDToFractalRandomHexMappingRequest(w http.ResponseWriter
 	res.send(w)
 }
 
-// Create the necessary body for a createContainer request, including authentication
-func CreateSetContainerIDToFractalRandomHexMappingRequestBody(r SetContainerIDToFractalRandomHexMappingRequest) ([]byte, error) {
+// Create the necessary body for a RegisterDockerContainerIDRequest, including authentication
+func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDRequest) ([]byte, error) {
 	body, err := json.Marshal(
 		struct {
-			AuthSecret       string `json:"auth_secret"`
-			ContainerID      string `json:"container_id"`
-			FractalRandomHex string `json:"fractal_random_hex"`
+			AuthSecret  string `json:"auth_secret"`
+			ContainerID string `json:"container_id"`
+			FractalID   string `json:"fractal_id"`
 		}{
-			AuthSecret:       webserverAuthSecret,
-			ContainerID:      r.ContainerID,
-			FractalRandomHex: r.FractalRandomHex,
+			AuthSecret:  webserverAuthSecret,
+			ContainerID: r.ContainerID,
+			FractalID:   r.FractalID,
 		},
 	)
 
@@ -351,7 +352,7 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	http.HandleFunc("/set_container_dpi", createHandler(processSetContainerDPIRequest))
-	http.HandleFunc("/set_container_id_to_fractal_random_hex_mapping", createHandler(processSetContainerIDToFractalRandomHexMappingRequest))
+	http.HandleFunc("/register_docker_container_id", createHandler(processRegisterDockerContainerIDRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+PortToListen, certPath, privatekeyPath, nil))
