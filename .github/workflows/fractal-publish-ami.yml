@@ -119,9 +119,7 @@ jobs:
                       -H "Content-Type: application/json" \
                       -H "Authorization: Bearer ${token}" \
                       --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region" | jq -r ".ID")
-
-                    # TODO: CHECK IF ID IS VALID
+                      "${{ env.webserver_url }}aws_container/update_region" | jq -er ".ID") # the -e flag is to make sure it fails if there isn't a task ID
 
                     # verify update_region succeeded
                     bash poll_task ${{ env.webserver_url}} ${ celery_task_output_id }

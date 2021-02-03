@@ -1,8 +1,9 @@
 # ${1} the webserver url
 # ${2} the task ID in question
 
-# Wait for initial task to complete – potential problem: initial task id is bad and this runs forever
 state=PENDING
+
+# poll for task to finish
 while [[ $state =~ PENDING ]]; do
     status=$(curl -L -X GET "${1}status/${2}")
     state=$(echo $status | jq ".state")
