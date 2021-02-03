@@ -78,10 +78,10 @@ def fractal_pre_process(func):
         )
 
         try:
-            body = json.loads(request.data) if request.method == "POST" else None
+            body = json.loads(request.data) if request.method == "POST" else dict()
         except Exception as e:
             print(str(e))
-            body = None
+            body = dict()
 
         kwargs["body"] = body
         kwargs["received_from"] = received_from
