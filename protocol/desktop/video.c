@@ -473,9 +473,10 @@ int32_t render_screen(SDL_Renderer* renderer) {
                     static bool already_sent_message = false;
                     static long long last_server_dims = -1;
                     static long long last_output_dims = -1;
-                    if (server_width * 100000LL + server_height != last_server_dims
-                     || output_width * 100000LL + output_height != last_output_dims) {
-                        // If truncation to/from dimensions have changed, then we should resend Truncating message
+                    if (server_width * 100000LL + server_height != last_server_dims ||
+                        output_width * 100000LL + output_height != last_output_dims) {
+                        // If truncation to/from dimensions have changed, then we should resend
+                        // Truncating message
                         already_sent_message = false;
                     }
                     last_server_dims = server_width * 100000LL + server_height;

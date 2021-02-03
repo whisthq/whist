@@ -82,12 +82,14 @@ int handle_window_size_changed(SDL_Event *event) {
     // Let video thread know about the resizing to
     // reinitialize display dimensions
 
-    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1, event->window.data2, get_window_pixel_width((SDL_Window*)window), get_window_pixel_height((SDL_Window*)window));
+    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1,
+             event->window.data2, get_window_pixel_width((SDL_Window *)window),
+             get_window_pixel_height((SDL_Window *)window));
 
-#ifndef __linux__ 
+#ifndef __linux__
     // Try to make pixel width and height conform to certain desirable dimensions
-    int current_width = get_window_pixel_width((SDL_Window*)window);
-    int current_height = get_window_pixel_height((SDL_Window*)window);
+    int current_width = get_window_pixel_width((SDL_Window *)window);
+    int current_height = get_window_pixel_height((SDL_Window *)window);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -102,7 +104,7 @@ int handle_window_size_changed(SDL_Event *event) {
     if (current_width != desired_width || current_height != desired_height) {
         // Avoid trying to force the window size forever, stop after 4 attempts
         if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
-            tries > 4)) {
+              tries > 4)) {
             if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
                 tries++;
             } else {
@@ -112,9 +114,10 @@ int handle_window_size_changed(SDL_Event *event) {
             }
 
             SDL_SetWindowSize((SDL_Window *)window, desired_width, desired_height);
-            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height, desired_width, desired_height);
-            current_width = get_window_pixel_width((SDL_Window*)window);
-            current_height = get_window_pixel_height((SDL_Window*)window);
+            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
+                     desired_width, desired_height);
+            current_width = get_window_pixel_width((SDL_Window *)window);
+            current_height = get_window_pixel_height((SDL_Window *)window);
 
             if (current_width != desired_width || current_height != desired_height) {
                 LOG_WARNING(
