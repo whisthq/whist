@@ -30,10 +30,11 @@ import (
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/events"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/client"
+	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
+	dockerevents "github.com/docker/docker/api/types/events"
+	dockerfilters "github.com/docker/docker/api/types/filters"
+	dockerclient "github.com/docker/docker/client"
 )
 
 // The location on disk where we store the container resource allocations
@@ -92,6 +93,11 @@ var fractalIDs map[string]string = make(map[string]string)
 // are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
+// TODO(Anton): we need to keep some sort of mapping from FractalIDs to uinput devices
+type UinputDeviceList struct {
+	Devices []dockercontainer.DeviceMapping `json:"devices"`
+}
+
 // Updates the fractalIDs mapping with a request from the ecs-agent
 func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error {
 	if req.ContainerID == "" || req.FractalID == "" {
@@ -102,6 +108,24 @@ func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error
 	fractalIDs[req.ContainerID] = req.FractalID
 	logger.Infof("Added mapping from ContainerID %s to FractalID %s", req.ContainerID, req.FractalID)
 	return nil
+}
+
+// TODO(Anton): Actually Implement this function
+func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) (UinputDeviceList, error) {
+	FractalID := r.FractalID
+	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
+
+	// TODO(Anton): actually create the uinput devices, etc.
+
+	return UinputDeviceList{
+		[]dockercontainer.DeviceMapping{
+			dockercontainer.DeviceMapping{
+				PathOnHost:        "/dev/input/event3",
+				PathInContainer:   "/dev/input/event3",
+				CgroupPermissions: "rwm", // read, write, mknod (the default)
+			},
+		},
+	}, nil
 }
 
 // Unmounts a cloud storage directory mounted on hostPort
@@ -320,7 +344,7 @@ func writeAssignmentToFile(filename, data string) (err error) {
 
 // Starts a container on the host by assigning to it the relevant parameters and
 // an unused TTY
-func containerStartHandler(ctx context.Context, cli *client.Client, id string) error {
+func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id string) error {
 	// Create a container-specific directory to store mappings
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.Mkdir(datadir, 0777)
@@ -398,7 +422,7 @@ func containerStartHandler(ctx context.Context, cli *client.Client, id string) e
 }
 
 // Frees all resources assigned to a container and kill it
-func containerDieHandler(ctx context.Context, cli *client.Client, id string) {
+func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
 	// Delete the container-specific data directory we used
 	datadir := resourceMappingDirectory + id + "/"
 	err := os.RemoveAll(datadir)
@@ -627,14 +651,14 @@ func main() {
 	}
 
 	ctx := context.Background()
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
 	if err != nil {
 		logger.Panicf("Error creating new Docker client: %v", err)
 	}
 
-	filters := filters.NewArgs()
-	filters.Add("type", events.ContainerEventType)
-	eventOptions := types.EventsOptions{
+	filters := dockerfilters.NewArgs()
+	filters.Add("type", dockerevents.ContainerEventType)
+	eventOptions := dockertypes.EventsOptions{
 		Filters: filters,
 	}
 
@@ -663,7 +687,7 @@ eventLoop:
 			case err == io.EOF:
 				logger.Panicf("Docker event stream has been completely read.")
 				break eventLoop
-			case client.IsErrConnectionFailed(err):
+			case dockerclient.IsErrConnectionFailed(err):
 				// This means "Cannot connect to the Docker daemon..."
 				logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
 				startDockerDaemon()
@@ -712,6 +736,20 @@ eventLoop:
 					logger.Error(err)
 				}
 				serverevent.ReturnResult("", err)
+
+			case *httpserver.CreateUinputDevicesRequest:
+				list, err := createUinputDevices(serverevent.(*httpserver.CreateUinputDevicesRequest))
+				if err != nil {
+					logger.Error(err)
+					serverevent.ReturnResult("", err)
+				} else {
+					if result, err := json.Marshal(list); err != nil {
+						logger.Error(err)
+						serverevent.ReturnResult("", err)
+					} else {
+						serverevent.ReturnResult(string(result), nil)
+					}
+				}
 
 			default:
 				err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)

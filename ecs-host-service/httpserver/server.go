@@ -232,6 +232,65 @@ func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDReque
 	return body, nil
 }
 
+// CreateUinputDevicesRequest defines the (unauthenticated)
+// `create_uinput_devices` endpoint, which is used by the ecs-agent (built into
+// the host service, in package `ecsagent`) to create uinput devices on the
+// host. We return the paths of these devices on disk, and they are mounted by
+// the ecs-agent when it creates the container.
+type CreateUinputDevicesRequest struct {
+	FractalID  string             `json:"fractal_id"` // FractalID corresponding to the container for which we are requesting the uinput devices to be created
+	resultChan chan requestResult // Channel to pass result between goroutines
+}
+
+func (s *CreateUinputDevicesRequest) ReturnResult(result string, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+func (s *CreateUinputDevicesRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+func processCreateUinputDevicesRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is a POST
+	if verifyRequestType(w, r, http.MethodPost) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata CreateUinputDevicesRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+		logger.Infof(err.Error())
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
+// CreateCreateUinputDevicesRequestBody creates the necessary body for a CreateUinputDevicesRequest, including authentication
+func CreateCreateUinputDevicesRequestBody(r CreateUinputDevicesRequest) ([]byte, error) {
+	body, err := json.Marshal(
+		struct {
+			AuthSecret string `json:"auth_secret"`
+			FractalID  string `json:"fractal_id"`
+		}{
+			AuthSecret: webserverAuthSecret,
+			FractalID:  r.FractalID,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
