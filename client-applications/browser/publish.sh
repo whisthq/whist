@@ -8,12 +8,12 @@ function printhelp {
     echo "                            in S3 bucket"
     echo "  --bucket BUCKET             set the S3 bucket to upload to (if -publish=true)"
     echo "                            options are:"
-    echo "                             fractal-windows-application-release [Windows bucket]"
-    echo "                             fractal-mac-application-release [Mac bucket]"
-    echo "                             fractal-linux-application-release [Linux bucket]"
-    echo "                             fractal-windows-application-testing [Internal use Windows testing bucket]"
-    echo "                             fractal-mac-application-testing [Internal use Mac testing bucket]"
-    echo "                             fractal-linux-application-testing [Internal use Linux testing bucket]"
+    echo "                             fractal-browser-macos-dev [macOS Development Bucket]"
+    echo "                             fractal-browser-macos-staging [macOS Staging Bucket]"
+    echo "                             fractal-browser-macos-prod [macOS Production Bucket]"
+    echo "                             fractal-browser-ubuntu-dev [Linux Ubuntu Development Bucket]"
+    echo "                             fractal-browser-ubuntu-staging [Linux Ubuntu Staging Bucket]"
+    echo "                             fractal-browser-ubuntu-prod [Linux Ubuntu Production Bucket]"
     echo "  --publish PUBLISH            set whether to publish to S3 and auto-update live apps"
     echo "                            defaults to false, options are true/false"
 }
@@ -23,7 +23,7 @@ then
     printhelp
 else
     version=${version:-1.0.0}
-    bucket=${bucket:-fractal-mac-browser-dev}
+    bucket=${bucket:-fractal-browser-macos-dev}
     publish=${publish:-false}
 
     # Download binaries
@@ -92,4 +92,3 @@ else
         yarn package
     fi
 fi
-

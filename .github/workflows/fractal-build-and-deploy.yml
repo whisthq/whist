@@ -508,25 +508,27 @@ jobs:
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                      echo "s3_bucket=fractal-linux-application-release" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-browser-ubuntu-prod" >> $GITHUB_ENV
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                      echo "s3_bucket=fractal-windows-application-release" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-browser-windows-prod" >> $GITHUB_ENV
                   else
-                      echo "s3_bucket=fractal-mac-application-release" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-browser-macos-prod" >> $GITHUB_ENV
                   fi
 
+            # (builds the branch that it is run on automatically, so master if running on push to master)
             - name: Publish the Windows Electron Application
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              working-directory: client-applications\desktop
-              run: .\publish.bat -branch=master -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
+              working-directory: client-applications\browser
+              run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
+            # (builds the branch that it is run on automatically, so master if running on push to master)
             - name: Publish the macOS/Linux Ubuntu Electron Applications
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
-              working-directory: client-applications/desktop
+              working-directory: client-applications/browser
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -539,7 +541,7 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --branch master --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
+                  ./publish.sh --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --publish true
 
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
