@@ -23,7 +23,7 @@ then
     printhelp
 else
     version=${version:-1.0.0}
-    bucket=${bucket:-fractal-browser-macos-dev}
+    bucket=${bucket:-fractal-chromium-macos-dev}
     publish=${publish:-false}
 
     # Download binaries
@@ -53,7 +53,7 @@ else
     cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
     make FractalClient
-    cd ../client-applications/browser
+    cd ../client-applications/desktop
     rm -rf protocol-build
     mkdir protocol-build
     cd protocol-build

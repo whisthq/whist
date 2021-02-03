@@ -60,9 +60,9 @@
         "linux": {
             "artifactName": "Fractal.${ext}",
             "category": "Productivity",
-            "description": "Fractal Browser Desktop Application. ",
+            "description": "Fractal Chromium Desktop Application. ",
             "icon": "build/icon.png",
-            "synopsis": "Fractal Browser Desktop Application",
+            "synopsis": "Fractal Chromium Desktop Application",
             "target": [
                 "deb",
                 "AppImage"
