@@ -108,7 +108,6 @@ def spin_lock(container_name, state_obj=None):
 
     if not locked:
         fractal_log(
-            function="spin_lock",
             label=str(username),
             logs="Container {container_name} found unlocked on first try.".format(
                 container_name=container_name
