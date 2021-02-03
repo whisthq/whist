@@ -204,7 +204,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     if empty_instances == 0:
         msg = (
             f"Cluster {cluster} had {num_instances} instances but should have"
-            " {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance"
+            f" {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance"
             " is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally"
             " distributed tasks onto instances."
         )
