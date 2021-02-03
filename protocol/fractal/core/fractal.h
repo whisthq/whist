@@ -118,6 +118,10 @@ Defines
 
 #endif  // __APPLE__
 
+// Milliseconds between sending resize events from client to server
+// Used to throttle resize event spam.
+#define WINDOW_RESIZE_MESSAGE_INTERVAL 200
+
 #define MAXIMUM_BITRATE 30000000
 #define MINIMUM_BITRATE 2000000
 #define ACK_REFRESH_MS 50
