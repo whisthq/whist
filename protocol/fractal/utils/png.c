@@ -783,7 +783,6 @@ int png_file_to_bmp(char* png, AVPacket* pkt) {
     return 0;
 }
 
-
 // masks for little-endian RGBA
 #define RGBA_MASK_A 0xff000000
 #define RGBA_MASK_B 0x00ff0000
@@ -801,8 +800,8 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
             surface (SDL_Surface*): the loaded surface on success, and NULL on failure
 
         NOTE:
-            After a successful call to sdl_surface_from_png_file, remember to call `SDL_FreeSurface(surface)`
-            to free memory.
+            After a successful call to sdl_surface_from_png_file, remember to call
+            `SDL_FreeSurface(surface)` to free memory.
     */
 
     unsigned int w, h, error;
@@ -816,11 +815,9 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
     }
 
     // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
-    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(
-        image, w, h, sizeof(uint32_t) * 8,
-        sizeof(uint32_t) * w, RGBA_MASK_R,
-        RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A
-    );
+    SDL_Surface* surface =
+        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
+                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
 
     if (surface == NULL) {
         LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
