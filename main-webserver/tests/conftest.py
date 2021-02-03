@@ -232,40 +232,6 @@ def container(cluster, user):
     return _container
 
 
-@pytest.fixture(autouse=True)
-def mock_aws(monkeypatch, pytestconfig):
-    """Patch environment variables to override legitimate AWS credentials.
-
-    Prevents accidental modification of actual AWS resources.
-
-    The mock_aws key in the pytest configuration is set to True by default.
-    Since this fixture is an autouse fixture, the AWS credentials used in tests
-    are set to garbage values (e.g. "mock") by default. If the proper fixtures,
-    which can be found in tests/aws/services.py, are not applied to test
-    functions, those tests functions will not work because they will try to use
-    garbage credentials to access the real AWS API. However, once the correct
-    fixtures are applied to the test functions, it will be possible to toggle
-    between using the real AWS API and the mock AWS API with the --mock-aws/
-    --no-mock-aws command line flags.
-    """
-
-    if pytestconfig.getoption("mock_aws"):
-        monkeypatch.setenv("AWS_ACCESS_KEY_ID", "mock")
-        monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "mock")
-        monkeypatch.setenv("AWS_SECURITY_TOKEN", "mock")
-        monkeypatch.setenv("AWS_SESSION_TOKEN", "mock")
-
-
-def pytest_addoption(parser, pluginmanager):
-    """Add command line options to explicitly enable or disable moto.
-
-    https://docs.pytest.org/en/stable/reference.html#pytest.hookspec.pytest_addoption.
-    """
-
-    parser.addoption("--mock-aws", dest="mock_aws", default=True, action="store_true")
-    parser.addoption("--no-mock-aws", dest="mock_aws", action="store_false")
-
-
 @pytest.fixture
 def user(request):
     """Create a test user.
