@@ -158,7 +158,7 @@ Here's the workflow:
 
 ## Publishing
 
-We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`. See `.github/workflows/fractal-publish-build.yml` and `.github/workflows/client-applications-publish.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
 
 As of writing, these YAML workflows only deploy our `master` branch, which is our production code. We are working on integrating continuous deployment for `staging` and `dev` branches, so that we can have a true continuous deployment pipeline. To understand how these branches interact together when it comes to releases, check our [Release Schedule](https://www.notion.so/tryfractal/Release-Schedule-c29cbe11c5f94cedb9c01aaa6d0d1ca4).
 

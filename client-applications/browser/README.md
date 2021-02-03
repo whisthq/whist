@@ -38,15 +38,15 @@ In order to just test the protocol without publishing, do the following:
 
 2. `cd` into `/protocol/` and run `cmake .` Then run `make FractalClient` in the same folder or cd into `/desktop` and run `make` to compile the MacOS client.
 
-3. Open two separate Finder windows - one to `/protocol/desktop/build64/Darwin`, and the other to `client-applications/desktop/protocol-build/desktop`. Delete any files in the latter, and then copy all files from the first filepath to the second filepath.
+3. Open two separate Finder windows - one to `/protocol/desktop/build64/Darwin`, and the other to `client-applications/browser/protocol-build/desktop`. Delete any files in the latter, and then copy all files from the first filepath to the second filepath.
 
-4. `cd` into `client-applications/desktop` and run `yarn dev`.
+4. `cd` into `client-applications/browser` and run `yarn dev`.
 
 #### Windows
 
 ## Packaging and Publishing
 
-In order to package your dev environment into a downloadable `.exe` (Windows) or `.dmg` (Mac), you'll need to run our `publish` scripts. In the desktop folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/desktop/release`. No cross-compilation is possible. You can only package the Windows application from a Windows computer.
+In order to package your dev environment into a downloadable `.exe` (Windows) or `.dmg` (Mac), you'll need to run our `publish` scripts. In the desktop folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/browser/release`. No cross-compilation is possible. You can only package the Windows application from a Windows computer.
 
 #### MacOS Notarizing
 
@@ -88,7 +88,7 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 New builds from the `dev` will also be pushed out on the `testing` channel (not yet done).
 
-Moreover, new builds from [fractal/protocol](https://github.com/fractal/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
+Moreover, new builds from [/protocol](https://github.com/fractal/fractal/tree/dev/protocol) will trigger builds in this repository on their corresponding branch (or on `dev` if there is no appropriate corresponding branch). Similarly, new protocol builds on `dev` will also trigger a new build to be sent out on the `testing` channel.
 
 Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
 

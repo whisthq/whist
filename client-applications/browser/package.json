@@ -60,9 +60,9 @@
         "linux": {
             "artifactName": "Fractal.${ext}",
             "category": "Productivity",
-            "description": "Fractal Desktop Application. ",
+            "description": "Fractal Browser Desktop Application. ",
             "icon": "build/icon.png",
-            "synopsis": "Fractal Desktop Application",
+            "synopsis": "Fractal Browser Desktop Application",
             "target": [
                 "deb",
                 "AppImage"
@@ -93,7 +93,7 @@
             ]
         },
         "publish": {
-            "bucket": "fractal-windows-browser-dev",
+            "bucket": "fractal-browser-windows-dev",
             "provider": "s3",
             "region": "us-east-1"
         },

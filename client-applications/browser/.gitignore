@@ -55,8 +55,6 @@ node_modules
 
 # Yarn
 .yarnclean
-yarn.lock
-app/yarn.lock
 
 # App packaged
 release
@@ -82,5 +80,7 @@ npm-debug.log.*
 *.scss.d.ts
 package-lock.json
 
-# AWS ping
+# Binaries/AWS ping
+binaries/
+binaries/**
 awsping.darwin.amd64.tgz
