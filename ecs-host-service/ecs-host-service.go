@@ -488,7 +488,7 @@ func saveUserConfig(hostPort uint16) {
 // and argument and returns nil if no errors, and error object if error.
 func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// Get needed vars and create path for config
-    userID := req.UserID
+	userID := req.UserID
 	containerID := containerIDs[(uint16)(req.HostPort)]
 	hostPort := logger.Sprintf("%v", req.HostPort)
 	configPath := userConfigsDirectory + hostPort + "/"
