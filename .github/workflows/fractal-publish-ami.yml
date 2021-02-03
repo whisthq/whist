@@ -114,21 +114,6 @@ jobs:
                     --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
                     ${{ env.graphql_db_url }}
 
-                    # run update_region on each region
-                    celery_task_output_id=$(curl -X POST \
-                      -H "Content-Type: application/json" \
-                      -H "Authorization: Bearer ${token}" \
-                      --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region" | jq -r ".ID")
-
-                    # TODO: CHECK IF ID IS VALID
-
-                    # verify update_region succeeded
-                    bash poll_task ${{ env.webserver_url}} ${ celery_task_output_id }
-                    if [[ $? =~ 1 ]]; then
-                      echo "Failed to update region $region" && false
-                    fi
-
                   done
 
     notify-slack:
