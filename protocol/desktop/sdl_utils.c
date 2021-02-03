@@ -21,6 +21,7 @@ Includes
 #include "utils/png.h"
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+#include "utils/color.h"
 #include "native_window_utils.h"
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
@@ -189,7 +190,8 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    set_native_window_color(sdl_window, 0, 0, 0);
+    const RGBColor black = {0, 0, 0};
+    set_native_window_color(sdl_window, black);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
     if (!is_fullscreen) {
