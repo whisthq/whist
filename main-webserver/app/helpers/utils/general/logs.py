@@ -4,7 +4,7 @@ import logging
 
 def fractal_log(label, logs, level=logging.INFO):
     # efficiently retrieve caller name and line number
-    frame = sys._getframe().f_back
+    frame = sys._getframe().f_back  # pylint: disable=protected-access
     caller_filename = frame.f_code.co_filename
     caller_funcname = frame.f_code.co_name
     caller_lineno = frame.f_lineno
