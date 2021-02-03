@@ -171,9 +171,9 @@ func processSetContainerDPIRequest(w http.ResponseWriter, r *http.Request, queue
 // ID). FractalIDs are also used to dynamically provide each container with a
 // directory that only that container has access to).
 type RegisterDockerContainerIDRequest struct {
-	ContainerID string             `json:"container_id"` // Docker runtime ID of this container
-	FractalID   string             `json:"fractal_id"`   // FractalID corresponding to this container
-	resultChan  chan requestResult // Channel to pass result between goroutines
+	DockerID   string             `json:"docker_id"`  // Docker runtime ID of this container
+	FractalID  string             `json:"fractal_id"` // FractalID corresponding to this container
+	resultChan chan requestResult // Channel to pass result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -215,13 +215,13 @@ func processRegisterDockerContainerIDRequest(w http.ResponseWriter, r *http.Requ
 func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDRequest) ([]byte, error) {
 	body, err := json.Marshal(
 		struct {
-			AuthSecret  string `json:"auth_secret"`
-			ContainerID string `json:"container_id"`
-			FractalID   string `json:"fractal_id"`
+			AuthSecret string `json:"auth_secret"`
+			DockerID   string `json:"docker_id"`
+			FractalID  string `json:"fractal_id"`
 		}{
-			AuthSecret:  webserverAuthSecret,
-			ContainerID: r.ContainerID,
-			FractalID:   r.FractalID,
+			AuthSecret: webserverAuthSecret,
+			DockerID:   r.DockerID,
+			FractalID:  r.FractalID,
 		},
 	)
 
@@ -412,6 +412,7 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	http.HandleFunc("/set_container_dpi", createHandler(processSetContainerDPIRequest))
 	http.HandleFunc("/register_docker_container_id", createHandler(processRegisterDockerContainerIDRequest))
+	http.HandleFunc("/create_uinput_devices", createHandler(processCreateUinputDevicesRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+PortToListen, certPath, privatekeyPath, nil))

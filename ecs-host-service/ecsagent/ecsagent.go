@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/tls"
+	"encoding/json"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,6 +15,8 @@ import (
 	ecsapp "github.com/fractal/ecs-agent/agent/app"
 	ecsengine "github.com/fractal/ecs-agent/agent/engine"
 	ecslogger "github.com/fractal/ecs-agent/agent/logger"
+
+	dockercontainer "github.com/docker/docker/api/types/container"
 
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
@@ -38,7 +42,8 @@ func init() {
 	}
 
 	// Tell the ecs-agent where the host service is listening for HTTP requests
-	// so it can pass along mappings between Docker container IDs and FractalIDs
+	// so it can pass along mappings between Docker container IDs and FractalIDs,
+	// as well as uinput devices
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
@@ -46,11 +51,11 @@ func init() {
 		},
 	}
 	ecsengine.SetFractalHostServiceMappingSender(
-		func(containerID, fractalID string) error {
+		func(dockerID, fractalID string) error {
 			body, err := fractalhttpserver.CreateRegisterDockerContainerIDRequestBody(
 				fractalhttpserver.RegisterDockerContainerIDRequest{
-					ContainerID: containerID,
-					FractalID:   fractalID,
+					DockerID:  dockerID,
+					FractalID: fractalID,
 				},
 			)
 			if err != nil {
@@ -66,6 +71,33 @@ func init() {
 			return err
 		},
 	)
+
+	// ecsengine.SetFractalHostServiceUinputDeviceRequester(
+	// func(fractalID string) ([]dockercontainer.DeviceMapping, error) {
+	// body, err := fractalhttpserver.CreateCreateUinputDevicesRequestBody(
+	// fractalhttpserver.CreateUinputDevicesRequest{
+	// FractalID: fractalID,
+	// },
+	// )
+	// if err != nil {
+	// err := fractallogger.MakeError("Error creating CreateUinputDevicesRequest: %s", err)
+	// return nil, err
+	// }
+	//
+	// // We have the request body, now just need to actually make the request
+	// requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
+	//
+	// response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+	// if err != nil {
+	// }
+	// respbody, err := ioutil.ReadAll(response.Body)
+	//
+	// var list []dockercontainer.DeviceMapping
+	// err = json.Unmarshal(respbody, list)
+	//
+	// },
+	// )
+
 }
 
 func ECSAgentMain() {
