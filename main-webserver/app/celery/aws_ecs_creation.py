@@ -512,7 +512,9 @@ def assign_container(
             raise Ignore
 
     _mount_cloud_storage(user, base_container)  # Not tested
-    _pass_start_values_to_instance(base_container.ip, base_container.port_32262, base_container.dpi, user.user_id)
+    _pass_start_values_to_instance(
+        base_container.ip, base_container.port_32262, base_container.dpi, user.user_id
+    )
     time.sleep(1)
 
     if not _poll(base_container.container_id):
@@ -732,7 +734,9 @@ def create_new_container(
             assert user
 
             _mount_cloud_storage(user, container)
-            _pass_start_values_to_instance(container.ip, container.port_32262, container.dpi, user.user_id)
+            _pass_start_values_to_instance(
+                container.ip, container.port_32262, container.dpi, user.user_id
+            )
 
             if not _poll(container.container_id):
 
