@@ -38,8 +38,7 @@ func init() {
 	}
 
 	// Tell the ecs-agent where the host service is listening for HTTP requests
-	// so it can pass along mappings between Docker container IDs and
-	// FractalRandomHexes
+	// so it can pass along mappings between Docker container IDs and FractalIDs
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
@@ -47,21 +46,21 @@ func init() {
 		},
 	}
 	ecsengine.SetFractalHostServiceMappingSender(
-		func(containerID, fractalRandomHex string) error {
-			body, err := fractalhttpserver.CreateSetContainerIDToFractalRandomHexMappingRequestBody(
-				fractalhttpserver.SetContainerIDToFractalRandomHexMappingRequest{
-					ContainerID:      containerID,
-					FractalRandomHex: fractalRandomHex,
+		func(containerID, fractalID string) error {
+			body, err := fractalhttpserver.CreateRegisterDockerContainerIDRequestBody(
+				fractalhttpserver.RegisterDockerContainerIDRequest{
+					ContainerID: containerID,
+					FractalID:   fractalID,
 				},
 			)
 			if err != nil {
-				err := fractallogger.MakeError("Error creating SetContainerIDToFractalRandomHexMappingRequest: %s", err)
+				err := fractallogger.MakeError("Error creating RegisterDockerContainerIDRequest: %s", err)
 				fractallogger.Error(err)
 				return err
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/set_container_id_to_fractal_random_hex_mapping"
+			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/register_docker_container_id"
 
 			_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			return err
