@@ -29,7 +29,7 @@ class WorkerProc(CeleryProc):
     their docs.
     """
 
-    name = "worker"
+    name = "celery"
     queues = ["celery"]
     simple_queues = True
 
