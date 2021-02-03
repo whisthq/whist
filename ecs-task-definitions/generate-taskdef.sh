@@ -11,18 +11,20 @@ if [ $# -eq 0 ] || [ $# -gt 1 ]; then
 fi
 
 # Currently, all apps have the same task definition parameters,
-# so we only need to update the family tag in fractal-taskdef-template.json
+# so we only need to update the family and Sentry environment tags (prod, staging, or dev)
+# in fractal-taskdef-template.json
 #
 # When/if there are app-specific parameters, we can update those
 # using an if or switch block, or by storing diffs in JSON format.
 
 app=$1
+sentry_env=$2
 
 # Generate the task definition JSON for the app
 # It's important to use fractal-taskdef-template here, else we get stdio issues
 # rewriting fractal-base.json, from the base image, which we did before
 
-cat fractal-taskdef-template.json | jq '.family |= "'$app'"' > $app.json
+cat fractal-taskdef-template.json | jq '.family |= "'$app'"' | jq '.environment[2] |= "'$sentry_env'"' > $app.json
 
 # Echo the task definition filename so the GitHub Actions CI workflow can get the app name
 echo $app.json
