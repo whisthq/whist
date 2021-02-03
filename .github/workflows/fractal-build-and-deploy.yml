@@ -508,18 +508,18 @@ jobs:
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                      echo "s3_bucket=fractal-browser-ubuntu-prod" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                      echo "s3_bucket=fractal-browser-windows-prod" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
                   else
-                      echo "s3_bucket=fractal-browser-macos-prod" >> $GITHUB_ENV
+                      echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
                   fi
 
             # (builds the branch that it is run on automatically, so master if running on push to master)
             - name: Publish the Windows Electron Application
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              working-directory: client-applications\browser
+              working-directory: client-applications\desktop
               run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -publish=true
 
             # (builds the branch that it is run on automatically, so master if running on push to master)
@@ -528,7 +528,7 @@ jobs:
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               shell: bash
-              working-directory: client-applications/browser
+              working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
