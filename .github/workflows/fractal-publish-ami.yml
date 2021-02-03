@@ -95,17 +95,20 @@ jobs:
                     --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
                     "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
 
-                  # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
-                  packer -machine-readable build ami_config.json
+                  # # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
+                  # packer -machine-readable build ami_config.json
 
-                  # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+                  # # if packer fails, manifest.json does not get created and the entire workflow fails here
+                  # new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
 
-                  # loop through each region, replace comma with space for delimiting
-                  for artifact in ${new_ami_ids//,/ }
-                  do
-                    ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
-                    region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
+                  # # loop through each region, replace comma with space for delimiting
+                  # for artifact in ${new_ami_ids//,/ }
+                  # do
+                  #   ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
+                  #   region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
+
+                    ami_id=ami-123
+                    region=eu-west-1
 
                     # update appropriate database with new AMI IDs
                     curl -X POST \
@@ -119,16 +122,15 @@ jobs:
                       -H "Content-Type: application/json" \
                       -H "Authorization: Bearer ${token}" \
                       --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region")
+                      "${{ env.webserver_url }}aws_container/update_region" | jq -r ".ID")
 
                     # verify update_region succeeded
-                    if [[ ${celery_task_output_id} =~ \{\"ID\":\"[0-9a-z-]+\"\} ]]; then 
-                      echo "Updated region $region"
-                    else 
+                    bash poll_task ${{ env.webserver_url}} ${ celery_task_output_id }
+                    if [[ $? =~ 1 ]]; then
                       echo "Failed to update region $region" && false
                     fi
 
-                  done
+                  # done
 
     notify-slack:
         name: Notify Slack

@@ -101,9 +101,7 @@ def update_region(self, region_name="us-east-1", ami=None):
         )
         self.update_state(
             state="SUCCESS",
-            meta={
-                "msg": f"No clusters in region {region_name}",
-            },
+            meta={"msg": f"No clusters in region {region_name}", "tasks": ""},
         )
         return
 
@@ -130,33 +128,7 @@ def update_region(self, region_name="us-east-1", ami=None):
 
     self.update_state(
         state="SUCCESS",
-        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
-    )
-
-
-@shared_task(bind=True)
-def manual_scale_cluster(self, cluster: str, region_name: str):
-    """
-    Manually scales the cluster according the the following logic:
-        1. see if active_tasks + pending_tasks > num_instances * AWS_TASKS_PER_INSTANCE. if so,
-            we should trigger a scale down.
-        2. check if there are instances with 0 tasks. sometimes AWS can suboptimally distribute
-            our workloads, so we want to make sure there are instances we can actually delete.
-            If AWS does poorly distribute our loads, we log it.
-        3. trigger a scale down so only instances with tasks remain.
-
-    This function does not handle outscaling at the moment.
-    This function can be expanded to handle more custom scaling logic as we grow.
-
-    Args:
-        cluster: cluster to manually scale
-        region_name: region that cluster resides in
-    """
-    self.update_state(
-        state="PENDING",
-        meta={
-            "msg": f"Checking if cluster {cluster} should be scaled.",
-        },
+        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": tasks},
     )
 
     factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
