@@ -250,7 +250,6 @@ class Credential(db.Model):
             raise OAuthProviderError(self.provider_id)
 
         fractal_log(
-            function="Credential.revoke",
             label=self.user_id,
             **log_kwargs,
         )

@@ -129,7 +129,6 @@ def register_helper(username, password, name, reason_for_signup, can_login):
         db.session.commit()
     except Exception as e:
         fractal_log(
-            function="register_helper",
             label=username,
             logs="Registration failed: " + str(e),
             level=logging.ERROR,
@@ -153,7 +152,6 @@ def register_helper(username, password, name, reason_for_signup, can_login):
             sendgrid_client.send(message)
         except Exception as e:
             fractal_log(
-                function="register_helper",
                 label=username,
                 logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
@@ -190,7 +188,6 @@ def verify_helper(username, provided_user_id):
 
         if provided_user_id == user.token:
             fractal_log(
-                function="verify_helper",
                 label=user_id,
                 logs="Verification token is valid, verifying.",
             )
@@ -199,7 +196,6 @@ def verify_helper(username, provided_user_id):
             return {"status": SUCCESS, "verified": True}
         else:
             fractal_log(
-                function="verify_helper",
                 label=user_id,
                 logs="Verification token {token} is invalid, cannot validate.".format(
                     token=provided_user_id

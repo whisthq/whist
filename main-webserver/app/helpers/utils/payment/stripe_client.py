@@ -359,7 +359,6 @@ class StripeClient:
         if subscriptions:
             stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], price=price)
             fractal_log(
-                function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer updated successful",
             )
@@ -376,7 +375,6 @@ class StripeClient:
                 default_tax_rates=[tax_rate],
             )
             fractal_log(
-                function="StripeClient.create_subscription",
                 label=email,
                 logs="Customer subscription created successful",
             )
@@ -414,7 +412,6 @@ class StripeClient:
         else:
             stripe.Subscription.delete(subscription[0]["id"])
             fractal_log(
-                function="StripeClient.cancel_subscription",
                 label=email,
                 logs="Cancelled stripe subscription for {}".format(email),
             )
@@ -520,7 +517,6 @@ class StripeClient:
             db.session.commit()
 
             fractal_log(
-                function="StripeClient.discount",
                 label=email,
                 logs="Applied discount and updated credits outstanding",
             )
@@ -591,7 +587,6 @@ class StripeClient:
 
         if user_price != hourly_price:
             fractal_log(
-                function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
                     username=email
@@ -608,7 +603,6 @@ class StripeClient:
 
         if latest_user_activity.action != "logon":
             fractal_log(
-                function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
                     username=email
@@ -657,7 +651,6 @@ class StripeClient:
             )
 
             fractal_log(
-                function="StripeClient.charge_hourly",
                 label=email,
                 logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(
                     username=email, hours_used=str(total_hours), amount=total_price

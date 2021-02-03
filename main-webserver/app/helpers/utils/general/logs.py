@@ -1,7 +1,12 @@
+import sys
 import logging
 
 
-def fractal_log(function, label, logs, level=logging.INFO):
+def fractal_log(label, logs, level=logging.INFO):
+    # efficiently retrieve caller name and line number
+    frame = sys._getframe().f_back
+    caller_fname = frame.f_code.co_name
+    caller_lineno = frame.f_lineno
     format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
 
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
@@ -11,8 +16,8 @@ def fractal_log(function, label, logs, level=logging.INFO):
     if not logs.endswith(".") and not logs.endswith("!") and not logs.endswith("?"):
         logs = "{logs}.".format(logs=logs)
 
-    output = "{function} | {label} | {logs}".format(
-        function=str(function), label=str(label), logs=str(logs)
+    output = "{function}:L{lineno} | {label} | {logs}".format(
+        function=str(caller_fname), lineno=caller_lineno, label=str(label), logs=str(logs)
     )
 
     if level == logging.CRITICAL:

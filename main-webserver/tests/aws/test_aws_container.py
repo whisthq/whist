@@ -29,7 +29,6 @@ pytest.container_name = None
 def check_test_database():
     if os.getenv("HEROKU_APP_NAME") == "main-webserver":
         fractal_log(
-            function="test_aws_container",
             label=None,
             logs="Not using staging database or resource group! Forcefully stopping tests.",
             level=logging.WARNING,
@@ -44,7 +43,6 @@ def check_test_database():
 def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
     fractal_log(
-        function="test_create_cluster",
         label="cluster/create",
         logs="Starting to create cluster {}".format(cluster_name),
     )
@@ -65,7 +63,6 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 
     if task["status"] < 1:
         fractal_log(
-            function="test_create_cluster",
             label="cluster/create",
             logs=task["output"],
             level=logging.ERROR,
@@ -73,7 +70,6 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
         assert False
     if not ClusterInfo.query.get(cluster_name):
         fractal_log(
-            function="test_create_cluster",
             label="cluster/create",
             logs="Cluster was not inserted in database",
             level=logging.ERROR,
@@ -91,7 +87,6 @@ def test_assign_container(client, admin, monkeypatch):
     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
     fractal_log(
-        function="test_assign_container",
         label="container/assign",
         logs="Starting to assign container in cluster {}".format(pytest.cluster_name),
     )
@@ -109,7 +104,6 @@ def test_assign_container(client, admin, monkeypatch):
 
     if task["status"] < 1:
         fractal_log(
-            function="test_assign_container",
             label="container/assign",
             logs=task["output"],
             level=logging.ERROR,
@@ -118,7 +112,6 @@ def test_assign_container(client, admin, monkeypatch):
 
     if not task["result"]:
         fractal_log(
-            function="test_assign_container",
             label="container/assign",
             logs="No container returned",
             level=logging.ERROR,
@@ -129,7 +122,6 @@ def test_assign_container(client, admin, monkeypatch):
     container_name = UserContainer.query.get(pytest.container_name)
     if container_name is None:
         fractal_log(
-            function="test_assign_container",
             label="container/assign",
             logs="Container was not inserted in database",
             level=logging.ERROR,
@@ -148,7 +140,6 @@ def test_assign_container(client, admin, monkeypatch):
 @pytest.mark.usefixtures("admin")
 def test_send_commands(client):
     fractal_log(
-        function="test_send_commands",
         label="cluster/send_commands",
         logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
     )
@@ -166,7 +157,6 @@ def test_send_commands(client):
 
     if task["status"] < 1:
         fractal_log(
-            function="test_send_commands",
             label="cluster/send_commands",
             logs=task["output"],
             level=logging.ERROR,
@@ -200,7 +190,6 @@ def test_update_cluster(client):
 @pytest.mark.usefixtures("celery_worker")
 def test_delete_container(client, monkeypatch):
     fractal_log(
-        function="test_delete_container",
         label="container/delete",
         logs="Starting to delete container {}".format(pytest.container_name),
     )
@@ -234,7 +223,6 @@ def test_delete_container(client, monkeypatch):
 
     if task["status"] < 1:
         fractal_log(
-            function="test_delete_container",
             label="container/delete",
             logs=task["output"],
             level=logging.ERROR,
@@ -245,7 +233,6 @@ def test_delete_container(client, monkeypatch):
 
     if UserContainer.query.get(pytest.container_name):
         fractal_log(
-            function="test_delete_container",
             label="container/delete",
             logs="Container was not deleted from database",
             level=logging.ERROR,
@@ -268,7 +255,6 @@ def test_update_region(client, admin, monkeypatch):
         # check that the arguments are as expected
         if cluster_name != pytest.cluster_name:
             fractal_log(
-                "mock_update_cluster",
                 None,
                 f"Expected cluster {pytest.cluster_name}, got {cluster_name}",
                 logging.ERROR,
@@ -276,7 +262,6 @@ def test_update_region(client, admin, monkeypatch):
             success = False
         elif region_name != "us-east-1":
             fractal_log(
-                "mock_update_cluster",
                 None,
                 f"Expected region us-east-1, got {region_name}",
                 logging.ERROR,
@@ -284,7 +269,6 @@ def test_update_region(client, admin, monkeypatch):
             success = False
         elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
             fractal_log(
-                "mock_update_cluster",
                 None,
                 f"Expected ami ami-0ff8a91507f77f867, got {ami}",
                 logging.ERROR,
@@ -310,7 +294,6 @@ def test_update_region(client, admin, monkeypatch):
     monkeypatch.setattr(update_cluster, "delay", mock_update_cluster)
 
     fractal_log(
-        function="test_update_region",
         label=None,
         logs="Calling update_region with monkeypatched update_cluster",
     )
@@ -330,7 +313,6 @@ def test_update_region(client, admin, monkeypatch):
     task = queryStatus(client, resp, timeout=30)
     if task["status"] < 1:
         fractal_log(
-            function="test_update_region",
             label=None,
             logs=task["output"],
             level=logging.ERROR,
@@ -365,7 +347,6 @@ def test_update_region(client, admin, monkeypatch):
 def test_delete_cluster(client, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
     fractal_log(
-        function="test_delete_cluster",
         label="cluster/delete",
         logs="Starting to delete cluster {}".format(cluster),
     )
@@ -382,7 +363,6 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
     if task["status"] < 1:
         fractal_log(
-            function="test_delete_cluster",
             label="cluster/delete",
             logs=task["output"],
             level=logging.ERROR,
@@ -390,7 +370,6 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
         assert False
     if ClusterInfo.query.get(cluster):
         fractal_log(
-            function="test_delete_cluster",
             label="cluster/delete",
             logs="Cluster was not deleted in database",
             level=logging.ERROR,
@@ -413,7 +392,6 @@ def test_cluster_assignment():
 
     def delete_cluster_helper(cluster):
         fractal_log(
-            function="test_cluster_assignment",
             label="cluster/delete",
             logs="Deleting cluster {} from database".format(cluster),
         )
@@ -422,7 +400,6 @@ def test_cluster_assignment():
 
         if ClusterInfo.query.get(cluster):
             fractal_log(
-                function="test_cluster_assignment",
                 label="cluster/delete",
                 logs="Cluster was not deleted in database",
                 level=logging.ERROR,
@@ -436,7 +413,6 @@ def test_cluster_assignment():
     ]
     if all_clusters:
         fractal_log(
-            function="test_cluster_assignment",
             label="cluster/delete",
             logs="Found {num_clusters} cluster(s) already in database. Starting to delete...".format(
                 num_clusters=str(len(clusters))
@@ -446,7 +422,6 @@ def test_cluster_assignment():
 
     else:
         fractal_log(
-            function="test_cluster_assignment",
             label="cluster/delete",
             logs="No clusters found in database",
         )

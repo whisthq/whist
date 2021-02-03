@@ -24,7 +24,6 @@ def fractal_sql_commit(db, func=None, *args):  # pylint: disable=keyword-arg-bef
                 time.sleep(2 ** attempts)
             else:
                 fractal_log(
-                    function="fractal_sql_commit",
                     label="None",
                     logs="SQL commit failed after five retries.",
                     level=logging.CRITICAL,
@@ -33,7 +32,6 @@ def fractal_sql_commit(db, func=None, *args):  # pylint: disable=keyword-arg-bef
 
     if commit_successful:
         fractal_log(
-            function="fractal_sql_commit",
             label="None",
             logs="SQL commit successful after {num_tries} tries".format(num_tries=attempts),
         )

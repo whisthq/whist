@@ -20,7 +20,6 @@ def signup_mail(username, promo_code):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="signup_mail",
             label="ERROR",
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,

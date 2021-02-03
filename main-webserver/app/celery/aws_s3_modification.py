@@ -53,7 +53,6 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
     # Perform input validation on the sender argument.
     if source not in ("CLIENT", "SERVER"):
         fractal_log(
-            function="upload_logs_to_s3",
             label=None,
             logs=f"Unrecognized sender {sender}",
             level=logging.ERROR,
@@ -72,7 +71,6 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
             message = f"Container {container} does not exist."
 
         fractal_log(
-            function="upload_logs_to_s3",
             label=container,
             logs=message,
             level=logging.ERROR,
@@ -91,7 +89,6 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
         s3_object.put(ACL="private", Body=message, ContentType="text/plain")
     except Exception as e:  # TODO: Handle specfic exceptions.
         fractal_log(
-            function="upload_logs_to_s3",
             label=username,
             logs=f"Error uploading {sender.lower()} logs to S3: {e}",
             level=logging.ERROR,
@@ -104,7 +101,6 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
     url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
     fractal_log(
-        function="upload_logs_to_s3",
         label=username,
         logs=f"Protocol server logs: {url}",
     )

@@ -42,7 +42,6 @@ def delete_container(self, container_name, aes_key):
 
     if spin_lock(container_name) < 0:
         fractal_log(
-            function="delete_container",
             label=container_name,
             logs="spin_lock took too long.",
             level=logging.ERROR,
@@ -59,7 +58,6 @@ def delete_container(self, container_name, aes_key):
             message = f"Container {container_name} does not exist."
 
         fractal_log(
-            function="delete_container",
             label=container_name,
             logs=message,
             level=logging.ERROR,
@@ -68,7 +66,6 @@ def delete_container(self, container_name, aes_key):
         raise Exception("The requested container does not exist.")
 
     fractal_log(
-        function="delete_container",
         label=str(container_name),
         logs="Beginning to delete container {container_name}. Goodbye!".format(
             container_name=container_name
@@ -111,13 +108,11 @@ def delete_container(self, container_name, aes_key):
     cluster_sql = fractal_sql_commit(db, fractal_sql_update, cluster_info, cluster_usage)
     if cluster_sql:
         fractal_log(
-            function="delete_container",
             label=container_name,
             logs=f"Removed task from cluster {container_cluster} and updated cluster info",
         )
     else:
         fractal_log(
-            function="delete_container",
             label=container_name,
             logs="Failed to update cluster resources.",
         )
@@ -148,7 +143,6 @@ def delete_cluster(self, cluster, region_name):
         ]
         if running_tasks:
             fractal_log(
-                function="delete_cluster",
                 label=cluster,
                 logs=(
                     f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
@@ -162,7 +156,6 @@ def delete_cluster(self, cluster, region_name):
             )
         else:
             fractal_log(
-                function="delete_cluster",
                 label=cluster,
                 logs="Deleting cluster {} in region {} and all associated instances".format(
                     cluster, region_name
@@ -206,7 +199,6 @@ def delete_cluster(self, cluster, region_name):
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
         fractal_log(
-            function="delete_cluster",
             label="None",
             logs=f"Encountered error: {error}, Traceback: {traceback_str}",
             level=logging.ERROR,

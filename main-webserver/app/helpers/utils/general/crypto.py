@@ -24,6 +24,6 @@ def check_value(hashed_value, raw_value):
         100000,
     )
     hex_raw = binascii.hexlify(decimal_key).decode("utf-8")
-    fractal_log(function="", label="", logs=str(hashed_value))
-    fractal_log(function="", label="", logs=str(hex_raw))
+    fractal_log(label="", logs=str(hashed_value))
+    fractal_log(label="", logs=str(hex_raw))
     return hashed_value == hex_raw

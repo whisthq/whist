@@ -70,7 +70,6 @@ def datadogEvent(title, tags, text="", init=True):
 
     if not validTags(tags):
         fractal_log(
-            function="datadogEvent",
             label=None,
             logs="Tried to log a datadog event with invalid tags: {tags}".format(tags=str(tags)),
             level=logging.ERROR,
@@ -295,7 +294,6 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
         if not CONTAINER_CREATION in tags:
             was_deletion = str(CONTAINER_DELETION in tags or CONTAINER_LIFECYCLE in tags)
             fractal_log(
-                function="datadogEvent_containerLifecycle",
                 label=None,
                 logs="Last event was not a creation for container {container_name}. Was it deletion? Answer: {was_deletion}. The user was {cointainer_user}.".format(
                     container_name=container_name,
@@ -330,7 +328,6 @@ def datadogEvent_containerLifecycle(container_name, cluster_name="unknown", time
             )
     else:
         fractal_log(
-            function="datadogEvent_containerLifecycle",
             label=None,
             logs="Failed to find creation event for container {container_name}".format(
                 container_name=container_name
@@ -360,7 +357,6 @@ def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
                 CLUSTER_DELETION in event["tags"] or CLUSTER_LIFECYCLE in event["tags"]
             )
             fractal_log(
-                function="datadogEvent_clusterLifecycle",
                 label=None,
                 logs="Last event was not a creation for cluster {cluster_name}. Was it deletion? Answer: {was_deletion}.".format(
                     cluster_name=cluster_name, was_deletion=was_deletion
@@ -386,7 +382,6 @@ def datadogEvent_clusterLifecycle(cluster_name, time_taken="unknown"):
             )
     else:
         fractal_log(
-            function="datadogEvent_clusterLifecycle",
             label=None,
             logs="Failed to find creation event for cluster {cluster_name}".format(
                 cluster_name=cluster_name
@@ -409,7 +404,6 @@ def datadogEvent_userLifecycle(user_name):
         if not LOGON in event["tags"]:
             was_logoff = str(LOGOFF in event["tags"] or USER_LIFECYCLE in event["tags"])
             fractal_log(
-                function="datadogEvent_userLifecycle",
                 label=None,
                 logs="Last event was not a log on for user {user_name}. Was it log off? Answer: {was_logoff}.".format(
                     user_name=user_name, was_logoff=was_logoff
@@ -434,7 +428,6 @@ def datadogEvent_userLifecycle(user_name):
             )
     else:
         fractal_log(
-            function="datadogEvent_userLifecycle",
             label=None,
             logs="Failed to find logon event for user {user_name}".format(user_name=user_name),
             level=logging.ERROR,

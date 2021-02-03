@@ -69,7 +69,7 @@ def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None
         force (bool, optional): Whether to update with a check for validity or not.
         Defaults to False.
     """
-    fractal_log(function="set_container_state", label=keyuser, logs=f"Container state is {state}")
+    fractal_log(label=keyuser, logs=f"Container state is {state}")
 
     obj = container_state_obj(user_id=keyuser)
 

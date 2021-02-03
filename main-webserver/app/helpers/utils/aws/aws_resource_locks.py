@@ -39,7 +39,6 @@ def lock_container_and_update(container_name, state, lock, temporary_lock):
         new_params["temporary_lock"] = new_temporary_lock
 
     fractal_log(
-        function="lock_container_and_update",
         label=get_container_user(container_name),
         logs="State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
             state=state,
@@ -96,7 +95,6 @@ def spin_lock(container_name, state_obj=None):
 
     else:
         fractal_log(
-            function="spin_lock",
             label=str(username) if username else container_name,
             logs="spin_lock could not find Container {container_name}".format(
                 container_name=container_name
@@ -119,7 +117,6 @@ def spin_lock(container_name, state_obj=None):
         return 1
     else:
         fractal_log(
-            function="spin_lock",
             label=str(username),
             logs=f"Container {container_name} found locked on first try. Proceeding to wait...",
         )
@@ -136,7 +133,6 @@ def spin_lock(container_name, state_obj=None):
 
         if num_tries > 40:
             fractal_log(
-                function="spin_lock",
                 label=str(username),
                 logs=f"Container {container_name} locked after waiting 200 seconds. Giving up...",
                 level=logging.ERROR,
@@ -147,7 +143,6 @@ def spin_lock(container_name, state_obj=None):
         state_obj.update_state(state="PENDING", meta={"msg": "Update successfully downloaded."})
 
     fractal_log(
-        function="spin_lock",
         label=str(username),
         logs="After waiting {seconds} seconds, Container {container_name} is unlocked".format(
             seconds=str(num_tries * 5), container_name=container_name

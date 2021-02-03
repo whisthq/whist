@@ -22,7 +22,6 @@ def get_redis_url():
     redis_url = os.environ.get("REDIS_URL", "")
     if redis_tls_url == "":
         fractal_log(
-            "get_redis_url",
             "",
             "Could not find REDIS_TLS_URL. Will try rediss://",
             level=logging.WARNING,
@@ -32,7 +31,6 @@ def get_redis_url():
 
     if redis_url == "":
         fractal_log(
-            "get_redis_url",
             "",
             "Could not find REDIS_URL. Will try redis://",
             level=logging.WARNING,
@@ -42,14 +40,12 @@ def get_redis_url():
 
     if try_redis_url(redis_tls_url):
         fractal_log(
-            "get_redis_url",
             None,
             f"REDIS_URL: {redis_tls_url}",
         )
         return redis_tls_url
     if try_redis_url(redis_url):
         fractal_log(
-            "get_redis_url",
             None,
             f"REDIS_URL: {redis_url}",
         )

@@ -32,7 +32,6 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     )
 
     fractal_log(
-        function="update_cluster",
         label="None",
         logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
     )
@@ -84,7 +83,6 @@ def update_region(self, region_name="us-east-1", ami=None):
         region_to_ami.ami_id = ami
         fractal_sql_commit(db)
         fractal_log(
-            "update_region",
             None,
             f"updated AMI in {region_name} to {ami}",
         )
@@ -94,7 +92,6 @@ def update_region(self, region_name="us-east-1", ami=None):
 
     if len(all_clusters) == 0:
         fractal_log(
-            function="update_region",
             label=None,
             logs=f"No clusters found in region {region_name}",
             level=logging.WARNING,
@@ -108,7 +105,6 @@ def update_region(self, region_name="us-east-1", ami=None):
         return
 
     fractal_log(
-        function="update_region",
         label=None,
         logs=f"Updating clusters: {all_clusters}",
     )
@@ -118,7 +114,6 @@ def update_region(self, region_name="us-east-1", ami=None):
         tasks.append(task.id)
 
     fractal_log(
-        function="update_region",
         label=None,
         logs="update_region is returning with success. It spun up the "
         f"following update_cluster tasks: {tasks}",
@@ -201,7 +196,6 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
     if empty_instances == 0:
         fractal_log(
-            "manual_scale_cluster",
             None,
             f"""Cluster {cluster} had {num_instances} instances but should have
                 {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance

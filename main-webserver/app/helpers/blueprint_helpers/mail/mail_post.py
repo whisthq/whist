@@ -46,7 +46,6 @@ def forgot_password_helper(username, email_token=None):
             sendgrid_client.send(message)
         except Exception as e:
             fractal_log(
-                function="forgot_password_helper",
                 label=username,
                 logs="Mail send failed: Error code " + str(e),
                 level=logging.ERROR,
@@ -87,7 +86,6 @@ def cancel_helper(user, feedback):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="cancel_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -114,7 +112,6 @@ def verification_helper(user, token):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="verification_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -139,7 +136,6 @@ def referral_mail_helper(user, recipients, code):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="referral_mail_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -164,7 +160,6 @@ def feedback_helper(user, feedback, feedback_type):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="feedback_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -187,7 +182,6 @@ def trial_start_helper(user, location, code):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="trial_start_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -208,7 +202,6 @@ def trial_start_helper(user, location, code):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="trial_start_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -235,7 +228,6 @@ def computer_ready_helper(user, date, code, location):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="computer_ready_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -254,7 +246,6 @@ def computer_ready_helper(user, date, code, location):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="computer_ready_helper",
             label=user,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -279,7 +270,6 @@ def join_waitlist_helper(email, name, date):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="join_waitlist_helper",
             label=email,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -304,7 +294,6 @@ def waitlist_referral_helper(email, name, code, recipient):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="waitlist_referral_helper",
             label=email,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,

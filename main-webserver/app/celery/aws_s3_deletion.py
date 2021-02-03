@@ -26,13 +26,11 @@ def delete_logs_from_s3(file_name, bucket="fractal-protocol-logs"):
     try:
         s3_resource.Object(bucket, file_name).delete()
         fractal_log(
-            function="delete_logs_from_s3",
             label="None",
             logs="Deleted log {file_name} from S3".format(file_name=file_name),
         )
     except Exception as e:
         fractal_log(
-            function="delete_logs_from_s3",
             label="None",
             logs="Deleting log {file_name} failed: {error}".format(
                 file_name=file_name, error=str(e)

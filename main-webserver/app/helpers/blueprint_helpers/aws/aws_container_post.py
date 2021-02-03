@@ -70,7 +70,6 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
         fractal_log(
-            function="ping_helper",
             label=str(username),
             logs="{username} just disconnected from Fractal".format(username=username),
         )
@@ -87,7 +86,6 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
         fractal_log(
-            function="ping_helper",
             label=str(username),
             logs="{username} just connected to Fractal".format(username=username),
         )

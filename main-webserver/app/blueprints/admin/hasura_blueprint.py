@@ -16,6 +16,6 @@ def hasura_auth_get(**kwargs):  # pylint: disable=unused-argument
     token = request.headers.get("Authorization")
     output = auth_helper(token)
 
-    fractal_log("", "", str(output))
+    fractal_log(None, str(output))
 
     return jsonify(output), SUCCESS

@@ -50,7 +50,6 @@ def fractal_auth(func):
                 username = request.args.get("username")
         except Exception as e:
             fractal_log(
-                function="",
                 label="",
                 logs="Bearer error: {error}".format(error=str(e)),
                 level=logging.ERROR,

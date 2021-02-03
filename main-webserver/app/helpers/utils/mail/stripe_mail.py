@@ -9,7 +9,6 @@ from app.helpers.utils.general.logs import fractal_log
 
 def chargeFailedMail(username, custId):
     fractal_log(
-        function="chargeFailedMail",
         label=username,
         logs="Sending charge failed email to {}".format(username),
     )
@@ -26,7 +25,6 @@ def chargeFailedMail(username, custId):
         sendgrid_client.send(message)
     except Exception as e:
         fractal_log(
-            function="chargeFailedMail",
             label=username,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -43,11 +41,10 @@ def chargeFailedMail(username, custId):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="chargeFailedMail", label=username, logs="Sent charge failed email to support"
+            label=username, logs="Sent charge failed email to support"
         )
     except Exception as e:
         fractal_log(
-            function="chargeFailedMail",
             label=username,
             logs="Mail send failed: Error code " + str(e),
             level=logging.ERROR,
@@ -66,17 +63,15 @@ def chargeSuccessMail(username, custId):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="chargeSuccessMail",
             label="Stripe",
             logs="Sent charge success email to support",
         )
     except Exception as e:
-        fractal_log(function="chargeSuccessMail", label="Stripe", logs=str(e), level=logging.ERROR)
+        fractal_log(label="Stripe", logs=str(e), level=logging.ERROR)
 
 
 def trialEndingMail(user):
     fractal_log(
-        function="trialEndingMail",
         label="Stripe",
         logs="Sending trial ending email to {}".format(user),
     )
@@ -92,10 +87,10 @@ def trialEndingMail(user):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="trialEndingMail", label="Stripe", logs="Sent trial ending email to customer"
+            label="Stripe", logs="Sent trial ending email to customer"
         )
     except Exception as e:
-        fractal_log(function="trialEndingMail", label="Stripe", logs=str(e), level=logging.ERROR)
+        fractal_log(label="Stripe", logs=str(e), level=logging.ERROR)
 
 
 def trialEndedMail(username):
@@ -110,12 +105,11 @@ def trialEndedMail(username):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="trialEndedMail",
             label="Stripe",
             logs="Sent trial ended email to {}".format(username),
         )
     except Exception as e:
-        fractal_log(function="trialEndedMail", label="Stripe", logs=str(e), level=logging.ERROR)
+        fractal_log(label="Stripe", logs=str(e), level=logging.ERROR)
 
 
 def creditAppliedMail(username):
@@ -139,12 +133,11 @@ def creditAppliedMail(username):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="creditAppliedMail",
             label="Mail",
             logs="Sent credit applied email to {}".format(username),
         )
     except Exception as e:
-        fractal_log(function="creditAppliedMail", label="Mail", logs=str(e), level=logging.ERROR)
+        fractal_log(label="Mail", logs=str(e), level=logging.ERROR)
         return 1
 
     return 0
@@ -162,9 +155,8 @@ def planChangeMail(username, newPlan):
 
         sendgrid_client.send(message)
         fractal_log(
-            function="planChangeMail",
             label="Mail",
             logs="Sent plan changed email to {}".format(username),
         )
     except Exception as e:
-        fractal_log(function="planChangeMail", label="Mail", logs=str(e), level=logging.ERROR)
+        fractal_log(label="Mail", logs=str(e), level=logging.ERROR)
