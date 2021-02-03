@@ -94,36 +94,31 @@ var fractalIDs map[string]string = make(map[string]string)
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
 // TODO(Anton): we need to keep some sort of mapping from FractalIDs to uinput devices
-type UinputDeviceList struct {
-	Devices []dockercontainer.DeviceMapping `json:"devices"`
-}
 
 // Updates the fractalIDs mapping with a request from the ecs-agent
 func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error {
-	if req.ContainerID == "" || req.FractalID == "" {
-		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.ContainerID: \"%s\", req.FractalID: \"%s\"",
-			req.ContainerID, req.FractalID)
+	if req.DockerID == "" || req.FractalID == "" {
+		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.DockerID: \"%s\", req.FractalID: \"%s\"",
+			req.DockerID, req.FractalID)
 	}
 
-	fractalIDs[req.ContainerID] = req.FractalID
-	logger.Infof("Added mapping from ContainerID %s to FractalID %s", req.ContainerID, req.FractalID)
+	fractalIDs[req.DockerID] = req.FractalID
+	logger.Infof("Added mapping from DockerID %s to FractalID %s", req.DockerID, req.FractalID)
 	return nil
 }
 
 // TODO(Anton): Actually Implement this function
-func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) (UinputDeviceList, error) {
+func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]dockercontainer.DeviceMapping, error) {
 	FractalID := r.FractalID
 	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
 
 	// TODO(Anton): actually create the uinput devices, etc.
 
-	return UinputDeviceList{
-		[]dockercontainer.DeviceMapping{
-			dockercontainer.DeviceMapping{
-				PathOnHost:        "/dev/input/event3",
-				PathInContainer:   "/dev/input/event3",
-				CgroupPermissions: "rwm", // read, write, mknod (the default)
-			},
+	return []dockercontainer.DeviceMapping{
+		{
+			PathOnHost:        "/dev/input/event3", // this will vary based on Anton's implementation
+			PathInContainer:   "/dev/input/event3", // we should hardcode the 3, 4, 5 inside the container to simplify the container-images side of things
+			CgroupPermissions: "rwm",               // read, write, mknod (the default)
 		},
 	}, nil
 }
