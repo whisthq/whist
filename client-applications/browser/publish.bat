@@ -57,9 +57,9 @@ echo                                   must be greater than the current version
 echo                                   in S3 bucket
 echo   -bucket=BUCKET                set the S3 bucket to upload to (if -publish=true)
 echo                                   options are:
-echo                                     fractal-windows-browser-dev [Windows Development Bucket]
+echo                                     fractal-browser-windows-dev [Windows Development Bucket]
 echo                                     fractal-browser-windows-staging [Windows Staging Bucket]
-echo                                     fractal-windows-browser-prod [Windows Production Bucket]
+echo                                     fractal-browser-windows-prod [Windows Production Bucket]
 echo   -publish=PUBLISH              set whether to publish to S3 and auto-update live apps
 echo                                   defaults to false, options are true/false
 exit /b 0
