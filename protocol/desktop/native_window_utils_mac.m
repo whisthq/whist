@@ -29,14 +29,14 @@ Public Function Implementations
 ============================
 */
 
-int set_native_window_color(SDL_Window *window, RGBColor color) {
+int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     /*
         Set the color of the titlebar of the native macOS window, and the corresponding
         titlebar text color.
 
         Arguments:
-            window (SDL_Window*): SDL window wrapper for the NSWindow whose titlebar to modify
-            color (RGBColor):     The RGB color to use when setting the titlebar color
+            window (SDL_Window*):       SDL window wrapper for the NSWindow whose titlebar to modify
+            color (FractalRGBColor):    The RGB color to use when setting the titlebar color
 
         Returns:
             (int): 0 on success, -1 on failure.
