@@ -112,7 +112,6 @@ MouseMotionAccumulation mouse_state = {0};
 
 // Window resizing state
 SDL_mutex* window_resize_mutex;             // protects pending_resize_message
-const float window_resize_interval = 0.2F;  // seconds in between sending resize requests
 clock window_resize_timer;
 volatile bool pending_resize_message =
     false;  // should be set to true if sdl event handler was not able to process resize event due
@@ -748,11 +747,11 @@ int main(int argc, char* argv[]) {
 
             // Check if window resize message should be sent to server
             if (pending_resize_message &&
-                get_timer(window_resize_timer) >= window_resize_interval) {
+                get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
                 safe_SDL_LockMutex(window_resize_mutex);
                 if (pending_resize_message &&
                     get_timer(window_resize_timer) >=
-                        window_resize_interval) {  // double checked locking
+                        WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {  // double checked locking
                     pending_resize_message = false;
                     send_message_dimensions();
                     start_timer(&window_resize_timer);

@@ -454,15 +454,12 @@ int32_t render_screen(SDL_Renderer* renderer) {
         // get_timer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
-            // SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 100, 20, 160,
-            // SDL_ALPHA_OPAQUE); SDL_RenderClear((SDL_Renderer*)renderer);
-
             // Subsection of texture that should be rendered to screen.
             SDL_Rect output_rect;
             output_rect.x = 0;
             output_rect.y = 0;
-            if (server_width >= output_width && server_width <= output_width + 8 &&
-                server_height >= output_height && server_height <= output_height + 2) {
+            if (output_width <= server_width && server_width <= output_width + 8 &&
+                output_height <= server_height && server_height <= output_height + 2) {
                 // Since RenderCopy scales the texture to the size of the window by default, we use
                 // this to truncate the frame to the size of the window to avoid scaling
                 // artifacts (blurriness). The frame may be larger than the window because the
@@ -473,8 +470,21 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 if (server_width > output_width || server_height > output_height) {
                     // We failed to force the window dimensions to be multiples of 8, 2 in
                     // `handle_window_size_changed`
-                    LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
-                                server_height, output_width, output_height);
+                    static bool already_sent_message = false;
+                    static long long last_server_dims = -1;
+                    static long long last_output_dims = -1;
+                    if (server_width * 100000LL + server_height != last_server_dims
+                     || output_width * 100000LL + output_height != last_output_dims) {
+                        // If truncation to/from dimensions have changed, then we should resend Truncating message
+                        already_sent_message = false;
+                    }
+                    last_server_dims = server_width * 100000LL + server_height;
+                    last_output_dims = output_width * 100000LL + output_height;
+                    if (!already_sent_message) {
+                        LOG_WARNING("Truncating window from %dx%d to %dx%d", server_width,
+                                    server_height, output_width, output_height);
+                        already_sent_message = true;
+                    }
                 }
             } else {
                 // If the condition is false, most likely that means the server has not yet updated
