@@ -115,6 +115,10 @@ def update_region(self, region_name="us-east-1", ami=None):
         task = update_cluster.delay(region_name, cluster.cluster, ami)
         tasks.append(task.id)
 
+    # format tasks to be space separated (used by ami building workflow to poll for success)
+    delim = " "
+    formatted_tasks = delim.join(tasks)
+
     fractal_log(
         function="update_region",
         label=None,
@@ -128,7 +132,7 @@ def update_region(self, region_name="us-east-1", ami=None):
 
     self.update_state(
         state="SUCCESS",
-        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": tasks},
+        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
     )
 
     factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
