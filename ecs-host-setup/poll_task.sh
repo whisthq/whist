@@ -1,7 +1,7 @@
 # ${1} the webserver url
 # ${2} the task ID in question
 
-# Wait for initial task to complete
+# Wait for initial task to complete – potential problem: initial task id is bad and this runs forever
 state=PENDING
 while [[ $state =~ PENDING ]]; do
     status=$(curl -L -X GET "${1}status/${2}")
@@ -12,7 +12,7 @@ done
 subtasks=$(echo $status | jq ".output.tasks" | sed 's/[][ \"]//g' | sed 's/,/ /g')
 
 # If the task suceeded, process subtasks
-if [[ $state =~ SUCCESS ]] && [[ ! -z $subtasks ]]; then
+if [[ $state =~ SUCCESS ]]; then
     for task in ${subtasks}; do
         if [ $task != null ] && [ ! -z $task ]; then
             # Recursively call script on subtask
@@ -26,6 +26,6 @@ if [[ $state =~ SUCCESS ]] && [[ ! -z $subtasks ]]; then
     # If all subtasks did not fail, exit script with 0 (success)
     exit 0
 else
-    # If main task failed, exit script with 1 (failure)
+    # If task failed, exit script with 1 (failure)
     exit 1
 fi

@@ -121,6 +121,8 @@ jobs:
                       --data "{\"region_name\": \"${region}\"}" \
                       "${{ env.webserver_url }}aws_container/update_region" | jq -r ".ID")
 
+                    # TODO: CHECK IF ID IS VALID
+
                     # verify update_region succeeded
                     bash poll_task ${{ env.webserver_url}} ${ celery_task_output_id }
                     if [[ $? =~ 1 ]]; then
