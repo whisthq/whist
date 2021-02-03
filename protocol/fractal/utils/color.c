@@ -30,18 +30,18 @@ Public Function Implementations
 
 #define CLAMP_COLOR(x) (((x) < 0) ? 0 : (((x) > 255) ? 255 : (x)))
 
-RGBColor yuv_to_rgb(YUVColor yuv_color) {
+FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
     /*
         Convert a color from YUV to RGB.
 
         Arguments:
-            yuv_color (YUVColor): YUV color to convert to RGB
+            yuv_color (FractalYUVColor): YUV color to convert to RGB
 
         Return:
-            rgb_color (RGBColor): The converted color, or black {0} on failure.
+            rgb_color (FractalRGBColor): The converted color, or black {0} on failure.
     */
 
-    RGBColor rgb_color = {
+    FractalRGBColor rgb_color = {
         (uint8_t)lround(1.164 * ((float)yuv_color.y - 16.) + 1.596 * ((float)yuv_color.v - 128.)),
         (uint8_t)lround(1.164 * ((float)yuv_color.y - 16.) - 0.392 * ((float)yuv_color.u - 128.) -
                         0.813 * ((float)yuv_color.v - 128.)),
@@ -54,13 +54,30 @@ RGBColor yuv_to_rgb(YUVColor yuv_color) {
     return rgb_color;
 }
 
-bool color_requires_dark_text(RGBColor rgb_color) {
+int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs){
+    /*
+        Compare two RGB colors for equality.
+
+        Arguments:
+            lhs (FractalRGBColor): The first color for comparison
+            rhs (FractalRGBColor): The second color for comparison
+
+        Return:
+            (int): 0 if the colors are equal, else 1.
+    */
+    if (lhs.red == rhs.red && lhs.green == rhs.green && lhs.blue == rhs.blue) {
+        return 0;
+    }
+    return 1;
+}
+
+bool color_requires_dark_text(FractalRGBColor rgb_color) {
     /*
         Figure out whether a given background color needs foreground text to be dark
         or light, according to https://stackoverflow.com/a/3943023.
 
         Arguments:
-            rgb_color (RGBColor): RGB background color
+            rgb_color (FractalRGBColor): RGB background color
 
         Return:
             (bool): True if the color needs dark text, and false if the color needs light text.

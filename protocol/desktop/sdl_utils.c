@@ -190,7 +190,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    const RGBColor black = {0, 0, 0};
+    const FractalRGBColor black = {0, 0, 0};
     set_native_window_color(sdl_window, black);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
