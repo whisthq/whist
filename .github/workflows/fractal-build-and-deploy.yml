@@ -56,6 +56,16 @@ jobs:
                   echo "branch is set to: $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
+            - name: Set DEPLOY_ENVIRONMENT Based on Git Branch
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "dev" ]
+                      echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
+
             - name: Detect Job(s)
               id: detect-job
               run: |
@@ -96,7 +106,7 @@ jobs:
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
-            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "container-images-publish-images-ghcr"]'), needs.fractal-publish-build-config.outputs.job)
         steps:
             - name: Checkout Git Repository
@@ -130,7 +140,7 @@ jobs:
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./push_container_image.sh $app
+                    ./push_container_image.sh $app $DEPLOY_ENVIRONMENT
                   done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
