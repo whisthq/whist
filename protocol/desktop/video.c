@@ -52,7 +52,7 @@ extern volatile CodecType output_codec_type;
 extern volatile int running_ci;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-extern volatile RGBColor native_window_color;
+extern volatile RGBColor* native_window_color;
 extern volatile bool native_window_color_update;
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
@@ -358,8 +358,19 @@ int32_t render_screen(SDL_Renderer* renderer) {
 
             RGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
-            if (new_rgb_color != native_window_color) {
-                native_window_color = new_rgb_color;
+            if ((RGBColor*)native_window_color == NULL) {
+                // no window color has been set; create it!
+                RGBColor* new_native_window_color = safe_malloc(sizeof(RGBColor));
+                *new_native_window_color = new_rgb_color;
+                native_window_color = new_native_window_color;
+                native_window_color_update = true;
+            } else if (new_rgb_color != *(RGBColor*)native_window_color) {
+                // window color has changed; update it!
+                RGBColor* old_native_window_color = (RGBColor*)native_window_color;
+                RGBColor* new_native_window_color = safe_malloc(sizeof(RGBColor));
+                *new_native_window_color = new_rgb_color;
+                native_window_color = new_native_window_color;
+                free(old_native_window_color);
                 native_window_color_update = true;
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
@@ -443,6 +454,10 @@ int32_t render_screen(SDL_Renderer* renderer) {
         has_rendered_yet = true;
         rendering = false;
     }
+
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+    free((RGBColor*)native_window_color);
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
     SDL_Delay(5);
     return 0;
