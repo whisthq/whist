@@ -353,11 +353,8 @@ int32_t render_screen(SDL_Renderer* renderer) {
             }
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-            YUVColor new_yuv_color = {
-                video_context.data[0][0],
-                video_context.data[1][0],
-                video_context.data[2][0]
-            };
+            YUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
+                                      video_context.data[2][0]};
 
             RGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
