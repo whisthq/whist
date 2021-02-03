@@ -40,9 +40,7 @@ def chargeFailedMail(username, custId):
         sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sendgrid_client.send(message)
-        fractal_log(
-            label=username, logs="Sent charge failed email to support"
-        )
+        fractal_log(label=username, logs="Sent charge failed email to support")
     except Exception as e:
         fractal_log(
             label=username,
@@ -86,9 +84,7 @@ def trialEndingMail(user):
         sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
 
         sendgrid_client.send(message)
-        fractal_log(
-            label="Stripe", logs="Sent trial ending email to customer"
-        )
+        fractal_log(label="Stripe", logs="Sent trial ending email to customer")
     except Exception as e:
         fractal_log(label="Stripe", logs=str(e), level=logging.ERROR)
 

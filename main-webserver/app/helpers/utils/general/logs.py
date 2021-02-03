@@ -23,7 +23,7 @@ def fractal_log(label, logs, level=logging.INFO):
         function=str(caller_funcname),
         lineno=caller_lineno,
         label=str(label),
-        logs=str(logs)
+        logs=str(logs),
     )
 
     if level == logging.CRITICAL:
