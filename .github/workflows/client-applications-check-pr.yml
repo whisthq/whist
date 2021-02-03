@@ -132,7 +132,7 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
-              run: .\publish.bat -branch=${{ env.current_git_branch }} -version=1.0.0 -bucket=not-applicable -publish=false
+              run: .\publish.bat -version=1.0.0 -bucket=not-applicable -publish=false
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
@@ -152,4 +152,4 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --branch ${{ env.current_git_branch }} --version 1.0.0 --bucket not-applicable --publish false
+                  ./publish.sh --version 1.0.0 --bucket not-applicable --publish false
