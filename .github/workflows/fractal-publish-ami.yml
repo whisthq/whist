@@ -122,7 +122,7 @@ jobs:
                       "${{ env.webserver_url }}aws_container/update_region" | jq -er ".ID") # the -e flag is to make sure it fails if there isn't a task ID
 
                     # verify update_region succeeded
-                    bash poll_task ${{ env.webserver_url}} ${ celery_task_output_id }
+                    bash poll_task.sh ${{ env.webserver_url}} ${ celery_task_output_id }
                     if [[ $? =~ 1 ]]; then
                       echo "Failed to update region $region" && false
                     fi
