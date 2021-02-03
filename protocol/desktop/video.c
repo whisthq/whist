@@ -354,7 +354,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
             FractalYUVColor new_yuv_color = {video_context.data[0][0], video_context.data[1][0],
-                                      video_context.data[2][0]};
+                                             video_context.data[2][0]};
 
             FractalRGBColor new_rgb_color = yuv_to_rgb(new_yuv_color);
 
@@ -664,7 +664,8 @@ static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t 
         if (client_id == msgs->peer_id) {
             continue;
         }
-        if (draw_peer_cursor(renderer, x, y, msgs->color.red, msgs->color.green, msgs->color.blue) != 0) {
+        if (draw_peer_cursor(renderer, x, y, msgs->color.red, msgs->color.green,
+                             msgs->color.blue) != 0) {
             LOG_ERROR("Failed to draw spectator cursor.");
             ret = -1;
         }

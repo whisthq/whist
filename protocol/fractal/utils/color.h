@@ -80,7 +80,8 @@ int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs);
 
 /**
  * @brief                          Figure out whether a given background color needs foreground text
- *                                 to be dark or light, according to https://stackoverflow.com/a/3943023
+ *                                 to be dark or light, according to
+ *                                 https://stackoverflow.com/a/3943023
  *
  * @param rgb_color                The background color.
  *

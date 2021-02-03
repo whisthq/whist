@@ -734,7 +734,8 @@ int main(int argc, char* argv[]) {
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
             if (native_window_color_update && native_window_color) {
-                set_native_window_color((SDL_Window*)window, *(FractalRGBColor*)native_window_color);
+                set_native_window_color((SDL_Window*)window,
+                                        *(FractalRGBColor*)native_window_color);
                 native_window_color_update = false;
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR

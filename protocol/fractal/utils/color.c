@@ -54,7 +54,7 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
     return rgb_color;
 }
 
-int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs){
+int rgb_compare(FractalRGBColor lhs, FractalRGBColor rhs) {
     /*
         Compare two RGB colors for equality.
 
