@@ -117,7 +117,7 @@ First, we need to setup a local Redis and Postgres instance. Navigate to `tests/
 
 ### Testing
 
-Now, navigate to `tests` and run `bash run_tests.sh --no-mock-aws`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
+Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
 
 ## How To Contribute
 
@@ -127,7 +127,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 2. Lint your code by running `black .` and `pylint app` from the `main-webserver` directory. If this does not pass, your code will fail Github CI. NOTE: Depending on where the directory containing your virtual environment is located, `black .` may attempt to lint the source code for all of the packages specified in your requirements files. In this case, use the --exclude flag.
 
-3. Run all test files by running `pytest --no-mock-aws` in the `main-webserver` directory. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
+3. Run all test files by running `bash run_tests.sh` in the `main-webserver/tests` directory. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
 
 4. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
 
