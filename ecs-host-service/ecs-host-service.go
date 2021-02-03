@@ -430,15 +430,10 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
+// When container disconnects, re-sync the user config back to S3
+// and delete the folder.
+// Takes hostPort (the host port of the container) as an argument.
 func saveUserConfig(hostPort uint16) {
-	/*
-		When container disconnects, re-sync the user config back to S3
-		and delete the folder
-
-		Arguments:
-			hostPort: the host port of the container
-	*/
-
 	appName, ok := containerAppNames[hostPort]
 	if !ok {
 		logger.Infof("No app name found for hostPort %v", hostPort)
@@ -463,8 +458,8 @@ func saveUserConfig(hostPort uint16) {
 		tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
 		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 		// tar is only fatal when exit status is 2 -
-		//		exit status 1 just means that some files have changed while tarring,
-		//		which is an ignorable error
+		//    exit status 1 just means that some files have changed while tarring,
+		//    which is an ignorable error
 		if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
 			logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
 		} else {
@@ -487,25 +482,18 @@ func saveUserConfig(hostPort uint16) {
 	os.RemoveAll(configPath)
 }
 
+// Populate the config folder under the container's host port for the
+// container's attached user and running application.
+// Takes the request to the `set_container_start_values` endpoint as
+// and argument and returns nil if no errors, and error object if error.
 func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
-	/*
-		Populate the config folder under the container's host port for the
-		container's attached user and running application
-
-		Arguments:
-			req: the SetContainerStartValuesRequest (contains UserID and HostPort)
-
-		Returns:
-			error: nil if no errors, else the error object generated
-	*/
-
 	// Get needed vars and create path for config
-	userID := req.UserID
-    containerID := containerIDs[(uint16)(req.HostPort)]
+    userID := req.UserID
+	containerID := containerIDs[(uint16)(req.HostPort)]
 	hostPort := logger.Sprintf("%v", req.HostPort)
 	configPath := userConfigsDirectory + hostPort + "/"
 
-    // Make directory to move configs to
+	// Make directory to move configs to
 	err := os.MkdirAll(configPath, 0777)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", configPath, err)
@@ -540,19 +528,19 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	appName := strings.TrimSpace(string(appNameOutput))
 
-	// store app name and user ID in maps
+	// Store app name and user ID in maps
 	containerAppNames[uint16(req.HostPort)] = appName
 	containerUserIDs[uint16(req.HostPort)] = string(userID)
 
-	// if userID is not set, we don't want to try to retrieve configs from S3
+	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
 		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
 		// Retrieve app config from S3
 		getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 		getConfigOutput, err := getConfigCmd.CombinedOutput()
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
-		//		this means that it's the user's first run and they dont' have any settings
-		//		stored for this application yet.
+		//    this means that it's the user's first run and they don't have any settings
+		//    stored for this application yet.
 		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
 			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
 		} else {
@@ -563,19 +551,12 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	return nil
 }
 
+// Creates a file containing the DPI assigned to a specific container, and make
+// it accessible to that container. Also take the received User ID and retrieve
+// the user's app configs if the User ID is set.
+// Takes the request to the `set_container_start_values` endpoint as
+// and argument and returns nil if no errors, and error object if error.
 func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
-	/*
-		Creates a file containing the DPI assigned to a specific container, and make
-		it accessible to that container. Also take the received User ID and retrieve
-		the user's app configs if the User ID is set.
-
-		Arguments:
-			req: the SetContainerStartValuesRequest that contains DPI and User ID
-
-		Returns:
-			error: nil if no problems, error object if otherwise.
-	*/
-
 	// Compute container-specific directory to write start value data to
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
 		return logger.MakeError("Invalid HostPort for start values request: %v", req.HostPort)
