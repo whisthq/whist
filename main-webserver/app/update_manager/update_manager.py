@@ -84,7 +84,7 @@ def try_end_update(region_name: str) -> bool:
     # release lock
     redis_conn.delete(_REDIS_LOCK_KEY)
     # notify slack
-    slack_send_safe("#alerts-test", f":unlock: webserver is in maintenance mode on region {region_name}")
+    slack_send_safe("#alerts-test", f":unlock: webserver has ended maintenance mode on region {region_name}")
     return True
 
 

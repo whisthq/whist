@@ -604,8 +604,7 @@ def assign_container(
         )
 
 
-    ret = user_container_schema.dump(base_container)
-    return ret
+    return user_container_schema.dump(base_container)
 
 
 @shared_task(bind=True)
