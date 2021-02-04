@@ -22,9 +22,12 @@ def bad_app(*args, **kwargs):
     raise BadAppError
 
 
+def set_valid_subscription(monkeypatch, valid):
+    subscriptions = ["some_subscription"] if valid else []
+    monkeypatch.setattr(StripeClient, "get_subscriptions", function(returns=subscriptions))
+
+
 # the following repeated monkeypatches (for userschema, stripeclient) are temporary, will need to replace with properly authenticated users later
-
-
 def test_bad_app(client, authorized, monkeypatch):
     # I couldn't figure out how to patch a function that was defined at the
     # top level of a module. I found this solution at:
@@ -32,7 +35,7 @@ def test_bad_app(client, authorized, monkeypatch):
 
     monkeypatch.setattr(preprocess_task_info, "__code__", bad_app.__code__)
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
-    monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=True))
+    set_valid_subscription(monkeypatch, True)
 
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
@@ -40,7 +43,8 @@ def test_bad_app(client, authorized, monkeypatch):
     assert response.status_code == 400
 
 
-def test_no_username(client, authorized):
+def test_no_username(client, authorized, monkeypatch):
+    set_valid_subscription(monkeypatch, True)
 
     response = client.post("/container/assign", json=dict(app="VSCode"))
     assert response.status_code == 401
@@ -48,14 +52,16 @@ def test_no_username(client, authorized):
 
 def test_no_app(client, authorized, monkeypatch):
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
-    monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=True))
+    set_valid_subscription(monkeypatch, True)
 
     response = client.post("/container/assign", json=dict(username=authorized.user_id))
 
     assert response.status_code == 400
 
 
-def test_no_region(client, authorized):
+def test_no_region(client, authorized, monkeypatch):
+    set_valid_subscription(monkeypatch, True)
+
     response = client.post(
         "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
     )
@@ -88,7 +94,7 @@ def test_payment(client, make_authorized_user, monkeypatch):
                 - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
             )
 
-        monkeypatch.setattr(StripeClient, "validate_customer_id", function(returns=isStripeValid))
+        set_valid_subscription(monkeypatch, isStripeValid)
         monkeypatch.setattr(assign_container, "apply_async", apply_async)
 
         response = client.post(

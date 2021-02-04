@@ -204,17 +204,7 @@ def payment_required(func):
             days_since_account_created = (
                 time_diff / SECONDS_IN_MINUTE / MINUTES_IN_HOUR / HOURS_IN_DAY
             )
-            subscriptions = (
-                []
-                if not stripe_customer_id
-                else stripe_client.get_subscriptions(stripe_customer_id)
-            )
-
-            fractal_log(
-                function="payment_required",
-                label=current_user,
-                logs=f"Created {days_since_account_created} days ago, stripe {stripe_customer_id}",
-            )
+            subscriptions = stripe_client.get_subscriptions(stripe_customer_id)
 
             if days_since_account_created >= 7 and (not stripe_customer_id or not subscriptions):
                 return (
