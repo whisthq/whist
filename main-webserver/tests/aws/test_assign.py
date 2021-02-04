@@ -122,6 +122,7 @@ def test_update_region_locks(test_payment):
 
     us_east.region_being_updated = True
     db.session.commit()
+    db.session.expire_all()
 
     resp = test_payment(True, True)
     assert resp.status_code == 400
@@ -129,6 +130,7 @@ def test_update_region_locks(test_payment):
 
     us_east.region_being_updated = False
     db.session.commit()
+    db.session.expire_all()
 
     resp = test_payment(True, True)
     assert resp.status_code == 202
