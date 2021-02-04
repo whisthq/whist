@@ -327,6 +327,17 @@ def assign_container(
         logs=f"Starting to assign container in {region_name}",
     )
 
+    # first, check if the relevant region is being updated
+    if not current_app.testing:
+        curr_region = RegionToAmi.query.filter_by(region_name=region_name).first()
+        if curr_region.region_being_updated:
+            # if so, stop the assign op
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Requested region is currently being updated, try again later"},
+            )
+            raise Ignore
+
     set_container_state(
         keyuser=username,
         keytask=self.request.id,
@@ -594,6 +605,17 @@ def create_new_container(
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
 
+    # first, check if the relevant region is being updated
+    if not current_app.testing:
+        curr_region = RegionToAmi.query.filter_by(region_name=region_name).first()
+        if curr_region.region_being_updated:
+            # if so, stop the create op
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Requested region is currently being updated, try again later"},
+            )
+            raise Ignore
+
     task_start_time = time.time()
 
     set_container_state(
@@ -813,6 +835,18 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
+
+    # first, check if the relevant region is being updated
+    if not current_app.testing:
+        curr_region = RegionToAmi.query.filter_by(region_name=region_name).first()
+        if curr_region.region_being_updated:
+            # if so, stop the create op
+            self.update_state(
+                state="FAILURE",
+                meta={"msg": "Requested region is currently being updated, try again later"},
+            )
+            raise Ignore
+
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()
 
