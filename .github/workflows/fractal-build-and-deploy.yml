@@ -207,7 +207,7 @@ jobs:
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo fractal/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
+              run: echo "taskdef_name=$(echo fractal/${{ env.DEPLOY_ENVIRONMENT }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
 
             - name: Set Sentry environment as env variable
               run: |
