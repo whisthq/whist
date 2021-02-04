@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import Blueprint, current_app
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
@@ -20,9 +20,10 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     set_stun,
 )
 from app.constants.container_state_values import CANCELLED
-
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
+
+from app.models import RegionToAmi
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -89,6 +90,17 @@ def test_endpoint(action, **kwargs):
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
 
+            # check if the webserver is currently updating
+        if not current_app.testing:
+            curr_region = RegionToAmi.query.filter_by(region_name=region_name).first()
+            if curr_region is None:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                return response
+            if curr_region.region_being_updated:
+                # if so, stop the create op
+                response = jsonify({"status": "Region is currently being updated"}), BAD_REQUEST
+                return response
+
         task = create_new_cluster.apply_async(
             [cluster_name, instance_type, ami, region_name, min_size, max_size]
         )
@@ -134,6 +146,17 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+
+        # check if the webserver is currently updating
+        if not current_app.testing:
+            curr_region = RegionToAmi.query.filter_by(region_name=region_name).first()
+            if curr_region is None:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                return response
+            if curr_region.region_being_updated:
+                # if so, stop the create op
+                response = jsonify({"status": "Region is currently being updated"}), BAD_REQUEST
+                return response
 
         task = assign_container.apply_async(
             [username, task_definition_arn],
@@ -275,6 +298,16 @@ def aws_container_assign(**kwargs):
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
         # assign a container.
+        # check if the webserver is currently updating
+        if not current_app.testing:
+            curr_region = RegionToAmi.query.filter_by(region_name=region).first()
+            if curr_region is None:
+                response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+                return response
+            if curr_region.region_being_updated:
+                # if so, stop the create op
+                response = jsonify({"status": "Region is currently being updated"}), BAD_REQUEST
+                return response
         try:
             task_arn, _, _ = preprocess_task_info(app)
         except BadAppError:
