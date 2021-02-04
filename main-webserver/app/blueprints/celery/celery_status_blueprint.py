@@ -16,6 +16,7 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     try:
         result = current_app.AsyncResult(task_id)
+
         if result.status == "SUCCESS":
             response = {"state": result.status, "output": result.result}
             return make_response(jsonify(response), 200)

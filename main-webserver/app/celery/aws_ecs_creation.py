@@ -8,8 +8,8 @@ from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
+from app.update_manager.update_manager import wait_no_update_and_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
-
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -306,6 +306,7 @@ def _get_num_extra(taskdef):
 
 
 @shared_task(bind=True)
+@wait_no_update_and_track_task
 def assign_container(
     self,
     username,
@@ -327,7 +328,6 @@ def assign_container(
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
-
     fractal_log(
         function="assign_container",
         label=username,
@@ -602,10 +602,14 @@ def assign_container(
         datadogEvent_containerAssign(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
-    return user_container_schema.dump(base_container)
+
+
+    ret = user_container_schema.dump(base_container)
+    return ret
 
 
 @shared_task(bind=True)
+@wait_no_update_and_track_task
 def create_new_container(
     self,
     username,
@@ -630,7 +634,6 @@ def create_new_container(
         dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
-
     task_start_time = time.time()
 
     set_container_state(
@@ -825,10 +828,13 @@ def create_new_container(
             state="FAILURE",
             meta={"msg": "Error updating container {} in SQL.".format(task_id)},
         )
+
         raise Ignore
 
 
+
 @shared_task(bind=True)
+@wait_no_update_and_track_task
 def create_new_cluster(
     self,
     cluster_name=None,

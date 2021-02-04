@@ -3,6 +3,7 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
+from app.update_manager.update_manager import try_start_update, try_end_update
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
@@ -164,6 +165,16 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "start_update":
+        region_name = kwargs["body"]["region_name"]
+        success = try_start_update(region_name)
+        return jsonify({"success": success}), ACCEPTED
+
+    if action == "end_update":
+        region_name = kwargs["body"]["region_name"]
+        success = try_end_update(region_name)
+        return jsonify({"success": success}), ACCEPTED
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
