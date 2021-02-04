@@ -13,7 +13,10 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
 
 
 from ..patches import apply_async, function
+
 from app.helpers.utils.payment.stripe_client import StripeClient
+from app.models import db
+from app.models.hardware import RegionToAmi
 from app.serializers.public import UserSchema
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 
@@ -110,3 +113,22 @@ def test_payment_all(test_payment, has_trial, has_subscription, expected):
     Tests the @payment_required decorator with whether a user has/does not have a free Fractal trial and has/does not have a subscription
     """
     assert test_payment(has_trial, has_subscription).status_code == expected
+
+
+def test_update_region_locks(test_payment):
+
+    db.session.expire_all()
+    us_east = RegionToAmi.query.get(region_name="us-east-1").first()
+
+    us_east.region_being_updated = True
+    db.session.commit()
+
+    resp = test_payment(True, True)
+    assert resp.status_code == 400
+    assert resp.status == "Region is currently being updated"
+
+    us_east.region_being_updated = True
+    db.session.commit()
+
+    resp = test_payment(True, True)
+    assert resp.status_code == 202
