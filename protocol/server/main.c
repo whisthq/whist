@@ -46,7 +46,7 @@ Includes
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/logging.h"
-#include "../fractal/video/cpucapturetransfer.h"
+#include "../fractal/video/transfercapture.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
 #include "client.h"
@@ -388,9 +388,13 @@ int32_t send_video(void* opaque) {
             if (device->using_nvidia) {
                 // If this device uses a device encoder, then we should update it
                 update_capture_encoder(device, current_bitrate, client_codec_type);
-                // We keep the dummy encoder as-is
+                // We keep the dummy encoder as-is,
+                // the real encoder was just updated with update_capture_encoder
                 update_encoder = false;
             } else {
+                // Keep track of whether or not a new encoder is being used now
+                bool new_encoder_used = false;
+
                 // Otherwise, this capture device must use an external encoder,
                 // so we should start making it in our encoder factory
                 if (pending_encoder) {
@@ -404,6 +408,8 @@ int32_t send_video(void* opaque) {
                         encoder = encoder_factory_result;
                         pending_encoder = false;
                         update_encoder = false;
+
+                        new_encoder_used = true;
                     }
                 } else {
                     // Starting making new encoder. This will set pending_encoder=true, but won't
@@ -411,7 +417,6 @@ int32_t send_video(void* opaque) {
                     LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate,
                              max_mbps);
                     current_bitrate = (int)(max_mbps * 1024 * 1024);
-                    pending_encoder = true;
                     encoder_finished = false;
                     encoder_factory_server_w = device->width;
                     encoder_factory_server_h = device->height;
@@ -425,27 +430,20 @@ int32_t send_video(void* opaque) {
                         encoder = encoder_factory_result;
                         pending_encoder = false;
                         update_encoder = false;
+
+                        new_encoder_used = true;
                     } else {
                         SDL_CreateThread(multithreaded_encoder_factory,
                                          "multithreaded_encoder_factory", NULL);
+                        pending_encoder = true;
                     }
                 }
 
                 // Reinitializes the internal context that handles transferring from device to
                 // encoder.
-                // TODO: Create this function using the comments below
-                // reinitialize_transfer_context(device, encoder);
-#ifdef _WIN32
-                if (encoder->type == NVENC_ENCODE) {
-                    // initialize the transfer context
-                    if (!dxgi_cuda_start_transfer_context(device)) {
-                        device->dxgi_cuda_available = true;
-                    }
-                } else if (device->dxgi_cuda_available) {
-                    // end the transfer context
-                    dxgi_cuda_close_transfer_context();
+                if (new_encoder_used) {
+                    reinitialize_transfer_context(device, encoder);
                 }
-#endif
             }
         }
 
@@ -486,22 +484,11 @@ int32_t send_video(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
-            // TODO: Make a function that does the following
-            // transfer_device_encoder(device, encoder);
-            // transfer the screen to a buffer
-            int transfer_res = 2;  // haven't tried anything yet
-#if defined(_WIN32)
-            if (encoder->type == NVENC_ENCODE && device->dxgi_cuda_available &&
-                device->texture_on_gpu) {
-                // if dxgi_cuda is setup and we have a dxgi texture on the gpu
-                transfer_res = dxgi_cuda_transfer_capture(device, encoder);
-            }
-#endif
-            if (transfer_res) {
-                // if previous attempt failed or we need to use cpu
-                transfer_res = cpu_transfer_capture(device, encoder);
-            }
-            if (transfer_res) {
+            // transfer the capture from the device to the encoder
+            // This function will DXGI CUDA optimize if possible,
+            // Or do nothing if the device already encoded the capture
+            // with nvidia capture SDK
+            if (transfer_capture(device, encoder) != 0) {
                 // if there was a failure
                 exiting = true;
                 break;
