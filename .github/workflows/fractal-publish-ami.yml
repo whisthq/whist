@@ -115,9 +115,6 @@ jobs:
                     --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
                     ${{ env.graphql_db_url }}
 
-                    # TODO – REMOVE AFTER TESTING! omg it works with no clusters let's see if it works with three!
-                    region=eu-west-1
-
                     # run update_region on each region
                     celery_task_output_id=$(curl -X POST \
                       -H "Content-Type: application/json" \
