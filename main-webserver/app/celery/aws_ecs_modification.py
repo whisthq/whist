@@ -104,7 +104,6 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
                     )
                 },
             )
-            ecs_client.spin_til_done(offset=0)
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
