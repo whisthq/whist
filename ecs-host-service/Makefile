@@ -53,7 +53,9 @@ else
 endif
 
 build: checkCI
-	GOPRIVATE=github.com/fractal/ecs-agent $(GOGET) -d github.com/fractal/ecs-agent/agent@dev
+	# GOPRIVATE=github.com/fractal/ecs-agent $(GOGET) -d github.com/fractal/ecs-agent/agent@dev
+	# go mod tidy
+	GOPRIVATE=github.com/fractal/uinput-go $(GOGET) -d github.com/fractal/uinput-go/@anton/updates
 	go mod tidy
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
