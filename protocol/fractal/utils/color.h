@@ -63,7 +63,7 @@ Public Functions
  * @param yuv_color                The YUV color to convert to RGB.
  *
  * @returns                        A filled struct with the converted color, or black {0} on
- * failure.
+ *                                 failure.
  */
 FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color);
 
