@@ -31,7 +31,7 @@ python3 uinput_tester.py
 
 ## uinput_server.c
 
-More feature-ful version of `uinput_tester.py` that performs all the steps that the host service would need to do in order for the uinput driver to work. The script is based on `uinput_input_driver.c`. It creates virtual devices using `/dev/uinput`, then waits for the container to initialize a unix socket at `/tmp/sockets/uinput.sock`. Once it detects the file is present, it connects to the socket as a client and passes the file descriptors of the virtual devices over to the container.
+More feature-ful version of `uinput_tester.py` that performs all the steps that the host service would need to do in order for the uinput driver to work. The script is based on `uinput_input_driver.c`. It creates virtual devices using `/dev/uinput`, then initializes a unix socket at `/tmp/sockets/uinput.sock`. The `socket_input_driver` connects to the socket and receives the file descriptors.
 
 Usage:
 

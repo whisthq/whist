@@ -342,55 +342,37 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
 
 InputDevice* create_input_device() {
     LOG_INFO("creating socket input driver");
-    // set up a unix socket server to receive file descriptor
+
     struct sockaddr_un addr;
     int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd_socket == -1) {
-        char buf[1024];
-        strerror_r(errno, buf, 1024);
-        LOG_ERROR("Socket input driver failed to open unix socket: %s", buf);
-        return NULL;
-    }
-    memset(&addr, 0, sizeof(addr));
-    addr.sun_family = AF_UNIX;
-    char* socket_path = "/tmp/sockets/uinput.sock";
-    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path));
-    unlink(socket_path);
-    if (bind(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        char buf[1024];
-        strerror_r(errno, buf, 1024);
-        LOG_ERROR("Socket input driver failed to bind unix socket to %s: %s", socket_path, buf);
+        LOG_ERROR("Failed to initialize unix socket");
         return NULL;
     }
 
-    if (listen(fd_socket, 5) == -1) {
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    char* socket_path = "/tmp/sockets/uinput.sock";
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+
+    if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
-        LOG_ERROR("Socket input driver failed to listen on unix socket: %s", buf);
+        LOG_ERROR("Failed to connect to unix socket: %s", buf);
         return NULL;
     }
 
     int fds[3];
-    while (1) {
-        int client = accept(fd_socket, NULL, NULL);
-        if (client == -1) {
-            char buf[1024];
-            strerror_r(errno, buf, 1024);
-            LOG_WARNING("Socket input driver failed to accept client: %s", buf);
-            continue;
-        }
-        int n = recv_fds(client, fds, 3);
-        if (n != 3) {
-            LOG_ERROR(
-                "Socket input driver received incorrect number of file descriptors, expected 3, "
-                "got %d",
-                n);
-            return NULL;
-        }
-        LOG_INFO("Socket input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
-                 fds[2]);
-        break;
+    int n = recv_fds(fd_socket, fds, 3);
+    if (n != 3) {
+        LOG_ERROR(
+            "Socket input driver received incorrect number of file descriptors, expected 3, "
+            "got %d",
+            n);
+        return NULL;
     }
+    LOG_INFO("Socket input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
+             fds[2]);
 
     InputDevice* input_device = malloc(sizeof(InputDevice));
     memset(input_device, 0, sizeof(InputDevice));
