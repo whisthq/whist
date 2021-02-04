@@ -171,7 +171,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     for k in keys:
         if k not in cluster_data:
             raise ValueError(
-                f"""Expected key {k} in AWS describle_cluster API response. Got: {cluster_data}"""
+                f"Expected key {k} in AWS describle_cluster API response. Got: {cluster_data}"
             )
 
     num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
@@ -185,6 +185,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
                 "msg": f"Cluster {cluster} did not need any scaling.",
             },
         )
+        return
 
     # now we check if there are actually empty instances
     instances = ecs_client.list_container_instances(cluster)
@@ -193,22 +194,26 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     empty_instances = 0
     for instance_task_data in instances_tasks:
         if "runningTasksCount" not in instance_task_data:
-            raise ValueError(
-                f"""Expected key runningTasksCount in AWS describe_container_instances response.
-                    Got: {instance_task_data}"""
+            msg = (
+                "Expected key runningTasksCount in AWS describe_container_instances response."
+                f" Got: {instance_task_data}"
             )
+            raise ValueError(msg)
         rtc = instance_task_data["runningTasksCount"]
         if rtc == 0:
             empty_instances += 1
 
     if empty_instances == 0:
+        msg = (
+            f"Cluster {cluster} had {num_instances} instances but should have"
+            f" {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance"
+            " is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally"
+            " distributed tasks onto instances."
+        )
         fractal_log(
             "manual_scale_cluster",
             None,
-            f"""Cluster {cluster} had {num_instances} instances but should have
-                {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance
-                is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally
-                distributed tasks onto instances.""",
+            msg,
             level=logging.INFO,
         )
 
