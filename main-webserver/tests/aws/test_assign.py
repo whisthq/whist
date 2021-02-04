@@ -118,7 +118,7 @@ def test_payment_all(test_payment, has_trial, has_subscription, expected):
 def test_update_region_locks(test_payment):
 
     db.session.expire_all()
-    us_east = RegionToAmi.query.get(region_name="us-east-1").first()
+    us_east = RegionToAmi.query.filter_by(region_name="us-east-1").first()
 
     us_east.region_being_updated = True
     db.session.commit()
