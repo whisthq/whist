@@ -72,31 +72,40 @@ func init() {
 		},
 	)
 
-	// ecsengine.SetFractalHostServiceUinputDeviceRequester(
-	// func(fractalID string) ([]dockercontainer.DeviceMapping, error) {
-	// body, err := fractalhttpserver.CreateCreateUinputDevicesRequestBody(
-	// fractalhttpserver.CreateUinputDevicesRequest{
-	// FractalID: fractalID,
-	// },
-	// )
-	// if err != nil {
-	// err := fractallogger.MakeError("Error creating CreateUinputDevicesRequest: %s", err)
-	// return nil, err
-	// }
-	//
-	// // We have the request body, now just need to actually make the request
-	// requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
-	//
-	// response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
-	// if err != nil {
-	// }
-	// respbody, err := ioutil.ReadAll(response.Body)
-	//
-	// var list []dockercontainer.DeviceMapping
-	// err = json.Unmarshal(respbody, list)
-	//
-	// },
-	// )
+	ecsengine.SetFractalHostServiceUinputDeviceRequester(
+		func(fractalID string) ([]dockercontainer.DeviceMapping, error) {
+			body, err := fractalhttpserver.CreateCreateUinputDevicesRequestBody(
+				fractalhttpserver.CreateUinputDevicesRequest{
+					FractalID: fractalID,
+				},
+			)
+			if err != nil {
+				err := fractallogger.MakeError("Error creating CreateUinputDevicesRequest: %s", err)
+				return nil, err
+			}
+
+			// We have the request body, now just need to actually make the request
+			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
+
+			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			if err != nil {
+				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s", err)
+			}
+
+			respbody, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error reading response from /create_uinput_devices endpoint: %s", err)
+			}
+
+			var list []dockercontainer.DeviceMapping
+			err = json.Unmarshal(respbody, &list)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error unmarshalling response from /create_uinput_devices endpoint. Error: %s, fractalID: %s, response: %s", err, fractalID, respbody)
+			}
+
+			return list, nil
+		},
+	)
 
 }
 
