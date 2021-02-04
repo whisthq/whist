@@ -1,7 +1,7 @@
-# workflows/fractal-publish-build.yml
+# workflows/fractal-build-and-deploy.yml
 #
-# Fractal: Build & Publish
-# Build and publish each of the relevant Fractal projects.
+# Fractal: Build & Deploy
+# Build and deploy each of the relevant Fractal projects for our production, staging and dev environments.
 
 name: "Fractal: Build & Deploy"
 
@@ -319,7 +319,7 @@ jobs:
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
+    # Runs if config succeeds and branch is in ["master", "staging"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
@@ -329,13 +329,13 @@ jobs:
             (
               (
                 contains(
-                  fromJSON('["master"]'),
+                  fromJSON('["master", "staging"]'),
                   needs.fractal-publish-build-config.outputs.branch
                 ) && success()
               ) ||
               (
                 contains(
-                  fromJSON('["staging", "dev"]'),
+                  fromJSON('["dev"]'),
                   needs.fractal-publish-build-config.outputs.branch
                 ) && always()
               )
@@ -399,9 +399,9 @@ jobs:
     # Client Applications: Build & Publish to AWS S3
     # Build and publish the client applications to their respective AWS S3 bucket,
     # from which Electron-Updater pulls them for auto-updating
-    # Runs if config succeeds and branch is in ["master"] and all previous publish jobs succeed
+    # Runs if config succeeds and branch is in ["master", "staging", "dev"] and all previous publish jobs succeed
     client-applications-publish-build-s3:
-        name: "Client Applications: Build & Publish ${{ matrix.config.name }}"
+        name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
         needs:
             [
@@ -412,7 +412,7 @@ jobs:
                 main-webserver-deploy-heroku,
             ]
         if: >
-            contains(fromJSON('["master"]'), needs.fractal-publish-build-config.outputs.branch) &&
+            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "client-applications-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
 
         strategy:
@@ -500,13 +500,36 @@ jobs:
                   curl -X POST \
                   -H 'Content-Type: application/json' \
                   -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                  --data "{ \"query\": \"query { desktop_app_version { commit_hash major minor micro } }\" }" \
+                  --data "{ \"query\": \"query { desktop_app_version { commit_hash major minor micro dev_rc staging_rc } }\" }" \
                   https://config-database.fractal.co/v1/graphql > response.json
 
-                  # parse JSON into major.minor.micro
+                  # parse JSON into major.minor.micro-rc
                   MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
                   MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
                   MICRO=$(cat response.json | jq '.data.desktop_app_version[0].micro')
+                  DEV_RC=$(cat response.json | jq '.data.desktop_app_version[0].dev_rc')
+                  STAGING_RC=$(cat response.json | jq '.data.desktop_app_version[0].staging_rc')
+
+
+
+                  # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
+
+
+                  if [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'master' ]]; then
+
+
+                  elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'staging' ]]; then
+
+
+                  elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'dev' ]]; then
+
+
+
+                  else
+
+
+                  fi
+
 
                   # increment version by 0.0.1
                   NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
@@ -530,15 +553,33 @@ jobs:
                   --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                   https://config-database.fractal.co/v1/graphql
 
-            - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS
+            - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
               shell: bash
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                      echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
+                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                        echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
+                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                        echo "s3_bucket=fractal-chromium-ubuntu-staging" >> $GITHUB_ENV
+                    else
+                        echo "s3_bucket=fractal-chromium-ubuntu-dev" >> $GITHUB_ENV
+                    fi
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                      echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
+                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                        echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
+                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                        echo "s3_bucket=fractal-chromium-windows-staging" >> $GITHUB_ENV
+                    else
+                        echo "s3_bucket=fractal-chromium-windows-dev" >> $GITHUB_ENV
+                    fi
                   else
-                      echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
+                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                        echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
+                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                        echo "s3_bucket=fractal-chromium-macos-staging" >> $GITHUB_ENV
+                    else
+                        echo "s3_bucket=fractal-chromium-macos-dev" >> $GITHUB_ENV
+                    fi
                   fi
 
             # (builds the branch that it is run on automatically, so master if running on push to master)
@@ -574,15 +615,15 @@ jobs:
     # Runs if client-applications-publish-build-s3 succeeds.
     client-applications-notify-slack:
         name: "Client Applications: Notify Slack"
+        runs-on: ubuntu-20.04
         needs: [client-applications-publish-build-s3]
         if: >
             success() &&
             contains(fromJSON('["all", "client-applications-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
-        runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Delpoyed to Production via S3 Upload.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
