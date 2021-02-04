@@ -3,7 +3,7 @@
 #include <cuda_d3d11_interop.h>
 #include <stdio.h>
 
-#include "dxgicudacapturetransfer.h"
+#include "dxgicudatransfercapture.h"
 
 extern "C" {
 bool cuda_is_available = false;
@@ -36,17 +36,21 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device) {
 
         active_transfer_context = true;
 
+        // DXGI CUDA transfer context is now initialized
+        device->dxgi_cuda_available = true;
+
         return 0;
     } else {
         return 1;  // cuda unavailable
     }
 }
 
-void dxgi_cuda_close_transfer_context() {
+void dxgi_cuda_close_transfer_context(CaptureDevice* device) {
     if (cuda_is_available && active_transfer_context && resource) {
         cudaGraphicsUnregisterResource(resource);
         active_transfer_context = false;
     }
+    device->dxgi_cuda_available = false;
 }
 
 int dxgi_cuda_transfer_capture(CaptureDevice* device,
@@ -121,4 +125,4 @@ int dxgi_cuda_transfer_capture(CaptureDevice* device,
         return 1;  // cuda unavailable
     }
 }
-}
+} // end extern "C"
