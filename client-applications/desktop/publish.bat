@@ -52,16 +52,19 @@ echo Usage: build [OPTION 1] [OPTION 2] ...
 echo.
 echo Note: Make sure to run this script in a x86_x64 terminal on Windows.
 echo Note: All arguments to both long and short options are mandatory.
+echo.
 echo   -version=VERSION              set the version number of the client app
-echo                                   must be greater than the current version
-echo                                   in S3 bucket
+echo                                 must be greater than the current version
+echo                                 in S3 bucket
+echo.
 echo   -bucket=BUCKET                set the S3 bucket to upload to (if -publish=true)
-echo                                   options are:
-echo                                     fractal-chromium-windows-dev [Windows Development Bucket]
-echo                                     fractal-chromium-windows-staging [Windows Staging Bucket]
-echo                                     fractal-chromium-windows-prod [Windows Production Bucket]
+echo                                 options are:
+echo                                     fractal-chromium-windows-dev     [Windows Fractalized Chrome Development Bucket]
+echo                                     fractal-chromium-windows-staging [Windows Fractalized Chrome Staging Bucket]
+echo                                     fractal-chromium-windows-prod    [Windows Fractalized Chrome Production Bucket]
+echo.
 echo   -publish=PUBLISH              set whether to publish to S3 and auto-update live apps
-echo                                   defaults to false, options are true/false
+echo                                 defaults to false, options are true/false
 exit /b 0
 
 :gettoken
