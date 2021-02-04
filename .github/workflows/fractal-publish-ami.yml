@@ -14,7 +14,7 @@ on:
             - mia/auto-ami-creation # TODO – REMOVE AFTER TESTING
         paths:
             - "ecs-host-service/"
-            - "ecs-host-setup/"
+            - "ecs-host-setup/" # this doesn't seem to work ?
             - ".github/workflows/fractal-publish-ami.yml"
             - "!README.md"
             - "!**/README.md"
