@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"math"
+
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via Sentry. Instead, use the
 	// fractallogger package imported below as `logger`
@@ -17,6 +18,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unsafe"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry.  For the same reason, we make sure
@@ -29,6 +31,8 @@ import (
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
+
+	uinput "github.com/fractal/uinput-go"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockerevents "github.com/docker/docker/api/types/events"
@@ -69,9 +73,9 @@ func startDockerDaemon() {
 }
 
 // We take ownership of the ECS agent ourselves
-func startECSAgent() {
-	go ecsagent.ECSAgentMain()
-}
+// func startECSAgent() {
+// 	go ecsagent.ECSAgentMain()
+// }
 
 // ------------------------------------
 // Container state manangement/mappings
@@ -92,7 +96,13 @@ var fractalIDs map[string]string = make(map[string]string)
 // are mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
 
-// TODO(Anton): we need to keep some sort of mapping from FractalIDs to uinput devices
+type uinputDevices struct {
+	absmouse uinput.TouchPad
+	relmouse uinput.Mouse
+	keyboard uinput.Keyboard
+}
+
+var devices map[string]uinputDevices = make(map[string]uinputDevices)
 
 // Updates the fractalIDs mapping with a request from the ecs-agent
 func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error {
@@ -106,18 +116,98 @@ func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error
 	return nil
 }
 
-// TODO(Anton): Actually Implement this function
+// from ioctl.h
+const (
+	iocDirshift  = 30
+	iocSizeshift = 16
+	iocTypeshift = 8
+	iocNrshift   = 0
+	iocRead      = 2
+	uiIoctlBase  = 85 // 'U'
+)
+
+func linuxIoc(dir uintptr, type_ uintptr, nr uintptr, size uintptr) uintptr {
+	return (dir << iocDirshift) + (type_ << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
+}
+
+func linuxUiGetSysname(len uintptr) uintptr {
+	return linuxIoc(iocRead, uiIoctlBase, 44, len)
+}
+
+// getDeviceFilePath returns the file path (e.g. /dev/input/event3) given a file descriptor corresponding to a virtual device created with uinput
+func getDeviceFilePath(fd *os.File) (string, error) {
+	const maxlen uintptr = 32
+	bsysname := make([]byte, maxlen)
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd.Fd()), linuxUiGetSysname(maxlen), uintptr(unsafe.Pointer(&bsysname[0])))
+	if errno != 0 {
+		return "", logger.MakeError("ioctl to get sysname failed with errno %d", errno)
+	}
+	sysname := string(bytes.Trim(bsysname, "\x00"))
+	syspath := logger.Sprintf("/sys/devices/virtual/input/%s", sysname)
+	sysdir, err := os.Open(syspath)
+	if err != nil {
+		return "", logger.MakeError("could not open directory %s: ", syspath, err)
+	}
+	names, err := sysdir.Readdirnames(0)
+	if err != nil {
+		return "", logger.MakeError("Readdirnames for directory %s failed:", syspath, err)
+	}
+	for _, name := range names {
+		if strings.HasPrefix(name, "event") {
+			return "/dev/input/" + name, nil
+		}
+	}
+	return "", logger.MakeError("did not find file in %s with prefix 'event'", syspath)
+}
+
 func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.UinputDeviceMapping, error) {
 	FractalID := r.FractalID
 	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
 
-	// TODO(Anton): actually create the uinput devices, etc.
+	absmouse, err := uinput.CreateTouchPad("/dev/uinput", []byte("Fractal Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
+	if err != nil {
+		return nil, logger.MakeError("Could not create virtual absolute input: %s", err)
+	}
+	absmousePath, err := getDeviceFilePath(absmouse.DeviceFile())
+	if err != nil {
+		return nil, logger.MakeError("Failed to get device path for virtual absolute input: %s", err)
+	}
+
+	relmouse, err := uinput.CreateMouse("/dev/uinput", []byte("Fractal Virtual Relative Input"))
+	if err != nil {
+		logger.Errorf("Could not create virtual relative input: %s", err)
+	}
+	relmousePath, err := getDeviceFilePath(relmouse.DeviceFile())
+	if err != nil {
+		return nil, logger.MakeError("Failed to get device path for virtual relative input: %s", err)
+	}
+
+	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("Fractal Virtual Keyboard"))
+	if err != nil {
+		logger.Errorf("Could not create virtual keyboard: %s", err)
+	}
+	keyboardPath, err := getDeviceFilePath(keyboard.DeviceFile())
+	if err != nil {
+		return nil, logger.MakeError("Failed to get device path for virtual keyboard: %s", err)
+	}
+
+	devices[FractalID] = uinputDevices{absmouse: absmouse, relmouse: relmouse, keyboard: keyboard}
 
 	return []ecsagent.UinputDeviceMapping{
 		{
-			PathOnHost:        "/dev/input/event3", // this will vary based on Anton's implementation
-			PathInContainer:   "/dev/input/event3", // we should hardcode the 3, 4, 5 inside the container to simplify the container-images side of things
-			CgroupPermissions: "rwm",               // read, write, mknod (the default)
+			PathOnHost:        absmousePath,
+			PathInContainer:   absmousePath,
+			CgroupPermissions: "rwm", // read, write, mknod (the default)
+		},
+		{
+			PathOnHost:        relmousePath,
+			PathInContainer:   relmousePath,
+			CgroupPermissions: "rwm", // read, write, mknod (the default)
+		},
+		{
+			PathOnHost:        keyboardPath,
+			PathInContainer:   keyboardPath,
+			CgroupPermissions: "rwm", // read, write, mknod (the default)
 		},
 	}, nil
 }
