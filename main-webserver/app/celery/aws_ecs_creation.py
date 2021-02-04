@@ -444,6 +444,7 @@ def assign_container(
             user_id=username,
             cluster=cluster_name,
             ip=curr_ip,
+            is_assigned=True,
             port_32262=curr_network_binding[32262],
             port_32263=curr_network_binding[32263],
             port_32273=curr_network_binding[32273],
