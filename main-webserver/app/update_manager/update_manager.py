@@ -17,7 +17,7 @@ _REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"
 
 def try_start_update(region_name: str) -> bool:
     from app import redis_conn
-    
+
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
@@ -40,17 +40,17 @@ def try_start_update(region_name: str) -> bool:
         success = True
         redis_conn.set(update_key, 1)
         fractal_log(
-            "try_start_update",
-            None,
-            f"putting webserver into update mode on region {region_name}"
+            "try_start_update", None, f"putting webserver into update mode on region {region_name}"
         )
-        slack_send_safe("#alerts-test", f":lock: webserver is in maintenance mode on region {region_name}")
+        slack_send_safe(
+            "#alerts-test", f":lock: webserver is in maintenance mode on region {region_name}"
+        )
 
     else:
         fractal_log(
             "try_start_update",
             None,
-            f"cannot start update. waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
+            f"cannot start update. waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}.",
         )
 
     # release lock
@@ -74,17 +74,15 @@ def try_end_update(region_name: str) -> bool:
         redis_conn.delete(_REDIS_LOCK_KEY)
         return False
 
-    fractal_log(
-        "try_end_update",
-        None,
-        f"ending webserver update mode on region {region_name}"
-    )
+    fractal_log("try_end_update", None, f"ending webserver update mode on region {region_name}")
     # delete update key
     redis_conn.delete(update_key)
     # release lock
     redis_conn.delete(_REDIS_LOCK_KEY)
     # notify slack
-    slack_send_safe("#alerts-test", f":unlock: webserver has ended maintenance mode on region {region_name}")
+    slack_send_safe(
+        "#alerts-test", f":unlock: webserver has ended maintenance mode on region {region_name}"
+    )
     return True
 
 
@@ -133,11 +131,7 @@ def try_deregister_task(region_name: str, task_id: int) -> bool:
 
 def wait_register_task(region_name: str, task_id: str, max_tries: int) -> bool:
     for i in range(max_tries):
-        fractal_log(
-            "wait_register_task",
-            None,
-            f"Try {i}: registering task {task_id}..."
-        )
+        fractal_log("wait_register_task", None, f"Try {i}: registering task {task_id}...")
         if try_register_task(region_name, task_id):
             return True
         time.sleep(10)
@@ -146,11 +140,7 @@ def wait_register_task(region_name: str, task_id: str, max_tries: int) -> bool:
 
 def wait_degister_task(region_name: str, task_id: str, max_tries: int) -> bool:
     for i in range(max_tries):
-        fractal_log(
-            "wait_degister_task",
-            None,
-            f"Try {i}: deregistering task {task_id}..."
-        )
+        fractal_log("wait_degister_task", None, f"Try {i}: deregistering task {task_id}...")
         if try_deregister_task(region_name, task_id):
             return True
         time.sleep(10)
@@ -159,7 +149,7 @@ def wait_degister_task(region_name: str, task_id: str, max_tries: int) -> bool:
 
 def get_arg_number(func: Callable, desired_arg: str) -> int:
     """
-    Given a function `func`, this function gives the argument number of `desired_arg` 
+    Given a function `func`, this function gives the argument number of `desired_arg`
     in `func`'s arguments.
 
     Args:
@@ -188,7 +178,6 @@ def wait_no_update_and_track_task(func):
         if region_argn == -1:
             raise ValueError(f"Function {func.__name__} needs to have argument self to be tracked")
 
-
     @wraps(func)
     def wrapper(*args, **kwargs):
         self_obj = args[self_argn]
@@ -197,22 +186,20 @@ def wait_no_update_and_track_task(func):
         # pre-function logic: register the task
         if not wait_register_task(region_name, self_obj.request.id, 10):
             raise ValueError(f"failed to register task. function: {func.__name__}")
-        
+
         exception = None
         try:
             ret = func(*args, **kwargs)
         except Exception as e:
             exception = e
-        
+
         # post-function logic: deregister the task
         if not wait_degister_task(region_name, self_obj.request.id, 10):
             raise ValueError(f"failed to register task. function: {func.__name__}")
-        
+
         # raise any exception to caller
         if exception is not None:
             raise exception
         return ret
-    
+
     return wrapper
-
-

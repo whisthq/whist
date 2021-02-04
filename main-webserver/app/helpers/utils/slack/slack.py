@@ -5,6 +5,7 @@ import requests
 
 from app.helpers.utils.general.logs import fractal_log
 
+
 def _slack_send(channel: str, message: str):
     # all channels start with a #
     assert channel[0] == "#"
@@ -41,4 +42,3 @@ def slack_send_safe(channel: str, message: str):
                 f"Failed to send slack message {message} to channel {channel}. Raised exception could not be serialized.",
                 level=logging.ERROR,
             )
-
