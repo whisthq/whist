@@ -3,9 +3,11 @@
 
 # poll for task to finish
 state=PENDING
+echo "ID: $2"
 while [[ $state =~ PENDING ]]; do
     status=$(curl -L -X GET "${1}status/${2}")
     state=$(echo $status | jq -e ".state")
+    echo "Status: $status"
 done
 
 # If the task suceeded, process subtasks
