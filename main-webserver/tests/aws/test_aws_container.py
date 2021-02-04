@@ -179,6 +179,25 @@ def test_send_commands(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
+def test_update_cluster(client):
+    # right now we have manually verified this actually does something on AWS.
+    # AWS/boto3 _should_ error out if something went wrong.
+    res = update_cluster.delay(
+        region_name="us-east-1",
+        cluster_name=pytest.cluster_name,
+        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+    )
+
+    # wait for operation to finish
+    res.get(timeout=30)
+
+    assert res.successful()
+    assert res.state == "SUCCESS"
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
 def test_delete_container(client, monkeypatch):
     fractal_log(
         function="test_delete_container",
@@ -235,25 +254,6 @@ def test_delete_container(client, monkeypatch):
 
     assert hasattr(mock_set_capacity, "test_passed")  # make sure function was called
     assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
-
-
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-def test_update_cluster(client):
-    # right now we have manually verified this actually does something on AWS.
-    # AWS/boto3 _should_ error out if something went wrong.
-    res = update_cluster.delay(
-        region_name="us-east-1",
-        cluster_name=pytest.cluster_name,
-        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
-    )
-
-    # wait for operation to finish
-    res.get(timeout=30)
-
-    assert res.successful()
-    assert res.state == "SUCCESS"
 
 
 @pytest.mark.container_serial
