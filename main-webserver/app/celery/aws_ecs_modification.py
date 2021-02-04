@@ -124,11 +124,13 @@ def update_region(self, region_name="us-east-1", ami=None):
         f"following update_cluster tasks: {tasks}",
     )
 
+    # format tasks as space separated strings (used by AMI creation workflow to poll for success)
+    delim = " "
+    formatted_tasks = delim.join(tasks)
+
     self.update_state(
         state="SUCCESS",
-        meta={
-            "msg": f"updated to ami {ami} in region {region_name}",
-        },
+        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
     )
 
 
