@@ -53,7 +53,7 @@ else
     cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
     make FractalClient
-    cd ../client-applications/browser
+    cd ../client-applications/desktop
     rm -rf protocol-build
     mkdir protocol-build
     cd protocol-build

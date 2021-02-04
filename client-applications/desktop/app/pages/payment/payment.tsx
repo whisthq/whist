@@ -62,8 +62,8 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
             <div className={styles.paymentCentered}>
                 <div style={{ fontSize: 60 }}>Your free trial has expired.</div>
                 <div className={styles.paymentText}>
-                    Please upgrade your plan to continue using Fractal. Once
-                    you've upgraded, refresh this page.
+                    Please upgrade your plan to continue using Fractal. Once you
+                    have upgraded, refresh this page.
                 </div>
                 <div style={{ display: "flex" }}>
                     <button
