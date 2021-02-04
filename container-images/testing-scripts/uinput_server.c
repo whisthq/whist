@@ -8,13 +8,13 @@
 #include <errno.h>
 #include <unistd.h>
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                          \
-    if (ioctl(FD, PARAMS) == -1) {                                                 \
-        char buf[1024];                                                            \
-        /* strerror_r should not fail here since ioctl returned -1 */              \
-        strerror_r(errno, buf, 1024);                                              \
-        printf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", buf);  \
-        return 1;                                                                  \
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                         \
+    if (ioctl(FD, PARAMS) == -1) {                                                \
+        char buf[1024];                                                           \
+        /* strerror_r should not fail here since ioctl returned -1 */             \
+        strerror_r(errno, buf, 1024);                                             \
+        printf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", buf); \
+        return 1;                                                                 \
     }
 
 #define LOG_INFO(message, ...) printf(message "\n", ##__VA_ARGS__)
@@ -311,33 +311,32 @@ const int linux_mouse_buttons[6] = {
 
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
 int send_fds(int sock, const int *fds, unsigned n_fds) {
-  struct {
-    struct cmsghdr h;
-    int fd[n_fds];
-  } buffer;
+    struct {
+        struct cmsghdr h;
+        int fd[n_fds];
+    } buffer;
 
-  struct msghdr msghdr;
-  char nothing = '!';
-  struct iovec nothing_ptr;
-  struct cmsghdr *cmsg;
-  int i;
+    struct msghdr msghdr;
+    char nothing = '!';
+    struct iovec nothing_ptr;
+    struct cmsghdr *cmsg;
+    int i;
 
-  nothing_ptr.iov_base = &nothing;
-  nothing_ptr.iov_len = 1;
-  msghdr.msg_name = NULL;
-  msghdr.msg_namelen = 0;
-  msghdr.msg_iov = &nothing_ptr;
-  msghdr.msg_iovlen = 1;
-  msghdr.msg_flags = 0;
-  msghdr.msg_control = &buffer;
-  msghdr.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
-  cmsg = CMSG_FIRSTHDR(&msghdr);
-  cmsg->cmsg_len = msghdr.msg_controllen;
-  cmsg->cmsg_level = SOL_SOCKET;
-  cmsg->cmsg_type = SCM_RIGHTS;
-  for(i = 0; i < n_fds; i++)
-    ((int *)CMSG_DATA(cmsg))[i] = fds[i];
-  return(sendmsg(sock, &msghdr, 0) >= 0 ? 0 : -1);
+    nothing_ptr.iov_base = &nothing;
+    nothing_ptr.iov_len = 1;
+    msghdr.msg_name = NULL;
+    msghdr.msg_namelen = 0;
+    msghdr.msg_iov = &nothing_ptr;
+    msghdr.msg_iovlen = 1;
+    msghdr.msg_flags = 0;
+    msghdr.msg_control = &buffer;
+    msghdr.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
+    cmsg = CMSG_FIRSTHDR(&msghdr);
+    cmsg->cmsg_len = msghdr.msg_controllen;
+    cmsg->cmsg_level = SOL_SOCKET;
+    cmsg->cmsg_type = SCM_RIGHTS;
+    for (i = 0; i < n_fds; i++) ((int *)CMSG_DATA(cmsg))[i] = fds[i];
+    return (sendmsg(sock, &msghdr, 0) >= 0 ? 0 : -1);
 }
 
 int main() {
@@ -346,8 +345,7 @@ int main() {
     int fd_relmouse = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
     int fd_keyboard = open("/dev/uinput", O_WRONLY | O_NONBLOCK);
 
-    if (fd_absmouse < 0 || fd_relmouse < 0 ||
-        fd_keyboard < 0) {
+    if (fd_absmouse < 0 || fd_relmouse < 0 || fd_keyboard < 0) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
         LOG_ERROR("CreateInputDevice: Error opening '/dev/uinput' for writing: %s", buf);
@@ -376,7 +374,7 @@ int main() {
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_Y);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL);
-    //these aren't yet supported by xorg input drivers
+    // these aren't yet supported by xorg input drivers
     /*
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_WHEEL_HI_RES);
     _FRACTAL_IOCTL_TRY(fd_relmouse, UI_SET_RELBIT, REL_HWHEEL_HI_RES);
@@ -442,47 +440,37 @@ int main() {
     LOG_INFO("KEYBOARD FD: %d", fd_keyboard);
     int fds[3] = {fd_absmouse, fd_relmouse, fd_keyboard};
 
-    char* socket_path = "/tmp/sockets/uinput.sock";
-    while (1) {
-      LOG_INFO("waiting for socket file %s to be created...", socket_path);
-      while (access(socket_path, F_OK) != 0) {
-        sleep(1);
-      }
-      LOG_INFO("created!");
-
-      struct sockaddr_un addr;
-      int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
-      if (fd_socket == -1) {
-        LOG_INFO("socket error");
-        return 1;
-      }
-
-      memset(&addr, 0, sizeof(addr));
-      addr.sun_family = AF_UNIX;
-      strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path)-1);
-
-      if (connect(fd_socket, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        LOG_INFO("connect error");
+    char *socket_path = "/tmp/sockets/uinput.sock";
+    struct sockaddr_un addr;
+    int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path));
+    unlink(socket_path);
+    if (bind(fd_socket, (struct sockaddr *)&addr, sizeof(addr)) == -1) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
-        LOG_INFO("%s", buf);
+        LOG_ERROR("Failed to bind unix socket to %s: %s", socket_path, buf);
         return 1;
-      }
+    }
+    if (listen(fd_socket, 5) == -1) {
+        char buf[1024];
+        strerror_r(errno, buf, 1024);
+        LOG_ERROR("Failed to listen on unix socket: %s", buf);
+        return 1;
+    }
 
-      LOG_INFO("connected!");
-
-      if (send_fds(fd_socket, fds, 3) == -1) {
-        LOG_INFO("failed to send file descriptors");
-      }
-      LOG_INFO("sent file descriptors!");
-
-      sleep(10);
-      LOG_INFO("closing and deleting socket");
-      unlink(socket_path);
-      close(fd_socket);
-      sleep(10);
+    while (1) {
+        int client = accept(fd_socket, NULL, NULL);
+        if (client == -1) {
+            char buf[1024];
+            strerror_r(errno, buf, 1024);
+            LOG_WARNING("Failed to accept client: %s", buf);
+        } else {
+            LOG_INFO("Client connected! %d", client);
+            send_fds(client, fds, 3);
+        }
     }
 
     return 0;
 }
-
