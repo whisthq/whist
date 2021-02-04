@@ -1,4 +1,4 @@
-from flask import Blueprint, current_app
+from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
