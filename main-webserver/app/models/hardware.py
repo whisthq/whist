@@ -98,12 +98,18 @@ class RegionToAmi(db.Model):
     This class represents the region_to_ami table in hardware
     it maps region names to the AMIs which should be used
     for clusters in that region
+
+    region_name (str):  which AWS region this row covers
+    ami_id (str):  the AMI of the ID currently in that region
+    region_being_updated (bool): whether the region is currently being updated
+                                 to a new AMI
     """
 
     __tablename__ = "region_to_ami"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     ami_id = db.Column(db.String(250), nullable=False)
+    region_being_updated = db.Column(db.Boolean, nullable=False, default=False)
 
 
 class SupportedAppImages(db.Model):
