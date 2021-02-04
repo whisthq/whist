@@ -11,7 +11,7 @@ on:
             - master
             - staging
             - dev
-            – mia/auto-ami-creation # TODO – REMOVE AFTER TESTING
+            - mia/auto-ami-creation # TODO – REMOVE AFTER TESTING
         paths:
             - "ecs-host-service/"
             - "ecs-host-setup/"
