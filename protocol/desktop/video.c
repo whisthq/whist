@@ -64,6 +64,7 @@ volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
 volatile SDL_Cursor* cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
+volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
 
 static enum AVPixelFormat sws_input_fmt;
@@ -184,6 +185,7 @@ void nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
 void update_pixel_format();
+void update_texture();
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
 int init_multithreaded_video(void* opaque);
@@ -353,6 +355,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
             clock sws_timer;
             start_timer(&sws_timer);
 
+            update_texture();
             pending_resize_render = false;
 
             if (video_context.sws) {
@@ -680,6 +683,30 @@ void update_pixel_format() {
     }
 }
 
+void update_texture() {
+    /*
+        Update the SDL video texture
+    */
+
+    if (pending_texture_update) {
+        // Destroy the old texture
+        if (video_context.texture) {
+            SDL_DestroyTexture(video_context.texture);
+        }
+        // Create a new texture
+        SDL_Texture* texture =
+            SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
+                              SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
+        if (!texture) {
+            LOG_FATAL("SDL: could not create texture - exiting");
+        }
+        // Save the new texture over the old one
+        video_context.texture = texture;
+
+        pending_texture_update = false;
+    }
+}
+
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs) {
     /*
         Render peer cursors for multiclient
@@ -792,15 +819,11 @@ int init_multithreaded_video(void* opaque) {
     // Allocate a place to put our YUV image on that screen.
     // Rather than allocating a new texture every time the dimensions change, we instead allocate
     // the texture once and render sub-rectangles of it.
-    texture = SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
-                                SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
-    if (!texture) {
-        LOG_FATAL("SDL: could not create texture - exiting");
-    }
+    pending_texture_update = true;
+    update_texture();
 
     pending_sws_update = false;
     sws_input_fmt = AV_PIX_FMT_NONE;
-    video_context.texture = texture;
     video_context.sws = NULL;
 
     max_bitrate = STARTING_BITRATE;
@@ -1225,6 +1248,7 @@ void set_video_active_resizing(bool is_resizing) {
         int new_width = get_window_pixel_width((SDL_Window*)window);
         int new_height = get_window_pixel_height((SDL_Window*)window);
         if (new_width != output_width || new_height != output_height) {
+            pending_texture_update = true;
             pending_sws_update = true;
             output_width = new_width;
             output_height = new_height;

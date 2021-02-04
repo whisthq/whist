@@ -24,7 +24,7 @@ int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
         if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
             return 0;
         } else {
-            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!")
+            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
             // otherwise, do the cpu transfer below
         }
     }

@@ -33,7 +33,8 @@ Public Functions
  * @brief                         Initialize or reinitialize the dxgi cuda transfer context,
  *                                if it is needed for the given (device, encoder) pair.
  *                                This should be called after deciding to use a new encoder,
- *                                as it may be able to hardware optimize the transfer from device to encoder
+ *                                as it may be able to hardware optimize the transfer from device to
+ * encoder
  *
  * @param device                  The capture device being used
  *
