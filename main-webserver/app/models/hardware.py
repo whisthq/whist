@@ -100,7 +100,7 @@ class RegionToAmi(db.Model):
     for clusters in that region
 
     region_name (str):  which AWS region this row covers
-    ami_id (str):  the AMI of the ID currently in that region
+    ami_id (str):  the ID of the AMI currently in that region
     region_being_updated (bool): whether the region is currently being updated
                                  to a new AMI
     """
