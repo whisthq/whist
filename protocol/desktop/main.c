@@ -627,12 +627,6 @@ int main(int argc, char* argv[]) {
 
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    // While showing the SDL loading screen, read in any piped arguments
-    if (read_piped_arguments() != 0) {
-        free_parsed_args();
-        return -1;
-    }
-
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
@@ -665,6 +659,12 @@ int main(int argc, char* argv[]) {
 
     exiting = false;
     bool failed = false;
+
+    // While showing the SDL loading screen, read in any piped arguments
+    //    If the arguments are bad, then skip to the destruction phase
+    if (read_piped_arguments() != 0) {
+        failed = true;
+    }
 
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
