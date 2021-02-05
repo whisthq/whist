@@ -194,24 +194,29 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 
 	devices[FractalID] = uinputDevices{absmouse: absmouse, relmouse: relmouse, keyboard: keyboard}
 
+	// set up goroutine to create unix socket and pass file descriptors to protocol
 	go func() {
+		// TODO(anton): handle errors better
+		// TODO(anton): exit goroutine if container is dead
+		// TODO(anton): delete devices from devices map when container dies
+		// TODO(anton): create socket specifically for FractalID
 		filename := "/tmp/sockets/uinput.sock"
 		os.Remove(filename)
 		server, err := net.Listen("unix", filename)
 		if err != nil {
-			logger.Infof("unix socket error: %s", err)
+			logger.Errorf("Could not create unix socket at %s: %s", filename, err)
 			return
 		}
 		defer server.Close()
 		client, err := server.Accept()
 		if err != nil {
-			logger.Info("accept error: %s", err)
+			logger.Errorf("Could not connect to client over unix socket: %s", err)
 			return
 		}
 		defer client.Close()
 		connf, err := client.(*net.UnixConn).File()
 		if err != nil {
-			logger.Infof("file error: %s", err)
+			logger.Errorf("Could not get file corresponding to client connection: %s", err)
 			return
 		}
 		defer connf.Close()
@@ -219,6 +224,7 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 		fds := [3]int{int(absmouse.DeviceFile().Fd()), int(relmouse.DeviceFile().Fd()), int(keyboard.DeviceFile().Fd())}
 		rights := syscall.UnixRights(fds[:]...)
 		syscall.Sendmsg(connfd, nil, rights, nil, 0)
+		logger.Infof("Sent uinput file descriptors to %s", FractalID)
 	}()
 
 	return []ecsagent.UinputDeviceMapping{
