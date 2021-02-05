@@ -2,7 +2,7 @@ import time
 from functools import wraps
 import json
 import inspect
-from typing import Callable
+from typing import Callable, Tuple
 
 import redis
 
@@ -15,16 +15,15 @@ _REDIS_UPDATE_KEY = "WEBSERVER_UPDATE_{region_name}"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"
 
 
-def try_start_update(region_name: str) -> bool:
+def try_start_update(region_name: str) -> Tuple[bool, str]:
     from app import redis_conn
 
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    success = False
     got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
     if not got_lock:
-        return False
+        return False, "Did not get lock"
 
     # now we freely operate on the keys. first make sure we are not already in update mode
     # then, we need to make sure no tasks are going
@@ -32,30 +31,56 @@ def try_start_update(region_name: str) -> bool:
     if update_exists:
         # release lock
         redis_conn.delete(_REDIS_LOCK_KEY)
-        return False
+        return False, "An update is already happening."
 
+    success = False
+    return_msg = None
     tasks = redis_conn.lrange(tasks_key, 0, -1)
     if tasks is None or len(tasks) == 0:
         # no tasks, we can start the update
         success = True
         redis_conn.set(update_key, 1)
-        fractal_log(
-            "try_start_update", None, f"putting webserver into update mode on region {region_name}"
-        )
+
         slack_send_safe(
-            "#alerts-test", f":lock: webserver is in maintenance mode on region {region_name}"
+            "#alerts-test",
+            f":lock: webserver is in maintenance mode in region {region_name}"
         )
+        fractal_log(
+            "try_start_update", None, f"putting webserver into update mode in region {region_name}"
+        )
+        return_msg = f"Put webserver into maintenance mode in region {region_name}."
 
     else:
+        # no tasks, we cannot start the update. However, we set update_key so no new tasks start.
+        success = False
+        redis_conn.set(update_key, 1)
+
+        slack_msg = (
+            f":no_entry_sign: webserver has stopped new tasks in region {region_name}."
+            f"Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
+        )
+        slack_send_safe(
+            "#alerts-test",
+            slack_msg,
+        )
+        log = (
+             "cannot start update, but stopping new tasks from running."
+             f"waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
+        )
         fractal_log(
             "try_start_update",
             None,
-            f"cannot start update. waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}.",
+            log,
+        )
+        return_msg = (
+            f"There are {len(tasks)} tasks currently running."
+            "However, all new tasks in region {region_name} will not run."
+            "Please poll until these tasks finish."
         )
 
     # release lock
     redis_conn.delete(_REDIS_LOCK_KEY)
-    return success
+    return success, return_msg
 
 
 def try_end_update(region_name: str) -> bool:
@@ -74,7 +99,11 @@ def try_end_update(region_name: str) -> bool:
         redis_conn.delete(_REDIS_LOCK_KEY)
         return False
 
-    fractal_log("try_end_update", None, f"ending webserver update mode on region {region_name}")
+    fractal_log(
+        "try_end_update",
+        None,
+        f"ending webserver update mode on region {region_name}",
+    )
     # delete update key
     redis_conn.delete(update_key)
     # release lock

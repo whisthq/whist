@@ -175,6 +175,7 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
+    SLACK_WEBHOOK = property(getter("SLACK_WEBHOOK"))
 
     @property
     def config_table(self):
@@ -253,6 +254,10 @@ class LocalConfig(DeploymentConfig):
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
+    # Local webservers will fail to ping slack because this variable is missing. Set it in docker-compose
+    # if you would like to use it.
+    SLACK_WEBHOOK = property(getter("SLACK_WEBHOOK", default="", fetch=False))
+    
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name

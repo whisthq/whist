@@ -2,14 +2,23 @@ import json
 import logging
 
 import requests
+from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_log
 
 
 def _slack_send(channel: str, message: str):
+    """
+    Send a message to a channel on Fractal slack as Fractal Bot. This can fail out with asserts.
+
+    Args:
+        channel: channel to post in. Must start with #. Example: #alerts-test
+        message: message to send.
+    """
+
     # all channels start with a #
     assert channel[0] == "#"
-    url = "https://hooks.slack.com/services/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"
+    url = current_app.config["SLACK_WEBHOOK"]
     payload = {
         "channel": channel,
         "username": "Fractal Bot",
@@ -22,6 +31,14 @@ def _slack_send(channel: str, message: str):
 
 
 def slack_send_safe(channel: str, message: str):
+    """
+    Send a message to a channel on Fractal slack as Fractal Bot. This is a wrapper around _slack_send
+    and safely handles exceptions during production.
+
+    Args:
+        channel: channel to post in. Must start with #. Example: #alerts-test
+        message: message to send.
+    """
     try:
         _slack_send(channel, message)
     except Exception as e:
