@@ -32,7 +32,7 @@ devices_arg=""
 run_container() {
     docker run -it -d \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
-        -v "/fractal/$fractal_id/containerResourceMappings:/fractal/containerResourceMappings:ro" \
+        -v "/fractal/$fractal_id/containerResourceMappings:/fractal/resourceMappings:ro" \
         -v "/fractalCloudStorage/$fractal_id:/fractal/cloudStorage:rshared" \
         -v /tmp/sockets:/tmp/sockets \
         -v /run/udev/data:/run/udev/data:ro \
