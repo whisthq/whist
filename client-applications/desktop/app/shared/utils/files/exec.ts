@@ -60,8 +60,7 @@ const getExecutableName = (): string => {
     return ""
 }
 
-export const launchProtocol = (
-    container: Container,
+export const launchProtocol = async (
     protocolOnStart: () => void,
     protocolOnExit: () => void
 ) => {
@@ -73,6 +72,9 @@ export const launchProtocol = (
         container: Container from Redux store
         protocolOnStart (function): Callback function fired right before protocol starts
         protocolOnExit (function): Callback function fired right after protocol exits
+
+    Returns:
+        Child process object created by spawn()
     */
 
     // spawn launches an executable in a separate thread
@@ -88,45 +90,54 @@ export const launchProtocol = (
     )
 
     const executable = getExecutableName()
+
     // On Mac, run chmod to allow the protocol to run
-    execPromise("chmod +x FractalClient", protocolPath, [
+    await execPromise("chmod +x FractalClient", protocolPath, [
         OperatingSystem.MAC,
         OperatingSystem.LINUX,
     ])
-        .then(() => {
-            // Protocol arguments
-            const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
-            const protocolParameters = {
-                width: 800,
-                height: 600,
-                ports: portInfo,
-                "private-key": container.secretKey,
-                name: "Fractalized Chrome",
-                icon: iconPath,
-            }
 
-            const protocolArguments = [
-                ...Object.entries(protocolParameters)
-                    .map(([flag, arg]) => [`--${flag}`, arg])
-                    .flat(),
-                container.publicIP,
-            ]
+    // Protocol arguments
+    const protocolParameters = {
+        width: 800,
+        height: 600,
+        name: "Fractalized Chrome",
+        icon: iconPath,
+    }
 
-            // Starts the protocol
-            protocolOnStart()
-            const protocol = spawn(executable, protocolArguments, {
-                cwd: protocolPath,
-                detached: false,
-                stdio: "ignore",
-            })
+    // TODO: Make the protocol start without an IP address
+    const protocolArguments = [
+        ...Object.entries(protocolParameters)
+            .map(([flag, arg]) => [`--${flag}`, arg])
+            .flat(),
+        "0.0.0.0",
+    ]
 
-            // On protocol exit logic, fired only when protocol stops running
-            protocol.on("close", () => {
-                protocolOnExit()
-            })
-            return null
-        })
-        .catch((error) => {
-            throw error
-        })
+    // Starts the protocol
+    protocolOnStart()
+    const protocol = spawn(executable, protocolArguments, {
+        cwd: protocolPath,
+        detached: false,
+        stdio: ["pipe", process.stdout, process.stderr]
+    })
+
+    // On protocol exit logic, fired only when protocol stops running
+    protocol.on("close", () => {
+        protocolOnExit()
+    })
+
+    return protocol
+}
+
+export const writeStream = (process:ChildProcess | null, message:String) => {
+    if(process && process.stdin) {
+        process.stdin.write(message)
+        process.stdin.write("\n")
+    }
+}
+
+export const endStream = (process:ChildProcess | null, message:String) => {
+    if(process && process.stdin) {
+        process.stdin.end(message)
+    }
 }

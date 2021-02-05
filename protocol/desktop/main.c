@@ -605,6 +605,19 @@ int main(int argc, char* argv[]) {
 
     init_logger(log_dir);
     free(log_dir);
+
+    // TODO: Figure out a better way to parse stdin
+    // TODO: Move this so that it renders the loading screen until we break out of the
+    // while loop
+    LOG_INFO("READING STDIN\n");
+    char incoming[100];
+
+    while(fgets(incoming,100,stdin) != NULL) {
+        LOG_INFO("incoming %s\n", incoming);
+        fflush(stdout);
+    }
+    printf("Out of loop!\n");
+
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
