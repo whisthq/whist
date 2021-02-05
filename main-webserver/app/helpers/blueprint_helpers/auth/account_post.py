@@ -58,7 +58,7 @@ def login_helper(email, password):
                 "refresh_token": None,
                 "verification_token": None,
                 "name": None,
-                "can_login": False,
+                "created_timestamp": None,
             }
 
     # Fetch the JWT tokens
@@ -75,11 +75,11 @@ def login_helper(email, password):
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
-        "can_login": user.can_login,
+        "created_timestamp": user.created_timestamp,
     }
 
 
-def register_helper(username, password, name, reason_for_signup, can_login):
+def register_helper(username, password, name, reason_for_signup):
     """Stores username and password in the database and generates user metadata, like their
     user ID and promo code
 
@@ -106,6 +106,7 @@ def register_helper(username, password, name, reason_for_signup, can_login):
     promo_code = generate_unique_promo_code()
 
     # Add the user to the database
+    created_timestamp = round(dt.now(datetime.timezone.utc).timestamp())
 
     new_user = User(
         user_id=username,
@@ -115,8 +116,7 @@ def register_helper(username, password, name, reason_for_signup, can_login):
         name=name,
         reason_for_signup=reason_for_signup,
         release_stage=50,
-        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
-        can_login=can_login,
+        created_timestamp=created_timestamp,
     )
 
     status = SUCCESS
@@ -161,9 +161,10 @@ def register_helper(username, password, name, reason_for_signup, can_login):
 
     return {
         "status": status,
-        "verification_token": new_user.token,
+        "verification_token": new_user.token if status == SUCCESS else None,
         "access_token": access_token,
         "refresh_token": refresh_token,
+        "created_timestamp": created_timestamp if status == SUCCESS else None,
     }
 
 
