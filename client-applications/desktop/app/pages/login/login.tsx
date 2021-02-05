@@ -70,6 +70,10 @@ export const Login = (props: {
     }
 
     useEffect(() => {
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+    }, [])
+
+    useEffect(() => {
         if (userID && accessToken) {
             history.push(FractalRoute.LAUNCHER)
         }
