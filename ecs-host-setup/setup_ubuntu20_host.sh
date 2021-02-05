@@ -115,7 +115,7 @@ echo "================================================"
 echo "Installing Other Utilities..."
 echo "================================================"
 
-sudo apt-get install -y lsof
+sudo apt-get install -y lsof jq
 
 echo "================================================"
 echo "Installing Miscellaneous Config Files..."
