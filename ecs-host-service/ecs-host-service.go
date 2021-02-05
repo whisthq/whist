@@ -512,7 +512,7 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 	}
 	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 
-	err = os.Mkdir(datadir, 0777)
+	err = os.MkdirAll(datadir, 0777)
 	if err != nil {
 		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
 	}
