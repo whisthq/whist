@@ -110,7 +110,7 @@ export const launchProtocol = async (
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
             .flat(),
-        "--spin"
+        "--read-pipe"
     ]
 
     // Starts the protocol

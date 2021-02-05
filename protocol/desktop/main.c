@@ -598,6 +598,10 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Client protocol started.");
 
+    if (init_socket_library() != 0) {
+        LOG_FATAL("Failed to initialize socket library.");
+    }
+
     if (alloc_parsed_args() != 0) {
         return -1;
     }
@@ -611,6 +615,22 @@ int main(int argc, char* argv[]) {
         // --help or --version
         free_parsed_args();
         return 0;
+    }
+
+    // Initialize the SDL window
+    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+
+    if (!window) {
+        destroy_socket_library();
+        LOG_FATAL("Failed to initialize SDL");
+    }
+
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
+    // While showing the SDL loading screen, read in any piped arguments
+    if (read_piped_arguments() != 0) {
+        free_parsed_args();
+        return -1;
     }
 
     // Set sentry user here based on email from command line args
@@ -630,20 +650,6 @@ int main(int argc, char* argv[]) {
     if (running_ci) {
         LOG_INFO("Running in CI mode");
     }
-
-    if (init_socket_library() != 0) {
-        LOG_FATAL("Failed to initialize socket library.");
-    }
-
-    // Initialize the SDL window
-    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
-
-    if (!window) {
-        destroy_socket_library();
-        LOG_FATAL("Failed to initialize SDL");
-    }
-
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
 // Windows GHA VM cannot render, it just segfaults on creating the renderer
 #if defined(_WIN32)
