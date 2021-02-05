@@ -426,7 +426,7 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
 		return logger.MakeError("Invalid HostPort for DPI request: %v", req.HostPort)
 	}
-	hostPort := (uint16)(req.HostPort)
+	hostPort := uint16(req.HostPort)
 	id, exists := containerIDs[hostPort]
 	if !exists {
 		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
@@ -557,7 +557,7 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 	// `containerIDs` map.
 	hostPortInt64, err := strconv.ParseUint(hostPort[0].HostPort, 10, 16)
 	if err != nil {
-		err := logger.MakeError("containerStartHandler: The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
+		err := logger.MakeError("containerStartHandler(): The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
 		return err
 	}
 	hostPortUint16 := uint16(hostPortInt64)
@@ -579,7 +579,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	// exit if we are not dealing with a Fractal container.
 	fractalID, ok := fractalIDs[id]
 	if !ok {
-		logger.Infof("handleDPIRequest(): couldn't find FractalID mapping for container with DockerID %s", id)
+		logger.Infof("containerDieHandler(): couldn't find FractalID mapping for container with DockerID %s", id)
 		return
 	}
 
@@ -587,10 +587,10 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 	err := os.RemoveAll(datadir)
 	if err != nil {
-		logger.Errorf("Failed to delete container-specific directory %s", datadir)
+		logger.Errorf("containerDieHandler(): Failed to delete container-specific directory %s", datadir)
 		// Do not return here, since we still want to de-allocate the TTY if it exists
 	}
-	logger.Info("Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
+	logger.Info("containerDieHandler(): Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
 
 	// Free tty internal state
 	for tty := range ttyState {
@@ -613,11 +613,11 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		}
 	}
 	if !foundHostPort {
-		logger.Infof("Could not find a hostPort mapping for container %s", id)
+		logger.Infof("containerDieHandler(): Could not find a hostPort mapping for container %s", id)
 		return
 	}
 	delete(containerIDs, hostPort)
-	logger.Infof("Deleted mapping from hostPort %v to container ID %v", hostPort, id)
+	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
 	// Unmount cloud storage directories
 	storageDirs, exists := cloudStorageDirs[hostPort]
@@ -798,16 +798,17 @@ func main() {
 		logger.Panic(err)
 	}
 
-	// Start Docker Daemons and ECS Agent,
-	// Notably, this needs to happen after the webserver handshake above. This
-	// prevents AWS from assigning any task definitions to our container before
-	// the webserver knows about it.
+	// Start Docker Daemon and ECS Agent. Notably, this needs to happen after the
+	// webserver handshake above. This prevents AWS from assigning any task
+	// definitions to our container before the webserver knows about it.
 	startDockerDaemon()
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
 	if logger.GetAppEnvironment() != logger.EnvLocalDev {
 		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
 		startECSAgent()
+	} else {
+		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
 	}
 
 	ctx := context.Background()
