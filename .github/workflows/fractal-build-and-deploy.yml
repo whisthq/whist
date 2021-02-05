@@ -38,6 +38,8 @@ jobs:
             branch: ${{ steps.detect-branch.outputs.branch }}
             job: ${{ steps.detect-job.outputs.job }}
             publish: ${{ steps.detect-publish.outputs.publish }}
+            deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
+            sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
         steps:
             - name: Detect Branch
               id: detect-branch
@@ -56,15 +58,29 @@ jobs:
                   echo "branch is set to: $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
-            - name: Set DEPLOY_ENVIRONMENT Based on Git Branch
+            - name: Set deploy environment based on Git Branch
+              id: set-deploy-environment
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
-                      echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+                      DEPLOY_ENVIRONMENT=prod
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                      DEPLOY_ENVIRONMENT=staging
                   elif [ "${GITHUB_REF##*/}" == "dev" ]
-                      echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                      DEPLOY_ENVIRONMENT=dev
                   fi
+                  echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
+                  echo "::set-output name=deploy_environment::$DEPLOY_ENVIRONMENT"
+
+            - name: Set Sentry environment based on Git Branch
+              id: set-sentry-environment
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      SENTRY_ENVIRONMENT=prod
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      SENTRY_ENVIRONMENT=staging
+                  fi
+                  echo "senty_environment is set to: $SENTRY_ENVIRONMENT"
+                  echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
             - name: Detect Job(s)
               id: detect-job
@@ -140,7 +156,7 @@ jobs:
               run: |
                   for app in ${{ env.apps }}
                   do
-                    ./push_container_image.sh $app ${{ env.DEPLOY_ENVIRONMENT }}
+                    ./push_container_image.sh $app ${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
                   done
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
@@ -162,7 +178,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to ${{ env.DEPLOY_ENVIRONMENT }} via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
@@ -207,20 +223,12 @@ jobs:
               run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
             - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo fractal/${{ env.DEPLOY_ENVIRONMENT }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
-
-            - name: Set Sentry environment as env variable
-              run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
-                      echo "SENTRY_ENVIRONMENT=prod" >> $GITHUB_ENV
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      echo "SENTRY_ENVIRONMENT=staging" >> $GITHUB_ENV
-                  fi
+              run: echo "taskdef_name=$(echo fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
 
             - name: Generate taskdef and store JSON path to variable
               working-directory: ecs-task-definitions
               run: |
-                  taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name ${{ env.SENTRY_ENVIRONMENT }})
+                  taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name ${{ needs.fractal-publish-build-config.outputs.sentry_environment }})
                   echo "taskdef_json=ecs-task-definitions/$taskdef_json_filename" >> $GITHUB_ENV
 
             - name: Render Amazon ECS task Definitions
@@ -229,7 +237,7 @@ jobs:
               with:
                   container-name: fractal-container
                   task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ghcr_base_uri }}/fractal/${{ env.DEPLOY_ENVIRONMENT }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
+                  image: ${{ env.ghcr_base_uri }}/fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
             - name: Deploy to Amazon ECS service
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
@@ -252,7 +260,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ env.DEPLOY_ENVIRONMENT }} via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Host Service: Build & Publish to AWS S3
