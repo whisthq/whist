@@ -30,12 +30,13 @@ import { FractalIPC } from "shared/types/ipc"
 import { FractalDirectory } from "shared/types/client"
 import { uploadToS3 } from "shared/utils/files/aws"
 
-import { launchProtocol } from "shared/utils/files/exec"
+import { launchProtocol, writeStream, endStream } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/launcher/launcher.css"
+import { ChildProcess } from "child_process"
 
 export const Launcher = (props: {
     userID: string
@@ -68,17 +69,14 @@ export const Launcher = (props: {
     } = props
 
     const [protocolLaunched, setProtocolLaunched] = useState(false)
-    const [loadingMessage, setLoadingMessage] = useState(
-        LoadingMessage.STARTING
-    )
     const [taskState, setTaskState] = useState(FractalAppState.PENDING)
+    const [protocol, updateProtocol] = useState<ChildProcess>()
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
     })
 
     const ipc = require("electron").ipcRenderer
-
     const logger = new FractalLogger()
 
     const startTimeout = () => {
@@ -119,8 +117,7 @@ export const Launcher = (props: {
                 userID
             )
         }
-        setLoadingMessage(LoadingMessage.STARTING)
-        setTaskState(FractalAppState.PENDING)
+        writeStream(protocol, LoadingMessage.STARTING)
         resetLaunch()
     }
 
@@ -135,7 +132,7 @@ export const Launcher = (props: {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
         dispatch(updateTimer({ protocolLaunched: Date.now() }))
-        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+        // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
@@ -189,6 +186,17 @@ export const Launcher = (props: {
     // from being created.
     useEffect(() => {
         if (!running && !protocolLaunched) {
+            const launchProtocolAsync = async () => {
+                const protocol = await launchProtocol(
+                    protocolOnStart,
+                    protocolOnExit
+                )
+                updateProtocol(protocol)
+            }
+
+            setProtocolLaunched(true)
+            launchProtocolAsync()
+
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
             dispatch(updateTask({ running: true }))
@@ -218,7 +226,7 @@ export const Launcher = (props: {
                 setTaskState(currentState)
                 switch (currentState) {
                     case FractalAppState.PENDING:
-                        setLoadingMessage(LoadingMessage.PENDING)
+                        writeStream(protocol, LoadingMessage.PENDING)
                         break
                     case FractalAppState.SPINNING_UP_NEW:
                         setLoadingMessage(LoadingMessage.PENDING)
@@ -232,7 +240,7 @@ export const Launcher = (props: {
                             userID
                         )
                         setTaskState(FractalAppState.FAILURE)
-                        setLoadingMessage(LoadingMessage.FAILURE)
+                        writeStream(protocol, LoadingMessage.FAILURE)
                         break
                     default:
                         break
@@ -243,16 +251,8 @@ export const Launcher = (props: {
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {
-        if (container.containerID && !protocolLaunched) {
-            logger.logInfo(
-                `Container ${JSON.stringify(
-                    container
-                )} detected, launching protocol`,
-                userID
-            )
-
-            setProtocolLaunched(true)
-            launchProtocol(container, protocolOnStart, protocolOnExit)
+        if (container.publicIP) {
+            endStream(protocol, container.publicIP)
         }
     }, [container, protocolLaunched])
 
@@ -261,18 +261,18 @@ export const Launcher = (props: {
             <ChromeBackground />
             <div className={styles.loadingWrapper}>
                 <Animation />
-                <div className={styles.loadingText}>{loadingMessage}</div>
-                {taskState === FractalAppState.FAILURE && (
-                    <div style={{ marginTop: 35 }}>
-                        <button
-                            type="button"
-                            className={styles.greenButton}
-                            onClick={tryAgain}
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                )}
+                {taskState === FractalAppState.FAILURE ||
+                    (status === FractalTaskStatus.FAILURE && (
+                        <div style={{ marginTop: 35 }}>
+                            <button
+                                type="button"
+                                className={styles.greenButton}
+                                onClick={tryAgain}
+                            >
+                                Try Again
+                            </button>
+                        </div>
+                    ))}
             </div>
         </div>
     )
