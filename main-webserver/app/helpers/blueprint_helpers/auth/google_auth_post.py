@@ -84,7 +84,6 @@ def login_helper(code, client_app):
                 "username": username,
                 "status": SUCCESS,
                 "name": name,
-                "can_login": user.can_login,
                 "using_google_login": True,
             }
         else:
@@ -109,7 +108,6 @@ def login_helper(code, client_app):
         "refresh_token": refresh_token,
         "username": username,
         "name": name,
-        "can_login": False,
         "using_google_login": True,
     }
 

@@ -2,7 +2,7 @@ import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
 import { apiGet, apiPost } from "shared/utils/general/api"
 
-import { FractalAPI } from "shared/types/api"
+import { FractalAPI, FractalHTTPCode } from "shared/types/api"
 import * as ContainerAction from "store/actions/container/sideEffects"
 import { updateUser } from "store/actions/auth/pure"
 import { FractalTaskStatus } from "shared/types/containers"
@@ -15,6 +15,8 @@ import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
 import { allowedRegions } from "shared/types/aws"
 import { FractalLogger } from "shared/utils/general/logging"
+
+import { DEFAULT as ContainerDefault } from "store/reducers/container/default"
 
 function* createContainer() {
     /*
@@ -45,7 +47,7 @@ function* createContainer() {
     const dpi = findDPI()
 
     // Send container assign request
-    const { json, success } = yield call(
+    const { json, success, response } = yield call(
         apiPost,
         FractalAPI.CONTAINER.ASSIGN,
         {
@@ -61,9 +63,14 @@ function* createContainer() {
     if (success && json.ID) {
         yield put(updateTask({ taskID: json.ID }))
     } else {
-        yield put(updateTask({ running: false }))
-        yield put(updateUser(deepCopyObject(DEFAULT.user)))
-        history.push(FractalRoute.LOGIN)
+        yield put(updateTask(ContainerDefault.task))
+
+        if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
+            history.push(FractalRoute.PAYMENT)
+        } else {
+            yield put(updateUser(deepCopyObject(DEFAULT.user)))
+            history.push(FractalRoute.LOGIN)
+        }
     }
 }
 

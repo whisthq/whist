@@ -81,6 +81,15 @@ export const Launcher = (props: {
 
     const logger = new FractalLogger()
 
+    const startTimeout = () => {
+        setTimeout(() => {
+            if (!protocolLaunched) {
+                setTaskState(FractalAppState.FAILURE)
+                setLoadingMessage(LoadingMessage.TIMEOUT)
+                logger.logError("Protocol took to long to launch", userID)
+            }
+        }, 20000)
+    }
     // Restores Redux state to before a container was created
     const resetLaunch = () => {
         const defaultContainerState = deepCopyObject(ContainerDefault.container)
@@ -93,6 +102,8 @@ export const Launcher = (props: {
         dispatch(updateTask(defaultTaskState))
         // Erase old timer info
         dispatch(updateTimer(defaultTimerState))
+
+        startTimeout()
     }
 
     // If the webserver failed, function to try again
@@ -109,6 +120,7 @@ export const Launcher = (props: {
             )
         }
         setLoadingMessage(LoadingMessage.STARTING)
+        setTaskState(FractalAppState.PENDING)
         resetLaunch()
     }
 
@@ -129,6 +141,8 @@ export const Launcher = (props: {
     // Callback function meant to be fired when protocol exits
     const protocolOnExit = () => {
         // Log timer analytics data
+        setProtocolLaunched(false)
+
         dispatch(updateTimer({ protocolClosed: Date.now() }))
 
         // For S3 protocol client log upload
@@ -137,7 +151,7 @@ export const Launcher = (props: {
             "protocol-build/desktop/log.txt"
         )
 
-        const s3FileName = `CLIENT${new Date().getTime()}.txt`
+        const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`
 
         logger.logInfo(
             `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
@@ -154,6 +168,11 @@ export const Launcher = (props: {
             forceQuit()
         })
     }
+
+    // Set timeout for maximum time before we stop waiting for container/assing
+    useEffect(() => {
+        startTimeout()
+    }, [])
 
     // Log timer analytics
     useEffect(() => {
@@ -240,18 +259,17 @@ export const Launcher = (props: {
             <div className={styles.loadingWrapper}>
                 <Animation />
                 <div className={styles.loadingText}>{loadingMessage}</div>
-                {taskState === FractalAppState.FAILURE ||
-                    (status === FractalTaskStatus.FAILURE && (
-                        <div style={{ marginTop: 35 }}>
-                            <button
-                                type="button"
-                                className={styles.greenButton}
-                                onClick={tryAgain}
-                            >
-                                Try Again
-                            </button>
-                        </div>
-                    ))}
+                {taskState === FractalAppState.FAILURE && (
+                    <div style={{ marginTop: 35 }}>
+                        <button
+                            type="button"
+                            className={styles.greenButton}
+                            onClick={tryAgain}
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )

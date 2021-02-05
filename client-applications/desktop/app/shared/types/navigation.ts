@@ -3,4 +3,5 @@ export enum FractalRoute {
     LAUNCHER = "/launcher",
     LOGIN = "/login",
     UPDATE = "/update",
+    PAYMENT = "/payment",
 }

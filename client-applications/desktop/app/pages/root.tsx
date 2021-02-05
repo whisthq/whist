@@ -6,6 +6,7 @@ import LoadingPage from "pages/loading/loading"
 import LauncherPage from "pages/launcher/launcher"
 import LoginPage from "pages/login/login"
 import UpdatePage from "pages/update/update"
+import PaymentPage from "pages/payment/payment"
 
 import TitleBar from "shared/components/titleBar"
 
@@ -25,6 +26,7 @@ const Root = () => {
                 <Route path={FractalRoute.LAUNCHER} component={LauncherPage} />
                 <Route path={FractalRoute.LOGIN} component={LoginPage} />
                 <Route path={FractalRoute.UPDATE} component={UpdatePage} />
+                <Route path={FractalRoute.PAYMENT} component={PaymentPage} />
                 <Route path={FractalRoute.LOADING} component={LoadingPage} />
             </Switch>
         </div>
