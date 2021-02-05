@@ -118,6 +118,7 @@
         "-": "^0.0.1",
         "@apollo/client": "^3.2.4",
         "@hot-loader/react-dom": "^16.11.0",
+        "@rauschma/stringio": "^1.4.0",
         "@sentry/electron": "^2.0.4",
         "@tailwindcss/postcss7-compat": "^2.0.2",
         "@testing-library/jest-dom": "^5.11.6",
