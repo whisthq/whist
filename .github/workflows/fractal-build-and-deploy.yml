@@ -114,7 +114,7 @@ jobs:
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
-    # Runs if config succeeds and branch is in ["master"].
+    # Runs if config succeeds and branch is in ["master", "staging", "dev"].
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
@@ -183,7 +183,7 @@ jobs:
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["master"] and publish-images-ghcr succeeds.
+    # Runs if config succeeds and branch is in ["master", "staging", "dev"] and publish-images-ghcr succeeds.
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
