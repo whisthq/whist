@@ -594,12 +594,18 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Client protocol started.");
 
+    if (alloc_parsed_args() != 0) {
+        return -1;
+    }
+
     int ret = parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
+        free_parsed_args();
         return -1;
     } else if (ret == 1) {
         // --help or --version
+        free_parsed_args();
         return 0;
     }
 
@@ -817,6 +823,7 @@ int main(int argc, char* argv[]) {
     destroy_video();
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
+    free_parsed_args();
     destroy_logger();
     return (try_amount < 3 && !failed) ? 0 : -1;
 }
