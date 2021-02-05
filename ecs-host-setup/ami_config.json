@@ -1,0 +1,75 @@
+{
+    "builders": [
+      {
+        "name": "Fractal AWS AMI Builder",
+        "type": "amazon-ebs",
+        "access_key": "PLACEHOLDER",
+        "secret_key": "PLACEHOLDER",
+        "region": "PLACEHOLDER",
+        "source_ami": "PLACEHOLDER",
+        "ami_regions": "PLACEHOLDER",
+        "instance_type": "PLACEHOLDER",
+        "ami_name": "PLACEHOLDER",
+        "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
+        "iam_instance_profile": "PackerAMIBuilder",
+        "ssh_username": "ubuntu",
+        "launch_block_device_mappings": [
+          {
+            "volume_type": "gp2",
+            "device_name": "/dev/sda1",
+            "delete_on_termination": true,
+            "volume_size": 32
+          }
+        ],
+        "ebs_optimized": true,
+        "subnet_id": "PLACEHOLDER",
+        "vpc_id": "PLACEHOLDER"
+      }
+    ],
+    "provisioners": [
+      {
+        "type": "shell",
+        "inline": [
+          "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+        ]
+      },
+      {
+        "type": "shell",
+        "expect_disconnect": "true",
+        "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
+      },
+      {
+        "pause_before": "10s",
+        "type": "file",
+        "source": "../ecs-host-setup",
+        "destination": "/home/ubuntu"
+      },
+      {
+        "type": "shell",
+        "inline": ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
+      },
+      {
+        "type": "shell",
+        "expect_disconnect": "true",
+        "inline": ["sudo reboot"]
+      },
+      {
+        "pause_before": "10s",
+        "type": "shell",
+        "inline": [
+          "cd /home/ubuntu/ecs-host-setup",
+          "./setup_ubuntu20_ami_host.sh",
+          "cd ..",
+          "rm -rf ecs-host-setup"
+        ]
+      }
+    ],
+    "post-processors": [
+      {
+        "type": "manifest",
+        "output": "manifest.json",
+        "strip_path": true
+      }
+    ]
+  }
+  

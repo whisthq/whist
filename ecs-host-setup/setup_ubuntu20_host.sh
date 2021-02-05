@@ -14,6 +14,10 @@ if [ "$EUID" -eq 0 ]; then
     exit
 fi
 
+# Set dkpg frontend as non-interactive to avoid irrelevant warnings
+echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections
+sudo apt-get install -y -q
+
 echo "================================================"
 echo "Replacing potentially outdated Docker runtime..."
 echo "================================================"
@@ -21,6 +25,8 @@ echo "================================================"
 # Attempt to remove potentially oudated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
 sudo apt-get remove docker docker-engine docker.io containerd runc ||:
+sudo apt-get clean
+sudo apt-get upgrade
 sudo apt-get update
 
 # Install latest Docker runtime and dependencies
@@ -42,6 +48,8 @@ echo "================================================"
 echo "Installing AWS CLI..."
 echo "================================================"
 
+# We don't need to configure the AWS CLI (only install it) because this script runs
+# on an AWS EC2 instance, which have awscli automatically configured
 sudo apt install -y awscli
 
 echo "================================================"
