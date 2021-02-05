@@ -598,29 +598,14 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Client protocol started.");
 
-    // TODO: IP address, ports and secret key will be arriving here
-    // Read them into the protocol
-    char incoming[100];
- 
-    while(fgets(incoming, 100, stdin) != NULL) {
-        char* arg_name = strtok(incoming, "?");
-        char* arg_value = strtok(NULL, "?");
-
-        LOG_INFO("Received arg name %s\n", arg_name);
-        LOG_INFO("Received arg value %s\n", arg_value);
-
-        fflush(stdout);
-    }
-
-
     int ret = parse_args(argc, argv);
-    // if (ret == -1) {
-    //     // invalid usage
-    //     return -1;
-    // } else if (ret == 1) {
-    //     // --help or --version
-    //     return 0;
-    // }
+    if (ret == -1) {
+        // invalid usage
+        return -1;
+    } else if (ret == 1) {
+        // --help or --version
+        return 0;
+    }
 
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email

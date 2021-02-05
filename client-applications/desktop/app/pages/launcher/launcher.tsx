@@ -50,7 +50,7 @@ export const Launcher = (props: {
     /*
         Protocol launcher with animated loading screen. User will be redirected to this page
         if they are successfully logged in.
- 
+
         Arguments:
             userID (string): User ID
             running (boolean): true if a container has been created or protocol is running
@@ -265,8 +265,8 @@ export const Launcher = (props: {
         if (container && container.containerID) {
             console.log(container)
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
-            writeStream(protocol, `port?${portInfo}`)
-            writeStream(protocol, `key?${container.secretKey}`)
+            writeStream(protocol, `ports?${portInfo}`)
+            writeStream(protocol, `private-key?${container.secretKey}`)
             endStream(protocol, `ip?${container.publicIP}`)
         }
     }, [container, protocolLaunched])
