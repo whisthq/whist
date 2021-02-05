@@ -84,10 +84,14 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         redis_conn.set(update_key, 1)
 
         slack_send_safe(
-            "#alerts-test", f":lock: webserver is in maintenance mode in region {region_name}"
+            #TODO: make real
+            "#alerts-test", 
+            f":lock: webserver is in maintenance mode in region {region_name}"
         )
         fractal_log(
-            "try_start_update", None, f"putting webserver into update mode in region {region_name}"
+            "try_start_update",
+            None,
+            f"putting webserver into update mode in region {region_name}"
         )
         return_msg = f"Put webserver into maintenance mode in region {region_name}."
 
@@ -101,6 +105,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             f"Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
         )
         slack_send_safe(
+            #TODO: make real
             "#alerts-test",
             slack_msg,
         )
