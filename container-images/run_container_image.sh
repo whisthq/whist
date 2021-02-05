@@ -135,15 +135,16 @@ send_uinput_device_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "fractal_id": "'"$1"'"
     }') \
-  || (echo "create_uinput_devices request to the host service failed with response: $response" && exit 1)
+  || (echo "create_uinput_devices request to the host service failed!" && exit 1)
   echo "Sent create_uinput_devices request for container with FractalID $1!"
   echo "Response to create_uinput_devices request from host service: $response"
   host_paths=($((jq -r '.result | fromjson | .[].path_on_host | @sh' <<< "$response") | tr -d \'))
   container_paths=($((jq -r '.result | fromjson | .[].path_in_container | @sh' <<< "$response") | tr -d \'))
-  devices_arg=$(printf -- "--device=%s:%s\n--device=%s:%s\n--device=%s:%s\n" \
-    "${host_paths[0]}" "${container_paths[0]}" \
-    "${host_paths[1]}" "${container_paths[1]}" \
-    "${host_paths[2]}" "${container_paths[2]}" \
+  device_perms=($((jq -r '.result | fromjson | .[].cgroup_permissions | @sh' <<< "$response") | tr -d \'))
+  devices_arg=$(printf -- "--device=%s:%s:%s\n--device=%s:%s:%s\n--device=%s:%s:%s\n" \
+    "${host_paths[0]}" "${container_paths[0]}" "${device_perms[0]}" \
+    "${host_paths[1]}" "${container_paths[1]}" "${device_perms[1]}" \
+    "${host_paths[2]}" "${container_paths[2]}" "${device_perms[2]}" \
   )
 }
 
