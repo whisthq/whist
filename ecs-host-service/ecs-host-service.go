@@ -211,14 +211,19 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 		// TODO(anton): actually delete the devices from the host when the container dies
 		// TODO(anton): delete devices from devices map when container dies
 		// TODO(anton): create socket specifically for FractalID
-		filename := fractalTempDir + FractalID + "/sockets/uinput.sock"
-		os.Remove(filename)
+		dirname := fractalTempDir + FractalID + "/sockets/"
+		filename := dirname + "uinput.sock"
+		os.MkdirAll(dirname, 0777)
+		os.RemoveAll(filename)
 		server, err := net.Listen("unix", filename)
 		if err != nil {
 			logger.Errorf("Could not create unix socket at %s: %s", filename, err)
 			return
 		}
 		defer server.Close()
+
+		logger.Infof("Successfully created unix socket at: %s", filename)
+
 		client, err := server.Accept()
 		if err != nil {
 			logger.Errorf("Could not connect to client over unix socket: %s", err)
