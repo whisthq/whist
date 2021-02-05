@@ -349,14 +349,14 @@ RUN cd /root && \
     cd .. && \
     rm -rf NVIDIA* nvidia-driver-installer.run
 
-# Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID
+# Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
-COPY services/fractal-update-nvidia-busid.service /etc/systemd/system/
-COPY scripts/update-nvidia-busid.sh /usr/share/fractal/
-RUN chmod +x /usr/share/fractal/update-nvidia-busid.sh
+COPY services/fractal-update-xorg-conf.service /etc/systemd/system/
+COPY scripts/update-xorg-conf.sh /usr/share/fractal/
+RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
 
-# Enable Nvidia Bus ID update script
-RUN systemctl enable fractal-update-nvidia-busid
+# Enable update script
+RUN systemctl enable fractal-update-xorg-conf
 
 # Set display environment variable to our Nvidia-powered display
 ENV DISPLAY :10
