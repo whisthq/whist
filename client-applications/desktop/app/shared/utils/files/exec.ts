@@ -1,5 +1,5 @@
 import { OperatingSystem, FractalDirectory } from "shared/types/client"
-import { Container } from "store/reducers/container/default"
+import { ChildProcess } from "child_process"
 
 export const execPromise = (
     command: string,
