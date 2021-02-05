@@ -207,7 +207,7 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 	// set up goroutine to create unix socket and pass file descriptors to protocol
 	go func() {
 		// TODO(anton): handle errors better
-		// TODO(anton): exit goroutine if container is dead
+		// TODO(anton): exit goroutine if container dies
 		// TODO(anton): actually delete the devices from the host when the container dies
 		// TODO(anton): delete devices from devices map when container dies
 		// TODO(anton): create socket specifically for FractalID
@@ -224,18 +224,21 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 
 		logger.Infof("Successfully created unix socket at: %s", filename)
 
+		// server.Accept() blocks until the protocol connects
 		client, err := server.Accept()
 		if err != nil {
 			logger.Errorf("Could not connect to client over unix socket: %s", err)
 			return
 		}
 		defer client.Close()
+
 		connf, err := client.(*net.UnixConn).File()
 		if err != nil {
 			logger.Errorf("Could not get file corresponding to client connection: %s", err)
 			return
 		}
 		defer connf.Close()
+
 		connfd := int(connf.Fd())
 		fds := [3]int{int(absmouse.DeviceFile().Fd()), int(relmouse.DeviceFile().Fd()), int(keyboard.DeviceFile().Fd())}
 		rights := syscall.UnixRights(fds[:]...)
