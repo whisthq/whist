@@ -497,15 +497,16 @@ jobs:
                     # set new desktop app version
                     NEW_VERSION="${MAJOR}.${MINOR}.${NEW_MICRO}"
 
-                    # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC to 0
+                    # store NEW_MICRO in GITHUB_ENV to push to GraphQL API, and reset STAGING_RC and DEV_RC to 0
                     echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
                     echo "new_staging_rc_version=0" >> $GITHUB_ENV
+                    echo "new_dev_rc_version=0" >> $GITHUB_ENV
 
                     # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
                     curl -X POST \
                     -H 'Content-Type: application/json' \
                     -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
                   elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'staging' ]]; then
                     # increment version by staging-rc.1
@@ -514,15 +515,14 @@ jobs:
                     # set new desktop app version
                     NEW_VERSION="${MAJOR}.${MINOR}.${MICRO}-staging-rc.${NEW_STAGING_RC}"
 
-                    # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API, and reset DEV_RC to 0
+                    # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
                     echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
-                    echo "new_dev_rc_version=0" >> $GITHUB_ENV
 
                     # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
                     curl -X POST \
                     -H 'Content-Type: application/json' \
                     -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
                   elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'dev' ]]; then
                     # increment version by dev-rc.1
@@ -619,5 +619,5 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
