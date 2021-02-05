@@ -11,7 +11,7 @@ import redis
 
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.slack.slack import slack_send_safe
-from app.constants.http_codes import WEBSERVER_MAINTENANCE
+# from app.constants.http_codes import WEBSERVER_MAINTENANCE
 
 
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
@@ -32,7 +32,7 @@ def check_if_update(region_name: str) -> bool:
     # we don't need a lock because we are just checking if the key exists,
     # not modifying data. it is posisble for an update to start right after
     # the check happens; that is handled elsewhere.
-    return redis_conn.exits(update_key)
+    return redis_conn.exists(update_key)
 
 
 def try_start_update(region_name: str) -> Tuple[bool, str]:
@@ -67,14 +67,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     if not got_lock:
         return False, "Did not get lock"
 
-    # now we freely operate on the keys. first make sure we are not already in update mode
-    # then, we need to make sure no tasks are going
-    update_exists = redis_conn.exists(update_key)
-    if update_exists:
-        # release lock
-        redis_conn.delete(_REDIS_LOCK_KEY)
-        return False, "An update is already happening."
-
+    # now we freely operate on the keys. we need to make sure no tasks are going
     success = False
     return_msg = None
     tasks = redis_conn.lrange(tasks_key, 0, -1)
@@ -102,7 +95,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
 
         slack_msg = (
             f":no_entry_sign: webserver has stopped new tasks in region {region_name}."
-            f"Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
+            f" Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
         )
         slack_send_safe(
             #TODO: make real
@@ -111,7 +104,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         )
         log = (
             "cannot start update, but stopping new tasks from running."
-            f"waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
+            f" Waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
         )
         fractal_log(
             "try_start_update",
@@ -120,8 +113,8 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         )
         return_msg = (
             f"There are {len(tasks)} tasks currently running."
-            "However, all new tasks in region {region_name} will not run."
-            "Please poll until these tasks finish."
+            f" However, all new tasks in region {region_name} will not run."
+            " Please poll until these tasks finish."
         )
 
     # release lock
@@ -352,77 +345,78 @@ def wait_no_update_and_track_task(func: Callable):
     return wrapper
 
 
-def check_if_update_mode(func: Callable):
-    """
-    Decorator to do two things:
-        1. check if there is no update going on. if so error out and never call the celery task.
-        2. track a celery task during its execution
-        3. clean up tracking of the celery task after it finishes
+# def check_if_update_mode(func: Callable):
+#     """
+#     Decorator to do two things:
+#         1. check if there is no update going on. if so error out and never call the celery task.
+#         2. track a celery task during its execution
+#         3. clean up tracking of the celery task after it finishes
 
-    Args:
-        func: function (celery task) to decorate
+#     Args:
+#         func: function (celery task) to decorate
 
-    Return:
-        If not in update mode, returns whatever `func` would. If in update mode, returns
-        an error with WEBSERVER_MAINTENANCE code and never calls `func`. Special case:
-        `func` == "test_endpoint" and argument "action" is "update_region" or "end_update".
-        These are allowed during an update so we let them through.
-    """
+#     Return:
+#         If not in update mode, returns whatever `func` would. If in update mode, returns
+#         an error with WEBSERVER_MAINTENANCE code and never calls `func`. Special case:
+#         `func` == "test_endpoint" and argument "action" is "update_region" or "end_update".
+#         These are allowed during an update so we let them through.
+#     """
 
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        body = kwargs.pop("body")
-        region_name = None
-        if "region" in kwargs:
-            region_name = body["region"]
-        elif "region_name" in kwargs:
-            region_name = body["region_name"]
-        else:
-            # this shouldn't happen because this decorator should only work on function that
-            # take region or region_name as paramaters in their requests.
-            # Behavior: call the function to be safe but error log so we investigate
-            log = (
-                "Could not find region or region_name in kwargs for endpoint function"
-                f"{func.__name__}. Continuing execution..."
-            )
-            fractal_log(
-                "check_if_update_mode",
-                None,
-                log,
-                level=logging.ERROR,
-            )
-            return func()
+#     @wraps(func)
+#     def wrapper(*args, **kwargs):
+#         body = kwargs.pop("body")
+#         region_name = None
+#         if "region" in body:
+#             region_name = body["region"]
+#         elif "region_name" in body:
+#             region_name = body["region_name"]
+#         else:
+#             # this shouldn't happen because this decorator should only work on function that
+#             # take region or region_name as paramaters in their requests.
+#             # Behavior: call the function to be safe but error log so we investigate
+#             log = (
+#                 "Could not find region or region_name in kwargs for endpoint function"
+#                 f" {func.__name__}. Continuing execution..."
+#             )
+#             fractal_log(
+#                 "check_if_update_mode",
+#                 None,
+#                 log,
+#                 level=logging.ERROR,
+#             )
+#             return func(*args, **kwargs)
 
-        # this is a special case: /aws_container/test_endpoint/update_region and 
-        # /aws_container/test_endpoint/end_update can always proceed in maintenance mode
-        if func.__name__ == 'test_endpoint':
-            # TODO: can we do this differently? this is very jank
-            action = args[0]
-            if action in ["update_region", "end_update"]:
-                return func()
+#         # this is a special case: /aws_container/test_endpoint/update_region and
+#         # /aws_container/test_endpoint/end_update can always proceed in maintenance mode
+#         if func.__name__ == 'test_endpoint':
+#             # TODO: can we do this differently? this is very jank
+#             action = kwargs["action"]
+#             if action in ["update_region", "end_update"]:
+#                 return func(*args, **kwargs)
 
-        # check if in maintenance mode
-        if check_if_update(region_name):
-            log = (
-                f"Could not service request because in maintenance mode. Function: {func.__name__}"
-                f" Args: {*args}. Kwargs: {**kwargs}"
-            )
-            fractal_log(
-                "check_if_update_mode",
-                None,
-                log,
-            )
+#         # check if in maintenance mode
+#         if check_if_update(region_name):
+#             log = (
+#                 f"Could not service request because in maintenance mode. Function: {func.__name__}"
+#                 f" Args: {args}. Kwargs: {kwargs}"
+#             )
+#             fractal_log(
+#                 "check_if_update_mode",
+#                 None,
+#                 log,
+#             )
 
-            return (
-                jsonify(
-                    {
-                        "error": "Webserver is in maintenance mode.",
-                    }
-                ),
-                WEBSERVER_MAINTENANCE,
-            )
-        else:
-            # we are not in update mode; freely call the function
-            return func()
+#             return (
+#                 jsonify(
+#                     {
+#                         "error": "Webserver is in maintenance mode.",
+#                     }
+#                 ),
+#                 WEBSERVER_MAINTENANCE,
+#             )
+#         else:
+#             # we are not in update mode; freely call the function
+#             return func(*args, **kwargs)
 
-    return wrapper
+#     return wrapper
+

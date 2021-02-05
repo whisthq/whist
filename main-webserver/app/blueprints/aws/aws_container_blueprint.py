@@ -3,7 +3,11 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
-from app.update_manager.update_manager import try_start_update, try_end_update
+from app.update_manager.update_manager import (
+    check_if_update,
+    try_start_update,
+    try_end_update,
+)
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
@@ -12,7 +16,13 @@ from app.celery.aws_ecs_creation import (
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container
 from app.celery.aws_ecs_modification import update_region
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
+from app.constants.http_codes import (
+    ACCEPTED,
+    BAD_REQUEST,
+    NOT_FOUND,
+    SUCCESS,
+    WEBSERVER_MAINTENANCE,
+)
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     ping_helper,
@@ -65,7 +75,7 @@ def container_state(action, **kwargs):
 @fractal_pre_process
 @jwt_required
 @developer_required
-@check_if_update_mode
+# @check_if_update_mode
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
     aws container creation, cluster creation, deletion, etcetera. It differs from our
@@ -80,6 +90,19 @@ def test_endpoint(action, **kwargs):
         json, int: the json http response and the http status code
         (which is an int like 200, 400, ...).
     """
+    if action not in ["update_region", "start_update", "end_update"]:
+        # check if there is an update going on
+        region_name = kwargs["body"]["region_name"]
+        if check_if_update(region_name):
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver is in maintenance mode.",
+                    }
+                ),
+                WEBSERVER_MAINTENANCE,
+            )
+
     if action == "create_cluster":
         try:
             cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -268,7 +291,6 @@ def aws_container_ping(**kwargs):
 @jwt_required
 @fractal_auth
 @payment_required
-@check_if_update_mode
 def aws_container_assign(**kwargs):
     """
     Assigns aws container. Needs:
@@ -279,6 +301,18 @@ def aws_container_assign(**kwargs):
 
     Returns container status
     """
+    # check if there is an update going on
+    region_name = kwargs["body"]["region"]
+    if check_if_update(region_name):
+        return (
+            jsonify(
+                {
+                    "error": "Webserver is in maintenance mode.",
+                }
+            ),
+            WEBSERVER_MAINTENANCE,
+        )
+
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     body = kwargs.pop("body")
 

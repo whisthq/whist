@@ -28,6 +28,7 @@ services:
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
+      SLACK_WEBHOOK: https://hooks.slack.com/services/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
       POSTGRES_URI: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
       REDIS_URL: rediss://redis
       HOT_RELOAD: ${HOT_RELOAD}
