@@ -31,7 +31,6 @@ import (
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
 
 	dockertypes "github.com/docker/docker/api/types"
-	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerevents "github.com/docker/docker/api/types/events"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
@@ -108,13 +107,13 @@ func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error
 }
 
 // TODO(Anton): Actually Implement this function
-func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]dockercontainer.DeviceMapping, error) {
+func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.UinputDeviceMapping, error) {
 	FractalID := r.FractalID
 	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
 
 	// TODO(Anton): actually create the uinput devices, etc.
 
-	return []dockercontainer.DeviceMapping{
+	return []ecsagent.UinputDeviceMapping{
 		{
 			PathOnHost:        "/dev/input/event3", // this will vary based on Anton's implementation
 			PathInContainer:   "/dev/input/event3", // we should hardcode the 3, 4, 5 inside the container to simplify the container-images side of things
