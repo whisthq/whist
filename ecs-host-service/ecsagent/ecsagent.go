@@ -16,11 +16,11 @@ import (
 	ecsengine "github.com/fractal/ecs-agent/agent/engine"
 	ecslogger "github.com/fractal/ecs-agent/agent/logger"
 
-	dockercontainer "github.com/docker/docker/api/types/container"
-
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 )
+
+type UinputDeviceMapping ecsengine.FractalUinputDeviceMapping
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -41,9 +41,8 @@ func init() {
 		fractallogger.Panicf("Could not make directory /etc/ecs: Error: %s", err)
 	}
 
-	// Tell the ecs-agent where the host service is listening for HTTP requests
-	// so it can pass along mappings between Docker container IDs and FractalIDs,
-	// as well as uinput devices
+	// Give the ecs-agent a method to pass along mappings between Docker
+	// container IDs and FractalIDs.
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
@@ -72,8 +71,9 @@ func init() {
 		},
 	)
 
+	// Give the ecs-agent a method to ask for uinput devices for a container.
 	ecsengine.SetFractalHostServiceUinputDeviceRequester(
-		func(fractalID string) ([]dockercontainer.DeviceMapping, error) {
+		func(fractalID string) ([]ecsengine.FractalUinputDeviceMapping, error) {
 			body, err := fractalhttpserver.CreateCreateUinputDevicesRequestBody(
 				fractalhttpserver.CreateUinputDevicesRequest{
 					FractalID: fractalID,
@@ -87,23 +87,42 @@ func init() {
 			// We have the request body, now just need to actually make the request
 			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
 
-			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
-			if err != nil {
-				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s", err)
+			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			respbody, bodyerr := ioutil.ReadAll(response.Body)
+			response.Body.Close()
+			switch {
+			case resperr != nil && bodyerr == nil:
+				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s. Response body: %s", resperr, respbody)
+			case resperr == nil && bodyerr != nil:
+				return nil, fractallogger.MakeError("Error reading response from /create_uinput_devices endpoint: %s", bodyerr)
+			case resperr != nil && bodyerr != nil:
+				return nil, fractallogger.MakeError("Post request to /create_uinput_devices endpoint returned error: %s. Also, could not read response body because of error: %s", resperr, bodyerr)
 			}
 
-			respbody, err := ioutil.ReadAll(response.Body)
-			if err != nil {
-				return nil, fractallogger.MakeError("Error reading response from /create_uinput_devices endpoint: %s", err)
-			}
+			fractallogger.Infof("Reponse body: %s", respbody)
 
-			var list []dockercontainer.DeviceMapping
-			err = json.Unmarshal(respbody, &list)
+			var respstruct struct {
+				Result string `json:"result"`
+				Error  string `json:"error"`
+			}
+			err = json.Unmarshal(respbody, &respstruct)
 			if err != nil {
 				return nil, fractallogger.MakeError("Error unmarshalling response from /create_uinput_devices endpoint. Error: %s, fractalID: %s, response: %s", err, fractalID, respbody)
 			}
 
-			return list, nil
+			var devices []UinputDeviceMapping
+			err = json.Unmarshal([]byte(respstruct.Result), &devices)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error unmarshalling devices from /create_uinput_devices endpoint. Error: %s, fractalID: %s, device list: %s", err, fractalID, respstruct.Result)
+			}
+
+			// Convert to the right type
+			result := make([]ecsengine.FractalUinputDeviceMapping, len(devices))
+			for i, v := range devices {
+				result[i] = ecsengine.FractalUinputDeviceMapping(v)
+			}
+
+			return result, nil
 		},
 	)
 
