@@ -41,4 +41,3 @@ def shift_unix_by_week(utc, num_weeks):
 def shift_unix_by_minutes(utc, num_minutes):
     date = unix_to_date(utc)
     return round(date_to_unix(date + relativedelta(minutes=num_minutes)))
-
