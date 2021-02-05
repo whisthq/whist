@@ -101,9 +101,7 @@ def update_region(self, region_name="us-east-1", ami=None):
         )
         self.update_state(
             state="SUCCESS",
-            meta={
-                "msg": f"No clusters in region {region_name}",
-            },
+            meta={"msg": f"No clusters in region {region_name}", "tasks": ""},
         )
         return
 
@@ -144,10 +142,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
             our workloads, so we want to make sure there are instances we can actually delete.
             If AWS does poorly distribute our loads, we log it.
         3. trigger a scale down so only instances with tasks remain.
-
     This function does not handle outscaling at the moment.
     This function can be expanded to handle more custom scaling logic as we grow.
-
     Args:
         cluster: cluster to manually scale
         region_name: region that cluster resides in

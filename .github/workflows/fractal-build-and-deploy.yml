@@ -23,7 +23,7 @@ on:
                 required: true
                 default: "None" # Avoid accidental mistakes by making the default not run any jobs
             publish:
-                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing"
+                description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
                 required: true
                 default: false # Avoid accidental mistakes by making the default not publish
 
@@ -190,7 +190,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ matrix.aws-region }}
 
-            - name: Retrieve master git hash as env variable
+            - name: Retrieve Branch HEAD Git Hash as Env Variable
               run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
             - name: Store GitHub Container Registry base URI as env variable
