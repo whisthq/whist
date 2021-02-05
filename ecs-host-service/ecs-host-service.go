@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"io"
 	"math/rand"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -116,7 +117,7 @@ func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error
 	return nil
 }
 
-// from ioctl.h
+// from ioctl.h and uinput.h
 const (
 	iocDirshift  = 30
 	iocSizeshift = 16
@@ -192,6 +193,33 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 	}
 
 	devices[FractalID] = uinputDevices{absmouse: absmouse, relmouse: relmouse, keyboard: keyboard}
+
+	go func() {
+		filename := "/tmp/sockets/uinput.sock"
+		os.Remove(filename)
+		server, err := net.Listen("unix", filename)
+		if err != nil {
+			logger.Infof("unix socket error: %s", err)
+			return
+		}
+		defer server.Close()
+		client, err := server.Accept()
+		if err != nil {
+			logger.Info("accept error: %s", err)
+			return
+		}
+		defer client.Close()
+		connf, err := client.(*net.UnixConn).File()
+		if err != nil {
+			logger.Infof("file error: %s", err)
+			return
+		}
+		defer connf.Close()
+		connfd := int(connf.Fd())
+		fds := [3]int{int(absmouse.DeviceFile().Fd()), int(relmouse.DeviceFile().Fd()), int(keyboard.DeviceFile().Fd())}
+		rights := syscall.UnixRights(fds[:]...)
+		syscall.Sendmsg(connfd, nil, rights, nil, 0)
+	}()
 
 	return []ecsagent.UinputDeviceMapping{
 		{
