@@ -56,7 +56,6 @@ Includes
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
-#include "../fractal/video/dxgicudacapturetransfer.h"
 #endif
 
 #ifdef _WIN32
