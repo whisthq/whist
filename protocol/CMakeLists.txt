@@ -17,9 +17,11 @@ the verbose messages will be printed regardless of whether verbose output is set
 
 # 3.15 required for CMP0091
 # We need CMP0091 to select the MSVC_RUNTIME_LIBRARY
+# We need CheckLanguage to call check_language
 # See https://cmake.org/cmake/help/v3.15/prop_tgt/MSVC_RUNTIME_LIBRARY.html
 cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
+include(CheckLanguage)
 
 # export compile commands database - comment this out if not running clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -27,7 +29,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    enable_language(CUDA)
+    check_language(CUDA)
+    # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
+    if(CMAKE_CUDA_COMPILER)
+        enable_language(CUDA)
+    endif()
 endif()
 
 #set default compiler flags
