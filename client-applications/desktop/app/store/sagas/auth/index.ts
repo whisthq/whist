@@ -46,7 +46,7 @@ function* validateAccessToken(action: { accessToken: string }) {
     }
 }
 
-export default function* authSaga () {
+export default function* authSaga() {
     yield all([
         takeEvery(AuthAction.VALIDATE_ACCESS_TOKEN, validateAccessToken),
     ])

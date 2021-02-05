@@ -113,7 +113,7 @@ function* getContainerInfo(action: { taskID: string }) {
     }
 }
 
-export default function* containerSaga () {
+export default function* containerSaga() {
     yield all([
         takeEvery(ContainerAction.CREATE_CONTAINER, createContainer),
         takeEvery(ContainerAction.GET_CONTAINER_INFO, getContainerInfo),
