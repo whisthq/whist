@@ -3,13 +3,15 @@
 # exit on error
 set -Eeuo pipefail
 
+CURRENT_DIR=`pwd`
+
 # check if in CI; if so just run fetch and setup scripts then exit
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
-    cd db
+    cd ../../db_setup
     bash fetch_db.sh
     bash db_setup.sh
-    cd ..
+    cd $CURRENT_DIR
     exit 0
 fi
 
@@ -29,12 +31,12 @@ export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
 export POSTGRES_REMOTE_DB=$POSTGRES_DB
 
 
-if [ -f db/db_schema.sql ]; then
+if [ -f ../../db_setup/db_schema.sql ]; then
     echo "Found existing schema and data sql scripts. Skipping fetching db."
 else
-    cd db
+    cd ../../db_setup/
     bash fetch_db.sh
-    cd ..
+    cd $CURRENT_DIR
 fi
 
 docker-compose up -d --build
@@ -48,9 +50,9 @@ export POSTGRES_LOCAL_PORT="9999"
 # we don't need a pwd because local db trusts all incoming connections
 export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
 export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
-cd db
+cd ../../db_setup/
 bash db_setup.sh
-cd ..
+cd $CURRENT_DIR
 
 echo "Success! Teardown when you are done with: docker-compose down"
 

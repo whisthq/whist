@@ -3,15 +3,7 @@
 # exit on error
 set -Eeuo pipefail
 
-# check if in CI; if so just run fetch and setup scripts then exit
-IN_CI=${CI:=false} # default: false
-if [ $IN_CI == "true" ]; then
-    cd db
-    bash fetch_db.sh
-    bash db_setup.sh
-    cd ..
-    exit 0
-fi
+CURRENT_DIR=`pwd`
 
 # make sure current directory is docker
 if [ ! -f .env ]; then
@@ -29,15 +21,13 @@ export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
 export POSTGRES_REMOTE_DB=$POSTGRES_DB
 
 
-if [ -f ../tests/setup/db/db_schema.sql ]; then
+if [ -f ../db_setup/db_schema.sql ]; then
     echo "Found existing schema and data sql scripts. Skipping fetching db."
 else
     # navigate to test directory to get the db
-    #TODO; move this out of tests
-    cd ../tests/setup/db/
+    cd ../db_setup
     bash fetch_db.sh
-    # come back here
-    cd ../../../docker
+    cd $CURRENT_DIR
 fi
 
 # local deploy uses localhost db
@@ -52,9 +42,9 @@ docker-compose up -d --build
 # let db prepare. TODO: make more robust
 sleep 2
 
-cd ../tests/setup/db
+cd ../db_setup
 bash db_setup.sh
-cd ../../../docker
+cd $CURRENT_DIR
 
 echo "Success! Teardown when you are done with: docker-compose down"
 

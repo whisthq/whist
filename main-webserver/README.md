@@ -20,9 +20,7 @@ Right now, in order to be _sure_ that changes you make to the web stack won't br
 
 The web application stack is comprised of three main components: the web server itself, an asynchronous task queue, and a database. The web server is written in Python using the [Flask](https://flask.palletsprojects.com/en/1.1.x/) web framework. The task queue is a Redis-backed [Celery](https://docs.celeryproject.org/en/stable/index.html) task queue. As such, the task queue can be broken down into two more granular sub-components: a pool of worker processes and a Redis store. The database is a Postgres instance that is shared by multiple developers. In summary, there are a total of _four_ components that make up the web application stack: a Flask server, a Celery worker pool, a Redis store, and a PostgreSQL database.
 
-We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally.
-
-We use environment variables to configure our local development environments. Environment variables should be set by adding lines of the form `KEY=VALUE` to the file `docker/.env`. **The main environment variable that _must_ be set in order to do any kind of local development, whether with the `docker-compose` stack or the `pytest` test suite, is the `CONFIG_DB_URL` environment variable.** `CONFIG_DB_URL` specifies the PostgreSQL connection URI of the Fractal configuration database. This database contains default values for many of the variables that are used to configure the various parts of the web application stack. These default values may be overridden locally by setting alternatives in the same `docker/.env` file.
+We use [`docker-compose`](https://docs.docker.com/compose/) to spin part of the web server stack up (the `docker-compose` stack does not include the Postgres database, which is shared between multiple developers and app deployments, as mentioned above) locally for development purposes. `docker-compose` builds Docker images for the Flask server and the Celery worker pool and deploys them alongside containerized Redis. There is also a `pytest` test suite that developers may run locally. None of these commands are run directly, and are intsead wrapped by bash scripts that do a bit of preparation (namely `docker/local_deploy.sh` and `tests/setup/setup_tests.sh`).
 
 The following environment variables must also be set in `docker/.env` (neither the test suite nor the `docker-compose` stack will work without them).
 
@@ -30,6 +28,8 @@ The following environment variables must also be set in `docker/.env` (neither t
 - `POSTGRES_HOST` &ndash; The hostname or IP address of the development Postgres instance.
 - `POSTGRES_PASSWORD` &ndash; The password used to authenticate with the local stack's PostgresQL instance.
 - `POSTGRES_USER` &ndash; The name of the user as whom to log into the development Postgres instance.
+
+All of local deployment, local testing, and CI use ephemeral DBs that are mostly empty copies of the dev database. The copying script (see `db_setup/`) looks at the database specified by those environment variables.
 
 **1. Set environment variables**
 
@@ -63,17 +63,18 @@ We use a Redis+TLS instance in production, so during testing we try to maintain 
 
 **5. Spin Up Local Servers**
 
-Use `docker-compose` to run the stack locally. First, `cd` into the `docker/` folder. Then, run the `up` command. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
+Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
 
 ```sh
-docker-compose up --build
+cd docker
+bash local_deploy.sh
 ```
 
 If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away.
 
-Review `docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running.
+Review `docker/docker-compose.yml` to see which ports the various services are hosted on. For example, `"7810:6379"` means that the Redis service, running on port 6379 internally, will be available on `localhost:7810` from the host machine. Line 25 of `docker-compose.yml` will tell you where the webserver itself is running.
 
-By default, hot-reloading of the Flask web server and Celery task queue is disabled (`HOT_RELOAD=`). To enable it, set `HOT_RELOAD` to a non-empty string in your `docker/.env` file.
+By default, hot-reloading of the Flask web server and Celery task queue is disabled (`HOT_RELOAD=`). To enable it, set `HOT_RELOAD` to a non-empty string in `docker/local_deploy.sh`.
 
 ### Flask CLI
 
