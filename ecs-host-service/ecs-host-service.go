@@ -41,15 +41,25 @@ import (
 	dockerclient "github.com/docker/docker/client"
 )
 
-// The location on disk where we store the container resource allocations
-const resourceMappingDirectory = "/fractal/containerResourceMappings/"
-const cloudStorageDirectory = "/fractal/cloudStorage/"
+// The locations on disk where we store our data, including cloud storage
+// mounts and container resource allocations. Note that we keep the cloud
+// storage in its own directory, not in the fractalDir, so that we can safely
+// delete the entire `fractal` directory on exit.
+const fractalDir = "/fractal/"
+const cloudStorageDir = "/fractalCloudStorage/"
+const fractalTempDir = fractalDir + "temp/"
+const containerResourceMappings = "containerResourceMappings/"
 
+// TODO: get rid of this security nemesis
 // Opens all permissions on /fractal directory
-func makeFractalDirectoryFreeForAll() {
-	cmd := exec.Command("chown", "-R", "ubuntu", "/fractal")
+func makeFractalDirectoriesFreeForAll() {
+	cmd := exec.Command("chown", "-R", "ubuntu", fractalDir)
 	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "777", "/fractal")
+	cmd = exec.Command("chmod", "-R", "777", fractalDir)
+	cmd.Run()
+	cmd = exec.Command("chown", "-R", "ubuntu", cloudStorageDir)
+	cmd.Run()
+	cmd = exec.Command("chmod", "-R", "777", cloudStorageDir)
 	cmd.Run()
 }
 
@@ -283,10 +293,19 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 		return logger.MakeError("Unrecognized cloud storage provider: req.Provider=%s", req.Provider)
 	}
 
+	// Compute the directory to mount the cloud storage folder in
+	dockerID, ok := containerIDs[uint16(req.HostPort)]
+	if !ok {
+		return logger.MakeError("mountCloudStoragedir: couldn't find DockerID for hostPort %v", req.HostPort)
+	}
+	fractalID, ok := fractalIDs[dockerID]
+	if !ok {
+		return logger.MakeError("mountCloudStoragedir: couldn't find FractalID for hostPort %v", req.HostPort)
+	}
+
 	// Don't forget the trailing slash
-	hostPort := logger.Sprintf("%v", req.HostPort)
-	path := cloudStorageDirectory + hostPort + "/" + dirName + "/"
-	configName := hostPort + rcloneType
+	path := logger.Sprintf("%s%s/%s/", cloudStorageDir, fractalID, dirName)
+	configName := fractalID + rcloneType
 
 	buf, err := json.Marshal(
 		struct {
@@ -313,7 +332,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	} else {
 		logger.Infof("Created directory %s", path)
 	}
-	makeFractalDirectoryFreeForAll()
+	makeFractalDirectoriesFreeForAll()
 
 	// We mount in foreground mode, and wait for the result to clean up the
 	// directory created for this purpose. That way we know that we aren't
@@ -329,7 +348,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 			"client_secret", req.ClientSecret,
 		}, " ")
 	// )
-	scriptpath := resourceMappingDirectory + "config-create-" + configName + ".sh"
+	scriptpath := fractalTempDir + "config-create-" + configName + ".sh"
 	f, _ := os.Create(scriptpath)
 	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
 	_, _ = f.WriteString(strcmd)
@@ -412,7 +431,14 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	if !exists {
 		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
 	}
-	datadir := resourceMappingDirectory + id + "/"
+
+	// Get the fractalID and use it to compute the right resource mapping directory
+	fractalID, ok := fractalIDs[id]
+	if !ok {
+		// This is actually an error, since we received a DPI request.
+		return logger.MakeError("handleDPIRequest(): couldn't find FractalID mapping for container with DockerID %s", id)
+	}
+	datadir := fractalDir + fractalID + containerResourceMappings
 
 	// Actually write DPI information to file
 	strdpi := logger.Sprintf("%v", req.DPI)
@@ -464,14 +490,6 @@ func writeAssignmentToFile(filename, data string) (err error) {
 // Starts a container on the host by assigning to it the relevant parameters and
 // an unused TTY
 func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id string) error {
-	// Create a container-specific directory to store mappings
-	datadir := resourceMappingDirectory + id + "/"
-	err := os.Mkdir(datadir, 0777)
-	if err != nil {
-		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
-	}
-	logger.Info("Created container-specific directory %s\n", datadir)
-
 	c, err := cli.ContainerInspect(ctx, id)
 	if err != nil {
 		return logger.MakeError("Error running ContainerInspect on container %s: %v", id, err)
@@ -484,6 +502,21 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 		logger.Info("Detected ecs-agent starting. Doing nothing.")
 		return nil
 	}
+
+	// Create a container-specific directory to store mappings. Exit if it's a
+	// non-fractal container.
+	//   Get the fractalID and use it to compute the right directory
+	fractalID, ok := fractalIDs[id]
+	if !ok {
+		return logger.MakeError("containerStartHandler(): couldn't find FractalID mapping for container with name %s", c.Name)
+	}
+	datadir := fractalDir + fractalID + containerResourceMappings
+
+	err = os.Mkdir(datadir, 0777)
+	if err != nil {
+		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
+	}
+	logger.Info("Created container-specific directory %s\n", datadir)
 
 	// Keep track of port mapping
 	// We only need to keep track of the mapping of the container's tcp 32262 on the host
@@ -542,8 +575,16 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 
 // Frees all resources assigned to a container and kill it
 func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
+	// Get the fractalID and use it to compute the right data directory. Also,
+	// exit if we are not dealing with a Fractal container.
+	fractalID, ok := fractalIDs[id]
+	if !ok {
+		logger.Infof("handleDPIRequest(): couldn't find FractalID mapping for container with DockerID %s", id)
+		return
+	}
+
 	// Delete the container-specific data directory we used
-	datadir := resourceMappingDirectory + id + "/"
+	datadir := fractalDir + fractalID + containerResourceMappings
 	err := os.RemoveAll(datadir)
 	if err != nil {
 		logger.Errorf("Failed to delete container-specific directory %s", datadir)
@@ -621,20 +662,20 @@ func shutdownHostService() {
 // Create the directory used to store the container resource allocations
 // (e.g. TTYs and cloud storage folders) on disk
 func initializeFilesystem() {
-	// check if resource mapping directory already exists --- if so, panic, since
+	// check if "/fractal" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
-	if _, err := os.Lstat(resourceMappingDirectory); !os.IsNotExist(err) {
+	if _, err := os.Lstat(fractalDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf("Directory %s already exists!", resourceMappingDirectory)
+			logger.Panicf("Directory %s already exists!", fractalDir)
 		} else {
-			logger.Panicf("Could not make directory %s because of error %v", resourceMappingDirectory, err)
+			logger.Panicf("Could not make directory %s because of error %v", fractalDir, err)
 		}
 	}
 
 	// Create the resource mapping directory
-	err := os.MkdirAll(resourceMappingDirectory, 0777)
+	err := os.MkdirAll(fractalDir, 0777)
 	if err != nil {
-		logger.Panicf("Failed to create directory %s: error: %s\n", resourceMappingDirectory, err)
+		logger.Panicf("Failed to create directory %s: error: %s\n", fractalDir, err)
 	}
 
 	// Same check as above, but for fractal-private directory
@@ -658,21 +699,21 @@ func initializeFilesystem() {
 	// storage drives.)
 
 	// Create cloud storage directory
-	err = os.MkdirAll(cloudStorageDirectory, 0777)
+	err = os.MkdirAll(cloudStorageDir, 0777)
 	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDirectory, err)
+		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
 	}
-	makeFractalDirectoryFreeForAll()
+	makeFractalDirectoriesFreeForAll()
 }
 
 // Delete the directory used to store the container resource allocations
 // (e.g. TTYs and cloud storage folders) on disk
 func uninitializeFilesystem() {
-	err := os.RemoveAll(resourceMappingDirectory)
+	err := os.RemoveAll(fractalDir)
 	if err != nil {
-		logger.Panicf("Failed to delete directory %s: error: %v\n", resourceMappingDirectory, err)
+		logger.Panicf("Failed to delete directory %s: error: %v\n", fractalDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", resourceMappingDirectory)
+		logger.Infof("Successfully deleted directory %s\n", fractalDir)
 	}
 
 	err = os.RemoveAll(httpserver.FractalPrivatePath)
