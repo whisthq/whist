@@ -45,9 +45,9 @@ const getExecutableName = (): string => {
 
     Arguments: none
 
-    Returns: 
+    Returns:
         (string) name of executable to run
-        
+
     */
     const currentOS = require("os").platform()
 
@@ -68,7 +68,7 @@ export const launchProtocol = async (
     Description:
         Function to launch the protocol
 
-    Arguments:  
+    Arguments:
         container: Container from Redux store
         protocolOnStart (function): Callback function fired right before protocol starts
         protocolOnExit (function): Callback function fired right after protocol exits
@@ -109,7 +109,8 @@ export const launchProtocol = async (
     const protocolArguments = [
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
-            .flat()
+            .flat(),
+        "--spin"
     ]
 
     // Starts the protocol
