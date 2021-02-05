@@ -198,6 +198,7 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 	go func() {
 		// TODO(anton): handle errors better
 		// TODO(anton): exit goroutine if container is dead
+		// TODO(anton): actually delete the devices from the host when the container dies
 		// TODO(anton): delete devices from devices map when container dies
 		// TODO(anton): create socket specifically for FractalID
 		filename := "/tmp/sockets/uinput.sock"
