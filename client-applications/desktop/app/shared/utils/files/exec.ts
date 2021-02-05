@@ -109,8 +109,7 @@ export const launchProtocol = async (
     const protocolArguments = [
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
-            .flat(),
-        "0.0.0.0",
+            .flat()
     ]
 
     // Starts the protocol

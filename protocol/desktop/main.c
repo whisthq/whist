@@ -35,6 +35,7 @@ Includes
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
+#include "../fractal/utils/string_utils.h"
 #include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
@@ -578,15 +579,6 @@ int sync_keyboard_state(void) {
 int main(int argc, char* argv[]) {
     init_default_port_mappings();
 
-    int ret = parse_args(argc, argv);
-    if (ret == -1) {
-        // invalid usage
-        return -1;
-    } else if (ret == 1) {
-        // --help or --version
-        return 0;
-    }
-
     LOG_INFO("Client protocol started.");
 
     srand(rand() * (unsigned int)time(NULL) + rand());
@@ -609,14 +601,75 @@ int main(int argc, char* argv[]) {
     // TODO: Figure out a better way to parse stdin
     // TODO: Move this so that it renders the loading screen until we break out of the
     // while loop
-    LOG_INFO("READING STDIN\n");
     char incoming[100];
+    char* loading = "loading";
+    int argv_index = argc;
+    char* copied_argv[100];
+    int i;
+    for(i = 0; i < argc; i++) {
+        copied_argv[i] = argv[i];
+        LOG_INFO("copied initial %s to %d\n", copied_argv[i], i);
+    }
 
-    while(fgets(incoming,100,stdin) != NULL) {
-        LOG_INFO("incoming %s\n", incoming);
+    while(fgets(incoming, 100, stdin) != NULL) {
+        LOG_INFO("INCOMING %s\n", incoming);
+        char* arg = strtok(incoming, "?");
+        char* second_arg = strtok(NULL, "?");
+        LOG_INFO("SECOND ARG %s\n", second_arg);
+
+        if(strcmp(arg, loading) != 0) {
+            switch (arg[0]) {
+                case 'p': {
+                    char* ports = "--ports";
+                    copied_argv[argv_index] = ports;
+                    LOG_INFO("adding %s to %d\n", copied_argv[argv_index], argv_index);
+                    argv_index += 1;
+                    copied_argv[argv_index] = second_arg;
+                    LOG_INFO("adding %s to %d\n", copied_argv[argv_index], argv_index);
+                    argv_index += 1;
+                    break;
+                }
+                case 'k': {
+                    char* private_key = "--private_key";
+                    copied_argv[argv_index] = private_key;
+                    LOG_INFO("adding %s to %d\n", copied_argv[argv_index], argv_index);
+                    argv_index += 1;
+                    copied_argv[argv_index] = second_arg;
+                    LOG_INFO("adding %s to %d\n", copied_argv[argv_index], argv_index);
+                    argv_index += 1;
+                    break;
+                }
+                case 'i': {
+                    copied_argv[argv_index] = second_arg;
+                    LOG_INFO("adding %s to %d\n", copied_argv[argv_index], argv_index);
+                    argv_index += 1;
+                    break;
+                }
+                default: {
+                    break;
+                }
+            }            
+        }
         fflush(stdout);
     }
-    printf("Out of loop!\n");
+    LOG_INFO("done concat!");
+    LOG_INFO("other args is %d\n", argv_index);
+    LOG_INFO("in total %d\n args", argv_index);
+    int j;
+    for(j = 0; j < argv_index; j++) {
+        LOG_INFO("copied after %s\n", copied_argv[j]);
+    }
+
+    int ret = parse_args(argv_index, copied_argv);
+    if (ret == -1) {
+        LOG_INFO("ARG PARSED WRONG");
+        // invalid usage
+        return -1;
+    } else if (ret == 1) {
+        LOG_INFO("ARG HELP CALLED");
+        // --help or --version
+        return 0;
+    }
 
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
