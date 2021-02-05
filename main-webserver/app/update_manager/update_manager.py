@@ -42,8 +42,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         redis_conn.set(update_key, 1)
 
         slack_send_safe(
-            "#alerts-test",
-            f":lock: webserver is in maintenance mode in region {region_name}"
+            "#alerts-test", f":lock: webserver is in maintenance mode in region {region_name}"
         )
         fractal_log(
             "try_start_update", None, f"putting webserver into update mode in region {region_name}"
@@ -64,8 +63,8 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             slack_msg,
         )
         log = (
-             "cannot start update, but stopping new tasks from running."
-             f"waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
+            "cannot start update, but stopping new tasks from running."
+            f"waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
         )
         fractal_log(
             "try_start_update",

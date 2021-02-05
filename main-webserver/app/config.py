@@ -257,7 +257,6 @@ class LocalConfig(DeploymentConfig):
     # Local webservers will fail to ping slack because this variable is missing. Set it in docker-compose
     # if you would like to use it.
     SLACK_WEBHOOK = property(getter("SLACK_WEBHOOK", default="", fetch=False))
-    
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
