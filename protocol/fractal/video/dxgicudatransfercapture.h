@@ -1,4 +1,3 @@
-<<<<<<< HEAD:protocol/fractal/video/dxgicudacapturetransfer.h
 #ifndef DXGI_CUDA_TRANSFER_CAPTURE_H
 #define DXGI_CUDA_TRANSFER_CAPTURE_H
 /**
