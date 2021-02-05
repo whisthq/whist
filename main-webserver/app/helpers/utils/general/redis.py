@@ -17,7 +17,6 @@ def get_redis_url():
     Returns:
         (str) the redis URL to connect to
     """
-
     redis_tls_url = os.environ.get("REDIS_TLS_URL", "")
     redis_url = os.environ.get("REDIS_URL", "")
     if redis_tls_url == "":
