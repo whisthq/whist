@@ -29,23 +29,3 @@ def test_callback_webserver_hostname_localhost_with_port():
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
-
-
-def test_timeout_decorator_no_timeout():
-    @func_set_timeout(timeout=1)
-    def fast_func():
-        time.sleep(0.5)
-
-    # this should run with no timeout error
-    fast_func()
-
-    assert True
-
-
-def test_timeout_decorator_yes_timeout():
-    @func_set_timeout(timeout=1)
-    def slow_func():
-        time.sleep(1.5)
-
-    with pytest.raises(FunctionTimedOut):
-        slow_func()
