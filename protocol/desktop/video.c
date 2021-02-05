@@ -268,9 +268,9 @@ int32_t render_screen(SDL_Renderer* renderer) {
             output_rect.y = 0;
             output_rect.w = server_width;
             output_rect.h = server_height;
-            SDL_RenderCopy((SDL_Renderer*)video_context.renderer, video_context.texture,
+            SDL_RenderCopy(video_context.renderer, video_context.texture,
                            &output_rect, NULL);
-            SDL_RenderPresent((SDL_Renderer*)video_context.renderer);
+            SDL_RenderPresent(video_context.renderer);
         }
         safe_SDL_UnlockMutex(render_mutex);
 
@@ -695,7 +695,7 @@ void update_texture() {
         }
         // Create a new texture
         SDL_Texture* texture =
-            SDL_CreateTexture((SDL_Renderer*)renderer, SDL_PIXELFORMAT_YV12,
+            SDL_CreateTexture(video_context.renderer, SDL_PIXELFORMAT_YV12,
                               SDL_TEXTUREACCESS_STREAMING, MAX_SCREEN_WIDTH, MAX_SCREEN_HEIGHT);
         if (!texture) {
             LOG_FATAL("SDL: could not create texture - exiting");
@@ -812,8 +812,6 @@ int init_multithreaded_video(void* opaque) {
     // True if RenderScreen is currently rendering a frame
     rendering = false;
     has_rendered_yet = false;
-
-    SDL_Texture* texture;
 
     SDL_SetRenderDrawBlendMode((SDL_Renderer*)renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen.

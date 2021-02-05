@@ -5,7 +5,7 @@
  **/
 #include "dxgicapture.h"
 
-#include "dxgicudacapturetransfer.h"
+#include "dxgicudatransfercapture.h"
 
 #include <windows.h>
 
@@ -451,7 +451,7 @@ void release_screen(CaptureDevice* device) {
 
 void destroy_capture_device(CaptureDevice* device) {
     // need to reinitialize this, so close it
-    dxgi_cuda_close_transfer_context();
+    dxgi_cuda_close_transfer_context(device);
 
     HRESULT hr;
 
