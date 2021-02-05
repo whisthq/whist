@@ -51,11 +51,11 @@ jobs:
               id: detect-sentry-environment
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=production" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=production
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=staging
                   else
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=dev
                   fi
 
                   echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
@@ -84,5 +84,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ fromJSON(needs.fractal-deploy-sentry-releases-main.detect-sentry-environment.outputs.sentry-environment) }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ needs.fractal-deploy-sentry-releases-main.detect-sentry-environment.outputs.sentry-environment }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
