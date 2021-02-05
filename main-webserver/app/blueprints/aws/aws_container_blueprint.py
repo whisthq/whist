@@ -65,6 +65,7 @@ def container_state(action, **kwargs):
 @fractal_pre_process
 @jwt_required
 @developer_required
+@check_if_update_mode
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
     aws container creation, cluster creation, deletion, etcetera. It differs from our
@@ -267,6 +268,7 @@ def aws_container_ping(**kwargs):
 @jwt_required
 @fractal_auth
 @payment_required
+@check_if_update_mode
 def aws_container_assign(**kwargs):
     """
     Assigns aws container. Needs:
