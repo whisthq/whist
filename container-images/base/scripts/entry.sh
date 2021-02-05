@@ -11,17 +11,16 @@ rm /var/run/nologin
 # echo $SSH_PUBLIC_KEY_AWS > ~/.ssh/authorized_keys
 
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
-CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 
 # Wait for TTY and port mapping files to exist
-until [ -f $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/.ready ]
+until [ -f $FRACTAL_MAPPINGS_DIR/.ready ]
 do
     sleep 0.1
 done
 
 # Register TTY once it was assigned via writing to a file by Fractal ECS host service
-ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/tty)
+ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
 # Create a TTY within the container so we don't have to hook it up to one of the host's
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that 
