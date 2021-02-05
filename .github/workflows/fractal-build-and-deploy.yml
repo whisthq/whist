@@ -79,7 +79,7 @@ jobs:
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                       SENTRY_ENVIRONMENT=staging
                   fi
-                  echo "senty_environment is set to: $SENTRY_ENVIRONMENT"
+                  echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
             - name: Detect Job(s)
