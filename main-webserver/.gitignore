@@ -34,3 +34,6 @@ docker/.DS_Store
 
 # GitHub
 tags
+
+# Google Cloud Platform
+client_secret.json
