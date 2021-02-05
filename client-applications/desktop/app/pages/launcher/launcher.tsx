@@ -117,7 +117,7 @@ export const Launcher = (props: {
                 userID
             )
         }
-        writeStream(protocol, LoadingMessage.STARTING)
+        writeStream(protocol, `loading?${LoadingMessage.STARTING}`)
         resetLaunch()
     }
 
@@ -132,7 +132,7 @@ export const Launcher = (props: {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
         dispatch(updateTimer({ protocolLaunched: Date.now() }))
-        // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
@@ -166,10 +166,11 @@ export const Launcher = (props: {
         })
     }
 
-    // Set timeout for maximum time before we stop waiting for container/assing
     useEffect(() => {
-        startTimeout()
-    }, [])
+        if (taskState === FractalAppState.FAILURE) {
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+        }
+    }, [taskState])
 
     // Log timer analytics
     useEffect(() => {
@@ -226,7 +227,10 @@ export const Launcher = (props: {
                 setTaskState(currentState)
                 switch (currentState) {
                     case FractalAppState.PENDING:
-                        writeStream(protocol, LoadingMessage.PENDING)
+                        writeStream(
+                            protocol,
+                            `loading?${LoadingMessage.PENDING}`
+                        )
                         break
                     case FractalAppState.READY:
                         dispatch(getContainerInfo(taskID))
@@ -237,7 +241,10 @@ export const Launcher = (props: {
                             userID
                         )
                         setTaskState(FractalAppState.FAILURE)
-                        writeStream(protocol, LoadingMessage.FAILURE)
+                        writeStream(
+                            protocol,
+                            `loading?${LoadingMessage.FAILURE}`
+                        )
                         break
                     default:
                         break
@@ -248,8 +255,12 @@ export const Launcher = (props: {
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {
-        if (container.publicIP) {
-            endStream(protocol, container.publicIP)
+        if (container && container.containerID) {
+            console.log(container)
+            const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
+            writeStream(protocol, `port?${portInfo}`)
+            writeStream(protocol, `key?${container.secretKey}`)
+            endStream(protocol, `ip?${container.publicIP}`)
         }
     }, [container, protocolLaunched])
 
