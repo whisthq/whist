@@ -153,11 +153,11 @@ send_uinput_device_request() {
 check_if_host_service_running
 send_uinput_device_request $fractal_id
 container_id=$(run_container $image)
+echo "Running container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id
 send_dpi_request $container_id $dpi
 
 # Run the Docker container
-echo "Running container with ID: $container_id"
 docker exec -it $container_id /bin/bash || true
 
 # Kill the Docker container once we are done
