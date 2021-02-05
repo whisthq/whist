@@ -571,7 +571,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		}
 	}
 	if !foundHostPort {
-		logger.Errorf("Could not find a hostPort mapping for container %s", id)
+		logger.Infof("Could not find a hostPort mapping for container %s", id)
 		return
 	}
 	delete(containerIDs, hostPort)
