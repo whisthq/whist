@@ -97,4 +97,3 @@ def try_redis_url(redis_url):
 def _test_redis_url(redis_conn):
     redis_conn.ping()
     redis_conn.close()
-    
