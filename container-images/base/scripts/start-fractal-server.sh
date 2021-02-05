@@ -5,7 +5,7 @@
 
 # Set/Retrieve Container parameters 
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
-FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
+FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url

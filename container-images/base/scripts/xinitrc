@@ -16,7 +16,7 @@ runuser --login fractal -c \
 
 # Retrieve container parameters
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
-DPI_FILENAME=/fractal/containerResourceMappings/$CONTAINER_ID/DPI
+DPI_FILENAME=/fractal/resourceMappings/$CONTAINER_ID/DPI
 
 # Send DPI to X Server, if DPI is set for the container
 if [ -f "$DPI_FILENAME" ]; then

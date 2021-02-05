@@ -12,7 +12,7 @@ rm /var/run/nologin
 
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
 CONTAINER_ID=$(basename $(cat /proc/1/cpuset))
-FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
+FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 
 # Wait for TTY and port mapping files to exist
 until [ -f $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID/.ready ]
