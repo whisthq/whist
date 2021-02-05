@@ -56,6 +56,7 @@ extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
 
+volatile bool using_piped_arguments;
 const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
@@ -68,15 +69,17 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
-                                     {"spin", no_argument, NULL, 's'},
+                                     {"read-pipe", no_argument, NULL, 'r'},
+                                     {"loading", required_argument, NULL, 'l'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
+const char* usage;
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:s"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:"
 
 /*
 ============================
@@ -103,7 +106,18 @@ char *dupstring(char *s1) {
     return ret;
 }
 
-int parse_arg(int opt, char* optarg, const char* usage) {
+int evaluate_arg(int opt, char* optarg) {
+    /*
+        Evaluate an option given the optcode and the argument
+
+        Arguments:
+            opt (int): optcode
+            optarg (char*): argument (can be NULL) passed with opt
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     long int ret;
     char *endptr;
 
@@ -233,6 +247,14 @@ int parse_arg(int opt, char* optarg, const char* usage) {
             strcpy((char *)program_name, optarg);
             break;
         }
+        case 'r': { // use arguments piped from stdin
+            using_piped_arguments = true;
+            break;
+        }
+        case 'l': { // loading message
+            LOG_INFO("LOADING: %s", optarg);
+            break;
+        }
         default: {
             if (opt != -1) {
                 // illegal option
@@ -264,7 +286,7 @@ int parse_args(int argc, char *argv[]) {
     */
 
     // TODO: replace `desktop` with argv[0]
-    const char *usage =
+    usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
     const char *usage_details =
@@ -293,7 +315,9 @@ int parse_args(int argc, char *argv[]) {
         "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME               Set the window title. Default: Fractal\n"
-        "  -s, --spin                    Spin to wait for arguments from stdin until EOF\n"
+        "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
+        "                                  in IP if using this argument and passing with arg `ip`\n"
+        "  -l, --loading                 Custom loading screen message\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -310,6 +334,9 @@ int parse_args(int argc, char *argv[]) {
 
     int opt;
     bool ip_set = false;
+    long int ret;
+    char *endptr;
+    using_piped_arguments = false;
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
@@ -320,56 +347,9 @@ int parse_args(int argc, char *argv[]) {
         }
         errno = 0;
 
-        // If the opt is "--spin or -s", then spin for arguments from stdin until EOF.
-        //    Otherwise, evaluate the argument normally
+        // For arguments that are not `help` and `version`, evaluate option
+        //    and argument via `evaluate_arg`
         switch (opt) {
-            case 's': { // spin for piped arguments
-                // Arguments will arrive from the client application via pipe to stdin
-                char incoming[128];
-
-                // Each argument will be passed via pipe from the client application
-                //    with the argument name and value separated by a "?"
-                //    and each argument/value pair on its own line
-                while(fgets(incoming, 100, stdin) != NULL) {
-                    char* arg_name = strtok(incoming, "?");
-                    char* arg_value = strtok(NULL, "?");
-
-                    arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
-
-                    // Iterate through cmd_options to find the corresponding opt
-                    int opt_index = -1;
-                    for (int i = 0; cmd_options[i].name; i++) {
-                        if (strncmp(arg_name, cmd_options[i].name, strlen(arg_name))) continue;
-
-                        if (strlen(cmd_options[i].name) == (unsigned)strlen(arg_name)) {
-                            opt_index = i;
-                            break;
-                        }
-                    }
-
-                    if (opt_index >= 0) {
-                        // Evaluate the passed argument, if a valid opt or IP
-                        if (parse_arg(cmd_options[opt_index].val, arg_value, usage) < 0) {
-                            LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value);
-                            return -1;
-                        }
-                    } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
-                        // If arg_name is `ip`, then set IP address
-                        strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
-                        ip_set = true;
-                        LOG_INFO("Connecting to IP %s", server_ip);
-                    } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
-                        // If arg_name is `loading`, then log loading message
-                        LOG_INFO("LOADING: %s", arg_value);
-                    } else {
-                        // If arg_name is invalid, then log a warning, but continue
-                        LOG_WARNING("Piped arg %s not available", arg_name);
-                    }
-
-                    fflush(stdout);
-                }
-                break;
-            }
             case FRACTAL_GETOPT_HELP_CHAR: {  // help
                 printf("%s", usage_details);
                 return 1;
@@ -379,7 +359,7 @@ int parse_args(int argc, char *argv[]) {
                 return 1;
             }
             default: {
-                if (parse_arg(opt, optarg, usage) < 0) {
+                if (evaluate_arg(opt, optarg) < 0) {
                     return -1;
                 }
             }
@@ -388,10 +368,10 @@ int parse_args(int argc, char *argv[]) {
         if (opt == -1) {
             if (optind < argc && !ip_set) {
                 // there's a valid non-option arg and ip is unset
-                strncpy((char*)server_ip, argv[optind], MAX_IP_LEN);
+                safe_strncpy((char*)server_ip, argv[optind], MAX_IP_LEN);
                 ip_set = true;
                 ++optind;
-            } else if (optind < argc || !ip_set) {
+            } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
                 // incorrect usage
                 printf("%s", usage);
                 return -1;
@@ -400,6 +380,69 @@ int parse_args(int argc, char *argv[]) {
                 break;
             }
         }
+    }
+
+    return 0;
+}
+
+int read_piped_arguments(void) {
+    /*
+        Read arguments from the stdin pipe if `using_piped_arguments` is
+        set to `true`.
+
+        Can read IP as argument with name `ip`
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
+    if (!using_piped_arguments) {
+        return 0;
+    }
+
+    // Arguments will arrive from the client application via pipe to stdin
+    char incoming[128];
+
+    // Each argument will be passed via pipe from the client application
+    //    with the argument name and value separated by a "?"
+    //    and each argument/value pair on its own line
+    while(fgets(incoming, 100, stdin) != NULL) {
+        char* arg_name = strtok(incoming, "?");
+        char* arg_value = strtok(NULL, "?");
+
+        arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
+
+        // Iterate through cmd_options to find the corresponding opt
+        int opt_index = -1;
+        for (int i = 0; cmd_options[i].name; i++) {
+            if (strncmp(arg_name, cmd_options[i].name, strlen(arg_name))) continue;
+
+            if (strlen(cmd_options[i].name) == (unsigned)strlen(arg_name)) {
+                opt_index = i;
+                break;
+            }
+        }
+
+        if (opt_index >= 0) {
+            // Evaluate the passed argument, if a valid opt
+            if (evaluate_arg(cmd_options[opt_index].val, arg_value) < 0) {
+                LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value);
+                return -1;
+            }
+        } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
+            // If arg_name is `ip`, then set IP address
+            safe_strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
+            LOG_INFO("Connecting to IP %s", server_ip);
+        } else {
+            // If arg_name is invalid, then log a warning, but continue
+            LOG_WARNING("Piped arg %s not available", arg_name);
+        }
+
+        fflush(stdout);
+    }
+
+    if (strlen((char*)server_ip) == 0) {
+        LOG_ERROR("Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
     }
 
     return 0;
