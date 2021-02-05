@@ -24,23 +24,23 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
+    all_regions = RegionToAmi.query.all()
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+    if ami is None:
+        ami = region_to_ami[region_name]
+
     self.update_state(
         state="PENDING",
         meta={
             "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
     )
-
     fractal_log(
         function="update_cluster",
         label="None",
         logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
     )
 
-    all_regions = RegionToAmi.query.all()
-    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
-    if ami is None:
-        ami = region_to_ami[region_name]
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     ecs_client.update_cluster_with_new_ami(cluster_name, ami)
 
@@ -62,17 +62,9 @@ def update_region(self, region_name="us-east-1", ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
-    self.update_state(
-        state="PENDING",
-        meta={
-            "msg": (f"updating to ami {ami} in region {region_name}"),
-        },
-    )
-
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
     ).first()
-
     if region_to_ami is None:
         raise ValueError(f"Region {region_name} is not in db.")
 
@@ -88,6 +80,13 @@ def update_region(self, region_name="us-east-1", ami=None):
             None,
             f"updated AMI in {region_name} to {ami}",
         )
+
+    self.update_state(
+        state="PENDING",
+        meta={
+            "msg": (f"updating to ami {ami} in region {region_name}"),
+        },
+    )
 
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
