@@ -9,6 +9,26 @@ from flask_jwt_extended import create_access_token
 from app.constants.http_codes import NOT_FOUND, SUCCESS, UNAUTHORIZED
 from app.helpers.utils.general.logs import fractal_log
 from app.models import User
+from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound
+
+def mail_helper(email_id, from_email, to_emails, email_args):
+    mail_client = MailClient(current_app.config["SENDGRID_API_SECRET"])
+    templates = mail_client.get_available_templates()
+
+    if not email_id in templates.keys():
+        raise TemplateNotFound
+
+    mail_client.send_email(from_email, to_emails, templates[email_id].title, templates[email_id].url, email_args)
+    
+
+
+
+
+
+
+
+
+
 
 
 def forgot_password_helper(username, email_token=None):
