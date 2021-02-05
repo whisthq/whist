@@ -27,14 +27,14 @@ fractal_id="abcdefabcdefabcdefabcdefabcdef"
 # Devices to pas into the container
 devices_arg=""
 
-# Run the specified Docker container image with as-restrictive-as-possible system
+# Create the specified Docker container image with as-restrictive-as-possible system
 # capabilities, for security purposes
-run_container() {
-    docker run -it -d \
+create_container() {
+    docker create -it \
         -v /sys/fs/cgroup:/sys/fs/cgroup:ro \
         -v "/fractal/$fractal_id/containerResourceMappings:/fractal/resourceMappings:ro" \
         -v "/fractalCloudStorage/$fractal_id:/fractal/cloudStorage:rshared" \
-        -v /tmp/sockets:/tmp/sockets \
+        -v /fractal/temp/$fractal_id/sockets:/tmp/sockets \
         -v /run/udev/data:/run/udev/data:ro \
         $devices_arg \
         $mount_protocol \
@@ -152,9 +152,10 @@ send_uinput_device_request() {
 # Main executing thread
 check_if_host_service_running
 send_uinput_device_request $fractal_id
-container_id=$(run_container $image)
-echo "Running container with ID: $container_id"
+container_id=$(create_container $image)
+echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id
+docker start $container_id
 send_dpi_request $container_id $dpi
 
 # Run the Docker container
