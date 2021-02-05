@@ -347,20 +347,23 @@ int parse_args(int argc, char *argv[]) {
                         }
                     }
 
-                    // Evaluate the passed argument, if a valid opt or IP
                     if (opt_index >= 0) {
+                        // Evaluate the passed argument, if a valid opt or IP
                         if (parse_arg(cmd_options[opt_index].val, arg_value, usage) < 0) {
                             LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value);
                             return -1;
                         }
                     } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
-                        server_ip = arg_value;
+                        // If arg_name is `ip`, then set IP address
+                        strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
                         ip_set = true;
-                        LOG_INFO("Connection to IP %s", server_ip);
+                        LOG_INFO("Connecting to IP %s", server_ip);
                     } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
+                        // If arg_name is `loading`, then log loading message
                         LOG_INFO("LOADING: %s", arg_value);
                     } else {
-                        LOG_INFO("Piped arg %s not available", arg_name);
+                        // If arg_name is invalid, then log a warning, but continue
+                        LOG_WARNING("Piped arg %s not available", arg_name);
                     }
 
                     fflush(stdout);
@@ -385,7 +388,7 @@ int parse_args(int argc, char *argv[]) {
         if (opt == -1) {
             if (optind < argc && !ip_set) {
                 // there's a valid non-option arg and ip is unset
-                server_ip = argv[optind];
+                strncpy((char*)server_ip, argv[optind], MAX_IP_LEN);
                 ip_set = true;
                 ++optind;
             } else if (optind < argc || !ip_set) {
@@ -524,6 +527,38 @@ int destroy_socket_library(void) {
 #ifdef _WIN32
     WSACleanup();
 #endif
+    return 0;
+}
+
+int alloc_parsed_args(void) {
+    /*
+        Init any allocated memory for parsed args
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+    server_ip = malloc(MAX_IP_LEN);
+
+    if (!server_ip) {
+        return -1;
+    }
+
+    memset((char*)server_ip, 0, MAX_IP_LEN);
+
+    return 0;
+}
+
+int free_parsed_args(void) {
+    /*
+        Free any allocated memory for parsed args
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+    if (server_ip) {
+        free((char*)server_ip);
+    }
+
     return 0;
 }
 
