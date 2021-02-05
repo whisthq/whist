@@ -438,7 +438,7 @@ func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 		// This is actually an error, since we received a DPI request.
 		return logger.MakeError("handleDPIRequest(): couldn't find FractalID mapping for container with DockerID %s", id)
 	}
-	datadir := fractalDir + fractalID + containerResourceMappings
+	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 
 	// Actually write DPI information to file
 	strdpi := logger.Sprintf("%v", req.DPI)
@@ -510,7 +510,7 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 	if !ok {
 		return logger.MakeError("containerStartHandler(): couldn't find FractalID mapping for container with name %s", c.Name)
 	}
-	datadir := fractalDir + fractalID + containerResourceMappings
+	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 
 	err = os.Mkdir(datadir, 0777)
 	if err != nil {
@@ -584,7 +584,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	}
 
 	// Delete the container-specific data directory we used
-	datadir := fractalDir + fractalID + containerResourceMappings
+	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 	err := os.RemoveAll(datadir)
 	if err != nil {
 		logger.Errorf("Failed to delete container-specific directory %s", datadir)
