@@ -1,8 +1,4 @@
 import os
-import signal
-from functools import wraps
-import errno
-import ssl
 
 from func_timeout import func_set_timeout, FunctionTimedOut
 import redis

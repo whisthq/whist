@@ -91,11 +91,7 @@ def try_redis_url(redis_url):
         redis_conn.ping()
         redis_conn.close()
         return True
-    except FunctionTimedOut:
-        # this can happen with SSL. Just return False.
-        return False
-    except redis.exceptions.ConnectionError:
-        # this can happen with regular redis. Just return False
+    except Exception:
+        # this can happen for a few reasons (connection error, SSL timeout). Just return False.
         return False
 
-    # any other code flow will be an unexpected error and will be passed to the caller
