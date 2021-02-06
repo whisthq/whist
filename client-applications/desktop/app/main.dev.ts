@@ -155,6 +155,44 @@ const createWindow = async () => {
         event.returnValue = argv
     })
 
+    ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
+        console.log("event received")
+
+        // let googleWindow
+        // googleWindow = new BrowserWindow({
+        // webPreferences: {
+        //     nodeIntegration: true,
+        //     preload:`${__dirname}/scripts/googleWindow.js`
+        //   }});
+        // //load html into window
+        // googleWindow.loadURL('https://www.google.com/');
+        // //garbage collection handle
+        // googleWindow.on('close', function(){
+        // googleWindow=null;
+
+        if (mainWindow) {
+            mainWindow.loadURL(
+                "http://localhost:3000/auth/loginToken=123456789012345678901234567890"
+            ) // TODO (Jannie): change to URL from configs
+        }
+        // showMainWindow = argv
+        // if (showMainWindow && mainWindow) {
+        //     mainWindow.maximize()
+        //     mainWindow.show()
+        //     mainWindow.focus()
+        //     mainWindow.restore()
+        //     if (app && app.dock) {
+        //         app.dock.show()
+        //     }
+        // } else if (!showMainWindow && mainWindow) {
+        //     mainWindow.hide()
+        //     if (app && app.dock) {
+        //         app.dock.hide()
+        //     }
+        // }
+        // event.returnValue = argv
+    })
+
     ipc.on(FractalIPC.FORCE_QUIT, () => {
         app.exit(0)
         app.quit()

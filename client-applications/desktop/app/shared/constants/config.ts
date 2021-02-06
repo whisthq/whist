@@ -9,7 +9,8 @@ import {
     Webserver URLs
 */
 export const webservers: { [key: string]: string } = {
-    local: "http://127.0.0.1:7730",
+    //local: "http://127.0.0.1:7730",
+    local: "http://dev-server.fractal.co/",
     dev: "http://dev-server.fractal.co/",
     staging: "https://staging-server.fractal.co",
     production: "https://prod-server.fractal.co",

@@ -115,7 +115,7 @@
         "@apollo/client": "^3.2.4",
         "@hot-loader/react-dom": "^16.11.0",
         "@sentry/electron": "^2.0.4",
-        "@tailwindcss/postcss7-compat": "^2.0.2",
+        "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
         "@testing-library/jest-dom": "^5.11.6",
         "@testing-library/react": "^11.2.2",
         "autoprefixer": "9",
