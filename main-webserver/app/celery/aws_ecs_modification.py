@@ -45,6 +45,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
         ami = region_to_ami[region_name]
+
     # first, delete every unassigned container
     unassigned_containers = UserContainer.query.filter_by(
         cluster=cluster_name, is_assigned=False
@@ -60,20 +61,6 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
             )
 
             raise Exception("Failed to acquire resource lock.")
-
-        container = UserContainer.query.get(container_name)
-
-        if not container:
-            message = f"Container {container_name} does not exist."
-
-            fractal_log(
-                function="update_cluster",
-                label=container_name,
-                logs=message,
-                level=logging.ERROR,
-            )
-
-            raise Exception("The requested container does not exist.")
 
         fractal_log(
             function="update_cluster",
