@@ -405,7 +405,7 @@ def test_update_region(client, admin, monkeypatch):
 
         class FakeReturn:
             def __init__(self):
-                self.id = "this-is-a-fake-test-id"
+                self.id = "this-is-a-fake-celery-test-id"
 
         return FakeReturn()
 

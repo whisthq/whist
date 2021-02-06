@@ -8,7 +8,7 @@ from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
-from app.update_manager.update_manager import wait_no_update_and_track_task
+from app.maintenance.maintenance_manager import wait_no_update_and_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log

@@ -184,6 +184,9 @@ def try_register_task(region_name: str, task_id: int) -> bool:
     """
     from app import redis_conn
 
+    # assert redis_conn.ping()
+    # raise ValueError("HERE")
+
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
@@ -317,7 +320,7 @@ def wait_no_update_and_track_task(func: Callable):
             10,
             # these are passed to try_register_task
             region_name,
-            self_obj.request.id,
+            func.__name__, # self_obj.request.id,
             ):
             raise ValueError(f"failed to register task. function: {func.__name__}")
 

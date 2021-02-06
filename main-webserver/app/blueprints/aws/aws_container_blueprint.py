@@ -3,7 +3,7 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
-from app.update_manager.update_manager import (
+from app.maintenance.maintenance_manager import (
     check_if_update,
     try_start_update,
     try_end_update,
@@ -90,7 +90,7 @@ def test_endpoint(action, **kwargs):
         json, int: the json http response and the http status code
         (which is an int like 200, 400, ...).
     """
-    if action not in ["update_region", "start_update", "end_update"]:
+    if action in ["create_cluster", "assign_container"]:
         # check if there is an update going on
         region_name = kwargs["body"]["region_name"]
         if check_if_update(region_name):
@@ -116,8 +116,13 @@ def test_endpoint(action, **kwargs):
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
 
-        task = create_new_cluster.apply_async(
-            [cluster_name, instance_type, ami, region_name, min_size, max_size]
+        task = create_new_cluster.delay(
+            cluster_name,
+            instance_type,
+            ami,
+            region_name,
+            min_size,
+            max_size,
         )
 
         if not task:
