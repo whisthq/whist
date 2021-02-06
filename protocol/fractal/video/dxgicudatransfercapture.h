@@ -55,6 +55,8 @@ Public Functions
 
 BEGIN_EXTERN_C
 
+#ifdef FRACTAL_CUDA_ENABLED
+
 /**
  * @brief                         Check CUDA capabilities and, if possible,
  *                                register the screen capture texture resource
@@ -93,6 +95,14 @@ void dxgi_cuda_close_transfer_context(CaptureDevice* device);
  *                                on error
  */
 int dxgi_cuda_transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
+
+#else
+
+#define dxgi_cuda_start_transfer_context(...) (0)
+#define dxgi_cuda_close_transfer_context(...) (0)
+#define dxgi_cuda_transfer_capture(...) (0)
+
+#endif
 
 END_EXTERN_C
 
