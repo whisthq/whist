@@ -52,9 +52,9 @@ REM # Download OpenSSL libraries
 REM ###############################
 
 REM Emscripten
-mkdir lib\64\openssl
-mkdir lib\64\openssl\Emscripten
-aws s3 cp s3://fractal-protocol-shared-libs/fractal-emscripten-libcrypto.tar.gz - | tar xzf - -C lib\64\openssl\Emscripten
+REM mkdir lib\64\openssl
+REM mkdir lib\64\openssl\Emscripten
+REM aws s3 cp s3://fractal-protocol-shared-libs/fractal-emscripten-libcrypto.tar.gz - | tar xzf - -C lib\64\openssl\Emscripten
 
 REM ###############################
 ECHO "Download Completed"
