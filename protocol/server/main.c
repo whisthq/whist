@@ -1177,7 +1177,7 @@ int main(int argc, char* argv[]) {
 
     input_device = create_input_device();
     if (!input_device) {
-        LOG_WARNING("Failed to create input device for playback.");
+        LOG_FATAL("Failed to create input device for playback.");
     }
 
 #ifdef _WIN32
