@@ -58,31 +58,9 @@ EOF
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
-# The ECS Host Service gets built in the `fractal-publish-ami.yml` workflow and 
+# The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and 
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
-# Here, we write systemd unit file for Fractal ECS Host Service
-sudo cat << EOF > /etc/systemd/system/ecs-host-service.service
-[Unit]
-Description=ECS Host Service
-Requires=docker.service
-After=docker.service
-
-[Service]
-Restart=always
-User=root
-Type=exec
-Environment="APP_ENV=PROD"
-ExecStart=/home/ubuntu/ecs-host-service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Reload daemon files
-sudo /bin/systemctl daemon-reload
-
-# Enable ECS Host Service
-sudo systemctl enable --now ecs-host-service.service
+# It gets enabled in base_userdata_template.sh
 
 echo
 echo "Install complete. Make sure you do not reboot when creating the AMI (check NO REBOOT)"
