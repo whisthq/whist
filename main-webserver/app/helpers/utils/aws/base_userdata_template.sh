@@ -32,5 +32,3 @@ rm -f /var/lib/ecs/data/*
 
 cd /home/ubuntu
 echo export USE_PROD_SENTRY=1 >> /etc/bash.bashrc
-chmod +x userdata-bootstrap.sh
-./userdata-bootstrap.sh
