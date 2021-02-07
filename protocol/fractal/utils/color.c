@@ -41,9 +41,9 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
             rgb_color (FractalRGBColor): The converted color, or black {0} on failure.
     */
 
-    float y_delta = (float)yuv_color.y - 16.;
-    float u_delta = (float)yuv_color.u - 128.;
-    float v_delta = (float)yuv_color.v - 128.;
+    float y_delta = (float)(yuv_color.y - 16);
+    float u_delta = (float)(yuv_color.u - 128);
+    float v_delta = (float)(yuv_color.v - 128);
 
     int r_component = lround(1.164 * y_delta + 1.596 * v_delta);
     int g_component = lround(1.164 * y_delta - 0.392 * u_delta - 0.813 * v_delta);
