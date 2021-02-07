@@ -40,7 +40,7 @@ import { ChildProcess } from "child_process"
 
 export const Launcher = (props: {
     userID: string
-    running: boolean
+    protocol: ChildProcess | undefined
     taskID: string
     status: FractalTaskStatus
     container: Container
@@ -53,14 +53,13 @@ export const Launcher = (props: {
 
         Arguments:
             userID (string): User ID
-            running (boolean): true if a container has been created or protocol is running
             taskID (string): Container creation celery ID
             container (Container): Container from Redux state
     */
 
     const {
         userID,
-        running,
+        protocol,
         taskID,
         status,
         container,
@@ -68,9 +67,7 @@ export const Launcher = (props: {
         dispatch,
     } = props
 
-    const [protocolLaunched, setProtocolLaunched] = useState(false)
-    const [taskState, setTaskState] = useState(FractalAppState.PENDING)
-    const [protocol, updateProtocol] = useState<ChildProcess>()
+    const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -81,10 +78,9 @@ export const Launcher = (props: {
 
     const startTimeout = () => {
         setTimeout(() => {
-            if (!protocolLaunched) {
+            if (!container.containerID) {
                 setTaskState(FractalAppState.FAILURE)
-                setLoadingMessage(LoadingMessage.TIMEOUT)
-                logger.logError("Protocol took to long to launch", userID)
+                logger.logError("Container took too long to create", userID)
             }
         }, 20000)
     }
@@ -102,7 +98,6 @@ export const Launcher = (props: {
         dispatch(updateTimer(defaultTimerState))
 
         startTimeout()
-        setProtocolLaunched(false)
     }
 
     // If the webserver failed, function to try again
@@ -120,7 +115,7 @@ export const Launcher = (props: {
         }
 
         writeStream(protocol, `loading?${LoadingMessage.STARTING}`)
-        setTaskState(FractalAppState.PENDING)
+        setTaskState(FractalAppState.NO_TASK)
         resetLaunch()
     }
 
@@ -140,8 +135,6 @@ export const Launcher = (props: {
     // Callback function meant to be fired when protocol exits
     const protocolOnExit = () => {
         // Log timer analytics data
-        setProtocolLaunched(false)
-
         dispatch(updateTimer({ protocolClosed: Date.now() }))
 
         // For S3 protocol client log upload
@@ -162,9 +155,11 @@ export const Launcher = (props: {
         // Upload client logs to S3 and shut down Electron
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
-                logger.logError(`Upload to S3 errored: ${error}`, userID)
+                logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
             }
-            forceQuit()
+            if (container && container.containerID) {
+                forceQuit()
+            }
         })
     }
 
@@ -190,11 +185,9 @@ export const Launcher = (props: {
     }, [timer])
 
     // On app start, check if a container creation request has been sent.
-    // If not, create a container and set running = true to prevent multiple containers
-    // from being created.
+    // If not, create a container
     useEffect(() => {
-        if (!running && !protocolLaunched) {
-            console.log("HIDING MAIN WINDOW")
+        if (!protocol) {
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
@@ -202,18 +195,22 @@ export const Launcher = (props: {
                     protocolOnStart,
                     protocolOnExit
                 )
-                updateProtocol(protocol)
+                dispatch(updateTask({ childProcess: protocol }))
             }
 
-            setProtocolLaunched(true)
-            // launchProtocolAsync()
+            launchProtocolAsync()
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
-            dispatch(updateTask({ running: true }))
+        }
+    }, [dispatch, protocol])
+
+    useEffect(() => {
+        if (protocol && taskState === FractalAppState.NO_TASK) {
+            setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [running, dispatch])
+    }, [protocol])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -265,21 +262,23 @@ export const Launcher = (props: {
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {
-        if (container && container.containerID) {
-            console.log(container)
+        if (container && container.containerID && protocol) {
+            logger.logInfo(
+                `Received container IP ${container.publicIP}, piping to protocol`,
+                userID
+            )
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             writeStream(protocol, `ports?${portInfo}`)
             writeStream(protocol, `private-key?${container.secretKey}`)
             endStream(protocol, `ip?${container.publicIP}`)
         }
-    }, [container, protocolLaunched])
+    }, [container, protocol])
 
     return (
         <div className={styles.launcherWrapper}>
             <ChromeBackground />
             <div className={styles.loadingWrapper}>
                 <Animation />
-                <div className={styles.loadingText}>{loadingMessage}</div>
                 {taskState === FractalAppState.FAILURE && (
                     <div style={{ marginTop: 35 }}>
                         <button
@@ -310,7 +309,7 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
-        running: state.ContainerReducer.task.running,
+        protocol: state.ContainerReducer.task.childProcess,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         container: state.ContainerReducer.container,

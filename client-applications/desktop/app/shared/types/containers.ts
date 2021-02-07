@@ -1,5 +1,6 @@
 // State of container creation from GraphQL
 export enum FractalAppState {
+    NO_TASK = "NO_TASK",
     PENDING = "PENDING", // is spinning up
     READY = "READY", // successfully spun up, ready to connect
     FAILURE = "FAILURE", // failed to spin up, cannot be connected to
