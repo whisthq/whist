@@ -102,6 +102,7 @@ export const Launcher = (props: {
         dispatch(updateTimer(defaultTimerState))
 
         startTimeout()
+        setProtocolLaunched(false)
     }
 
     // If the webserver failed, function to try again
@@ -134,7 +135,6 @@ export const Launcher = (props: {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
         dispatch(updateTimer({ protocolLaunched: Date.now() }))
-        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
@@ -194,6 +194,9 @@ export const Launcher = (props: {
     // from being created.
     useEffect(() => {
         if (!running && !protocolLaunched) {
+            console.log("HIDING MAIN WINDOW")
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+
             const launchProtocolAsync = async () => {
                 const protocol = await launchProtocol(
                     protocolOnStart,
@@ -203,7 +206,7 @@ export const Launcher = (props: {
             }
 
             setProtocolLaunched(true)
-            launchProtocolAsync()
+            // launchProtocolAsync()
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
