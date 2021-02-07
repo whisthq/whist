@@ -29,6 +29,7 @@ jobs:
                 config:
                     - name: "Build and Check Protocol on Windows (cl)"
                       os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
+                      cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
                     - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
                       os: ubuntu-18.04 # cmake is pre-installed on ubuntu-18.04+ machines
                     - name: "Build and Check Protocol on macOS (clang)"
@@ -55,7 +56,7 @@ jobs:
                   args: install cppcheck
 
             - name: Install CUDA on Windows GHA Machine
-              if: runner.os == 'Windows'
+              if: runner.os == 'Windows' && matrix.config.cuda
               env:
                   visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
                   cuda: "11.0.167" # Imported from env in the .ps1 script
@@ -70,10 +71,12 @@ jobs:
                     echo "CUDA_PATH=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
                     echo "$env:CUDA_PATH_VX_Y=$env:CUDA_PATH" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
                     echo "$env:CUDA_PATH/bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+                  } else {
+                    exit 1
                   }
 
             - name: Verify that NVCC is Installed on GHA Windows Machine
-              if: runner.os == 'Windows'
+              if: runner.os == 'Windows' && matrix.config.cuda
               shell: powershell
               run: |
                   nvcc -V
