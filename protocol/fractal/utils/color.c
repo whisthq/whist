@@ -28,7 +28,7 @@ Public Function Implementations
 ============================
 */
 
-#define CLAMP_COLOR(x) (((x) < 0) ? 0 : (((x) > 255) ? 255 : (x)))
+#define CLAMP_COLOR(x) (uint8_t)(((x) < 0) ? 0 : (((x) > 255) ? 255 : (x)))
 
 FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
     /*
@@ -41,15 +41,16 @@ FractalRGBColor yuv_to_rgb(FractalYUVColor yuv_color) {
             rgb_color (FractalRGBColor): The converted color, or black {0} on failure.
     */
 
-    FractalRGBColor rgb_color = {
-        (uint8_t)lround(1.164 * ((float)yuv_color.y - 16.) + 1.596 * ((float)yuv_color.v - 128.)),
-        (uint8_t)lround(1.164 * ((float)yuv_color.y - 16.) - 0.392 * ((float)yuv_color.u - 128.) -
-                        0.813 * ((float)yuv_color.v - 128.)),
-        (uint8_t)lround(1.164 * ((float)yuv_color.y - 16.) + 2.017 * ((float)yuv_color.u - 128.))};
+    float y_delta = (float)yuv_color.y - 16.;
+    float u_delta = (float)yuv_color.u - 128.;
+    float v_delta = (float)yuv_color.v - 128.;
 
-    rgb_color.red = CLAMP_COLOR(rgb_color.red);
-    rgb_color.green = CLAMP_COLOR(rgb_color.green);
-    rgb_color.blue = CLAMP_COLOR(rgb_color.blue);
+    int r_component = lround(1.164 * y_delta + 1.596 * v_delta);
+    int g_component = lround(1.164 * y_delta - 0.392 * u_delta - 0.813 * v_delta);
+    int b_component = lround(1.164 * y_delta + 2.017 * u_delta);
+
+    FractalRGBColor rgb_color = {CLAMP_COLOR(r_component), CLAMP_COLOR(g_component),
+                                 CLAMP_COLOR(b_component)};
 
     return rgb_color;
 }
