@@ -512,7 +512,7 @@ jobs:
                 fractal-publish-build-config,
                 container-images-publish-images-ghcr,
                 ecs-task-definitions-deploy-task-definitions-ecs,
-                ecs-host-service-publish-build-s3,
+                ami-publish-ec2,
                 main-webserver-deploy-heroku,
             ]
         if: >
