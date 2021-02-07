@@ -53,7 +53,8 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     for container in unassigned_containers:
         container_name = container.container_id
 
-        # First, we lock the container in the DB to make sure it doesn't get assigned while being deleted.
+        # First, we lock the container in the DB to make sure it doesn't get assigned
+        # while being deleted.
         if spin_lock(container_name) < 0:
             fractal_log(
                 function="update_cluster",
