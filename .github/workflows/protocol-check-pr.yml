@@ -198,4 +198,4 @@ jobs:
               if: runner.os == 'Linux'
               shell: bash
               working-directory: container-images
-              run: ./base/copy-protocol-build.sh
+              run: ./base/copy_protocol_build.sh
