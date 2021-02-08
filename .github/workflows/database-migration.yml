@@ -67,7 +67,7 @@ jobs:
 
             - name: Set the $DB_URL env var
               run: |
-                DB_URL={heroku config:get DATBASE_URL --app=fractal-dev-server}
+                DB_URL=`heroku config:get DATBASE_URL --app=fractal-dev-server`
                 echo "DB_URL=$DB_URL" >> $GITHUB_ENV
 
 
