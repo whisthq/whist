@@ -114,6 +114,7 @@ export const Launcher = (props: {
         setTaskState(FractalAppState.NO_TASK)
         resetReduxforLaunch()
         dispatch(updateTask({ shouldLaunchProtocol: true }))
+        setTimedOut(false)
 
         setTimeout(() => {
             setTimedOut(true)
@@ -168,7 +169,7 @@ export const Launcher = (props: {
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)
-        }, 30000)
+        }, 20000)
     }, [])
 
     useEffect(() => {
@@ -176,7 +177,7 @@ export const Launcher = (props: {
             logger.logInfo(JSON.stringify(container), userID)
 
             if (!container.containerID && taskState !== FractalAppState.READY) {
-                // dispatch(updateTask({ shouldLaunchProtocol: false }))
+                setTaskState(FractalAppState.FAILURE)
                 logger.logError("Container took too long to create", userID)
             }
         }
@@ -243,11 +244,15 @@ export const Launcher = (props: {
     }, [dispatch, protocol, shouldLaunchProtocol])
 
     useEffect(() => {
-        if (protocol && taskState === FractalAppState.NO_TASK) {
+        if (
+            protocol &&
+            taskState === FractalAppState.NO_TASK &&
+            container.region
+        ) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol])
+    }, [protocol, container])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -257,7 +262,7 @@ export const Launcher = (props: {
                 userID
             )
             setTaskState(FractalAppState.FAILURE)
-        } else {
+        } else if (!timedOut) {
             const currentState =
                 data &&
                 data.hardware_user_app_state &&
@@ -291,7 +296,7 @@ export const Launcher = (props: {
                 }
             }
         }
-    }, [data, loading, error])
+    }, [data, loading, error, timedOut])
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {

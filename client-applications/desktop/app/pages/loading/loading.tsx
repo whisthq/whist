@@ -8,6 +8,7 @@ import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { updateTask } from "store/actions/container/pure"
 import { updateTimer } from "store/actions/analytics/pure"
+import { getRegion } from "store/actions/container/sideEffects"
 import { DEFAULT, User, AuthFlow } from "store/reducers/auth/default"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { history } from "store/history"
@@ -50,6 +51,7 @@ export const Loading = (props: {
 
     useEffect(() => {
         dispatch(updateTimer({ appOpened: Date.now() }))
+        dispatch(getRegion())
     }, [dispatch])
 
     useEffect(() => {

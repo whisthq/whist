@@ -1,8 +1,10 @@
+import ping from "ping"
+
 import { graphQLPost } from "shared/utils/general/api"
 import { allowedRegions } from "shared/types/aws"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { config } from "shared/constants/config"
-import ping from "ping"
+import { AWSRegion } from "shared/types/aws"
 
 const fractalPingTime = async (host: string, numberPings: number) => {
     /*
@@ -34,14 +36,14 @@ const fractalPingTime = async (host: string, numberPings: number) => {
     return totalTime / pingResults.length
 }
 
-export const setAWSRegion = async (accessToken: string) => {
+export const setAWSRegion = async () => {
     /*
     Description:
         Pulls AWS regions from SQL and pings each region, and finds the closest region
         by shortest ping time
 
     Arguments:
-        accessToken (string): Access token, used to query GraphQL for allowed regions
+        none
     Returns:
         (string): Closest region e.g. us-east-1
     */
@@ -51,8 +53,7 @@ export const setAWSRegion = async (accessToken: string) => {
     const graphqlRegions = await graphQLPost(
         QUERY_REGION_TO_AMI,
         "GetRegionToAmi",
-        {},
-        accessToken
+        {}
     )
 
     // Default to hard-coded region list if GraphQL query fails, otherwise parse
@@ -66,7 +67,7 @@ export const setAWSRegion = async (accessToken: string) => {
         finalRegions = allowedRegions
     } else {
         finalRegions = graphqlRegions.json.data.hardware_region_to_ami.map(
-            (region: { region_name: string }) => region.region_name
+            (region: { region_name: AWSRegion }) => region.region_name
         )
     }
 

@@ -1,4 +1,5 @@
 import { FractalTaskStatus } from "shared/types/containers"
+import { AWSRegion } from "shared/types/aws"
 
 export type Task = {
     taskID?: string
@@ -16,6 +17,7 @@ export type Container = {
     port32273?: string
     location?: string
     secretKey?: string
+    region?: AWSRegion | undefined
 }
 
 export type ContainerState = {
@@ -39,5 +41,6 @@ export const DEFAULT: ContainerState = {
         port32273: "",
         location: "",
         secretKey: "",
+        region: undefined,
     },
 }
