@@ -83,10 +83,10 @@ export const Launcher = (props: {
                 setTaskState(FractalAppState.FAILURE)
                 logger.logError("Container took too long to create", userID)
             }
-        }, 60000)
+        }, 20000)
     }
     // Restores Redux state to before a container was created
-    const resetLaunch = () => {
+    const resetReduxforLaunch = () => {
         const defaultContainerState = deepCopyObject(ContainerDefault.container)
         const defaultTimerState = deepCopyObject(AnalyticsDefault.timer)
         const defaultTaskState = deepCopyObject(ContainerDefault.task)
@@ -116,7 +116,7 @@ export const Launcher = (props: {
         }
 
         setTaskState(FractalAppState.NO_TASK)
-        resetLaunch()
+        resetReduxforLaunch()
         dispatch(updateTask({ shouldLaunchProtocol: true }))
     }
 
@@ -151,7 +151,7 @@ export const Launcher = (props: {
             userID
         )
         // Clear the Redux state just in case
-        resetLaunch()
+        resetReduxforLaunch()
 
         // Upload client logs to S3 and shut down Electron
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
@@ -170,7 +170,6 @@ export const Launcher = (props: {
     }, [])
 
     useEffect(() => {
-        console.log(taskState)
         if (taskState === FractalAppState.FAILURE) {
             if (protocol) {
                 protocol.kill("SIGINT")
@@ -193,7 +192,7 @@ export const Launcher = (props: {
     // If not, create a container
     useEffect(() => {
         if (!protocol && shouldLaunchProtocol) {
-            // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
                 const childProcess = await launchProtocol(
@@ -279,19 +278,7 @@ export const Launcher = (props: {
             )
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             writeStream(protocol, `ports?${portInfo}`)
-            const streamWritten = writeStream(
-                protocol,
-                `private-key?${container.secretKey}`
-            )
-            logger.logInfo(
-                `Stream write success is ${streamWritten.toString()}`,
-                userID
-            )
-            const streamEnded = endStream(protocol, `ip?${container.publicIP}`)
-            logger.logInfo(
-                `Stream end success is ${streamEnded.toString()}`,
-                userID
-            )
+            endStream(protocol, `ip?${container.publicIP}`)
         }
     }, [container, protocol])
 
