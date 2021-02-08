@@ -304,10 +304,6 @@ jobs:
             - name: Setup Go environment
               uses: actions/setup-go@v2.1.3
 
-            - name: Install Go dependencies
-              working-directory: ecs-host-service
-              run: make deps
-
             - name: Build Go project
               env:
                   WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
