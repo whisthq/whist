@@ -1,10 +1,9 @@
 import ping from "ping"
 
 import { graphQLPost } from "shared/utils/general/api"
-import { allowedRegions } from "shared/types/aws"
+import { allowedRegions, AWSRegion } from "shared/types/aws"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { config } from "shared/constants/config"
-import { AWSRegion } from "shared/types/aws"
 
 const fractalPingTime = async (host: string, numberPings: number) => {
     /*
