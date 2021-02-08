@@ -22,7 +22,7 @@ jobs:
         name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
         runs-on: ubuntu-20.04
         outputs:
-            branch: ${{ steps.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}
+            sentry-deploy-environment: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
 
         strategy:
             matrix:
@@ -59,7 +59,7 @@ jobs:
                   fi
 
                   echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
-                  echo "::set-output name=SENTRY_DEPLOY_ENVIRONMENT::$SENTRY_DEPLOY_ENVIRONMENT"
+                  echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
             - name: Create New Sentry Release
               run: |
@@ -86,5 +86,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ steps.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ needs.detect-sentry-environment.outputs.sentry-deploy-environment }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
