@@ -7,6 +7,7 @@ from app.maintenance.maintenance_manager import (
     check_if_update,
     try_start_update,
     try_end_update,
+    wait_retry_func
 )
 from app.celery.aws_ecs_creation import (
     assign_container,
@@ -167,14 +168,21 @@ def test_endpoint(action, **kwargs):
 
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
-        task = assign_container.apply_async(
-            [username, task_definition_arn],
-            {
-                "cluster_name": cluster_name,
-                "region_name": region_name,
-                "webserver_url": kwargs["webserver_url"],
-            },
+        task = assign_container.delay(
+            username,
+            task_definition_arn,
+            region_name,
+            cluster_name,
+            webserver_url=kwargs["webserver_url"],
         )
+        # task = assign_container.apply_async(
+        #     [username, task_definition_arn],
+        #     {
+        #         "cluster_name": cluster_name,
+        #         "region_name": region_name,
+        #         "webserver_url": kwargs["webserver_url"],
+        #     },
+        # )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
