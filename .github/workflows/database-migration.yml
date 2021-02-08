@@ -68,7 +68,7 @@ jobs:
             - name: Load Heroku Config
               run: |
                 RESULT="$(
-                curl -X GET https://api.heroku.com/apps/$HEROKU_APP_NAME \
+                curl -n https://api.heroku.com/apps/$HEROKU_APP_NAME \
                 -H "Accept: application/vnd.heroku+json; version=3"
                 )"
                 echo "RESULT:"
