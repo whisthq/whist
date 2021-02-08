@@ -30,6 +30,7 @@ const environment: FractalEnvironment = {
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
         },
+        deployEnv: "dev",
         sentryEnv: "development",
         clientDownloadURLs: {
             MacOS:
@@ -53,6 +54,7 @@ const environment: FractalEnvironment = {
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
         },
+        deployEnv: "dev",
         sentryEnv: "development",
         clientDownloadURLs: {
             MacOS:
@@ -76,7 +78,8 @@ const environment: FractalEnvironment = {
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
         },
-        sentryEnv: "development",
+        deployEnv: "staging",
+        sentryEnv: "staging",
         clientDownloadURLs: {
             MacOS:
                 "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
@@ -99,6 +102,7 @@ const environment: FractalEnvironment = {
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
         },
+        deployEnv: "prod",
         sentryEnv: "production",
         clientDownloadURLs: {
             MacOS:
