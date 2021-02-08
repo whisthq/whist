@@ -194,8 +194,8 @@ jobs:
               working-directory: protocol
               run: ./build_protocol.sh release
 
-            - name: Build Container Base Image to Ensure it Builds
+            - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
               shell: bash
               working-directory: container-images
-              run: ./build_container_image.sh base
+              run: ./base/copy-protocol-build.sh
