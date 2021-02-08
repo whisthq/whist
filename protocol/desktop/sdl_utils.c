@@ -164,7 +164,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     static const uint32_t fullscreen_flags =
         SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP;
 #endif
-    static const uint32_t windowed_flags = SDL_WINDOW_OPENGL;
+    static const uint32_t windowed_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
@@ -201,7 +201,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
             LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
             return NULL;
         }
-        SDL_SetWindowResizable((SDL_Window*)sdl_window, true);
     }
 
     SDL_Event cur_event;
