@@ -218,7 +218,11 @@ export const Launcher = (props: {
 
     useEffect(() => {
         if (protocol && taskState === FractalAppState.NO_TASK) {
-            writeStream(protocol, `loading?CREATING_CONTAINER`)
+            writeStream(protocol, "loading?USE_EFFECT1")
+            writeStream(protocol, "loading?USE_EFFECT2")
+            writeStream(protocol, "loading?USE_EFFECT3")
+            writeStream(protocol, "loading?USE_EFFECT4")
+
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
@@ -226,8 +230,6 @@ export const Launcher = (props: {
 
     // Listen to container creation task state
     useEffect(() => {
-        writeStream(protocol, "loading?USE_EFFECT")
-
         if (error) {
             logger.logError(
                 `User container subscription errored: ${error}`,
