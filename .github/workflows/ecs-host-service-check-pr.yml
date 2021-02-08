@@ -34,7 +34,7 @@ jobs:
 
             - name: Authenticate Go commands with GitHub
               run: |
-                  git config --global "url.https://$GH_USERNAME:$GH_PAT@github.com:.insteadOf https://github.com/"
+                  git config --global "url.https://$GH_USERNAME\:$GH_PAT\@github.com:.insteadOf https://github.com/"
               env:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
