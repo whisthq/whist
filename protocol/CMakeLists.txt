@@ -67,9 +67,10 @@ elseif(${CMAKE_BUILD_TYPE} MATCHES Release)
 endif()
 add_definitions(-D__ROOT_FILE__="${PROJECT_SOURCE_DIR}")
 
-# static analysis during build defaults to off, but we set to on in github actions
-# you can also use this locally if you like, but will need to install cppcheck.
-OPTION(USE_CPPCHECK OFF)
+# CI will by-default by off, but we set to ON in github actions
+# You can locally set to ON as well if you like, just make sure to have cppcheck installed
+OPTION(CI OFF)
+
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
     message(STATUS "found cppcheck")
