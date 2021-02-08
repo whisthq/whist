@@ -13,6 +13,7 @@ export type FractalConfig = {
         AWS_ACCESS_KEY: string | undefined
         AWS_SECRET_KEY: string | undefined
     }
+    deployEnv: string | undefined
     sentryEnv: string | undefined
     clientDownloadURLs: {
         MacOS: string | undefined
