@@ -34,9 +34,7 @@ jobs:
 
             - name: Install goimports
               working-directory: ecs-host-service
-              run: go get -u golang.org/x/tools/cmd/goimports
-              env:
-                  GOPRIVATE: "github.com/fractal"
+              run: GOPRIVATE=github.com/fractal go get -u golang.org/x/tools/cmd/goimports
 
             - name: Check if Code is Linted with goimports
               working-directory: ecs-host-service
