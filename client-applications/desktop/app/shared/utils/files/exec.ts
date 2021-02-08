@@ -129,15 +129,19 @@ export const launchProtocol = async (
     return protocol
 }
 
-export const writeStream = (process:ChildProcess | undefined, message:String) => {
+export const writeStream = (process:ChildProcess | undefined, message:String):boolean => {
     if(process && process.stdin) {
         process.stdin.write(message)
         process.stdin.write("\n")
+        return true 
     }
+    return false
 }
 
-export const endStream = (process:ChildProcess | undefined, message:String) => {
+export const endStream = (process:ChildProcess | undefined, message:String):boolean => {
     if(process && process.stdin) {
         process.stdin.end(message)
+        return true 
     }
+    return false
 }

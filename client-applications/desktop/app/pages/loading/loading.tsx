@@ -6,6 +6,7 @@ import { Dispatch } from "shared/types/redux"
 import { FractalAuthCache } from "shared/types/cache"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import { updateTask } from "store/actions/container/pure"
 import { updateTimer } from "store/actions/analytics/pure"
 import { DEFAULT, User, AuthFlow } from "store/reducers/auth/default"
 import { deepCopyObject } from "shared/utils/general/reducer"
@@ -95,6 +96,7 @@ export const Loading = (props: {
         if (userID !== "" && accessToken !== "") {
             logger.logInfo(`Authenticated, redirecting to launcher`, userID)
             dispatch(updateTimer({ appDoneLoading: Date.now() }))
+            dispatch(updateTask({ shouldLaunchProtocol: true }))
             history.push(FractalRoute.LAUNCHER)
             return
         }

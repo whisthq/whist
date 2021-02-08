@@ -15,7 +15,7 @@ import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
 import { allowedRegions } from "shared/types/aws"
 import { FractalLogger } from "shared/utils/general/logging"
-import { writeStream, endStream } from "shared/utils/files/exec"
+import { endStream } from "shared/utils/files/exec"
 
 import { DEFAULT as ContainerDefault } from "store/reducers/container/default"
 
@@ -65,7 +65,7 @@ function* createContainer() {
     if (success && json.ID) {
         yield put(updateTask({ taskID: json.ID }))
     } else {
-        endStream(state.ContainerReducer.task.childProcess, "Close protocol")
+        endStream(state.ContainerReducer.task.childProcess, "loading?Close protocol")
         
         if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             yield call(history.push, FractalRoute.PAYMENT)

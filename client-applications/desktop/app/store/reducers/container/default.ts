@@ -5,6 +5,7 @@ export type Task = {
     taskID?: string
     status?: FractalTaskStatus
     childProcess?: ChildProcess | undefined
+    shouldLaunchProtocol?: boolean
 }
 
 export type Container = {
@@ -27,7 +28,8 @@ export const DEFAULT: ContainerState = {
     task: {
         taskID: "",
         status: FractalTaskStatus.PENDING,
-        childProcess: undefined
+        childProcess: undefined,
+        shouldLaunchProtocol: false
     },
     container: {
         publicIP: "",
