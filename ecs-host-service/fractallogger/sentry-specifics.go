@@ -11,22 +11,21 @@ import (
 
 // InitializeSentry initializes Sentry for use.
 func InitializeSentry() error {
-	// Only set up Sentry to log events if running in production
 	strProd := os.Getenv("USE_PROD_SENTRY")
 	// We want to use the production Sentry config if we run with that
-	// environment variable, or if we are actually running in production.
-	useProdSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd)
-	if useProdSentry {
-		log.Print("Using production Sentry configuration.")
+	// environment variable, or if we are actually running in staging/production.
+	useSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging)
+	if useSentry {
+		log.Print("Using staging/production Sentry configuration.")
 	} else {
-		log.Print("Not production - not setting up Sentry")
+		log.Print("Not staging or production - not setting up Sentry")
 		return nil
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
 		Dsn:         "https://774bb2996acb4696944e1c847c41773c@o400459.ingest.sentry.io/5461239",
 		Release:     GetGitCommit(),
-		Environment: os.Getenv("APP_ENV"),
+		Environment: string(GetAppEnvironment()),
 	})
 	if err != nil {
 		return MakeError("Error calling Sentry.init: %v", err)
