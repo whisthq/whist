@@ -35,7 +35,8 @@ jobs:
             - name: Install goimports
               working-directory: ecs-host-service
               run: go get -u golang.org/x/tools/cmd/goimports
-              env: GOPRIVATE=github.com/fractal
+              env:
+                  GOPRIVATE: "github.com/fractal"
 
             - name: Check if Code is Linted with goimports
               working-directory: ecs-host-service
@@ -47,7 +48,8 @@ jobs:
                   else
                     (echo "Code is linted with goimports" && true)
                   fi
-              env: GOPRIVATE=github.com/fractal
+              env:
+                  GOPRIVATE: "github.com/fractal"
 
     # Building
     # Check that the ECS Host Service builds.
