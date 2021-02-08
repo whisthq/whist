@@ -72,4 +72,4 @@ jobs:
                 -H "Accept: application/vnd.heroku+json; version=3"
                 )"
                 echo "RESULT:"
-                echol $RESULT
+                echo $RESULT
