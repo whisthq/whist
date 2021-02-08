@@ -320,7 +320,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     msghdr.msg_iov = &nothing_ptr;
     msghdr.msg_iovlen = 1;
     msghdr.msg_flags = 0;
-    msghdr.msg_control = &buffer;
+    msghdr.msg_control = buffer;
     msghdr.msg_controllen = buffer_size;
     cmsg = CMSG_FIRSTHDR(&msghdr);
     cmsg->cmsg_len = msghdr.msg_controllen;
