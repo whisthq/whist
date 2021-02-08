@@ -353,12 +353,11 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	// correct key (which does not help the attacker too much), but provides us
 	// the benefit of preventing a super-long request from clogging up our host
 	// service with huge memory allocations.
-	// TODO: REENABLE AUTHENTICATION
-	if false && (len(webserverAuthSecret) != len(requestAuthSecret) ||
+	if len(webserverAuthSecret) != len(requestAuthSecret) ||
 		subtle.ConstantTimeCompare(
 			[]byte(webserverAuthSecret),
 			[]byte(requestAuthSecret),
-		) == 0) {
+		) == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return logger.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
 	}
