@@ -95,29 +95,14 @@ force_output=${2:-false}
 # Working directory is fractal/container-images/
 cd "$DIR"
 
-# Create temporary directory for build dependencies
-mkdir -p "base/build-temp"
-
-# PROTOCOL -- BUILD & COPY
-mkdir -p "base/build-temp/protocol"
-if [ ! -f ../protocol/server/build64/libsentry.so ]; then
-  echo "Could not find $DIR/../protocol/server/build64/libsentry.so... building protocol"
+# If copying the protocol build fails,
+# try compiling first and then copying again
+if [ ! ./base/copy_protocol_build.sh ]; then
   ../protocol/build_protocol.sh
+  ./base/copy_protocol_build.sh
+else
+  echo "A protocol build exists, though it is not guaranteed to be up-to-date."
 fi
-if [ ! -f ../protocol/server/build64/crashpad_handler ]; then
-  echo "Could not find $DIR/../protocol/sentry-native/crashpad_build/handler/crashpad_handler... building protocol"
-  ../protocol/build_protocol.sh
-fi
-if [ ! -f ../protocol/server/build64/FractalServer ]; then
-  echo "Could not find $DIR/../protocol/server/build64/FractalServer... building protocol"
-  ../protocol/build_protocol.sh
-fi
-
-echo "A protocol build exists, though it is not guaranteed to be up-to-date."
-
-cp ../protocol/server/build64/libsentry.so base/build-temp/protocol
-cp ../protocol/server/build64/crashpad_handler base/build-temp/protocol
-cp ../protocol/server/build64/FractalServer base/build-temp/protocol
 
 # NVIDIA DRIVERS -- DOWNLOAD AND EXTRACT
 mkdir -p "base/build-temp/nvidia-driver"
