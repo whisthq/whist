@@ -86,5 +86,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ needs.fractal-deploy-sentry-releases-main.detect-sentry-environment.outputs.sentry-environment }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Sentry\", \"text\": \"Fractal Sentry Releases for Environment \`${{ needs.fractal-deploy-sentry-releases-main.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}\` Deployed to Sentry.\", \"icon_emoji\": \":sentry:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
