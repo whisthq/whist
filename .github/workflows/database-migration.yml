@@ -65,17 +65,11 @@ jobs:
                   # fi
                   echo "HEROKU_APP_NAME=fractal-dev-server" >> $GITHUB_ENV
 
-            - name: Test ENV var
+            - name: Load Heroku Config
               run: |
-                  echo "HEROKU APP NAME:"
-                  echo $HEROKU_APP_NAME
-
-
-            # - name: Load Heroku Config
-            #   run: |
-            #     RESULT="$(
-            #     curl -X GET https://api.heroku.com/apps/$HEROK \
-            #     -H "Accept: application/vnd.heroku+json; version=3"
-            #     )"
-            #     echo "RESULT:"
-            #     echol $RESULT
+                RESULT="$(
+                curl -X GET https://api.heroku.com/apps/$HEROKU_APP_NAME \
+                -H "Accept: application/vnd.heroku+json; version=3"
+                )"
+                echo "RESULT:"
+                echol $RESULT
