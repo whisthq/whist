@@ -1,12 +1,10 @@
-import { debugLog } from "shared/utils/general/logging"
 import { graphQLPost } from "shared/utils/general/api"
 import { allowedRegions } from "shared/types/aws"
-import { fractalBackoff } from "shared/utils/general/helpers"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
-import { OperatingSystem, FractalDirectory } from "shared/types/client"
 import { config } from "shared/constants/config"
+import tcpp from "tcp-ping" 
 
-export const setAWSRegion = (accessToken: string, backoff?: true) => {
+export const setAWSRegion = async (accessToken: string, backoff?: true) => {
     /*
     Description:
         Runs AWS ping shell script (tells us which AWS server is closest to the client)
@@ -17,95 +15,44 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
     Returns:
         promise : Promise
     */
+    let finalRegions = []
+    const graphqlRegions = await graphQLPost(
+        QUERY_REGION_TO_AMI,
+        "GetRegionToAmi",
+        {},
+        accessToken
+    )
 
-    const awsPromise = () => {
-        return new Promise((resolve) => {
-            const { spawn } = require("child_process")
-            const platform = require("os").platform()
-            const path = require("path")
-            const fs = require("fs")
+    if (
+        !graphqlRegions ||
+        !graphqlRegions.json ||
+        !graphqlRegions.json.data ||
+        !graphqlRegions.json.data.hardware_region_to_ami
+    ) {
+        finalRegions = allowedRegions
+    } else {
+        finalRegions = graphqlRegions.json.data.hardware_region_to_ami.map(
+            (region: { region_name: string }) => region.region_name
+        )
+    }
 
-            let executableName
-            const binariesPath = path.join(
-                FractalDirectory.getRootDirectory(),
-                "binaries"
-            )
+    let closestRegion = finalRegions[0]
+    let lowestPingTime = Number.MAX_SAFE_INTEGER 
 
-            if (platform === OperatingSystem.MAC) {
-                executableName = "awsping_osx"
-            } else if (platform === OperatingSystem.WINDOWS) {
-                executableName = "awsping_windows.exe"
-            } else if (platform === OperatingSystem.LINUX) {
-                executableName = "awsping_linux"
-            } else {
-                debugLog(`no suitable os found, instead got ${platform}`)
+    finalRegions.forEach((region: string) => {
+        tcpp.ping({ address: `dynamodb.${region}.amazonaws.com` }, (err, data) => {
+            if(data) {
+                const pingTimes = data.results.map((ping: {seq: number, time: number}) => ping.time)
+                const averagePingTime = pingTimes.reduce((x,y) => x+y, 0)/pingTimes.length
+                if(averagePingTime < lowestPingTime) {
+                    closestRegion = region 
+                    lowestPingTime = averagePingTime
+                }
             }
+        });
+    })
 
-            const executablePath = path.join(binariesPath, executableName)
-
-            fs.chmodSync(executablePath, 0o755)
-
-            const regions = spawn(executablePath, ["-n", "3"]) // ping via TCP
-            regions.stdout.setEncoding("utf8")
-
-            regions.stdout.on("data", async (data: string) => {
-                // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                const output = data.split(/\r?\n/)
-                console.log("AWS PING GOT", output)
-                let finalRegions = null
-                const graphqlRegions = await graphQLPost(
-                    QUERY_REGION_TO_AMI,
-                    "GetRegionToAmi",
-                    {},
-                    accessToken
-                )
-                console.log("GRAPHQL REGIONS", graphqlRegions)
-
-                if (
-                    !graphqlRegions ||
-                    !graphqlRegions.json ||
-                    !graphqlRegions.json.data ||
-                    !graphqlRegions.json.data.hardware_region_to_ami
-                ) {
-                    finalRegions = allowedRegions
-                } else {
-                    finalRegions = graphqlRegions.json.data.hardware_region_to_ami.map(
-                        (region: { region_name: string }) => region.region_name
-                    )
-                }
-
-                let index = 0
-                let line = output[index].replace(/  +/g, " ")
-                let items = line.split(" ")
-
-                try {
-                    items[2].slice(1, -1)
-                } catch (err) {
-                    throw new Error("AWS ping failed")
-                }
-
-                console.log("FINAL REGIONS", finalRegions)
-
-                while (
-                    !finalRegions.includes(items[2].slice(1, -1)) &&
-                    index < output.length - 1
-                ) {
-                    index += 1
-                    line = output[index].replace(/  +/g, " ")
-                    items = line.split(" ")
-                }
-                // In case data is split and sent separately, only use closest AWS region which has index of 0
-                const region = items[2].slice(1, -1)
-                resolve(region)
-            })
-            return null
-        })
-    }
-
-    if (backoff) {
-        return fractalBackoff(awsPromise)
-    }
-    return awsPromise()
+    return closestRegion
 }
 
 export const uploadToS3 = (
