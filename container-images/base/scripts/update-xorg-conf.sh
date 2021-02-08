@@ -3,6 +3,7 @@
 # This script updates the NVIDIA BusID to the current GPU's BusID. It must
 # be run before the X Server starts.
 
+# TODO: set -Eeou pipefail and make sure everything works
 set -e
 
 # Retrieve the Fractal NVIDIA display config
