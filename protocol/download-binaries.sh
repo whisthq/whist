@@ -28,7 +28,7 @@ cp lib/64/ffmpeg/Darwin/* desktop/build64/Darwin/
 # Download SDL2 headers
 ###############################
 
-mkdir include/SDL2
+mkdir -p include/SDL2
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-sdl2-headers.tar.gz - | tar -xz -C include/SDL2
 
 # Pull all SDL2 include files up a level and delete encapsulating folder
@@ -40,16 +40,16 @@ rm -rf include/SDL2/include
 ###############################
 
 # macOS
-mkdir lib/64/SDL2
-mkdir lib/64/SDL2/Darwin
+mkdir -p lib/64/SDL2
+mkdir -p lib/64/SDL2/Darwin
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-macos-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Darwin
 
 # Linux Ubuntu
-mkdir lib/64/SDL2/Linux
+mkdir -p lib/64/SDL2/Linux
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-linux-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Linux
 
 # Windows
-mkdir lib/64/SDL2/Windows
+mkdir -p lib/64/SDL2/Windows
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-windows-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Windows
 
 ###############################
@@ -57,8 +57,8 @@ aws s3 cp s3://fractal-protocol-shared-libs/fractal-windows-sdl2-static-lib.tar.
 ###############################
 
 # Emscripten
-mkdir lib/64/openssl
-mkdir lib/64/openssl/Emscripten
+mkdir -p lib/64/openssl
+mkdir -p lib/64/openssl/Emscripten
 aws s3 cp s3://fractal-protocol-shared-libs/fractal-emscripten-libcrypto.tar.gz - | tar xz -C lib/64/openssl/Emscripten
 
 ###############################
