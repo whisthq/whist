@@ -1,0 +1,74 @@
+# workflows/main-webserver-check-pr.yml
+#
+# Main Webserver: Check PR
+# Checks a main-webserver PR for linting and unit testing success.
+
+name: "Database Migration"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        # This workflow will run when one of these files changes.
+        paths:
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+            - ".github/workflows/main-webserver-check-pr.yml"
+    # workflow_dispatch:
+
+jobs:
+    main-webserver-check-pr-linting:
+        name: Run Migra Diff
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: main-webserver
+              run: pip install --upgrade pip
+
+            # - name: Install Dependencies
+            #   working-directory: main-webserver
+            #   run: pip install -r requirements.txt -r requirements-test.txt
+            #
+            - name: Install Migra
+              working-directory: main-webserver
+              run: pip install migra
+
+            - name: Install Node.js 14
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 14
+
+            - name: Install Heroku CLI
+              run: npm install -g heroku
+
+
+
+    # Heroku Testing
+    # Checks unit tests on the Heroku pipeline.
+    main-webserver-check-pr-testing-heroku:
+        name: Heroku Testing
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
+
+            - name: Run Tests on Heroku
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              working-directory: main-webserver
+              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
