@@ -69,8 +69,8 @@ jobs:
               run: |
                 echo "HEROKU_RESPONSE=\"$(
                 curl -n -s https://api.heroku.com/apps/$HEROKU_APP_NAME \
-                -H "Accept: application/vnd.heroku+json; version=3"
-                )\"" >> $GITHUB_ENV
+                -H Accept: application/vnd.heroku+json; version=3\" \
+                )\""
 
             - name: Print Heroku Response
               run: |
