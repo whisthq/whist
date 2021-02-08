@@ -63,7 +63,8 @@ jobs:
                   # else
                   #     echo 'Error: Invalid branch' && false
                   # fi
-                  echo "HEROKU_APP_NAME=fractal-dev-server" >> $GITHUB_ENV
+                  HEROKU_APP_NAME=fractal-dev-server"
+                  echo $HEROKU_APP_NAME >> $GITHUB_ENV
                   echo "HEROKU APP NAME:"
                   echo $HEROKU_APP_NAME
 
