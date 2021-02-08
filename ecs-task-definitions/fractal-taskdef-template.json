@@ -84,18 +84,28 @@
             "mountPoints": [
                 {
                     "readOnly": true,
-                    "containerPath": "/sys/fs/cgroup",
-                    "sourceVolume": "cgroup"
-                },
-                {
-                    "readOnly": true,
-                    "containerPath": "/fractal/containerResourceMappings",
+                    "containerPath": "/fractal/resourceMappings",
                     "sourceVolume": "containerResourceMappings"
                 },
                 {
                     "readOnly": false,
                     "containerPath": "/fractal/cloudStorage:rshared",
                     "sourceVolume": "cloudStorage"
+                },
+                {
+                    "readOnly": false,
+                    "containerPath": "/tmp/sockets",
+                    "sourceVolume": "sockets"
+                },
+                {
+                    "readOnly": true,
+                    "containerPath": "/run/udev/data",
+                    "sourceVolume": "udevData"
+                },
+                {
+                    "readOnly": true,
+                    "containerPath": "/sys/fs/cgroup",
+                    "sourceVolume": "cgroup"
                 }
             ],
             "workingDirectory": null,
@@ -139,6 +149,7 @@
     "proxyConfiguration": null,
     "volumes": [
         {
+            "fsxWindowsFileServerVolumeConfiguration": null,
             "efsVolumeConfiguration": null,
             "name": "cgroup",
             "host": {
@@ -147,18 +158,38 @@
             "dockerVolumeConfiguration": null
         },
         {
+            "fsxWindowsFileServerVolumeConfiguration": null,
             "efsVolumeConfiguration": null,
             "name": "containerResourceMappings",
             "host": {
-                "sourcePath": "/fractal/containerResourceMappings"
+                "sourcePath": "/fractal/%%FRACTAL_ID_PLACEHOLDER%%/containerResourceMappings"
             },
             "dockerVolumeConfiguration": null
         },
         {
+            "fsxWindowsFileServerVolumeConfiguration": null,
             "efsVolumeConfiguration": null,
             "name": "cloudStorage",
             "host": {
-                "sourcePath": "/fractal/cloudStorage"
+                "sourcePath": "/fractalCloudStorage/%%FRACTAL_ID_PLACEHOLDER%%/"
+            },
+            "dockerVolumeConfiguration": null
+        },
+        {
+            "fsxWindowsFileServerVolumeConfiguration": null,
+            "efsVolumeConfiguration": null,
+            "name": "sockets",
+            "host": {
+                "sourcePath": "/fractal/temp/%%FRACTAL_ID_PLACEHOLDER%%/sockets/"
+            },
+            "dockerVolumeConfiguration": null
+        },
+        {
+            "fsxWindowsFileServerVolumeConfiguration": null,
+            "efsVolumeConfiguration": null,
+            "name": "udevData",
+            "host": {
+                "sourcePath": "/run/udev/data"
             },
             "dockerVolumeConfiguration": null
         }
