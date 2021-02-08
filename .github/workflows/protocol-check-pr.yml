@@ -124,7 +124,7 @@ jobs:
                       sudo apt-get install -y clang-tidy coreutils perl cppcheck
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      brew install llvm coreutils perl
+                      brew install llvm@7 coreutils perl
                       ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
                       ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
