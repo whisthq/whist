@@ -14,9 +14,6 @@ from app.celery.aws_ecs_creation import (
     _create_new_cluster,
     _assign_container
 )
-from app.celery.aws_ecs_deletion import (
-    _delete_cluster
-)
 from app.constants.http_codes import (
     ACCEPTED,
     WEBSERVER_MAINTENANCE,
@@ -24,10 +21,7 @@ from app.constants.http_codes import (
 from app.helpers.utils.general.logs import fractal_log
 
 
-def mock_celery_endpoint(*args, **kwargs):
-    """
-    FAKKKKKEE
-    """
+def mock_create_cluster(*args, **kwargs):
     if hasattr(_create_new_cluster, "num_calls"):
         num_calls = getattr(_create_new_cluster, "num_calls") + 1
         setattr(_create_new_cluster, "num_calls", num_calls)
@@ -40,14 +34,27 @@ def mock_celery_endpoint(*args, **kwargs):
     time.sleep(1)
 
 
-def mock_endpoints(monkeypatch):
+def mock_assign_container(*args, **kwargs):
+    if hasattr(_assign_container, "num_calls"):
+        num_calls = getattr(_assign_container, "num_calls") + 1
+        setattr(_assign_container, "num_calls", num_calls)
+    else:
+        setattr(_assign_container, "num_calls", 1)
+
+    celery_id = args[0].request.id
+    fractal_log("mock_celery_endpoint", None, f"HERE WITH TASK {celery_id}")
+
+    time.sleep(1)
+
+
+def mock_endpoints():
     # problematic:
     # /aws_container/create_cluster, /aws_container/assign_container, /container/assign
-    # monkeypatch.setattr("app.celery.aws_ecs_creation._create_new_cluster", mock_celery_endpoint)
-    _create_new_cluster.__doc__ = mock_celery_endpoint.__doc__
-    _create_new_cluster.__code__ = mock_celery_endpoint.__code__
-    # raise ValueError(_create_new_cluster.__doc__)
-    # monkeypatch.setattr("app.celery.aws_ecs_creation._assign_container", mock_celery_endpoint)
+    _create_new_cluster.__doc__ = mock_create_cluster.__doc__
+    _create_new_cluster.__code__ = mock_create_cluster.__code__
+
+    _assign_container.__doc__ = mock_assign_container.__doc__
+    _assign_container.__code__ = mock_assign_container.__code__
 
 
 def try_start_maintenance(client, region_name: str):
@@ -70,54 +77,49 @@ def try_end_maintenance(client, region_name: str):
     return resp.status_code, resp.json
 
 
-def try_problematic_endpoint(client, admin, region_name: str):
-    # create_cluster, assign_container (through test_endpoint and aws_container_assign)
-    create_cluster_body = dict(
-        cluster_name="maintenance-test",
-        instance_type="g3s.xlarge",
-        region_name=region_name,
-        max_size=1,
-        min_size=0,
-        username=admin.user_id,
-    )
-    assign_container_body = dict(
-        username=admin.user_id,
-        cluster_name="maintenance-test",
-        region_name=region_name,
-        region=region_name,
-        task_definition_arn="fractal-browsers-chrome",
-    )
+def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str):
+    assert endpoint_type in ["te_cc", "te_ac"]
 
-    fractal_log(
-        "maintenace_test",
-        None,
-        f"BEFORE DOCSTRING: {_create_new_cluster.__doc__}",
-    )
+    resp = None
+    if endpoint_type == "te_cc":
+        # test_endpoint create_cluster
+        create_cluster_body = dict(
+            cluster_name="maintenance-test",
+            instance_type="g3s.xlarge",
+            region_name=region_name,
+            max_size=1,
+            min_size=0,
+            username=admin.user_id,
+        )
+        resp = client.post(
+            "/aws_container/create_cluster",
+            json=create_cluster_body
+        )
 
-    # cc = create_cluster, te = test_endpoint
-    resp = client.post(
-        "/aws_container/create_cluster",
-        json=create_cluster_body
-    )
+    elif endpoint_type == "te_ac":
+        # test_endpoint assign_container
+        assign_container_body = dict(
+            username=admin.user_id,
+            cluster_name="maintenance-test",
+            region_name=region_name,
+            region=region_name,
+            task_definition_arn="fractal-browsers-chrome",
+        )
+        resp = client.post(
+            "/aws_container/assign_container",
+            json=assign_container_body
+        )
 
-    # ac = assign_container
-    # resp_ac_te = client.post(
-    #     "/aws_container/assign_container",
-    #     json=assign_container_body
-    # )
-    # aca = aws_container_assign
-    # resp_ac_aca = client.post(
-    #     "/container/assign",
-    #     json=assign_container_body
-    # )
+    else:
+        raise ValueError(f"Unrecognized endpoint_type {endpoint_type}")
 
-    return resp.status_code # resp_ac_te.status_code, ]# resp_ac_aca.status_code]
+    return resp.status_code
 
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("admin")
-def test_maintenance_mode(client, admin, monkeypatch):
+def test_maintenance_mode(client, admin):
     """
     Test the following maintenance mode access pattern:
     1. mocked problematic task that takes 1 second
@@ -129,8 +131,10 @@ def test_maintenance_mode(client, admin, monkeypatch):
     7. end maintenance mode
     8. try another problematic task in the original region, should succeed since maintenance mode over
 
-    TODO: have multiple celery workers to concurrently run all problematic endpoints? Current strategy is
+    TODO:
+    1. have multiple celery workers to concurrently run all problematic endpoints? Current strategy is
     to do a mix of them throughout test execution.
+    2. We need to add fixtures so we can hit /container/assign and make sure it is locked down
     """
     from app import redis_conn
     update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
@@ -140,13 +144,13 @@ def test_maintenance_mode(client, admin, monkeypatch):
     redis_conn.delete(update_key)
     redis_conn.delete(tasks_key)
 
-    mock_endpoints(monkeypatch)
+    mock_endpoints()
 
     # -- Start the test -- #
 
     # start a task
-    p_code = try_problematic_endpoint(client, admin, "us-east-1")
-    assert p_code == ACCEPTED
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert code == ACCEPTED
 
     # let celery actually start handling the task but not finish
     time.sleep(0.5)
@@ -165,13 +169,13 @@ def test_maintenance_mode(client, admin, monkeypatch):
     assert redis_conn.exists(update_key)
     
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    p_code = try_problematic_endpoint(client, admin, "us-east-1")
-    assert p_code == WEBSERVER_MAINTENANCE
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert code == WEBSERVER_MAINTENANCE
 
     # let original celery task finish
     time.sleep(1)
 
-    # # mock_celery_endpoint should be called just once
+    # _create_new_cluster (mock) should be called just once
     assert hasattr(_create_new_cluster, "num_calls")
     assert getattr(_create_new_cluster, "num_calls") == 1
 
@@ -181,12 +185,16 @@ def test_maintenance_mode(client, admin, monkeypatch):
     assert response["success"] is True
 
     # new requests should still fail out
-    p_code = try_problematic_endpoint(client, admin, "us-east-1")
-    assert p_code == WEBSERVER_MAINTENANCE
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert code == WEBSERVER_MAINTENANCE
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert code == WEBSERVER_MAINTENANCE
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert code == WEBSERVER_MAINTENANCE
 
     # test that tasks in other regions should proceed just fine
-    p_code = try_problematic_endpoint(client, admin, "us-east-2")
-    assert p_code == ACCEPTED
+    code = try_problematic_endpoint(client, admin, "us-east-2", "te_ac")
+    assert code == ACCEPTED
 
     # now end maintenance
     code, response = try_end_maintenance(client, "us-east-1")
@@ -197,6 +205,17 @@ def test_maintenance_mode(client, admin, monkeypatch):
     assert not redis_conn.exists(update_key)
 
     # tasks should work again
-    p_code = try_problematic_endpoint(client, admin, "us-east-1")
-    assert p_code == ACCEPTED
+    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert code == ACCEPTED
+
+    # let task finish
+    time.sleep(1.5)
+
+    # _create_new_cluster (mock) should be called just once
+    assert hasattr(_create_new_cluster, "num_calls")
+    assert getattr(_create_new_cluster, "num_calls") == 1
+
+    # _assign_container (mock) should be called just once
+    assert hasattr(_assign_container, "num_calls")
+    assert getattr(_assign_container, "num_calls") == 2
 
