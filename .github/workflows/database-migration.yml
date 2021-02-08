@@ -71,6 +71,6 @@ jobs:
                 curl -n -s https://api.heroku.com/apps/$HEROKU_APP_NAME \
                 -H "Accept: application/vnd.heroku+json; version=3"
                 )"
-                JSON="${{fromJson($RESULT)}}"
+                JSON="${{fromJson(env.RESULT)}}"
                 echo "RESULT:"
                 echo $JSON
