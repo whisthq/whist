@@ -97,11 +97,11 @@ cd "$DIR"
 
 # If copying the protocol build fails,
 # try compiling first and then copying again
-if [ ! ./base/copy_protocol_build.sh ]; then
-  ../protocol/build_protocol.sh
-  ./base/copy_protocol_build.sh
-else
+if ./copy_protocol_build.sh ; then
   echo "A protocol build exists, though it is not guaranteed to be up-to-date."
+else
+  ../protocol/build_protocol.sh
+  ./copy_protocol_build.sh
 fi
 
 # NVIDIA DRIVERS -- DOWNLOAD AND EXTRACT
