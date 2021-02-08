@@ -22,7 +22,7 @@ jobs:
         name: "Deploy Sentry Release for: ${{ matrix.project.name }}"
         runs-on: ubuntu-20.04
         outputs:
-            branch: ${{ steps.detect-sentry-environment.outputs.sentry-environment }}
+            branch: ${{ steps.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}
 
         strategy:
             matrix:
@@ -74,6 +74,8 @@ jobs:
 
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+              env:
+                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}
 
     notify-slack:
         name: Notify Slack
