@@ -206,11 +206,10 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 
 	// set up goroutine to create unix socket and pass file descriptors to protocol
 	go func() {
-		// TODO(anton): handle errors better
-		// TODO(anton): exit goroutine if container dies
-		// TODO(anton): actually delete the devices from the host when the container dies
-		// TODO(anton): delete devices from devices map when container dies
-		// TODO(anton): create socket specifically for FractalID
+		// TODO: handle errors better
+		// TODO: exit goroutine if container dies
+		// TODO: actually delete the devices from the host when the container dies
+		// TODO: delete devices from devices map when container dies
 		dirname := fractalTempDir + FractalID + "/sockets/"
 		filename := dirname + "uinput.sock"
 		os.MkdirAll(dirname, 0777)
