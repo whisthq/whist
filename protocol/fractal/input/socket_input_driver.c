@@ -304,10 +304,8 @@ const int linux_mouse_buttons[6] = {
 
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
 int recv_fds(int sock, int* fds, unsigned n_fds) {
-    struct {
-        struct cmsghdr h;
-        int fd[n_fds];
-    } buffer;
+    int buffer_size = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
+    void* buffer = malloc(buffer_size);
 
     struct msghdr msghdr;
     char nothing;
@@ -323,7 +321,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     msghdr.msg_iovlen = 1;
     msghdr.msg_flags = 0;
     msghdr.msg_control = &buffer;
-    msghdr.msg_controllen = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
+    msghdr.msg_controllen = buffer_size;
     cmsg = CMSG_FIRSTHDR(&msghdr);
     cmsg->cmsg_len = msghdr.msg_controllen;
     cmsg->cmsg_level = SOL_SOCKET;
@@ -333,11 +331,14 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
         LOG_ERROR("Socket input driver failed to receive file descriptors: recvmsg error %s", buf);
-        return (-1);
+        free(buffer);
+        return -1;
     }
     for (i = 0; i < n_fds; i++) fds[i] = ((int*)CMSG_DATA(cmsg))[i];
     n_fds = (cmsg->cmsg_len - sizeof(struct cmsghdr)) / sizeof(int);
-    return (n_fds);
+
+    free(buffer);
+    return n_fds;
 }
 
 InputDevice* create_input_device() {
