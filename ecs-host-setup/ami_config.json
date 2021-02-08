@@ -45,6 +45,10 @@
       "destination": "/home/ubuntu"
     },
     {
+      "type": "shell",
+      "inline": ["mv /home/ubuntu/ecs-host-setup/app_env.env /usr/share/fractal/app_env.env"]
+    },
+    {
       "type": "file",
       "source": "../ecs-host-service/build/ecs-host-service",
       "destination": "/home/ubuntu/ecs-host-service"
