@@ -67,10 +67,11 @@ jobs:
 
             - name: Load Heroku Config
               run: |
-                RESULT="$(
+                echo "HEROKU_RESPONSE=\"$(
                 curl -n -s https://api.heroku.com/apps/$HEROKU_APP_NAME \
-                -H "Accept: application/vnd.heroku+json; version=3"
-                )"
-                JSON="${{fromJson(env.RESULT)}}"
-                echo "RESULT:"
-                echo $JSON
+                -H \"Accept: application/vnd.heroku+json; version=3\"
+                )\""
+
+            - name: Print Heroku Response
+              run: |
+                echo $HEROKU_RESPONS
