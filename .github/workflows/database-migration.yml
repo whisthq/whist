@@ -54,6 +54,22 @@ jobs:
               run: npm install -g heroku
 
 
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
+            - name: Set the $DB_URL env var
+              run: |
+                echo "heroku config:get DATBASE_URL --app=fractal-dev-server" >> $DB_URL
+
+
 
     # Heroku Testing
     # Checks unit tests on the Heroku pipeline.
