@@ -67,6 +67,8 @@ jobs:
                       DEPLOY_ENVIRONMENT=staging
                   elif [ "${GITHUB_REF##*/}" == "dev" ]
                       DEPLOY_ENVIRONMENT=dev
+                  else
+                      DEPLOY_ENVIRONMENT=null
                   fi
                   echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
                   echo "::set-output name=deploy_environment::$DEPLOY_ENVIRONMENT"
@@ -74,10 +76,14 @@ jobs:
             - name: Set Sentry environment based on Git Branch
               id: set-sentry-environment
               run: |
+                  # on dev branch, we don't set Sentry environment as we don't want to
+                  # log to Sentry in development
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                       SENTRY_ENVIRONMENT=prod
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                       SENTRY_ENVIRONMENT=staging
+                  else
+                      SENTRY_ENVIRONMENT=""
                   fi
                   echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
