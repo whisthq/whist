@@ -1,9 +1,38 @@
-#include "cpucapturetransfer.h"
+#include "transfercapture.h"
+#ifdef _WIN32
+#include "dxgicudatransfercapture.h"
+#endif
 
-int cpu_transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
+void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder) {
+#ifdef _WIN32
+    // If we're encoding using NVENC, we will want the dxgi cuda transfer context to be available
+    if (encoder->type == NVENC_ENCODE) {
+        // initialize the transfer context
+        dxgi_cuda_start_transfer_context(device);
+    } else if (device->dxgi_cuda_available) {
+        // Otherwise, we can close the transfer context
+        // end the transfer context
+        dxgi_cuda_close_transfer_context(device);
+    }
+#endif
+}
+
+int transfer_capture(CaptureDevice* device, VideoEncoder* encoder) {
+#ifdef _WIN32
+    if (encoder->type == NVENC_ENCODE && device->dxgi_cuda_available && device->texture_on_gpu) {
+        // if dxgi_cuda is setup and we have a dxgi texture on the gpu
+        if (dxgi_cuda_transfer_capture(device, encoder) == 0) {
+            return 0;
+        } else {
+            LOG_WARNING("Tried to do DXGI CUDA transfer, but transfer failed!");
+            // otherwise, do the cpu transfer below
+        }
+    }
+#endif
+
 #ifdef _WIN32
     encoder->already_encoded = false;
-#else
+#else  // __linux__
     if (device->capture_is_on_nvidia) {
         encoder->encoded_frame_data = device->nvidia_capture_device.frame;
         encoder->encoded_frame_size = device->nvidia_capture_device.size;

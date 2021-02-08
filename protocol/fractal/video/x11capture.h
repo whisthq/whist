@@ -75,10 +75,13 @@ Public Functions
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
  * @param dpi                      Dots per inch of the screen, in pixels
+ * @param bitrate                  Bitrate (used for create_nvidia_capture_device)
+ * @param codec                    Codec (used for create_nvidia_capture_device)
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
+                          CodecType codec);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in

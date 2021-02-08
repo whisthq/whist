@@ -165,7 +165,6 @@ export const Launcher = (props: {
         })
     }
 
-    // Set timeout for maximum time before we stop waiting for container/assing
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)

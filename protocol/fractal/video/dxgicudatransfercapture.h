@@ -1,5 +1,5 @@
-#ifndef DXGI_CUDA_CAPTURE_TRANSFER_H
-#define DXGI_CUDA_CAPTURE_TRANSFER_H
+#ifndef DXGI_CUDA_TRANSFER_CAPTURE_H
+#define DXGI_CUDA_TRANSFER_CAPTURE_H
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file cpucapturetransfer.h
@@ -55,6 +55,8 @@ Public Functions
 
 BEGIN_EXTERN_C
 
+#ifdef FRACTAL_CUDA_ENABLED
+
 /**
  * @brief                         Check CUDA capabilities and, if possible,
  *                                register the screen capture texture resource
@@ -73,8 +75,10 @@ int dxgi_cuda_start_transfer_context(CaptureDevice* device);
  * @brief                         Unregister the screen capture texture resource
  *                                for the capture device. Must be called before
  *                                destroying the capture device
+ *
+ * @param device                  The capture device to unregister
  */
-void dxgi_cuda_close_transfer_context();
+void dxgi_cuda_close_transfer_context(CaptureDevice* device);
 
 /**
  * @brief                         Transfer the texture stored in the capture
@@ -92,6 +96,14 @@ void dxgi_cuda_close_transfer_context();
  */
 int dxgi_cuda_transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
 
+#else
+
+#define dxgi_cuda_start_transfer_context(...) (0)
+#define dxgi_cuda_close_transfer_context(...) (0)
+#define dxgi_cuda_transfer_capture(...) (0)
+
+#endif
+
 END_EXTERN_C
 
-#endif  // DXGI_CUDA_CAPTURE_TRANSFER_H
+#endif  // DXGI_CUDA_TRANSFER_CAPTURE_H

@@ -46,7 +46,7 @@ Includes
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
 #include "../fractal/utils/logging.h"
-#include "../fractal/video/cpucapturetransfer.h"
+#include "../fractal/video/transfercapture.h"
 #include "../fractal/video/screencapture.h"
 #include "../fractal/video/videoencode.h"
 #include "client.h"
@@ -56,7 +56,6 @@ Includes
 
 #ifdef _WIN32
 #include "../fractal/utils/windows_utils.h"
-#include "../fractal/video/dxgicudacapturetransfer.h"
 #endif
 
 #ifdef _WIN32
@@ -114,6 +113,9 @@ volatile bool update_encoder;
 bool pending_encoder;
 bool encoder_finished;
 VideoEncoder* encoder_factory_result = NULL;
+// If we are using nvidia's built in encoder, then we do not need to create a real encoder
+// struct since frames will already be encoded, So we can use this dummy encoder.
+VideoEncoder dummy_encoder = {0};
 
 int encoder_factory_server_w;
 int encoder_factory_server_h;
@@ -264,9 +266,12 @@ int32_t multithreaded_encoder_factory(void* opaque) {
     encoder_finished = true;
     return 0;
 }
+
 int32_t multithreaded_destroy_encoder(void* opaque) {
     VideoEncoder* encoder = (VideoEncoder*)opaque;
-    destroy_video_encoder(encoder);
+    if (encoder != &dummy_encoder) {
+        destroy_video_encoder(encoder);
+    }
     return 0;
 }
 
@@ -314,10 +319,6 @@ int32_t send_video(void* opaque) {
     pending_encoder = false;
     encoder_finished = false;
 
-#ifdef _WIN32
-    bool dxgi_cuda_available = false;
-#endif
-
     while (!exiting) {
         if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
             SDL_Delay(5);
@@ -328,18 +329,20 @@ int32_t send_video(void* opaque) {
         if (update_device) {
             update_device = false;
 
-#ifdef _WIN32
-            // need to reinitialize this, so close it
-            dxgi_cuda_close_transfer_context();
-#endif
-
             if (device) {
                 destroy_capture_device(device);
                 device = NULL;
             }
 
             device = &rdevice;
-            if (create_capture_device(device, client_width, client_height, client_dpi) < 0) {
+            // YUV pixel format requires the width to be a multiple of 4 and the height to be a
+            // multiple of 2 (see `bRoundFrameSize` in NvFBC.h). By default, the dimensions will be
+            // implicitly rounded up, but for some reason it looks better if we explicitly set the
+            // size. Also for some reason it actually rounds the width to a multiple of 8.
+            int true_width = client_width + 7 - ((client_width + 7) % 8);
+            int true_height = client_height + 1 - ((client_height + 1) % 2);
+            if (create_capture_device(device, true_width, true_height, client_dpi, current_bitrate,
+                                      client_codec_type) < 0) {
                 LOG_WARNING("Failed to create capture device");
                 device = NULL;
                 update_device = true;
@@ -350,74 +353,97 @@ int32_t send_video(void* opaque) {
 
             LOG_INFO("Created Capture Device of dimensions %dx%d", device->width, device->height);
 
-            while (pending_encoder) {
-                if (encoder_finished) {
-                    if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder,
-                                         "MultithreadedDestroyEncoder", encoder);
+            if (device->using_nvidia) {
+                // The frames will already arrive encoded by the GPU, so we do not need to do any
+                // encoding ourselves
+                encoder = &dummy_encoder;
+                memset(encoder, 0, sizeof(VideoEncoder));
+                update_encoder = false;
+            } else {
+                // If an encoder is pending, while capture_device is updating, then we should wait
+                // for it to be created
+                while (pending_encoder) {
+                    if (encoder_finished) {
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        break;
                     }
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    update_encoder = false;
-                    break;
+                    SDL_Delay(1);
                 }
-                SDL_Delay(1);
-            }
-            update_encoder = true;
-            if (encoder) {
-                multithreaded_destroy_encoder(encoder);
-                encoder = NULL;
+                // If an encoder exists, then we should destroy it since the capture device is being
+                // created now
+                if (encoder) {
+                    SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
+                                     encoder);
+                    encoder = NULL;
+                }
+                // Next, we should update our ffmpeg encoder
+                update_encoder = true;
             }
         }
 
         // Update encoder with new parameters
         if (update_encoder) {
-            update_capture_encoder(device, current_bitrate, client_codec_type);
-            // encoder = NULL;
-            if (pending_encoder) {
-                if (encoder_finished) {
-                    if (encoder) {
-                        SDL_CreateThread(multithreaded_destroy_encoder,
-                                         "multithreaded_destroy_encoder", encoder);
-                    }
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    update_encoder = false;
-                }
+            if (device->using_nvidia) {
+                // If this device uses a device encoder, then we should update it
+                update_capture_encoder(device, current_bitrate, client_codec_type);
+                // We keep the dummy encoder as-is,
+                // the real encoder was just updated with update_capture_encoder
+                update_encoder = false;
             } else {
-                LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate, max_mbps);
-                current_bitrate = (int)(max_mbps * 1024 * 1024);
-                pending_encoder = true;
-                encoder_finished = false;
-                encoder_factory_server_w = device->width;
-                encoder_factory_server_h = device->height;
-                encoder_factory_client_w = (int)client_width;
-                encoder_factory_client_h = (int)client_height;
-                encoder_factory_codec_type = (CodecType)client_codec_type;
-                encoder_factory_current_bitrate = current_bitrate;
-                if (encoder == NULL) {
-                    // Run on this thread bc we have to wait for it anyway
-                    multithreaded_encoder_factory(NULL);
-                    encoder = encoder_factory_result;
-                    pending_encoder = false;
-                    update_encoder = false;
-                } else {
-                    SDL_CreateThread(multithreaded_encoder_factory, "multithreaded_encoder_factory",
-                                     NULL);
-                }
-            }
+                // Keep track of whether or not a new encoder is being used now
+                bool new_encoder_used = false;
 
-#ifdef _WIN32
-            if (encoder->type == NVENC_ENCODE) {
-                // initialize the transfer context
-                if (!dxgi_cuda_start_transfer_context(device)) {
-                    dxgi_cuda_available = true;
+                // Otherwise, this capture device must use an external encoder,
+                // so we should start making it in our encoder factory
+                if (pending_encoder) {
+                    if (encoder_finished) {
+                        // Once encoder_finished, we'll destroy the old one that we've been using,
+                        // and replace it with the result of multithreaded_encoder_factory
+                        if (encoder) {
+                            SDL_CreateThread(multithreaded_destroy_encoder,
+                                             "multithreaded_destroy_encoder", encoder);
+                        }
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        update_encoder = false;
+
+                        new_encoder_used = true;
+                    }
+                } else {
+                    // Starting making new encoder. This will set pending_encoder=true, but won't
+                    // actually update it yet, we'll still use the old one for a bit
+                    LOG_INFO("Updating Encoder using Bitrate: %d from %f", current_bitrate,
+                             max_mbps);
+                    current_bitrate = (int)(max_mbps * 1024 * 1024);
+                    encoder_finished = false;
+                    encoder_factory_server_w = device->width;
+                    encoder_factory_server_h = device->height;
+                    encoder_factory_client_w = (int)client_width;
+                    encoder_factory_client_h = (int)client_height;
+                    encoder_factory_codec_type = (CodecType)client_codec_type;
+                    encoder_factory_current_bitrate = current_bitrate;
+                    if (encoder == NULL) {
+                        // Run on this thread bc we have to wait for it anyway, encoder == NULL
+                        multithreaded_encoder_factory(NULL);
+                        encoder = encoder_factory_result;
+                        pending_encoder = false;
+                        update_encoder = false;
+
+                        new_encoder_used = true;
+                    } else {
+                        SDL_CreateThread(multithreaded_encoder_factory,
+                                         "multithreaded_encoder_factory", NULL);
+                        pending_encoder = true;
+                    }
                 }
-            } else if (dxgi_cuda_available) {
-                // end the transfer context
-                dxgi_cuda_close_transfer_context();
+
+                // Reinitializes the internal context that handles transferring from device to
+                // encoder.
+                if (new_encoder_used) {
+                    reinitialize_transfer_context(device, encoder);
+                }
             }
-#endif
         }
 
         // Accumulated_frames is equal to how many frames have passed since the
@@ -457,19 +483,11 @@ int32_t send_video(void* opaque) {
                 LOG_INFO("Sending current frame!");
             }
 
-            // transfer the screen to a buffer
-            int transfer_res = 2;  // haven't tried anything yet
-#if defined(_WIN32)
-            if (encoder->type == NVENC_ENCODE && dxgi_cuda_available && device->texture_on_gpu) {
-                // if dxgi_cuda is setup and we have a dxgi texture on the gpu
-                transfer_res = dxgi_cuda_transfer_capture(device, encoder);
-            }
-#endif
-            if (transfer_res) {
-                // if previous attempt failed or we need to use cpu
-                transfer_res = cpu_transfer_capture(device, encoder);
-            }
-            if (transfer_res) {
+            // transfer the capture from the device to the encoder
+            // This function will DXGI CUDA optimize if possible,
+            // Or do nothing if the device already encoded the capture
+            // with nvidia capture SDK
+            if (transfer_capture(device, encoder) != 0) {
                 // if there was a failure
                 exiting = true;
                 break;

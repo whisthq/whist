@@ -51,7 +51,8 @@ bool is_same_wh(CaptureDevice* device) {
     return device->width == w && device->height == h;
 }
 
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi) {
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
+                          CodecType codec) {
     if (!device) return -1;
 
     device->display = XOpenDisplay(NULL);
@@ -65,7 +66,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         LOG_ERROR("Invalid width/height of %d/%d", width, height);
         return -1;
     }
-    device->width = width & ~0xF;
+    device->width = width;
     device->height = height;
 
     if (!is_same_wh(device)) {
@@ -91,6 +92,10 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
         runcmd(cmd, NULL);
+        // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
+        snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
+        runcmd(cmd, NULL);
+        // while this command sets the font DPI setting
         snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
         runcmd(cmd, NULL);
 
@@ -104,15 +109,12 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
 
 #if USING_GPU_CAPTURE
-    if (create_nvidia_capture_device(&device->nvidia_capture_device, 10000000, CODEC_TYPE_UNKNOWN) <
-        0) {
+    if (create_nvidia_capture_device(&device->nvidia_capture_device, bitrate, codec) < 0) {
         device->using_nvidia = false;
         LOG_WARNING("USING_GPU_CAPTURE defined but not using Nvidia Capture SDK!");
     } else {
         device->using_nvidia = true;
         device->image = NULL;
-        capture_screen(device);
-        device->capture_is_on_nvidia = false;
         LOG_INFO("Using Nvidia Capture SDK!");
         return 0;
     }

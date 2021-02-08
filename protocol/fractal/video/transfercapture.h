@@ -30,9 +30,21 @@ Public Functions
 */
 
 /**
+ * @brief                         Initialize or reinitialize the dxgi cuda transfer context,
+ *                                if it is needed for the given (device, encoder) pair.
+ *                                This should be called after deciding to use a new encoder,
+ *                                as it may be able to hardware optimize the transfer from device to
+ * encoder
+ *
+ * @param device                  The capture device being used
+ *
+ * @param encoder                 The encoder being used
+ */
+void reinitialize_transfer_context(CaptureDevice* device, VideoEncoder* encoder);
+
+/**
  * @brief                         Transfer the texture stored in the capture
- *                                device to a CPU buffer, and load that CPU
- *                                buffer into the encoder's input frame
+ *                                device to the encoder, either via GPU or CPU
  *
  * @param device                  The capture device from which to get the
  *                                texture
@@ -40,6 +52,6 @@ Public Functions
  *
  * @returns                       0 on success, else -1
  */
-int cpu_transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
+int transfer_capture(CaptureDevice* device, VideoEncoder* encoder);
 
 #endif  // CPU_CAPTURE_TRANSFER_H

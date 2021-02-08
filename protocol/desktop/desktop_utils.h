@@ -138,4 +138,9 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage* fmsg, char* email);
  */
 int update_mouse_motion();
 
+/**
+ * @brief                          Sends message to server with output dimensions and DPI.
+ */
+void send_message_dimensions();
+
 #endif  // DESKTOP_UTILS_H

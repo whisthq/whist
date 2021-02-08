@@ -111,7 +111,12 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
+// Window resizing state
+SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 clock window_resize_timer;
+volatile bool pending_resize_message =
+    false;  // should be set to true if sdl event handler was not able to process resize event due
+            // to throttling, so the main loop should process it
 
 // Function Declarations
 
@@ -214,16 +219,7 @@ void update() {
     if (!update_data.tried_to_update_dimension &&
         (server_width != output_width || server_height != output_height ||
          server_codec_type != output_codec_type)) {
-        LOG_INFO("Asking for server dimension to be %dx%d with codec type h%d", output_width,
-                 output_height, output_codec_type);
-        fmsg.type = MESSAGE_DIMENSIONS;
-        fmsg.dimensions.width = (int)output_width;
-        fmsg.dimensions.height = (int)output_height;
-        fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        float dpi;
-        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
-        fmsg.dimensions.dpi = (int)dpi;
-        send_fmsg(&fmsg);
+        send_message_dimensions();
         update_data.tried_to_update_dimension = true;
     }
 
@@ -708,6 +704,7 @@ int main(int argc, char* argv[]) {
             SDL_CreateThread(send_clipboard_packets, "SendClipboardPackets", NULL);
 
         start_timer(&window_resize_timer);
+        window_resize_mutex = safe_SDL_CreateMutex();
 
         // Timer used in CI mode to exit after 1 min
         clock ci_timer;
@@ -761,6 +758,23 @@ int main(int argc, char* argv[]) {
                 }
                 start_timer(&keyboard_sync_timer);
             }
+
+            // Check if window resize message should be sent to server
+            if (pending_resize_message &&
+                get_timer(window_resize_timer) >=
+                    WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+                safe_SDL_LockMutex(window_resize_mutex);
+                if (pending_resize_message &&
+                    get_timer(window_resize_timer) >=
+                        WINDOW_RESIZE_MESSAGE_INTERVAL /
+                            (float)MS_IN_SECOND) {  // double checked locking
+                    pending_resize_message = false;
+                    send_message_dimensions();
+                    start_timer(&window_resize_timer);
+                }
+                safe_SDL_UnlockMutex(window_resize_mutex);
+            }
+
             int events = SDL_PollEvent(&sdl_msg);
 
             if (events && handle_sdl_event(&sdl_msg) != 0) {

@@ -35,7 +35,10 @@ extern bool rgui_pressed;
 // Main state variables
 extern bool exiting;
 
+extern SDL_mutex *window_resize_mutex;
+extern const float window_resize_interval;
 extern clock window_resize_timer;
+extern volatile bool pending_resize_message;
 
 extern volatile SDL_Window *window;
 
@@ -78,25 +81,72 @@ int handle_window_size_changed(SDL_Event *event) {
 
     // Let video thread know about the resizing to
     // reinitialize display dimensions
+
+    LOG_INFO("Received resize event for %dx%d, currently %dx%d", event->window.data1,
+             event->window.data2, get_window_pixel_width((SDL_Window *)window),
+             get_window_pixel_height((SDL_Window *)window));
+
+#ifndef __linux__
+    // Try to make pixel width and height conform to certain desirable dimensions
+    int current_width = get_window_pixel_width((SDL_Window *)window);
+    int current_height = get_window_pixel_height((SDL_Window *)window);
+    int dpi = get_window_pixel_width((SDL_Window *)window) /
+              get_window_virtual_width((SDL_Window *)window);
+
+    // The server will round the dimensions up in order to satisfy the YUV pixel format
+    // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
+    // to a multiple of 2. Here, we try to force the window size to be valid values so the
+    // dimensions of the client and server match. We round down rather than up to avoid extending
+    // past the size of the display.
+    int desired_width = current_width - (current_width % 8);
+    int desired_height = current_height - (current_height % 2);
+    static int prev_desired_width = 0;
+    static int prev_desired_height = 0;
+    static int tries = 0;  // number of attemps to force window size to be prev_desired_width/height
+    if (current_width != desired_width || current_height != desired_height) {
+        // Avoid trying to force the window size forever, stop after 4 attempts
+        if (!(prev_desired_width == desired_width && prev_desired_height == desired_height &&
+              tries > 4)) {
+            if (prev_desired_width == desired_width && prev_desired_height == desired_height) {
+                tries++;
+            } else {
+                prev_desired_width = desired_width;
+                prev_desired_height = desired_height;
+                tries = 0;
+            }
+
+            SDL_SetWindowSize((SDL_Window *)window, desired_width / dpi, desired_height / dpi);
+            LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
+                     desired_width, desired_height);
+            current_width = get_window_pixel_width((SDL_Window *)window);
+            current_height = get_window_pixel_height((SDL_Window *)window);
+
+            if (current_width != desired_width || current_height != desired_height) {
+                LOG_WARNING(
+                    "Unable to change window size to match desired dimensions using "
+                    "SDL_SetWindowSize: "
+                    "actual output=%dx%d, desired output=%dx%d",
+                    current_width, current_height, desired_width, desired_height);
+            }
+        }
+    }
+#endif
+
+    // This propagates the resize to the video thread, and marks it as no longer resizing.
+    // output_width/output_height will now be updated
     set_video_active_resizing(false);
 
-    if (get_timer(window_resize_timer) > 0.2) {
-        // Let the server know the new dimensions so that it
-        // can change native dimensions for monitor
-        FractalClientMessage fmsg = {0};
-        fmsg.type = MESSAGE_DIMENSIONS;
-        fmsg.dimensions.width = output_width;
-        fmsg.dimensions.height = output_height;
-        fmsg.dimensions.codec_type = (CodecType)output_codec_type;
-        float dpi;
-        SDL_GetDisplayDPI(0, NULL, &dpi, NULL);
-        fmsg.dimensions.dpi = (int)dpi;
-        send_fmsg(&fmsg);
-
+    safe_SDL_LockMutex(window_resize_mutex);
+    if (get_timer(window_resize_timer) >= WINDOW_RESIZE_MESSAGE_INTERVAL / (float)MS_IN_SECOND) {
+        pending_resize_message = false;
+        send_message_dimensions();
         start_timer(&window_resize_timer);
+    } else {
+        pending_resize_message = true;
     }
+    safe_SDL_UnlockMutex(window_resize_mutex);
 
-    LOG_INFO("Window %d resized to %dx%d (Physical %dx%d)", event->window.windowID,
+    LOG_INFO("Window %d resized to %dx%d (Actual %dx%d)", event->window.windowID,
              event->window.data1, event->window.data2, output_width, output_height);
 
     return 0;

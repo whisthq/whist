@@ -63,6 +63,8 @@ typedef struct CaptureDevice {
     bool released;
     MONITORINFOEXW monitorInfo;
     char* bitmap;
+    bool using_nvidia;
+    bool dxgi_cuda_available;
 } CaptureDevice;
 
 /*
@@ -80,10 +82,13 @@ Public Functions
  * @param width                    Width of the screen to capture, in pixels
  * @param height                   Height of the screen to capture, in pixels
  * @param dpi                      Dots per inch of the screen, in pixels
+ * @param bitrate                  Bitrate (unused)
+ * @param codec                    Codec (unused)
  *
  * @returns                        0 if succeeded, else -1
  */
-int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi);
+int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT dpi, int bitrate,
+                          CodecType codec);
 
 /**
  * @brief                          Capture a bitmap snapshot of the screen, in

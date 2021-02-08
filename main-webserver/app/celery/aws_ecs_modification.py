@@ -5,12 +5,12 @@ from celery import shared_task
 from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.helpers.utils.general.logs import fractal_log
-from app.models import (
-    db,
-    ClusterInfo,
-    RegionToAmi,
+from app.helpers.utils.aws.aws_resource_locks import (
+    lock_container_and_update,
+    spin_lock,
 )
+from app.helpers.utils.general.logs import fractal_log
+from app.models import db, ClusterInfo, RegionToAmi, UserContainer
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 
 
@@ -41,13 +41,70 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
     )
 
+    all_regions = RegionToAmi.query.all()
+    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
+    if ami is None:
+        ami = region_to_ami[region_name]
+
+    # first, delete every unassigned container
+    unassigned_containers = UserContainer.query.filter_by(
+        cluster=cluster_name, is_assigned=False
+    ).all()
+    for container in unassigned_containers:
+        container_name = container.container_id
+
+        # First, we lock the container in the DB to make sure it doesn't get assigned
+        # while being deleted.
+        if spin_lock(container_name) < 0:
+            fractal_log(
+                function="update_cluster",
+                label=container_name,
+                logs="spin_lock took too long.",
+                level=logging.ERROR,
+            )
+
+            raise Exception("Failed to acquire resource lock.")
+
+        fractal_log(
+            function="update_cluster",
+            label=str(container_name),
+            logs="Beginning to delete unassigned container {container_name}. Goodbye!".format(
+                container_name=container_name
+            ),
+        )
+
+        lock_container_and_update(
+            container_name=container_name, state="DELETING", lock=True, temporary_lock=10
+        )
+
+        # then, we delete it
+
+        container_cluster = container.cluster
+        container_location = container.location
+        ecs_client = ECSClient(
+            base_cluster=container_cluster, region_name=container_location, grab_logs=False
+        )
+
+        ecs_client.add_task(container_name)
+        if not ecs_client.check_if_done(offset=0):
+            ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
+            self.update_state(
+                state="PENDING",
+                meta={
+                    "msg": "Container {container_name} begun stoppage".format(
+                        container_name=container_name,
+                    )
+                },
+            )
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     ecs_client.update_cluster_with_new_ami(cluster_name, ami)
 
     self.update_state(
         state="SUCCESS",
         meta={
-            "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
+            "msg": f"updated cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
         },
     )
 

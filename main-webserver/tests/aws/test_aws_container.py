@@ -90,6 +90,12 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 def test_assign_container(client, admin, monkeypatch):
     monkeypatch.setattr(_poll, "__code__", (lambda *args, **kwargs: True).__code__)
 
+    deploy_env = "dev"
+    if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
+        deploy_env = "prod"
+    elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
+        deploy_env = "staging"
+
     fractal_log(
         function="test_assign_container",
         label="container/assign",
@@ -101,7 +107,7 @@ def test_assign_container(client, admin, monkeypatch):
             username=admin.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
-            task_definition_arn="fractal-browsers-chrome",
+            task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
         ),
     )
 

@@ -58,8 +58,9 @@ EOF
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
-# Copy userdata-bootstrap.sh, which gets run at host runtime
-sudo cp userdata-bootstrap.sh /home/ubuntu/userdata-bootstrap.sh
+# The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and 
+# uploaded from this Git repository to the AMI during Packer via ami_config.json
+# It gets enabled in base_userdata_template.sh
 
 echo
 echo "Install complete. Make sure you do not reboot when creating the AMI (check NO REBOOT)"
