@@ -62,6 +62,8 @@ jobs:
                   echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
             - name: Create New Sentry Release
+              env:
+                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
               run: |
                   # Install Sentry CLI
                   curl -sL https://sentry.io/get-cli/ | bash
@@ -74,8 +76,6 @@ jobs:
 
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
-              env:
-                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.SENTRY_DEPLOY_ENVIRONMENT }}
 
     notify-slack:
         name: Notify Slack
