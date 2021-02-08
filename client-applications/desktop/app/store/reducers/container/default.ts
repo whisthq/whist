@@ -1,11 +1,10 @@
 import { FractalTaskStatus } from "shared/types/containers"
-import { ChildProcess } from "child_process"
 
 export type Task = {
     taskID?: string
     status?: FractalTaskStatus
-    childProcess?: ChildProcess | undefined
     shouldLaunchProtocol?: boolean
+    protocolKillSignal?: number
 }
 
 export type Container = {
@@ -28,8 +27,8 @@ export const DEFAULT: ContainerState = {
     task: {
         taskID: "",
         status: FractalTaskStatus.PENDING,
-        childProcess: undefined,
-        shouldLaunchProtocol: false
+        shouldLaunchProtocol: false,
+        protocolKillSignal: 0
     },
     container: {
         publicIP: "",

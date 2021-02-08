@@ -64,9 +64,7 @@ function* createContainer() {
     // Get the Celery task ID
     if (success && json.ID) {
         yield put(updateTask({ taskID: json.ID }))
-    } else {
-        endStream(state.ContainerReducer.task.childProcess, "loading?Close protocol")
-        
+    } else {        
         if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             yield call(history.push, FractalRoute.PAYMENT)
         } else {

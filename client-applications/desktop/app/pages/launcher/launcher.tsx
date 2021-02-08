@@ -40,7 +40,6 @@ import { ChildProcess } from "child_process"
 
 export const Launcher = (props: {
     userID: string
-    protocol: ChildProcess | undefined
     taskID: string
     status: FractalTaskStatus
     shouldLaunchProtocol: boolean
@@ -60,7 +59,6 @@ export const Launcher = (props: {
 
     const {
         userID,
-        protocol,
         taskID,
         status,
         shouldLaunchProtocol,
@@ -70,6 +68,7 @@ export const Launcher = (props: {
     } = props
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
+    const [protocol, updateProtocol] = useState<ChildProcess>()
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -203,10 +202,10 @@ export const Launcher = (props: {
                 )
                 dispatch(
                     updateTask({
-                        childProcess: childProcess,
                         shouldLaunchProtocol: false,
                     })
                 )
+                updateProtocol(childProcess)
             }
 
             launchProtocolAsync()
@@ -218,11 +217,6 @@ export const Launcher = (props: {
 
     useEffect(() => {
         if (protocol && taskState === FractalAppState.NO_TASK) {
-            writeStream(protocol, "loading?USE_EFFECT1")
-            writeStream(protocol, "loading?USE_EFFECT2")
-            writeStream(protocol, "loading?USE_EFFECT3")
-            writeStream(protocol, "loading?USE_EFFECT4")
-
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
@@ -336,7 +330,6 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
-        protocol: state.ContainerReducer.task.childProcess,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
