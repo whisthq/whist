@@ -10,10 +10,7 @@ from app.maintenance.maintenance_manager import (
     _REDIS_TASKS_KEY,
     _REDIS_UPDATE_KEY,
 )
-from app.celery.aws_ecs_creation import (
-    _create_new_cluster,
-    _assign_container
-)
+from app.celery.aws_ecs_creation import _create_new_cluster, _assign_container
 from app.constants.http_codes import (
     ACCEPTED,
     WEBSERVER_MAINTENANCE,
@@ -91,10 +88,7 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
             min_size=0,
             username=admin.user_id,
         )
-        resp = client.post(
-            "/aws_container/create_cluster",
-            json=create_cluster_body
-        )
+        resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
     elif endpoint_type == "te_ac":
         # test_endpoint assign_container
@@ -105,10 +99,7 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
             region=region_name,
             task_definition_arn="fractal-browsers-chrome",
         )
-        resp = client.post(
-            "/aws_container/assign_container",
-            json=assign_container_body
-        )
+        resp = client.post("/aws_container/assign_container", json=assign_container_body)
 
     else:
         raise ValueError(f"Unrecognized endpoint_type {endpoint_type}")
@@ -137,6 +128,7 @@ def test_maintenance_mode(client, admin):
     2. We need to add fixtures so we can hit /container/assign and make sure it is locked down
     """
     from app import redis_conn
+
     update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
     tasks_key = _REDIS_TASKS_KEY.format(region_name="us-east-1")
 
@@ -164,10 +156,10 @@ def test_maintenance_mode(client, admin):
     # start maintenance while existing task is running
     code, response = try_start_maintenance(client, "us-east-1")
     assert code == ACCEPTED
-    assert response["success"] is False # False because a task is still running
+    assert response["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
     assert redis_conn.exists(update_key)
-    
+
     # a new task should fail out, even though webserver is not in maintenance mode yet
     code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
     assert code == WEBSERVER_MAINTENANCE
@@ -218,4 +210,3 @@ def test_maintenance_mode(client, admin):
     # _assign_container (mock) should be called just once
     assert hasattr(_assign_container, "num_calls")
     assert getattr(_assign_container, "num_calls") == 2
-

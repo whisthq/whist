@@ -41,7 +41,7 @@ def slack_send_safe(channel: str, message: str):
     """
     if current_app.testing:
         return
-        
+
     try:
         _slack_send(channel, message)
     except Exception as e:

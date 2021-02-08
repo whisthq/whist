@@ -11,6 +11,7 @@ import redis
 
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.slack.slack import slack_send_safe
+
 # from app.constants.http_codes import WEBSERVER_MAINTENANCE
 
 
@@ -42,12 +43,12 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         2. Set the update key if no tracked tasks are running
         3. Release lock
     In order to prevent excessive polling of this method, the region's update
-    key will be created to prevent new tasks from being made. However, the 
+    key will be created to prevent new tasks from being made. However, the
     webserver is not officially in update mode until all tasks in the region finish.
     The first element of the return will only be True if all tasks have finished.
-    However, the implementation allows a client to call this function once to stop new tasks 
-    from being started. The client just needs to grab the lock once to do so. 
-    Then, after some polling, the return should become true. Also, there are 
+    However, the implementation allows a client to call this function once to stop new tasks
+    from being started. The client just needs to grab the lock once to do so.
+    Then, after some polling, the return should become true. Also, there are
     slack integrations to inform us what is going on.
 
     Args:
@@ -77,14 +78,14 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         redis_conn.set(update_key, 1)
 
         slack_send_safe(
-            #TODO: make real
-            "#alerts-test", 
-            f":lock: webserver is in maintenance mode in region {region_name}"
+            # TODO: make real
+            "#alerts-test",
+            f":lock: webserver is in maintenance mode in region {region_name}",
         )
         fractal_log(
             "try_start_update",
             None,
-            f"putting webserver into maintenance mode in region {region_name}"
+            f"putting webserver into maintenance mode in region {region_name}",
         )
         return_msg = f"Put webserver into maintenance mode in region {region_name}."
 
@@ -98,7 +99,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             f" Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
         )
         slack_send_safe(
-            #TODO: make real
+            # TODO: make real
             "#alerts-test",
             slack_msg,
         )
@@ -308,10 +309,10 @@ def wait_no_update_and_track_task(func: Callable):
         region_argn = get_arg_number(func, "region_name")
         if region_argn == -1:
             raise ValueError(f"Function {func.__name__} needs to have argument self to be tracked")
-    
+
     @wraps(func)
     def wrapper(*args, **kwargs):
-        self_obj = args[self_argn] # celery "self" object created with @shared_task(bind=True)
+        self_obj = args[self_argn]  # celery "self" object created with @shared_task(bind=True)
         region_name = args[region_argn]
 
         # pre-function logic: register the task
@@ -321,7 +322,7 @@ def wait_no_update_and_track_task(func: Callable):
             # these are passed to try_register_task
             region_name,
             self_obj.request.id,
-            ):
+        ):
             raise ValueError(f"failed to register task. function: {func.__name__}")
 
         exception = None
@@ -337,7 +338,7 @@ def wait_no_update_and_track_task(func: Callable):
             # these are passed to try_deregister_task
             region_name,
             self_obj.request.id,
-            ):
+        ):
             raise ValueError(f"failed to deregister task. function: {func.__name__}")
 
         # raise any exception to caller

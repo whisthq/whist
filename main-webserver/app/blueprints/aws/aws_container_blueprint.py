@@ -7,7 +7,7 @@ from app.maintenance.maintenance_manager import (
     check_if_update,
     try_start_update,
     try_end_update,
-    wait_retry_func
+    wait_retry_func,
 )
 from app.celery.aws_ecs_creation import (
     assign_container,

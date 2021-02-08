@@ -149,10 +149,6 @@ def delete_container(self, container_name, aes_key):
 
 @shared_task(bind=True)
 def delete_cluster(self, cluster, region_name):
-    _delete_cluster(self, cluster, region_name)
-
-
-def _delete_cluster(self, cluster, region_name):
     task_start_time = time.time()
 
     ecs_client = ECSClient(region_name=region_name)
