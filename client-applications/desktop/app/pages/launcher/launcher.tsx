@@ -43,6 +43,7 @@ export const Launcher = (props: {
     taskID: string
     status: FractalTaskStatus
     shouldLaunchProtocol: boolean
+    protocolKillSignal: number
     container: Container
     timer: Timer
     dispatch: Dispatch
@@ -62,6 +63,7 @@ export const Launcher = (props: {
         taskID,
         status,
         shouldLaunchProtocol,
+        protocolKillSignal,
         container,
         timer,
         dispatch,
@@ -72,6 +74,7 @@ export const Launcher = (props: {
     const [disconnected, setDisconnected] = useState(false)
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
+    const [killSignalsReceived, setKillSignalsReceived] = useState(0)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -165,7 +168,7 @@ export const Launcher = (props: {
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)
-        }, 20000)
+        }, 30000)
     }, [])
 
     useEffect(() => {
@@ -173,7 +176,7 @@ export const Launcher = (props: {
             logger.logInfo(JSON.stringify(container), userID)
 
             if (!container.containerID && taskState !== FractalAppState.READY) {
-                setTaskState(FractalAppState.FAILURE)
+                // dispatch(updateTask({ shouldLaunchProtocol: false }))
                 logger.logError("Container took too long to create", userID)
             }
         }
@@ -186,17 +189,22 @@ export const Launcher = (props: {
     }, [shouldForceQuit, disconnected])
 
     useEffect(() => {
-        if (taskState === FractalAppState.FAILURE) {
+        if (
+            taskState === FractalAppState.FAILURE ||
+            protocolKillSignal > killSignalsReceived
+        ) {
             logger.logError(
                 "Task state is FAILURE, sending protocol kill",
                 userID
             )
             if (protocol) {
                 protocol.kill("SIGINT")
+                updateProtocol(undefined)
             }
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+            setKillSignalsReceived(protocolKillSignal)
         }
-    }, [taskState])
+    }, [taskState, protocolKillSignal])
 
     // Log timer analytics
     useEffect(() => {
@@ -212,7 +220,7 @@ export const Launcher = (props: {
     // If not, create a container
     useEffect(() => {
         if (!protocol && shouldLaunchProtocol) {
-            // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
                 const childProcess = await launchProtocol(
@@ -338,6 +346,7 @@ export const mapStateToProps = (state: {
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
+        protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
         timer: state.AnalyticsReducer.timer,
     }

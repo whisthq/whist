@@ -64,6 +64,12 @@ function* createContainer() {
         yield put(updateTask({ taskID: json.ID }))
     } else {
         yield put(updateTask(ContainerDefault.task))
+        yield put(
+            updateTask({
+                protocolKillSignal:
+                    state.ContainerReducer.task.protocolKillSignal + 1,
+            })
+        )
 
         if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             history.push(FractalRoute.PAYMENT)

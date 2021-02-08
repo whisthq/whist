@@ -28,7 +28,7 @@ export const DEFAULT: ContainerState = {
         taskID: "",
         status: FractalTaskStatus.PENDING,
         shouldLaunchProtocol: false,
-        protocolKillSignal: 0
+        protocolKillSignal: 0,
     },
     container: {
         publicIP: "",

@@ -16,14 +16,22 @@ const fractalPingTime = async (host: string, numberPings: number) => {
         (number): Average ping time to ping host (in ms)
     */
 
-    let pingTimes = []
-    for (let i = 0; i < numberPings; i++) {
-        const pingResult = await ping.promise.probe(host)
-        pingTimes.push(Number(pingResult.avg))
+    // Create list of Promises, where each Promise resolves to a ping time
+    const pingPromises = []
+    for (let i = 0; i < numberPings; i += 1) {
+        pingPromises.push(ping.promise.probe(host))
     }
-    const averageTime =
-        pingTimes.reduce((x: number, y: number) => x + y, 0) / pingTimes.length
-    return averageTime
+
+    // Resolve list of Promises synchronously to get a list of ping outputs
+    const pingResults = await Promise.all(pingPromises)
+
+    // Calculate the average ping time
+    let totalTime = 0
+    for (let i = 0; i < numberPings; i += 1) {
+        totalTime += Number(pingResults[i].avg)
+    }
+
+    return totalTime / pingResults.length
 }
 
 export const setAWSRegion = async (accessToken: string) => {
@@ -66,11 +74,12 @@ export const setAWSRegion = async (accessToken: string) => {
     let closestRegion = finalRegions[0]
     let lowestPingTime = Number.MAX_SAFE_INTEGER
 
-    for (let i = 0; i < finalRegions.length; i++) {
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < finalRegions.length; i += 1) {
         const region = finalRegions[i]
         const averagePingTime = await fractalPingTime(
             `dynamodb.${region}.amazonaws.com`,
-            10
+            3
         )
         if (averagePingTime < lowestPingTime) {
             closestRegion = region

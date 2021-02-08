@@ -110,7 +110,7 @@ export const launchProtocol = async (
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
             .flat(),
-        "--read-pipe"
+        "--read-pipe",
     ]
 
     // Starts the protocol
@@ -118,7 +118,7 @@ export const launchProtocol = async (
     const protocol = spawn(executable, protocolArguments, {
         cwd: protocolPath,
         detached: false,
-        stdio: ["pipe", process.stdout, process.stderr]
+        stdio: ["pipe", process.stdout, process.stderr],
     })
 
     // On protocol exit logic, fired only when protocol stops running
@@ -129,19 +129,25 @@ export const launchProtocol = async (
     return protocol
 }
 
-export const writeStream = (process:ChildProcess | undefined, message:String):boolean => {
-    if(process && process.stdin) {
+export const writeStream = (
+    process: ChildProcess | undefined,
+    message: string
+): boolean => {
+    if (process && process.stdin) {
         process.stdin.write(message)
         process.stdin.write("\n")
-        return true 
+        return true
     }
     return false
 }
 
-export const endStream = (process:ChildProcess | undefined, message:String):boolean => {
-    if(process && process.stdin) {
+export const endStream = (
+    process: ChildProcess | undefined,
+    message: string
+): boolean => {
+    if (process && process.stdin) {
         process.stdin.end(message)
-        return true 
+        return true
     }
     return false
 }
