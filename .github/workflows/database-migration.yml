@@ -54,16 +54,16 @@ jobs:
 
             - name: Get HEROKU_APP_NAME env var
               run: |
-                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-                      HEROKU_APP_NAME=fractal-dev-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-                      HEROKU_APP_NAME=fractal-staging-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
-                      HEROKU_APP_NAME=fractal-prod-server
-                  else
-                      echo 'Error: Invalid branch' && false
-                  fi
-                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+                  # if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
+                  #     HEROKU_APP_NAME=fractal-dev-server
+                  # elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
+                  #     HEROKU_APP_NAME=fractal-staging-server
+                  # elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
+                  #     HEROKU_APP_NAME=fractal-prod-server
+                  # else
+                  #     echo 'Error: Invalid branch' && false
+                  # fi
+                  echo "HEROKU_APP_NAME=fractal-dev-server" >> $GITHUB_ENV
                   echo "HEROKU APP NAME:"
                   echo $HEROKU_APP_NAME
 
