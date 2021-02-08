@@ -74,4 +74,4 @@ jobs:
 
             - name: Print Heroku Response
               run: |
-                echo $HEROKU_RESPONS
+                echo $HEROKU_RESPONSE
