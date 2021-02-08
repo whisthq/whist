@@ -16,8 +16,6 @@ DesktopContext: This type represents a Windows desktop object.
 
 #define _CRT_SECURE_NO_WARNINGS  // stupid Windows warnings
 
-#ifdef _WIN32
-
 #include "windows_utils.h"
 
 void log_to_file(char* msg, char* filename) {
@@ -139,5 +137,3 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
 
     return !failed;
 }
-
-#endif  // _WIN32

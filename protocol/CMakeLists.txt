@@ -23,9 +23,6 @@ cmake_minimum_required(VERSION 3.15)
 cmake_policy(SET CMP0091 NEW)
 include(CheckLanguage)
 
-# export compile commands database - comment this out if not running clang-tidy
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 project(FractalProtocol LANGUAGES C)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
@@ -80,7 +77,7 @@ else()
     message(STATUS "cppcheck not found")
 endif()
 
-if (CPPCHECK AND ${USE_CPPCHECK} MATCHES "ON" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
     message(STATUS "cppcheck active")
     set(CMAKE_C_CPPCHECK "${CPPCHECK}"
             "--template=\"cppcheck: {file}:{line} ({severity}) {message}\""
@@ -99,6 +96,9 @@ else()
     message(STATUS "cppcheck inactive")
 endif()
 
+# export compile commands database - comment this out if not running clang-tidy
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+message(STATUS "Exporting compile commands for clang-tidy")
 
 # detect if we are building 64bit or 32bit
 if (${CMAKE_SIZEOF_VOID_P} MATCHES "8")

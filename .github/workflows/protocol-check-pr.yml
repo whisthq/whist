@@ -121,7 +121,7 @@ jobs:
                       ./setup-linux-build-environment.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
-                      sudo apt-get install -y clang-tidy coreutils perl
+                      sudo apt-get install -y clang-tidy coreutils perl cppcheck
                   else
                       # llvm for clang-tidy, coreutils for realpath
                       brew install llvm coreutils perl
