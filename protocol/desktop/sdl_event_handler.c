@@ -90,6 +90,8 @@ int handle_window_size_changed(SDL_Event *event) {
     // Try to make pixel width and height conform to certain desirable dimensions
     int current_width = get_window_pixel_width((SDL_Window *)window);
     int current_height = get_window_pixel_height((SDL_Window *)window);
+    int dpi = get_window_pixel_width((SDL_Window *)window) /
+              get_window_virtual_width((SDL_Window *)window);
 
     // The server will round the dimensions up in order to satisfy the YUV pixel format
     // requirements. Specifically, it will round the width up to a multiple of 8 and the height up
@@ -113,7 +115,7 @@ int handle_window_size_changed(SDL_Event *event) {
                 tries = 0;
             }
 
-            SDL_SetWindowSize((SDL_Window *)window, desired_width, desired_height);
+            SDL_SetWindowSize((SDL_Window *)window, desired_width / dpi, desired_height / dpi);
             LOG_INFO("Forcing a resize from %dx%d to %dx%d", current_width, current_height,
                      desired_width, desired_height);
             current_width = get_window_pixel_width((SDL_Window *)window);
