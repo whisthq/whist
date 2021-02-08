@@ -100,6 +100,7 @@ cd "$DIR"
 if ./copy_protocol_build.sh ; then
   echo "A protocol build exists, though it is not guaranteed to be up-to-date."
 else
+  echo "Attempting to copy an existing protocol build failed with the above error. Building ourselves a fresh copy..."
   ../protocol/build_protocol.sh
   ./copy_protocol_build.sh
 fi
