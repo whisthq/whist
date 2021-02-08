@@ -328,6 +328,22 @@ def assign_container(
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
     """
+    return _assign_container(self, username, task_definition_arn, region_name, cluster_name, dpi, webserver_url)
+
+
+def _assign_container(
+    self,
+    username,
+    task_definition_arn,
+    region_name="us-east-1",
+    cluster_name=None,
+    dpi=96,
+    webserver_url=None
+):
+    """
+    See assign_container. This is helpful for mocking.
+    """
+    raise ValueError("No")
     fractal_log(
         function="assign_container",
         label=username,
@@ -606,7 +622,7 @@ def assign_container(
 
 
 @shared_task(bind=True)
-@wait_no_update_and_track_task
+# @wait_no_update_and_track_task
 def create_new_container(
     self,
     username,
@@ -857,6 +873,14 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
+    return _create_new_cluster(self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones)
+
+
+def _create_new_cluster(self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones):
+    """
+    See create_new_cluster. This exists for mocking.
+    """
+    raise ValueError("No")
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()
 

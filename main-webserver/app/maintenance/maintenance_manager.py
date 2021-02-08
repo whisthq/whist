@@ -84,7 +84,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         fractal_log(
             "try_start_update",
             None,
-            f"putting webserver into update mode in region {region_name}"
+            f"putting webserver into maintenance mode in region {region_name}"
         )
         return_msg = f"Put webserver into maintenance mode in region {region_name}."
 
@@ -154,7 +154,7 @@ def try_end_update(region_name: str) -> bool:
     fractal_log(
         "try_end_update",
         None,
-        f"ending webserver update mode on region {region_name}",
+        f"ending webserver maintenance mode on region {region_name}",
     )
     # delete update key
     redis_conn.delete(update_key)
@@ -308,7 +308,7 @@ def wait_no_update_and_track_task(func: Callable):
         region_argn = get_arg_number(func, "region_name")
         if region_argn == -1:
             raise ValueError(f"Function {func.__name__} needs to have argument self to be tracked")
-
+    
     @wraps(func)
     def wrapper(*args, **kwargs):
         self_obj = args[self_argn] # celery "self" object created with @shared_task(bind=True)
@@ -320,7 +320,7 @@ def wait_no_update_and_track_task(func: Callable):
             10,
             # these are passed to try_register_task
             region_name,
-            func.__name__, # self_obj.request.id,
+            self_obj.request.id,
             ):
             raise ValueError(f"failed to register task. function: {func.__name__}")
 

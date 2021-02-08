@@ -39,6 +39,9 @@ def slack_send_safe(channel: str, message: str):
         channel: channel to post in. Must start with #. Example: #alerts-test
         message: message to send.
     """
+    if current_app.testing:
+        return
+        
     try:
         _slack_send(channel, message)
     except Exception as e:
