@@ -51,6 +51,7 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
             regions.stdout.on("data", async (data: string) => {
                 // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
                 const output = data.split(/\r?\n/)
+                console.log("AWS PING GOT", output)
                 let finalRegions = null
                 const graphqlRegions = await graphQLPost(
                     QUERY_REGION_TO_AMI,
@@ -58,6 +59,7 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
                     {},
                     accessToken
                 )
+                console.log("GRAPHQL REGIONS", graphqlRegions)
 
                 if (
                     !graphqlRegions ||
@@ -81,6 +83,8 @@ export const setAWSRegion = (accessToken: string, backoff?: true) => {
                 } catch (err) {
                     throw new Error("AWS ping failed")
                 }
+
+                console.log("FINAL REGIONS", finalRegions)
 
                 while (
                     !finalRegions.includes(items[2].slice(1, -1)) &&
