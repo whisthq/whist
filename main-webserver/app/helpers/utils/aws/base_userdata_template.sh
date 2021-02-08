@@ -31,7 +31,6 @@ EOF
 rm -f /var/lib/ecs/data/*
 
 cd /home/ubuntu
-echo export USE_PROD_SENTRY=1 >> /etc/bash.bashrc
 
 # The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and 
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
@@ -46,7 +45,7 @@ After=docker.service
 Restart=always
 User=root
 Type=exec
-Environment="APP_ENV=PROD"
+EnvironmentFile=/usr/share/fractal/app_env.env
 ExecStart=/home/ubuntu/ecs-host-service
 
 [Install]

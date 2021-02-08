@@ -335,6 +335,17 @@ jobs:
                     echo "webserver_url=https://dev-server.fractal.co/" >> $GITHUB_ENV
                   fi
 
+            - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
+              working-directory: ecs-host-setup
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    echo 'APP_ENV=PROD' > app_env.env
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    echo 'APP_ENV=STAGING' > app_env.env
+                  else
+                    echo 'APP_ENV=DEV' > app_env.env
+                  fi
+
             # No quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list.
             # Also, we write to a temp json file and move to the right one
             # because the current syntax doesn't permit modifying the same file
