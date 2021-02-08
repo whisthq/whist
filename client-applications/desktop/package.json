@@ -40,7 +40,6 @@
         },
         "extraFiles": [
             "protocol-build/",
-            "binaries/",
             "build/"
         ],
         "files": [
@@ -49,7 +48,6 @@
             "icons/",
             "resources/",
             "protocol-build/",
-            "binaries/",
             "app.html",
             "main.prod.js",
             "main.prod.js.map",
@@ -148,6 +146,7 @@
         "ky": "^0.19.1",
         "ky-universal": "^0.6.0",
         "node-forge": "^0.10.0",
+        "ping": "^0.4.0",
         "png2icons": "^2.0.1",
         "popper.js": "^1.16.1",
         "postcss": "7",

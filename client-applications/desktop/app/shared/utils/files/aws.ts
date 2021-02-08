@@ -2,9 +2,19 @@ import { graphQLPost } from "shared/utils/general/api"
 import { allowedRegions } from "shared/types/aws"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { config } from "shared/constants/config"
-import tcpp from "tcp-ping" 
+import ping from "ping"
 
-export const setAWSRegion = async (accessToken: string, backoff?: true) => {
+const fractalPingTime = async (host: string, numberPings: number) => {
+    let pingTimes = []
+    for(let i = 0; i < numberPings; i++) {
+        const pingResult = await ping.promise.probe(host)
+        pingTimes.push(Number(pingResult.avg))
+    }
+    const averageTime = pingTimes.reduce((x:number,y:number) => x+y, 0) / pingTimes.length
+    return averageTime
+}
+
+export const setAWSRegion = async (accessToken: string) => {
     /*
     Description:
         Runs AWS ping shell script (tells us which AWS server is closest to the client)
@@ -39,19 +49,16 @@ export const setAWSRegion = async (accessToken: string, backoff?: true) => {
     let closestRegion = finalRegions[0]
     let lowestPingTime = Number.MAX_SAFE_INTEGER 
 
-    finalRegions.forEach((region: string) => {
-        tcpp.ping({ address: `dynamodb.${region}.amazonaws.com` }, (err, data) => {
-            if(data) {
-                const pingTimes = data.results.map((ping: {seq: number, time: number}) => ping.time)
-                const averagePingTime = pingTimes.reduce((x,y) => x+y, 0)/pingTimes.length
-                if(averagePingTime < lowestPingTime) {
-                    closestRegion = region 
-                    lowestPingTime = averagePingTime
-                }
-            }
-        });
-    })
+    for(let i = 0; i < finalRegions.length; i++) {
+        const region = finalRegions[i]
+        const averagePingTime = await fractalPingTime(`dynamodb.${region}.amazonaws.com`, 10)
+        if(averagePingTime < lowestPingTime) {
+            closestRegion = region 
+            lowestPingTime = averagePingTime
+        }
+    }
 
+    console.log(closestRegion)
     return closestRegion
 }
 
