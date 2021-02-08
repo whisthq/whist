@@ -11,6 +11,7 @@ tags
 *.iml
 *.pyc
 *.cbp
+*.swp
 
 # Visual Studio
 **/Debug/
