@@ -69,7 +69,9 @@ export const Launcher = (props: {
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
     const [protocol, updateProtocol] = useState<ChildProcess>()
+    const [disconnected, setDisconnected] = useState(false)
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
+    const [timedOut, setTimedOut] = useState(false)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -108,15 +110,11 @@ export const Launcher = (props: {
 
         setTaskState(FractalAppState.NO_TASK)
         resetReduxforLaunch()
-        // setTimeout(() => {
-        //     logger.logInfo(JSON.stringify(container), userID)
-        //     logger.logInfo(taskState, userID)
-        //     // if (!container.containerID && taskState !== FractalAppState.READY) {
-        //     //     setTaskState(FractalAppState.FAILURE)
-        //     //     logger.logError("Container took too long to create", userID)
-        //     // }
-        // }, 20000)
         dispatch(updateTask({ shouldLaunchProtocol: true }))
+
+        setTimeout(() => {
+            setTimedOut(true)
+        }, 20000)
     }
 
     const forceQuit = () => {
@@ -159,27 +157,33 @@ export const Launcher = (props: {
             if (s3Error) {
                 logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
             }
-            if (shouldForceQuit) {
-                forceQuit()
-            }
+            setDisconnected(true)
         })
     }
 
     // Set timeout for maximum time before we stop waiting for container/assing
     useEffect(() => {
         setTimeout(() => {
-            logger.logInfo(JSON.stringify(container), userID)
-            logger.logInfo(taskState, userID)
-            // if (!container.containerID && taskState !== FractalAppState.READY) {
-            //     setTaskState(FractalAppState.FAILURE)
-            //     logger.logError("Container took too long to create", userID)
-            // }
+            setTimedOut(true)
         }, 20000)
     }, [])
 
     useEffect(() => {
-        logger.logInfo(`FORCE QUIT LISTENER ${shouldForceQuit}`, userID)
-    }, [shouldForceQuit])
+        if (timedOut) {
+            logger.logInfo(JSON.stringify(container), userID)
+
+            if (!container.containerID && taskState !== FractalAppState.READY) {
+                setTaskState(FractalAppState.FAILURE)
+                logger.logError("Container took too long to create", userID)
+            }
+        }
+    }, [timedOut])
+
+    useEffect(() => {
+        if (shouldForceQuit && disconnected) {
+            forceQuit()
+        }
+    }, [shouldForceQuit, disconnected])
 
     useEffect(() => {
         if (taskState === FractalAppState.FAILURE) {
@@ -273,10 +277,6 @@ export const Launcher = (props: {
                             userID
                         )
                         setTaskState(FractalAppState.FAILURE)
-                        writeStream(
-                            protocol,
-                            `loading?${LoadingMessage.FAILURE}`
-                        )
                         break
                     default:
                         break

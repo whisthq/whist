@@ -35,6 +35,7 @@ function* createContainer() {
     let region = allowedRegions[0]
     try {
         region = yield call(setAWSRegion, accessToken)
+        logger.logInfo(`Fetch AWS region found region ${region}`, userID)
     } catch (err) {
         logger.logError(
             `Fetch AWS region errored with ${err}, using default region ${region}`,

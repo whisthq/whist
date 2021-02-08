@@ -5,26 +5,40 @@ import { config } from "shared/constants/config"
 import ping from "ping"
 
 const fractalPingTime = async (host: string, numberPings: number) => {
+    /*
+    Description:
+        Measures the average ping time (in ms) to ping a host (IP address or URL)
+
+    Arguments:
+        host (string): IP address or URL
+        numberPings (number): Number of times to ping the host
+    Returns:
+        (number): Average ping time to ping host (in ms)
+    */
+
     let pingTimes = []
-    for(let i = 0; i < numberPings; i++) {
+    for (let i = 0; i < numberPings; i++) {
         const pingResult = await ping.promise.probe(host)
         pingTimes.push(Number(pingResult.avg))
     }
-    const averageTime = pingTimes.reduce((x:number,y:number) => x+y, 0) / pingTimes.length
+    const averageTime =
+        pingTimes.reduce((x: number, y: number) => x + y, 0) / pingTimes.length
     return averageTime
 }
 
 export const setAWSRegion = async (accessToken: string) => {
     /*
     Description:
-        Runs AWS ping shell script (tells us which AWS server is closest to the client)
+        Pulls AWS regions from SQL and pings each region, and finds the closest region
+        by shortest ping time
 
     Arguments:
         accessToken (string): Access token, used to query GraphQL for allowed regions
-        backoff (boolean): If true, uses exponential backoff w/ jitter in case AWS ping fails
     Returns:
-        promise : Promise
+        (string): Closest region e.g. us-east-1
     */
+
+    // Pull allowed regions from SQL via GraphQL
     let finalRegions = []
     const graphqlRegions = await graphQLPost(
         QUERY_REGION_TO_AMI,
@@ -33,6 +47,8 @@ export const setAWSRegion = async (accessToken: string) => {
         accessToken
     )
 
+    // Default to hard-coded region list if GraphQL query fails, otherwise parse
+    // GraphQL query output
     if (
         !graphqlRegions ||
         !graphqlRegions.json ||
@@ -46,19 +62,22 @@ export const setAWSRegion = async (accessToken: string) => {
         )
     }
 
+    // Ping each region and find the closest region by lowest ping time
     let closestRegion = finalRegions[0]
-    let lowestPingTime = Number.MAX_SAFE_INTEGER 
+    let lowestPingTime = Number.MAX_SAFE_INTEGER
 
-    for(let i = 0; i < finalRegions.length; i++) {
+    for (let i = 0; i < finalRegions.length; i++) {
         const region = finalRegions[i]
-        const averagePingTime = await fractalPingTime(`dynamodb.${region}.amazonaws.com`, 10)
-        if(averagePingTime < lowestPingTime) {
-            closestRegion = region 
+        const averagePingTime = await fractalPingTime(
+            `dynamodb.${region}.amazonaws.com`,
+            10
+        )
+        if (averagePingTime < lowestPingTime) {
+            closestRegion = region
             lowestPingTime = averagePingTime
         }
     }
 
-    console.log(closestRegion)
     return closestRegion
 }
 
