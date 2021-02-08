@@ -46,7 +46,10 @@
     },
     {
       "type": "shell",
-      "inline": ["mv /home/ubuntu/ecs-host-setup/app_env.env /usr/share/fractal/app_env.env"]
+      "inline": [
+        "mkdir -p /usr/share/fractal",
+        "mv /home/ubuntu/ecs-host-setup/app_env.env /usr/share/fractal/app_env.env"
+      ]
     },
     {
       "type": "file",
