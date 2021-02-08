@@ -65,7 +65,7 @@ jobs:
                       DEPLOY_ENVIRONMENT=prod
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                       DEPLOY_ENVIRONMENT=staging
-                  elif [ "${GITHUB_REF##*/}" == "dev" ]
+                  elif [ "${GITHUB_REF##*/}" == "dev" ]; then
                       DEPLOY_ENVIRONMENT=dev
                   else
                       DEPLOY_ENVIRONMENT=null
