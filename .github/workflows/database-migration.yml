@@ -37,22 +37,9 @@ jobs:
               working-directory: main-webserver
               run: pip install --upgrade pip
 
-            # - name: Install Dependencies
-            #   working-directory: main-webserver
-            #   run: pip install -r requirements.txt -r requirements-test.txt
-            #
             - name: Install Migra
               working-directory: main-webserver
               run: pip install migra
-
-            - name: Install Node.js 14
-              uses: actions/setup-node@v1
-              with:
-                  node-version: 14
-
-            - name: Install Heroku CLI
-              run: npm install -g heroku
-
 
             - name: Authenticate Heroku
               run: |
@@ -65,27 +52,27 @@ jobs:
                     password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   EOF
 
-            - name: Set the $DB_URL env var
+            - name: Get HEROKU_APP_NAME env var
               run: |
-                DB_URL=`heroku config:get DATBASE_URL --app=fractal-dev-server`
-                echo "DB_URL=$DB_URL" >> $GITHUB_ENV
+                  if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
+                      HEROKU_APP_NAME=fractal-dev-server
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
+                      HEROKU_APP_NAME=fractal-staging-server
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
+                      HEROKU_APP_NAME=fractal-prod-server
+                  else
+                      echo 'Error: Invalid branch' && false
+                  fi
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
+                  echo "HEROKU APP NAME:"
+                  echo $HEROKU_APP_NAME
 
 
-
-    # Heroku Testing
-    # Checks unit tests on the Heroku pipeline.
-    main-webserver-check-pr-testing-heroku:
-        name: Heroku Testing
-        runs-on: ubuntu-20.04
-
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-              with:
-                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
-
-            - name: Run Tests on Heroku
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
-              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+            # - name: Load Heroku Config
+            #   run: |
+            #     RESULT="$(
+            #     curl -X GET https://api.heroku.com/apps/$HEROK \
+            #     -H "Accept: application/vnd.heroku+json; version=3"
+            #     )"
+            #     echo "RESULT:"
+            #     echol $RESULT
