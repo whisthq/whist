@@ -27,7 +27,7 @@ jobs:
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           PATH_SCHEMA_MERGING: "db.sql"
           PATH_SCHEMA_CURRENT: "./temp/current_schema.sql"
-          TEMP: "./temp/"
+          TEMP: "./temp"
 
 
         steps:
