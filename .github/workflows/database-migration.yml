@@ -95,10 +95,10 @@ jobs:
 
             - name: Create empty comparison db
               run: |
-                docker run -e POSTGRES_USER=diff -e POSTGRES_PASSWORD=diff -e POSTGRES_DB=diff library/postgres
-                # CONTAINER=$("docker ps --last 1 --format \"{{.Names}}\"")
-                # echo "THE NAME IS:"
-                # echo $CONTAINER
+                # docker run -e POSTGRES_USER=diff -e POSTGRES_PASSWORD=diff -e POSTGRES_DB=diff library/postgres
+                CONTAINER=$(docker ps --last 1 --format "{{.Names}}")
+                echo "THE NAME IS:"
+                echo $CONTAINER
 
             # - name: New db from merging schema
             #   run: |
