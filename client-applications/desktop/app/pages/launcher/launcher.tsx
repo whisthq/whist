@@ -10,10 +10,7 @@ import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
 import { FractalAppState, FractalTaskStatus } from "shared/types/containers"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { User } from "store/reducers/auth/default"
-import {
-    Timer,
-    DEFAULT as AnalyticsDefault,
-} from "store/reducers/analytics/default"
+import { Timer, DEFAULT as ClientDefault } from "store/reducers/client/default"
 import {
     Container,
     Task,
@@ -21,7 +18,7 @@ import {
 } from "store/reducers/container/default"
 
 import { updateContainer, updateTask } from "store/actions/container/pure"
-import { updateTimer } from "store/actions/analytics/pure"
+import { updateTimer } from "store/actions/client/pure"
 import {
     getContainerInfo,
     createContainer,
@@ -86,7 +83,7 @@ export const Launcher = (props: {
     // Restores Redux state to before a container was created
     const resetReduxforLaunch = () => {
         const defaultContainerState = deepCopyObject(ContainerDefault.container)
-        const defaultTimerState = deepCopyObject(AnalyticsDefault.timer)
+        const defaultTimerState = deepCopyObject(ClientDefault.timer)
         const defaultTaskState = deepCopyObject(ContainerDefault.task)
 
         // Erase old container info
@@ -123,7 +120,7 @@ export const Launcher = (props: {
 
     const forceQuit = () => {
         setTimeout(() => {
-            ipc.sendSync(FractalIPC.FORCE_QUIT)
+            // ipc.sendSync(FractalIPC.FORCE_QUIT)
         }, 1000)
     }
 
@@ -220,7 +217,7 @@ export const Launcher = (props: {
     // If not, create a container
     useEffect(() => {
         if (!protocol && shouldLaunchProtocol) {
-            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
                 const childProcess = await launchProtocol(
@@ -344,7 +341,7 @@ export const mapStateToProps = (state: {
         task: Task
         container: Container
     }
-    AnalyticsReducer: {
+    ClientReducer: {
         timer: Timer
     }
 }) => {
@@ -355,7 +352,7 @@ export const mapStateToProps = (state: {
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
         protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
-        timer: state.AnalyticsReducer.timer,
+        timer: state.ClientReducer.timer,
     }
 }
 
