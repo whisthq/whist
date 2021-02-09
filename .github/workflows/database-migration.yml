@@ -103,7 +103,8 @@ jobs:
               run: |
                 CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
                 MERGING=${URL_MERGING}
-                RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+                RESULT=$(CURRENT=${CURRENT} MERGING=${MERGING} python ${DIFF_SCRIPT})
+
                 export msg=${RESULT}"
                 jq -nc '{"body":env.msg}' | \
                 curl -sL  -X POST -d @- \
@@ -111,6 +112,5 @@ jobs:
                 -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
                 "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
               env:
-                OWNER: ${{ github.repository_owner }}
                 REPO:  ${{ github.repository }}
                 PR:    ${{ github.event.number }}
