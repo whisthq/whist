@@ -22,6 +22,7 @@ def write_sql(sql_file_path, db_uri):
     subprocess.run(["psql", "-f", "db.sql"],
                    stdout=subprocess.PIPE)
 
+
 def main():
     result_diff = ignore_filter(diff(CURRENT, MERGING))
     if not result_diff:
