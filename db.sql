@@ -1695,7 +1695,7 @@ ALTER TABLE ONLY hardware.user_containers
 --
 
 ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE CASCADE ON DELETE CASCADE;
+    ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE RESTRICT ON DELETE RESTRICT;
 
 
 --
@@ -1792,33 +1792,3 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
 
 ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
     ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: login_history login_history_user_id_fkey; Type: FK CONSTRAINT; Schema: logs; Owner: -
---
-
-ALTER TABLE ONLY logs.login_history
-    ADD CONSTRAINT login_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: protocol_logs protocol_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: logs; Owner: -
---
-
-ALTER TABLE ONLY logs.protocol_logs
-    ADD CONSTRAINT protocol_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON UPDATE CASCADE ON DELETE SET NULL;
-
-
---
--- Name: main_newsletter fk_user_id; Type: FK CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.main_newsletter
-    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
-
-
---
--- PostgreSQL database dump complete
---
-
