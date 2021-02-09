@@ -141,20 +141,16 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Walk repo to find all dockerfiles and store path as env variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
             - name: Build release protocol # No need to run this for debug, just for release
               working-directory: protocol
               run: ./build_protocol.sh release
 
+            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
+              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+
             - name: Build container images
               working-directory: container-images
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./build_container_image.sh $app
-                  done
+              run: ./build_container_image.sh --all
 
             - name: Push container images
               working-directory: container-images
