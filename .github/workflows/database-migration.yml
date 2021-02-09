@@ -12,12 +12,9 @@ on:
             - staging
             - dev
             - project/**
-        # This workflow will run when one of these files changes.
-        paths:
-            - "main-webserver/**"
-            - "!main-webserver/README.md"
-            - ".github/workflows/main-webserver-check-pr.yml"
-    # workflow_dispatch:
+        # # This workflow will run when one of these files changes.
+        # paths:
+        #     - "db.sql"
 
 jobs:
     main-webserver-check-pr-linting:
@@ -29,7 +26,7 @@ jobs:
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           PATH_SCHEMA_MERGING: "db.sql"
-          PATH_SCHEMA_CURRENT: ""
+          PATH_SCHEMA_CURRENT: "./temp/current_schema.sql"
           TEMP: "./temp/"
 
 
@@ -73,19 +70,15 @@ jobs:
 
             - name: Check that db.sql exists
               run: |
-                FILE=${SCHEMA_MERGING}
+                FILE=${PATH_SCHEMA_MERGING}
                 if test -f "$FILE"; then
                 echo "$FILE exists."
                 fi
 
-            # - name: Start PostgreSQL server
-            #   run: pg_ctl -D /usr/local/var/postgres start
-
-
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
+                echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
 
             # - name: Dump merging DB schmea
