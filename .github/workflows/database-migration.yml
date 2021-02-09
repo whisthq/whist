@@ -15,6 +15,7 @@ on:
         # # This workflow will run when one of these files changes.
         # paths:
         #     - "db.sql"
+    workflow_dispatch:
 
 jobs:
     main-webserver-check-pr-linting:
@@ -93,33 +94,24 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: Create empty compare db
-              run: |
-                # docker run -e POSTGRES_USER=diff -e POSTGRES_PASSWORD=diff -e POSTGRES_DB=diff library/postgres
-                CONTAINER=$(docker ps --last 1 --format "{{.Names}}")
-                docker exec $CONTAINER sh -c "sudo createdb compare"
-
-            # - name: New db from merging schema
+            # - name: New db from current schema
             #   run: |
             #     psql -f db.sql ${URL_MERGING}
-
-            - name: New db from current schema
+            #
+            #
+            - name: Say hello, bot
               run: |
-                psql -f db.sql ${URL_MERGING}
-                echo "PG_DUMP"
-                echo $(pg_dump --schema-only ${URL_MERGING})
+                export msg="hello world"
+                jq -nc '{"body":env.msg}' | \
+                curl -sL  -X POST -d @- \
+                -H "Content-Type: application/json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/comments"
 
             - name: Run migra on endpoints
               id: migra-diff-1
               run: |
                 CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
                 MERGING=${URL_MERGING}
-                DIFF=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
-                echo "DIFF"
-                echo $DIFF
-                # echo "::set-output diff1=${DIFF}"
+                RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
 
-            # - name: Print migra output
-            #   run: |
-            #     echo DIFF1
-            #     echo ${{ steps.migra-diff1.outputs.diff1 }}
