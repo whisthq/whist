@@ -26,6 +26,7 @@ jobs:
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           DIFF_SCRIPT: ".github/workflows/helpers/migration/schema_diff.py"
           URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
+          URL_DIFFING: "postgresql://postgres:postgres@localhost:5432/postgres"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           NAME_DB_MERGING: "db.sql"
           PATH_SCHEMA_MERGING: "db.sql"
@@ -92,7 +93,17 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: New db from dq.sql schema
+            - name: Create empty comparison db
+              run: |
+                CONTAINER="docker ps --last 1 --format \"{{.Names}}\""
+                echo "THE NAME IS:"
+                echo $CONTAINER
+
+            # - name: New db from merging schema
+            #   run: |
+            #     psql -f db.sql ${URL_MERGING}
+
+            - name: New db from current schema
               run: |
                 psql -f db.sql ${URL_MERGING}
                 echo "PG_DUMP"

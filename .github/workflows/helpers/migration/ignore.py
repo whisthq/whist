@@ -29,6 +29,6 @@ def is_ignored_complete(ln: str):
 
 def ignore_filter(lines):
     no_empty = (ln for ln in lines if ln)
-    ignored_head = (ln for ln in no_empty if is_ignored_head(ln))
-    ignored_complete = (ln for ln in ignored_head if is_ignored_complete(ln))
+    ignored_head = (ln for ln in no_empty if not is_ignored_head(ln))
+    ignored_complete = (ln for ln in ignored_head if not is_ignored_complete(ln))
     return list(ignored_complete)
