@@ -101,7 +101,7 @@ jobs:
             #
             - name: Say hello, bot
               run: |
-                $ curl -s -u "${GITHUB_ACCOUNT} \
+                $ curl -s -u "${GITHUB_ACCOUNT}" \
                 -X POST -d '{"body": "Hello World!"}' \
                 "https://api.github.com/repos/${OWNER}/${REPO}/issues/${PR}/comments"
               env:
