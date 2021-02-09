@@ -52,26 +52,12 @@ jobs:
                     password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   EOF
 
-            - name: Get HEROKU_APP_NAME env var
+            - name: Load Database URL
               run: |
-                  # if [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == dev ]]; then
-                  #     HEROKU_APP_NAME=fractal-dev-server
-                  # elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
-                  #     HEROKU_APP_NAME=fractal-staging-server
-                  # elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
-                  #     HEROKU_APP_NAME=fractal-prod-server
-                  # else
-                  #     echo 'Error: Invalid branch' && false
-                  # fi
-                  echo "HEROKU_APP_NAME=fractal-dev-server" >> $GITHUB_ENV
+                echo "DB_URL=${python3 $HEROKU_CONFIG_SCRIPT}" >> $GITHUB_ENV
+              env:
+                HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/heroku_config.py"
 
-            - name: Load Heroku Config
+            - name: Print Database Schema
               run: |
-                echo "HEROKU_RESPONSE=$(
-                curl -n -s https://api.heroku.com/apps/$HEROKU_APP_NAME \
-                -H "Accept: application/vnd.heroku+json; version=3" \
-                )" >> $GITHUB_ENV
-
-            - name: Print Heroku Response
-              run: |
-                echo $HEROKU_RESPONSE
+                echo ${pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL}
