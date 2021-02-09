@@ -59,10 +59,12 @@ jobs:
             - name: Load Database URL
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo "DB_URL=$URL" >> $GITHUB_ENV
-              env:
-                HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/heroku_config.py"
+                echo $URL
+                # echo "DB_URL=$URL" >> $GITHUB_ENV
 
-            - name: Print Database Schema
-              run: |
-                echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
+            #   env:
+            #     HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/heroku_config.py"
+
+            # - name: Print Database Schema
+            #   run: |
+            #     echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
