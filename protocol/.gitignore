@@ -72,6 +72,11 @@ compile_commands.json
 CTestTestfile.cmake
 fixes/
 
+# Ninja
+.ninja_deps
+.ninja_log
+build.ninja
+
 # SDL
 include/SDL2/*
 lib/64/SDL2/Darwin/*
