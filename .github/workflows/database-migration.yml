@@ -107,6 +107,8 @@ jobs:
             - name: New db from dq.sql schema
               run: |
                 psql -f db.sql postgresql://postgres:postgres@localhost:5432/postgres
+                echo "PG_DUMP"
+                echo $(pg_dump --schema-only postgresql://postgres:postgres@localhost:5432/postgres)
                 # createdb ${NAME_DB_MERGING}
                 # psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
@@ -121,5 +123,5 @@ jobs:
             #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
             #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
 
-            - name: Remove temporary directory
-              run: rm -r ${TEMP}
+            # - name: Remove temporary directory
+            #   run: rm -r ${TEMP}
