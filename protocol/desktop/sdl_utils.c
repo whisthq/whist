@@ -145,7 +145,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     int full_width = get_virtual_screen_width();
     int full_height = get_virtual_screen_height();
 
-    bool is_fullscreen = target_output_width == 0 && target_output_height == 0;
+    bool maximized = target_output_width == 0 && target_output_height == 0;
 
     // Default output dimensions will be full screen
     if (target_output_width == 0) {
@@ -158,20 +158,15 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     SDL_Window* sdl_window;
 
-#if defined(_WIN32)
-    static const uint32_t fullscreen_flags = SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP;
-#else
-    static const uint32_t fullscreen_flags =
-        SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_ALWAYS_ON_TOP;
-#endif
-    static const uint32_t windowed_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+    const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
+                                  SDL_WINDOW_SKIP_TASKBAR | SDL_WINDOW_RESIZABLE |
+                                  (maximized ? SDL_WINDOW_MAXIMIZED : 0);
 
     // Simulate fullscreen with borderless always on top, so that it can still
     // be used with multiple monitors
-    sdl_window = SDL_CreateWindow(
-        (name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        target_output_width, target_output_height,
-        SDL_WINDOW_ALLOW_HIGHDPI | (is_fullscreen ? fullscreen_flags : windowed_flags));
+    sdl_window = SDL_CreateWindow((name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED,
+                                  SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
+                                  window_flags);
 
 /*
     On macOS, we must initialize the renderer in the main thread -- seems not needed
@@ -194,13 +189,11 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     set_native_window_color(sdl_window, black);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
-    if (!is_fullscreen) {
-        // Resize event handling
-        SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
-        if (!sdl_window) {
-            LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
-            return NULL;
-        }
+    // Resize event handling
+    SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
+    if (!sdl_window) {
+        LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
+        return NULL;
     }
 
     SDL_Event cur_event;
