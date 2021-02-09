@@ -37,6 +37,7 @@ jobs:
 
 
         env:
+          TEMP: "./temp"
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
@@ -47,6 +48,9 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+            - name: Create temp directory
+              run: mkdir ${TEMP}
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
