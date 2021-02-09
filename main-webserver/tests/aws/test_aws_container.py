@@ -213,7 +213,6 @@ def test_update_bad_cluster(client, cluster):
     )
 
     # wait for operation to finish
-    # this task should work fast
     # if it takes more than 30 sec, something is wrong
     res.get(timeout=30)
 
