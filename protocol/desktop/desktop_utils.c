@@ -385,12 +385,15 @@ int parse_args(int argc, char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(void) {
+int read_piped_arguments(void* opaque) {
     /*
         Read arguments from the stdin pipe if `using_piped_arguments` is
         set to `true`.
 
         Can read IP as argument with name `ip`
+
+        Arguments:
+            opaque (void*): pass arguments to a thread, pass NULL if calling normally
 
         Returns:
             (int): 0 on success, -1 on failure
