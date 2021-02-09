@@ -1,3 +1,5 @@
+import { OperatingSystem } from "shared/types/client"
+
 export type Timer = {
     appOpened?: number
     appDoneLoading?: number
@@ -6,16 +8,24 @@ export type Timer = {
     protocolClosed?: number
 }
 
-export type AnalyticsDefault = {
-    timer: Timer
+export type ComputerInfo = {
+    operatingSystem?: OperatingSystem | undefined
 }
 
-export const DEFAULT: AnalyticsDefault = {
+export type ClientDefault = {
+    timer: Timer
+    computerInfo: ComputerInfo
+}
+
+export const DEFAULT: ClientDefault = {
     timer: {
         appOpened: 0,
         appDoneLoading: 0,
         createContainerRequestSent: 0,
         protocolLaunched: 0,
         protocolClosed: 0,
+    },
+    computerInfo: {
+        operatingSystem: undefined,
     },
 }
