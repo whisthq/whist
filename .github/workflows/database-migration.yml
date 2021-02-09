@@ -31,6 +31,9 @@ jobs:
 
 
         steps:
+            - name: Create temporary directory
+              run: mkdir ${TEMP}
+
             - name: Install Postgres and start server
               run: |
                 sudo apt install postgresql
@@ -85,3 +88,6 @@ jobs:
             #   run: |
             #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
             #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
+
+            - name: Remove temporary directory
+              run: rm -r ${TEMP}
