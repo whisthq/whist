@@ -97,7 +97,7 @@ jobs:
               run: |
                 # docker run -e POSTGRES_USER=diff -e POSTGRES_PASSWORD=diff -e POSTGRES_DB=diff library/postgres
                 CONTAINER=$(docker ps --last 1 --format "{{.Names}}")
-                docker exec $CONTAINER createdb compare
+                docker exec $CONTAINER sh -c "sudo createdb compare"
 
             # - name: New db from merging schema
             #   run: |
