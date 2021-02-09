@@ -25,23 +25,10 @@ function* createContainer() {
 
     Arguments: none
     */
-    const logger = new FractalLogger()
-
     const state = yield select()
     const userID = state.AuthReducer.user.userID
     const accessToken = state.AuthReducer.user.accessToken
-
-    // Get region
-    let region = allowedRegions[0]
-    try {
-        region = yield call(setAWSRegion, accessToken)
-        logger.logInfo(`Fetch AWS region found region ${region}`, userID)
-    } catch (err) {
-        logger.logError(
-            `Fetch AWS region errored with ${err}, using default region ${region}`,
-            userID
-        )
-    }
+    const region = state.ContainerReducer.container.region
 
     // Get client DPI
     const dpi = findDPI()
@@ -64,6 +51,12 @@ function* createContainer() {
         yield put(updateTask({ taskID: json.ID }))
     } else {
         yield put(updateTask(ContainerDefault.task))
+        yield put(
+            updateTask({
+                protocolKillSignal:
+                    state.ContainerReducer.task.protocolKillSignal + 1,
+            })
+        )
 
         if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             history.push(FractalRoute.PAYMENT)
@@ -120,9 +113,27 @@ function* getContainerInfo(action: { taskID: string }) {
     }
 }
 
+function* getRegion() {
+    // Get region
+    const logger = new FractalLogger()
+
+    let region = allowedRegions[0]
+    try {
+        region = yield call(setAWSRegion)
+        logger.logInfo(`Fetch AWS region found region ${region}`)
+    } catch (err) {
+        logger.logError(
+            `Fetch AWS region errored with ${err}, using default region ${region}`
+        )
+    }
+
+    yield put(updateContainer({ region: region }))
+}
+
 export default function* containerSaga() {
     yield all([
         takeEvery(ContainerAction.CREATE_CONTAINER, createContainer),
         takeEvery(ContainerAction.GET_CONTAINER_INFO, getContainerInfo),
+        takeEvery(ContainerAction.GET_REGION, getRegion),
     ])
 }
