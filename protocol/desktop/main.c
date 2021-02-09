@@ -572,6 +572,14 @@ int sync_keyboard_state(void) {
     return 0;
 }
 
+volatile bool continue_pumping = false;
+
+int read_piped_arguments_thread_function(void* opaque) {
+    int ret = read_piped_arguments(opaque);
+    continue_pumping = false;
+    return ret;
+}
+
 int main(int argc, char* argv[]) {
     init_default_port_mappings();
 
@@ -658,18 +666,41 @@ int main(int argc, char* argv[]) {
 
     // While showing the SDL loading screen, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
-    if (read_piped_arguments() != 0) {
+    continue_pumping = true;
+    SDL_Thread* pipe_arg_thread = SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", NULL);
+    if (pipe_arg_thread == NULL) {
         failed = true;
+    } else {
+        // SDL event;
+        // while (continue_pumping) {
+        //     if (SDL_PollEvent(&event)) {
+
+        //     }
+        // }
+        int pipe_arg_ret;
+        SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
+        if (pipe_arg_ret != 0) {
+            failed = true;
+        }
     }
 
+    SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
+        if (SDL_PollEvent(&sdl_msg)) {
+            exiting = true;
+        }
+
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
+        }
+
+        if (SDL_PollEvent(&sdl_msg)) {
+            exiting = true;
         }
 
         if (discover_ports(&using_stun) != 0) {
@@ -680,6 +711,10 @@ int main(int argc, char* argv[]) {
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
+        }
+
+        if (SDL_PollEvent(&sdl_msg)) {
+            exiting = true;
         }
 
         connected = true;
@@ -715,7 +750,7 @@ int main(int argc, char* argv[]) {
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
 
-        SDL_Event sdl_msg;
+        // SDL_Event sdl_msg;
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued

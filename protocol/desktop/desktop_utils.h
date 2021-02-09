@@ -61,9 +61,11 @@ int parse_args(int argc, char* argv[]);
  * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`
  *                                 is set to `true`.
  *
+ * @param opaque                   Pass arguments to a thread, pass NULL if calling normally
+ *
  * @returns                        Returns -1 on failure, 0 on success
  */
-int read_piped_arguments(void);
+int read_piped_arguments(void* opaque);
 
 /**
  * @brief                          Get directory of Fractal log
