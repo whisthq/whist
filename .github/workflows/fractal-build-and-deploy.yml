@@ -431,7 +431,7 @@ jobs:
     # Runs if ami-publish-ec2 succeeds.
     ami-notify-slack:
         name: "AMI: Notify Slack"
-        needs: [ami-publish-ec2]
+        needs: [fractal-publish-build-config, ami-publish-ec2]
         if: >
             success() &&
             contains(fromJSON('["all", "ami-publish-ec2"]'), needs.fractal-publish-build-config.outputs.job)
