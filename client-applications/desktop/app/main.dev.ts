@@ -124,9 +124,9 @@ const createWindow = async () => {
             if (process.env.START_MINIMIZED) {
                 mainWindow.minimize()
             } else {
-                mainWindow.maximize()
                 mainWindow.show()
                 mainWindow.focus()
+                mainWindow.maximize()
             }
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
@@ -140,9 +140,9 @@ const createWindow = async () => {
     ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
         showMainWindow = argv
         if (showMainWindow && mainWindow) {
-            mainWindow.maximize()
             mainWindow.show()
             mainWindow.focus()
+            mainWindow.maximize()
             mainWindow.restore()
             if (app && app.dock) {
                 app.dock.show()

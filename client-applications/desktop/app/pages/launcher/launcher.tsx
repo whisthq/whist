@@ -40,9 +40,10 @@ import { ChildProcess } from "child_process"
 
 export const Launcher = (props: {
     userID: string
-    running: boolean
     taskID: string
     status: FractalTaskStatus
+    shouldLaunchProtocol: boolean
+    protocolKillSignal: number
     container: Container
     timer: Timer
     dispatch: Dispatch
@@ -53,24 +54,27 @@ export const Launcher = (props: {
 
         Arguments:
             userID (string): User ID
-            running (boolean): true if a container has been created or protocol is running
             taskID (string): Container creation celery ID
             container (Container): Container from Redux state
     */
 
     const {
         userID,
-        running,
         taskID,
         status,
+        shouldLaunchProtocol,
+        protocolKillSignal,
         container,
         timer,
         dispatch,
     } = props
 
-    const [protocolLaunched, setProtocolLaunched] = useState(false)
-    const [taskState, setTaskState] = useState(FractalAppState.PENDING)
+    const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
     const [protocol, updateProtocol] = useState<ChildProcess>()
+    const [disconnected, setDisconnected] = useState(false)
+    const [shouldForceQuit, setShouldForceQuit] = useState(false)
+    const [timedOut, setTimedOut] = useState(false)
+    const [killSignalsReceived, setKillSignalsReceived] = useState(0)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -79,20 +83,11 @@ export const Launcher = (props: {
     const ipc = require("electron").ipcRenderer
     const logger = new FractalLogger()
 
-    const startTimeout = () => {
-        setTimeout(() => {
-            if (!protocolLaunched) {
-                setTaskState(FractalAppState.FAILURE)
-                setLoadingMessage(LoadingMessage.TIMEOUT)
-                logger.logError("Protocol took to long to launch", userID)
-            }
-        }, 20000)
-    }
     // Restores Redux state to before a container was created
-    const resetLaunch = () => {
+    const resetReduxforLaunch = () => {
         const defaultContainerState = deepCopyObject(ContainerDefault.container)
-        const defaultTaskState = deepCopyObject(ContainerDefault.task)
         const defaultTimerState = deepCopyObject(AnalyticsDefault.timer)
+        const defaultTaskState = deepCopyObject(ContainerDefault.task)
 
         // Erase old container info
         dispatch(updateContainer(defaultContainerState))
@@ -100,8 +95,6 @@ export const Launcher = (props: {
         dispatch(updateTask(defaultTaskState))
         // Erase old timer info
         dispatch(updateTimer(defaultTimerState))
-
-        startTimeout()
     }
 
     // If the webserver failed, function to try again
@@ -117,8 +110,15 @@ export const Launcher = (props: {
                 userID
             )
         }
-        writeStream(protocol, `loading?${LoadingMessage.STARTING}`)
-        resetLaunch()
+
+        setTaskState(FractalAppState.NO_TASK)
+        resetReduxforLaunch()
+        dispatch(updateTask({ shouldLaunchProtocol: true }))
+        setTimedOut(false)
+
+        setTimeout(() => {
+            setTimedOut(true)
+        }, 20000)
     }
 
     const forceQuit = () => {
@@ -132,14 +132,11 @@ export const Launcher = (props: {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
         dispatch(updateTimer({ protocolLaunched: Date.now() }))
-        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
     }
 
     // Callback function meant to be fired when protocol exits
     const protocolOnExit = () => {
         // Log timer analytics data
-        setProtocolLaunched(false)
-
         dispatch(updateTimer({ protocolClosed: Date.now() }))
 
         // For S3 protocol client log upload
@@ -155,22 +152,59 @@ export const Launcher = (props: {
             userID
         )
         // Clear the Redux state just in case
-        resetLaunch()
+        resetReduxforLaunch()
+
+        logger.logInfo(`Should force quit is ${shouldForceQuit}`, userID)
 
         // Upload client logs to S3 and shut down Electron
         uploadToS3(logPath, s3FileName, (s3Error: string) => {
             if (s3Error) {
-                logger.logError(`Upload to S3 errored: ${error}`, userID)
+                logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
             }
-            forceQuit()
+            setDisconnected(true)
         })
     }
 
     useEffect(() => {
-        if (taskState === FractalAppState.FAILURE) {
-            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+        setTimeout(() => {
+            setTimedOut(true)
+        }, 20000)
+    }, [])
+
+    useEffect(() => {
+        if (timedOut) {
+            logger.logInfo(JSON.stringify(container), userID)
+
+            if (!container.containerID && taskState !== FractalAppState.READY) {
+                setTaskState(FractalAppState.FAILURE)
+                logger.logError("Container took too long to create", userID)
+            }
         }
-    }, [taskState])
+    }, [timedOut])
+
+    useEffect(() => {
+        if (shouldForceQuit && disconnected) {
+            forceQuit()
+        }
+    }, [shouldForceQuit, disconnected])
+
+    useEffect(() => {
+        if (
+            taskState === FractalAppState.FAILURE ||
+            protocolKillSignal > killSignalsReceived
+        ) {
+            logger.logError(
+                "Task state is FAILURE, sending protocol kill",
+                userID
+            )
+            if (protocol) {
+                protocol.kill("SIGINT")
+                updateProtocol(undefined)
+            }
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+            setKillSignalsReceived(protocolKillSignal)
+        }
+    }, [taskState, protocolKillSignal])
 
     // Log timer analytics
     useEffect(() => {
@@ -183,27 +217,41 @@ export const Launcher = (props: {
     }, [timer])
 
     // On app start, check if a container creation request has been sent.
-    // If not, create a container and set running = true to prevent multiple containers
-    // from being created.
+    // If not, create a container
     useEffect(() => {
-        if (!running && !protocolLaunched) {
+        if (!protocol && shouldLaunchProtocol) {
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+
             const launchProtocolAsync = async () => {
-                const protocol = await launchProtocol(
+                const childProcess = await launchProtocol(
                     protocolOnStart,
                     protocolOnExit
                 )
-                updateProtocol(protocol)
+                dispatch(
+                    updateTask({
+                        shouldLaunchProtocol: false,
+                    })
+                )
+                updateProtocol(childProcess)
             }
 
-            setProtocolLaunched(true)
             launchProtocolAsync()
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
-            dispatch(updateTask({ running: true }))
+        }
+    }, [dispatch, protocol, shouldLaunchProtocol])
+
+    useEffect(() => {
+        if (
+            protocol &&
+            taskState === FractalAppState.NO_TASK &&
+            container.region
+        ) {
+            setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [running, dispatch])
+    }, [protocol, container])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -213,7 +261,7 @@ export const Launcher = (props: {
                 userID
             )
             setTaskState(FractalAppState.FAILURE)
-        } else {
+        } else if (!timedOut) {
             const currentState =
                 data &&
                 data.hardware_user_app_state &&
@@ -241,46 +289,45 @@ export const Launcher = (props: {
                             userID
                         )
                         setTaskState(FractalAppState.FAILURE)
-                        writeStream(
-                            protocol,
-                            `loading?${LoadingMessage.FAILURE}`
-                        )
                         break
                     default:
                         break
                 }
             }
         }
-    }, [data, loading, error])
+    }, [data, loading, error, timedOut])
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {
-        if (container && container.containerID) {
-            console.log(container)
+        if (container && container.containerID && protocol) {
+            logger.logInfo(
+                `Received container IP ${container.publicIP}, piping to protocol`,
+                userID
+            )
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             writeStream(protocol, `ports?${portInfo}`)
             writeStream(protocol, `private-key?${container.secretKey}`)
             endStream(protocol, `ip?${container.publicIP}`)
+            setShouldForceQuit(true)
         }
-    }, [container, protocolLaunched])
+    }, [container, protocol])
 
     return (
         <div className={styles.launcherWrapper}>
             <ChromeBackground />
             <div className={styles.loadingWrapper}>
                 <Animation />
-                {taskState === FractalAppState.FAILURE ||
-                    (status === FractalTaskStatus.FAILURE && (
-                        <div style={{ marginTop: 35 }}>
-                            <button
-                                type="button"
-                                className={styles.greenButton}
-                                onClick={tryAgain}
-                            >
-                                Try Again
-                            </button>
-                        </div>
-                    ))}
+                {taskState === FractalAppState.FAILURE && (
+                    <div style={{ marginTop: 35 }}>
+                        <button
+                            type="button"
+                            className={styles.greenButton}
+                            onClick={tryAgain}
+                        >
+                            Try Again
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -300,9 +347,10 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
-        running: state.ContainerReducer.task.running,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
+        shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
+        protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
         timer: state.AnalyticsReducer.timer,
     }
