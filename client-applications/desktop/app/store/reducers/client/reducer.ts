@@ -1,5 +1,5 @@
-import { DEFAULT, Timer } from "store/reducers/analytics/default"
-import * as AnalyticsAction from "store/actions/analytics/pure"
+import { DEFAULT, Timer } from "store/reducers/client/default"
+import * as ClientAction from "store/actions/client/pure"
 import { deepCopyObject } from "shared/utils/general/reducer"
 
 export default (
@@ -20,10 +20,18 @@ export default (
     const stateCopy = deepCopyObject(state)
 
     switch (action.type) {
-        case AnalyticsAction.UPDATE_TIMER:
+        case ClientAction.UPDATE_TIMER:
             return {
                 ...stateCopy,
                 timer: Object.assign(stateCopy.timer, action.body),
+            }
+        case ClientAction.UPDATE_COMPUTER_INFO:
+            return {
+                ...stateCopy,
+                computerInfo: Object.assign(
+                    stateCopy.computerInfo,
+                    action.body
+                ),
             }
         default:
             return state
