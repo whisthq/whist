@@ -108,7 +108,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         self.update_state(
             state="SUCCESS",
             meta={
-                "msg": f"cluster {cluster_name} on ECS in region {region_name} did not exist.",
+                "msg": f"cluster {cluster_name} in region {region_name} did not exist.",
             },
         )
     else:
