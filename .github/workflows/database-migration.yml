@@ -101,7 +101,7 @@ jobs:
               run: |
                 # sudo service postgresql start
                 docker run --name some-postgres -e POSTGRES_PASSWORD=postgres_password -d -p 5432:5432 postgres
-                docker exec -it my-postgres bash
+                docker exec -it some-postgres bash
                 psql -U postgres
                 # docker run --name runner -e POSTGRES_PASSWORD=postgres_password -d postgres
                 # sudo -u postgres -i
