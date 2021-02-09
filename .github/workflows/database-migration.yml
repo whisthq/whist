@@ -104,9 +104,11 @@ jobs:
                 CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
                 MERGING=${URL_MERGING}
                 DIFF=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
-                echo "::set-output diff1=${DIFF}"
+                echo "DIFF"
+                echo $DIFF
+                # echo "::set-output diff1=${DIFF}"
 
-            - name: Print migra output
-              run: |
-                echo DIFF1
-                echo ${{ steps.migra-diff1.outputs.diff1 }}
+            # - name: Print migra output
+            #   run: |
+            #     echo DIFF1
+            #     echo ${{ steps.migra-diff1.outputs.diff1 }}
