@@ -95,7 +95,7 @@ jobs:
 
             - name: Create empty comparison db
               run: |
-                CONTAINER="docker ps --last 1 --format \"{{.Names}}\""
+                CONTAINER=$("docker ps --last 1 --format \"{{.Names}}\"")
                 echo "THE NAME IS:"
                 echo $CONTAINER
 
