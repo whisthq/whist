@@ -345,6 +345,7 @@ def _assign_container(
     """
     See assign_container. This is helpful for mocking.
     """
+    raise ValueError("NO")
     fractal_log(
         function="assign_container",
         label=username,
@@ -884,6 +885,7 @@ def _create_new_cluster(
     """
     See create_new_cluster. This exists for mocking.
     """
+    raise ValueError("NO")
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()
 

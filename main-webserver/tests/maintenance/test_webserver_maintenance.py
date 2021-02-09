@@ -1,7 +1,9 @@
 import time
 import copy
-from functools import wraps
+import decorator
 from typing import Callable
+# from mock import patch
+from unittest.mock import patch
 
 import pytest
 from celery import shared_task
@@ -26,7 +28,7 @@ def mock_create_cluster(*args, **kwargs):
         setattr(_create_new_cluster, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_celery_endpoint", None, f"HERE WITH TASK {celery_id}")
+    fractal_log("mock_create_cluster", None, f"TASK ID: {celery_id}")
 
     time.sleep(1)
 
@@ -39,19 +41,28 @@ def mock_assign_container(*args, **kwargs):
         setattr(_assign_container, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_celery_endpoint", None, f"HERE WITH TASK {celery_id}")
+    fractal_log("mock_assign_container", None, f"TASK ID: {celery_id}")
 
     time.sleep(1)
 
 
 def mock_endpoints():
+    """ Manual mocking because this needs to be done before celery threads start. """
     # problematic:
     # /aws_container/create_cluster, /aws_container/assign_container, /container/assign
-    _create_new_cluster.__doc__ = mock_create_cluster.__doc__
+    create_new_cluster_code = copy.deepcopy(_create_new_cluster.__code__)
     _create_new_cluster.__code__ = mock_create_cluster.__code__
 
-    _assign_container.__doc__ = mock_assign_container.__doc__
+    assign_container_code = copy.deepcopy(_assign_container.__code__)
     _assign_container.__code__ = mock_assign_container.__code__
+
+    return create_new_cluster_code, assign_container_code
+
+
+def unmock_endpoints(create_new_cluster_code, assign_container_code):
+    """ Undo the mocking of create cluster and assign container """
+    _create_new_cluster.__code__ = create_new_cluster_code
+    _assign_container.__code__ = assign_container_code
 
 
 def try_start_maintenance(client, region_name: str):
@@ -107,9 +118,29 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
     return resp.status_code
 
 
+def custom_monkeypatch(func):
+    """
+    This decorator is needed to patch before celery fixtures are applied.
+    The decorated test can only be run once.
+    """
+    # mock right away to stop race-condition with celery threads. mocking inside
+    # wrapper() would cause problems.
+    create_new_cluster_code, assign_container_code = mock_endpoints()
+    def wrapper(func, *args, **kwargs):
+        nonlocal create_new_cluster_code, assign_container_code
+        to_ret = func(*args, **kwargs)
+        unmock_endpoints(create_new_cluster_code, assign_container_code)
+        return to_ret
+
+    # using functools.wraps does not work. This post helped:
+    # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
+    return decorator.decorator(wrapper, func)
+
+
+@custom_monkeypatch
+@pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("admin")
 def test_maintenance_mode(client, admin):
     """
     Test the following maintenance mode access pattern:
@@ -136,7 +167,8 @@ def test_maintenance_mode(client, admin):
     redis_conn.delete(update_key)
     redis_conn.delete(tasks_key)
 
-    mock_endpoints()
+    # mock endpoints (will call again to unmock)
+    # mock_endpoints()
 
     # -- Start the test -- #
 
@@ -165,7 +197,7 @@ def test_maintenance_mode(client, admin):
     assert code == WEBSERVER_MAINTENANCE
 
     # let original celery task finish
-    time.sleep(1)
+    time.sleep(2.0)
 
     # _create_new_cluster (mock) should be called just once
     assert hasattr(_create_new_cluster, "num_calls")
@@ -178,8 +210,6 @@ def test_maintenance_mode(client, admin):
 
     # new requests should still fail out
     code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
-    assert code == WEBSERVER_MAINTENANCE
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
     assert code == WEBSERVER_MAINTENANCE
     code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
     assert code == WEBSERVER_MAINTENANCE
@@ -201,12 +231,12 @@ def test_maintenance_mode(client, admin):
     assert code == ACCEPTED
 
     # let task finish
-    time.sleep(1.5)
+    time.sleep(2.0)
 
     # _create_new_cluster (mock) should be called just once
     assert hasattr(_create_new_cluster, "num_calls")
     assert getattr(_create_new_cluster, "num_calls") == 1
 
-    # _assign_container (mock) should be called just once
+    # # _assign_container (mock) should be called just once
     assert hasattr(_assign_container, "num_calls")
     assert getattr(_assign_container, "num_calls") == 2
