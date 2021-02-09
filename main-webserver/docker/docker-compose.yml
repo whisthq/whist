@@ -43,6 +43,7 @@ services:
       REDIS_URL: rediss://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 50
+      C_FORCE_ROOT: "True"
     volumes:
       - ..:/app
       - $HOME/.aws:/.aws
