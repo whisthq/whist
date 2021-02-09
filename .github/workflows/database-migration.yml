@@ -40,7 +40,7 @@ jobs:
             image: postgres
             # Provide the password for postgres
             env:
-              POSTGRES_PASSWORD: postgres_password
+              POSTGRES_PASSWORD: postgres
               # Set health checks to wait until loaded
             options: >-
               --health-cmd pg_isready
@@ -56,42 +56,33 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            # - name: Install Postgres and switch user
+            # - name: Set up Python 3.8
+            #   uses: actions/setup-python@v2
+            #   with:
+            #       python-version: 3.8
+
+            # - name: Upgrade pip
+            #   working-directory: main-webserver
+            #   run: pip install --upgrade pip
+
+            # - name: Install migra
+            #   working-directory: main-webserver
+            #   run: pip install migra
+
+            # - name: Install requests
+            #   working-directory: main-webserver
+            #   run: pip install requests
+
+            # - name: Authenticate Heroku
             #   run: |
-            #     # Create the file repository configuration:
-            #     sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
-            #     wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-            #     sudo apt-get update
-            #     sudo apt-get -y install postgresql
-            #     sudo -i -u postgres
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Upgrade pip
-              working-directory: main-webserver
-              run: pip install --upgrade pip
-
-            - name: Install migra
-              working-directory: main-webserver
-              run: pip install migra
-
-            - name: Install requests
-              working-directory: main-webserver
-              run: pip install requests
-
-            - name: Authenticate Heroku
-              run: |
-                  cat > ~/.netrc << EOF
-                  machine api.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  machine git.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  EOF
+            #       cat > ~/.netrc << EOF
+            #       machine api.heroku.com
+            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+            #       machine git.heroku.com
+            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+            #       EOF
 
             - name: Check that db.sql exists
               run: |
@@ -102,7 +93,7 @@ jobs:
 
             - name: Start postgres server
               run: |
-                # echo $(docker ps -a)
+                echo $(docker ps -a)
                 # sudo service postgresql start
                 # docker exec -it some-postgres bash
                 # docker exec some-postgres sh -c "echo $(pwd); echo $(docker ps -a)"
@@ -113,13 +104,11 @@ jobs:
                 # createuser -l -d -P runner
                 #
 
-            # - name: Create postgres user
-            #   run: |
-
             - name: New db from dq.sql schema
               run: |
-                createdb ${NAME_DB_MERGING}
-                psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
+                psql -f db.sql postgresql://postgres:postgres@localhost:5432/postgres
+                # createdb ${NAME_DB_MERGING}
+                # psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
             # - name: Dump current DB schema
             #   run: |
