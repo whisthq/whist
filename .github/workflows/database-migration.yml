@@ -30,6 +30,7 @@ jobs:
           PATH_SCHEMA_CURRENT: "current_schema.sql"
           POSTGRES_HOST: postgres
           POSTGRES_PORT: 5432
+          POSTGRES_USER: runner
 
           # Service containers to run with `container-job`
         services:
@@ -39,8 +40,8 @@ jobs:
             image: postgres
             # Provide the password for postgres
             env:
-              POSTGRES_PASSWORD: postgres
-              # Set health checks to wait until postgres has started
+              POSTGRES_PASSWORD: postgres_password
+              # Set health checks to wait until p
               options: >-
                 --health-cmd pg_isready
                 --health-interval 10s
@@ -99,8 +100,10 @@ jobs:
             - name: Start postgres server
               run: |
                 sudo service postgresql start
-                sudo -u postgres -i
-                createuser -l -d -P runner
+                docker run --name runner -e POSTGRES_PASSWORD=postgres_password -d postgres
+                # sudo -u postgres -i
+                # createuser -l -d -P runner
+                #
 
             # - name: Create postgres user
             #   run: |
