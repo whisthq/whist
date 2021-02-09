@@ -24,6 +24,7 @@ jobs:
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
+          URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           NAME_DB_MERGING: "db.sql"
           PATH_SCHEMA_MERGING: "db.sql"
@@ -91,32 +92,26 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: Start postgres server
-              run: |
-                echo $(docker ps -a)
-                # sudo service postgresql start
-                # docker exec -it some-postgres bash
-                # docker exec some-postgres sh -c "echo $(pwd); echo $(docker ps -a)"
-                # docker exec some-postgres sh -c "psql -U postgres"
-                # psql -U postgres
-                # docker run --name runner -e POSTGRES_PASSWORD=postgres_password -d postgres
-                # sudo -u postgres -i
-                # createuser -l -d -P runner
-                #
-
             - name: New db from dq.sql schema
               run: |
-                psql -f db.sql postgresql://postgres:postgres@localhost:5432/postgres
+                psql -f db.sql ${URL_MERGING}
                 echo "PG_DUMP"
-                echo $(pg_dump --schema-only postgresql://postgres:postgres@localhost:5432/postgres)
+                echo $(pg_dump --schema-only ${URL_MERGING}
                 # createdb ${NAME_DB_MERGING}
                 # psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
-            # - name: Dump current DB schema
-            #   run: |
-            #     postgres -D /usr/local/pgsql/data
-            #     URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-            #     echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
+                # - name: Dump current DB schema
+                #   run: |
+                #     postgres -D /usr/local/pgsql/data
+                #     URL=$(python3 $HEROKU_CONFIG_SCRIPT)
+                #     echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
+                #
+            - name: Run migra on endpoints
+              run: |
+                CURRENT_ENDPOINT=$(python3 $HEROKU_CONFIG_SCRIPT)
+                MERGING_ENDPOINT=${URL_MERGING}
+                echo "MIGRA:"
+                echo $(migra ${MERGING_ENDPOINT} ${CURRENT_ENDPOINT})
 
             # - name: Dump merging DB schmea
             #   run: |
