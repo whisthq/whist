@@ -20,8 +20,6 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
             response = {"state": result.status, "output": result.result}
             return make_response(jsonify(response), 200)
         elif result.status == "FAILURE":
-            from app.helpers.utils.general.logs import fractal_log
-            fractal_log("RESULT", None, f"result tb: {result.traceback}")
             msg = None
             if check_developer():
                 msg = f"Experienced an error. Traceback: {result.traceback}"
