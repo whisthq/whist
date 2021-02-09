@@ -109,4 +109,4 @@ jobs:
             - name: Print migra output
               run: |
                 echo DIFF1
-                echo {{ steps.migra-diff1.outputs.diff1 }}
+                echo ${{ steps.migra-diff1.outputs.diff1 }}
