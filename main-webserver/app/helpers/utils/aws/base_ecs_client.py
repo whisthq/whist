@@ -270,7 +270,9 @@ class ECSClient:
         Returns:
             List[Dict]: each dict contains details about an auto scaling group in the cluster
         """
-        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]["capacityProviders"]
+        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
+            "capacityProviders"
+        ]
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
