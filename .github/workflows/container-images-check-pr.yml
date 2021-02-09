@@ -60,12 +60,5 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECR_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
-
             - name: Build Container Images
-              run: |
-                  for app in ${{ env.apps }}
-                  do
-                    ./container-images/build_container_image.sh $app
-                  done
+              run: ./container-images/build_container_image.sh --all
