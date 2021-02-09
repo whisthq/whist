@@ -80,7 +80,8 @@ jobs:
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
+                echo $(${CMD_SCHEMA_DUMP} $URL) > dump.sql
+                echo $(cat dump.sql)
 
 
             # - name: Dump merging DB schmea
