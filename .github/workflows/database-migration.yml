@@ -20,21 +20,6 @@ jobs:
     main-webserver-check-pr-linting:
         name: Run Migra Diff
         runs-on: ubuntu-20.04
-        # Service containers to run with `container-job`
-        services:
-          # Label used to access the service container
-          postgres:
-            # Docker Hub image
-            image: postgres
-            # Provide the password for postgres
-            env:
-              POSTGRES_PASSWORD: postgres
-              # Set health checks to wait until postgres has started
-              options: >-
-                --health-cmd pg_isready
-                --health-interval 10s
-                --health-timeout 5s
-                --health-retries 5
 
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
@@ -54,13 +39,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Install Postgres
+            - name: Install Postgres and switch user
               run: |
                 # Create the file repository configuration:
                 sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
                 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
                 sudo apt-get update
                 sudo apt-get -y install postgresql
+                sudo -i -u postgres
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
@@ -100,10 +86,10 @@ jobs:
             - name: Start postgres server
               run: sudo service postgresql start
 
-            # - name: New db from dq.sql schema
-            #   run: |
-            #     createdb ${NAME_DB_MERGING}
-            #     psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
+            - name: New db from dq.sql schema
+              run: |
+                createdb ${NAME_DB_MERGING}
+                psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
             # - name: Dump current DB schema
             #   run: |
