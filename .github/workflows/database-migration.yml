@@ -33,8 +33,9 @@ jobs:
               POSTGRES_PASSWORD: postgres
               POSTGRES_DB: your_test_db_name
               ports:
-                # needed because the postgres container does not provide a healthcheck
-                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+                - 5432:5432
+              # needed because the postgres container does not provide a healthcheck
+              options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
 
         env:
