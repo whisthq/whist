@@ -47,6 +47,18 @@ Public Functions
  */
 SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon_filename);
 
+int resizing_event_watcher(void* data, SDL_Event* event);
+/*
+
+
+    Arguments:
+        data (void*): SDL Window data
+        event (SDL_Event*): SDL event to be analyzed
+
+    Return:
+        (int): 0 on success
+*/
+
 /**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
