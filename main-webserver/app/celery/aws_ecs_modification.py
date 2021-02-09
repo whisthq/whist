@@ -115,7 +115,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         self.update_state(
             state="SUCCESS",
             meta={
-                "msg": f"updated cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
+                "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
             },
         )
 
