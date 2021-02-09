@@ -209,7 +209,7 @@ def test_update_bad_cluster(client, cluster):
     # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
         region_name="us-east-1",
-        cluster_name=cluster.cluster_name,
+        cluster_name=cluster.cluster,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
     )
 
