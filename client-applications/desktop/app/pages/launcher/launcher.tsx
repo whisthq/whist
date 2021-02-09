@@ -78,6 +78,7 @@ export const Launcher = (props: {
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
     const [killSignalsReceived, setKillSignalsReceived] = useState(0)
+    const [loadingMessage, setLoadingMessage] = useState("")
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -176,12 +177,15 @@ export const Launcher = (props: {
 
     useEffect(() => {
         if (timedOut) {
+            setLoadingMessage("Error: It took too long to open your browser.")
             logger.logInfo(JSON.stringify(container), userID)
 
             if (!container.containerID && taskState !== FractalAppState.READY) {
                 setTaskState(FractalAppState.FAILURE)
                 logger.logError("Container took too long to create", userID)
             }
+        } else {
+            setLoadingMessage("")
         }
     }, [timedOut])
 
@@ -201,7 +205,7 @@ export const Launcher = (props: {
                 userID
             )
             if (protocol) {
-                protocol.kill("SIGINT")
+                endStream(protocol, "kill?0")
                 updateProtocol(undefined)
             }
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
@@ -291,6 +295,7 @@ export const Launcher = (props: {
                             "Container creation state is FAILURE",
                             userID
                         )
+                        setLoadingMessage("Oops! Unexpected server error.")
                         setTaskState(FractalAppState.FAILURE)
                         break
                     default:
@@ -322,6 +327,7 @@ export const Launcher = (props: {
                 <Animation />
                 {taskState === FractalAppState.FAILURE && (
                     <div style={{ marginTop: 35 }}>
+                        <div style={{ marginBottom: 25 }}>{loadingMessage}</div>
                         <button
                             type="button"
                             className={styles.greenButton}
