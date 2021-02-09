@@ -671,12 +671,6 @@ int main(int argc, char* argv[]) {
     if (pipe_arg_thread == NULL) {
         failed = true;
     } else {
-        // SDL event;
-        // while (continue_pumping) {
-        //     if (SDL_PollEvent(&event)) {
-
-        //     }
-        // }
         int pipe_arg_ret;
         SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
         if (pipe_arg_ret != 0) {
@@ -690,17 +684,9 @@ int main(int argc, char* argv[]) {
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
-        if (SDL_PollEvent(&sdl_msg)) {
-            exiting = true;
-        }
-
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
-        }
-
-        if (SDL_PollEvent(&sdl_msg)) {
-            exiting = true;
         }
 
         if (discover_ports(&using_stun) != 0) {
@@ -711,10 +697,6 @@ int main(int argc, char* argv[]) {
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
-        }
-
-        if (SDL_PollEvent(&sdl_msg)) {
-            exiting = true;
         }
 
         connected = true;
