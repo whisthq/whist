@@ -31,14 +31,14 @@ jobs:
 
 
         steps:
-            - name: Create temporary directory
-              run: mkdir ${TEMP}
-
             - name: Install Postgres and start server
               run: |
                 sudo apt install postgresql
                 sudo -i -u postgres
                 postgres -D /usr/local/pgsql/data >logfile 2>&1 &
+
+            - name: Create temporary directory
+              run: mkdir ${TEMP}
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -81,7 +81,6 @@ jobs:
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                touch ${PATH_SCHEMA_CURRENT}
                 echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
 
