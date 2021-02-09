@@ -40,8 +40,8 @@ jobs:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
-          SCHEMA_MERGING: "db.sql"
-          TEMP: "./temp/"
+          PATH_SCHEMA_MERGING: "db.sql"
+          PATH_SCHEMA_CURRENT: "./temp/current-db.sql"
 
 
         steps:
@@ -86,11 +86,10 @@ jobs:
             # - name: Start PostgreSQL server
             #   run: pg_ctl -D /usr/local/var/postgres start
 
-
-            # - name: Dump current DB schema
-            #   run: |
-            #     URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
+            - name: Dump current DB schema
+              run: |
+                URL=$(python3 $HEROKU_CONFIG_SCRIPT)
+                echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
 
             # - name: Dump merging DB schmea
