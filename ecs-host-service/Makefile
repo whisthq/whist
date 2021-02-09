@@ -68,6 +68,10 @@ run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev (debug) configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
 	# handling for Ctrl+C does not work
+	sudo env PATH=$(PATH) APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+
+rundev: build
+	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev (debug) configuration...)
 	sudo env PATH=$(PATH) APP_ENV=development $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runstaging: build

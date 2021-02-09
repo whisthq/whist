@@ -294,7 +294,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
-// Creates a file containing the DPI assigned to a specific container, and make it 
+// Creates a file containing the DPI assigned to a specific container, and make it
 // accessible to that container
 func handleDPIRequest(req *httpserver.SetContainerDPIRequest) error {
 	// Compute container-specific directory to write DPI data to
@@ -656,8 +656,9 @@ func main() {
 	// prevents AWS from assigning any task definitions to our container before
 	// the webserver knows about it.
 	startDockerDaemon()
-	// Only start the ECS Agent if running in production, on an AWS EC2 instance
-	if logger.GetAppEnvironment() == logger.EnvProd {
+	// Only start the ECS Agent if we are talking to a dev, staging, or
+	// production webserver.
+	if logger.GetAppEnvironment() != logger.EnvLocalDev {
 		logger.Infof("Running in production, starting ECS Agent.")
 		startECSAgent()
 	}
