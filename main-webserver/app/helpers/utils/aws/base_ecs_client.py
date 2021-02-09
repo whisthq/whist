@@ -995,6 +995,7 @@ class ECSClient:
         except IndexError:
             # that means the cluster itself is dead
             # so pass that info up to the DB
+            # with a standardized string to keep return types consistent
             return "Cluster does not exist", "Cluster does not exist"
         asg_name = launch_config_info[0]["AutoScalingGroupName"]
         old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
