@@ -41,7 +41,7 @@ jobs:
             # Provide the password for postgres
             env:
               POSTGRES_PASSWORD: postgres_password
-              # Set health checks to wait until p
+              # Set health checks to wait until loaded
               options: >-
                 --health-cmd pg_isready
                 --health-interval 10s
@@ -101,8 +101,9 @@ jobs:
               run: |
                 # sudo service postgresql start
                 docker run --name some-postgres -e POSTGRES_PASSWORD=postgres_password -d -p 5432:5432 postgres
-                docker exec -it some-postgres bash
-                psql -U postgres
+                # docker exec -it some-postgres bash
+                docker exec some-postgres sh -c "psql -U postgres"
+                # psql -U postgres
                 # docker run --name runner -e POSTGRES_PASSWORD=postgres_password -d postgres
                 # sudo -u postgres -i
                 # createuser -l -d -P runner
