@@ -54,7 +54,7 @@ jobs:
 
             - name: Load Database URL
               run: |
-                URL= ${python3 $HEROKU_CONFIG_SCRIPT}
+                URL=$(python3 $HEROKU_CONFIG_SCRIPT)
                 echo "DB_URL=$URL" >> $GITHUB_ENV
               env:
                 HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/heroku_config.py"
