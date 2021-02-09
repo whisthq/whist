@@ -115,7 +115,7 @@ def authorized(client, user, monkeypatch):
 @pytest.fixture(scope="function")
 def celery_config():
     """Configure the Celery application for testing.
-    Specifically, we're adding the right redis and serialization settings.
+    Specifically, we're adding the right redis and serialization settings (pickle).
 
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
@@ -137,7 +137,7 @@ def celery_config():
             "result_accept_content": ["json", "pickle"],
             "task_serializer": "pickle",
             "result_serializer": "pickle",
-            "event_serializer":"pickle",
+            "event_serializer": "pickle",
         }
 
     elif redis_url[:5] == "redis":
