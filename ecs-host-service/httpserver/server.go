@@ -75,15 +75,15 @@ func (r requestResult) send(w http.ResponseWriter) {
 // MountCloudStorageRequest defines the (unauthenticated) mount_cloud_storage
 // endpoint
 type MountCloudStorageRequest struct {
-	HostPort     int    `json:"host_port"`      // Port on the host to mount the cloud storage drive to
-	Provider     string `json:"provider"`       // Cloud storage provider (i.e. google_drive) 
-	AccessToken  string `json:"access_token"`   // Cloud storage access token
-	RefreshToken string `json:"refresh_token"`  // Cloud storage access token refresher
-	Expiry       string `json:"expiry"`         // Expiration date of access_token
-	TokenType    string `json:"token_type"`     // Type of access_token, currently always "bearer"
-	ClientID     string `json:"client_id"`      // ID to tell cloud storage provider that we are the Fractal client they approved
-	ClientSecret string `json:"client_secret"`  // Secret associated with client_id
-	resultChan   chan requestResult             // Channel to pass cloud storage mounting result between goroutines
+	HostPort     int                `json:"host_port"`     // Port on the host to mount the cloud storage drive to
+	Provider     string             `json:"provider"`      // Cloud storage provider (i.e. google_drive)
+	AccessToken  string             `json:"access_token"`  // Cloud storage access token
+	RefreshToken string             `json:"refresh_token"` // Cloud storage access token refresher
+	Expiry       string             `json:"expiry"`        // Expiration date of access_token
+	TokenType    string             `json:"token_type"`    // Type of access_token, currently always "bearer"
+	ClientID     string             `json:"client_id"`     // ID to tell cloud storage provider that we are the Fractal client they approved
+	ClientSecret string             `json:"client_secret"` // Secret associated with client_id
+	resultChan   chan requestResult // Channel to pass cloud storage mounting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -123,9 +123,9 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerDPIRequest defines the (unauthenticated) DPI endpoint
 type SetContainerDPIRequest struct {
-	HostPort   int `json:"host_port"`   // Port on the host to mount the DPI file to
-	DPI        int `json:"dpi"`         // DPI to set for the container
-	resultChan chan requestResult       // Channel to pass DPI setting result between goroutines
+	HostPort   int                `json:"host_port"` // Port on the host to mount the DPI file to
+	DPI        int                `json:"dpi"`       // DPI to set for the container
+	resultChan chan requestResult // Channel to pass DPI setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -252,7 +252,10 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
 	// Select the correct environment (dev, staging, prod)
+	// TODO: account for localdev here
 	switch logger.GetAppEnvironment() {
+	case logger.EnvLocalDev:
+		fallthrough
 	case logger.EnvDev:
 		webserverAuthSecret = webserverAuthSecretDev
 	case logger.EnvStaging:
