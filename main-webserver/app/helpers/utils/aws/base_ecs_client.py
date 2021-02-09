@@ -270,9 +270,13 @@ class ECSClient:
         Returns:
             List[Dict]: each dict contains details about an auto scaling group in the cluster
         """
-        capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
-            "capacityProviders"
-        ]
+        try:
+            capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][
+                0
+            ]["capacityProviders"]
+        except IndexError:
+            # reraising to make sure we get the right error type
+            raise IndexError
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
@@ -300,7 +304,7 @@ class ECSClient:
         key = "containerInstanceArns"
         if key not in resp:
             raise ValueError(
-                f"""Unexpected AWS API response to list_container_instances. 
+                f"""Unexpected AWS API response to list_container_instances.
                                 Expected key {key}. Got: {resp}."""
             )
         return resp[key]
@@ -321,7 +325,7 @@ class ECSClient:
         key = "containerInstances"
         if key not in resp:
             raise ValueError(
-                f"""Unexpected AWS API response to describe_container_instances. 
+                f"""Unexpected AWS API response to describe_container_instances.
                                 Expected key {key}. Got: {resp}."""
             )
         return resp[key]
@@ -990,7 +994,12 @@ class ECSClient:
         :return: the name of the updated cluster
         """
         self.set_cluster(cluster_name)
-        launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+        try:
+            launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+        except IndexError:
+            # that means the cluster itself is dead
+            # so pass that info up to the DB
+            return "Cluster does not exist", "Cluster does not exist"
         asg_name = launch_config_info[0]["AutoScalingGroupName"]
         old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
         _, new_launch_config_name = self.create_launch_configuration(

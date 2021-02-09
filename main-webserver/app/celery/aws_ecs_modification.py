@@ -99,7 +99,11 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-    ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+    cluster_updated, _ = ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+    if "does not exist" in cluster_updated:
+        # then the cluster is bad, and we should remove it
+        bad_cluster = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_cluster)
 
     self.update_state(
         state="SUCCESS",
