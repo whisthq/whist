@@ -372,5 +372,5 @@
         "test-watch": "yarn test --watch",
         "ts": "tsc"
     },
-    "version": "PLACEHOLDER"
+    "version": "1.0.0"
 }
