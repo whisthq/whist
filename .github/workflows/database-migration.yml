@@ -96,7 +96,7 @@ jobs:
               run: |
                 psql -f db.sql ${URL_MERGING}
                 echo "PG_DUMP"
-                echo $(pg_dump --schema-only ${URL_MERGING}
+                echo $(pg_dump --schema-only ${URL_MERGING})
                 # createdb ${NAME_DB_MERGING}
                 # psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
