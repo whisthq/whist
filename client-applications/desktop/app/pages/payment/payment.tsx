@@ -12,6 +12,8 @@ import { history } from "store/history"
 import { updateUser } from "store/actions/auth/pure"
 import { FractalAuthCache } from "shared/types/cache"
 import { deepCopyObject } from "shared/utils/general/reducer"
+import { FractalIPC } from "shared/types/ipc"
+import { updateTask } from "store/actions/container/pure"
 
 import styles from "pages/payment/payment.css"
 
@@ -30,12 +32,14 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
     const logger = new FractalLogger()
     const Store = require("electron-store")
     const storage = new Store()
+    const ipc = require("electron").ipcRenderer
 
     const upgrade = () => {
         openExternal(`${config.url.FRONTEND_URL}/dashboard/settings/payment`)
     }
 
     const refresh = () => {
+        dispatch(updateTask({ shouldLaunchProtocol: true }))
         history.push(FractalRoute.LAUNCHER)
     }
 
@@ -47,6 +51,7 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
 
     useEffect(() => {
         logger.logInfo("Payment required page loaded", userID)
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
     }, [])
 
     return (

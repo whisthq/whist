@@ -33,19 +33,6 @@ else
     env=${env:-development}
     publish=${publish:-false}
 
-    # Download binaries
-    mkdir binaries
-    cd binaries
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        # Linux Ubuntu
-        wget https://fractal-client-application-deps.s3.us-east-1.amazonaws.com/awsping_linux
-        sudo chmod +x awsping_linux
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        curl https://fractal-client-application-deps.s3.us-east-1.amazonaws.com/awsping_osx -o awsping_osx
-        sudo chmod +x awsping_osx
-    fi
-    cd ..
-
     # get named params
     while [ $# -gt 0 ]; do
     if [[ $1 == *"--"* ]]; then

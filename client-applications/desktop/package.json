@@ -40,7 +40,6 @@
         },
         "extraFiles": [
             "protocol-build/",
-            "binaries/",
             "build/"
         ],
         "files": [
@@ -49,7 +48,6 @@
             "icons/",
             "resources/",
             "protocol-build/",
-            "binaries/",
             "app.html",
             "main.prod.js",
             "main.prod.js.map",
@@ -147,6 +145,7 @@
         "ky": "^0.19.1",
         "ky-universal": "^0.6.0",
         "node-forge": "^0.10.0",
+        "ping": "^0.4.0",
         "png2icons": "^2.0.1",
         "popper.js": "^1.16.1",
         "postcss": "7",
@@ -175,6 +174,7 @@
         "subscriptions-transport-ws": "^0.9.18",
         "systeminformation": "^5.3.1",
         "tailwindcss": "npm:@tailwindcss/postcss7-compat",
+        "tcp-ping": "^0.1.1",
         "temp": "^0.9.4",
         "winston": "^3.3.3",
         "winston-logzio": "^5.1.2"
@@ -259,6 +259,7 @@
         "eslint-plugin-testcafe": "^0.2.1",
         "fbjs-scripts": "^1.2.0",
         "file-loader": "^6.0.0",
+        "husky": "^4.2.0",
         "identity-obj-proxy": "^3.0.0",
         "jest": "^26.6.3",
         "lint-staged": "^10.0.2",
@@ -354,8 +355,8 @@
         "dev": "cross-env START_HOT=1 yarn start-renderer-dev",
         "dev-docker": "cross-env DEVELOPMENT_ENV=local START_HOT=1 yarn start-renderer-dev",
         "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "lint-check": "yarn eslint --max-warnings 0 \"app/*.ts*\" && yarn eslint --max-warnings 0 \"app/pages/**/*.ts*\" && yarn eslint --max-warnings 0 \"app/shared/**/*.ts*\" && yarn eslint --max-warnings 0 \"app/store/**/*.ts*\"",
-        "lint-fix": "yarn eslint --max-warnings 0 --fix \"app/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/pages/**/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/shared/**/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/store/**/*.ts*\"",
+        "lint-check": "yarn eslint --max-warnings 0 \"app/*.ts*\" && yarn eslint \"app/pages/**/*.ts*\" && yarn eslint \"app/shared/**/*.ts*\" && yarn eslint \"app/store/**/*.ts*\"",
+        "lint-fix": "yarn eslint --max-warnings 0 --fix \"app/*.ts*\" && yarn eslint --fix \"app/pages/**/*.ts*\" && yarn eslint --fix \"app/shared/**/*.ts*\" && yarn eslint --fix \"app/store/**/*.ts*\"",
         "package": "yarn build && electron-builder build --publish never",
         "package-all": "yarn build && electron-builder build -mwl",
         "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
