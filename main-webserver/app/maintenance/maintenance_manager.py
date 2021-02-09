@@ -12,8 +12,6 @@ import redis
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.slack.slack import slack_send_safe
 
-# from app.constants.http_codes import WEBSERVER_MAINTENANCE
-
 
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_UPDATE_KEY = "WEBSERVER_UPDATE_{region_name}"
@@ -184,9 +182,6 @@ def try_register_task(region_name: str, task_id: int) -> bool:
         True if registered, False if lock was not acquired or an update is happening
     """
     from app import redis_conn
-
-    # assert redis_conn.ping()
-    # raise ValueError("HERE")
 
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)

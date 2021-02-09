@@ -345,7 +345,6 @@ def _assign_container(
     """
     See assign_container. This is helpful for mocking.
     """
-    raise ValueError("No")
     fractal_log(
         function="assign_container",
         label=username,
@@ -874,11 +873,6 @@ def create_new_cluster(
     Returns:
         user_cluster_schema: information on cluster created
     """
-    fractal_log(
-        "create_new_cluster",
-        None,
-        f"DOCSTRING FOR CREATE NEW CLUSTER: {_create_new_cluster.__doc__}",
-    )
     return _create_new_cluster(
         self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
     )
@@ -890,7 +884,6 @@ def _create_new_cluster(
     """
     See create_new_cluster. This exists for mocking.
     """
-    raise ValueError(f"NO! cluster_name: {cluster_name}, region_name: {region_name}")
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()
 

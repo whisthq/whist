@@ -76,7 +76,6 @@ def container_state(action, **kwargs):
 @fractal_pre_process
 @jwt_required
 @developer_required
-# @check_if_update_mode
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
     aws container creation, cluster creation, deletion, etcetera. It differs from our
@@ -314,26 +313,22 @@ def aws_container_assign(**kwargs):
 
     Returns container status
     """
-    # check if there is an update going on
-    region_name = kwargs["body"]["region"]
-    if check_if_update(region_name):
-        return (
-            jsonify(
-                {
-                    "error": "Webserver is in maintenance mode.",
-                }
-            ),
-            WEBSERVER_MAINTENANCE,
-        )
-
-    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     body = kwargs.pop("body")
-
+    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
+        if check_if_update(region):
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver is in maintenance mode.",
+                    }
+                ),
+                WEBSERVER_MAINTENANCE,
+            )
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:

@@ -55,7 +55,7 @@ def slack_send_safe(channel: str, message: str):
             )
 
         except:
-            exc_str = str(e)
+            # to be extra safe we handle when the exception cannot be serialized with `str(e)`
             fractal_log(
                 "slack_send_safe",
                 None,
