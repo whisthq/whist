@@ -450,8 +450,7 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs: [fractal-publish-build-config]
         if: >
             (
               (
