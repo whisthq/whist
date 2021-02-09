@@ -51,7 +51,7 @@ Whether you're running tests or the `docker-compose` stack locally, the web serv
 
 Before you can create new containers with cloud storage folders mounted to them from an instance of the web server running locally, you must download the [Google client secret file](https://s3.console.aws.amazon.com/s3/object/fractal-dev-secrets?region=us-east-1&prefix=client_secret.json) from S3. Save it to `main-webserver/client_secret.json`. An easy way to do this is to run:
 
-    aws s3 cp s3://fractal-dev-secrets/client_secret.json client_secret.json
+    aws s3 cp --only-show-errors s3://fractal-dev-secrets/client_secret.json client_secret.json
 
 from within the `main-webserver` directory.
 
