@@ -59,7 +59,7 @@ jobs:
               if: runner.os == 'Windows' && matrix.config.cuda
               env:
                   visual_studio: "Visual Studio 16 2019" # Imported from env in the .ps1 script
-                  cuda: "11.0.167" # Imported from env in the .ps1 script
+                  cuda: "11.0.167" # Imported from env in the .ps1 script, we use CUDA 11.0
               shell: powershell
               working-directory: .github\workflows\helpers\protocol
               run: |

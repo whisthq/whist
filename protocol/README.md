@@ -126,7 +126,7 @@ The above files are fairly static. If you add or remove a file, or change what a
 
 ## Development
 
-We use Cmake to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system. We also use cppcheck to run static tests on the code, which you should install as well. If you are running on Windows, you also need to make sure the Nvidia CUDA Compiler, NVCC, is installed with version 10.2 or higher to compile our CUDA code.
+We use Cmake to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system. We also use cppcheck to run static tests on the code, which you should install as well. If you are running on Windows, you also need to make sure the Nvidia CUDA Compiler, NVCC, is installed with version 11.0 or higher to compile our CUDA code.
 
 ### Installation
 
@@ -158,7 +158,7 @@ First you will have to install [gitbash](https://git-scm.com/downloads). You can
 
 In order to compile it, you need to first install [Microsoft Visual Studio Community 2019](https://visualstudio.microsoft.com/downloads/) and select `Desktop Development with C++` add-on in the installer. This will install different Visual Studio Command Prompts for different architectures. In order to compile the protocol, you need to make sure to be using x86_x64 Visual Studio Developer Command Prompt.
 
-You also need to install the Nvidia CUDA Compiler, NVCC. You'll need [Toolkit version 10.2](https://developer.nvidia.com/cuda-10.2-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exenetwork) instead of the latest 11.0, since this is the one we use on our production VMs currently. If you have an Nvidia GPU, feel free to install all the components if you don't mind overwriting your display driver with whatever comes with the 10.2 release. If you don't have an Nvidia GPU, you have to be careful which components you install. At the Options page of the installer, choose the Custom Install. Don't install the Driver components or the Other components (it might be bad to overwrite your driver if you don't have an Nvidia GPU or you don't want the driver packaged with the 10.2 release). Meanwhile, under CUDA, you MUST install the Development→Compiler and Runtime→Library. Everything else is optional, though you might find the extra tools, samples, or visual studio integration useful.
+You also need to install the Nvidia CUDA Compiler, NVCC. You'll need Toolkit version 11.0, which is latest at time of writing. If you have an Nvidia GPU, feel free to install all the components if you don't mind overwriting your display driver with whatever comes with the 11.0 release. If you don't have an Nvidia GPU, you have to be careful which components you install. At the Options page of the installer, choose the Custom Install. Don't install the Driver components or the Other components (it might be bad to overwrite your driver if you don't have an Nvidia GPU or you don't want the driver packaged with the 11.0 release). Meanwhile, under CUDA, you MUST install the Development→Compiler and Runtime→Library. Everything else is optional, though you might find the extra tools, samples, or visual studio integration useful.
 
 After doing this, you might have to restart your terminal or IDE, after which you'll be able to build using CMake.
 
@@ -204,16 +204,6 @@ To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root di
 We also use Doxygen in this repository. The Doxy file is `docs/Doxyfile`. To generate it, you should first install doxygen via your local package manager, and run `doxygen Doxyfile`. This will generate the docs and put them in `docs/html` and `docs/latex`. You can view the html docs by opening the index.html page with a web browser. We keep the docs gitignored to avoid clutter on the repository, since we don't publish them anywhere.
 
 ## CI & CD
-
-### Continuous Deployment
-
-Every commit to `dev`, `staging` and `master`, as well as each new PR opened or updated, results in a new build being created an uploaded to GitHub Releases. These builds are versioned using the following scheme `GITREF-YYYYMMDD.#`, where
-
--   `GITREF` is either the branch name (such as `dev`) or the PR info (such as `pr255merge` for the merge commit on PR #255)
--   `YYYYMMDD` is the current UTC date
--   `#` is an incrementing integer to disambiguate multiple releases on the same date
-
-A build of the `client-applications` will also be triggered for each new `protocol` build. See that repository's README for more information.
 
 #### Checks & Tests
 
