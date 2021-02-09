@@ -20,18 +20,17 @@ jobs:
     main-webserver-check-pr-linting:
         name: Run Migra Diff
         runs-on: ubuntu-20.04
-
-        postgres:
-          image: postgis/postgis:10-2.5
-          env:
-            # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: your_test_db_name
-            ports:
-              - 5432:5432
-              # needed because the postgres container does not provide a healthcheck
-            options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
+        services:
+          postgres:
+            image: postgis/postgis:10-2.5
+            env:
+              # must specify password for PG Docker container image, see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
+              POSTGRES_PASSWORD: password
+              POSTGRES_DB: your_test_db_name
+              ports:
+                - 5432:5432
+                # needed because the postgres container does not provide a healthcheck
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
 
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
