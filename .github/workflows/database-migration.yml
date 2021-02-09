@@ -87,6 +87,7 @@ jobs:
 
             - name: New db from dq.sql schema
               run: |
+                postgres -D /usr/local/pgsql/data
                 createdb ${NAME_DB_MERGING}
                 psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
