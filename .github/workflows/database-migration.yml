@@ -83,8 +83,8 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: Start PostgreSQL server
-              run: pg_ctl -D /usr/local/var/postgres start
+            # - name: Start PostgreSQL server
+            #   run: pg_ctl -D /usr/local/var/postgres start
 
 
             # - name: Dump current DB schema
