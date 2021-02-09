@@ -24,6 +24,12 @@ jobs:
         name: Run Migra Diff
         runs-on: ubuntu-20.04
 
+        services:
+          postgres:
+            image: postgres
+            env:
+              POSTGRES_PASSWORD: postgres
+
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
