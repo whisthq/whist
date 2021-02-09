@@ -148,13 +148,15 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     bool maximized = target_output_width == 0 && target_output_height == 0;
 
-    // Default output dimensions will be full screen
+    // Default output dimensions will be a quarter of the full screen if the window
+    // starts maximized. Even if this isn't a multiple of 8, it's fine because
+    // clicking the minimize button will trigger an SDL resize event
     if (target_output_width == 0) {
-        target_output_width = full_width;
+        target_output_width = full_width / 2;
     }
 
     if (target_output_height == 0) {
-        target_output_height = full_height;
+        target_output_height = full_height / 2;
     }
 
     SDL_Window* sdl_window;
@@ -168,6 +170,10 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     sdl_window = SDL_CreateWindow((name == NULL ? "Fractal" : name), SDL_WINDOWPOS_CENTERED,
                                   SDL_WINDOWPOS_CENTERED, target_output_width, target_output_height,
                                   window_flags);
+    if (!sdl_window) {
+        LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
+        return NULL;
+    }
 
 /*
     On macOS, we must initialize the renderer in the main thread -- seems not needed
@@ -189,13 +195,6 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     const FractalRGBColor black = {0, 0, 0};
     set_native_window_color(sdl_window, black);
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-
-    // Resize event handling
-    SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)sdl_window);
-    if (!sdl_window) {
-        LOG_ERROR("SDL: could not create window - exiting: %s", SDL_GetError());
-        return NULL;
-    }
 
     SDL_Event cur_event;
     while (SDL_PollEvent(&cur_event)) {

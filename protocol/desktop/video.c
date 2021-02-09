@@ -844,6 +844,9 @@ int init_multithreaded_video(void* opaque) {
     video_data.renderscreen_semaphore = SDL_CreateSemaphore(0);
     video_data.run_render_screen_thread = true;
 
+    // Resize event handling
+    SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
+
     render_screen((SDL_Renderer*)renderer);
     SDL_DestroyRenderer((SDL_Renderer*)renderer);
     return 0;
