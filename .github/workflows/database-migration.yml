@@ -96,13 +96,13 @@ jobs:
                 echo "$FILE exists."
                 fi
 
+            - name: Start postgres server
+              run: sudo service postgresql start
+
             - name: Create postgres user
               run: |
                 sudo -u postgres -i
                 createuser -l -d -P runner
-
-            - name: Start postgres server
-              run: sudo service postgresql start
 
             - name: New db from dq.sql schema
               run: |
