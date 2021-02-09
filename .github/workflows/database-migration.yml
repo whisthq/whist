@@ -25,9 +25,9 @@ jobs:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
+          NAME_DB_MERGING: "db.sql"
           PATH_SCHEMA_MERGING: "db.sql"
-          PATH_SCHEMA_CURRENT: "./temp/current_schema.sql"
-          TEMP: "./temp"
+          PATH_SCHEMA_CURRENT: "current_schema.sql"
 
 
         steps:
@@ -77,12 +77,13 @@ jobs:
                 echo "$FILE exists."
                 fi
 
+            - name: New db from dq.sql schema
+              run: psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
+
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo $(${CMD_SCHEMA_DUMP} $URL) > dump.sql
-                echo $(cat dump.sql)
-
+                echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
             # - name: Dump merging DB schmea
             #   run: |
