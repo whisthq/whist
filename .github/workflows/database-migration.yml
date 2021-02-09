@@ -60,10 +60,10 @@ jobs:
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
                 echo $URL
-                # echo "DB_URL=$URL" >> $GITHUB_ENV
+                echo "DB_URL=$URL" >> $GITHUB_ENV
               env:
                 HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/heroku_config.py"
 
-            # - name: Print Database Schema
-            #   run: |
-            #     echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
+            - name: Print Database Schema
+              run: |
+                echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
