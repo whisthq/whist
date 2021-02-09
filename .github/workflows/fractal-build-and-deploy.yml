@@ -431,7 +431,7 @@ jobs:
     # Runs if ami-publish-ec2 succeeds.
     ami-notify-slack:
         name: "AMI: Notify Slack"
-        needs: [ami-publish-ec2]
+        needs: [fractal-publish-build-config, ami-publish-ec2]
         if: >
             success() &&
             contains(fromJSON('["all", "ami-publish-ec2"]'), needs.fractal-publish-build-config.outputs.job)
@@ -450,8 +450,7 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs: [fractal-publish-build-config]
         if: >
             (
               (
@@ -530,14 +529,7 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs:
-            [
-                fractal-publish-build-config,
-                container-images-publish-images-ghcr,
-                ecs-task-definitions-deploy-task-definitions-ecs,
-                ami-publish-ec2,
-                main-webserver-deploy-heroku,
-            ]
+        needs: [fractal-publish-build-config]
         if: >
             contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "client-applications-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
