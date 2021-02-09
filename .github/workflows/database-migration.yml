@@ -34,17 +34,14 @@ jobs:
 
 
         steps:
-            # - name: Install Postgres and switch role
-            #   run: |
-            #     sudo apt install postgresql
-            #     sudo -i -u postgres
+            - name: Install Postgres and start server
+              run: |
+                sudo apt install postgresql
+                sudo -i -u postgres
+                postgres -D /usr/local/pgsql/data >logfile 2>&1 &
 
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-
-            - name: Setup tmate session
-              uses: mxschmitt/action-tmate@v3
-              timeout-minutes: 30
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
