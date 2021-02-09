@@ -132,6 +132,10 @@ def celery_config():
             "redis_backend_use_ssl": {
                 "ssl_cert_reqs": ssl.CERT_NONE,
             },
+            'accept_content': ["json", "pickle"],
+            'result_accept_content': ["json", "pickle"],
+            'task_serializer': 'pickle',
+            'result_serializer': 'pickle',
         }
 
     elif redis_url[:5] == "redis":
@@ -139,6 +143,10 @@ def celery_config():
         return {
             "broker_url": redis_url,
             "result_backend": redis_url,
+            'accept_content': ["json", "pickle"],
+            'result_accept_content': ["json", "pickle"],
+            'task_serializer': 'pickle',
+            'result_serializer': 'pickle',
         }
 
     # unexpected input, fail out
