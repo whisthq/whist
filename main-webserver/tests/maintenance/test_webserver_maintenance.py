@@ -2,8 +2,6 @@ import time
 import copy
 import decorator
 from typing import Callable
-# from mock import patch
-from unittest.mock import patch
 
 import pytest
 from celery import shared_task
@@ -18,6 +16,7 @@ from app.constants.http_codes import (
     WEBSERVER_MAINTENANCE,
 )
 from app.helpers.utils.general.logs import fractal_log
+from tests.helpers.general.progress import queryStatus
 
 
 def mock_create_cluster(*args, **kwargs):
@@ -72,7 +71,7 @@ def try_start_maintenance(client, region_name: str):
             region_name=region_name,
         ),
     )
-    return resp.status_code, resp.json
+    return resp
 
 
 def try_end_maintenance(client, region_name: str):
@@ -82,7 +81,7 @@ def try_end_maintenance(client, region_name: str):
             region_name=region_name,
         ),
     )
-    return resp.status_code, resp.json
+    return resp
 
 
 def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str):
@@ -115,7 +114,7 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
     else:
         raise ValueError(f"Unrecognized endpoint_type {endpoint_type}")
 
-    return resp.status_code
+    return resp
 
 
 def custom_monkeypatch(func):
@@ -173,8 +172,8 @@ def test_maintenance_mode(client, admin):
     # -- Start the test -- #
 
     # start a task
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
-    assert code == ACCEPTED
+    resp_start = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
     time.sleep(0.5)
@@ -186,52 +185,54 @@ def test_maintenance_mode(client, admin):
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
-    code, response = try_start_maintenance(client, "us-east-1")
-    assert code == ACCEPTED
-    assert response["success"] is False  # False because a task is still running
+    resp = try_start_maintenance(client, "us-east-1")
+    
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
     assert redis_conn.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
-    assert code == WEBSERVER_MAINTENANCE
+    resp_fail = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
-    # let original celery task finish
-    time.sleep(2.0)
+    # poll original celery task finish
+    task = queryStatus(client, resp_start, timeout=0.5) # 0.5 minutes = 30 seconds
+    assert task["status"] == 1, f"TASK: {task}"
 
     # _create_new_cluster (mock) should be called just once
     assert hasattr(_create_new_cluster, "num_calls")
     assert getattr(_create_new_cluster, "num_calls") == 1
 
     # now maintenance request should succeed
-    code, response = try_start_maintenance(client, "us-east-1")
-    assert code == ACCEPTED
-    assert response["success"] is True
+    resp = try_start_maintenance(client, "us-east-1")
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is True
 
     # new requests should still fail out
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
-    assert code == WEBSERVER_MAINTENANCE
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
-    assert code == WEBSERVER_MAINTENANCE
+    resp = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+    resp = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # test that tasks in other regions should proceed just fine
-    code = try_problematic_endpoint(client, admin, "us-east-2", "te_ac")
-    assert code == ACCEPTED
+    resp = try_problematic_endpoint(client, admin, "us-east-2", "te_ac")
+    assert resp.status_code == ACCEPTED
 
     # now end maintenance
-    code, response = try_end_maintenance(client, "us-east-1")
-    assert code == ACCEPTED
-    assert response["success"] is True
+    resp = try_end_maintenance(client, "us-east-1")
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is True
 
     # update key should not exist anymore
     assert not redis_conn.exists(update_key)
 
     # tasks should work again
-    code = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
-    assert code == ACCEPTED
+    resp_final = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert resp.status_code == ACCEPTED
 
-    # let task finish
-    time.sleep(2.0)
+    task = queryStatus(client, resp_final, timeout=0.5) # 0.1 minutes = 6 seconds
+    assert task["status"] == 1, f"TASK: {task}"
 
     # _create_new_cluster (mock) should be called just once
     assert hasattr(_create_new_cluster, "num_calls")
