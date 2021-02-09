@@ -612,7 +612,7 @@ jobs:
                   echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
                   # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
-                  if [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'master' ]]; then
+                  if [[ "${GITHUB_REF##*/}" == "master" ]]; then
                     # increment version by 0.0.1
                     NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
@@ -630,7 +630,7 @@ jobs:
                     -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
                     --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
-                  elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'staging' ]]; then
+                  elif [[ "${GITHUB_REF##*/}" == "staging" ]]; then
                     # increment version by staging-rc.1
                     NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
 
@@ -646,7 +646,7 @@ jobs:
                     -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
                     --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
-                  elif [[ ${{ fromJSON(needs.fractal-publish-build-config.outputs.branch) }} == 'dev' ]]; then
+                  elif [[ "${GITHUB_REF##*/}" == "dev" ]]; then
                     # increment version by dev-rc.1
                     NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
 
