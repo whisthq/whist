@@ -86,7 +86,12 @@ else
         # codesign the FractalClient executable
         codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
     fi
+
+    # Initialize yarn first
     yarn -i
+
+    # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
+    yarn config set network-timeout 300000
 
     if [[ "$publish" == "true" ]]
     then

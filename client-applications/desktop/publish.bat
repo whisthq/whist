@@ -38,6 +38,9 @@ if "%1%" == "--help" (
     REM initialize yarn first
     yarn -i
 
+    REM Increase yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
+    yarn config set network-timeout 300000
+
     if "%publish%" == "true" (
         yarn package-ci
         REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-server.fractal.co/version
