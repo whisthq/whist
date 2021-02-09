@@ -4,7 +4,8 @@ def init_celery(celery, app):
     adds flask request context to all celery tasks.
     Note specifically the serialization strategy now
     uses pickle instead of json, which binds us
-    to python data types.
+    to python data types but means we can handle any python
+    object.
 
     Args:
         celery: a Celery instance
