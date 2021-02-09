@@ -37,12 +37,13 @@ jobs:
 
 
         env:
-          TEMP: "./temp"
+          TEMP: "./temp" # temp directory to store files, deleted at end of job
           HEROKU_APP_NAME: "fractal-dev-server"
-          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
-          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
-          PATH_SCHEMA_MERGING: "db.sql"
-          PATH_SCHEMA_CURRENT: "./temp/current-db.sql"
+          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py" # load db url from heroku
+          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only" # cmd used to create .sql schemas
+          NAME_DB_MERGING: "merging_db" # arbitrary name used to create a postgres db from db.sql
+          PATH_SCHEMA_MERGING: "db.sql" # path to the "source of truth" schema file in the repository
+          PATH_SCHEMA_CURRENT: "./temp/current-db.sql" # temporary path to dump current "live" db schema
 
 
         steps:
@@ -87,8 +88,8 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            # - name: Start PostgreSQL server
-            #   run: pg_ctl -D /usr/local/var/postgres start
+            - name: Create Postgres DB from db.sql
+              run: psql ${NAME_DB_MERGING} -1 -f db.sql
 
             - name: Dump current DB schema
               run: |
@@ -96,7 +97,5 @@ jobs:
                 echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
 
-            # - name: Dump merging DB schmea
-            #   run: |
-            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
-            #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
+            - name: Clean up temp directory
+              run: rm -r ${TEMP}
