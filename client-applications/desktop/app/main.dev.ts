@@ -30,7 +30,7 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = true
+let showMainWindow = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
