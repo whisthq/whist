@@ -57,33 +57,33 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            # - name: Set up Python 3.8
-            #   uses: actions/setup-python@v2
-            #   with:
-            #       python-version: 3.8
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
 
-            # - name: Upgrade pip
-            #   working-directory: main-webserver
-            #   run: pip install --upgrade pip
+            - name: Upgrade pip
+              working-directory: main-webserver
+              run: pip install --upgrade pip
 
-            # - name: Install migra
-            #   working-directory: main-webserver
-            #   run: pip install migra
+            - name: Install migra
+              working-directory: main-webserver
+              run: pip install migra
 
-            # - name: Install requests
-            #   working-directory: main-webserver
-            #   run: pip install requests
+            - name: Install requests
+              working-directory: main-webserver
+              run: pip install requests
 
-            # - name: Authenticate Heroku
-            #   run: |
-            #       cat > ~/.netrc << EOF
-            #       machine api.heroku.com
-            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-            #       machine git.heroku.com
-            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-            #       EOF
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
 
             - name: Check that db.sql exists
               run: |
