@@ -34,7 +34,6 @@ jobs:
             - name: Install Postgres and start server
               run: |
                 sudo apt install postgresql
-                sudo -i -u postgres
                 postgres -D /usr/local/pgsql/data >logfile 2>&1 &
 
             - name: Create temporary directory
