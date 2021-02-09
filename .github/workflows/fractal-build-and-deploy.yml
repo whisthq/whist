@@ -256,7 +256,11 @@ jobs:
     # Runs if deploy-task-definitions-ecs succeeds.
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
-        needs: [ecs-task-definitions-deploy-task-definitions-ecs]
+        needs:
+            [
+                fractal-publish-build-config,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+            ]
         if: >
             success() &&
             contains(fromJSON('["all", "ecs-task-definitions-deploy-task-definitions-ecs"]'), needs.fractal-publish-build-config.outputs.job)
@@ -275,8 +279,7 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs: [fractal-publish-build-config]
         if: >
             contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(fromJSON('["all", "ami-publish-ec2"]'), needs.fractal-publish-build-config.outputs.job)
@@ -734,7 +737,8 @@ jobs:
     client-applications-notify-slack:
         name: "Client Applications: Notify Slack"
         runs-on: ubuntu-20.04
-        needs: [client-applications-publish-build-s3]
+        needs:
+            [fractal-publish-build-config, client-applications-publish-build-s3]
         if: >
             success() &&
             contains(fromJSON('["all", "client-applications-publish-build-s3"]'), needs.fractal-publish-build-config.outputs.job)
