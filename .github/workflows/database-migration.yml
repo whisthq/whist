@@ -101,9 +101,12 @@ jobs:
             #
             - name: Say hello, bot
               run: |
-                $ curl -s -u "${GITHUB_ACCOUNT} \
-                -X POST -d '{"body": "Hello World!"}' \
-                https://api.github.com/repos/${OWNER}/${REPO}/issues/${PR}/comments"
+                export msg="hello world"
+                jq -nc '{"body":env.msg}' | \
+                curl -sL  -X POST -d @- \
+                -H "Content-Type: application/json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
               env:
                 OWNER: ${{ github.repository_owner }}
                 REPO:  ${{ github.repository }}
