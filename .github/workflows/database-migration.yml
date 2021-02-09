@@ -99,7 +99,7 @@ jobs:
 
             - name: Start postgres server
               run: |
-                sudo service postgresql start
+                # sudo service postgresql start
                 docker run --name some-postgres -e POSTGRES_PASSWORD=postgres_password -d -p 5432:5432 postgres
                 docker exec -it my-postgres bash
                 psql -U postgres
