@@ -115,6 +115,7 @@ def authorized(client, user, monkeypatch):
 @pytest.fixture(scope="function")
 def celery_config():
     """Configure the Celery application for testing.
+    Specifically, we're adding the right redis and serialization settings.
 
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
     """
@@ -132,10 +133,10 @@ def celery_config():
             "redis_backend_use_ssl": {
                 "ssl_cert_reqs": ssl.CERT_NONE,
             },
-            'accept_content': ["json", "pickle"],
-            'result_accept_content': ["json", "pickle"],
-            'task_serializer': 'pickle',
-            'result_serializer': 'pickle',
+            "accept_content": ["json", "pickle"],
+            "result_accept_content": ["json", "pickle"],
+            "task_serializer": "pickle",
+            "result_serializer": "pickle",
         }
 
     elif redis_url[:5] == "redis":
@@ -143,10 +144,10 @@ def celery_config():
         return {
             "broker_url": redis_url,
             "result_backend": redis_url,
-            'accept_content': ["json", "pickle"],
-            'result_accept_content': ["json", "pickle"],
-            'task_serializer': 'pickle',
-            'result_serializer': 'pickle',
+            "accept_content": ["json", "pickle"],
+            "result_accept_content": ["json", "pickle"],
+            "task_serializer": "pickle",
+            "result_serializer": "pickle",
         }
 
     # unexpected input, fail out

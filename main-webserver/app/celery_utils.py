@@ -1,7 +1,10 @@
 def init_celery(celery, app):
     """
     Adds some configs to Celery instance (`celery`) and
-    adds flask request context to all celery tasks
+    adds flask request context to all celery tasks.
+    Note specifically the serialization strategy now
+    uses pickle instead of json, which binds us
+    to python data types.
 
     Args:
         celery: a Celery instance
@@ -13,8 +16,8 @@ def init_celery(celery, app):
         result_accept_content=["json", "pickle"],
         worker_hijack_root_logger=True,
         celery_redis_max_connections=40,
-        task_serializer='pickle',
-        result_serializer='pickle',
+        task_serializer="pickle",
+        result_serializer="pickle",
     )
     TaskBase = celery.Task  # pylint: disable=invalid-name
 
