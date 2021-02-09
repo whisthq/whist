@@ -35,7 +35,7 @@ type handshakeRequest struct {
 	InstanceID string
 }
 
-// We receive an auth token from the webserver if handshaking succeeded, which is 
+// We receive an auth token from the webserver if handshaking succeeded, which is
 // necessary for communicating with it thereafter
 type handshakeResponse struct {
 	AuthToken string
@@ -43,15 +43,15 @@ type handshakeResponse struct {
 
 // We periodically send heartbeats to the webserver to notify it of this EC2 host's state
 type heartbeatRequest struct {
-	AuthToken        string 	// Handshake-response auth token to authenticate with webserver
-	Timestamp        string 	// Current timestamp
-	HeartbeatNumber  uint64 	// Index of heartbeat since host service started
-	InstanceID       string 	// EC2 instance ID
-	InstanceType     string 	// EC2 instance type
-	TotalRAMinKB     string 	// Total amount of RAM on the host, in kilobytes
-	FreeRAMinKB      string 	// Lower bound on RAM available on the host (not consumed by running containers), in kilobytes 
-	AvailRAMinKB     string 	// Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
-	IsDyingHeartbeat bool   	// Whether this 
+	AuthToken        string // Handshake-response auth token to authenticate with webserver
+	Timestamp        string // Current timestamp
+	HeartbeatNumber  uint64 // Index of heartbeat since host service started
+	InstanceID       string // EC2 instance ID
+	InstanceType     string // EC2 instance type
+	TotalRAMinKB     string // Total amount of RAM on the host, in kilobytes
+	FreeRAMinKB      string // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
+	AvailRAMinKB     string // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
+	IsDyingHeartbeat bool   // Whether this
 }
 
 var authToken string
@@ -62,6 +62,7 @@ var httpClient = http.Client{
 
 // Get the appropriate webserverHost based on whether we're running in
 // production, staging or development
+// TODO(djsavvy): Only communicate with webserver in dev environment, not localdev
 func getWebserverHost() string {
 	switch logger.GetAppEnvironment() {
 	case logger.EnvStaging:

@@ -19,11 +19,14 @@ func GetGitCommit() string {
 	return gitCommit
 }
 
-// An EnvironmentType represents either dev, staging, or prod
+// An EnvironmentType represents either localdev (i.e. a dev instance), dev
+// (i.e. talking to the dev websever), staging, or prod
 type EnvironmentType string
 
-// Constants for whether we are running in dev, staging, or prod
+// Constants for whether we are running in localdev (i.e. a dev instance), dev
+// (i.e. talking to the dev webserver), staging, or prod
 const (
+	EnvLocalDev EnvironmentType = "LOCALDEV"
 	EnvDev     EnvironmentType = "DEV"
 	EnvStaging EnvironmentType = "STAGING"
 	EnvProd    EnvironmentType = "PROD"
@@ -40,7 +43,7 @@ func GetAppEnvironment() EnvironmentType {
 	case "production", "prod", "PRODUCTION", "PROD":
 		return EnvProd
 	default:
-		return EnvDev
+		return EnvLocalDev
 	}
 }
 
