@@ -35,6 +35,12 @@ import ChromeBackground from "shared/components/chromeBackground/chromeBackgroun
 import styles from "pages/launcher/launcher.css"
 import { ChildProcess } from "child_process"
 
+/* 
+    Amount of time passed before giving up on container/assign
+    60000 = 1 minute
+*/
+const TIMEOUT = 60000 * 2
+
 export const Launcher = (props: {
     userID: string
     taskID: string
@@ -115,7 +121,7 @@ export const Launcher = (props: {
 
         setTimeout(() => {
             setTimedOut(true)
-        }, 20000)
+        }, TIMEOUT)
     }
 
     const forceQuit = () => {
@@ -165,7 +171,7 @@ export const Launcher = (props: {
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)
-        }, 20000)
+        }, TIMEOUT)
     }, [])
 
     useEffect(() => {
