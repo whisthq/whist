@@ -24,34 +24,23 @@ jobs:
         name: Run Migra Diff
         runs-on: ubuntu-20.04
 
-        services:
-          postgres:
-            image: postgis/postgis:10-2.5
-            env:
-              # must specify password for PG Docker container image,
-              # see: https://registry.hub.docker.com/_/postgres?tab=description&page=1&name=10
-              POSTGRES_PASSWORD: postgres
-              POSTGRES_DB: your_test_db_name
-              # needed because the postgres container does not provide a healthcheck
-              options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-
-
         env:
-          TEMP: "./temp" # temp directory to store files, deleted at end of job
           HEROKU_APP_NAME: "fractal-dev-server"
-          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py" # load db url from heroku
-          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only" # cmd used to create .sql schemas
-          NAME_DB_MERGING: "merging_db" # arbitrary name used to create a postgres db from db.sql
-          PATH_SCHEMA_MERGING: "db.sql" # path to the "source of truth" schema file in the repository
-          PATH_SCHEMA_CURRENT: "./temp/current-db.sql" # temporary path to dump current "live" db schema
+          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
+          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
+          PATH_SCHEMA_MERGING: "db.sql"
+          PATH_SCHEMA_CURRENT: ""
+          TEMP: "./temp/"
 
 
         steps:
+            - name: Install Postgres and switch role
+              run: |
+                sudo apt install postgresql
+                sudo -i -u postgres
+
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-
-            - name: Create temp directory
-              run: mkdir ${TEMP}
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
@@ -88,14 +77,17 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: Create Postgres DB from db.sql
-              run: psql ${NAME_DB_MERGING} -1 -f db.sql
+            # - name: Start PostgreSQL server
+            #   run: pg_ctl -D /usr/local/var/postgres start
+
 
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
+                echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
 
 
-            - name: Clean up temp directory
-              run: rm -r ${TEMP}
+            # - name: Dump merging DB schmea
+            #   run: |
+            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
+            #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
