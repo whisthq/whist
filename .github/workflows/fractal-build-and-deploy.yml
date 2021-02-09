@@ -12,6 +12,7 @@ on:
             - staging
             - dev
             - project/**
+            - mia/ami-name-timestamp
         paths-ignore:
             - "README.md"
             - "**/README.md"
