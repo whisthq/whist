@@ -105,12 +105,19 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         bad_cluster = ClusterInfo.query.filter_by(cluster=cluster_name).first()
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_cluster)
 
-    self.update_state(
-        state="SUCCESS",
-        meta={
-            "msg": f"updated cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
-        },
-    )
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": f"cluster {cluster_name} on ECS in region {region_name} did not exist.",
+            },
+        )
+    else:
+        self.update_state(
+            state="SUCCESS",
+            meta={
+                "msg": f"updated cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
+            },
+        )
 
 
 @shared_task(bind=True)
