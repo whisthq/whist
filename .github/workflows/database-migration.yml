@@ -47,6 +47,9 @@ jobs:
                 --health-interval 10s
                 --health-timeout 5s
                 --health-retries 5
+              ports:
+                # Maps tcp port 5432 on service container to the host
+                - 5432:5432
 
         steps:
 
@@ -99,7 +102,7 @@ jobs:
 
             - name: Start postgres server
               run: |
-                echo $(docker ps -a)
+                # echo $(docker ps -a)
                 # sudo service postgresql start
                 # docker exec -it some-postgres bash
                 # docker exec some-postgres sh -c "echo $(pwd); echo $(docker ps -a)"
