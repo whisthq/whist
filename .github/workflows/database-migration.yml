@@ -66,13 +66,12 @@ jobs:
               working-directory: main-webserver
               run: pip install --upgrade pip
 
-            - name: Install migra
+            - name: Install Python dependencies
               working-directory: main-webserver
-              run: pip install migra
-
-            - name: Install requests
-              working-directory: main-webserver
-              run: pip install requests
+              run: |
+                pip install psycopg2
+                pip install migra
+                pip install requests
 
             - name: Authenticate Heroku
               run: |
