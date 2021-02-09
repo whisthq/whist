@@ -99,9 +99,12 @@ jobs:
             #     psql -f db.sql ${URL_MERGING}
             #
             #
-            - name: Say hello, bot
+            - name: Run migra and print result
               run: |
-                export msg="hello world"
+                CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
+                MERGING=${URL_MERGING}
+                RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+                export msg=${RESULT}"
                 jq -nc '{"body":env.msg}' | \
                 curl -sL  -X POST -d @- \
                 -H "Content-Type: application/json" \
@@ -111,11 +114,3 @@ jobs:
                 OWNER: ${{ github.repository_owner }}
                 REPO:  ${{ github.repository }}
                 PR:    ${{ github.event.number }}
-
-            - name: Run migra on endpoints
-              id: migra-diff-1
-              run: |
-                CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
-                MERGING=${URL_MERGING}
-                RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
-
