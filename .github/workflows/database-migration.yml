@@ -24,6 +24,7 @@ jobs:
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
+          DIFF_SCRIPT: ".github/workflows/helpers/migration/schema_diff.py"
           URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           NAME_DB_MERGING: "db.sql"
@@ -96,26 +97,16 @@ jobs:
                 psql -f db.sql ${URL_MERGING}
                 echo "PG_DUMP"
                 echo $(pg_dump --schema-only ${URL_MERGING})
-                # createdb ${NAME_DB_MERGING}
-                # psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
-                # - name: Dump current DB schema
-                #   run: |
-                #     postgres -D /usr/local/pgsql/data
-                #     URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                #     echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
-                #
             - name: Run migra on endpoints
+              id: migra-diff-1
               run: |
-                CURRENT_ENDPOINT=$(python3 $HEROKU_CONFIG_SCRIPT)
-                MERGING_ENDPOINT=${URL_MERGING}
-                echo "MIGRA:"
-                echo $(migra ${MERGING_ENDPOINT} ${CURRENT_ENDPOINT})
+                CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
+                MERGING=${URL_MERGING}
+                DIFF=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+                echo "::set-output diff1=${DIFF}"
 
-            # - name: Dump merging DB schmea
-            #   run: |
-            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
-            #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
-
-            # - name: Remove temporary directory
-            #   run: rm -r ${TEMP}
+            - name: Print migra output
+              run: |
+                echo DIFF1
+                echo {{ steps.migra-diff1.outputs.diff1 }}
