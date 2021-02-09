@@ -65,4 +65,4 @@ jobs:
 
             - name: Print Database Schema
               run: |
-                echo ${pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL}
+                echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
