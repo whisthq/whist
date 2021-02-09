@@ -97,12 +97,13 @@ jobs:
                 fi
 
             - name: Start postgres server
-              run: sudo service postgresql start
-
-            - name: Create postgres user
               run: |
+                sudo service postgresql start
                 sudo -u postgres -i
                 createuser -l -d -P runner
+
+            # - name: Create postgres user
+            #   run: |
 
             - name: New db from dq.sql schema
               run: |
