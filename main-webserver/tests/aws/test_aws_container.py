@@ -204,12 +204,12 @@ def test_update_cluster(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_bad_cluster(client):
+def test_update_bad_cluster(client, cluster):
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
         region_name="us-east-1",
-        cluster_name="this-is-a-fake-cluster-and-should-not-exist",
+        cluster_name=cluster.cluster_name,
         ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
     )
 
