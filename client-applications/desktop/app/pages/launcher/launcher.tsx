@@ -35,7 +35,7 @@ import ChromeBackground from "shared/components/chromeBackground/chromeBackgroun
 import styles from "pages/launcher/launcher.css"
 import { ChildProcess } from "child_process"
 
-/* 
+/*
     Amount of time passed before giving up on container/assign
     60000 = 1 minute
 */

@@ -139,9 +139,9 @@ const createWindow = async () => {
     ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
         showMainWindow = argv
         if (showMainWindow && mainWindow) {
-            mainWindow.maximize()
             mainWindow.show()
             mainWindow.focus()
+            mainWindow.maximize()
             mainWindow.restore()
             if (app && app.dock) {
                 app.dock.show()
