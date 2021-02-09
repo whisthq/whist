@@ -99,7 +99,7 @@ jobs:
 
             - name: Start postgres server
               run: |
-                echo $(docker ps-a)
+                echo $(docker ps -a)
                 # sudo service postgresql start
                 # docker exec -it some-postgres bash
                 # docker exec some-postgres sh -c "echo $(pwd); echo $(docker ps -a)"
