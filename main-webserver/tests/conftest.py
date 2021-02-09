@@ -137,6 +137,7 @@ def celery_config():
             "result_accept_content": ["json", "pickle"],
             "task_serializer": "pickle",
             "result_serializer": "pickle",
+            "event_serializer":"pickle",
         }
 
     elif redis_url[:5] == "redis":
@@ -148,6 +149,7 @@ def celery_config():
             "result_accept_content": ["json", "pickle"],
             "task_serializer": "pickle",
             "result_serializer": "pickle",
+            "event_serializer": "pickle",
         }
 
     # unexpected input, fail out

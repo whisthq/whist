@@ -18,6 +18,7 @@ def init_celery(celery, app):
         celery_redis_max_connections=40,
         task_serializer="pickle",
         result_serializer="pickle",
+        event_serializer="pickle",
     )
     TaskBase = celery.Task  # pylint: disable=invalid-name
 
