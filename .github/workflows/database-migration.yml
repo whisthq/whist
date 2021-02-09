@@ -24,6 +24,14 @@ jobs:
         name: Run Migra Diff
         runs-on: ubuntu-20.04
 
+        env:
+          HEROKU_APP_NAME: "fractal-dev-server"
+          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
+          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
+          SCHEMA_MERGING: "db.sql"
+          TEMP: "./temp/"
+
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -56,14 +64,24 @@ jobs:
                     password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
                   EOF
 
-            - name: Load Database URL
+            - name: Check that db.sql exists
               run: |
-                URL=$(python3 $HEROKU_CONFIG_SCRIPT)
-                echo "DB_URL=$URL" >> $GITHUB_ENV
-              env:
-                HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
-                HEROKU_APP_NAME: "fractal-dev-server"
+                FILE=${SCHEMA_MERGING}
+                if test -f "$FILE"; then
+                echo "$FILE exists."
+                fi
 
-            - name: Print Database Schema
-              run: |
-                echo $(pg_dump --no-owner --no-privileges --schema-only $DB_URL)
+            - name: Start PostgreSQL server
+              run: pg_ctl -D /usr/local/var/postgres start
+
+
+            # - name: Dump current DB schema
+            #   run: |
+            #     URL=$(python3 $HEROKU_CONFIG_SCRIPT)
+            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
+
+
+            # - name: Dump merging DB schmea
+            #   run: |
+            #     echo $(${CMD_SCHEMA_DUMP} $DB_URL) > ./temp/current_schema.sql
+            #     echo $(${CMD_SCHEMA_DUMP} $) > merging_schema.sql
