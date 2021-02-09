@@ -94,11 +94,11 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            # - name: New db from current schema
-            #   run: |
-            #     psql -f db.sql ${URL_MERGING}
-            #
-            #
+            - name: New db from current schema
+              run: |
+                psql -f db.sql ${URL_MERGING}
+
+         
             - name: Run migra on endpoints and print
               run: |
                 CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
