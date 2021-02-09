@@ -86,7 +86,9 @@ jobs:
                 fi
 
             - name: New db from dq.sql schema
-              run: psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
+              run: |
+                createdb ${NAME_DB_MERGING}
+                psql ${NAME_DB_MERGING} -1 -f ${PATH_SCHEMA_MERGING}
 
             - name: Dump current DB schema
               run: |
