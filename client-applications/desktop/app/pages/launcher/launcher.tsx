@@ -120,7 +120,7 @@ export const Launcher = (props: {
 
     const forceQuit = () => {
         setTimeout(() => {
-            // ipc.sendSync(FractalIPC.FORCE_QUIT)
+            ipc.sendSync(FractalIPC.FORCE_QUIT)
         }, 1000)
     }
 
@@ -217,7 +217,7 @@ export const Launcher = (props: {
     // If not, create a container
     useEffect(() => {
         if (!protocol && shouldLaunchProtocol) {
-            // ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
                 const childProcess = await launchProtocol(
