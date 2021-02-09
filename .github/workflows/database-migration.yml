@@ -63,6 +63,7 @@ jobs:
               env:
                 HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
                 HEROKU_APP_NAME: "fractal-dev-server"
-# - name: Print Database Schema
-#               run: |
-#                 echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
+
+            - name: Print Database Schema
+              run: |
+                echo $(pg_dump pg_dump --no-owner --no-privileges --schema-only $DB_URL)
