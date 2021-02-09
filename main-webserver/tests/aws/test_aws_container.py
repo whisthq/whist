@@ -205,8 +205,7 @@ def test_update_cluster(client):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_update_bad_cluster(client, cluster):
-    # right now we have manually verified this actually does something on AWS.
-    # AWS/boto3 _should_ error out if something went wrong.
+    # Regression test for PR 665, tests that a dead cluster doesn't brick
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name=cluster.cluster,
@@ -214,6 +213,8 @@ def test_update_bad_cluster(client, cluster):
     )
 
     # wait for operation to finish
+    # this task should work fast
+    # if it takes more than 30 sec, something is wrong
     res.get(timeout=30)
 
     assert res.successful()
