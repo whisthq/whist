@@ -656,12 +656,7 @@ func main() {
 	// prevents AWS from assigning any task definitions to our container before
 	// the webserver knows about it.
 	startDockerDaemon()
-	// Only start the ECS Agent if running in production, on an AWS EC2 instance
-	if logger.GetAppEnvironment() == logger.EnvProd {
-		logger.Infof("Running in production, starting ECS Agent.")
-		startECSAgent()
-	}
-
+	startECSAgent()
 	ctx := context.Background()
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
