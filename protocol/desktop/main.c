@@ -27,6 +27,7 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "../fractal/clipboard/clipboard.h"
 #include "../fractal/core/fractal.h"
@@ -574,8 +575,8 @@ int sync_keyboard_state(void) {
 
 volatile bool continue_pumping = false;
 
-int read_piped_arguments_thread_function(void* opaque) {
-    int ret = read_piped_arguments(opaque);
+int read_piped_arguments_thread_function(void* keep_piping) {
+    int ret = read_piped_arguments((bool*) keep_piping);
     continue_pumping = false;
     return ret;
 }
@@ -667,10 +668,18 @@ int main(int argc, char* argv[]) {
     // While showing the SDL loading screen, read in any piped arguments
     //    If the arguments are bad, then skip to the destruction phase
     continue_pumping = true;
-    SDL_Thread* pipe_arg_thread = SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", NULL);
+    bool keep_piping = true;
+    SDL_Thread* pipe_arg_thread = SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
         failed = true;
     } else {
+        SDL_Event event;
+        while (continue_pumping) {
+            if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
+                exiting = true;
+                keep_piping = false;
+            }
+        }
         int pipe_arg_ret;
         SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
         if (pipe_arg_ret != 0) {
@@ -684,9 +693,17 @@ int main(int argc, char* argv[]) {
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
+        }
+
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
+        }
+
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
         }
 
         if (discover_ports(&using_stun) != 0) {
@@ -697,6 +714,10 @@ int main(int argc, char* argv[]) {
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
+        }
+
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
         }
 
         connected = true;

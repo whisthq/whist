@@ -393,7 +393,7 @@ int parse_args(int argc, char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(void* opaque) {
+int read_piped_arguments(bool* keep_waiting) {
     /*
         Read arguments from the stdin pipe if `using_piped_arguments` is
         set to `true`.
@@ -401,7 +401,7 @@ int read_piped_arguments(void* opaque) {
         Can read IP as argument with name `ip`
 
         Arguments:
-            opaque (void*): pass arguments to a thread, pass NULL if calling normally
+            keep_waiting (bool*): pointer to a boolean indicating whether to continue waiting
 
         Returns:
             (int): 0 on success, -1 on failure
@@ -412,15 +412,61 @@ int read_piped_arguments(void* opaque) {
     }
 
     // Arguments will arrive from the client application via pipe to stdin
-    char incoming[128];
+    int max_incoming_length = 128;
+    char incoming[max_incoming_length];
+
+    int total_stored_chars = 0;
+    int available_chars = 0;
+    char read_char = 0;
+    bool keep_reading = true;
+    bool finished_line = false;
 
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
-    while(fgets(incoming, 100, stdin) != NULL) {
-        char* arg_name = strtok(incoming, "?");
-        char* arg_value = strtok(NULL, "?");
+    while (keep_reading && *keep_waiting) {
+        // If stdin doesn't have any characters, continue the loop
+        if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
+            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+        } else if (available_chars == 0) {
+            continue;
+        }
 
+        for (int i = 0; i < available_chars; i++) {
+            // Read a character from stdin
+            read_char = (char) fgetc(stdin);
+
+            if (!finished_line) {
+                incoming[total_stored_chars] = read_char;
+                total_stored_chars++;
+            }
+
+            // If the character is EOF, make sure the loop ends after this iteration
+            if (read_char == EOF) {
+                keep_reading = false;
+            }
+
+            // Causes some funky behavior if the line being read in is longer than 128 characters because
+            //   it splits into two and processes as two different pieces
+            if (!keep_reading || (total_stored_chars > 0 &&
+                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == max_incoming_length)
+            )) {
+                finished_line = true;
+                total_stored_chars = 0;
+            }
+        }
+
+        // Splits the incoming string from STDIN into arg_name and arg_value
+        char* arg_name = strtok(incoming, "?");
+        arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
+
+        char* arg_value = strtok(NULL, "?");
+        if (!arg_value) {
+            // parse_arg only takes options that require optargs, so arg_value should not be NULL
+            LOG_WARNING("Passed arg_name %s without any arg_value", arg_name);
+            finished_line = false;
+            continue;
+        }
         arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
 
         // Iterate through cmd_options to find the corresponding opt
@@ -450,6 +496,9 @@ int read_piped_arguments(void* opaque) {
         }
 
         fflush(stdout);
+
+        // Reset finished_line after evaluating a line
+        finished_line = false;
     }
 
     if (strlen((char*)server_ip) == 0) {
