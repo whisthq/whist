@@ -81,6 +81,7 @@ jobs:
             - name: Dump current DB schema
               run: |
                 URL=$(python3 $HEROKU_CONFIG_SCRIPT)
+                touch ${PATH_SCHEMA_CURRENT}
                 echo $(${CMD_SCHEMA_DUMP} $URL) > ${PATH_SCHEMA_CURRENT}
 
 
