@@ -47,6 +47,7 @@ extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment 
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
 extern bool using_sentry;
+extern bool skip_taskbar;
 
 extern volatile CodecType codec_type;
 extern bool using_stun;
@@ -71,6 +72,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"name", required_argument, NULL, 'n'},
                                      {"read-pipe", no_argument, NULL, 'r'},
                                      {"loading", required_argument, NULL, 'l'},
+                                     {"skip-taskbar", no_argument, NULL, 's'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
@@ -79,7 +81,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
 const char* usage;
 
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:s"
 
 /*
 ============================
@@ -255,6 +257,10 @@ int evaluate_arg(int opt, char* optarg) {
             LOG_INFO("LOADING: %s", optarg);
             break;
         }
+        case 's': {  // skip taskbar
+            skip_taskbar = true;
+            break;
+        }
         default: {
             if (opt != -1) {
                 // illegal option
@@ -318,6 +324,8 @@ int parse_args(int argc, char *argv[]) {
         "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
         "                                  in IP if using this argument and passing with arg `ip`\n"
         "  -l, --loading                 Custom loading screen message\n"
+        "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
+        "                                  in the taskbar\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
