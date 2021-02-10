@@ -4,9 +4,9 @@ from flask_jwt_extended import jwt_optional
 
 from app import fractal_pre_process
 from app.celery.dummy import dummy_task
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 from app.helpers.utils.general.auth import check_developer
 from app.constants.http_codes import (
+    ACCEPTED,
     SUCCESS,
     BAD_REQUEST,
     WEBSERVER_MAINTENANCE,
