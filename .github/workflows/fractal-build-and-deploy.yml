@@ -146,7 +146,7 @@ jobs:
               run: ./build_protocol.sh release
 
             - name: Walk Folder to Find All Dockerfiles and Store Paths as Environment Variable
-              run: echo "apps=$(./container-images/find_images_in_git_repo.sh)" >> $GITHUB_ENV
+              run: echo "apps=$(./container-images/helper-scripts/find_images_in_git_repo.sh)" >> $GITHUB_ENV
 
             - name: Build container images
               working-directory: container-images

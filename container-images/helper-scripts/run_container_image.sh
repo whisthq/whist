@@ -7,6 +7,12 @@
 
 set -Eeuo pipefail
 
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Working directory is fractal/container-images/helper-scripts/
+cd "$DIR/.."
+
 # Fractal container image to run
 image=${1:-fractal/base:current-build}
 
