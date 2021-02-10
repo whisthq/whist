@@ -25,7 +25,7 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
                 msg = f"Experienced an error. Error trace: {result.traceback}"
             else:
                 # do not give details to non-developers
-                msg = "Experience an error. Please try the request again."
+                msg = "Experienced an error. Please try the request again."
 
             response = {"state": result.status, "output": msg}
             return make_response(jsonify(response), 200)
