@@ -126,7 +126,7 @@ def spin_lock(container_name, state_obj=None):
         if state_obj:
             state_obj.update_state(
                 state="PENDING",
-                meta={"msg": "Fractal is downloading an update. This could take a few minutes."},
+                meta={"msg": "Fractal is waiting for an app to be assigned."},
             )
 
     while locked:
@@ -144,7 +144,7 @@ def spin_lock(container_name, state_obj=None):
             return -1
 
     if state_obj:
-        state_obj.update_state(state="PENDING", meta={"msg": "Update successfully downloaded."})
+        state_obj.update_state(state="PENDING", meta={"msg": "App successfully assigned."})
 
     fractal_log(
         function="spin_lock",
