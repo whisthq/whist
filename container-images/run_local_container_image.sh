@@ -6,10 +6,16 @@
 
 set -Eeuo pipefail
 
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Working directory is fractal/container-images/
+cd "$DIR"
+
 # Parameters of the local container image to run
 app_path=${1%/}
 image=fractal/$app_path:current-build
 mount=${2:-}
 
 # Run the container image stored locally
-./run_container_image.sh $image $mount
+./helper-scripts/run_container_image.sh $image $mount

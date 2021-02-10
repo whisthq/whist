@@ -25,7 +25,7 @@ build_all = args.all
 
 # If --all is passed, generate image_paths procedurally
 if build_all:
-  files_process = subprocess.Popen("./find_images_in_git_repo.sh", shell=True, stdout=subprocess.PIPE)
+  files_process = subprocess.Popen("./helper-scripts/find_images_in_git_repo.sh", shell=True, stdout=subprocess.PIPE)
   image_paths = files_process.communicate()[0].decode("utf-8").strip().split(" ")
   print("All files requested, will be building the following image paths: " + " ".join(image_paths))
 
