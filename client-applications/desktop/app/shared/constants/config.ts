@@ -113,10 +113,32 @@ const environment: FractalEnvironment = {
     },
 }
 
+const getDevelopmentEnv = () => {
+    switch (process.env.DEVELOPMENT_ENV) {
+        case "local":
+            return environment.LOCAL
+        default:
+            return environment.DEVELOPMENT
+    }
+}
+
+const getProductionEnv = () => {
+    switch (process.env.PRODUCTION_ENV) {
+        case "development":
+            return environment.DEVELOPMENT
+        case "staging":
+            return environment.STAGING
+        case "production":
+            return environment.PRODUCTION
+        default:
+            return environment.PRODUCTION
+    }
+}
+
 export const config: FractalConfig =
     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-        ? environment.DEVELOPMENT
-        : environment.PRODUCTION
+        ? getDevelopmentEnv()
+        : getProductionEnv()
 
 // default export until we have multiple exports
 export default config
