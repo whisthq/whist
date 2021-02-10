@@ -96,7 +96,9 @@ Of course, input must also be sent from client to server. This is handled in the
 │   ├── utils
 │   │   ├── aes.c <- Generic encrypt/decrypt of network packets
 │   │   ├── clock.c <- Clock
+│   │   ├── color.c <- RGB/YUV conversation, and other color helpers
 │   │   ├── json.c <- JSON reader implementation
+│   │   ├── lodepng.c <- LodePNG external dependency
 │   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc, along with sentry breadcrumbs
 │   │   ├── mac_utils.c <- Mac wrappers
 │   │   ├── mouse.c <- Mutliclient cursor colors
@@ -104,16 +106,17 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
 │   │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
+│   │   ├── window_name.c <- Linux Getter for the window name of the application
 │   │   └── windows_utils.c <- Log-in past windows start screen
 │   └── video
+│       ├── dxgicapture.c <- Capture screen using DXGI
 │       ├── nvidia-linux
 │       │   └── NvFBCUtils.c (NVDA Header)
-│       ├── cpucapturetransfer.c <- ?
-│       ├── dxgicapture.c <- Capture screen using DXGI
-│       ├── videodecode.c <- Decompress h264/h265 image
-│       ├── videoencode.c <- Compress image to h264/h265
-│       ├── x11capture.c <- Capture with X11
-│       └── x11nvidiacapture.c <- Capture to h264/h265 with NvidiaCaptureSDK
+│       ├── transfercapture.c <- Implements CPU or CUDA transfer of frame from device to encoder
+│       ├── videodecode.c <- Decompress image using h264/h265
+│       ├── videoencode.c <- Compress image using h264/h265
+│       ├── x11capture.c <- Capture screen using X11
+│       └── x11nvidiacapture.c <- Capture h264/h265 compressed screen with NvidiaCaptureSDK
 └── server
     ├── client.c <- Handle multiclient messages
     ├── handle_client_message.c <- Handle client fmsg's
