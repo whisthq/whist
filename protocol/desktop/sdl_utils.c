@@ -161,6 +161,13 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
 
     SDL_Window* sdl_window;
 
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+    // only implemented on macOS so far
+    if (skip_taskbar) {
+        hide_native_window_taskbar();
+    }
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+
     const uint32_t window_flags = SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_OPENGL |
                                   SDL_WINDOW_RESIZABLE | (maximized ? SDL_WINDOW_MAXIMIZED : 0) |
                                   (skip_taskbar ? SDL_WINDOW_SKIP_TASKBAR : 0);
