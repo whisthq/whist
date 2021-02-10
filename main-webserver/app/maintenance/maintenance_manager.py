@@ -18,7 +18,7 @@ _REDIS_UPDATE_KEY = "WEBSERVER_UPDATE_{region_name}"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"
 
 
-def check_if_update(region_name: str) -> bool:
+def check_if_maintenance(region_name: str) -> bool:
     """
     Check if an update is going on.
 

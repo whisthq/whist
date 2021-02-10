@@ -241,3 +241,4 @@ def test_maintenance_mode(client, admin):
     # # _assign_container (mock) should be called just once
     assert hasattr(_assign_container, "num_calls")
     assert getattr(_assign_container, "num_calls") == 2
+

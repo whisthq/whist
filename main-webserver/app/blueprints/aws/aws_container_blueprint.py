@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.maintenance.maintenance_manager import (
-    check_if_update,
+    check_if_maintenance,
     try_start_update,
     try_end_update,
 )
@@ -89,10 +89,11 @@ def test_endpoint(action, **kwargs):
         json, int: the json http response and the http status code
         (which is an int like 200, 400, ...).
     """
+    # check for maintenance-related things
     if action in ["create_cluster", "assign_container"]:
-        # check if there is an update going on
         region_name = kwargs["body"]["region_name"]
-        if check_if_update(region_name):
+        if check_if_maintenance(region_name):
+            # server cannot be in maintenance mode to do this
             return (
                 jsonify(
                     {
@@ -101,7 +102,20 @@ def test_endpoint(action, **kwargs):
                 ),
                 WEBSERVER_MAINTENANCE,
             )
+    elif action in ["update_region"]:
+        region_name = kwargs["body"]["region_name"]
+        if not check_if_maintenance(region_name):
+            # server must be in maintenance mode to do this
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver must be put in maintenance mode before doing this.",
+                    }
+                ),
+                BAD_REQUEST,
+            )
 
+    # handle the action
     if action == "create_cluster":
         try:
             cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -325,7 +339,7 @@ def aws_container_assign(**kwargs):
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
-        if check_if_update(region):
+        if check_if_maintenance(region):
             return (
                 jsonify(
                     {
