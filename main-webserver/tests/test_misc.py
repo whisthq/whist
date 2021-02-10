@@ -3,9 +3,9 @@ import time
 
 from flask import current_app
 import pytest
+from func_timeout import func_set_timeout, FunctionTimedOut
 
 from app.config import _callback_webserver_hostname
-from app.helpers.utils.general.time import timeout, TimeoutError
 
 
 def test_callback_webserver_hostname_localhost():
@@ -29,23 +29,3 @@ def test_callback_webserver_hostname_localhost_with_port():
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
-
-
-def test_timeout_decorator_no_timeout():
-    @timeout(seconds=1)
-    def fast_func():
-        time.sleep(0.5)
-
-    # this should run with no timeout error
-    fast_func()
-
-    assert True
-
-
-def test_timeout_decorator_yes_timeout():
-    @timeout(seconds=1)
-    def slow_func():
-        time.sleep(1.5)
-
-    with pytest.raises(TimeoutError):
-        slow_func()

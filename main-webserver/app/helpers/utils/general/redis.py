@@ -3,9 +3,9 @@ import logging
 import ssl
 
 import redis
+from func_timeout import func_set_timeout, FunctionTimedOut
 
 from app.helpers.utils.general.logs import fractal_log
-from app.helpers.utils.general.time import timeout, TimeoutError
 
 
 def get_redis_url():
@@ -57,14 +57,11 @@ def get_redis_url():
         raise ValueError("No valid redis URL could be found.")
 
 
-@timeout(seconds=5)
 def try_redis_url(redis_url):
     """
     Tries a redis_url. Can be SSL supported (redis://) or regular (redis://).
-
     Args:
         redis_url (str): url to try
-
     Returns:
         (bool) True if valid url, False otherwise
     """
@@ -84,17 +81,18 @@ def try_redis_url(redis_url):
         raise ValueError(f"Unexpected redis url: {redis_url}")
 
     try:
-        # this ping checks to see if redis is available. SSL connections just
-        # freeze if the instance is not properly set up, so this method is
-        # wrapped in a timeout.
-        redis_conn.ping()
-        redis_conn.close()
+        _test_redis_url(redis_conn)
         return True
-    except TimeoutError:
+    except FunctionTimedOut:
         # this can happen with SSL. Just return False.
         return False
     except redis.exceptions.ConnectionError:
         # this can happen with regular redis. Just return False
         return False
-
     # any other code flow will be an unexpected error and will be passed to the caller
+
+
+@func_set_timeout(timeout=1)
+def _test_redis_url(redis_conn):
+    redis_conn.ping()
+    redis_conn.close()
