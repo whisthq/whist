@@ -197,5 +197,5 @@ jobs:
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
               shell: bash
-              working-directory: container-images
+              working-directory: container-images/helper-scripts
               run: ./copy_protocol_build.sh
