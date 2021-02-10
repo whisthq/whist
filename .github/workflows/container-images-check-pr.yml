@@ -61,5 +61,4 @@ jobs:
                   aws-region: us-east-1
 
             - name: Build Container Images
-              run: |
-                  ./container-images/build_container_image.sh --all
+              run: ./container-images/build_container_image.sh --all
