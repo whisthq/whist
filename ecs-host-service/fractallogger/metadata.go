@@ -27,9 +27,9 @@ type EnvironmentType string
 // (i.e. talking to the dev webserver), staging, or prod
 const (
 	EnvLocalDev EnvironmentType = "LOCALDEV"
-	EnvDev     EnvironmentType = "DEV"
-	EnvStaging EnvironmentType = "STAGING"
-	EnvProd    EnvironmentType = "PROD"
+	EnvDev      EnvironmentType = "DEV"
+	EnvStaging  EnvironmentType = "STAGING"
+	EnvProd     EnvironmentType = "PROD"
 )
 
 // GetAppEnvironment returns the EnvironmentType of the current instance
