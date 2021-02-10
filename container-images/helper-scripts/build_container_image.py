@@ -49,7 +49,10 @@ def get_dep_from_image(image_path): # returns dep_path
 # Map image_path's to dependencies
 dependencies = {}
 
-# Get all dependencies, and add dependencies to image_paths
+# Get all dependencies for each requested image_path,
+# and add all unrequested dependencies to the image_paths list.
+# This ensures that every image_path is either a root node (dependency==None),
+# or a child of another image_path
 i = 0
 while i < len(image_paths):
   image_path = image_paths[i]
@@ -68,6 +71,7 @@ def build_image_path(image_path):
   build_process = subprocess.Popen(command, shell=True)
   build_process.wait()
   if build_process.returncode != 0:
+    # If _any_ build fails, we exit with return code 1
     print("Build of " + image_path + " failed, terminating")
     sys.exit(1)
   # Notify successful build
@@ -91,10 +95,18 @@ def build_image_path(image_path):
       proc = multiprocessing.Process(target=build_image_path, args=[next_image_path])
       proc.start()
       procs.append(proc)
-  # Wait for them all to execute before returning
+  # Wait for them all to finished executing before returning
   for proc in procs:
     proc.join()
 
-# All image_path's are descendants of base, so this will trickle down to all of them
-build_image_path('base')
+# Get all image_path's with no dependencies
+root_level_images = []
+for image_path in dependencies:
+  if dependencies[image_path] == None:
+    root_level_images.append(image_path)
 
+# Build all root_level_images
+for image_path in root_level_images:
+  build_image_path(image_path)
+
+print("All images have been built successfully!")
