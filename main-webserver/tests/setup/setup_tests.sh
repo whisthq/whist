@@ -65,7 +65,6 @@ success="False"
 while [ $success != "True" ]; do
     echo "Trying to connect to local db..."
     cmds="\q"
-    # if left fails, right makes sure bash script does not exit
     psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds
     if [ $? == 0 ]; then
         success="True"
