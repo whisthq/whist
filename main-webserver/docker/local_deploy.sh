@@ -52,8 +52,19 @@ export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
 # launch images using above LOCAL env vars
 docker-compose up -d --build
 
-# let db prepare. TODO: make more robust
-sleep 2
+# let db prepare. Check connections using psql.
+success="False"
+while [ $success != "True" ]; do
+    echo "Trying to connect to local db..."
+    cmds="\q"
+    # if left fails, right makes sure bash script does not exit
+    (psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds) || true
+    if [ $? == 0 ]; then
+        success="True"
+    else
+        sleep 2
+    fi
+done
 
 bash ../db_setup/db_setup.sh
 
