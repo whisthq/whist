@@ -22,7 +22,7 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
         elif result.status == "FAILURE":
             msg = None
             if check_developer():
-                msg = f"Experienced an error. Traceback: {result.traceback}"
+                msg = f"Experienced an error. Error trace: {result.traceback}"
             else:
                 # do not give details to non-developers
                 msg = "Experience an error. Please try the request again."
