@@ -22,7 +22,7 @@ WEBSERVER_AUTH_SECRET_PROD ?= testwebserverauthsecretprod
 
 all: build
 
-# Check that the required environment variables for building as part of our 
+# Check that the required environment variables for building as part of our
 # continuous integration/deployment pipeline on GitHub Actions are set properly.
 checkCI:
 	$(info building in $(BUILD_FOLDER) with CI set to $(CI)...)
@@ -62,6 +62,9 @@ build: checkCI
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+
+format:
+	goimports -l -w $$(find $(CURDIR) -name "*.go" | xargs)
 
 clean:
 	$(GOCLEAN)
