@@ -436,20 +436,18 @@ int read_piped_arguments(bool* keep_waiting) {
             // Read a character from stdin
             read_char = (char) fgetc(stdin);
 
-            if (!finished_line) {
-                incoming[total_stored_chars] = read_char;
-                total_stored_chars++;
-            }
-
             // If the character is EOF, make sure the loop ends after this iteration
             if (read_char == EOF) {
                 keep_reading = false;
+            } else if (!finished_line) {
+                incoming[total_stored_chars] = read_char;
+                total_stored_chars++;
             }
 
             // Causes some funky behavior if the line being read in is longer than 128 characters because
             //   it splits into two and processes as two different pieces
             if (!keep_reading || (total_stored_chars > 0 &&
-                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == max_incoming_length)
+                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == max_incoming_length - 1)
             )) {
                 finished_line = true;
                 total_stored_chars = 0;
@@ -458,16 +456,15 @@ int read_piped_arguments(bool* keep_waiting) {
 
         // Splits the incoming string from STDIN into arg_name and arg_value
         char* arg_name = strtok(incoming, "?");
+        if (!arg_name) {
+            goto completed_line_eval;
+        }
         arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
 
         char* arg_value = strtok(NULL, "?");
-        if (!arg_value) {
-            // parse_arg only takes options that require optargs, so arg_value should not be NULL
-            LOG_WARNING("Passed arg_name %s without any arg_value", arg_name);
-            finished_line = false;
-            continue;
+        if (arg_value) {
+            arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
         }
-        arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
 
         // Iterate through cmd_options to find the corresponding opt
         int opt_index = -1;
@@ -483,13 +480,17 @@ int read_piped_arguments(bool* keep_waiting) {
         if (opt_index >= 0) {
             // Evaluate the passed argument, if a valid opt
             if (evaluate_arg(cmd_options[opt_index].val, arg_value) < 0) {
-                LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value);
+                LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value ? arg_value : "NULL");
                 return -1;
             }
         } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
             // If arg_name is `ip`, then set IP address
-            safe_strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
-            LOG_INFO("Connecting to IP %s", server_ip);
+            if (!arg_value) {
+                LOG_WARNING("Must pass arg_value with `ip` arg_name");
+            } else {
+                safe_strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
+                LOG_INFO("Connecting to IP %s", server_ip);
+            }
         } else {
             // If arg_name is invalid, then log a warning, but continue
             LOG_WARNING("Piped arg %s not available", arg_name);
@@ -497,8 +498,10 @@ int read_piped_arguments(bool* keep_waiting) {
 
         fflush(stdout);
 
+completed_line_eval:
         // Reset finished_line after evaluating a line
         finished_line = false;
+        memset(&incoming, 0, max_incoming_length);
     }
 
     if (strlen((char*)server_ip) == 0) {
