@@ -130,6 +130,20 @@ def admin_required(func):
     return wrapper
 
 
+def check_developer() -> bool:
+    """
+    Check if the requester is a developer.
+
+    Note: any decorated function must call @jwt_optional or @jwt_required for
+    an authorized developer to be identified.
+    """
+    current_user = get_jwt_identity()
+    if current_user is None:
+        return False
+    fractal_log("check_developer", None, current_user)
+    return current_app.config["DASHBOARD_USERNAME"] in current_user or "@fractal.co" in current_user
+
+
 def developer_required(func):
     """Similar decorator to admin_required, but it allows @fractal.co
     users as well. It is meant for developer endpoints such as the test_endpoint where we,
@@ -147,11 +161,7 @@ def developer_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        current_user = get_jwt_identity()
-        if not (
-            current_app.config["DASHBOARD_USERNAME"] in current_user
-            or "@fractal.co" in current_user
-        ):
+        if not check_developer():
             return (
                 jsonify(
                     {
