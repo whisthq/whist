@@ -134,16 +134,14 @@ def check_developer() -> bool:
     """
     Check if the requester is a developer.
 
-    Note: any decorated function must call @jwt_optional or @jwt_required for 
+    Note: any decorated function must call @jwt_optional or @jwt_required for
     an authorized developer to be identified.
     """
     current_user = get_jwt_identity()
     if current_user is None:
         return False
     fractal_log("check_developer", None, current_user)
-    return (current_app.config["DASHBOARD_USERNAME"] in current_user
-        or "@fractal.co" in current_user
-    )
+    return current_app.config["DASHBOARD_USERNAME"] in current_user or "@fractal.co" in current_user
 
 
 def developer_required(func):
