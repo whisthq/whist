@@ -27,7 +27,7 @@ def mock_create_cluster(*args, **kwargs):
         setattr(_create_new_cluster, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_create_cluster", None, f"TASK ID: {celery_id}")
+    fractal_log("mock_create_cluster", None, f"Running mocked version of task {celery_id}")
 
     time.sleep(1)
 
@@ -40,7 +40,7 @@ def mock_assign_container(*args, **kwargs):
         setattr(_assign_container, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_assign_container", None, f"TASK ID: {celery_id}")
+    fractal_log("mock_assign_container", None, f"Running mocked version of task {celery_id}")
 
     time.sleep(1)
 

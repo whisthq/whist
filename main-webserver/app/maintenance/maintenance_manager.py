@@ -34,6 +34,32 @@ def check_if_update(region_name: str) -> bool:
     return redis_conn.exists(update_key)
 
 
+def _get_lock(max_tries: int = 100) -> bool:
+    """
+    Tries to get lock using redis SETNX command. Tries `max_tries` time
+    with a sleep time chosen randomly between 0 and 3 to improve lock
+    contention.
+    """
+    from app import redis_conn
+
+    for _ in range(max_tries):
+        got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+        if got_lock:
+            return True
+        sleep_time = random.random() * 3
+        time.sleep(sleep_time)
+    return False
+
+
+def _release_lock():
+    """
+    Release the lock
+    """
+    from app import redis_conn
+
+    redis_conn.delete(_REDIS_LOCK_KEY)
+
+
 def try_start_update(region_name: str) -> Tuple[bool, str]:
     """
     Try to start an update. Steps:
@@ -62,7 +88,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+    got_lock = _get_lock(100)
     if not got_lock:
         return False, "Did not get lock"
 
@@ -116,8 +142,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             " Please poll until these tasks finish."
         )
 
-    # release lock
-    redis_conn.delete(_REDIS_LOCK_KEY)
+    _release_lock()
     return success, return_msg
 
 
@@ -138,9 +163,9 @@ def try_end_update(region_name: str) -> bool:
     from app import redis_conn
 
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
-    got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+    got_lock = _get_lock(100)
     if not got_lock:
-        return False
+        return False, "Did not get lock"
 
     #  now we freely operate on the keys. first make sure we are not already in update mode
     # then, we need to make sure no tasks are going
@@ -148,22 +173,21 @@ def try_end_update(region_name: str) -> bool:
     if not update_exists:
         # release lock
         redis_conn.delete(_REDIS_LOCK_KEY)
-        return False
+        return False, f"No update in {region_name}"
 
     fractal_log(
         "try_end_update",
         None,
         f"ending webserver maintenance mode on region {region_name}",
     )
-    # delete update key
+
     redis_conn.delete(update_key)
-    # release lock
-    redis_conn.delete(_REDIS_LOCK_KEY)
+    _release_lock()
     # notify slack
     slack_send_safe(
         "#alerts-test", f":unlock: webserver has ended maintenance mode on region {region_name}"
     )
-    return True
+    return True, f"Ended update in {region_name}"
 
 
 def try_register_task(region_name: str, task_id: int) -> bool:
@@ -186,12 +210,11 @@ def try_register_task(region_name: str, task_id: int) -> bool:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+    got_lock = _get_lock(100)
     if not got_lock:
         return False
 
     success = False
-
     # now we freely operate on the keys. first check if an update is in progress. if so,
     # the task does not get registered. otherwise, register it.
     update_exists = redis_conn.exists(update_key)
@@ -201,8 +224,7 @@ def try_register_task(region_name: str, task_id: int) -> bool:
         redis_conn.rpush(tasks_key, task_id)
         success = True
 
-    # release lock
-    redis_conn.delete(_REDIS_LOCK_KEY)
+    _release_lock()
     return success
 
 
@@ -224,42 +246,14 @@ def try_deregister_task(region_name: str, task_id: int) -> bool:
 
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+    got_lock = _get_lock(100)
     if not got_lock:
         return False
 
     # remove from list
-    success = redis_conn.lrem(tasks_key, 1, task_id)
-    # release lock
-    redis_conn.delete(_REDIS_LOCK_KEY)
+    success = redis_conn.lrem(tasks_key, 1, task_id) == 1
+    _release_lock()
     return success
-
-
-def wait_retry_func(func: Callable, max_tries: int, *args, **kwargs) -> bool:
-    """
-    Wrapper around any callable `func`. Tries max_tries times with sleep for a random
-    amount of seconds between 0 and 3 (to improve lock contention).
-
-    Args:
-        task_id: celery task that is being tracked
-        max_tries: times to try
-        *args: any args for the function
-        **kwargs: any kwargs for the function
-
-    Return:
-        True if func succeeded once, otherwise False.
-    """
-    for i in range(max_tries):
-        fractal_log(
-            "wait_retry_func",
-            None,
-            f"Try {i}: Calling {func.__name__} with args: {args}, kwargs: {kwargs}.",
-        )
-        if func(*args, **kwargs):
-            return True
-        sleep_time = random.random() * 3
-        time.sleep(sleep_time)
-    return False
 
 
 def get_arg_number(func: Callable, desired_arg: str) -> int:
@@ -311,14 +305,23 @@ def wait_no_update_and_track_task(func: Callable):
         region_name = args[region_argn]
 
         # pre-function logic: register the task
-        if not wait_retry_func(
-            try_register_task,
-            10,
-            # these are passed to try_register_task
-            region_name,
-            self_obj.request.id,
-        ):
-            raise ValueError(f"failed to register task. function: {func.__name__}")
+        if not try_register_task(
+                region_name=region_name,
+                task_id=self_obj.request.id
+            ):
+            msg = (
+                "Could not register a tracked task. Debug info:\n"
+                f"Celery Task ID: {self_obj.request.id}\n"
+                f"Function: {func.__name__}\n"
+                f"Args: {args}\n"
+                f"Kwargs: {kwargs}\n"
+            )
+            fractal_log(
+                "wait_no_update_and_track_task",
+                None,
+                msg,
+            )
+            raise ValueError("MAINTENANCE ERROR. Failed to register task.")
 
         exception = None
         try:
@@ -327,14 +330,26 @@ def wait_no_update_and_track_task(func: Callable):
             exception = e
 
         # post-function logic: deregister the task
-        if not wait_retry_func(
-            try_deregister_task,
-            10,
-            # these are passed to try_deregister_task
-            region_name,
-            self_obj.request.id,
+        if not try_deregister_task(
+            region_name=region_name,
+            task_id=self_obj.request.id,
         ):
-            raise ValueError(f"failed to deregister task. function: {func.__name__}")
+            msg = (
+                "CRITICAL! Could not deregister a tracked task. Debug info:\n"
+                f"Celery Task ID: {self_obj.request.id}\n"
+                f"Function: {func.__name__}\n"
+                f"Args: {args}\n"
+                f"Kwargs: {kwargs}\n"
+            )
+            fractal_log(
+                "wait_no_update_and_track_task",
+                None,
+                msg,
+                level=logging.ERROR,
+            )
+            #TODO: make real
+            slack_send_safe("#alerts-test", msg)
+            raise ValueError("MAINTENANCE ERROR. Failed to deregister task.")
 
         # raise any exception to caller
         if exception is not None:

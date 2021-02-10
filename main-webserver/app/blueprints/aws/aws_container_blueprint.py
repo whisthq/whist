@@ -7,7 +7,6 @@ from app.maintenance.maintenance_manager import (
     check_if_update,
     try_start_update,
     try_end_update,
-    wait_retry_func,
 )
 from app.celery.aws_ecs_creation import (
     assign_container,
@@ -204,13 +203,19 @@ def test_endpoint(action, **kwargs):
 
     if action == "start_update":
         region_name = kwargs["body"]["region_name"]
-        success, msg = try_start_update(region_name)
+        # success, msg = try_start_update(region_name)
+        success, msg = try_start_update(
+            region_name=region_name
+        )
         return jsonify({"success": success, "msg": msg}), ACCEPTED
 
     if action == "end_update":
         region_name = kwargs["body"]["region_name"]
-        success = try_end_update(region_name)
-        return jsonify({"success": success}), ACCEPTED
+        # success = try_end_update(region_name)
+        success, msg = try_end_update(
+            region_name=region_name,
+        )
+        return jsonify({"success": success, "msg": msg}), ACCEPTED
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
