@@ -171,6 +171,14 @@ const createWindow = async () => {
         mainWindow = null
     })
 
+    mainWindow.on("maximize", () => {
+        console.log("MAXIMIZED")
+    })
+
+    mainWindow.on("minimize", () => {
+        console.log("MINIMIZED")
+    })
+
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
     } else {
