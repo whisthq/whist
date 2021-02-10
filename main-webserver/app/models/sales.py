@@ -7,3 +7,4 @@ class EmailTemplates(db.Model):
 
     id = db.Column(db.String(250), primary_key=True)
     url = db.Column(db.String(250), nullable=False)
+    title = db.Column(db.String(250), nullable=False)

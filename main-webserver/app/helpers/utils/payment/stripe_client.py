@@ -19,9 +19,6 @@ from app.constants.states import STATE_LIST
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.time import date_to_unix, get_today
 
-# TODO we may want to move this out of the client? not sure
-from app.helpers.utils.mail.stripe_mail import creditAppliedMail, planChangeMail
-
 from app.models import db, User, LoginHistory
 from app.serializers.public import UserSchema
 
@@ -540,10 +537,6 @@ class StripeClient:
                 logs="Applied discount and updated credits outstanding",
             )
 
-            # don't want to spam ming :)
-            if not current_app.testing:
-                creditAppliedMail(email)
-
             return True
 
     def charge_hourly(self, email):
@@ -818,6 +811,3 @@ class StripeClient:
             stripe.SubscriptionItem.modify(
                 subscriptions[0]["items"]["data"][0]["id"], price=new_price
             )
-
-            if not current_app.testing:
-                planChangeMail(username, new_plan_type)

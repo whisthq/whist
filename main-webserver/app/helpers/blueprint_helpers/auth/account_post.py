@@ -3,11 +3,8 @@ import logging
 
 from datetime import datetime as dt
 from flask import current_app, jsonify
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
-from app.helpers.blueprint_helpers.mail.mail_post import verification_helper
 from app.helpers.utils.general.crypto import check_value, hash_value
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import (
@@ -20,10 +17,10 @@ from app.helpers.utils.general.tokens import (
     get_access_tokens,
 )
 from app.models import db, User
-
 from app.helpers.utils.datadog.events import (
     datadogEvent_userLogon,
 )
+from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound, SendGridException
 
 
 def login_helper(email, password):
@@ -136,28 +133,6 @@ def register_helper(username, password, name, reason_for_signup):
         )
         status = BAD_REQUEST
         access_token = refresh_token = None
-
-    if status == SUCCESS:
-        try:
-            message = Mail(
-                from_email=current_app.config["SENDGRID_DEFAULT_FROM"],
-                to_emails="support@fractal.co",
-                subject=username + " just created an account!",
-                html_content=(
-                    f"<p>Just letting you know that {name} created an account. Their reason for "
-                    f"signup is: {reason_for_signup}. Have a great day.</p>"
-                ),
-            )
-            sendgrid_client = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
-
-            sendgrid_client.send(message)
-        except Exception as e:
-            fractal_log(
-                function="register_helper",
-                label=username,
-                logs="Mail send failed: Error code " + str(e),
-                level=logging.ERROR,
-            )
 
     return {
         "status": status,
@@ -279,7 +254,11 @@ def update_user_helper(body):
             db.session.commit()
 
             token = user.token
-            return verification_helper(body["email"], token)
+            url = current_app.config["FRONTEND_URL"] + "/verify?" + token
+            mail_client = MailClient(current_app.config["SENDGRID_API_KEY"])
+            mail_client.send_email(
+                to_email=user.user_id, email_id="EMAIL_VERIFICATION", jinja_args={"url": url}
+            )
         if "password" in body:
             reset_password_helper(body["username"], body["password"])
             return jsonify({"msg": "Password updated successfully"}), SUCCESS
