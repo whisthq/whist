@@ -11,6 +11,21 @@ import botocore.exceptions
 from flask import current_app
 
 
+class FractalECSClusterNotFoundException(Exception):
+    """
+    Exception to be raised when a requested cluster is not found on ECS.
+    """
+
+    def __init__(self, cluster_name):
+        super().__init__()
+        self.cluster_name = cluster_name
+
+    def __str__(self):
+        return "FractalECSClusterNotFoundException: Cluster {0} was not found!".format(
+            self.cluster_name
+        )
+
+
 def check_str_param(val, name):
     if isinstance(val, str):
         return val
@@ -991,14 +1006,12 @@ class ECSClient:
         """
         self.set_cluster(cluster_name)
         try:
-            launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)
+            launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)[0]
         except IndexError:
-            # that means the cluster itself is dead
-            # so pass that info up to the DB
-            # with a standardized string to keep return types consistent
-            return "Cluster does not exist", "Cluster does not exist"
-        asg_name = launch_config_info[0]["AutoScalingGroupName"]
-        old_launch_config_name = launch_config_info[0]["LaunchConfigurationName"]
+            # This means that the cluster we were looking for was not found.
+            raise FractalECSClusterNotFoundException(cluster_name)
+        asg_name = launch_config_info["AutoScalingGroupName"]
+        old_launch_config_name = launch_config_info["LaunchConfigurationName"]
         _, new_launch_config_name = self.create_launch_configuration(
             instance_type="g3.4xlarge",
             ami=ami,

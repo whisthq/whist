@@ -4,7 +4,7 @@ import logging
 from celery import shared_task
 from flask import current_app
 
-from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
@@ -41,20 +41,15 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
     )
 
-    all_regions = RegionToAmi.query.all()
-    region_to_ami = {region.region_name: region.ami_id for region in all_regions}
-    if ami is None:
-        ami = region_to_ami[region_name]
-
-    # first, delete every unassigned container
+    # We must delete every unassigned container in the cluster.
     unassigned_containers = UserContainer.query.filter_by(
         cluster=cluster_name, is_assigned=False
     ).all()
     for container in unassigned_containers:
         container_name = container.container_id
 
-        # First, we lock the container in the DB to make sure it doesn't get assigned
-        # while being deleted.
+        # Lock the container in the database.
+        # This is to make sure that the container is not assigned while we are trying to delete it.
         if spin_lock(container_name) < 0:
             fractal_log(
                 function="update_cluster",
@@ -73,19 +68,27 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
             ),
         )
 
+        # Set the container state to "DELETING".
+        # Why are we locking it again if we already locked it?
+        # What is the point of the temporary_lock=10?
         lock_container_and_update(
             container_name=container_name, state="DELETING", lock=True, temporary_lock=10
         )
 
-        # then, we delete it
-
+        # Initialize ECSClient
         container_cluster = container.cluster
         container_location = container.location
+
+        # What happens if this cluster doesn't exist at this point?
         ecs_client = ECSClient(
             base_cluster=container_cluster, region_name=container_location, grab_logs=False
         )
 
+        # Spawn a new task to replace the one we're deleting.
+        # How do we know this won't be assigned to a cluster we're about to delete right after this call?
         ecs_client.add_task(container_name)
+
+        # Actually stop the task if it's not done.
         if not ecs_client.check_if_done(offset=0):
             ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
             self.update_state(
@@ -96,22 +99,31 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
                     )
                 },
             )
+
+        # Delete the row for this container from the database.
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
+    # Check if a cluster does not exist
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-    cluster_updated, _ = ecs_client.update_cluster_with_new_ami(cluster_name, ami)
-    if "does not exist" in cluster_updated:
-        # then the cluster is bad, and we should remove it
-        bad_cluster = ClusterInfo.query.filter_by(cluster=cluster_name).first()
-        fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_cluster)
 
+    try:
+        ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+    except FractalECSClusterNotFoundException:
+        # We should remove any entries in the DB referencing this cluster, as they are out of date
+        bad_entries = ClusterInfo.query.filter_by(cluster=cluster_name).all()
+
+        for bad_entry in bad_entries:
+            fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
+
+        # Why is the status SUCCESS? Shouldn't it be a handled error?
         self.update_state(
             state="SUCCESS",
             meta={
-                "msg": f"cluster {cluster_name} in region {region_name} did not exist.",
+                "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
             },
         )
-    else:
+    finally:
+        # The cluster did exist, and was updated successfully.
         self.update_state(
             state="SUCCESS",
             meta={
