@@ -34,7 +34,7 @@ def get_dep_from_image(image_path): # returns dep_path
   # Open Dockerfile for the image path
   with open(image_path + "/Dockerfile.20") as f:
     # Regex match the Dockerfile dependency, with a capture group on the dependency name
-    regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build$")
+    regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build")
     for line in f:
       result = regex.search(line)
       if result:
