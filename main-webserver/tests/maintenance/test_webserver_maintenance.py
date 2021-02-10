@@ -125,6 +125,7 @@ def custom_monkeypatch(func):
     # mock right away to stop race-condition with celery threads. mocking inside
     # wrapper() would cause problems.
     create_new_cluster_code, assign_container_code = mock_endpoints()
+
     def wrapper(func, *args, **kwargs):
         nonlocal create_new_cluster_code, assign_container_code
         to_ret = func(*args, **kwargs)
@@ -186,7 +187,7 @@ def test_maintenance_mode(client, admin):
 
     # start maintenance while existing task is running
     resp = try_start_maintenance(client, "us-east-1")
-    
+
     assert resp.status_code == ACCEPTED
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
@@ -197,7 +198,7 @@ def test_maintenance_mode(client, admin):
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
-    task = queryStatus(client, resp_start, timeout=0.5) # 0.5 minutes = 30 seconds
+    task = queryStatus(client, resp_start, timeout=0.5)  # 0.5 minutes = 30 seconds
     assert task["status"] == 1, f"TASK: {task}"
 
     # _create_new_cluster (mock) should be called just once
@@ -231,7 +232,7 @@ def test_maintenance_mode(client, admin):
     resp_final = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
     assert resp.status_code == ACCEPTED
 
-    task = queryStatus(client, resp_final, timeout=0.5) # 0.1 minutes = 6 seconds
+    task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
     assert task["status"] == 1, f"TASK: {task}"
 
     # _create_new_cluster (mock) should be called just once
@@ -241,4 +242,3 @@ def test_maintenance_mode(client, admin):
     # # _assign_container (mock) should be called just once
     assert hasattr(_assign_container, "num_calls")
     assert getattr(_assign_container, "num_calls") == 2
-

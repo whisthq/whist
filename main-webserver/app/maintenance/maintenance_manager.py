@@ -305,10 +305,7 @@ def wait_no_update_and_track_task(func: Callable):
         region_name = args[region_argn]
 
         # pre-function logic: register the task
-        if not try_register_task(
-                region_name=region_name,
-                task_id=self_obj.request.id
-            ):
+        if not try_register_task(region_name=region_name, task_id=self_obj.request.id):
             msg = (
                 "Could not register a tracked task. Debug info:\n"
                 f"Celery Task ID: {self_obj.request.id}\n"
@@ -347,7 +344,7 @@ def wait_no_update_and_track_task(func: Callable):
                 msg,
                 level=logging.ERROR,
             )
-            #TODO: make real
+            # TODO: make real
             slack_send_safe("#alerts-test", msg)
             raise ValueError("MAINTENANCE ERROR. Failed to deregister task.")
 

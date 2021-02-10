@@ -12,10 +12,7 @@ from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer, RegionToAmi
-from app.constants.http_codes import (
-    ACCEPTED,
-    BAD_REQUEST
-)
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST
 
 from ..helpers.general.progress import queryStatus
 from ..patches import function
