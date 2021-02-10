@@ -53,18 +53,20 @@ export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
 docker-compose up -d --build
 
 # let db prepare. Check connections using psql.
+set +Eeuo pipefail # errors are ok right now
 success="False"
 while [ $success != "True" ]; do
     echo "Trying to connect to local db..."
     cmds="\q"
     # if left fails, right makes sure bash script does not exit
-    (psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds) || true
+    psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds
     if [ $? == 0 ]; then
         success="True"
     else
         sleep 2
     fi
 done
+set -Eeuo pipefail # errors are bad again
 
 bash ../db_setup/db_setup.sh
 
