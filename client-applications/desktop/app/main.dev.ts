@@ -102,6 +102,18 @@ const createWindow = async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
 
+    app.on('browser-window-focus', (event, window) => {
+        console.log("FOCUSED");
+    })
+
+    app.on('browser-window-blur', (event, window) => {
+        console.log("FOCUSED");
+    })
+
+    mainWindow.on('hide', () => {
+        console.log("HIDE");
+    })
+
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
     mainWindow.webContents.on("did-frame-finish-load", () => {
@@ -131,14 +143,16 @@ const createWindow = async () => {
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }
-        if (showMainWindow) {
-            if (process.env.START_MINIMIZED) {
-                mainWindow.minimize()
-            } else {
-                mainWindow.show()
-                mainWindow.focus()
-                mainWindow.maximize()
-            }
+        if (!showMainWindow) {
+            mainWindow.setOpacity(0.0)
+            mainWindow.setIgnoreMouseEvents(true)
+        }
+        if (process.env.START_MINIMIZED) {
+            mainWindow.minimize()
+        } else {
+            mainWindow.show()
+            mainWindow.focus()
+            mainWindow.maximize()
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
@@ -155,14 +169,11 @@ const createWindow = async () => {
             mainWindow.show()
             mainWindow.focus()
             mainWindow.restore()
-            if (app && app.dock) {
-                app.dock.show()
-            }
+            mainWindow.setOpacity(1.0)
+            mainWindow.setIgnoreMouseEvents(false)
         } else if (!showMainWindow && mainWindow) {
-            mainWindow.hide()
-            if (app && app.dock) {
-                app.dock.hide()
-            }
+            mainWindow.setOpacity(0.0)
+            mainWindow.setIgnoreMouseEvents(true)
         }
         event.returnValue = argv
     })
