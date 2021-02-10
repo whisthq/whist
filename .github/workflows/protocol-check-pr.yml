@@ -16,6 +16,7 @@ on:
             - "protocol/**"
             - "!protocol/README.md"
             - ".github/workflows/protocol-check-pr.yml"
+            - "container-images/helper-scripts/copy_protocol_build.sh"
     workflow_dispatch:
 
 jobs:
