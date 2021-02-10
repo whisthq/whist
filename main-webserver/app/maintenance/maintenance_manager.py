@@ -102,8 +102,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         redis_conn.set(update_key, 1)
 
         slack_send_safe(
-            # TODO: make real
-            "#alerts-test",
+            "#webserver",
             f":lock: webserver is in maintenance mode in region {region_name}",
         )
         fractal_log(
@@ -123,8 +122,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             f" Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
         )
         slack_send_safe(
-            # TODO: make real
-            "#alerts-test",
+            "#webserver",
             slack_msg,
         )
         log = (
@@ -183,9 +181,9 @@ def try_end_update(region_name: str) -> bool:
 
     redis_conn.delete(update_key)
     _release_lock()
-    # notify slack
     slack_send_safe(
-        "#alerts-test", f":unlock: webserver has ended maintenance mode on region {region_name}"
+        "#webserver",
+        f":unlock: webserver has ended maintenance mode on region {region_name}"
     )
     return True, f"Ended update in {region_name}"
 
@@ -344,8 +342,7 @@ def wait_no_update_and_track_task(func: Callable):
                 msg,
                 level=logging.ERROR,
             )
-            # TODO: make real
-            slack_send_safe("#alerts-test", msg)
+            slack_send_safe("#webserver", msg)
             raise ValueError("MAINTENANCE ERROR. Failed to deregister task.")
 
         # raise any exception to caller

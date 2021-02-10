@@ -177,7 +177,6 @@ def test_endpoint(action, **kwargs):
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
-
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
         task = assign_container.delay(
@@ -187,18 +186,9 @@ def test_endpoint(action, **kwargs):
             cluster_name,
             webserver_url=kwargs["webserver_url"],
         )
-        # task = assign_container.apply_async(
-        #     [username, task_definition_arn],
-        #     {
-        #         "cluster_name": cluster_name,
-        #         "region_name": region_name,
-        #         "webserver_url": kwargs["webserver_url"],
-        #     },
-        # )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
-
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "send_commands":
@@ -217,13 +207,11 @@ def test_endpoint(action, **kwargs):
 
     if action == "start_update":
         region_name = kwargs["body"]["region_name"]
-        # success, msg = try_start_update(region_name)
         success, msg = try_start_update(region_name=region_name)
         return jsonify({"success": success, "msg": msg}), ACCEPTED
 
     if action == "end_update":
         region_name = kwargs["body"]["region_name"]
-        # success = try_end_update(region_name)
         success, msg = try_end_update(
             region_name=region_name,
         )

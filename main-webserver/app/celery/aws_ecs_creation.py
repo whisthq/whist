@@ -343,7 +343,7 @@ def _assign_container(
     webserver_url=None,
 ):
     """
-    See assign_container. This is helpful for mocking.
+    See assign_container. This is helpful to mock.
     """
     fractal_log(
         function="assign_container",
@@ -882,7 +882,7 @@ def _create_new_cluster(
     self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
 ):
     """
-    See create_new_cluster. This exists for mocking.
+    See create_new_cluster. This is helpful to mock.
     """
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()

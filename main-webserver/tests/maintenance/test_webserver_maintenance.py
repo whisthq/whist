@@ -10,7 +10,10 @@ from app.maintenance.maintenance_manager import (
     _REDIS_TASKS_KEY,
     _REDIS_UPDATE_KEY,
 )
-from app.celery.aws_ecs_creation import _create_new_cluster, _assign_container
+from app.celery.aws_ecs_creation import (
+    _create_new_cluster,
+    _assign_container,
+)
 from app.constants.http_codes import (
     ACCEPTED,
     WEBSERVER_MAINTENANCE,
@@ -140,8 +143,9 @@ def custom_monkeypatch(func):
 @pytest.mark.usefixtures("celery_worker")
 def test_maintenance_mode(client, admin):
     """
-    Test the following maintenance mode access pattern:
-    1. mocked problematic task that takes 1 second
+    problematic task: create cluster or assign container, from /aws_container or /container/assign
+    Test this maintenance mode access pattern:
+    1. run a mocked problematic task that takes 1 second
     2. start maintenance mode, which should not succeed due to existing task but stop any new ones
     3. try a new problematic task, should fail out
     4. request maintenance mode again, this time succeeds due to first task being finished
