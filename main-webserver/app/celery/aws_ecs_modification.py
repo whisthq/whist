@@ -48,7 +48,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
     for container in unassigned_containers:
         container_name = container.container_id
 
-        # Lock the container in the database.
+        # Lock the container in the database for a short amount of time.
         # This is to make sure that the container is not assigned while we are trying to delete it.
         if spin_lock(container_name) < 0:
             fractal_log(
@@ -69,8 +69,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         )
 
         # Set the container state to "DELETING".
-        # Why are we locking it again if we already locked it?
-        # What is the point of the temporary_lock=10?
+        # Lock it for 10 minutes (again, spin_lock is only a temporary lock.)
         lock_container_and_update(
             container_name=container_name, state="DELETING", lock=True, temporary_lock=10
         )
@@ -79,13 +78,13 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         container_cluster = container.cluster
         container_location = container.location
 
-        # What happens if this cluster doesn't exist at this point?
+        # Database constraints ensure that we will only reach here if the cluster exists,
+        # because otherwise no containers would be found in the DB.
         ecs_client = ECSClient(
             base_cluster=container_cluster, region_name=container_location, grab_logs=False
         )
 
-        # Spawn a new task to replace the one we're deleting.
-        # How do we know this won't be assigned to a cluster we're about to delete right after this call?
+        # Update ecs_client to use the current task
         ecs_client.add_task(container_name)
 
         # Actually stop the task if it's not done.
@@ -103,19 +102,18 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         # Delete the row for this container from the database.
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
-    # Check if a cluster does not exist
+    # Check if a cluster does not exist.
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     try:
         ecs_client.update_cluster_with_new_ami(cluster_name, ami)
     except FractalECSClusterNotFoundException:
         # We should remove any entries in the DB referencing this cluster, as they are out of date
-        bad_entries = ClusterInfo.query.filter_by(cluster=cluster_name).all()
+        # Cluster is a primary key, so `.first()` suffices
+        bad_entry = ClusterInfo.query.filter_by(cluster=cluster_name).first()
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
 
-        for bad_entry in bad_entries:
-            fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
-
-        # Why is the status SUCCESS? Shouldn't it be a handled error?
+        # Task was executed successfully; we have recorded the fact that this cluster did not exist.
         self.update_state(
             state="SUCCESS",
             meta={
