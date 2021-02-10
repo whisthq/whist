@@ -9,7 +9,6 @@ from celery import Celery
 from flask import current_app, request
 from flask_sendgrid import SendGrid
 
-from app.helpers.utils.general.time import timeout
 from app.helpers.utils.general.redis import get_redis_url
 
 from .config import _callback_webserver_hostname
