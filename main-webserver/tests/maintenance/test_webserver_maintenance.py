@@ -122,6 +122,7 @@ def custom_monkeypatch(func):
     This decorator is needed to patch before celery fixtures are applied.
     The decorated test can only be run once.
     """
+
     def wrapper(func, *args, **kwargs):
         create_new_cluster_code, assign_container_code = mock_endpoints()
         to_ret = func(*args, **kwargs)
@@ -133,7 +134,7 @@ def custom_monkeypatch(func):
     return decorator.decorator(wrapper, func)
 
 
-@custom_monkeypatch # mock first to stop race-condition with celery threads
+@custom_monkeypatch  # mock first to stop race-condition with celery threads
 @pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
