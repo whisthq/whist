@@ -5,6 +5,7 @@ setlocal enabledelayedexpansion
 set "map=%*"
 call :gettoken -version version
 call :gettoken -bucket bucket
+call :gettoken -env env
 call :gettoken -publish publish
 
 if "%1%" == "--help" (
@@ -42,9 +43,21 @@ if "%1%" == "--help" (
     yarn config set network-timeout 300000
 
     if "%publish%" == "true" (
-        yarn package-ci
-        REM yarn package-ci && curl -X POST -H Content-Type:application/json  -d "{ \"branch\" : \"%1\", \"version\" : \"%2\" }" https://staging-server.fractal.co/version
+        if "%env%" == "development" (
+            yarn package-development
+        ) else (
+            if "%env%" == "staging" (
+                yarn package-staging
+            ) else (
+                if "%env%" == "production" (
+                    yarn package-production
+                ) else (
+                    echo Did not set a valid environment; not publishing. Options are development/staging/production.
+                )
+            )
+        )
     ) else (
+        REM packages the application locally, without uploading to AWS S3 bucket
         yarn package
     )
 )
