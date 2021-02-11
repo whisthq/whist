@@ -89,6 +89,11 @@
                 },
                 {
                     "readOnly": false,
+                    "containerPath": "/fractal/userConfigs:rshared",
+                    "sourceVolume": "userConfigs"
+                },
+                {
+                    "readOnly": false,
                     "containerPath": "/fractal/cloudStorage:rshared",
                     "sourceVolume": "cloudStorage"
                 },
@@ -163,6 +168,15 @@
             "name": "containerResourceMappings",
             "host": {
                 "sourcePath": "/fractal/%%FRACTAL_ID_PLACEHOLDER%%/containerResourceMappings"
+            },
+            "dockerVolumeConfiguration": null
+        },
+        {
+            "fsxWindowsFileServerVolumeConfiguration": null,
+            "efsVolumeConfiguration": null,
+            "name": "userConfigs",
+            "host": {
+                "sourcePath": "/fractal/%%FRACTAL_ID_PLACEHOLDER%%/userConfigs"
             },
             "dockerVolumeConfiguration": null
         },

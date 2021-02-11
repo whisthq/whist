@@ -174,6 +174,7 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 type RegisterDockerContainerIDRequest struct {
 	DockerID   string             `json:"docker_id"`  // Docker runtime ID of this container
 	FractalID  string             `json:"fractal_id"` // FractalID corresponding to this container
+	AppName    string             `json:"app_name"`   // App Name (e.g. browsers/chrome) for this container
 	resultChan chan requestResult // Channel to pass result between goroutines
 }
 
@@ -220,10 +221,12 @@ func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDReque
 			AuthSecret string `json:"auth_secret"`
 			DockerID   string `json:"docker_id"`
 			FractalID  string `json:"fractal_id"`
+			AppName    string `json:"app_name"`
 		}{
 			AuthSecret: webserverAuthSecret,
 			DockerID:   r.DockerID,
 			FractalID:  r.FractalID,
+			AppName:    r.AppName,
 		},
 	)
 
