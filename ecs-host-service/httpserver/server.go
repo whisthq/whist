@@ -87,13 +87,13 @@ type MountCloudStorageRequest struct {
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *MountCloudStorageRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
-// createResultChan is called to create the Go channel to pass cloud storage mounting request
-// result back to the HTTP request handler via ReturnResult
+// createResultChan is called to create the Go channel to pass request result
+// back to the HTTP request handler via ReturnResult.
 func (s *MountCloudStorageRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -129,13 +129,13 @@ type SetContainerDPIRequest struct {
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *SetContainerDPIRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass DPI setting request
-// result back to the HTTP request handler via ReturnResult
+// result back to the HTTP request handler via ReturnResult.
 func (s *SetContainerDPIRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -177,13 +177,13 @@ type RegisterDockerContainerIDRequest struct {
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *RegisterDockerContainerIDRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass request result
-// back to the HTTP request handler via ReturnResult
+// back to the HTTP request handler via ReturnResult.
 func (s *RegisterDockerContainerIDRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -211,7 +211,8 @@ func processRegisterDockerContainerIDRequest(w http.ResponseWriter, r *http.Requ
 	res.send(w)
 }
 
-// Create the necessary body for a RegisterDockerContainerIDRequest, including authentication
+// CreateRegisterDockerContainerIDRequestBody creates the necessary body for a
+// RegisterDockerContainerIDRequest, including authentication.
 func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDRequest) ([]byte, error) {
 	body, err := json.Marshal(
 		struct {
@@ -242,10 +243,14 @@ type CreateUinputDevicesRequest struct {
 	resultChan chan requestResult // Channel to pass result between goroutines
 }
 
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
 func (s *CreateUinputDevicesRequest) ReturnResult(result string, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
+// createResultChan is called to create the Go channel to pass request result
+// back to the HTTP request handler via ReturnResult.
 func (s *CreateUinputDevicesRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -339,9 +344,8 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	err = func() error {
 		if value, ok := rawmap["auth_secret"]; ok {
 			return json.Unmarshal(*value, &requestAuthSecret)
-		} else {
-			return logger.MakeError("Request body had no \"auth_secret\" field.")
 		}
+		return logger.MakeError("Request body had no \"auth_secret\" field.")
 	}()
 	if err != nil {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)

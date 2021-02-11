@@ -20,6 +20,9 @@ import (
 	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 )
 
+// UinputDeviceMapping is the type we manipulate in the main package of the
+// host service to avoid having to import ecs-agent packages into the main
+// package (for modularity).
 type UinputDeviceMapping ecsengine.FractalUinputDeviceMapping
 
 func init() {
@@ -128,7 +131,9 @@ func init() {
 
 }
 
-func ECSAgentMain() {
+// Main is the function that actually starts the ecsagent. It also contains the
+// main function from fractal/ecs-agent.
+func Main() {
 	// We want to set the relevant environment variables here so that the ECS
 	// agent is configured correctly before it actually runs.
 
@@ -164,7 +169,9 @@ func ECSAgentMain() {
 
 	fractallogger.Infof("Successfully set all env vars from %s", ecsConfigFilePath)
 
-	// Below is the original main() body from the ECS agent itself.
+	// Below is the original main() body from the ECS agent itself. Note that we
+	// modify `ecsapp.Run()` to take no arguments instead of reading in
+	// `os.Args[1:]`.
 	ecslogger.InitSeelog()
-	os.Exit(ecsapp.Run(os.Args[1:]))
+	os.Exit(ecsapp.Run([]string{}))
 }
