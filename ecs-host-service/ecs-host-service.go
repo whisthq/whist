@@ -157,11 +157,11 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 	syspath := logger.Sprintf("/sys/devices/virtual/input/%s", sysname)
 	sysdir, err := os.Open(syspath)
 	if err != nil {
-		return "", logger.MakeError("could not open directory %s: ", syspath, err)
+		return "", logger.MakeError("could not open directory %s: %s", syspath, err)
 	}
 	names, err := sysdir.Readdirnames(0)
 	if err != nil {
-		return "", logger.MakeError("Readdirnames for directory %s failed:", syspath, err)
+		return "", logger.MakeError("Readdirnames for directory %s failed: %s", syspath, err)
 	}
 	for _, name := range names {
 		if strings.HasPrefix(name, "event") {
