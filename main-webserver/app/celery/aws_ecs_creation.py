@@ -378,7 +378,7 @@ def assign_container(
         base_container.dpi = dpi
         db.session.commit()
         self.update_state(
-            state="PENDING",
+            state="STARTED",
             meta={"msg": "Container assigned"},
         )
     else:
@@ -410,7 +410,7 @@ def assign_container(
 
         message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
         self.update_state(
-            state="PENDING",
+            state="STARTED",
             meta={"msg": message},
         )
         fractal_log(function="assign_container", label=username, logs=message)
@@ -643,7 +643,7 @@ def create_new_container(
 
     message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={"msg": message},
     )
     fractal_log(function="create_new_container", label="None", logs=message)
@@ -831,7 +831,7 @@ def create_new_cluster(
     )
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": (
                 f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in "
@@ -927,7 +927,7 @@ def send_commands(self, cluster, region_name, commands, containers=None):
                 ),
             )
             self.update_state(
-                state="PENDING",
+                state="STARTED",
                 meta={
                     "msg": "Sending commands {} to containers {} in cluster {}".format(
                         commands, containers, cluster

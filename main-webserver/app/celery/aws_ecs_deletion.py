@@ -91,7 +91,7 @@ def delete_container(self, container_name, aes_key):
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
         self.update_state(
-            state="PENDING",
+            state="STARTED",
             meta={
                 "msg": "Container {container_name} begun stoppage".format(
                     container_name=container_name,
@@ -170,7 +170,7 @@ def delete_cluster(self, cluster, region_name):
             )
             ecs_client.terminate_containers_in_cluster(cluster)
             self.update_state(
-                state="PENDING",
+                state="STARTED",
                 meta={
                     "msg": "Terminating containers in {}".format(
                         cluster,

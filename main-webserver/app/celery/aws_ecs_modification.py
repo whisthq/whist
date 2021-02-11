@@ -30,7 +30,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         ami = region_to_ami[region_name]
 
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
@@ -91,7 +91,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         if not ecs_client.check_if_done(offset=0):
             ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
             self.update_state(
-                state="PENDING",
+                state="STARTED",
                 meta={
                     "msg": "Container {container_name} begun stoppage".format(
                         container_name=container_name,
@@ -160,7 +160,7 @@ def update_region(self, region_name="us-east-1", ami=None):
         )
 
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
@@ -226,7 +226,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         region_name: region that cluster resides in
     """
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": f"Checking if cluster {cluster} should be scaled.",
         },
