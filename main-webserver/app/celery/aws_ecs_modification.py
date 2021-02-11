@@ -120,7 +120,7 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
                 "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
             },
         )
-    finally:
+    else:
         # The cluster did exist, and was updated successfully.
         self.update_state(
             state="SUCCESS",
