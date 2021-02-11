@@ -80,6 +80,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {0, 0, 0, 0}};
 const char* usage;
 
+#define MAX_INCOMING_LENGTH 128
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
 #define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:s"
 
@@ -108,13 +109,13 @@ char *dupstring(char *s1) {
     return ret;
 }
 
-int evaluate_arg(int opt, char* optarg) {
+int evaluate_arg(int eval_opt, char* eval_optarg) {
     /*
         Evaluate an option given the optcode and the argument
 
         Arguments:
-            opt (int): optcode
-            optarg (char*): argument (can be NULL) passed with opt
+            eval_opt (int): optcode
+            eval_optarg (char*): argument (can be NULL) passed with opt
 
         Returns:
             (int): -1 on failure, 0 on success
@@ -123,9 +124,9 @@ int evaluate_arg(int opt, char* optarg) {
     long int ret;
     char *endptr;
 
-    switch (opt) {
+    switch (eval_opt) {
         case 'w': {  // width
-            ret = strtol(optarg, &endptr, 10);
+            ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                 printf("%s", usage);
                 return -1;
@@ -134,7 +135,7 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'h': {  // height
-            ret = strtol(optarg, &endptr, 10);
+            ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                 printf("%s", usage);
                 return -1;
@@ -143,7 +144,7 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'b': {  // bitrate
-            ret = strtol(optarg, &endptr, 10);
+            ret = strtol(eval_optarg, &endptr, 10);
             if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
                 printf("%s", usage);
                 return -1;
@@ -152,38 +153,38 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'c': {  // codec
-            if (!strcmp(optarg, "h264")) {
+            if (!strcmp(eval_optarg, "h264")) {
                 output_codec_type = CODEC_TYPE_H264;
-            } else if (!strcmp(optarg, "h265")) {
+            } else if (!strcmp(eval_optarg, "h265")) {
                 output_codec_type = CODEC_TYPE_H265;
             } else {
-                printf("Invalid codec type: '%s'\n", optarg);
+                printf("Invalid codec type: '%s'\n", eval_optarg);
                 printf("%s", usage);
                 return -1;
             }
             break;
         }
         case 'k': {  // private key
-            if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
+            if (!read_hexadecimal_private_key(eval_optarg, (char *)binary_aes_private_key,
                                               (char *)hex_aes_private_key)) {
-                printf("Invalid hexadecimal string: %s\n", optarg);
+                printf("Invalid hexadecimal string: %s\n", eval_optarg);
                 printf("%s", usage);
                 return -1;
             }
             break;
         }
         case 'u': {  // user email
-            if (!safe_strncpy(user_email, optarg, USER_EMAIL_MAXLEN)) {
-                printf("User email is too long: %s\n", optarg);
+            if (!safe_strncpy(user_email, eval_optarg, USER_EMAIL_MAXLEN)) {
+                printf("User email is too long: %s\n", eval_optarg);
                 return -1;
             }
             break;
         }
         case 'e': {  // sentry environment
             // only log "production" and "staging" env sentry events
-            if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
-                    printf("Sentry environment is too long: %s\n", optarg);
+            if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
+                if (!safe_strncpy(sentry_environment, eval_optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
+                    printf("Sentry environment is too long: %s\n", eval_optarg);
                     return -1;
                 }
                 using_sentry = true;
@@ -191,8 +192,8 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'i': {  // protocol window icon
-            if (!safe_strncpy(icon_png_filename, optarg, ICON_PNG_FILENAME_MAXLEN)) {
-                printf("Icon PNG filename is too long: %s\n", optarg);
+            if (!safe_strncpy(icon_png_filename, eval_optarg, ICON_PNG_FILENAME_MAXLEN)) {
+                printf("Icon PNG filename is too long: %s\n", eval_optarg);
                 return -1;
             }
             break;
@@ -202,7 +203,7 @@ int evaluate_arg(int opt, char* optarg) {
             char c = separator;
             unsigned short origin_port;
             unsigned short destination_port;
-            const char *str = optarg;
+            const char *str = eval_optarg;
             while (c == separator) {
                 int bytes_read;
                 int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
@@ -233,20 +234,20 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'z': {  // first connection method to try
-            if (!strcmp(optarg, "STUN")) {
+            if (!strcmp(eval_optarg, "STUN")) {
                 using_stun = true;
             } else if (!strcmp(optarg, "DIRECT")) {
                 using_stun = false;
             } else {
-                printf("Invalid connection type: '%s'\n", optarg);
+                printf("Invalid connection type: '%s'\n", eval_optarg);
                 printf("%s", usage);
                 return -1;
             }
             break;
         }
         case 'n': {  // window title
-            program_name = calloc(sizeof(char), strlen(optarg));
-            strcpy((char *)program_name, optarg);
+            program_name = calloc(sizeof(char), strlen(eval_optarg));
+            strcpy((char *)program_name, eval_optarg);
             break;
         }
         case 'r': { // use arguments piped from stdin
@@ -254,7 +255,7 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         case 'l': { // loading message
-            LOG_INFO("LOADING: %s", optarg);
+            LOG_INFO("LOADING: %s", eval_optarg);
             break;
         }
         case 's': {  // skip taskbar
@@ -262,7 +263,7 @@ int evaluate_arg(int opt, char* optarg) {
             break;
         }
         default: {
-            if (opt != -1) {
+            if (eval_opt != -1) {
                 // illegal option
                 printf("%s", usage);
                 return -1;
@@ -342,8 +343,6 @@ int parse_args(int argc, char *argv[]) {
 
     int opt;
     bool ip_set = false;
-    long int ret;
-    char *endptr;
     using_piped_arguments = false;
 
     while (true) {
@@ -412,27 +411,45 @@ int read_piped_arguments(bool* keep_waiting) {
     }
 
     // Arguments will arrive from the client application via pipe to stdin
-    int max_incoming_length = 128;
-    char incoming[max_incoming_length];
+    char incoming[MAX_INCOMING_LENGTH];
 
     int total_stored_chars = 0;
-    int available_chars = 0;
     char read_char = 0;
     bool keep_reading = true;
     bool finished_line = false;
+
+#ifndef _WIN32
+    int available_chars = 0;
+#else
+    DWORD available_chars;
+    INPUT_RECORD dummy_buffer[MAX_INCOMING_LENGTH];
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+#endif
 
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
     while (keep_reading && *keep_waiting) {
         // If stdin doesn't have any characters, continue the loop
+#ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+            return -1;
+        } else if (available_chars == 0) {
+            continue;
+        } else {
+            LOG_INFO("available_chars %d", available_chars);
+        }
+#else
+        if (!PeekConsoleInput(h_stdin, dummy_buffer, MAX_INCOMING_LENGTH, &available_chars)) {
+            LOG_ERROR("PeekConsoleInput error with piped arguments, errno %d", GetLastError());
+            return -1;
         } else if (available_chars == 0) {
             continue;
         }
+#endif // _WIN32
 
-        for (int i = 0; i < available_chars; i++) {
+        for (int i = 0; i < (int) available_chars; i++) {
             // Read a character from stdin
             read_char = (char) fgetc(stdin);
 
@@ -447,7 +464,7 @@ int read_piped_arguments(bool* keep_waiting) {
             // Causes some funky behavior if the line being read in is longer than 128 characters because
             //   it splits into two and processes as two different pieces
             if (!keep_reading || (total_stored_chars > 0 &&
-                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == max_incoming_length - 1)
+                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == MAX_INCOMING_LENGTH - 1)
             )) {
                 finished_line = true;
                 total_stored_chars = 0;
@@ -504,7 +521,7 @@ int read_piped_arguments(bool* keep_waiting) {
 completed_line_eval:
         // Reset finished_line after evaluating a line
         finished_line = false;
-        memset(&incoming, 0, max_incoming_length);
+        memset(&incoming, 0, MAX_INCOMING_LENGTH);
     }
 
     if (strlen((char*)server_ip) == 0) {

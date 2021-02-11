@@ -66,6 +66,7 @@ volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
+volatile bool initting_video = false;
 
 static enum AVPixelFormat sws_input_fmt;
 
@@ -847,6 +848,8 @@ int init_multithreaded_video(void* opaque) {
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
+    initting_video = false;
+
     render_screen((SDL_Renderer*)renderer);
     SDL_DestroyRenderer((SDL_Renderer*)renderer);
     return 0;
@@ -863,6 +866,8 @@ void init_video() {
     /*
         Creates renderer and video thread
     */
+    initting_video = true;
+
     video_data.render_screen_thread =
         SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
 }
@@ -1215,6 +1220,8 @@ void destroy_video() {
     /*
         Free the video thread and VideoContext data to exit
     */
+
+    while (initting_video);
 
     video_data.run_render_screen_thread = false;
     SDL_WaitThread(video_data.render_screen_thread, NULL);
