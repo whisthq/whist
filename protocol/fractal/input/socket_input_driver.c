@@ -389,7 +389,7 @@ void destroy_input_device(InputDevice* input_device) {
         LOG_INFO("destroy_input_device: Nothing to do, device is null!");
         return;
     }
-    
+
     // We close without emitting `ioctl(fd, UI_DEV_DESTROY)`.
     // This is because we let the host service maintain this responsibility.
     // When we close the protocol's file descriptors, the host service still
