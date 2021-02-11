@@ -1,4 +1,5 @@
 import { OperatingSystem } from "shared/types/client"
+import { AWSRegion } from "shared/types/aws"
 
 export type Timer = {
     appOpened?: number
@@ -10,6 +11,7 @@ export type Timer = {
 
 export type ComputerInfo = {
     operatingSystem?: OperatingSystem | undefined
+    region?: AWSRegion | undefined
 }
 
 export type ClientDefault = {
@@ -27,5 +29,6 @@ export const DEFAULT: ClientDefault = {
     },
     computerInfo: {
         operatingSystem: undefined,
+        region: undefined,
     },
 }

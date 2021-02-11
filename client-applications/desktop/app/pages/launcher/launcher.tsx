@@ -10,7 +10,11 @@ import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
 import { FractalAppState, FractalTaskStatus } from "shared/types/containers"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { User } from "store/reducers/auth/default"
-import { Timer, DEFAULT as ClientDefault } from "store/reducers/client/default"
+import {
+    Timer,
+    ComputerInfo,
+    DEFAULT as ClientDefault,
+} from "store/reducers/client/default"
 import {
     Container,
     Task,
@@ -24,6 +28,7 @@ import {
     createContainer,
 } from "store/actions/container/sideEffects"
 import { FractalIPC } from "shared/types/ipc"
+import { AWSRegion } from "shared/types/aws"
 import { FractalDirectory } from "shared/types/client"
 import { uploadToS3 } from "shared/utils/files/aws"
 
@@ -39,7 +44,7 @@ import { ChildProcess } from "child_process"
     Amount of time passed before giving up on container/assign
     60000 = 1 minute
 */
-const TIMEOUT = 60000 * 2
+const TIMEOUT = 2 * 60000
 
 export const Launcher = (props: {
     userID: string
@@ -49,6 +54,7 @@ export const Launcher = (props: {
     protocolKillSignal: number
     container: Container
     timer: Timer
+    region: AWSRegion | undefined
     dispatch: Dispatch
 }) => {
     /*
@@ -69,11 +75,13 @@ export const Launcher = (props: {
         protocolKillSignal,
         container,
         timer,
+        region,
         dispatch,
     } = props
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
-    const [protocol, updateProtocol] = useState<ChildProcess>()
+    const [protocol, setProtocol] = useState<ChildProcess>()
+    const [protocolLock, setProtocolLock] = useState(false)
     const [disconnected, setDisconnected] = useState(false)
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
@@ -118,6 +126,7 @@ export const Launcher = (props: {
         setTaskState(FractalAppState.NO_TASK)
         resetReduxforLaunch()
         dispatch(updateTask({ shouldLaunchProtocol: true }))
+        setProtocolLock(false)
         setTimedOut(false)
 
         setTimeout(() => {
@@ -206,7 +215,9 @@ export const Launcher = (props: {
             )
             if (protocol) {
                 endStream(protocol, "kill?0")
-                updateProtocol(undefined)
+                protocol.kill("SIGINT")
+                setProtocolLock(false)
+                setProtocol(undefined)
             }
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
             setKillSignalsReceived(protocolKillSignal)
@@ -226,7 +237,14 @@ export const Launcher = (props: {
     // On app start, check if a container creation request has been sent.
     // If not, create a container
     useEffect(() => {
-        if (!protocol && shouldLaunchProtocol) {
+        if (!protocol && shouldLaunchProtocol && !protocolLock) {
+            setProtocolLock(true)
+            dispatch(
+                updateTask({
+                    shouldLaunchProtocol: false,
+                })
+            )
+
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
@@ -234,12 +252,7 @@ export const Launcher = (props: {
                     protocolOnStart,
                     protocolOnExit
                 )
-                dispatch(
-                    updateTask({
-                        shouldLaunchProtocol: false,
-                    })
-                )
-                updateProtocol(childProcess)
+                setProtocol(childProcess)
             }
 
             launchProtocolAsync()
@@ -247,18 +260,14 @@ export const Launcher = (props: {
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
         }
-    }, [dispatch, protocol, shouldLaunchProtocol])
+    }, [dispatch, protocol, shouldLaunchProtocol, protocolLock])
 
     useEffect(() => {
-        if (
-            protocol &&
-            taskState === FractalAppState.NO_TASK &&
-            container.region
-        ) {
+        if (protocol && taskState === FractalAppState.NO_TASK && region) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, container])
+    }, [protocol, region, taskState])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -355,6 +364,7 @@ export const mapStateToProps = (state: {
     }
     ClientReducer: {
         timer: Timer
+        computerInfo: ComputerInfo
     }
 }) => {
     return {
@@ -364,6 +374,7 @@ export const mapStateToProps = (state: {
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
         protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
+        region: state.ClientReducer.computerInfo.region,
         timer: state.ClientReducer.timer,
     }
 }

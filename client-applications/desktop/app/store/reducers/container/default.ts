@@ -41,6 +41,5 @@ export const DEFAULT: ContainerState = {
         port32273: "",
         location: "",
         secretKey: "",
-        region: undefined,
     },
 }

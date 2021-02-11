@@ -17,8 +17,6 @@ export const debugLog = <T>(callback: T) => {
 }
 
 export class FractalLogger {
-    // fileName = "logs/renderer.log"
-
     maxFileSize = 10000000
 
     token = "IroqVsvNytmNricZSTLUSVtJbxNYBgxp"
@@ -43,7 +41,13 @@ export class FractalLogger {
 
     private createLogger = () => {
         // Where to send the logs
-        const transport = [new transports.Console()]
+        const developmentTransport = [new transports.Console()]
+
+        const productionTransport = [new transports.Console()]
+        const transport =
+            process.env.NODE_ENV === FractalNodeEnvironment.PRODUCTION
+                ? productionTransport
+                : developmentTransport
 
         const logger = createLogger({
             levels: config.syslog.levels,
