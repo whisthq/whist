@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # util.sh
 
 # Helpful functions that are useful for preparing the fractal application for
