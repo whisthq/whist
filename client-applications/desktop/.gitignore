@@ -1,6 +1,5 @@
 # Fractal protocol
 protocol-build/
-logs/
 rcedit-x64.exe
 .unison
 .protocol

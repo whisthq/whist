@@ -8,7 +8,6 @@
         "extends browserslist-config-erb"
     ],
     "build": {
-        "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
         "asar": true,
