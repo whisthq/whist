@@ -633,16 +633,16 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		}
 	}
 
-    // Delete associated devices and remove them from the map
-    uinputDevices, ok := devices[fractalID]
+	// Delete associated devices and remove them from the map
+	uinputDevices, ok := devices[fractalID]
 	if !ok {
 		logger.Infof("containerDieHandler(): Couldn't find uinput devices mapping for container with fractalID %s", fractalID)
 		return
-    }
-    uinputDevices.absmouse.Close()
-    uinputDevices.relmouse.Close()
-    uinputDevices.keyboard.Close()
-    delete(devices, fractalID)
+	}
+	uinputDevices.absmouse.Close()
+	uinputDevices.relmouse.Close()
+	uinputDevices.keyboard.Close()
+	delete(devices, fractalID)
 }
 
 // ---------------------------
