@@ -69,7 +69,10 @@ format:
 
 lint:
 	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
-	golint ./...
+	golint -set_exit_status ./...
+
+vet:
+	go vet ./...
 
 clean:
 	$(GOCLEAN)
