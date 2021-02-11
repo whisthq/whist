@@ -2,11 +2,12 @@ import {
     FractalEnvironment,
     FractalConfig,
     FractalNodeEnvironment,
+    FractalCIEnvironment,
 } from "shared/types/config"
 
-// these are basically used to keep these links in one place
-// since we are going to be using them in logic for admin integration testing
-// app where you can choose where to go to
+/*
+    Webserver URLs
+*/
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
     dev: "http://dev-server.fractal.co/",
@@ -14,6 +15,9 @@ export const webservers: { [key: string]: string } = {
     production: "https://prod-server.fractal.co",
 }
 
+/* 
+    All environment variables. All secret keys have permission restrictions.
+*/
 const environment: FractalEnvironment = {
     LOCAL: {
         url: {
@@ -115,28 +119,28 @@ const environment: FractalEnvironment = {
 
 const getDevelopmentEnv = () => {
     switch (process.env.DEVELOPMENT_ENV) {
-        case "local":
+        case FractalCIEnvironment.LOCAL:
             return environment.LOCAL
         default:
-            return environment.DEV
+            return environment.DEVELOPMENT
     }
 }
 
 const getProductionEnv = () => {
     switch (process.env.PRODUCTION_ENV) {
-        case "development":
-            return environment.DEV
-        case "staging":
+        case FractalCIEnvironment.DEVELOPMENT:
+            return environment.DEVELOPMENT
+        case FractalCIEnvironment.STAGING:
             return environment.STAGING
-        case "production":
-            return environment.PROD
+        case FractalCIEnvironment.PRODUCTION:
+            return environment.PRODUCTION
         default:
-            return environment.PROD
+            return environment.PRODUCTION
     }
 }
 
 export const config: FractalConfig =
-    process.env.NODE_ENV === FractalNodeEnvironment.DEV
+    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
         ? getDevelopmentEnv()
         : getProductionEnv()
 
