@@ -39,13 +39,6 @@ jobs:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-            # Install dependencies for `make format` and `make lint`
-            # We make sure not to use `ecs-host-service` as the working directory to avoid polluting `go.mod` and `go.sum`
-            - name: Install goimports and golint
-              run: |
-                  go get -u golang.org/x/tools/cmd/goimports
-                  go get -u golang.org/x/lint/golint
-
             # Build go project
             - name: Build Go project
               env:
