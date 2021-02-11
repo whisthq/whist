@@ -491,6 +491,9 @@ int read_piped_arguments(bool* keep_waiting) {
                 safe_strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
                 LOG_INFO("Connecting to IP %s", server_ip);
             }
+        } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
+            // If arg_name is `kill`, then return failure
+            return -1;
         } else {
             // If arg_name is invalid, then log a warning, but continue
             LOG_WARNING("Piped arg %s not available", arg_name);
