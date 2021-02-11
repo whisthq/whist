@@ -34,9 +34,9 @@ const environment: FractalEnvironment = {
         sentryEnv: "development",
         clientDownloadURLs: {
             MacOS:
-                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
     },
     DEVELOPMENT: {
@@ -58,9 +58,9 @@ const environment: FractalEnvironment = {
         sentryEnv: "development",
         clientDownloadURLs: {
             MacOS:
-                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
+                "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe   ",
         },
     },
     STAGING: {
@@ -82,9 +82,9 @@ const environment: FractalEnvironment = {
         sentryEnv: "staging",
         clientDownloadURLs: {
             MacOS:
-                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+                "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
         },
     },
     PRODUCTION: {
@@ -106,9 +106,9 @@ const environment: FractalEnvironment = {
         sentryEnv: "production",
         clientDownloadURLs: {
             MacOS:
-                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+                "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
         },
     },
 }
@@ -118,25 +118,25 @@ const getDevelopmentEnv = () => {
         case "local":
             return environment.LOCAL
         default:
-            return environment.DEVELOPMENT
+            return environment.DEV
     }
 }
 
 const getProductionEnv = () => {
     switch (process.env.PRODUCTION_ENV) {
         case "development":
-            return environment.DEVELOPMENT
+            return environment.DEV
         case "staging":
             return environment.STAGING
         case "production":
-            return environment.PRODUCTION
+            return environment.PROD
         default:
-            return environment.PRODUCTION
+            return environment.PROD
     }
 }
 
 export const config: FractalConfig =
-    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+    process.env.NODE_ENV === FractalNodeEnvironment.DEV
         ? getDevelopmentEnv()
         : getProductionEnv()
 

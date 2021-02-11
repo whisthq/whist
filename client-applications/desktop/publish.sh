@@ -21,7 +21,7 @@ function printhelp {
     echo "                              fractal-chromium-ubuntu-prod    [Linux Ubuntu Fractalized Chrome Production Bucket]"
     echo ""
     echo "  --env ENV                 environment to publish the client app with"
-    echo "                            defaults to development, options are development/staging/production"
+    echo "                            defaults to development, options are dev/staging/prod"
     echo ""
     echo "  --publish PUBLISH         set whether to publish to S3 and auto-update live apps"
     echo "                            defaults to false, options are true/false"
@@ -102,17 +102,17 @@ else
 
     if [[ "$publish" == "true" ]]
     then
-        if [[ "$env" == "development" ]]
+        if [[ "$env" == "dev" ]]
         then
             yarn package-development
         elif [[ "$env" == "staging" ]]
         then
             yarn package-staging
-        elif [[ "$env" == "production" ]]
+        elif [[ "$env" == "prod" ]]
         then
-            yarn package-production
+            yarn package-prod
         else
-            echo "Did not set a valid environment; not publishing. Options are development/staging/production."
+            echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
         fi
     else
         yarn package # packages the application locally, without uploading to AWS S3 bucket
