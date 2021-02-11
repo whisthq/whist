@@ -67,6 +67,10 @@ format:
 	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | xargs)
 
+lint:
+	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
+	golint ./...
+
 clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_FOLDER)
