@@ -1,7 +1,7 @@
-export const GET_OPERATING_SYSTEM = "GET_OPERATING_SYSTEM"
+export const GET_COMPUTER_INFO = "GET_COMPUTER_INFO"
 
-export const getOperatingSystem = () => {
+export const getComputerInfo = () => {
     return {
-        type: GET_OPERATING_SYSTEM,
+        type: GET_COMPUTER_INFO,
     }
 }
