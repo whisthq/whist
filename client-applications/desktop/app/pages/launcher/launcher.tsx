@@ -88,7 +88,7 @@ export const Launcher = (props: {
                 setLoadingMessage(LoadingMessage.TIMEOUT)
                 logger.logError("Protocol took to long to launch", userID)
             }
-        }, 20000)
+        }, 60000)
     }
     // Restores Redux state to before a container was created
     const resetLaunch = () => {
