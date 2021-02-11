@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # ${1} the webserver url
 # ${2} the task ID in question
 
