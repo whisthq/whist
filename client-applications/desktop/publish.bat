@@ -43,16 +43,16 @@ if "%1%" == "--help" (
     yarn config set network-timeout 300000
 
     if "%publish%" == "true" (
-        if "%env%" == "development" (
-            yarn package-development
+        if "%env%" == "dev" (
+            yarn package-dev
         ) else (
             if "%env%" == "staging" (
                 yarn package-staging
             ) else (
-                if "%env%" == "production" (
-                    yarn package-production
+                if "%env%" == "prod" (
+                    yarn package-prod
                 ) else (
-                    echo Did not set a valid environment; not publishing. Options are development/staging/production.
+                    echo Did not set a valid environment; not publishing. Options are dev/staging/prod
                 )
             )
         )
@@ -78,6 +78,9 @@ echo                                 options are:
 echo                                     fractal-chromium-windows-dev     [Windows Fractalized Chrome Development Bucket]
 echo                                     fractal-chromium-windows-staging [Windows Fractalized Chrome Staging Bucket]
 echo                                     fractal-chromium-windows-prod    [Windows Fractalized Chrome Production Bucket]
+echo.
+echo  -env ENV                       environment to publish the client app with
+echo                                 defaults to development, options are dev/staging/prod
 echo.
 echo   -publish=PUBLISH              set whether to publish to S3 and auto-update live apps
 echo                                 defaults to false, options are true/false
