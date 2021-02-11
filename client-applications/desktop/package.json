@@ -34,7 +34,7 @@
                     "y": 220
                 }
             ],
-            "icon": "build/icon.icns",
+            "icon": "build/icon.png",
             "sign": false
         },
         "extraFiles": [
@@ -74,7 +74,7 @@
             },
             "gatekeeperAssess": false,
             "hardenedRuntime": true,
-            "icon": "build/icon.icns",
+            "icon": "build/icon.png",
             "minimumSystemVersion": "10.13.0",
             "target": [
                 "dmg"
