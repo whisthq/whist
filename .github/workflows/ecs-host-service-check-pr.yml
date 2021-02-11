@@ -55,16 +55,26 @@ jobs:
               working-directory: ecs-host-service
               run: make build
 
-            # Lint go project
-            - name: Check if Code is Linted with goimports
+            # Check code formatting
+            - name: Check if Code is Formatted with goimports
               working-directory: ecs-host-service
               run: |
                   PATH=$PATH:~/go/bin
-
                   # Apply goimports format changes to the current directory
                   make format
-
                   # Show diff in GitHub Actions logs
                   git diff HEAD --
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
+
+            - name: Check Code with govet
+              working-directory: ecs-host-service
+              run: |
+                  PATH=$PATH:~/go/bin
+                  make vet
+
+            - name: Check Code with golint
+              working-directory: ecs-host-service
+              run: |
+                  PATH=$PATH:~/go/bin
+                  make lint
