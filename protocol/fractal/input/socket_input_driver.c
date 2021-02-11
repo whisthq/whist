@@ -389,6 +389,14 @@ void destroy_input_device(InputDevice* input_device) {
         LOG_INFO("destroy_input_device: Nothing to do, device is null!");
         return;
     }
+    // We close without emitting `ioctl(fd, UI_DEV_DESTROY)`.
+    // This is because we let the host service maintain this responsibility.
+    // When we close the protocol's file descriptors, the host service still
+    // keeps its own file descriptors, which will make sure that the kernel
+    // will continue to keep open the OS-level _file description_. Therefore,
+    // the host service will still be able to write to its file descriptors.
+    // Once the host service closes its file descriptors, then the OS will
+    // finally close the file description since no more references remain.
     close(input_device->fd_absmouse);
     close(input_device->fd_relmouse);
     close(input_device->fd_keyboard);
