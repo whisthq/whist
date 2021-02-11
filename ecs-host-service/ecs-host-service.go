@@ -85,7 +85,7 @@ func startDockerDaemon() {
 
 // We take ownership of the ECS agent ourselves
 func startECSAgent() {
-	go ecsagent.ECSAgentMain()
+	go ecsagent.Main()
 }
 
 // ------------------------------------
@@ -137,11 +137,11 @@ const (
 	uiIoctlBase  = 85 // 'U'
 )
 
-func linuxIoc(dir uintptr, type_ uintptr, nr uintptr, size uintptr) uintptr {
-	return (dir << iocDirshift) + (type_ << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
+func linuxIoc(dir uintptr, requestType uintptr, nr uintptr, size uintptr) uintptr {
+	return (dir << iocDirshift) + (requestType << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
 }
 
-func linuxUiGetSysname(len uintptr) uintptr {
+func linuxUIGetSysName(len uintptr) uintptr {
 	return linuxIoc(iocRead, uiIoctlBase, 44, len)
 }
 
@@ -149,7 +149,7 @@ func linuxUiGetSysname(len uintptr) uintptr {
 func getDeviceFilePath(fd *os.File) (string, error) {
 	const maxlen uintptr = 32
 	bsysname := make([]byte, maxlen)
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd.Fd()), linuxUiGetSysname(maxlen), uintptr(unsafe.Pointer(&bsysname[0])))
+	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd.Fd()), linuxUIGetSysName(maxlen), uintptr(unsafe.Pointer(&bsysname[0])))
 	if errno != 0 {
 		return "", logger.MakeError("ioctl to get sysname failed with errno %d", errno)
 	}
@@ -334,9 +334,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	err = os.MkdirAll(path, 0777)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
-	} else {
-		logger.Infof("Created directory %s", path)
 	}
+	logger.Infof("Created directory %s", path)
 	makeFractalDirectoriesFreeForAll()
 
 	// We mount in foreground mode, and wait for the result to clean up the
@@ -367,9 +366,8 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not run \"rclone config create\" command: %s. Output: %s", err, output)
-	} else {
-		logger.Info("Ran \"rclone config create\" command with output: %s", output)
 	}
+	logger.Info("Ran \"rclone config create\" command with output: %s", output)
 
 	// Mount in separate goroutine so we don't block the main goroutine.
 	// Synchronize using errorchan.
