@@ -64,6 +64,7 @@ build: checkCI
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 format:
+	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | xargs)
 
 clean:
