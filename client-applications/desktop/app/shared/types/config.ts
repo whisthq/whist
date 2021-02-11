@@ -32,3 +32,10 @@ export enum FractalNodeEnvironment {
     DEVELOPMENT = "development",
     PRODUCTION = "production",
 }
+
+export enum FractalCIEnvironment {
+    LOCAL = "local",
+    DEVELOPMENT = "dev",
+    STAGING = "staging",
+    PRODUCTION = "prod",
+}
