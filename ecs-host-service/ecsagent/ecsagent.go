@@ -53,11 +53,12 @@ func init() {
 		},
 	}
 	ecsengine.SetFractalHostServiceMappingSender(
-		func(dockerID, fractalID string) error {
+		func(dockerID, fractalID, appName string) error {
 			body, err := fractalhttpserver.CreateRegisterDockerContainerIDRequestBody(
 				fractalhttpserver.RegisterDockerContainerIDRequest{
 					DockerID:  dockerID,
 					FractalID: fractalID,
+					AppName:   appName,
 				},
 			)
 			if err != nil {
