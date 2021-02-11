@@ -594,6 +594,15 @@ jobs:
                   --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
                   https://config-database.fractal.co/v1/graphql > response.json
 
+                  # Check if we actually got back valid json. If not, we should
+                  # throw a human-readable error because the config DB might be
+                  # down.
+                  if jq -e . > /dev/null 2>&1 <<< cat response.json ; then
+                    echo "Got some valid JSON from the config DB. Continuing..."
+                  else
+                    echo "Failed to parse the JSON from the config DB. Is it up?" && false
+                  fi
+
                   # parse JSON into major.minor.micro-rc
                   MAJOR=$(cat response.json | jq '.data.desktop_app_version[0].major')
                   MINOR=$(cat response.json | jq '.data.desktop_app_version[0].minor')
