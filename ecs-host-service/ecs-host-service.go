@@ -208,8 +208,6 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 	go func() {
 		// TODO: handle errors better
 		// TODO: exit goroutine if container dies
-		// TODO: actually delete the devices from the host when the container dies
-		// TODO: delete devices from devices map when container dies
 		dirname := fractalTempDir + FractalID + "/sockets/"
 		filename := dirname + "uinput.sock"
 		os.MkdirAll(dirname, 0777)
@@ -634,6 +632,17 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 			unmountCloudStorageDir(hostPort, k)
 		}
 	}
+
+	// Delete associated devices and remove them from the map
+	uinputDevices, ok := devices[fractalID]
+	if !ok {
+		logger.Infof("containerDieHandler(): Couldn't find uinput devices mapping for container with fractalID %s", fractalID)
+		return
+	}
+	uinputDevices.absmouse.Close()
+	uinputDevices.relmouse.Close()
+	uinputDevices.keyboard.Close()
+	delete(devices, fractalID)
 }
 
 // ---------------------------
