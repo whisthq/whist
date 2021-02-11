@@ -48,23 +48,12 @@ def mock_assign_container(*args, **kwargs):
     time.sleep(1)
 
 
-def mock_endpoints():
+def mock_endpoints(monkeypatch):
     """ Manual mocking because this needs to be done before celery threads start. """
     # problematic:
     # /aws_container/create_cluster, /aws_container/assign_container, /container/assign
-    create_new_cluster_code = copy.deepcopy(_create_new_cluster.__code__)
-    _create_new_cluster.__code__ = mock_create_cluster.__code__
-
-    assign_container_code = copy.deepcopy(_assign_container.__code__)
-    _assign_container.__code__ = mock_assign_container.__code__
-
-    return create_new_cluster_code, assign_container_code
-
-
-def unmock_endpoints(create_new_cluster_code, assign_container_code):
-    """ Undo the mocking of create cluster and assign container """
-    _create_new_cluster.__code__ = create_new_cluster_code
-    _assign_container.__code__ = assign_container_code
+    monkeypatch.setattr(_create_new_cluster, "__code__", mock_create_cluster.__code__)
+    monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
 
 def try_start_maintenance(client, region_name: str):
@@ -120,28 +109,28 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
     return resp
 
 
-def custom_monkeypatch(func):
+def early_monkeypatch(monkeypatch_argn: int):
     """
     This decorator is needed to patch before celery fixtures are applied.
     The decorated test can only be run once.
     """
+    def early_monkeypatch_decorator(func):
+        def wrapper(func, *args, **kwargs):
+            monkeypatch = args[monkeypatch_argn]
+            mock_endpoints(monkeypatch)
+            return func(*args, **kwargs)
 
-    def wrapper(func, *args, **kwargs):
-        create_new_cluster_code, assign_container_code = mock_endpoints()
-        to_ret = func(*args, **kwargs)
-        unmock_endpoints(create_new_cluster_code, assign_container_code)
-        return to_ret
-
-    # using functools.wraps does not work. This post helped:
-    # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
-    return decorator.decorator(wrapper, func)
+        # using functools.wraps does not work. This post helped:
+        # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
+        return decorator.decorator(wrapper, func)
+    return early_monkeypatch_decorator
 
 
-@custom_monkeypatch  # mock first to stop race-condition with celery threads
+@early_monkeypatch(monkeypatch_argn=2)  # mock first to stop race-condition with celery threads
 @pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode(client, admin):
+def test_maintenance_mode(client, admin, monkeypatch):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:
@@ -167,9 +156,6 @@ def test_maintenance_mode(client, admin):
     # wipe these for a fresh start
     redis_conn.delete(update_key)
     redis_conn.delete(tasks_key)
-
-    # mock endpoints (will call again to unmock)
-    # mock_endpoints()
 
     # -- Start the test -- #
 
