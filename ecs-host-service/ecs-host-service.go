@@ -107,7 +107,6 @@ var fractalIDs map[string]string = make(map[string]string)
 // keep track of the mapping from hostPort to app (e.g. browsers/chrome)
 var containerAppNames map[uint16]string = make(map[uint16]string)
 
-
 // keep track of the mapping from hostPort to user ID
 var containerUserIDs map[uint16]string = make(map[uint16]string)
 
@@ -463,7 +462,7 @@ func saveUserConfig(hostPort uint16) {
 		if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
 			logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
 		} else {
-			logger.Infof("Tar config directory output: %s", tarConfigOutput);
+			logger.Infof("Tar config directory output: %s", tarConfigOutput)
 		}
 
 		saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
@@ -491,16 +490,17 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	userID := req.UserID
 	containerID := containerIDs[(uint16)(req.HostPort)]
 	hostPort := logger.Sprintf("%v", req.HostPort)
+	fractalID := fractalIDs[containerID]
 	configPath := userConfigsDirectory + hostPort + "/"
 
 	// Make directory to move configs to
 	err := os.MkdirAll(configPath, 0777)
 	if err != nil {
 		return logger.MakeError("Could not mkdir path %s. Error: %s", configPath, err)
-	} else {
-		logger.Infof("Created directory %s", configPath)
 	}
-	makeFractalDirectoryFreeForAll()
+	logger.Infof("Created directory %s", configPath)
+
+	makeFractalDirectoriesFreeForAll()
 
 	// Get app name
 	getAppnameStrcmd := strings.Join(
@@ -511,7 +511,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 			"/usr/bin/sed", "'s/.*fractal\\/\\(.*\\):.*/\\1/'",
 		}, " ")
 
-	getAppnameScriptpath := resourceMappingDirectory + "get-app-name-" + hostPort + ".sh"
+	getAppnameScriptpath := fractalDir + fractalID + "/" + "get-app-name-" + hostPort + ".sh"
 	f, _ := os.Create(getAppnameScriptpath)
 	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
 	_, _ = f.WriteString(getAppnameStrcmd)
@@ -522,9 +522,9 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	appNameOutput, err := getAppnameCmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appNameOutput)
-	} else {
-		logger.Info("Ran \"docker inspect\" command with output: %s", appNameOutput)
 	}
+
+	logger.Info("Ran \"docker inspect\" command with output: %s", appNameOutput)
 
 	appName := strings.TrimSpace(string(appNameOutput))
 
@@ -534,7 +534,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
-		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName  + "/fractal-app-config.tar.gz"
+		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName + "/fractal-app-config.tar.gz"
 		// Retrieve app config from S3
 		getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 		getConfigOutput, err := getConfigCmd.CombinedOutput()
@@ -543,9 +543,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		//    stored for this application yet.
 		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
 			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
-		} else {
-			logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 		}
+		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 	}
 
 	return nil
@@ -871,7 +870,7 @@ func initializeFilesystem() {
 		logger.Panicf("Could not mkdir path %s. Error: %s", userConfigsDirectory, err)
 	}
 
-	makeFractalDirectoryFreeForAll()
+	makeFractalDirectoriesFreeForAll()
 }
 
 // Delete the directory used to store the container resource allocations
