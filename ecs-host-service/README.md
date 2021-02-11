@@ -36,18 +36,11 @@ For more details, see the comments at the beginning of `main()` and `shutdownHos
 
 ## Styling
 
-We use `goimports` and `golint` for Golang linting and coding standards. You can install them by running:
+We use `goimports` and `golint` for Golang linting and coding standards. These are automatically installed when running `make format` or `make lint`.
 
-```
-# Install goimports and golint
-go get -u golang.org/x/tools/cmd/goimports
-go get -u golang.org/x/lint/golint
+If you decide to manually install `goimports` and `golint` by copying the installation commands from the Makefile, make sure not to run the `go get` commands inside any of the ecs-host-service directories, since that will pollute our `go.mod` and `go.sum` files. Instead, switch to your home directory (for instance).
 
-# Add Go bin to path (Unix)
-PATH=$PATH:~/go/bin
-```
-
-Then, format your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-format.go]`, respectively.
+If `goimports` and `golint` are installed, you can manually format and lint your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-format.go]`, respectively.
 
 ## Publishing
 
