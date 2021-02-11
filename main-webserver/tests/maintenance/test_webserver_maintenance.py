@@ -114,6 +114,7 @@ def early_monkeypatch(monkeypatch_argn: int):
     This decorator is needed to patch before celery fixtures are applied.
     The decorated test can only be run once.
     """
+
     def early_monkeypatch_decorator(func):
         def wrapper(func, *args, **kwargs):
             monkeypatch = args[monkeypatch_argn]
@@ -123,6 +124,7 @@ def early_monkeypatch(monkeypatch_argn: int):
         # using functools.wraps does not work. This post helped:
         # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
         return decorator.decorator(wrapper, func)
+
     return early_monkeypatch_decorator
 
 
