@@ -1,3 +1,4 @@
+#!/bin/bash
 
 echo "*** When the command line prompts, just keep hitting 'enter' ***"
 echo "Making keys..."
