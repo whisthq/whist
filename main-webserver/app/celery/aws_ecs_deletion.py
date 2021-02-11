@@ -141,8 +141,8 @@ def delete_container(self, container_name, aes_key):
 def delete_cluster(self, cluster, region_name):
     task_start_time = time.time()
 
+    ecs_client = ECSClient(region_name=region_name)
     try:
-        ecs_client = ECSClient(region_name=region_name)
         running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus="RUNNING")[
             "taskArns"
         ]
@@ -202,6 +202,26 @@ def delete_cluster(self, cluster, region_name):
                 # sometimes metadata takes time to update
                 time.sleep(30)
                 ecs_client.ecs_client.delete_cluster(cluster=cluster)
+    except ecs_client.ecs_client.exceptions.ClusterNotFoundException:
+        # The cluster does not exist! We must simply purge from database if it exists
+        bad_entry = ClusterInfo.query.get(cluster)
+        if bad_entry:
+            fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
+            self.update_state(
+                state="SUCCESS",
+                meta={
+                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS!"
+                    "Removed an erroneous entry from our database."
+                },
+            )
+        else:
+            self.update_state(
+                state="SUCCESS",
+                meta={
+                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS"
+                    "or in our database."
+                },
+            )
     except Exception as error:
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
         print(traceback_str)
