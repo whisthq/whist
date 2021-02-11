@@ -49,7 +49,7 @@ const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
 const fractalTempDir = fractalDir + "temp/"
 const containerResourceMappings = "containerResourceMappings/"
-const userConfigsDirectory = "/fractal/userConfigs"
+const userConfigs = "userConfigs/"
 
 // TODO: get rid of this security nemesis
 // Opens all permissions on /fractal directory
@@ -104,11 +104,11 @@ var containerIDs map[uint16]string = make(map[uint16]string)
 // unique identifier for each container created by our modified ecs-agent
 var fractalIDs map[string]string = make(map[string]string)
 
-// keep track of the mapping from hostPort to app (e.g. browsers/chrome)
-var containerAppNames map[uint16]string = make(map[uint16]string)
+// keep track of the mapping from FractalID to app (e.g. browsers/chrome)
+var containerAppNames map[string]string = make(map[string]string)
 
-// keep track of the mapping from hostPort to user ID
-var containerUserIDs map[uint16]string = make(map[uint16]string)
+// keep track of the mapping from FractalID to UserID
+var containerUserIDs map[string]string = make(map[string]string)
 
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
@@ -123,13 +123,14 @@ type uinputDevices struct {
 var devices map[string]uinputDevices = make(map[string]uinputDevices)
 
 // Updates the fractalIDs mapping with a request from the ecs-agent
-func addFractalIDMapping(req *httpserver.RegisterDockerContainerIDRequest) error {
-	if req.DockerID == "" || req.FractalID == "" {
-		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.DockerID: \"%s\", req.FractalID: \"%s\"",
-			req.DockerID, req.FractalID)
+func addFractalIDMappings(req *httpserver.RegisterDockerContainerIDRequest) error {
+	if req.DockerID == "" || req.FractalID == "" || req.AppName == "" {
+		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.DockerID: \"%s\", req.FractalID: \"%s\", req.AppName: \"%s\"",
+			req.DockerID, req.FractalID, req.AppName)
 	}
 
 	fractalIDs[req.DockerID] = req.FractalID
+	containerAppNames[req.FractalID] = req.AppName
 	logger.Infof("Added mapping from DockerID %s to FractalID %s", req.DockerID, req.FractalID)
 	return nil
 }
@@ -431,23 +432,22 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 
 // When container disconnects, re-sync the user config back to S3
 // and delete the folder.
-// Takes hostPort (the host port of the container) as an argument.
-func saveUserConfig(hostPort uint16) {
-	appName, ok := containerAppNames[hostPort]
+// Takes fractalID (fractal id for the container) as an argument.
+func saveUserConfig(fractalID string) {
+	appName, ok := containerAppNames[fractalID]
 	if !ok {
-		logger.Infof("No app name found for hostPort %v", hostPort)
+		logger.Infof("No app name found for FractalID %v", fractalID)
 		return
 	}
 
-	userID, ok := containerUserIDs[hostPort]
+	userID, ok := containerUserIDs[fractalID]
 	if !ok {
-		logger.Infof("No user ID found for hostPort %v", hostPort)
+		logger.Infof("No user ID found for FractalID %v", fractalID)
 		return
 	}
 
 	// Save app config back to s3 - first tar, then upload
-	hostPortString := logger.Sprintf("%v", hostPort)
-	configPath := userConfigsDirectory + hostPortString + "/"
+	configPath := fractalDir + fractalID + "/" + userConfigs
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
 
 	// Only tar and save the config back to S3 if the user ID is set
@@ -474,8 +474,8 @@ func saveUserConfig(hostPort uint16) {
 		}
 	}
 
-	// remove app name mapping for container on hostPort
-	delete(containerAppNames, hostPort)
+	// remove app name mapping for container on fractalID
+	delete(containerAppNames, fractalID)
 
 	// clear contents of config directory
 	os.RemoveAll(configPath)
@@ -489,9 +489,9 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// Get needed vars and create path for config
 	userID := req.UserID
 	containerID := containerIDs[(uint16)(req.HostPort)]
-	hostPort := logger.Sprintf("%v", req.HostPort)
 	fractalID := fractalIDs[containerID]
-	configPath := userConfigsDirectory + hostPort + "/"
+	appName := containerAppNames[fractalID]
+	configPath := fractalDir + fractalID + "/" + userConfigs
 
 	// Make directory to move configs to
 	err := os.MkdirAll(configPath, 0777)
@@ -502,35 +502,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	makeFractalDirectoriesFreeForAll()
 
-	// Get app name
-	getAppnameStrcmd := strings.Join(
-		[]string{
-			"/usr/bin/docker", "inspect",
-			"--format='{{.Config.Image}}'",
-			containerID, "|",
-			"/usr/bin/sed", "'s/.*fractal\\/\\(.*\\):.*/\\1/'",
-		}, " ")
-
-	getAppnameScriptpath := fractalDir + fractalID + "/" + "get-app-name-" + hostPort + ".sh"
-	f, _ := os.Create(getAppnameScriptpath)
-	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
-	_, _ = f.WriteString(getAppnameStrcmd)
-	os.Chmod(getAppnameScriptpath, 0700)
-	f.Close()
-	defer os.RemoveAll(getAppnameScriptpath)
-	getAppnameCmd := exec.Command(getAppnameScriptpath)
-	appNameOutput, err := getAppnameCmd.CombinedOutput()
-	if err != nil {
-		return logger.MakeError("Could not run \"docker inspect\" command: %s. Output: %s", err, appNameOutput)
-	}
-
-	logger.Info("Ran \"docker inspect\" command with output: %s", appNameOutput)
-
-	appName := strings.TrimSpace(string(appNameOutput))
-
 	// Store app name and user ID in maps
-	containerAppNames[uint16(req.HostPort)] = appName
-	containerUserIDs[uint16(req.HostPort)] = string(userID)
+	containerUserIDs[fractalID] = string(userID)
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
@@ -546,7 +519,6 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		}
 		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 	}
-
 	return nil
 }
 
@@ -763,7 +735,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	}
 
 	// Delete user config and resave to S3
-	saveUserConfig(hostPort)
+	saveUserConfig(fractalID)
 
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
@@ -862,12 +834,6 @@ func initializeFilesystem() {
 	err = os.MkdirAll(cloudStorageDir, 0777)
 	if err != nil {
 		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
-	}
-
-	// Create user config directory
-	err = os.MkdirAll(userConfigsDirectory, 0777)
-	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", userConfigsDirectory, err)
 	}
 
 	makeFractalDirectoriesFreeForAll()
@@ -1059,7 +1025,7 @@ eventLoop:
 				serverevent.ReturnResult("", err)
 
 			case *httpserver.RegisterDockerContainerIDRequest:
-				err := addFractalIDMapping(serverevent.(*httpserver.RegisterDockerContainerIDRequest))
+				err := addFractalIDMappings(serverevent.(*httpserver.RegisterDockerContainerIDRequest))
 				if err != nil {
 					logger.Error(err)
 				}
