@@ -3,6 +3,11 @@ import os
 import subprocess
 from ignore import ignore_filter
 
+from pprint import pprint
+
+print("ENVIRONMENT!")
+pprint(os.environ)
+
 PATH_SCHEMA_MERGING = os.environ["PATH_SCHEMA_MERGING"]
 CURRENT = os.environ["CURRENT"]
 MERGING = os.environ["MERGING"]
