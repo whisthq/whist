@@ -59,23 +59,35 @@ def mock_endpoints(monkeypatch):
     monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
 
-def try_start_maintenance(client, region_name: str):
-    resp = client.post(
-        "/aws_container/start_update",
-        json=dict(
-            region_name=region_name,
-        ),
-    )
+def try_start_maintenance(client, region_name: str = None):
+    resp = None
+    if region_name is None:
+        resp = client.post(
+            "/aws_container/start_update",
+        )
+    else:
+        resp = client.post(
+            "/aws_container/start_update",
+            json=dict(
+                region_name=region_name,
+            ),
+        )
     return resp
 
 
-def try_end_maintenance(client, region_name: str):
-    resp = client.post(
-        "/aws_container/end_update",
-        json=dict(
-            region_name=region_name,
-        ),
-    )
+def try_end_maintenance(client, region_name: str = None):
+    resp = None
+    if region_name is None:
+        resp = client.post(
+            "/aws_container/end_update",
+        )
+    else:
+        resp = client.post(
+            "/aws_container/end_update",
+            json=dict(
+                region_name=region_name,
+            ),
+        )
     return resp
 
 
@@ -115,7 +127,7 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
 @pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode(client, admin, mock_endpoints):
+def test_maintenance_mode_single_region(client, admin, mock_endpoints):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:
@@ -138,9 +150,8 @@ def test_maintenance_mode(client, admin, mock_endpoints):
     update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
     tasks_key = _REDIS_TASKS_KEY.format(region_name="us-east-1")
 
-    # wipe these for a fresh start
-    redis_conn.delete(update_key)
-    redis_conn.delete(tasks_key)
+    # wipe db for a fresh start
+    redis_conn.flushall()
 
     # -- Start the test -- #
 
@@ -211,6 +222,103 @@ def test_maintenance_mode(client, admin, mock_endpoints):
     assert hasattr(_create_new_cluster, "num_calls")
     assert getattr(_create_new_cluster, "num_calls") == 1
 
-    # # _assign_container (mock) should be called just once
+    # # _assign_container (mock) should be called twice
     assert hasattr(_assign_container, "num_calls")
     assert getattr(_assign_container, "num_calls") == 2
+
+    # clean up
+    delattr(_create_new_cluster, "num_calls")
+    delattr(_assign_container, "num_calls")
+
+
+@pytest.mark.usefixtures("admin")
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_maintenance_mode_all_regions(client, admin, mock_endpoints):
+    """
+    See test_maintenance_mode_single_region. Only difference is that we try maintenance
+    in all regions. This means the request in us-east-2 should also fail.
+    """
+    from app import redis_conn
+
+    update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
+    tasks_key = _REDIS_TASKS_KEY.format(region_name="us-east-1")
+
+    # wipe db for a fresh start
+    redis_conn.flushall()
+
+    # -- Start the test -- #
+
+    # start a task
+    resp_start = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp_start.status_code == ACCEPTED
+
+    # let celery actually start handling the task but not finish
+    time.sleep(0.5)
+    # update key should not exist yet.
+    assert not redis_conn.exists(update_key)
+    # task key should exist and have one item
+    assert redis_conn.exists(tasks_key)
+    tasks = redis_conn.lrange(tasks_key, 0, -1)
+    assert len(tasks) == 1
+
+    # start maintenance while existing task is running
+    resp = try_start_maintenance(client)
+
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is False  # False because a task is still running
+    # the update key should exist now that someone started maintenance
+    assert redis_conn.exists(update_key)
+
+    # a new task should fail out, even though webserver is not in maintenance mode yet
+    resp_fail = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp_fail.status_code == WEBSERVER_MAINTENANCE
+
+    # poll original celery task finish
+    task = queryStatus(client, resp_start, timeout=0.5)  # 0.5 minutes = 30 seconds
+    assert task["status"] == 1, f"TASK: {task}"
+
+    # _create_new_cluster (mock) should be called just once
+    assert hasattr(_create_new_cluster, "num_calls")
+    assert getattr(_create_new_cluster, "num_calls") == 1
+
+    # now maintenance request should succeed
+    resp = try_start_maintenance(client)
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is True
+
+    # new requests should still fail out
+    resp = try_problematic_endpoint(client, admin, "us-east-1", "te_cc")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+    resp = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+    # test that tasks in other regions should also fail out
+    resp = try_problematic_endpoint(client, admin, "us-east-2", "te_ac")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+
+    # now end maintenance
+    resp = try_end_maintenance(client)
+    assert resp.status_code == ACCEPTED
+    assert resp.json["success"] is True
+
+    # update key should not exist anymore
+    assert not redis_conn.exists(update_key)
+
+    # tasks should work again
+    resp_final = try_problematic_endpoint(client, admin, "us-east-1", "te_ac")
+    assert resp.status_code == ACCEPTED
+
+    task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
+    assert task["status"] == 1, f"TASK: {task}"
+
+    # _create_new_cluster (mock) should be called just once
+    assert hasattr(_create_new_cluster, "num_calls")
+    assert getattr(_create_new_cluster, "num_calls") == 1
+
+    # # _assign_container (mock) should be called just once
+    assert hasattr(_assign_container, "num_calls")
+    assert getattr(_assign_container, "num_calls") == 1
+
+    # clean up
+    delattr(_create_new_cluster, "num_calls")
+    delattr(_assign_container, "num_calls")

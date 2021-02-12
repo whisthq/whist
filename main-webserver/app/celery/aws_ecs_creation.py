@@ -8,7 +8,7 @@ from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
-from app.maintenance.maintenance_manager import wait_no_update_and_track_task
+from app.maintenance.maintenance_manager import maintenance_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
@@ -306,7 +306,7 @@ def _get_num_extra(taskdef):
 
 
 @shared_task(bind=True)
-@wait_no_update_and_track_task
+@maintenance_track_task
 def assign_container(
     self,
     username,
@@ -327,6 +327,9 @@ def assign_container(
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
+
+    We directly call _assign_container because it can easily be mocked. The __code__ attribute
+    does not exist for functions with celery decorators like this one.
     """
     return _assign_container(
         self, username, task_definition_arn, region_name, cluster_name, dpi, webserver_url
@@ -623,6 +626,7 @@ def _assign_container(
 
 
 @shared_task(bind=True)
+@maintenance_track_task
 def create_new_container(
     self,
     username,
@@ -845,7 +849,7 @@ def create_new_container(
 
 
 @shared_task(bind=True)
-@wait_no_update_and_track_task
+@maintenance_track_task
 def create_new_cluster(
     self,
     cluster_name=None,
@@ -857,6 +861,11 @@ def create_new_cluster(
     availability_zones=None,
 ):
     """
+    Create a new cluster.
+    
+    We directly call _create_new_cluster because it can easily be mocked. The __code__ attribute
+    does not exist for functions with celery decorators like this one.
+
     Args:
         self: the celery instance running the task
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults

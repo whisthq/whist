@@ -11,6 +11,7 @@ import redis
 
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.slack.slack import slack_send_safe
+from app.models import RegionToAmi
 
 
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
@@ -23,7 +24,7 @@ def check_if_maintenance(region_name: str) -> bool:
     Check if an update is going on.
 
     Args:
-        region_name: name of region to check for updates
+        region_name: name of region to check for updates.
 
     Returns:
         True iff the web server is currently in maintenance mode.
@@ -33,7 +34,8 @@ def check_if_maintenance(region_name: str) -> bool:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     # we don't need a lock because we are just checking if the key exists,
     # not modifying data. it is posisble for an update to start right after
-    # the check happens; that is handled elsewhere.
+    # the check happens; that is handled through task tracking and failing out
+    # celery tasks that try to start during an update
     return redis_conn.exists(update_key)
 
 
@@ -85,7 +87,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     slack integrations to inform us what is going on.
 
     Args:
-        region_name: name of region to start updating
+        region_name: name of region to start updating.
 
     Returns:
         (success, human_readable_msg)
@@ -153,6 +155,38 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     return success, return_msg
 
 
+def try_start_update_all() -> Tuple[bool, str]:
+    """
+    Tries to start an update in all regions. Mainly works around try_start_update.
+
+    Returns:
+        (success, human_readable_msg)
+        success: True iff ALL regions are in update mode
+        human_readable_msg: explains exactly what has happened
+    """
+    region_to_ami = RegionToAmi.query.all()
+    all_regions = [region.region_name for region in region_to_ami]
+    pending_regions = []
+    for region in all_regions:
+        success, _ = try_start_update(region)
+        if not success:
+            pending_regions.append(region)
+    if len(pending_regions) == 0:
+        fractal_log(
+            "try_start_update_all",
+            None,
+            "Started global update."
+        )
+        return True, "All regions put in maintenance mode"
+    else:
+        fractal_log(
+            "try_start_update_all",
+            None,
+            f"Cannot do global update. Waiting on tasks in {pending_regions}."
+        )
+        return False, f"Waiting on the following regions: {pending_regions}"
+
+
 def try_end_update(region_name: str) -> bool:
     """
     Try to end an update. Steps:
@@ -165,7 +199,8 @@ def try_end_update(region_name: str) -> bool:
         region_name: name of region to end updating
 
     Returns:
-        True if update ended, False if lock was not acquired or an update was not happening
+        True iff there is no update in the region. This can be because there
+        already was no update, or because the update was ended by this function.
     """
     from app import redis_conn
 
@@ -180,7 +215,7 @@ def try_end_update(region_name: str) -> bool:
     if not update_exists:
         # release lock
         redis_conn.delete(_REDIS_LOCK_KEY)
-        return False, f"No update in {region_name}"
+        return True, f"No update in {region_name}"
 
     fractal_log(
         "try_end_update",
@@ -194,6 +229,38 @@ def try_end_update(region_name: str) -> bool:
         "#webserver", f":unlock: webserver has ended maintenance mode on region {region_name}"
     )
     return True, f"Ended update in {region_name}"
+
+
+def try_end_update_all() -> Tuple[bool, str]:
+    """
+    Tries to start an update in all regions. Mainly works around try_start_update.
+
+    Returns:
+        (success, human_readable_msg)
+        success: True iff ALL regions are in update mode
+        human_readable_msg: explains exactly what has happened
+    """
+    region_to_ami = RegionToAmi.query.all()
+    all_regions = [region.region_name for region in region_to_ami]
+    pending_regions = []
+    for region in all_regions:
+        success, _ = try_end_update(region)
+        if not success:
+            pending_regions.append(region)
+    if len(pending_regions) == 0:
+        fractal_log(
+            "try_end_update_all",
+            None,
+            "Global maintenance mode ended."
+        )
+        return True, "Global maintenance mode ended."
+    else:
+        fractal_log(
+            "try_end_update_all",
+            None,
+            f"Cannot end global update. Waiting on {pending_regions}."
+        )
+        return False, f"Waiting on the following regions: {pending_regions}."
 
 
 def try_register_task(region_name: str, task_id: int) -> bool:
@@ -283,7 +350,7 @@ def get_arg_number(func: Callable, desired_arg: str) -> int:
     return -1
 
 
-def wait_no_update_and_track_task(func: Callable):
+def maintenance_track_task(func: Callable):
     """
     Decorator to do three things:
         1. check if there is no update going on. if so error out and never call the celery task.
@@ -317,7 +384,7 @@ def wait_no_update_and_track_task(func: Callable):
                 f"Kwargs: {kwargs}\n"
             )
             fractal_log(
-                "wait_no_update_and_track_task",
+                "maintenance_track_task",
                 None,
                 msg,
             )
@@ -342,7 +409,7 @@ def wait_no_update_and_track_task(func: Callable):
                 f"Kwargs: {kwargs}\n"
             )
             fractal_log(
-                "wait_no_update_and_track_task",
+                "maintenance_track_task",
                 None,
                 msg,
                 level=logging.ERROR,
