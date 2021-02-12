@@ -1,19 +1,19 @@
 # workflows/ec2-status.yml
 #
-# EC2-Instance Status: Checks EC2 Instance
+# EC2 Instance Status: Checks EC2 Instance
 # Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
 
-name: "EC2-Instance Status: Checks EC2 instance "
+name: "EC2 Instance Status: Checks EC2 instance "
 
 on:
-    pull_request:
-        branches:
-            - dev
+    # pull_request:
+    #     branches:
+    #         - dev
 
-    push:
+    # push:
     # triggers workflow on a schedule
     schedule:
-        - cron: "*/2 * * * *"
+        - cron: "*/5 * * * *"
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
@@ -26,6 +26,8 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              with:
+                  ref: "steveli/ec2-status-workflow"
 
             # - name: "Configure AWS Credentials"
             # You may pin to the exact commit or the version.
