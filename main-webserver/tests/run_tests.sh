@@ -3,8 +3,6 @@
 # exit on error and missing env var
 set -Eeuo pipefail
 
-STARTING_DIR=$(pwd)
-
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -31,11 +29,5 @@ else
     export POSTGRES_PORT="9999"
 fi
 
-# pass args to pytest, but expand all filenames to full paths so we can safely call this script from anywhere
-cd $STARTING_DIR
-args=()
-for var in "$@"; do
-  args+=($(readlink -f $var))
-done
-
-(cd "$DIR/.." && pytest "${args[@]}")
+# pass args to pytest
+(cd .. && pytest "$@")
