@@ -1,6 +1,16 @@
+# workflows/ec2-status.yml
+#
+# EC2-Instance Status: Checks EC2 Instance
+# Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
+
 name: "EC2-Instance Status: Checks EC2 instance "
 
 on:
+    pull_request:
+        branches:
+            - dev
+
+    push:
     # triggers workflow on a schedule
     schedule:
         - cron: "2 * * * *"
@@ -10,7 +20,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-    build:
+    ec2instance-check-status-main:
         runs-on: ubuntu-20.04
 
         # Steps represent a sequence of tasks that will be executed as part of the job
