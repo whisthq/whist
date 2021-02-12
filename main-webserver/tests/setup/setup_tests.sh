@@ -3,7 +3,11 @@
 # exit on error
 set -Eeuo pipefail
 
-CURRENT_DIR=`pwd`
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# make sure current directory is `main-webserver/tests/setup`
+cd "$DIR"
 
 # check if in CI; if so just run fetch and setup scripts then exit
 IN_CI=${CI:=false} # default: false
@@ -12,7 +16,7 @@ if [ $IN_CI == "true" ]; then
     exit 0
 fi
 
-# make sure current directory is tests/setup
+# Make sure .env file exists
 if [ ! -f ../../docker/.env ]; then
     echo "Make sure you have run retrieve_config.sh"
     exit 1
