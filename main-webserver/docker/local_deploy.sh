@@ -9,6 +9,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make sure current directory is `main-webserver/docker`
 cd "$DIR"
 
+if [[ $* =~ [:space:]*--down[:space:]* ]]; then
+  echo "Running \"docker-compose down\"..."
+  docker-compose down
+  exit 0
+fi
+
 # Make sure .env file exists
 if [ ! -f .env ]; then
     echo "Did not find docker/.env file. Make sure you have run docker/retrieve_config.sh!"
@@ -45,5 +51,4 @@ sleep 2
 
 bash ../db_setup/db_setup.sh
 
-echo "Success! Teardown when you are done with: docker-compose down"
-
+echo "Success! Teardown when you are done with: docker/local_deploy.sh --down"
