@@ -24,10 +24,7 @@ export POSTGRES_REMOTE_DB=$POSTGRES_DB
 if [ -f ../db_setup/db_schema.sql ]; then
     echo "Found existing schema and data sql scripts. Skipping fetching db."
 else
-    # navigate to test directory to get the db
-    cd ../db_setup
-    bash fetch_db.sh
-    cd $CURRENT_DIR
+    bash ../db_setup/fetch_db.sh
 fi
 
 # local deploy uses localhost db
@@ -42,9 +39,7 @@ docker-compose up -d --build
 # let db prepare. TODO: make more robust
 sleep 2
 
-cd ../db_setup
-bash db_setup.sh
-cd $CURRENT_DIR
+bash ../db_setup/db_setup.sh
 
 echo "Success! Teardown when you are done with: docker-compose down"
 
