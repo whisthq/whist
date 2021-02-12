@@ -54,9 +54,6 @@ jobs:
               - 5432:5432
 
         steps:
-            - name: Debugging with tmate
-              uses: mxschmitt/action-tmate@v3.3
-
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
