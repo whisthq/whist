@@ -9,8 +9,13 @@
 
 set -eo pipefail
 
-relpath=$(dirname "$0")
-outfile="$relpath"/.env
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Make sure we are always running this script with working directory `main-webserver/docker`
+cd "$DIR"
+
+outfile="$DIR/.env"
 
 function fetch {
     # As long as developers are going to be connecting to the database attached
@@ -19,7 +24,7 @@ function fetch {
     heroku config:get CONFIG_DB_URL SECRET_KEY --shell \
 	   --app=fractal-dev-server
     heroku config:get DATABASE_URL --app=fractal-dev-server | \
-	python3 "$relpath"/pgparse.py
+	python3 "$DIR"/pgparse.py
 
     echo "HOT_RELOAD="
 }
