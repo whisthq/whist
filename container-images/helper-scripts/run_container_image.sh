@@ -112,7 +112,7 @@ send_start_values_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
-      "user_id": '"$3"'
+      "user_id": "'"${3:-}"'"
     }') \
   || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
   echo "Sent DPI/container-ready request to container $1!"
