@@ -493,7 +493,7 @@ jobs:
                   # list and kill any residual Packer instances
                   pip install aws-hashicorp-packer-reaper
                   aws-hashicorp-packer-reaper list
-                  aws-hashicorp-packer-reaper terminate --older-than 1m
+                  aws-hashicorp-packer-reaper terminate --older-than 1s
 
                   # loop through each region, replace comma with space for delimiting
                   for artifact in ${new_ami_ids//,/ }
