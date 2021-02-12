@@ -84,8 +84,8 @@ github.com/etcd-io/bbolt v1.3.3/go.mod h1:ZF2nL25h33cCyBtcyWeZ2/I3HQOfTP+0PIEvHj
 github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod h1:duJ4Jxv5lDcvg4QuQr0oowTf7dz4/CR8NtyCooz9HL8=
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/flosch/pongo2 v0.0.0-20190707114632-bbf5a6c351f4/go.mod h1:T9YF2M40nIgbVgp3rreNmTged+9HrbNTIQf1PsaIiTA=
-github.com/fractal/ecs-agent/agent v0.0.0-20210211220354-29baa9e1196d h1:uqsfTD02vvdntT6zg6IXTcPZX09Isb755YnZ/L31oOE=
-github.com/fractal/ecs-agent/agent v0.0.0-20210211220354-29baa9e1196d/go.mod h1:blz8GuLhNJUKERQ+T6yXAwXmo6wgLKPEvTeoagC9Xac=
+github.com/fractal/ecs-agent/agent v0.0.0-20210212182406-1a3ae3f427d1 h1:vttFJPcc4kF1ia2BzrYU9Mb1pVGwaQ6QRpugDlVM3Q8=
+github.com/fractal/ecs-agent/agent v0.0.0-20210212182406-1a3ae3f427d1/go.mod h1:blz8GuLhNJUKERQ+T6yXAwXmo6wgLKPEvTeoagC9Xac=
 github.com/fractal/uinput-go v1.4.1-0.20210205223251-85bbf8899b6a h1:uA6Kqz9KuCEYDLUNC/yDD+n9ZpDQQ1Gq1ZsaLojVUU4=
 github.com/fractal/uinput-go v1.4.1-0.20210205223251-85bbf8899b6a/go.mod h1:bG0ywqQr5fU8ua8Be8QVMclwlMeYEHHftEHKgUUMhKI=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
