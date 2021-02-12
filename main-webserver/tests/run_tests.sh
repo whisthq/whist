@@ -3,11 +3,11 @@
 # exit on error and missing env var
 set -Eeuo pipefail
 
-# we must be in the tests folder, so the folder `tests` cannot exist
-if [ -d tests ]; then
-    echo "Please cd into tests and then run this script."
-    exit 1
-fi
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Make sure we are always running this script with working directory `main-webserver/tests`
+cd "$DIR"
 
 echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
@@ -31,8 +31,5 @@ else
     export POSTGRES_PORT="9999"
 fi
 
-# we need to cd back out of tests into root dir for main-webserver
-cd ..
 # pass args to pytest
-pytest "$@"
-
+$(cd .. && pytest "$@")
