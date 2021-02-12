@@ -481,7 +481,7 @@ func saveUserConfig(fractalID string) {
 	os.RemoveAll(configPath)
 }
 
-// Populate the config folder under the container's host port for the
+// Populate the config folder under the container's FractalID for the
 // container's attached user and running application.
 // Takes the request to the `set_container_start_values` endpoint as
 // and argument and returns nil if no errors, and error object if error.
@@ -686,12 +686,8 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 	return nil
 }
 
-// Frees all resources assigned to a container and kill it
+// Handle tasks to be completed when a container dies
 func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
-	/*
-		Handle tasks to be completed when a container dies
-	*/
-
 	// Get the fractalID and use it to compute the right data directory. Also,
 	// exit if we are not dealing with a Fractal container.
 	fractalID, ok := fractalIDs[id]

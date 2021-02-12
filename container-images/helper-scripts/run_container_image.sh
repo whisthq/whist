@@ -47,7 +47,7 @@ create_container() {
         -v "/fractalCloudStorage/$fractal_id:/fractal/cloudStorage:rshared" \
         -v "/fractal/temp/$fractal_id/sockets:/tmp/sockets" \
         -v "/run/udev/data:/run/udev/data:ro" \
-        -v "/fractal/userConfigs/$fractal_id:/fractal/userConfigs:rshared" \
+        -v "/fractal/$fractal_id/userConfigs:/fractal/userConfigs:rshared" \
         $devices_arg \
         $mount_protocol \
         --tmpfs /run \
