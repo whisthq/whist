@@ -8,7 +8,7 @@ from app.maintenance.maintenance_manager import (
     try_start_update,
     try_end_update,
     try_start_update_all,
-    try_end_update_all
+    try_end_update_all,
 )
 from app.celery.aws_ecs_creation import (
     assign_container,

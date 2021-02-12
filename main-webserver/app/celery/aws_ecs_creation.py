@@ -862,7 +862,7 @@ def create_new_cluster(
 ):
     """
     Create a new cluster.
-    
+
     We directly call _create_new_cluster because it can easily be mocked. The __code__ attribute
     does not exist for functions with celery decorators like this one.
 

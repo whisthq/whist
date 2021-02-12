@@ -172,17 +172,13 @@ def try_start_update_all() -> Tuple[bool, str]:
         if not success:
             pending_regions.append(region)
     if len(pending_regions) == 0:
-        fractal_log(
-            "try_start_update_all",
-            None,
-            "Started global update."
-        )
+        fractal_log("try_start_update_all", None, "Started global update.")
         return True, "All regions put in maintenance mode"
     else:
         fractal_log(
             "try_start_update_all",
             None,
-            f"Cannot do global update. Waiting on tasks in {pending_regions}."
+            f"Cannot do global update. Waiting on tasks in {pending_regions}.",
         )
         return False, f"Waiting on the following regions: {pending_regions}"
 
@@ -248,17 +244,11 @@ def try_end_update_all() -> Tuple[bool, str]:
         if not success:
             pending_regions.append(region)
     if len(pending_regions) == 0:
-        fractal_log(
-            "try_end_update_all",
-            None,
-            "Global maintenance mode ended."
-        )
+        fractal_log("try_end_update_all", None, "Global maintenance mode ended.")
         return True, "Global maintenance mode ended."
     else:
         fractal_log(
-            "try_end_update_all",
-            None,
-            f"Cannot end global update. Waiting on {pending_regions}."
+            "try_end_update_all", None, f"Cannot end global update. Waiting on {pending_regions}."
         )
         return False, f"Waiting on the following regions: {pending_regions}."
 
