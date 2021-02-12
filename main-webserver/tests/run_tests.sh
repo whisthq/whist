@@ -17,9 +17,7 @@ if [ $IN_CI == "true" ]; then
     # these are needed to migrate schema/data
     export POSTGRES_REMOTE_URI=$DATABASE_URL # set in config vars on Heroku
     export POSTGRES_LOCAL_URI=$HEROKU_POSTGRES_URL # set in app.json
-    cd setup
-    bash setup_tests.sh
-    cd ..
+    bash setup/setup_tests.sh
     # app can look at POSTGRES_URI to connect to db. point to local CI db
     export POSTGRES_URI=$POSTGRES_LOCAL_URI
 else
