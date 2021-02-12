@@ -418,17 +418,25 @@ int read_piped_arguments(bool* keep_waiting) {
     bool keep_reading = true;
     bool finished_line = false;
 
-    int select_ret = 0;
-    int read_ret = 0;
 
-#ifdef _WIN32
-    DWORD available_chars;
-    INPUT_RECORD dummy_buffer[MAX_INCOMING_LENGTH];
-    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
-#endif
+#ifndef _WIN32
+    size_t read_ret = 0;
 
+    // Variables for the `select` function. Timeout 0 yields immediate return.
     fd_set fds;
     struct timeval timeout = {0, 0};
+    int select_ret = 0;
+#else
+    size_t read_ret = 0;
+    DWORD available_chars;
+
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD stdin_filetype = GetFileType(h_stdin);
+    if (stdin_filetype != FILE_TYPE_PIPE) {
+        LOG_ERROR("Stdin must be piped in on Windows");
+        return -1;
+    }
+#endif
 
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
@@ -446,8 +454,12 @@ int read_piped_arguments(bool* keep_waiting) {
             continue;
         }
 #else
-        if (!PeekConsoleInput(h_stdin, dummy_buffer, MAX_INCOMING_LENGTH, &available_chars)) {
-            LOG_ERROR("PeekConsoleInput error with piped arguments, errno %d", GetLastError());
+        // When in piped mode (e.g. from the client app), stdin is a NamedPipe
+        if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
+            if (GetLastError() == ERROR_BROKEN_PIPE) {
+                keep_reading = false;
+            }
+            LOG_ERROR("PeekNamedPipe error with piped arguments: %d", GetLastError());
             return -1;
         } else if (available_chars == 0) {
             continue;
@@ -455,7 +467,15 @@ int read_piped_arguments(bool* keep_waiting) {
 #endif // _WIN32
 
         // Read a character from stdin
+#ifndef _WIN32
         read_ret = read(STDIN_FILENO, &read_char, 1);
+#else
+        // if (!ReadFile(h_stdin, &read_char, 1, &read_ret, NULL)) {
+        //     LOG_ERROR("ReadFile error with piped arguments: %d", GetLastError());
+        //     return -1;
+        // }
+        read_ret = fread(&read_char, 1, 1, stdin);
+#endif
 
         // If the character is EOF, make sure the loop ends after this iteration
         if (read_ret < 0) {
@@ -485,10 +505,12 @@ int read_piped_arguments(bool* keep_waiting) {
             goto completed_line_eval;
         }
         arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
+        arg_name[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
 
         char* arg_value = strtok(NULL, "?");
         if (arg_value) {
             arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
+            arg_value[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
         }
 
         // Iterate through cmd_options to find the corresponding opt
@@ -518,6 +540,7 @@ int read_piped_arguments(bool* keep_waiting) {
             }
         } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
             // If arg_name is `kill`, then return failure
+            LOG_INFO("Killing client app");
             return -1;
         } else {
             // If arg_name is invalid, then log a warning, but continue
