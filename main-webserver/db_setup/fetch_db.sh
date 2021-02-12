@@ -6,7 +6,7 @@ set -Eeuo pipefail
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-# Make sure we are always running this script with working directory `main_webserver/db_setup`
+# Make sure we are always running this script with working directory `main-webserver/db_setup`
 cd "$DIR"
 
 POSTGRES_REMOTE_URI=${POSTGRES_REMOTE_URI:=""}
@@ -19,7 +19,7 @@ if [[ ^$POSTGRES_REMOTE_URI =~ "postgres://" ]]; then
 
   echo "===  Retrieving DB data  === \n"
   (pg_dump -d $POSTGRES_REMOTE_URI --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
-  
+
 else
   # pg_dump will look at this and skip asking for a prompt
   export PGPASSWORD=$POSTGRES_REMOTE_PASSWORD
