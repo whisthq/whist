@@ -61,13 +61,9 @@ from within the `main-webserver` directory.
 
 This step is optional. If you choose not to complete this step, you will still be able to launch containers, but those containers will not have cloud storage access, even for accounts to which a cloud storage provider is connected.
 
-**4. Make Dummy SSL Certificates.**
+**4. Spin Up Local Servers**
 
-We use a Redis+TLS instance in production, so during testing we try to maintain similarity by using a Redis+TLS docker image. Run `bash dummy_certs/create_dummy_certs.sh` to generate temporary SSL certificates that are only useful for local development. The Redis+TLS docker image will use this.
-
-**5. Spin Up Local Servers**
-
-Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
+Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will create dummy SSL certificates (to get as close to the Redis+TLS setup we have in production) and start the app at `run.py`.
 
 ```sh
 bash docker/local_deploy.sh
