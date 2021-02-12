@@ -41,6 +41,11 @@ jobs:
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
         steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # Get the whole git history
+
             - name: Detect Branch
               id: detect-branch
               run: |
@@ -96,30 +101,25 @@ jobs:
                   if [[ ${{ github.event_name }} == 'push' ]]; then
                     JOB_NAME=all
                   else
-                    # if running from workflow_dispatch, We use the job-name given as the dispatch input
+                    # If running from workflow_dispatch, We use the job-name given as the dispatch input
                     JOB_NAME=${{ github.event.inputs.job-name }}
                   fi
 
-                  # Save JSON file of dependency paths
-                  JOB_JSON=$(cat <<EOF
-                  {
-                      "container-images-publish-images-ghcr": ["container-images"],
-                      "ecs-task-definitions-deploy-task-definitions-ecs": ["ecs-host-service"]
-                  }
-                  EOF
-                  )
-
-                  # Install jq for JSON object parsing
-                  sudo apt install jq -y
-
-                  # Call shell file with JOB_NAME/JOB_JSON as parameters
-                  export JOB_NAME
-                  export JOB_JSON
-                  JOB_LIST=$(./helpers/deploy/get_job_list.sh)
+                  # Call python file with JOB_NAME as a parameter
+                  if [[ -n "$JOB_NAME" ]]; then
+                    # If job name isn't "all", then we should filter to that specific job
+                    options=""
+                    if [[ "$JOB_NAME" != "all" ]]; then
+                      options="--specific-job $JOB_NAME"
+                    fi
+                    JOB_LIST=$(python3 ./.github/workflows/helpers/deploy/filter_paths.py --commit "HEAD~20" $options)
+                  else
+                    JOB_LIST=""
+                  fi
 
                   echo "Jobs that have been selected to run: $JOB_LIST"
                   # Wrap jobs with |, so that "|job|" matches only that exact job (Without substring problems)
-                  JOB_LIST=$(echo "|$JOB_LIST" | tr ' ' '|')
+                  JOB_LIST=$(echo "|$JOB_LIST|" | tr ' ' '|')
                   echo "::set-output name=jobs::$JOB_LIST"
 
             - name: Detect Whether to Publish the Job(s) or Not
