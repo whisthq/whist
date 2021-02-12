@@ -30,4 +30,4 @@ else
 fi
 
 # pass args to pytest
-cd .. && pytest "$@"
+(cd .. && pytest "$@")
