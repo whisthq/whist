@@ -18,14 +18,18 @@ on:
             - ".github/workflows/README.md"
     workflow_dispatch:
         inputs:
+            # If a specific job-name is given, then we always run exactly that job
+            # If "all" is given, then we might filter jobs, it will be done as if a merge is bad to "branch-name"
             job-name:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
                 default: "" # Avoid accidental mistakes by making the default not run any jobs
+            # Name of the branch to simulate merging against
             branch-name:
                 description: "Branch to run the job as"
                 required: true
                 default: "dev"
+            # If true, this will deploy the build to our infrastructure
             publish:
                 description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
                 required: true
