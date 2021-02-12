@@ -11,7 +11,7 @@ cd "$DIR"
 
 # Make sure .env file exists
 if [ ! -f .env ]; then
-    echo "Make sure you have run retrieve_config.sh and are in the docker folder"
+    echo "Did not find docker/.env file. Make sure you have run docker/retrieve_config.sh!"
     exit 1
 fi
 
