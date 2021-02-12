@@ -70,8 +70,7 @@ We use a Redis+TLS instance in production, so during testing we try to maintain 
 Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will start the app at `run.py`.
 
 ```sh
-cd docker
-bash local_deploy.sh
+bash docker/local_deploy.sh
 ```
 
 If you encounter a "daemon not running" error, this likely means that Docker is not actually running. To fix this, try restarting your computer or opening the Docker desktop app; if the app opens successfully, then the issue should go away.
