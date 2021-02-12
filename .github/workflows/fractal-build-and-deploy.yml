@@ -163,12 +163,14 @@ jobs:
                       echo "Checking $i against $DEPS"
                       # Check if any diff'ed file starts with any of the dependency paths
                       # Final -- to distinguish commit from list of paths to diff
-                      if git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" &>/dev/null; then
-                        # If at least one file dependency is found in the git diff,
-                        # then we include that job
-                        echo "Job $i found with files changed"
+                      MATCH=$(git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" -m 1)
+                      if [[ -n "$MATCH" ]]; then
+                        echo "Dependency \"$MATCH\" of job \"$i\" was changed since $COMPARISON_COMMIT"
                         JOB_LIST="$JOB_LIST $i"
+                      else
+                        echo "No dependency of job \"$i\" was changed"
                       fi
+                      echo # Newline for easier readability
                     done
                   fi
 
