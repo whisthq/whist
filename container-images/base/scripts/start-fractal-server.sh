@@ -4,7 +4,8 @@
 # being run within a Fractal Docker container.
 
 # Set/Retrieve Container parameters
-FRACTAL_MAPPINGS_DIR=/fractal/containerResourceMappings
+FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
@@ -38,9 +39,9 @@ fi
 ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 
 # This tar file, if it exists, has been retrieved from S3 and must be extracted
-tarFile=/fractal/userConfigs/fractal-app-config.tar.gz
+tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
 if [ -f "$tarFile" ]; then
-    tar -xzf $tarFile -C /fractal/userConfigs/
+    tar -xzf $tarFile -C $USER_CONFIGS_DIR
 fi
 
 # While perhaps counterintuitive, "source" is the path in the userConfigs directory
@@ -50,7 +51,7 @@ fi
 # Iterate through the possible configuration locations and copy
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
     SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
-    SOURCE_CONFIG_PATH=/fractal/userConfigs/$SOURCE_CONFIG_SUBPATH
+    SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
     DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
 
     # If original config path does not exist, then continue
@@ -70,7 +71,7 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
 done
 
 # Delete broken symlinks from config
-find /fractal/userConfigs/ -xtype l -delete
+find $USER_CONFIGS_DIR -xtype l -delete
 
 # To assist the tar tool's "exclude" option, create a dummy tar file if it does not already exist
 if [ ! -f "$tarFile" ]; then
@@ -79,8 +80,8 @@ fi
 
 # Create a .configready file that forces the display to wait until configs are synced
 #     We are also forced to wait until the display has started
-touch /fractal/userConfigs/.configready
-until [ ! -f /fractal/userConfigs/.configready ]
+touch $USER_CONFIGS_DIR/.configready
+until [ ! -f $USER_CONFIGS_DIR/.configready ]
 do
     sleep 0.1
 done
