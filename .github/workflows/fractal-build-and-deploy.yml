@@ -121,19 +121,34 @@ jobs:
                     JOB_NAME=${{ github.event.inputs.job-name }}
                   fi
 
-                  # Call python file with JOB_NAME as a parameter
-                  if [[ -n "$JOB_NAME" ]]; then
-                    if [[ "$JOB_NAME" == "all" ]]; then
-                      # If job name was "all", then we shouldn't filter to a specific job
-                      options=""
-                    else
-                      # If job name isn't "all", then we should filter to that specific job
-                      options="--specific-job $JOB_NAME"
-                    fi
-                    JOB_LIST=$(python3 ./.github/workflows/helpers/deploy/filter_paths.py --commit "HEAD~20" $options)
+                  # Store job dependency files
+                  declare -A job_dependencies
+                  job_dependencies[container-images-publish-images-ghcr]="container-images"
+                  job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
+                  job_dependencies[main-webserver-deploy-heroku]="main-webserver"
+                  job_dependencies[client-applications-publish-build-s3]="client-applications"
+
+                  # If the job name isn't "all", then we explicitly run exactly that job
+                  if [[ "$JOB_NAME" != "all" ]]; then
+                    JOB_LIST="$JOB_NAME"
+                  # Otherwise, we run all of them if the branch is staging or master
+                  elif [[ "${{ steps.detect-branch.outputs.branch }}" =~ "(staging|master)" ]]; then
+                    JOB_LIST="${!job_dependencies[@]}"
+                  # However, if the branch isn't staging or master, then we filter based on changed files
                   else
-                  # If no JOB_NAME is given, then we should run no jobs
                     JOB_LIST=""
+                    for i in "${!job_dependencies[@]}"
+                    do
+                      # Separate by | in order to "OR" the filepaths
+                      DEPS=$(echo "${job_dependencies[$i]}" | tr ' ' '|')
+                      echo "Checking $i against $DEPS"
+                      if git diff --name-only "HEAD~20" | grep -E "^($DEPS)"; then
+                        # If at least one file dependency is found in the git diff,
+                        # then we include that job
+                        echo "Job $i found with files changed"
+                        JOB_LIST="$JOB_LIST $i"
+                      fi
+                    done
                   fi
 
                   echo "Jobs that have been selected to run: $JOB_LIST"
