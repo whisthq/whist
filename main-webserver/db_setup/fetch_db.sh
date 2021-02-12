@@ -3,6 +3,12 @@
 # exit on error and missing env var
 set -Eeuo pipefail
 
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# Make sure we are always running this script with working directory `main_webserver/db_setup`
+cd "$DIR"
+
 POSTGRES_REMOTE_URI=${POSTGRES_REMOTE_URI:=""}
 
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
