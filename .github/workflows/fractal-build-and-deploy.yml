@@ -22,6 +22,10 @@ on:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
                 default: "" # Avoid accidental mistakes by making the default not run any jobs
+            branch-name:
+                description: "Branch to run the job as"
+                required: true
+                default: "dev"
             publish:
                 description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
                 required: true
@@ -36,7 +40,7 @@ jobs:
         runs-on: ubuntu-20.04
         outputs:
             branch: ${{ steps.detect-branch.outputs.branch }}
-            jobs: ${{ steps.detect-job.outputs.jobs }}
+            jobs: ${{ steps.detect-jobs.outputs.jobs }}
             publish: ${{ steps.detect-publish.outputs.publish }}
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
@@ -49,16 +53,21 @@ jobs:
             - name: Detect Branch
               id: detect-branch
               run: |
-                  if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
-                      BRANCH_NAME=master
-                  elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
-                      BRANCH_NAME=staging
-                  elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
-                      BRANCH_NAME=dev
-                  elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
-                      BRANCH_NAME=project
-                  else
-                      BRANCH_NAME=null
+                  # Grab branch_name from workflow_dispatch inputs
+                  BRANCH_NAME=${{ github.event.inputs.branch-name }}
+                  if [[ -z "$BRANCH_NAME" ]]; then
+                      # If no input was received, use the github branch name
+                      if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
+                          BRANCH_NAME=master
+                      elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
+                          BRANCH_NAME=staging
+                      elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
+                          BRANCH_NAME=dev
+                      elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
+                          BRANCH_NAME=project
+                      else
+                          BRANCH_NAME=null
+                      fi
                   fi
                   echo "branch is set to: $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
@@ -66,11 +75,18 @@ jobs:
             - name: Set deploy environment based on Git Branch
               id: set-deploy-environment
               run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  # Grab branch_name from workflow_dispatch inputs
+                  BRANCH_NAME=${{ github.event.inputs.branch-name }}
+                  if [[ -z "$BRANCH_NAME" ]]; then
+                  # If no input was received, used the github branch name
+                      BRANCH_NAME="${GITHUB_REF##*/}"
+                  fi
+
+                  if [ "$BRANCH_NAME" == "master" ]; then
                       DEPLOY_ENVIRONMENT=prod
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
                       DEPLOY_ENVIRONMENT=staging
-                  elif [ "${GITHUB_REF##*/}" == "dev" ]; then
+                  elif [ "$BRANCH_NAME" == "dev" ]; then
                       DEPLOY_ENVIRONMENT=dev
                   else
                       DEPLOY_ENVIRONMENT=null
@@ -95,7 +111,7 @@ jobs:
 
             # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a ^/$)
             - name: Detect Job(s)
-              id: detect-job
+              id: detect-jobs
               run: |
                   # If this workflow was triggered by push, then we want to run all jobs
                   if [[ ${{ github.event_name }} == 'push' ]]; then
@@ -107,13 +123,16 @@ jobs:
 
                   # Call python file with JOB_NAME as a parameter
                   if [[ -n "$JOB_NAME" ]]; then
-                    # If job name isn't "all", then we should filter to that specific job
-                    options=""
-                    if [[ "$JOB_NAME" != "all" ]]; then
+                    if [[ "$JOB_NAME" == "all" ]]; then
+                      # If job name was "all", then we shouldn't filter to a specific job
+                      options=""
+                    else
+                      # If job name isn't "all", then we should filter to that specific job
                       options="--specific-job $JOB_NAME"
                     fi
                     JOB_LIST=$(python3 ./.github/workflows/helpers/deploy/filter_paths.py --commit "HEAD~20" $options)
                   else
+                  # If no JOB_NAME is given, then we should run no jobs
                     JOB_LIST=""
                   fi
 
@@ -125,13 +144,12 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  # if running from workflow_dispatch, publish will be set, so we set it as environment variable
-                  # if running from push, publish will not be set and PUBLISH will be empty
-                  PUBLISH=${{ github.event.inputs.publish }}
-
-                  # if PUBLISH is empty, this workflow was triggered by push, so we want to publish all jobs
-                  if [[ -z $PUBLISH && ${{ github.event_name }} == 'push' ]]; then
+                  # if this workflow was triggered by push, we want the jobs to publish
+                  if [[ ${{ github.event_name }} == 'push' ]]; then
                     PUBLISH=true
+                  else
+                    # if running from workflow_dispatch, input publish will be set, so we set it as environment variable
+                    PUBLISH=${{ github.event.inputs.publish }}
                   fi
 
                   echo "Publish is set to: $PUBLISH"
@@ -148,7 +166,7 @@ jobs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
             contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|container-images-publish-images-ghcr|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|container-images-publish-images-ghcr|')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -211,8 +229,7 @@ jobs:
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
-            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|ecs-task-definitions-deploy-task-definitions-ecs|')
+            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
             matrix:
@@ -278,11 +295,10 @@ jobs:
             ]
         if: >
             success() &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|ecs-task-definitions-deploy-task-definitions-ecs|')
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
@@ -297,7 +313,7 @@ jobs:
         needs: [fractal-publish-build-config]
         if: >
             contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|ami-publish-ec2|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
             aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
@@ -452,11 +468,11 @@ jobs:
         needs: [fractal-publish-build-config, ami-publish-ec2]
         if: >
             success() &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|ami-publish-ec2|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|') &&
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         runs-on: ubuntu-20.04
         steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
@@ -484,7 +500,7 @@ jobs:
                 ) && always()
               )
             ) &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
         steps:
             - name: Checkout Git Repository
@@ -551,7 +567,7 @@ jobs:
         needs: [fractal-publish-build-config]
         if: >
             contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
         strategy:
             matrix:
@@ -766,10 +782,10 @@ jobs:
             [fractal-publish-build-config, client-applications-publish-build-s3]
         if: >
             success() &&
-            contains(needs.fractal-public-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|') &&
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
