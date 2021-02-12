@@ -128,7 +128,7 @@ jobs:
                     # If running from workflow_dispatch, We use the job-name given as the dispatch input
                     JOB_NAME=${{ github.event.inputs.job-name }}
                     # If running from workflow_dispatch, we compare to the branch that we're simulating a build-and-deploy against
-                    COMPARISON_COMMIT="${{ steps.detect-branch.outputs.branch }}"
+                    COMPARISON_COMMIT="origin/$BRANCH_NAME"
                   fi
 
                   # Store job dependency files
@@ -138,6 +138,8 @@ jobs:
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="client-applications"
+                  # Files that all jobs depend on
+                  universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
                   # If the job name isn't "all", then we explicitly run exactly that job
                   if [[ "$JOB_NAME" != "all" ]]; then
@@ -151,10 +153,17 @@ jobs:
                     JOB_LIST=""
                     for i in "${!job_dependencies[@]}"
                     do
-                      # Separate by | in order to "OR" the filepaths
-                      DEPS=$(echo "${job_dependencies[$i]}" | tr ' ' '|')
+                      DEPS="${job_dependencies[$i]}"
+                      # If there are universal_dependencies, include them in the space-separated list
+                      if [[ -n "$universal_dependencies" ]]; then
+                        DEPS="$DEPS $universal_dependencies"
+                      fi
+                      # Replace spaces with |'s, to be used as "OR" in a regex path checker
+                      DEPS=$(echo "$DEPS" | tr ' ' '|')
                       echo "Checking $i against $DEPS"
-                      if git diff --name-only "$COMPARISON_COMMIT" | grep -E "^($DEPS)" &>/dev/null; then
+                      # Check if any diff'ed file starts with any of the dependency paths
+                      # Final -- to distinguish commit from list of paths to diff
+                      if git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" &>/dev/null; then
                         # If at least one file dependency is found in the git diff,
                         # then we include that job
                         echo "Job $i found with files changed"
