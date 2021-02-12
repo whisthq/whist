@@ -1,13 +1,9 @@
 import logging
 import time
 from functools import wraps
-import json
 import inspect
 import random
-from typing import Callable, Tuple, Any
-
-from flask import jsonify
-import redis
+from typing import Callable, Tuple
 
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.slack.slack import slack_send_safe
@@ -17,7 +13,7 @@ from app.config import _callback_webserver_hostname
 
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_UPDATE_KEY = "WEBSERVER_UPDATE_{region_name}"
-_REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"    
+_REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"
 
 
 def check_if_maintenance(region_name: str) -> bool:
@@ -109,7 +105,7 @@ def try_start_update(region_name: str, send_slack=True) -> Tuple[bool, str]:
     success = False
     return_msg = None
     tasks = redis_conn.lrange(tasks_key, 0, -1)
-    if tasks is None or len(tasks) == 0:
+    if tasks is None or not tasks:
         # no tasks, we can start the update
         success = True
         redis_conn.set(update_key, 1)
@@ -135,7 +131,8 @@ def try_start_update(region_name: str, send_slack=True) -> Tuple[bool, str]:
         webserver_type = _callback_webserver_hostname(localhost_ok=True)
         if send_slack:
             slack_msg = (
-                f":no_entry_sign: webserver at {webserver_type} has stopped new tasks in region {region_name}."
+                f":no_entry_sign: webserver at {webserver_type} has"
+                f"stopped new tasks in region {region_name}."
                 f" Waiting on {len(tasks)} to finish. Task IDs:\n{tasks}."
             )
             slack_send_safe(
@@ -177,7 +174,7 @@ def try_start_update_all() -> Tuple[bool, str]:
         success, _ = try_start_update(region, send_slack=False)
         if not success:
             pending_regions.append(region)
-    if len(pending_regions) == 0:
+    if not pending_regions:
         webserver_type = _callback_webserver_hostname(localhost_ok=True)
         slack_send_safe(
             "#alerts-test",
@@ -236,8 +233,12 @@ def try_end_update(region_name: str, send_slack=True) -> bool:
 
     if send_slack:
         webserver_type = _callback_webserver_hostname(localhost_ok=True)
+        slack_msg = (
+            f":unlock: webserver at {webserver_type} has ended maintenance mode"
+            f" on region {region_name}"
+        )
         slack_send_safe(
-            "#alerts-test", f":unlock: webserver at {webserver_type} has ended maintenance mode on region {region_name}"
+            "#alerts-test", slack_msg,
         )
     return True, f"Ended update in {region_name}"
 
@@ -258,7 +259,7 @@ def try_end_update_all() -> Tuple[bool, str]:
         success, _ = try_end_update(region, send_slack=False)
         if not success:
             pending_regions.append(region)
-    if len(pending_regions) == 0:
+    if not pending_regions:
         webserver_type = _callback_webserver_hostname(localhost_ok=True)
         slack_send_safe(
             "#alerts-test",
@@ -403,17 +404,18 @@ def maintenance_track_task(func: Callable):
         exception = None
         try:
             ret = func(*args, **kwargs)
-        except Exception as e:
+        except Exception as e: # pylint: disable=broad-except
             exception = e
 
         # post-function logic: deregister the task
         if not try_deregister_task(
-            region_name=region_name,
-            task_id=self_obj.request.id,
-        ):
+                region_name=region_name,
+                task_id=self_obj.request.id,
+            ):
             webserver_type = _callback_webserver_hostname(localhost_ok=True)
             msg = (
-                f"CRITICAL! Webserver at {webserver_type} not deregister a tracked task. Debug info:\n"
+                f"CRITICAL! Webserver at {webserver_type} could not deregister a tracked task."
+                "Debug info:\n"
                 f"Celery Task ID: {self_obj.request.id}\n"
                 f"Function: {func.__name__}\n"
                 f"Args: {args}\n"
