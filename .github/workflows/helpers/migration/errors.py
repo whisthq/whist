@@ -7,6 +7,7 @@ from functools import wraps
 
 
 def format_error(heading, input_data, error_data, suggestion=None):
+    """A utility function to build common error messages"""
     suggestion = ("\n\n" + suggestion) if suggestion else ""
     return Exception(
         heading
@@ -18,6 +19,7 @@ def format_error(heading, input_data, error_data, suggestion=None):
     )
 
 def catch_value_error (func):
+    """A decorator used to catch ValueError and format the message"""
     @wraps(func)
     def catch_value_error_wrapper(*args, **kwargs):
         try:
@@ -34,6 +36,7 @@ def catch_value_error (func):
 
 
 def catch_timeout_error(func):
+    """A decorator used to catch TimeoutError and format the message"""
     @wraps(func)
     def catch_timeout_error_wrapper(*args, **kwargs):
         try:
@@ -50,6 +53,12 @@ def catch_timeout_error(func):
 
 
 def catch_auth_error(func):
+    """A decorator used to catch HTTP auth errors and format the message
+
+    This function catches the specifc HTTPError emitted by the Requests
+    library. While it works for any Requests call, the message is formatted
+    to help point the user towards their Heroku credentials.
+    """
     @wraps(func)
     def catch_auth_error_wrapper(*args, **kwargs):
         try:
@@ -76,6 +85,7 @@ def catch_auth_error(func):
 
 
 def catch_process_error(func):
+    """A decorator used to catch CalledProcessError and format the message"""
     @wraps(func)
     def catch_process_error_wrapper(*args, **kwargs):
         try:

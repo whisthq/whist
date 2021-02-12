@@ -39,3 +39,18 @@ DB_CONFIG_DEFAULT = {"host": POSTGRES_DEFAULT_HOST,
 DB_CONFIG_MERGING = {**DB_CONFIG_DEFAULT, "port": 9900}
 
 DB_CONFIG_CURRENT = {**DB_CONFIG_DEFAULT, "port": 9995}
+
+IGNORE_SQL_STATEMENTS_HEAD = {
+    'alter extension "pg_stat_statements" update to'
+}
+
+IGNORE_SQL_STATEMENTS_COMPLETE = {
+    'alter table "hdb_catalog"."event_invocation_logs" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."event_log" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_action_log" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_cron_event_invocation_logs" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_cron_events" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_scheduled_event_invocation_logs" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_scheduled_events" alter column "id" set default public.gen_random_uuid();',
+    'alter table "hdb_catalog"."hdb_version" alter column "hasura_uuid" set default public.gen_random_uuid();'
+}

@@ -5,9 +5,16 @@ import config
 from pprint import pprint
 from errors import catch_auth_error
 
-# heroku credentials should already be in .netrc before this script runs
+
 @catch_auth_error
 def config_vars(app_name):
+    """Retrieves a map of configuration variables from Heroku app
+
+    Given an app name, makes a call to the Heroku API to ask for all
+    configuration variables stored under that app. This function relies
+    on ~/.netrc for authentication, which can either be configured manually
+    in CI/CD or be configured interactively with `heroku login` in the CLI.
+    """
     url = f"{config.HEROKU_BASE_URL}/apps/{app_name}/config-vars"
 
     r = requests.get(
