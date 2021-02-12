@@ -47,4 +47,3 @@ bash ../db_setup/db_setup.sh
 
 echo "Success! Teardown when you are done with: docker-compose down"
 
-
