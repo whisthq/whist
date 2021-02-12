@@ -14,6 +14,8 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
+from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+
 from app.models import (
     db,
     UserContainer,
@@ -348,29 +350,39 @@ def assign_container(
     if cluster_name is None:
         if enable_reconnect:
             # first, we check for a preexisting container with the correct user:
-            existing_container = (
-                UserContainer.query.filter_by(
-                    is_assigned=True,
-                    user_id=username,
-                    task_definition=task_definition_arn,
-                    location=region_name,
+            try:
+                existing_container = ensure_container_exists(
+                    UserContainer.query.filter_by(
+                        is_assigned=True,
+                        user_id=username,
+                        task_definition=task_definition_arn,
+                        location=region_name,
+                    )
+                    .limit(1)
+                    .first()
                 )
-                .limit(1)
-                .first()
-            )
+            except Exception:
+                # If the `filter_by` gave us `None`, that is okay, we handle that below.
+                pass
+
             if existing_container:
                 if _poll(existing_container.container_id):
                     return user_container_schema.dump(existing_container)
 
         # otherwise, we see if there's an unassigned container
-        base_container = (
-            UserContainer.query.filter_by(
-                is_assigned=False, task_definition=task_definition_arn, location=region_name
+        try:
+            base_container = ensure_container_exists(
+                UserContainer.query.filter_by(
+                    is_assigned=False, task_definition=task_definition_arn, location=region_name
+                )
+                .with_for_update()
+                .limit(1)
+                .first()
             )
-            .with_for_update()
-            .limit(1)
-            .first()
-        )
+        except Exception:
+            # If the `filter_by` gave us `None`, that is okay, we handle that below.
+            pass
+
         num_extra = _get_num_extra(task_definition_arn)
     else:
         num_extra = 0

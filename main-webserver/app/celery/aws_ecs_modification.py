@@ -5,6 +5,7 @@ from celery import shared_task
 from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
+from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
@@ -73,6 +74,11 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         lock_container_and_update(
             container_name=container_name, state="DELETING", lock=True, temporary_lock=10
         )
+
+        container = ensure_container_exists(container)
+        if not container:
+            # The container never existed, and has been deleted!
+            continue
 
         # Initialize ECSClient
         container_cluster = container.cluster
