@@ -5,7 +5,7 @@ import { deepCopyObject } from "shared/utils/general/reducer"
 export default (
     state = DEFAULT,
     action: {
-        body: User | AuthFlow
+        body: User | AuthFlow | string
         type: string
     }
 ) => {

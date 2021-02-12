@@ -9,7 +9,7 @@ import { openExternal } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
-import { updateUser } from "store/actions/auth/pure"
+import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { FractalAuthCache } from "shared/types/cache"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { FractalIPC } from "shared/types/ipc"
@@ -45,6 +45,7 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
 
     const logout = () => {
         dispatch(updateUser(deepCopyObject(AuthDefault.user)))
+        dispatch(updateAuthFlow(deepCopyObject(AuthDefault.authFlow)))
         storage.set(FractalAuthCache.ACCESS_TOKEN, null)
         history.push(FractalRoute.LOGIN)
     }

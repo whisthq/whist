@@ -7,6 +7,7 @@ export type User = {
 
 export type AuthFlow = {
     failures?: number
+    loginToken: string
 }
 
 export type AuthDefault = {
@@ -24,5 +25,6 @@ export const DEFAULT: AuthDefault = {
     },
     authFlow: {
         failures: 0,
+        loginToken: "",
     },
 }

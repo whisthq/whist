@@ -20,12 +20,15 @@ import {
     SUBSCRIBE_USER_ACCESS_TOKEN,
     DELETE_USER_TOKENS,
 } from "shared/constants/graphql"
+import { updateAuthFlow } from "store/actions/auth/pure"
+
 
 import styles from "pages/login/login.css"
 
 export const Login = (props: {
     userID: string
     accessToken: string
+    loginToken: string
     dispatch: Dispatch
 }) => {
     /*
@@ -36,11 +39,10 @@ export const Login = (props: {
             accessToken: Access token  
     */
 
-    const { userID, accessToken, dispatch } = props
+    const { userID, accessToken, loginToken, dispatch } = props
 
     const [buttonClicked, setButtonClicked] = useState(false)
     const [localAccessToken, setLocalAccessToken] = useState("")
-    const [loginToken, setLoginToken] = useState("")
 
     const ipc = require("electron").ipcRenderer
 
@@ -49,13 +51,14 @@ export const Login = (props: {
         SUBSCRIBE_USER_ACCESS_TOKEN,
         {
             variables: { loginToken: loginToken },
-            // connectionParams: (loginToken) => {return loginToken};
+
         }
     )
     const [deleteTokens] = useMutation(DELETE_USER_TOKENS, {
         context: {
             headers: {
-                Authorization: `Bearer ${accessToken}`,
+                Login: loginToken,
+
             },
         },
     })
@@ -100,12 +103,11 @@ export const Login = (props: {
         setButtonClicked(true)
         generateToken().then((token) => {
             const loginToken: string = Date.now() + token
-            setLoginToken(loginToken)
+            dispatch(updateAuthFlow({loginToken: loginToken}))
             addLogin({
                 variables: {
                     object: {
                         login_token: loginToken,
-                        // "login_token": "login_token",
                         access_token: null,
                     },
                 },
@@ -133,13 +135,12 @@ export const Login = (props: {
                     ? data.tokens[0].access_token
                     : null
             if (accessToken) {
-                console.log(`access_token: ${accessToken}`)
                 dispatch(validateAccessToken(accessToken))
-                // deleteTokens({
-                //     variables: {
-                //         loginToken: loginToken,
-                //     },
-                // })
+                deleteTokens({
+                    variables: {
+                        loginToken: loginToken,
+                    },
+                })
             }
         }
     }, [data, loading, error])
@@ -188,10 +189,11 @@ export const Login = (props: {
     )
 }
 
-const mapStateToProps = (state: { AuthReducer: { user: User } }) => {
+const mapStateToProps = (state: { AuthReducer: { user: User, authFlow: {loginToken: string} } }) => {
     return {
         userID: state.AuthReducer.user.userID,
         accessToken: state.AuthReducer.user.accessToken,
+        loginToken: state.AuthReducer.authFlow.loginToken
     }
 }
 

@@ -1,6 +1,15 @@
-import React from "react"
+import React, { useEffect } from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
+import {
+    ApolloProvider,
+    ApolloClient,
+    InMemoryCache,
+    HttpLink,
+    split,
+} from "@apollo/client"
+import { getMainDefinition } from "@apollo/client/utilities"
+import { WebSocketLink } from "@apollo/client/link/ws"
 
 import LoadingPage from "pages/loading/loading"
 import LauncherPage from "pages/launcher/launcher"
@@ -9,17 +18,60 @@ import UpdatePage from "pages/update/update"
 import PaymentPage from "pages/payment/payment"
 
 import TitleBar from "shared/components/titleBar"
-
+import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 
-const Root = () => {
+const Root = (props: {
+    loginToken: string,
+}) => {
     /*
         Highest level component, containers React Router and title bar
 
-        Arguments: none
+        Arguments:
+            loginToken: one time use token for retrieving the user access token
     */
 
+    const { loginToken } = props
+
+    // Set up Apollo GraphQL provider for https and wss (websocket)
+    const createApolloClient = (loginToken: string) => {
+        const httpLink = new HttpLink({
+            uri: config.url.GRAPHQL_HTTP_URL,
+        })
+    
+        const wsLink = new WebSocketLink({
+            uri: config.url.GRAPHQL_WS_URL,
+            options: {
+                reconnect: true,
+                connectionParams: {
+                    headers: {
+                        Login: loginToken,
+                    }
+                }
+            },
+        })
+    
+        const splitLink = split(
+            ({ query }) => {
+                const definition = getMainDefinition(query)
+                return (
+                    definition.kind === "OperationDefinition" &&
+                    definition.operation === "subscription"
+                )
+            },
+            wsLink,
+            httpLink
+        )
+        return new ApolloClient({
+            link: splitLink,
+            cache: new InMemoryCache(),
+        })
+    }
+
+    const apolloClient = createApolloClient(loginToken)
+
     return (
+        <ApolloProvider client={apolloClient}>
         <div>
             <TitleBar />
             <Switch>
@@ -30,12 +82,17 @@ const Root = () => {
                 <Route path={FractalRoute.LOADING} component={LoadingPage} />
             </Switch>
         </div>
+        </ApolloProvider>
     )
 }
 
 // Keeping here for future use
-const mapStateToProps = () => {
-    return {}
+const mapStateToProps = (state: {
+    AuthReducer: { authFlow: {loginToken: string }}
+}) => {
+    return {
+        loginToken: state.AuthReducer.authFlow.loginToken,
+    }
 }
 
 export default connect(mapStateToProps)(Root)
