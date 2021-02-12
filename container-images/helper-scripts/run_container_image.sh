@@ -15,7 +15,7 @@ cd "$DIR/.."
 
 # Fractal container image to run
 image=${1:-fractal/base:current-build}
-app_name=$(sed 's/.*fractal\/\(.*\):.*/\1/' $image)
+app_name=$(echo $image | sed 's/.*fractal\/\(.*\):.*/\1/')
 
 # Define the folder to mount the Fractal protocol server into the container
 if [[ ${2:-''} == mount ]]; then
