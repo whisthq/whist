@@ -64,7 +64,7 @@ def getInstances():
 
 if __name__ == "__main__":
     obj = getInstances()
-    print(os.environ)
+    print(os.environ.get("SLACK_EC2_BOT_TOKEN"))
     df_ec2 = pd.DataFrame(obj["instances"])
     client = slack.WebClient(token=os.environ.get("SLACK_EC2_BOT_TOKEN"))
 
