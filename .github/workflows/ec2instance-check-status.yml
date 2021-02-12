@@ -12,8 +12,8 @@ on:
 
     # push:
     # triggers workflow on a schedule
-    schedule:
-        - cron: "*/5 * * * *"
+    # schedule:
+    #     - cron: "*/5 * * * *"
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
@@ -29,10 +29,27 @@ jobs:
               with:
                   ref: "steveli/ec2-status-workflow"
 
-            # - name: "Configure AWS Credentials"
-            # You may pin to the exact commit or the version.
-            # uses: aws-actions/configure-aws-credentials@d2221ce3c7101a35ff049cc8fe652f5c9a64372d
-            # uses: aws-actions/configure-aws-credentials@v1
+            - name: Configure AWS Credentials
+              # You may pin to the exact commit or the version.
+              # uses: aws-actions/configure-aws-credentials@d2221ce3c7101a35ff049cc8fe652f5c9a64372d
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
 
-            - name: Run a one-line script
-              run: echo Hello, world!
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: .github/workflows/helpers/ec2monitoring
+              run: pip install --upgrade pip
+
+            - name: Install Dependencies
+              working-directory: .github/workflows/helpers/ec2monitoring
+              run: pip install -r requirements.txt
+
+            - name: Run ec2 instances
+              working-directory: .github/workflows/helpers/ec2monitoring
+              run: python3 main.py
