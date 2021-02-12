@@ -49,7 +49,7 @@ export POSTGRES_LOCAL_PORT="9999"
 # we don't need a pwd because local db trusts all incoming connections
 export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
 export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
-bash ../../db_setup/fetch_db.sh
+bash ../../db_setup/db_setup.sh
 
 echo "Success! Teardown when you are done with: docker-compose down"
 
