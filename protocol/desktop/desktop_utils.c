@@ -418,13 +418,17 @@ int read_piped_arguments(bool* keep_waiting) {
     bool keep_reading = true;
     bool finished_line = false;
 
-#ifndef _WIN32
-    int available_chars = 0;
-#else
+    int select_ret = 0;
+    int read_ret = 0;
+
+#ifdef _WIN32
     DWORD available_chars;
     INPUT_RECORD dummy_buffer[MAX_INCOMING_LENGTH];
     HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
 #endif
+
+    fd_set fds;
+    struct timeval timeout = {0, 0};
 
     // Each argument will be passed via pipe from the client application
     //    with the argument name and value separated by a "?"
@@ -432,13 +436,14 @@ int read_piped_arguments(bool* keep_waiting) {
     while (keep_reading && *keep_waiting) {
         // If stdin doesn't have any characters, continue the loop
 #ifndef _WIN32
-        if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
-            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+        FD_ZERO(&fds);
+        FD_SET(STDIN_FILENO, &fds);
+        select_ret = select(STDIN_FILENO + 1, &fds, NULL, NULL, &timeout);
+        if (select_ret < 0) {
+            LOG_ERROR("select error with piped arguments: %s", strerror(errno));
             return -1;
-        } else if (available_chars == 0) {
+        } else if (select_ret == 0) {
             continue;
-        } else {
-            LOG_INFO("available_chars %d", available_chars);
         }
 #else
         if (!PeekConsoleInput(h_stdin, dummy_buffer, MAX_INCOMING_LENGTH, &available_chars)) {
@@ -449,26 +454,29 @@ int read_piped_arguments(bool* keep_waiting) {
         }
 #endif // _WIN32
 
-        for (int i = 0; i < (int) available_chars; i++) {
-            // Read a character from stdin
-            read_char = (char) fgetc(stdin);
+        // Read a character from stdin
+        read_ret = read(STDIN_FILENO, &read_char, 1);
 
-            // If the character is EOF, make sure the loop ends after this iteration
-            if (read_char == EOF) {
-                keep_reading = false;
-            } else if (!finished_line) {
-                incoming[total_stored_chars] = read_char;
-                total_stored_chars++;
-            }
+        // If the character is EOF, make sure the loop ends after this iteration
+        if (read_ret < 0) {
+            LOG_ERROR("read error with piped arguments: %s", strerror(errno));
+            return -1;
+        } else if (read_ret == 0) {
+            keep_reading = false;
+        } else {
+            incoming[total_stored_chars] = read_char;
+            total_stored_chars++;
+        }
 
-            // Causes some funky behavior if the line being read in is longer than 128 characters because
-            //   it splits into two and processes as two different pieces
-            if (!keep_reading || (total_stored_chars > 0 &&
-                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == MAX_INCOMING_LENGTH - 1)
-            )) {
-                finished_line = true;
-                total_stored_chars = 0;
-            }
+        // Causes some funky behavior if the line being read in is longer than 128 characters because
+        //   it splits into two and processes as two different pieces
+        if (!keep_reading || (total_stored_chars > 0 &&
+            ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == MAX_INCOMING_LENGTH - 1)
+        )) {
+            finished_line = true;
+            total_stored_chars = 0;
+        } else {
+            continue;
         }
 
         // Splits the incoming string from STDIN into arg_name and arg_value
@@ -526,6 +534,7 @@ completed_line_eval:
 
     if (strlen((char*)server_ip) == 0) {
         LOG_ERROR("Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
+        return -1;
     }
 
     return 0;
