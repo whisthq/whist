@@ -9,6 +9,14 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make sure current directory is `main-webserver/tests/setup`
 cd "$DIR"
 
+# Allow passing `--down` to spin down the docker-compose stack, instead of
+# having to cd into this directory and manually run the command.
+if [[ $* =~ [:space:]*--down[:space:]* ]]; then
+  echo "Running \"docker-compose down\"..."
+  docker-compose down
+  exit 0
+fi
+
 # check if in CI; if so just run fetch and setup scripts then exit
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
@@ -52,5 +60,5 @@ export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
 export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
 bash ../../db_setup/db_setup.sh
 
-echo "Success! Teardown when you are done with: docker-compose down"
+echo "Success! Teardown when you are done with: tests/setup/setup_tests.sh --down"
 

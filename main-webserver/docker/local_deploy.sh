@@ -9,6 +9,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make sure current directory is `main-webserver/docker`
 cd "$DIR"
 
+# Allow passing `--down` to spin down the docker-compose stack, instead of
+# having to cd into this directory and manually run the command.
 if [[ $* =~ [:space:]*--down[:space:]* ]]; then
   echo "Running \"docker-compose down\"..."
   docker-compose down
