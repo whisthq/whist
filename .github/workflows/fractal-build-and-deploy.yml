@@ -33,7 +33,7 @@ on:
             publish:
                 description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
                 required: true
-                default: false # Avoid accidental mistakes by making the default not publish
+                default: "false" # Avoid accidental mistakes by making the default not publish
 
 jobs:
     # Configure Jobs
