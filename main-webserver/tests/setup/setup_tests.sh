@@ -13,6 +13,7 @@ cd "$DIR"
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
     bash ../../db_setup/fetch_db.sh
+    bash ../../db_setup/db_setup.sh
     exit 0
 fi
 
