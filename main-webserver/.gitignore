@@ -37,3 +37,7 @@ tags
 
 # Google Cloud Platform
 client_secret.json
+
+# Local testing database files
+db_setup/db_data.sql
+db_setup/db_schema.sql
