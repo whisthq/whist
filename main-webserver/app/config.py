@@ -30,7 +30,7 @@ _ConfigMatrix = namedtuple("_ConfigMatrix", ("deployment", "local"))
 _ConfigVector = namedtuple("_ConfigVector", ("serve", "test"))
 
 
-def _callback_webserver_hostname():
+def _callback_webserver_hostname(localhost_ok=False):
     """Return the hostname of the web server with which the protocol server should communicate.
 
     The callback web server will receive pings from the protocol server and will receive the
@@ -47,7 +47,8 @@ def _callback_webserver_hostname():
     Returns:
         A web server hostname.
     """
-
+    if localhost_ok:
+        return request.host
     return (
         request.host
         if not any((host in request.host for host in ("localhost", "127.0.0.1")))

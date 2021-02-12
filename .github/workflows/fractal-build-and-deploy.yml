@@ -217,6 +217,36 @@ jobs:
 
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
+        
+    # Put the webserver into maintenance mode while task defs/AMIs update
+    fractal-start-webserver-maintenance-mode:
+      name: "Put webserver into maintenance mode"
+      runs-on: ubuntu-20.04
+      steps:
+          - name: Set webserver URL based on Git Branch (master, staging, dev)
+            run: |
+                if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  echo "webserver_url=https://prod-server.fractal.co" >> $GITHUB_ENV
+                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  echo "webserver_url=https://staging-server.fractal.co" >> $GITHUB_ENV
+                else
+                  echo "webserver_url=https://dev-server.fractal.co" >> $GITHUB_ENV
+                fi
+
+          - name: Put webserver into maintenance mode
+            working-directory: main-webserver
+            run: |
+              # Log in as Admin to get Bearer Token for Update Region API call
+              token=$(curl -X POST \
+                    -H "Content-Type: application/json" \
+                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+              
+              # use a bash script to start update and poll for success
+              bash script_utils/poll_maintenance.sh ${{ env.webserver_url }} ${token} start
+              if [[ $? =~ 1 ]]; then
+                echo "Failed to start maintenance" && false
+              fi
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -224,7 +254,7 @@ jobs:
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs: [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
@@ -369,7 +399,7 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs: [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
@@ -565,7 +595,7 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs: [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
@@ -631,7 +661,7 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs: [fractal-publish-build-config]
+        needs: [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
@@ -884,3 +914,42 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+
+      # Put the webserver into maintenance mode while task defs/AMIs update
+    fractal-end-webserver-maintenance-mode:
+      name: "End webserver maintenance mode"
+      runs-on: ubuntu-20.04
+      needs:
+          [
+            container-images-publish-images-ghcr,
+            ecs-task-definitions-deploy-task-definitions-ecs,
+            ami-publish-ec2,
+            main-webserver-deploy-heroku,
+            client-applications-publish-build-s3,
+          ]
+      steps:
+          - name: Set webserver URL based on Git Branch (master, staging, dev)
+            run: |
+                if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  echo "webserver_url=https://prod-server.fractal.co" >> $GITHUB_ENV
+                elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  echo "webserver_url=https://staging-server.fractal.co" >> $GITHUB_ENV
+                else
+                  echo "webserver_url=https://dev-server.fractal.co" >> $GITHUB_ENV
+                fi
+
+          - name: Put webserver into maintenance mode
+            working-directory: main-webserver
+            run: |
+              # Log in as Admin to get Bearer Token for Update Region API call
+              token=$(curl -X POST \
+                    -H "Content-Type: application/json" \
+                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+              
+              # use a bash script to start update and poll for success
+              bash script_utils/poll_maintenance.sh ${{ env.webserver_url }} ${token} end
+              if [[ $? =~ 1 ]]; then
+                echo "Failed to end maintenance" && false
+              fi
