@@ -70,7 +70,7 @@ jobs:
               working-directory: main-webserver
               run: |
                 pip install pipenv
-                cd .github/workflows
+                # cd .github/workflows
                 pipenv install
 
 
