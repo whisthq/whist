@@ -10,6 +10,7 @@ from app.helpers.utils.aws.aws_resource_locks import (
     spin_lock,
 )
 from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
@@ -50,13 +51,22 @@ def delete_container(self, container_name, aes_key):
 
         raise Exception("Failed to acquire resource lock.")
 
-    container = UserContainer.query.get(container_name)
+    try:
+        container = ensure_container_exists(UserContainer.query.get(container_name))
+    except Exception as error:
+        message = f"Container {container_name} was not in the database."
+        fractal_log(
+            function="delete_container",
+            label=container_name,
+            logs=message,
+            level=logging.ERROR,
+        )
+        raise Exception("The requested container does not exist in the database.") from error
+    if not container:
+        return
 
-    if not container or container.secret_key.lower() != aes_key.lower():
-        if container:
-            message = f"Expected secret key {container.secret_key}. Got {aes_key}."
-        else:
-            message = f"Container {container_name} does not exist."
+    if container.secret_key.lower() != aes_key.lower():
+        message = f"Expected secret key {container.secret_key}. Got {aes_key}."
 
         fractal_log(
             function="delete_container",

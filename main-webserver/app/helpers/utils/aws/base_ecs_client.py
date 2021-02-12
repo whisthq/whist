@@ -769,6 +769,17 @@ class ECSClient:
                 network_binding_map[network_binding["containerPort"]] = network_binding["hostPort"]
         return network_binding_map
 
+    def check_task_exists(self, task_arn):
+        """
+        Checks whether a Task ARN actually belongs to the ecs_client cluster
+        :param task_arn (str): The ARN of the task to query
+        :return: True if the task exists, else False
+        """
+        response = self.ecs_client.describe_tasks(tasks=[task_arn])
+
+        # if failures is nonzero, that means this task wasn't found
+        return len(response[failures]) == 0
+
     def get_task_ip_ports(self, offset=0):
         if self.tasks_done[offset]:
             return False
