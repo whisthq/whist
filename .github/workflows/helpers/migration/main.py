@@ -15,9 +15,6 @@ from config import (HEROKU_APP_NAME,
                     DB_CONFIG_MERGING,
                     DB_CONFIG_CURRENT,)
 
-# print(containers.all_containers())
-containers.remove_all_containers()
-
 
 def db_from_schema(schema_path, **kwargs):
     container = containers.run_postgres_container(**kwargs)
