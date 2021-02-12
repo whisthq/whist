@@ -48,6 +48,7 @@ def mock_assign_container(*args, **kwargs):
     time.sleep(1)
 
 
+@pytest.fixture
 def mock_endpoints(monkeypatch):
     """ Manual mocking because this needs to be done before celery threads start. """
     # problematic:
@@ -109,30 +110,29 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
     return resp
 
 
-def early_monkeypatch(monkeypatch_argn: int):
-    """
-    This decorator is needed to patch before celery fixtures are applied.
-    The decorated test can only be run once.
-    """
+# def early_monkeypatch(monkeypatch_argn: int):
+#     """
+#     This decorator is needed to patch before celery fixtures are applied.
+#     """
 
-    def early_monkeypatch_decorator(func):
-        def wrapper(func, *args, **kwargs):
-            monkeypatch = args[monkeypatch_argn]
-            mock_endpoints(monkeypatch)
-            return func(*args, **kwargs)
+#     def early_monkeypatch_decorator(func):
+#         def wrapper(func, *args, **kwargs):
+#             monkeypatch = args[monkeypatch_argn]
+#             mock_endpoints(monkeypatch)
+#             return func(*args, **kwargs)
 
-        # using functools.wraps does not work. This post helped:
-        # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
-        return decorator.decorator(wrapper, func)
+#         # using functools.wraps does not work. This post helped:
+#         # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
+#         return decorator.decorator(wrapper, func)
 
-    return early_monkeypatch_decorator
+#     return early_monkeypatch_decorator
 
 
-@early_monkeypatch(monkeypatch_argn=2)  # mock first to stop race-condition with celery threads
+# @early_monkeypatch(monkeypatch_argn=2)  # mock first to stop race-condition with celery threads
 @pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode(client, admin, monkeypatch):
+def test_maintenance_mode(client, admin, mock_endpoints):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:

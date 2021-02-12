@@ -24,6 +24,9 @@ def check_if_maintenance(region_name: str) -> bool:
 
     Args:
         region_name: name of region to check for updates
+
+    Returns:
+        True iff the web server is currently in maintenance mode.
     """
     from app import redis_conn
 
@@ -39,6 +42,12 @@ def _get_lock(max_tries: int = 100) -> bool:
     Tries to get lock using redis SETNX command. Tries `max_tries` time
     with a sleep time chosen randomly between 0 and 3 to improve lock
     contention.
+
+    Args:
+        max_tries: number of tries to get the lock
+
+    Returns:
+        True iff the lock is acquired.
     """
     from app import redis_conn
 
