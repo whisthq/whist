@@ -11,7 +11,6 @@ import { User } from "store/reducers/auth/default"
 import { updateTask } from "store/actions/container/pure"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { history } from "store/history"
-import { FractalIPC } from "shared/types/ipc"
 import SplashScreenComponent from "pages/login/components/splashScreen/splashScreen"
 import RedirectComponent from "pages/login/components/redirect/redirect"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
@@ -63,22 +62,6 @@ export const Login = (props: {
         },
     })
 
-    // const ipc = require("electron").ipcRenderer
-    // ipc.on(FractalIPC.CUSTOM_URL, (_: any, customURL: string) => {
-    //     if (customURL && customURL.toString().includes("fractal://")) {
-    //         customURL = `fractal://${customURL.split("fractal://")[1]}`
-    //         // Convert URL to URL object so it can be parsed
-    //         const urlObj = new URL(customURL.toString())
-    //         urlObj.protocol = "https"
-
-    //         // Check to see if this is an auth request or an external app authentication
-    //         // const websiteAccessToken = urlObj.searchParams.get("accessToken")
-
-    //         // if (websiteAccessToken) {
-    //         //     dispatch(validateAccessToken(websiteAccessToken))
-    //         // }
-    //     }
-    // })
 
     const crypto = require("crypto")
     async function generateToken() {
@@ -116,8 +99,6 @@ export const Login = (props: {
                     openExternal(
                         `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
                     )
-
-                    //ipc.sendSync(FractalIPC.LOAD_BROWSER)
                 })
                 .catch((error) => {
                     throw error
