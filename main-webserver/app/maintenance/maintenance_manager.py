@@ -238,7 +238,8 @@ def try_end_update(region_name: str, send_slack=True) -> bool:
             f" on region {region_name}"
         )
         slack_send_safe(
-            "#alerts-test", slack_msg,
+            "#alerts-test",
+            slack_msg,
         )
     return True, f"Ended update in {region_name}"
 
@@ -263,7 +264,7 @@ def try_end_update_all() -> Tuple[bool, str]:
         webserver_type = _callback_webserver_hostname(localhost_ok=True)
         slack_send_safe(
             "#alerts-test",
-            f":unlock: webserver at {webserver_type} has ended global maintenance mode."
+            f":unlock: webserver at {webserver_type} has ended global maintenance mode.",
         )
         fractal_log("try_end_update_all", None, "Global maintenance mode ended.")
         return True, "Global maintenance mode ended."
@@ -383,7 +384,7 @@ def maintenance_track_task(func: Callable):
     @wraps(func)
     def wrapper(*args, **kwargs):
         self_obj = args[self_argn]  # celery "self" object created with @shared_task(bind=True)
-        # try different ways of getting region. it can be a KWARG if the caller did 
+        # try different ways of getting region. it can be a KWARG if the caller did
         # func(pos_arg1, pos_arg2, region_name=region)
         region_name = None
         if "region" in kwargs:
@@ -412,14 +413,14 @@ def maintenance_track_task(func: Callable):
         exception = None
         try:
             ret = func(*args, **kwargs)
-        except Exception as e: # pylint: disable=broad-except
+        except Exception as e:  # pylint: disable=broad-except
             exception = e
 
         # post-function logic: deregister the task
         if not try_deregister_task(
-                region_name=region_name,
-                task_id=self_obj.request.id,
-            ):
+            region_name=region_name,
+            task_id=self_obj.request.id,
+        ):
             webserver_type = _callback_webserver_hostname(localhost_ok=True)
             msg = (
                 f"CRITICAL! Webserver at {webserver_type} could not deregister a tracked task."

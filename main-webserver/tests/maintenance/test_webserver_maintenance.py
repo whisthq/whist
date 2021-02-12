@@ -153,7 +153,7 @@ def test_maintenance_mode_single_region(
     make_authorized_user,
     set_valid_subscription,
     mock_endpoints,
-    ):
+):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:
@@ -171,6 +171,7 @@ def test_maintenance_mode_single_region(
     is to do a mix of them throughout test execution.
     """
     from app import redis_conn
+
     # this is a free-trial user
     authorized = make_authorized_user(
         stripe_customer_id="random1234",
@@ -273,12 +274,13 @@ def test_maintenance_mode_all_regions(
     make_authorized_user,
     set_valid_subscription,
     mock_endpoints,
-    ):
+):
     """
     See test_maintenance_mode_single_region. Only difference is that we try maintenance
     in all regions. This means the request in us-east-2 should also fail.
     """
     from app import redis_conn
+
     # this is a free-trial user
     authorized = make_authorized_user(
         stripe_customer_id="random1234",
