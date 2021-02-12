@@ -490,6 +490,11 @@ jobs:
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
 
+                  # list and kill any residual Packer instances
+                  pip install aws-hashicorp-packer-reaper
+                  aws-hashicorp-packer-reaper list
+                  aws-hashicorp-packer-reaper terminate --older-than 1m
+
                   # loop through each region, replace comma with space for delimiting
                   for artifact in ${new_ami_ids//,/ }
                   do
