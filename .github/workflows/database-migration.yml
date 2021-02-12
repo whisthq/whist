@@ -72,9 +72,10 @@ jobs:
             - name: Install Python dependencies
               working-directory: main-webserver
               run: |
-                pip install psycopg2
-                pip install migra
-                pip install requests
+                pip install pipenv
+                cd .github/workflows
+                pipenv install
+
 
             - name: Authenticate Heroku
               run: |
@@ -94,24 +95,24 @@ jobs:
                 echo "$FILE exists."
                 fi
 
-            - name: New db from current schema
-              run: |
-                psql -f db.sql ${URL_MERGING}
+            # - name: New db from current schema
+            #   run: |
+            #     psql -f db.sql ${URL_MERGING}
 
-         
-            - name: Run migra on endpoints and print
-              run: |
-                CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
-                MERGING=${URL_MERGING}
-                RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
 
-                export msg="${RESULT}"
-                jq -nc '{"body":env.msg}' | \
-                curl -sL  -X POST -d @- \
-                -H "Content-Type: application/json" \
-                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-                "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
-              env:
-                OWNER: ${{ github.repository_owner }}
-                REPO:  ${{ github.repository }}
-                PR:    ${{ github.event.number }}
+            # - name: Run migra on endpoints and print
+            #   run: |
+            #     CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
+            #     MERGING=${URL_MERGING}
+            #     RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+
+            #     export msg="${RESULT}"
+            #     jq -nc '{"body":env.msg}' | \
+            #     curl -sL  -X POST -d @- \
+            #     -H "Content-Type: application/json" \
+            #     -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            #     "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
+            #   env:
+            #     OWNER: ${{ github.repository_owner }}
+            #     REPO:  ${{ github.repository }}
+            #     PR:    ${{ github.event.number }}
