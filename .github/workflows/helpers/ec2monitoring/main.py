@@ -1,7 +1,7 @@
 import boto3
 import pandas as pd
 import slack
-
+import os
 
 blocks = [
     {"type": "section", "text": {"type": "mrkdwn", "text": "*EC2 Instance Status:*"}},
@@ -64,10 +64,9 @@ def getInstances():
 
 if __name__ == "__main__":
     obj = getInstances()
+    print(os.environ)
     df_ec2 = pd.DataFrame(obj["instances"])
-    client = slack.WebClient(
-        token="xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
-    )
+    client = slack.WebClient(token=os.environ.get("SLACK_EC2_BOT_TOKEN"))
 
     blocks[1]["text"]["text"] = obj["message"]
     client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
