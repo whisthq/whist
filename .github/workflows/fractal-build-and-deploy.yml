@@ -56,7 +56,7 @@ jobs:
                   # Grab branch_name from workflow_dispatch inputs
                   BRANCH_NAME=${{ github.event.inputs.branch-name }}
                   if [[ -z "$BRANCH_NAME" ]]; then
-                      # If no input was received, use the github branch name
+                      # If no workflow_dispatch input was received, then use the git branch name
                       if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
                           BRANCH_NAME=master
                       elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
@@ -75,12 +75,8 @@ jobs:
             - name: Set deploy environment based on Git Branch
               id: set-deploy-environment
               run: |
-                  # Grab branch_name from workflow_dispatch inputs
-                  BRANCH_NAME=${{ github.event.inputs.branch-name }}
-                  if [[ -z "$BRANCH_NAME" ]]; then
-                  # If no input was received, used the github branch name
-                      BRANCH_NAME="${GITHUB_REF##*/}"
-                  fi
+                  # Grab branch_name from detect-branch
+                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
 
                   if [ "$BRANCH_NAME" == "master" ]; then
                       DEPLOY_ENVIRONMENT=prod
@@ -97,11 +93,14 @@ jobs:
             - name: Set Sentry environment based on Git Branch
               id: set-sentry-environment
               run: |
+                  # Grab branch_name from detect-branch
+                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+
                   # on dev branch, we don't set Sentry environment as we don't want to
                   # log to Sentry in development
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "master" ]; then
                       SENTRY_ENVIRONMENT=prod
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
                       SENTRY_ENVIRONMENT=staging
                   else
                       SENTRY_ENVIRONMENT=""
@@ -113,15 +112,18 @@ jobs:
             - name: Detect Job(s)
               id: detect-jobs
               run: |
-                  # If this workflow was triggered by push, then we want to run all jobs
+                  # Grab branch_name from detect-branch
+                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+
                   if [[ ${{ github.event_name }} == 'push' ]]; then
+                    # If this workflow was triggered by push, then we want to run all jobs
                     JOB_NAME=all
                     # Store the commit from before the push was made
                     COMPARISON_COMMIT="${{ github.event.before }}"
                   else
                     # If running from workflow_dispatch, We use the job-name given as the dispatch input
                     JOB_NAME=${{ github.event.inputs.job-name }}
-                    # Otherwise, we compare to the branch that we're simulating a build-and-deploy against
+                    # If running from workflow_dispatch, we compare to the branch that we're simulating a build-and-deploy against
                     COMPARISON_COMMIT="${{ steps.detect-branch.outputs.branch }}"
                   fi
 
@@ -136,10 +138,11 @@ jobs:
                   # If the job name isn't "all", then we explicitly run exactly that job
                   if [[ "$JOB_NAME" != "all" ]]; then
                     JOB_LIST="$JOB_NAME"
-                  # Otherwise, we run all of them if the branch is staging or master
-                  elif [[ "${{ steps.detect-branch.outputs.branch }}" =~ "(staging|master)" ]]; then
+                  # If JOB_NAME=all, then we do indeed run all of them if the branch is staging or master
+                  elif [[ "$BRANCH_NAME" =~ "(staging|master)" ]]; then
                     JOB_LIST="${!job_dependencies[@]}"
-                  # Otherwise, we filter based on changed files
+                  # If JOB_NAME=all, and we're not merging to staging/master,
+                  # then we should filter the job list based on the job's dependencies
                   else
                     JOB_LIST=""
                     for i in "${!job_dependencies[@]}"
@@ -147,7 +150,7 @@ jobs:
                       # Separate by | in order to "OR" the filepaths
                       DEPS=$(echo "${job_dependencies[$i]}" | tr ' ' '|')
                       echo "Checking $i against $DEPS"
-                      if git diff --name-only "HEAD~20" | grep -E "^($DEPS)" &>/dev/null; then
+                      if git diff --name-only "$COMPARISON_COMMIT" | grep -E "^($DEPS)" &>/dev/null; then
                         # If at least one file dependency is found in the git diff,
                         # then we include that job
                         echo "Job $i found with files changed"
@@ -164,11 +167,11 @@ jobs:
             - name: Detect Whether to Publish the Job(s) or Not
               id: detect-publish
               run: |
-                  # if this workflow was triggered by push, we want the jobs to publish
+                  # if this workflow was triggered by push, then we want the jobs to publish
                   if [[ ${{ github.event_name }} == 'push' ]]; then
                     PUBLISH=true
                   else
-                    # if running from workflow_dispatch, input publish will be set, so we set it as environment variable
+                    # if running from workflow_dispatch, we use the github input for publishing
                     PUBLISH=${{ github.event.inputs.publish }}
                   fi
 
@@ -309,7 +312,10 @@ jobs:
     ecs-task-definitions-notify-slack:
         name: "ECS Task Definitions: Notify Slack"
         needs:
-            [fractal-publish-build-config, ecs-task-definitions-deploy-task-definitions-ecs]
+            [
+                fractal-publish-build-config,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+            ]
         if: >
             success() &&
             contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
