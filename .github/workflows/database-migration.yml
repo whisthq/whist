@@ -1,0 +1,118 @@
+# workflows/main-webserver-check-pr.yml
+#
+# Main Webserver: Check PR
+# Checks a main-webserver PR for linting and unit testing success.
+
+name: "Database Migration"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+            - project/**
+        # # This workflow will run when one of these files changes.
+        # paths:
+        #     - "db.sql"
+    workflow_dispatch:
+
+jobs:
+    main-webserver-check-pr-linting:
+        name: Run Migra Diff
+        runs-on: ubuntu-20.04
+
+        env:
+          HEROKU_APP_NAME: "fractal-dev-server"
+          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
+          DIFF_SCRIPT: ".github/workflows/helpers/migration/schema_diff.py"
+          URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
+          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
+          PATH_SCHEMA_MERGING: "db.sql"
+          PATH_SCHEMA_CURRENT: "current_schema.sql"
+          POSTGRES_HOST: postgres
+          POSTGRES_PORT: 5432
+          POSTGRES_USER: runner
+
+          # Service containers to run with `container-job`
+        services:
+          # Label used to access the service container
+          postgres:
+            # Docker Hub image
+            image: postgres
+            # Provide the password for postgres
+            env:
+              POSTGRES_PASSWORD: postgres
+              # Set health checks to wait until loaded
+            options: >-
+              --health-cmd pg_isready
+              --health-interval 10s
+              --health-timeout 5s
+              --health-retries 5
+            ports:
+              # Maps tcp port 5432 on service container to the host
+              - 5432:5432
+
+        steps:
+            - name: Debugging with tmate
+              uses: mxschmitt/action-tmate@v3.3
+
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: main-webserver
+              run: pip install --upgrade pip
+
+            - name: Install Python dependencies
+              working-directory: main-webserver
+              run: |
+                pip install pipenv
+                cd .github/workflows
+                pipenv install
+
+
+            - name: Authenticate Heroku
+              run: |
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
+
+            - name: Check that db.sql exists
+              run: |
+                FILE=${PATH_SCHEMA_MERGING}
+                if test -f "$FILE"; then
+                echo "$FILE exists."
+                fi
+
+            # - name: New db from current schema
+            #   run: |
+            #     psql -f db.sql ${URL_MERGING}
+
+
+            # - name: Run migra on endpoints and print
+            #   run: |
+            #     CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
+            #     MERGING=${URL_MERGING}
+            #     RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+
+            #     export msg="${RESULT}"
+            #     jq -nc '{"body":env.msg}' | \
+            #     curl -sL  -X POST -d @- \
+            #     -H "Content-Type: application/json" \
+            #     -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            #     "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
+            #   env:
+            #     OWNER: ${{ github.repository_owner }}
+            #     REPO:  ${{ github.repository }}
+            #     PR:    ${{ github.event.number }}
