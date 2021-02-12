@@ -6,9 +6,9 @@
 name: "EC2 Instance Status: Checks EC2 instance "
 
 on:
-    # pull_request:
-    #     branches:
-    #         - dev
+    pull_request:
+        branches:
+            - dev
 
     # push:
     # triggers workflow on a schedule
