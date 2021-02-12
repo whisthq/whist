@@ -15,6 +15,7 @@ cd "$DIR/.."
 
 # Fractal container image to run
 image=${1:-fractal/base:current-build}
+app_name=$(sed 's/.*fractal\/\(.*\):.*/\1/' $image)
 
 # Define the folder to mount the Fractal protocol server into the container
 if [[ ${2:-''} == mount ]]; then
@@ -75,7 +76,7 @@ create_container() {
         -p 32262:32262 \
         -p 32263:32263/udp \
         -p 32273:32273 \
-        $image
+        $1
     # capabilities not enabled by default: CAP_NICE
 }
 
@@ -120,8 +121,8 @@ send_start_values_request() {
 }
 
 # Send a request to the host service (pretending to be the ecs-agent) setting
-# up the mapping between FractalID and DockerID.
-# Args: container_id, fractal_id
+# up the mappings between FractalID and DockerID and AppName.
+# Args: container_id, fractal_id, app_name
 send_register_docker_container_id_request() {
   # Send the request
   response=$(curl --insecure --silent --location --request POST 'https://localhost:4678/register_docker_container_id' \
@@ -129,7 +130,8 @@ send_register_docker_container_id_request() {
     --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "docker_id": "'"$1"'",
-      "fractal_id": "'"$2"'"
+      "fractal_id": "'"$2"'",
+      "app_name": "'"$3"'"
     }') \
   || (print_error_and_kill_container $1 "register_docker_container_id request to the host service failed!")
   echo "Sent register_docker_container_id request to container $1!"
@@ -167,7 +169,7 @@ check_if_host_service_running
 send_uinput_device_request $fractal_id
 container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
-send_register_docker_container_id_request $container_id $fractal_id
+send_register_docker_container_id_request $container_id $fractal_id $app_name
 docker start $container_id
 send_start_values_request $container_id $dpi $user_id
 
