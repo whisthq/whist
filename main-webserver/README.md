@@ -59,7 +59,7 @@ This step is optional. If you choose not to complete this step, you will still b
 
 **4. Make Dummy SSL Certificates.**
 
-We use a Redis+TLS instance in production, so during testing we try to maintain similarity by using a Redis+TLS docker image. Navigate to the `dummy_certs` directory and run `bash create_dummy_certs.sh` to generate temporary useless SSL certificates. The Redis+TLS docker image will use this.
+We use a Redis+TLS instance in production, so during testing we try to maintain similarity by using a Redis+TLS docker image. Run `bash dummy_certs/create_dummy_certs.sh` to generate temporary SSL certificates that are only useful for local development. The Redis+TLS docker image will use this.
 
 **5. Spin Up Local Servers**
 
