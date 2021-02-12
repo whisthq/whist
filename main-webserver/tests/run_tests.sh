@@ -9,8 +9,6 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Make sure we are always running this script with working directory `main-webserver/tests`
 cd "$DIR"
 
-echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
-
 # if in CI, run setup tests and set env vars
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == "true" ]; then
@@ -21,6 +19,8 @@ if [ $IN_CI == "true" ]; then
     # app can look at POSTGRES_URI to connect to db. point to local CI db
     export POSTGRES_URI=$POSTGRES_LOCAL_URI
 else
+    echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
+
     # add env vars to current env. these tell us the host, db, role, pwd
     export $(cat ../docker/.env | xargs)
 

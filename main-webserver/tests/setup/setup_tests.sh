@@ -33,7 +33,7 @@ fi
 
 # Make sure we have dummy SSL certificates. Note that we don't care if we
 # overwrite existing ones.
-../dummy_certs/create_dummy_certs.sh
+bash ../../dummy_certs/create_dummy_certs.sh
 
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat ../../docker/.env | xargs)
