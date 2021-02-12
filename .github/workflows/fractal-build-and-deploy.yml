@@ -112,7 +112,7 @@ jobs:
                   echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
-            # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a ^/$)
+            # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
             - name: Detect Job(s)
               id: detect-jobs
               run: |
