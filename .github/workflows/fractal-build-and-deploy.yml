@@ -402,11 +402,13 @@ jobs:
 
             - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
               run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
+                  if [ "$BRANCH_NAME" == "master" ]; then
                     echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
                     echo "webserver_url=https://prod-server.fractal.co/" >> $GITHUB_ENV
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
                     echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
                     echo "webserver_url=https://staging-server.fractal.co/" >> $GITHUB_ENV
@@ -419,9 +421,11 @@ jobs:
             - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
               working-directory: ecs-host-setup
               run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
+                  if [ "$BRANCH_NAME" == "master" ]; then
                     echo 'APP_ENV=PROD' > app_env.env
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
                     echo 'APP_ENV=STAGING' > app_env.env
                   else
                     echo 'APP_ENV=DEV' > app_env.env
@@ -451,6 +455,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               working-directory: ecs-host-setup
               run: |
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -490,26 +495,17 @@ jobs:
                       echo "Failed to update $region" && false
                     fi
 
-                    # poll for update_region and its subtasks 
-                    bash ../.github/workflows/helpers/ecs-host-setup/poll_webserver_update_region_celery.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
+                    # poll for update_region and its subtasks
+                    ../.github/workflows/helpers/ecs-host-setup/poll_webserver_update_region_celery.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
                     if [[ $? =~ 1 ]]; then
                       echo "Failed to update $region" && false
                     fi
 
                   done
 
-    # AMI: Notify Slack
-    # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
-    # Runs if ami-publish-ec2 succeeds.
-    ami-notify-slack:
-        name: "AMI: Notify Slack"
-        needs: [fractal-publish-build-config, ami-publish-ec2]
-        if: >
-            success() &&
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        runs-on: ubuntu-20.04
-        steps:
+            # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
@@ -658,8 +654,10 @@ jobs:
 
             - name: Retrieve Desktop App Version from Config Database, Increment Minor Version, and Update Config Database Version
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              shell: bash
+              shell: bash -e {0}
               run: |
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
                   # curl GraphQL API to retrieve version number from config database
                   curl -X POST \
                   -H 'Content-Type: application/json' \
@@ -690,7 +688,7 @@ jobs:
                   echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
                   # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
-                  if [[ "${GITHUB_REF##*/}" == "master" ]]; then
+                  if [[ "$BRANCH_NAME" == "master" ]]; then
                     echo 'Using master configuration...'
                     # increment version by 0.0.1
                     NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
@@ -710,7 +708,7 @@ jobs:
                     --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
 
-                  elif [[ "${GITHUB_REF##*/}" == "staging" ]]; then
+                  elif [[ "$BRANCH_NAME" == "staging" ]]; then
                     echo 'Using staging configuration...'
                     # increment version by staging-rc.1
                     NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
@@ -727,8 +725,7 @@ jobs:
                     -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
                     --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
                     https://config-database.fractal.co/v1/graphql
-
-                  elif [[ "${GITHUB_REF##*/}" == "dev" ]]; then
+                  elif [[ "$BRANCH_NAME" == "dev" ]]; then
                     echo 'Using dev configuration...'
                     # increment version by dev-rc.1
                     NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
@@ -753,28 +750,30 @@ jobs:
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
 
             - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
-              shell: bash
+              shell: bash -e {0}
               run: |
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "master" ]; then
                         echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
-                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-ubuntu-staging" >> $GITHUB_ENV
                     else
                         echo "s3_bucket=fractal-chromium-ubuntu-dev" >> $GITHUB_ENV
                     fi
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "master" ]; then
                         echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
-                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-windows-staging" >> $GITHUB_ENV
                     else
                         echo "s3_bucket=fractal-chromium-windows-dev" >> $GITHUB_ENV
                     fi
                   else
-                    if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "master" ]; then
                         echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
-                    elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-macos-staging" >> $GITHUB_ENV
                     else
                         echo "s3_bucket=fractal-chromium-macos-dev" >> $GITHUB_ENV
@@ -793,7 +792,6 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              shell: bash
               working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
@@ -819,9 +817,9 @@ jobs:
             [fractal-publish-build-config, client-applications-publish-build-s3]
         if: >
             success() &&
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         steps:
             - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \

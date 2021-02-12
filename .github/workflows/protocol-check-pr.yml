@@ -86,7 +86,7 @@ jobs:
                   ls $env:CUDA_PATH\include
 
             - name: Install OS Compiler Matchers
-              shell: bash
+              shell: bash -e {0}
               run: |
                   # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
@@ -111,7 +111,7 @@ jobs:
 
             - name: Install Linux/MacOS Client Protocol Dependencies on Linux/MacOS GHA Machines
               if: runner.os == 'Linux' || runner.os == 'macOS'
-              shell: bash
+              shell: bash -e {0}
               working-directory: protocol
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
@@ -146,7 +146,6 @@ jobs:
               if: runner.os == 'Linux' || runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
-              shell: bash
               working-directory: protocol
               run: |
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
@@ -157,7 +156,6 @@ jobs:
               if: runner.os == 'Linux'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
-              shell: bash
               working-directory: protocol
               run: |
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
@@ -165,7 +163,6 @@ jobs:
 
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: protocol
               run: |
                   # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
@@ -180,7 +177,7 @@ jobs:
                   git diff-index --quiet HEAD --
 
             - name: Verify Builds with clang-tidy
-              shell: bash
+              shell: bash -e {0}
               working-directory: protocol
               run: |
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
@@ -191,12 +188,10 @@ jobs:
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: protocol
               run: ./build_protocol.sh release
 
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: container-images
               run: ./helper-scripts/copy_protocol_build.sh
