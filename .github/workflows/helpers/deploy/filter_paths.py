@@ -8,6 +8,8 @@ parser.add_argument('--commit', required=True,
                     help='The git commit to check comparisons against')
 parser.add_argument('--specific-job', nargs='?',
                     help='If only a specific job should be run, pass it into here')
+parser.add_argument('--all-jobs', action='store_true',
+                    help='If all jobs should be run, pass it into here')
 args = parser.parse_args()
 
 # Job folder dependency mapping
