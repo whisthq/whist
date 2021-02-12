@@ -120,7 +120,6 @@ jobs:
               if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              shell: bash
               working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
