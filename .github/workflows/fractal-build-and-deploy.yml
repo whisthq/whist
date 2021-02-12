@@ -916,7 +916,7 @@ jobs:
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
 
-      # Put the webserver into maintenance mode while task defs/AMIs update
+    # End maintenance mode
     fractal-end-webserver-maintenance-mode:
       name: "End webserver maintenance mode"
       runs-on: ubuntu-20.04

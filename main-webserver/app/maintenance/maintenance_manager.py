@@ -383,7 +383,15 @@ def maintenance_track_task(func: Callable):
     @wraps(func)
     def wrapper(*args, **kwargs):
         self_obj = args[self_argn]  # celery "self" object created with @shared_task(bind=True)
-        region_name = args[region_argn]
+        # try different ways of getting region. it can be a KWARG if the caller did 
+        # func(pos_arg1, pos_arg2, region_name=region)
+        region_name = None
+        if "region" in kwargs:
+            region_name = kwargs["region"]
+        elif "region_name" in kwargs:
+            region_name = kwargs["region_name"]
+        else:
+            region_name = args[region_argn]
 
         # pre-function logic: register the task
         if not try_register_task(region_name=region_name, task_id=self_obj.request.id):

@@ -31,7 +31,7 @@ services:
       SLACK_WEBHOOK: https://hooks.slack.com/services/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
       POSTGRES_URI: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
       REDIS_URL: rediss://redis
-      HOT_RELOAD: "true" # ${HOT_RELOAD}
+      HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
     volumes:
       - ..:/app

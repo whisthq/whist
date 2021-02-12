@@ -110,6 +110,8 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
 
+        # raise ValueError(response.status_code)
+
         return response
 
     return _test_payment
@@ -129,4 +131,5 @@ def test_payment_all(test_payment, has_trial, has_subscription, expected):
 
     Tests the @payment_required decorator with whether a user has/does not have a free Fractal trial and has/does not have a subscription
     """
+    raise ValueError(test_payment(has_trial, has_subscription).status_code)
     assert test_payment(has_trial, has_subscription).status_code == expected
