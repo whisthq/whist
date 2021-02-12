@@ -1,6 +1,6 @@
 #!/usr/bin/env python
+import tempfile
 from pathlib import Path
-
 
 TIMEOUT_SECONDS = 10
 
@@ -10,12 +10,32 @@ HEROKU_BASE_URL = "https://api.heroku.com"
 
 HEROKU_APP_NAME = "fractal-dev-server"
 
-SCHEMA_MERGING_NAME = "db.sql"
+HEROKU_DB_URL_KEY = "DATABASE_URL"
 
-SCHEMA_MERGING_PATH = FRACTAL_ROOT.joinpath(SCHEMA_MERGING_NAME)
+POSTGRES_DEFAULT_HOST = "localhost"
 
-DB_MERGING = {"ports": {"localhost": 9900,
-                        "container": 5432}}
+POSTGRES_DEFAULT_IMAGE = "postgres"
 
-DB_CURRENT = {"ports": {"localhost": 9995,
-                        "container": 5432}}
+POSTGRES_DEFAULT_USERNAME = "postgres"
+
+POSTGRES_DEFAULT_DBNAME = "postgres"
+
+POSTGRES_DEFAULT_PASSWORD = "password"
+
+POSTGRES_DEFAULT_PORT = 5432
+
+SCHEMA_PATH_MERGING = FRACTAL_ROOT.joinpath("db.sql")
+
+SCHEMA_PATH_CURRENT = Path(tempfile.gettempdir()).joinpath("tempdb.sql")
+
+SCHEMA_PATH_DIFFING = Path(tempfile.gettempdir()).joinpath("diffdb.sql")
+
+DB_CONFIG_DEFAULT = {"host": POSTGRES_DEFAULT_HOST,
+                       "port": POSTGRES_DEFAULT_PORT,
+                       "username": POSTGRES_DEFAULT_USERNAME,
+                       "password": POSTGRES_DEFAULT_PASSWORD,
+                       "dbname": POSTGRES_DEFAULT_USERNAME}
+
+DB_CONFIG_MERGING = {**DB_CONFIG_DEFAULT, "port": 9900}
+
+DB_CONFIG_CURRENT = {**DB_CONFIG_DEFAULT, "port": 9995}

@@ -5,6 +5,7 @@ import config
 import traceback
 from functools import wraps
 
+
 def format_error(heading, input_data, error_data, suggestion=None):
     suggestion = ("\n\n" + suggestion) if suggestion else ""
     return Exception(
@@ -15,6 +16,22 @@ def format_error(heading, input_data, error_data, suggestion=None):
         + error_data
         + suggestion
     )
+
+def catch_value_error (func):
+    @wraps(func)
+    def catch_value_error_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except ValueError as e:
+            raise format_error(
+                "The following function received incorrect arguments:",
+                func.__name__,
+                (e.args[0] + " Received:"),
+                str(list(e.args[1:]))
+            ) from e
+
+    return catch_value_error_wrapper
+
 
 def catch_timeout_error(func):
     @wraps(func)
@@ -43,7 +60,7 @@ def catch_auth_error(func):
             response = e.response
             status = response.status_code
 
-            if status == 403:
+            if status == 403 or status == 401:
                 json = response.json()
                 r_id = json["id"]
                 r_message = json["message"]

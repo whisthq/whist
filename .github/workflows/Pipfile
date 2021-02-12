@@ -7,11 +7,11 @@ name = "pypi"
 requests = "*"
 pytest = "*"
 pytest-docker = "*"
-psycopg2 = "*"
 migra = "*"
 docker = "*"
 pretty-errors = "*"
 stopit = "*"
+psycopg2 = "*"
 
 [dev-packages]
 

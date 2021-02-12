@@ -4,6 +4,7 @@ import utilities
 from functools import wraps, partial
 from contextlib import contextmanager
 from errors import catch_timeout_error
+import config
 
 
 client = docker.from_env()
@@ -11,22 +12,20 @@ client = docker.from_env()
 
 def with_docker(func):
     @wraps(func)
-    def with_docker_wrapper(*args):
-        return func(client, *args)
+    def with_docker_wrapper(*args, **kwargs):
+        return func(client, *args, **kwargs)
     return with_docker_wrapper
 
 
-def with_port_map(func):
-    @wraps(func)
-    def with_port_map_wrapper(config_map):
-        # if not kwargs.get("ports"):
-        #     return func(port_map=None)
-        container_port = config_map["ports"]["container"]
-        localhost_port = config_map["ports"]["localhost"]
-        ports = {}
-        ports[container_port] = localhost_port
-        return func(ports)
-    return with_port_map_wrapper
+# def with_ports_map(func):
+#     @wraps(func)
+#     def with_ports_map_wrapper(config_map):
+#         container_port = config_map["container"]
+#         localhost_port = config_map["localhost"]
+#         ports = {}
+#         ports[container_port] = localhost_port
+#         return func(ports)
+#     return with_ports_map_wrapper
 
 
 @with_docker
@@ -50,21 +49,20 @@ def is_ready(client, container_id):
 
 
 @catch_timeout_error
-@with_port_map
-def run_postgres_container(port_map):
+@with_docker
+def run_postgres_container(client, **kwargs):
     # Note that ports are backwards from the Docker CLI.
     # Docker CLI takes: --ports host:container
     # docker-py takes: ports={container: host}
-    print(port_map)
-    host_port = next(iter(port_map.values()))
+    ports = {}
+    ports[config.POSTGRES_DEFAULT_PORT] = kwargs["port"]
     container = client.containers.run(
-        "postgres",
-        environment={
-            "POSTGRES_HOST_AUTH_METHOD": "trust"},
-        ports=port_map,
+        config.POSTGRES_DEFAULT_IMAGE,
+        environment={"POSTGRES_PASSWORD": config.POSTGRES_DEFAULT_PASSWORD},
+        ports=ports,
         detach=True)
 
-    # utilities.ensure_ready(partial(is_ready, container.id),
-    #                        partial(postgres.is_ready, host_port))
+    utilities.ensure_ready(partial(is_ready, container.id),
+                           partial(postgres.is_ready, **kwargs))
 
     return container
