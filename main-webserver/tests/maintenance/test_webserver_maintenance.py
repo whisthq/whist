@@ -50,7 +50,9 @@ def mock_assign_container(*args, **kwargs):
 
 @pytest.fixture
 def mock_endpoints(monkeypatch):
-    """ Manual mocking because this needs to be done before celery threads start. """
+    """
+    Mock _create_new_cluster and _assign_container. MUST be done before celery threads start.
+    """
     # problematic:
     # /aws_container/create_cluster, /aws_container/assign_container, /container/assign
     monkeypatch.setattr(_create_new_cluster, "__code__", mock_create_cluster.__code__)
@@ -110,25 +112,6 @@ def try_problematic_endpoint(client, admin, region_name: str, endpoint_type: str
     return resp
 
 
-# def early_monkeypatch(monkeypatch_argn: int):
-#     """
-#     This decorator is needed to patch before celery fixtures are applied.
-#     """
-
-#     def early_monkeypatch_decorator(func):
-#         def wrapper(func, *args, **kwargs):
-#             monkeypatch = args[monkeypatch_argn]
-#             mock_endpoints(monkeypatch)
-#             return func(*args, **kwargs)
-
-#         # using functools.wraps does not work. This post helped:
-#         # https://stackoverflow.com/questions/19614658/how-do-i-make-pytest-fixtures-work-with-decorated-functions
-#         return decorator.decorator(wrapper, func)
-
-#     return early_monkeypatch_decorator
-
-
-# @early_monkeypatch(monkeypatch_argn=2)  # mock first to stop race-condition with celery threads
 @pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
@@ -143,11 +126,11 @@ def test_maintenance_mode(client, admin, mock_endpoints):
     5. try another problematic task, should fail out because webserver in maintenance mode
     6. try a problematic task in a different region, which should succeed
     7. end maintenance mode
-    8. try another problematic task in the original region, should succeed since maintenance mode over
+    8. try another problematic task in the original region, should succeed since maintenance over
 
     TODO:
-    1. have multiple celery workers to concurrently run all problematic endpoints? Current strategy is
-    to do a mix of them throughout test execution.
+    1. have multiple celery workers to concurrently run all problematic endpoints? Current strategy
+    is to do a mix of them throughout test execution.
     2. We need to add fixtures so we can hit /container/assign and make sure it is locked down
     """
     from app import redis_conn

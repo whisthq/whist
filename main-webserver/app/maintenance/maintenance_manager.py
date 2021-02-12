@@ -87,7 +87,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     Args:
         region_name: name of region to start updating
 
-    Return:
+    Returns:
         (success, human_readable_msg)
         success: True if webserver in update mode, otherwise false
         human_readable_msg: explains exactly what has happened
@@ -164,7 +164,7 @@ def try_end_update(region_name: str) -> bool:
     Args:
         region_name: name of region to end updating
 
-    Return:
+    Returns:
         True if update ended, False if lock was not acquired or an update was not happening
     """
     from app import redis_conn
@@ -208,7 +208,7 @@ def try_register_task(region_name: str, task_id: int) -> bool:
         region_name: name of region to start updating
         task_id: celery task that is being tracked
 
-    Return:
+    Returns:
         True if registered, False if lock was not acquired or an update is happening
     """
     from app import redis_conn
@@ -245,7 +245,7 @@ def try_deregister_task(region_name: str, task_id: int) -> bool:
         region_name: name of region to start updating
         task_id: celery task that is being tracked
 
-    Return:
+    Returns:
         True if deregistered, False if lock was not acquired or task_id does not exist in list
     """
     from app import redis_conn
@@ -289,9 +289,6 @@ def wait_no_update_and_track_task(func: Callable):
         1. check if there is no update going on. if so error out and never call the celery task.
         2. track a celery task during its execution
         3. clean up tracking of the celery task after it finishes
-
-    Args:
-        func: function (celery task) to decorate
     """
     # must have "self" argument
     self_argn = get_arg_number(func, "self")
