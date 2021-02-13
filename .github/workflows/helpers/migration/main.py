@@ -5,6 +5,7 @@ import containers
 import heroku
 import postgres
 import sys
+import tempfile
 from pprint import pprint
 from pathlib import Path
 from config import (HEROKU_APP_NAME,
