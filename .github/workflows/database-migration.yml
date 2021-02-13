@@ -102,7 +102,7 @@ jobs:
 
             - name: Run migra on endpoints and print
               run: |
-                RESULT=$(${DIFF_SCRIPT})
+                RESULT=$(python3 ${DIFF_SCRIPT})
 
                 export msg="${RESULT}"
                 jq -nc '{"body":env.msg}' | \
