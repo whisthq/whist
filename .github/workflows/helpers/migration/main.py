@@ -15,7 +15,8 @@ from config import (HEROKU_APP_NAME,
                     SCHEMA_PATH_MERGING,
                     SCHEMA_PATH_DIFFING,
                     DB_CONFIG_MERGING,
-                    DB_CONFIG_CURRENT,)
+                    DB_CONFIG_CURRENT,
+                    PERFORM_DATABASE_MIGRATION)
 
 
 def db_from_schema(schema_path, **kwargs):
@@ -69,7 +70,7 @@ if not test_diff:
         # Actually perform migration
         # postgres.sql_commands(SCHEMA_PATH_DIFFING,
         #                       url=heroku_db_url)
-        #
+
         output.title("Database migration performed!")
         output.body(f"The follow SQL commands were sent to {HEROKU_APP_NAME}.")
         output.sql(diff)
