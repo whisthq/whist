@@ -69,7 +69,8 @@ jobs:
             - name: Install Python dependencies
               working-directory: main-webserver
               run: |
-                pip install -r .github/workflows/requirements.txt
+                echo pwd
+                pip install -r ./requirements.txt
                 # pip install pipenv
                 # cd .github/workflows
                 # pipenv install
