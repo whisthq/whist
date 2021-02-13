@@ -15,6 +15,14 @@ from config import (HEROKU_APP_NAME,
                     DB_CONFIG_MERGING,
                     DB_CONFIG_CURRENT,)
 
+from pathlib import Path
+dir_path = os.path.dirname(os.path.realpath(__file__))
+print("dir_path", dir_path)
+p = Path(dir_path)
+print("parent", p.parent)
+print("children", list(p.iterdir()))
+print("parents", list(p.parents))
+
 
 def db_from_schema(schema_path, **kwargs):
     container = containers.run_postgres_container(**kwargs)
