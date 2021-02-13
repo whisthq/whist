@@ -25,7 +25,7 @@ jobs:
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
           HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
-          DIFF_SCRIPT: ".github/workflows/helpers/migration/schema_diff.py"
+          DIFF_SCRIPT: ".github/workflows/helpers/migration/main.py"
           URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
           CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
           PATH_SCHEMA_MERGING: "db.sql"
@@ -100,19 +100,17 @@ jobs:
             #     psql -f db.sql ${URL_MERGING}
 
 
-            # - name: Run migra on endpoints and print
-            #   run: |
-            #     CURRENT=$(python3 $HEROKU_CONFIG_SCRIPT)
-            #     MERGING=${URL_MERGING}
-            #     RESULT=$(CURRENT=$CURRENT MERGING=$MERGING python ${DIFF_SCRIPT})
+            - name: Run migra on endpoints and print
+              run: |
+                RESULT=$(${DIFF_SCRIPT})
 
-            #     export msg="${RESULT}"
-            #     jq -nc '{"body":env.msg}' | \
-            #     curl -sL  -X POST -d @- \
-            #     -H "Content-Type: application/json" \
-            #     -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            #     "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
-            #   env:
-            #     OWNER: ${{ github.repository_owner }}
-            #     REPO:  ${{ github.repository }}
-            #     PR:    ${{ github.event.number }}
+                export msg="${RESULT}"
+                jq -nc '{"body":env.msg}' | \
+                curl -sL  -X POST -d @- \
+                -H "Content-Type: application/json" \
+                -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+                "https://api.github.com/repos/${REPO}/issues/${PR}/comments"
+              env:
+                OWNER: ${{ github.repository_owner }}
+                REPO:  ${{ github.repository }}
+                PR:    ${{ github.event.number }}
