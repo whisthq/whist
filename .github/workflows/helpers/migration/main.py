@@ -6,6 +6,7 @@ import heroku
 import postgres
 import sys
 import tempfile
+import output
 from pprint import pprint
 from pathlib import Path
 from config import (HEROKU_APP_NAME,
@@ -15,6 +16,8 @@ from config import (HEROKU_APP_NAME,
                     SCHEMA_PATH_DIFFING,
                     DB_CONFIG_MERGING,
                     DB_CONFIG_CURRENT,)
+
+containers.remove_all_containers()
 
 
 def db_from_schema(schema_path, **kwargs):
@@ -45,7 +48,8 @@ diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 
 # If there's no schema diff, exit with code 0.
 if not diff:
-    print("No schema changes for this PR!")
+    output.title("No schema changes for this PR!")
+    output.body("No database migration will be performed.")
     # sys.exit(0)
 
 # If there's a diff, we need to test it against the current database
@@ -64,15 +68,15 @@ postgres.sql_commands(SCHEMA_PATH_DIFFING, **DB_CONFIG_CURRENT)
 test_diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 
 if not test_diff:
-    print("There's some changes to be made to the schema!")
-    print("Running these SQL commands will perform the migration:\n\n")
-    print(diff)
+    output.title("There's some changes to be made to the schema!")
+    output.body("Running the SQL commands below will perform the migration.")
+    output.sql(diff)
     # sys.exit(2)
 else:
-    print("This migration might not go properly.")
-    print("Here's the diff between schemas:\n\n")
-    print(diff)
-    print("\n\n")
-    print("Here's what didn't make it through the diff test:\n\n")
-    print(test_diff)
+    output.alert("This migration might not go properly.")
+    output.body("Here's the diff between schemas:")
+    output.sql(diff)
+    output.sep()
+    print("Here's what didn't make it through the diff test:")
+    ouput.sql(test_diff)
     # sys.exit(4)
