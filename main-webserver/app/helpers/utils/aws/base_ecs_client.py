@@ -778,7 +778,7 @@ class ECSClient:
         response = self.ecs_client.describe_tasks(tasks=[task_arn])
 
         # if failures is nonzero, that means this task wasn't found
-        return len(response[failures]) == 0
+        return len(response["failures"]) == 0
 
     def get_task_ip_ports(self, offset=0):
         if self.tasks_done[offset]:
