@@ -53,3 +53,5 @@ IGNORE_SQL_STATEMENTS_COMPLETE = {
     'alter table "hdb_catalog"."hdb_scheduled_events" alter column "id" set default public.gen_random_uuid();',
     'alter table "hdb_catalog"."hdb_version" alter column "hasura_uuid" set default public.gen_random_uuid();'
 }
+
+PERFORM_DATABASE_MIGRATION = os.environ.get("PERFORM_DATABASE_MIGRATION")

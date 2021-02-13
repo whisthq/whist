@@ -17,8 +17,6 @@ from config import (HEROKU_APP_NAME,
                     DB_CONFIG_MERGING,
                     DB_CONFIG_CURRENT,)
 
-containers.remove_all_containers()
-
 
 def db_from_schema(schema_path, **kwargs):
     container = containers.run_postgres_container(**kwargs)
@@ -50,7 +48,6 @@ diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 if not diff:
     output.title("No schema changes for this PR!")
     output.body("No database migration will be performed.")
-    # sys.exit(0)
 
 # If there's a diff, we need to test it against the current database
 # Create a temporary file for the diff we just generated, so that
@@ -68,10 +65,18 @@ postgres.sql_commands(SCHEMA_PATH_DIFFING, **DB_CONFIG_CURRENT)
 test_diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 
 if not test_diff:
-    output.title("There's some changes to be made to the schema!")
-    output.body("Running the SQL commands below will perform the migration.")
-    output.sql(diff)
-    # sys.exit(2)
+    if PERFORM_DATABASE_MIGRATION:
+        # Actually perform migration
+        # postgres.sql_commands(SCHEMA_PATH_DIFFING,
+        #                       url=heroku_db_url)
+        #
+        output.title("Database migration performed!")
+        output.body(f"The follow SQL commands were sent to {HEROKU_APP_NAME}.")
+        output.sql(diff)
+    else:
+        output.title("There's some changes to be made to the schema!")
+        output.body("Running the SQL commands below will perform the migration.")
+        output.sql(diff)
 else:
     output.alert("This migration might not go properly.")
     output.body("Here's the diff between schemas:")
@@ -79,4 +84,3 @@ else:
     output.sep()
     print("Here's what didn't make it through the diff test:")
     ouput.sql(test_diff)
-    # sys.exit(4)
