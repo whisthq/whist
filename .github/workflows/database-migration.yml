@@ -95,7 +95,7 @@ jobs:
 
             - name: Run migra on endpoints and print
               run: |
-                python3 ${DIFF_SCRIPT} $(cat SCHEMA_PATH_MERGING)
+                python3 ${DIFF_SCRIPT} $(cat ${SCHEMA_PATH_MERGING})
                 RESULT="Nothing to report"
                 # RESULT=$(python3 ${DIFF_SCRIPT})
 
