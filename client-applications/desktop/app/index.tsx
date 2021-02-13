@@ -31,13 +31,12 @@ const store = configureStore()
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
 
-
 document.addEventListener("DOMContentLoaded", () =>
     render(
         <AppContainer>
             <Provider store={store}>
                 <ConnectedRouter history={history}>
-                        <Root />
+                    <Root />
                 </ConnectedRouter>
             </Provider>
         </AppContainer>,

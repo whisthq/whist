@@ -1,4 +1,4 @@
-import React, { useEffect } from "react"
+import React from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
 import {
@@ -21,9 +21,7 @@ import TitleBar from "shared/components/titleBar"
 import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 
-const Root = (props: {
-    loginToken: string,
-}) => {
+const Root = (props: { loginToken: string }) => {
     /*
         Highest level component, containers React Router and title bar
 
@@ -34,23 +32,23 @@ const Root = (props: {
     const { loginToken } = props
 
     // Set up Apollo GraphQL provider for https and wss (websocket)
-    const createApolloClient = (loginToken: string) => {
+    const createApolloClient = (tempLoginToken: string) => {
         const httpLink = new HttpLink({
             uri: config.url.GRAPHQL_HTTP_URL,
         })
-    
+
         const wsLink = new WebSocketLink({
             uri: config.url.GRAPHQL_WS_URL,
             options: {
                 reconnect: true,
                 connectionParams: {
                     headers: {
-                        Login: loginToken,
-                    }
-                }
+                        Login: tempLoginToken,
+                    },
+                },
             },
         })
-    
+
         const splitLink = split(
             ({ query }) => {
                 const definition = getMainDefinition(query)
@@ -72,23 +70,32 @@ const Root = (props: {
 
     return (
         <ApolloProvider client={apolloClient}>
-        <div>
-            <TitleBar />
-            <Switch>
-                <Route path={FractalRoute.LAUNCHER} component={LauncherPage} />
-                <Route path={FractalRoute.LOGIN} component={LoginPage} />
-                <Route path={FractalRoute.UPDATE} component={UpdatePage} />
-                <Route path={FractalRoute.PAYMENT} component={PaymentPage} />
-                <Route path={FractalRoute.LOADING} component={LoadingPage} />
-            </Switch>
-        </div>
+            <div>
+                <TitleBar />
+                <Switch>
+                    <Route
+                        path={FractalRoute.LAUNCHER}
+                        component={LauncherPage}
+                    />
+                    <Route path={FractalRoute.LOGIN} component={LoginPage} />
+                    <Route path={FractalRoute.UPDATE} component={UpdatePage} />
+                    <Route
+                        path={FractalRoute.PAYMENT}
+                        component={PaymentPage}
+                    />
+                    <Route
+                        path={FractalRoute.LOADING}
+                        component={LoadingPage}
+                    />
+                </Switch>
+            </div>
         </ApolloProvider>
     )
 }
 
 // Keeping here for future use
 const mapStateToProps = (state: {
-    AuthReducer: { authFlow: {loginToken: string }}
+    AuthReducer: { authFlow: { loginToken: string } }
 }) => {
     return {
         loginToken: state.AuthReducer.authFlow.loginToken,

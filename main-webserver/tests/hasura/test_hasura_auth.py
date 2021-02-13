@@ -8,6 +8,7 @@ from jose import jwt
 
 from ..patches import function
 
+
 def test_no_headers(client):
     response = client.get("/hasura/auth")
     assert response.status_code == HTTPStatus.OK

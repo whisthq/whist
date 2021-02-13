@@ -21,7 +21,6 @@ import {
 } from "shared/constants/graphql"
 import { updateAuthFlow } from "store/actions/auth/pure"
 
-
 import styles from "pages/login/login.css"
 
 export const Login = (props: {
@@ -42,26 +41,22 @@ export const Login = (props: {
 
     const [buttonClicked, setButtonClicked] = useState(false)
     const [localAccessToken, setLocalAccessToken] = useState("")
-
-    const ipc = require("electron").ipcRenderer
+    const [tokenGenerated, setTokenGenerated] = useState(false)
 
     const [addLogin] = useMutation(ADD_LOGIN_TOKEN)
     const { data, loading, error } = useSubscription(
         SUBSCRIBE_USER_ACCESS_TOKEN,
         {
             variables: { loginToken: loginToken },
-
         }
     )
     const [deleteTokens] = useMutation(DELETE_USER_TOKENS, {
         context: {
             headers: {
                 Login: loginToken,
-
             },
         },
     })
-
 
     const crypto = require("crypto")
     async function generateToken() {
@@ -72,11 +67,11 @@ export const Login = (props: {
                 none     
         */
         const buffer = await new Promise((resolve, reject) => {
-            crypto.randomBytes(128, (err, buffer) => {
+            crypto.randomBytes(128, (err, buf) => {
                 if (err) {
-                    reject("error generating token")
+                    reject(err)
                 }
-                resolve(buffer)
+                resolve(buf)
             })
         })
         return buffer.toString("hex")
@@ -84,14 +79,25 @@ export const Login = (props: {
 
     const handleLogin = () => {
         setButtonClicked(true)
-        generateToken().then((token) => {
-            const loginToken: string = Date.now() + token
-            dispatch(updateAuthFlow({loginToken: loginToken}))
+        generateToken()
+            .then((token) => {
+                const tempLoginToken: string = Date.now() + token
+                dispatch(updateAuthFlow({ loginToken: tempLoginToken }))
+                setTokenGenerated(true)
+                return null
+            })
+            .catch((err) => {
+                throw err
+            })
+    }
+
+    useEffect(() => {
+        if (tokenGenerated) {
             addLogin({
                 variables: {
                     object: {
-                        login_token: loginToken,
-                        access_token: null,
+                        login_token: loginToken /* eslint-disable-line @typescript-eslint/camelcase */,
+                        access_token: null /* eslint-disable-line @typescript-eslint/camelcase */,
                     },
                 },
             })
@@ -99,24 +105,27 @@ export const Login = (props: {
                     openExternal(
                         `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
                     )
+                    return null
                 })
-                .catch((error) => {
-                    throw error
+                .catch((err) => {
+                    throw err
                 })
-        })
-    }
+            setTokenGenerated(false)
+        }
+    }, [tokenGenerated])
+
     useEffect(() => {
         if (error) {
             console.log(error)
         } else if (loading) {
             console.log("loading!")
         } else {
-            const accessToken =
+            const tempAccessToken =
                 data && data.tokens && data.tokens[0]
                     ? data.tokens[0].access_token
                     : null
-            if (accessToken) {
-                dispatch(validateAccessToken(accessToken))
+            if (tempAccessToken) {
+                dispatch(validateAccessToken(tempAccessToken))
                 deleteTokens({
                     variables: {
                         loginToken: loginToken,
@@ -170,11 +179,13 @@ export const Login = (props: {
     )
 }
 
-const mapStateToProps = (state: { AuthReducer: { user: User, authFlow: {loginToken: string} } }) => {
+const mapStateToProps = (state: {
+    AuthReducer: { user: User; authFlow: { loginToken: string } }
+}) => {
     return {
         userID: state.AuthReducer.user.userID,
         accessToken: state.AuthReducer.user.accessToken,
-        loginToken: state.AuthReducer.authFlow.loginToken
+        loginToken: state.AuthReducer.authFlow.loginToken,
     }
 }
 

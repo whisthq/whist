@@ -3,6 +3,7 @@ from jose import jwt
 
 from app.models import User
 
+
 def auth_token_helper(auth_token):
     """A helper function that processes any tokens passed to the /hasura/auth
     endpoint through the Authorization header
