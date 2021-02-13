@@ -46,7 +46,7 @@ diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 # If there's no schema diff, exit with code 0.
 if not diff:
     print("No schema changes for this PR!")
-    sys.exit(0)
+    # sys.exit(0)
 
 # If there's a diff, we need to test it against the current database
 # Create a temporary file for the diff we just generated, so that
@@ -67,7 +67,7 @@ if not test_diff:
     print("There's some changes to be made to the schema!")
     print("Running these SQL commands will perform the migration:\n\n")
     print(diff)
-    sys.exit(2)
+    # sys.exit(2)
 else:
     print("This migration might not go properly.")
     print("Here's the diff between schemas:\n\n")
@@ -75,4 +75,4 @@ else:
     print("\n\n")
     print("Here's what didn't make it through the diff test:\n\n")
     print(test_diff)
-    sys.exit(4)
+    # sys.exit(4)
