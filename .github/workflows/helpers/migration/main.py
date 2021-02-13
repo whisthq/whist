@@ -27,6 +27,10 @@ def write_to_file(path, string):
         f.write(string)
 
 
+# Try and get SCHEMA_PATH_MERGING from stdin first arg
+SCHEMA_PATH_MERGING = Path(tempfile.gettempdir()).joinpath("db.sql")
+write_to_file(SCHEMA_PATH_MERGING, sys.argv[1])
+
 # Dump the schema from the "current" database (fractal server)
 # using Heroku credentials, and save to a temporary file
 heroku_config = heroku.config_vars(HEROKU_APP_NAME)
