@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 import tempfile
+import os
 from pathlib import Path
 
 TIMEOUT_SECONDS = 10
 
-FRACTAL_ROOT = Path.cwd().parent.parent
-
 HEROKU_BASE_URL = "https://api.heroku.com"
 
-HEROKU_APP_NAME = "fractal-dev-server"
+HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
 
 HEROKU_DB_URL_KEY = "DATABASE_URL"
 
@@ -24,7 +23,7 @@ POSTGRES_DEFAULT_PASSWORD = "password"
 
 POSTGRES_DEFAULT_PORT = 5432
 
-SCHEMA_PATH_MERGING = FRACTAL_ROOT.joinpath("db.sql")
+SCHEMA_PATH_MERGING = os.environ["SCHEMA_PATH_MERGING"]
 
 SCHEMA_PATH_CURRENT = Path(tempfile.gettempdir()).joinpath("tempdb.sql")
 

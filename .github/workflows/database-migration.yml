@@ -24,15 +24,8 @@ jobs:
 
         env:
           HEROKU_APP_NAME: "fractal-dev-server"
-          HEROKU_CONFIG_SCRIPT: ".github/workflows/helpers/migration/db_url.py"
           DIFF_SCRIPT: ".github/workflows/helpers/migration/main.py"
-          URL_MERGING: "postgresql://postgres:postgres@localhost:5432/postgres"
-          CMD_SCHEMA_DUMP: "pg_dump --no-owner --no-privileges --schema-only"
-          PATH_SCHEMA_MERGING: "db.sql"
-          PATH_SCHEMA_CURRENT: "current_schema.sql"
-          POSTGRES_HOST: postgres
-          POSTGRES_PORT: 5432
-          POSTGRES_USER: runner
+          SCHEMA_PATH_MERGING: "db.sql"
 
           # Service containers to run with `container-job`
         services:
@@ -90,7 +83,7 @@ jobs:
 
             - name: Check that db.sql exists
               run: |
-                FILE=${PATH_SCHEMA_MERGING}
+                FILE=${SCHEMA_PATH_MERGING}
                 if test -f "$FILE"; then
                 echo "$FILE exists."
                 fi
