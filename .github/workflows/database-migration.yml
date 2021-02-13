@@ -69,11 +69,12 @@ jobs:
             - name: Install Python dependencies
               working-directory: main-webserver
               run: |
-                echo pwd
-                pip install -r ./requirements.txt
-                # pip install pipenv
-                # cd .github/workflows
-                # pipenv install
+                pip install docker
+                pip install migra
+                pip install pretty-errors
+                pip install psycopg2
+                pip install requests
+                pip install stopit
 
 
             - name: Authenticate Heroku
