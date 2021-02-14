@@ -2,6 +2,9 @@
 
 # This script runs the Docker container that builds the Fractal protocol server for Linux Ubuntu 20.04.
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # Parameters needed to build the Fractal protocol server in Docker
 container_name=fractal-protocol-builder-$(date +"%s") # The name of the Docker container
 mount_directory=$(cd ${1:-.}; pwd) # The local directory to mount into the Docker container
