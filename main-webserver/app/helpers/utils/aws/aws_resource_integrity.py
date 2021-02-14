@@ -28,12 +28,12 @@ def ensure_container_exists(container):
         base_cluster=container.cluster, region_name=container.location, grab_logs=False
     )
 
-    if not ecs_client.check_task_exists(container.container_name):
+    if not ecs_client.check_task_exists(container.container_id):
         # the task doesn't really exist! we should delete from the database
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
         fractal_log(
             function="ensure_container_exists",
-            label=container.container_name,
+            label=container.container_id,
             logs=f"Task was not in region {container.location} cluster {container.cluster}!"
             "Deleted erroneous entry from database.",
         )
