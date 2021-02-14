@@ -4,6 +4,7 @@
 # it to work with the Fractal containers, this script needs to be run directly on a Fractal-enabled (see /ecs-host-setup)
 # AWS EC2 instance, via SSH, after the container image was locally built.
 
+# Exit on errors and missing environment variables
 set -Eeuo pipefail
 
 # Retrieve relative subfolder path

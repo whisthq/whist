@@ -3,6 +3,9 @@
 # This script defines a general-purpose function to install any Google Chrome extension
 # by passing in the extension ID and name
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # Google Chrome extension installer
 install_chrome_extension () {
   # Extensions folder and format

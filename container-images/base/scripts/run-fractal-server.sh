@@ -3,7 +3,10 @@
 # This script starts the Fractal protocol server, and assumes that it is
 # being run within a Fractal Docker container.
 
-# Set/Retrieve Container parameters
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
+# Set/Retrieve Container parameters 
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp

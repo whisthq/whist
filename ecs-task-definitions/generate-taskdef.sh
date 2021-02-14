@@ -4,6 +4,9 @@
 # passed in as a parameter to the script (i.e. chrome).
 # Arguments: $1 - app name (e.g. fractal-prod-browsers-chrome) $2 - Sentry environment (prod, staging, or none)
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # Warn on misconfigured arguments
 if [ $# -eq 0 ] || [ $# -gt 2 ]; then
     echo "Invalid number of arguments"

@@ -3,6 +3,9 @@
 # This script is the entrance for Fractal within the Fractal Docker containers. It retrieves
 # the relevant parameters for the container and starts the fractal systemd user
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # Amazon Linux doesn't have the need for a Fractal firewall rule
 # yes | ufw allow 5900;
 

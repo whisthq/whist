@@ -22,6 +22,9 @@
 # This will ensure increased uniformity between dev and production
 # environments.
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 case "$1" in
     "web")
 	if [ -n "$HOT_RELOAD" ]; then

@@ -7,6 +7,9 @@
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
 # This script can only be run after calling make within /desktop (and /server, if applicable)
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # run with option -c for CI check without replacement option
 OPTIND=1
 CICheck=0

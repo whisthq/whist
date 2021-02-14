@@ -4,6 +4,7 @@
 # (for development) via setup_ubuntu20_host.sh and sets it up to run Fractal
 # automatically (for production).
 
+# Exit on errors and missing environment variables
 set -Eeuo pipefail
 
 # Prevent user from running script as root, to guarantee that all steps are
