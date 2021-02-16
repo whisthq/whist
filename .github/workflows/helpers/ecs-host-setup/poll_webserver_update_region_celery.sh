@@ -1,11 +1,18 @@
 #!/bin/bash
 
+# Arguments:
 # ${1} the webserver url
 # ${2} the task ID in question
 # ${3} the admin token to use to get full logs
 
 # Exit on errors and missing environment variables
 set -Eeuo pipefail
+
+# Retrieve relative subfolder path
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+# make sure current directory is `.github/workflows/helpers/ecs-host-setup/`
+cd "$DIR"
 
 # poll for task to finish
 state=PENDING
@@ -22,7 +29,7 @@ if [[ $state =~ SUCCESS ]]; then
     for task in ${subtasks}; do
         if [ $task != null ] && [ ! -z $task ]; then
             # Recursively call script on subtask
-            bash poll_webserver_update_region_celery.sh ${1} ${task}
+            bash ./poll_webserver_update_region_celery.sh ${1} ${task}
             # If subtask exited with 1, exit this script with 1 (failure)
             if [[ $? =~ 1 ]]; then
                 exit 1
