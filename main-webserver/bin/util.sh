@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# util.sh
-
 # Helpful functions that are useful for preparing the fractal application for
 # deployment.
+
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
 
 # This code was copied from
 # https://devcenter.heroku.com/articles/buildpack-api#bin-compile-summary

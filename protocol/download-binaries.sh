@@ -1,6 +1,10 @@
 #!/bin/bash
 
 # This script downloads pre-built Fractal protocol libraries from AWS S3, on Unix
+
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 echo "Downloading Protocol Libraries"
 
 ###############################
