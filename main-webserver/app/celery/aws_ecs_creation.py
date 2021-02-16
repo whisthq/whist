@@ -33,7 +33,7 @@ from app.helpers.utils.datadog.events import (
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
-from app.constants.container_state_values import FAILURE, PENDING, READY
+from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
 
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
@@ -382,6 +382,13 @@ def assign_container(
             meta={"msg": "Container assigned"},
         )
     else:
+        set_container_state(
+            keyuser=username,
+            keytask=self.request.id,
+            task_id=self.request.id,
+            state=SPINNING_UP_NEW,
+            force=True,  # necessary since check will fail otherwise
+        )
         self.update_state(
             state="PENDING",
             meta={"msg": "No waiting container found -- creating a new one"},
