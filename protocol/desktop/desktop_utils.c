@@ -453,15 +453,12 @@ int read_piped_arguments(bool* keep_waiting) {
 #else
         // When in piped mode (e.g. from the client app), stdin is a NamedPipe
         if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
-            if (GetLastError() == ERROR_BROKEN_PIPE) {
-                keep_reading = false;
+            if (GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_PIPE_NOT_CONNECTED) {
+                // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
+                available_chars = 1; 
             }
-            LOG_ERROR("PeekNamedPipe error with piped arguments: %d", GetLastError());
-            return -1;
         } else if (available_chars == 0) {
             continue;
-        } else {
-            LOG_INFO("available_chars %d", available_chars);
         }
 #endif // _WIN32
 
@@ -494,14 +491,15 @@ int read_piped_arguments(bool* keep_waiting) {
             if (!arg_name) {
                 goto completed_line_eval;
             }
-            arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
-            arg_name[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
 
             char* arg_value = strtok(NULL, "?");
             if (arg_value) {
                 arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
-                arg_value[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
+                arg_value[strcspn(arg_value, "\r")] = 0; // removes trailing carriage return, if exists
             }
+
+            arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
+            arg_name[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
 
             // Iterate through cmd_options to find the corresponding opt
             int opt_index = -1;
@@ -538,12 +536,16 @@ int read_piped_arguments(bool* keep_waiting) {
             }
 
             fflush(stdout);
-        }
 
 completed_line_eval:
-        // Reset finished_line after evaluating a line
-        finished_line = false;
-        memset(&incoming, 0, MAX_INCOMING_LENGTH);
+            if (finished_line) {
+                // Reset finished_line after evaluating a line
+                finished_line = false;
+                memset(&incoming, 0, MAX_INCOMING_LENGTH);
+            }
+        }
+
+        available_chars = 0;
     }
 
     if (strlen((char*)server_ip) == 0) {
