@@ -84,4 +84,4 @@ else:
     output.sql(diff)
     output.sep()
     print("Here's what didn't make it through the diff test:")
-    ouput.sql(test_diff)
+    output.sql(test_diff)
