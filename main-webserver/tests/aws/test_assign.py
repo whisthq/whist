@@ -110,8 +110,6 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
 
-        # raise ValueError(response.status_code)
-
         return response
 
     return _test_payment
