@@ -418,7 +418,7 @@ jobs:
                     fi
 
                     # poll for update_region and its subtasks 
-                    bash ../.github/workflows/helpers/ecs-host-setup/poll_task.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
+                    bash ../.github/workflows/helpers/ecs-host-setup/poll_webserver_update_region_celery.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
                     if [[ $? =~ 1 ]]; then
                       echo "Failed to update $region" && false
                     fi
