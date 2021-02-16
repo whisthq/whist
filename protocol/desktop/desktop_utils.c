@@ -78,7 +78,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
-const char* usage;
+const char *usage;
 
 #define MAX_INCOMING_LENGTH 128
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
@@ -109,7 +109,7 @@ char *dupstring(char *s1) {
     return ret;
 }
 
-int evaluate_arg(int eval_opt, char* eval_optarg) {
+int evaluate_arg(int eval_opt, char *eval_optarg) {
     /*
         Evaluate an option given the optcode and the argument
 
@@ -183,7 +183,8 @@ int evaluate_arg(int eval_opt, char* eval_optarg) {
         case 'e': {  // sentry environment
             // only log "production" and "staging" env sentry events
             if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
-                if (!safe_strncpy(sentry_environment, eval_optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
+                if (!safe_strncpy(sentry_environment, eval_optarg,
+                                  FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
                     printf("Sentry environment is too long: %s\n", eval_optarg);
                     return -1;
                 }
@@ -206,8 +207,8 @@ int evaluate_arg(int eval_opt, char* eval_optarg) {
             const char *str = eval_optarg;
             while (c == separator) {
                 int bytes_read;
-                int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
-                                       &bytes_read);
+                int args_read =
+                    sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
                 // If we read port arguments, then map them
                 if (args_read >= 2) {
                     LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
@@ -250,11 +251,11 @@ int evaluate_arg(int eval_opt, char* eval_optarg) {
             strcpy((char *)program_name, eval_optarg);
             break;
         }
-        case 'r': { // use arguments piped from stdin
+        case 'r': {  // use arguments piped from stdin
             using_piped_arguments = true;
             break;
         }
-        case 'l': { // loading message
+        case 'l': {  // loading message
             LOG_INFO("LOADING: %s", eval_optarg);
             break;
         }
@@ -375,7 +376,7 @@ int parse_args(int argc, char *argv[]) {
         if (opt == -1) {
             if (optind < argc && !ip_set) {
                 // there's a valid non-option arg and ip is unset
-                safe_strncpy((char*)server_ip, argv[optind], MAX_IP_LEN);
+                safe_strncpy((char *)server_ip, argv[optind], MAX_IP_LEN);
                 ip_set = true;
                 ++optind;
             } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
@@ -392,7 +393,7 @@ int parse_args(int argc, char *argv[]) {
     return 0;
 }
 
-int read_piped_arguments(bool* keep_waiting) {
+int read_piped_arguments(bool *keep_waiting) {
     /*
         Read arguments from the stdin pipe if `using_piped_arguments` is
         set to `true`.
@@ -418,7 +419,6 @@ int read_piped_arguments(bool* keep_waiting) {
     bool keep_reading = true;
     bool finished_line = false;
 
-
 #ifndef _WIN32
     int available_chars;
 #else
@@ -436,8 +436,8 @@ int read_piped_arguments(bool* keep_waiting) {
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
     while (keep_reading && *keep_waiting) {
-        SDL_Delay(50); // to keep the fan from freaking out
-        // If stdin doesn't have any characters, continue the loop
+        SDL_Delay(50);  // to keep the fan from freaking out
+                        // If stdin doesn't have any characters, continue the loop
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
             LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
@@ -455,11 +455,11 @@ int read_piped_arguments(bool* keep_waiting) {
         } else if (available_chars == 0) {
             continue;
         }
-#endif // _WIN32
+#endif  // _WIN32
 
-        for (int char_idx = 0; char_idx < (int) available_chars; char_idx++) {
+        for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
-            read_char = (char) fgetc(stdin);
+            read_char = (char)fgetc(stdin);
 
             // If the character is EOF, make sure the loop ends after this iteration
             if (read_char == EOF) {
@@ -469,11 +469,12 @@ int read_piped_arguments(bool* keep_waiting) {
                 total_stored_chars++;
             }
 
-            // Causes some funky behavior if the line being read in is longer than 128 characters because
+            // Causes some funky behavior if the line being read in is longer than 128 characters
+            // because
             //   it splits into two and processes as two different pieces
-            if (!keep_reading || (total_stored_chars > 0 &&
-                ((incoming[total_stored_chars - 1] == '\n') || total_stored_chars == MAX_INCOMING_LENGTH - 1)
-            )) {
+            if (!keep_reading ||
+                (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
+                                            total_stored_chars == MAX_INCOMING_LENGTH - 1))) {
                 finished_line = true;
                 total_stored_chars = 0;
             } else {
@@ -481,19 +482,20 @@ int read_piped_arguments(bool* keep_waiting) {
             }
 
             // Splits the incoming string from STDIN into arg_name and arg_value
-            char* arg_name = strtok(incoming, "?");
+            char *arg_name = strtok(incoming, "?");
             if (!arg_name) {
                 goto completed_line_eval;
             }
 
-            char* arg_value = strtok(NULL, "?");
+            char *arg_value = strtok(NULL, "?");
             if (arg_value) {
-                arg_value[strcspn(arg_value, "\n")] = 0; // removes trailing newline, if exists
-                arg_value[strcspn(arg_value, "\r")] = 0; // removes trailing carriage return, if exists
+                arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
+                arg_value[strcspn(arg_value, "\r")] =
+                    0;  // removes trailing carriage return, if exists
             }
 
-            arg_name[strcspn(arg_name, "\n")] = 0; // removes trailing newline, if exists
-            arg_name[strcspn(arg_name, "\r")] = 0; // removes trailing carriage return, if exists
+            arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
+            arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
 
             // Iterate through cmd_options to find the corresponding opt
             int opt_index = -1;
@@ -509,7 +511,8 @@ int read_piped_arguments(bool* keep_waiting) {
             if (opt_index >= 0) {
                 // Evaluate the passed argument, if a valid opt
                 if (evaluate_arg(cmd_options[opt_index].val, arg_value) < 0) {
-                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name, arg_value ? arg_value : "NULL");
+                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
+                              arg_value ? arg_value : "NULL");
                     return -1;
                 }
             } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
@@ -517,7 +520,7 @@ int read_piped_arguments(bool* keep_waiting) {
                 if (!arg_value) {
                     LOG_WARNING("Must pass arg_value with `ip` arg_name");
                 } else {
-                    safe_strncpy((char*)server_ip, arg_value, MAX_IP_LEN);
+                    safe_strncpy((char *)server_ip, arg_value, MAX_IP_LEN);
                     LOG_INFO("Connecting to IP %s", server_ip);
                 }
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
@@ -536,19 +539,20 @@ int read_piped_arguments(bool* keep_waiting) {
 
             fflush(stdout);
 
-completed_line_eval:
+        completed_line_eval:
             if (finished_line) {
                 // Reset finished_line after evaluating a line
                 finished_line = false;
                 memset(&incoming, 0, MAX_INCOMING_LENGTH);
             }
         }
-end_of_eval_loop:
+    end_of_eval_loop:
         available_chars = 0;
     }
 
-    if (strlen((char*)server_ip) == 0) {
-        LOG_ERROR("Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
+    if (strlen((char *)server_ip) == 0) {
+        LOG_ERROR(
+            "Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
         return -1;
     }
 
@@ -693,7 +697,7 @@ int alloc_parsed_args(void) {
         return -1;
     }
 
-    memset((char*)server_ip, 0, MAX_IP_LEN);
+    memset((char *)server_ip, 0, MAX_IP_LEN);
 
     return 0;
 }
@@ -706,7 +710,7 @@ int free_parsed_args(void) {
             (int): 0 on success, -1 on failure
     */
     if (server_ip) {
-        free((char*)server_ip);
+        free((char *)server_ip);
     }
 
     return 0;
