@@ -465,7 +465,7 @@ func saveUserConfig(fractalID string) {
 			logger.Infof("Tar config directory output: %s", tarConfigOutput)
 		}
 
-		saveConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
+		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
 		saveConfigOutput, err := saveConfigCmd.CombinedOutput()
 		if err != nil {
 			logger.Errorf("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
@@ -509,7 +509,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	if userID != "" {
 		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName + "/fractal-app-config.tar.gz"
 		// Retrieve app config from S3
-		getConfigCmd := exec.Command("/usr/local/bin/aws", "s3", "cp", s3ConfigPath, configPath)
+		getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 		getConfigOutput, err := getConfigCmd.CombinedOutput()
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
 		//    this means that it's the user's first run and they don't have any settings
