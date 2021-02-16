@@ -2,6 +2,7 @@
 import config
 from pathlib import Path
 
+
 def is_ignored_head(ln: str):
     for head in config.IGNORE_HEAD:
         if ln.startswith(head):
@@ -11,6 +12,7 @@ def is_ignored_head(ln: str):
 
 def is_ignored_complete(ln: str):
     return ln in config.IGNORE_COMPLETE
+
 
 def ignore_filter(lines):
     """Filters pre-configured lines from a string of SQL commands

@@ -3,13 +3,17 @@ import config
 import time
 from functools import wraps
 
+
 def with_timeout(secs):
     """Returns a decorator that passes its argument to a function"""
+
     def with_timeout_decorator(func):
         @wraps(func)
         def with_timeout_wrapper(*args, **kwargs):
             return func(secs, *args, **kwargs)
+
         return with_timeout_wrapper
+
     return with_timeout_decorator
 
 
@@ -28,5 +32,3 @@ def ensure_ready(timeout_secs, *fns):
             if all(f() for f in fns):
                 return True
     raise TimeoutError
-
-

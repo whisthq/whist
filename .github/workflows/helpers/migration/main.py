@@ -9,14 +9,16 @@ import tempfile
 import output
 from pprint import pprint
 from pathlib import Path
-from config import (HEROKU_APP_NAME,
-                    HEROKU_DB_URL_KEY,
-                    SCHEMA_PATH_CURRENT,
-                    SCHEMA_PATH_MERGING,
-                    SCHEMA_PATH_DIFFING,
-                    DB_CONFIG_MERGING,
-                    DB_CONFIG_CURRENT,
-                    PERFORM_DATABASE_MIGRATION)
+from config import (
+    HEROKU_APP_NAME,
+    HEROKU_DB_URL_KEY,
+    SCHEMA_PATH_CURRENT,
+    SCHEMA_PATH_MERGING,
+    SCHEMA_PATH_DIFFING,
+    DB_CONFIG_MERGING,
+    DB_CONFIG_CURRENT,
+    PERFORM_DATABASE_MIGRATION,
+)
 
 
 def db_from_schema(schema_path, **kwargs):
@@ -28,6 +30,7 @@ def db_from_schema(schema_path, **kwargs):
 def write_to_file(path, string):
     with open(path, "w") as f:
         f.write(string)
+
 
 if __name__ == "__main__":
     # Dump the schema from the "current" database (fractal server)

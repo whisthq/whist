@@ -16,10 +16,13 @@ def with_docker(func):
     Passes a default Docker client as the first argument to decorated
     functions.
     """
+
     @wraps(func)
     def with_docker_wrapper(*args, **kwargs):
         return func(client, *args, **kwargs)
+
     return with_docker_wrapper
+
 
 @with_docker
 def all_containers(client):
@@ -41,6 +44,7 @@ def remove_all_containers():
     for c in all_containers():
         remove_container(c)
     return all_containers()
+
 
 @with_docker
 def is_ready(client, container_id):
@@ -73,9 +77,11 @@ def run_postgres_container(client, **kwargs):
         config.POSTGRES_DEFAULT_IMAGE,
         environment={"POSTGRES_PASSWORD": config.POSTGRES_DEFAULT_PASSWORD},
         ports=ports,
-        detach=True)
+        detach=True,
+    )
 
-    utilities.ensure_ready(partial(is_ready, container.id),
-                           partial(postgres.is_ready, **kwargs))
+    utilities.ensure_ready(
+        partial(is_ready, container.id), partial(postgres.is_ready, **kwargs)
+    )
 
     return container

@@ -5,6 +5,7 @@ from contextlib import contextmanager
 from errors import catch_process_error, catch_value_error
 import config
 
+
 def postgres_parse_url(config):
     """Formats a URL string given a configuration dictionary"""
     if config.get("url"):
@@ -18,6 +19,7 @@ def postgres_parse_url(config):
 
     return f"postgres://{username}:{password}@{host}:{port}/{dbname}"
 
+
 def with_postgres_url(func):
     """A decorator to transform the arguments to PostgreSQL functions
 
@@ -27,20 +29,24 @@ def with_postgres_url(func):
     URL to the decorated PostgreSQL function. It accepts keyword parameters:
 
     host= a string
-    port= a number or string 
+    port= a number or string
     dbname= a string
     username= a string
     password= a string
     """
+
     @wraps(func)
     def with_postgres_url_wrapper(*args, **kwargs):
         try:
             return func(*args, postgres_parse_url(kwargs))
         except KeyError:
             raise ValueError(
-                ("Database connection needs "
-                 + "host, port, username, password, and dbname keywords."),
-                kwargs) from None
+                (
+                    "Database connection needs "
+                    + "host, port, username, password, and dbname keywords."
+                ),
+                kwargs,
+            ) from None
 
     return with_postgres_url_wrapper
 
@@ -54,13 +60,12 @@ def sql_commands(sql_file_path, *args):
     is read as a single string. The entire string is executed in a single
     transaction against the database, which must already be running.
     """
-    subprocess.run(["psql",
-                    "--single-transaction",
-                    "--file", str(sql_file_path),
-                    *args],
-                   check=True,
-                   stdout=subprocess.PIPE,
-                   stderr=subprocess.PIPE)
+    subprocess.run(
+        ["psql", "--single-transaction", "--file", str(sql_file_path), *args],
+        check=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
 
 
 # Not using with_postgres_url decorator,
@@ -76,13 +81,12 @@ def is_ready(host=None, port=None, username=None, **kwargs):
     Uses the PostgreSQL tool pg_isready to ping the database.
     """
     try:
-        completed = subprocess.run(["pg_isready",
-                                    "--host", host,
-                                    "--port", str(port),
-                                    "--username", username],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   check=True)
+        completed = subprocess.run(
+            ["pg_isready", "--host", host, "--port", str(port), "--username", username],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
         return True
     # Return code "1" means that the call was successful and db isn't ready
     # Return code "2" means that the call received no reponse
@@ -105,14 +109,12 @@ def dump_schema(*args):
 
     Uses the PostGreSQL pg_dump tool to generate the statements.
     """
-    completed = subprocess.run(["pg_dump",
-                                "--no-owner",
-                                "--no-privileges",
-                                "--schema-only",
-                                *args],
-                               stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               check=True)
+    completed = subprocess.run(
+        ["pg_dump", "--no-owner", "--no-privileges", "--schema-only", *args],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
     return completed.stdout.decode("utf-8")
 
 
@@ -139,13 +141,12 @@ def schema_diff(db_config_A, db_config_B):
     url_B = with_postgres_url(identity)(**db_config_B)
 
     try:
-        completed = subprocess.run(["migra",
-                                    "--unsafe",
-                                    url_A,
-                                    url_B],
-                                   stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE,
-                                   check=True)
+        completed = subprocess.run(
+            ["migra", "--unsafe", url_A, url_B],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=True,
+        )
     except Exception as e:
         if e.returncode == 0:
             return None

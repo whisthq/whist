@@ -17,9 +17,7 @@ def config_vars(app_name):
     """
     url = f"{config.HEROKU_BASE_URL}/apps/{app_name}/config-vars"
 
-    r = requests.get(
-        url,
-        headers={"Accept": "application/vnd.heroku+json; version=3"})
+    r = requests.get(url, headers={"Accept": "application/vnd.heroku+json; version=3"})
 
     r.raise_for_status()
     return r.json()
