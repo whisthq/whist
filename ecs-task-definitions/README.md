@@ -12,6 +12,8 @@ This script assumes that the application you generate a task definition for does
 
 Note that the `:rshared` string in the cloud storage mount point is an instance of us using this undocumented hack in AWS: [https://github.com/aws/containers-roadmap/issues/362](https://github.com/aws/containers-roadmap/issues/362). However, it's been around since 2017, so hopefully it doesn't get patched out before we transition to multicloud with Kubernetes/running Docker containers ourselves to bypass the ECS task definitions.
 
+For an explanation of the `%%FRACTAL_ID_PLACEHOLDER%%`s, refer to [the README for `fractal/ecs-agent`](https://github.com/fractal/ecs-agent). In summary, the string `%%FRACTAL_ID_PLACEHOLDER%%` gets replaced at container creation with a randomly-generated string, called the FractalID, by the ECS agent/host service. This `FractalID` is used internally to dynamically and _securely_ create resources like `uinput` devices and cloud storage directories.
+
 ## Publishing
 
 Task definitions for all currently supported apps get automatically published to AWS ECS through the `fractal-publish-build.yml` GitHub Actions workflow, under the `ecs-task-definitions-deploy-task-definitions-ecs` job. See `.github/workflows/fractal-publish-build.yml` for the exact list of applications and AWS regions supported.
