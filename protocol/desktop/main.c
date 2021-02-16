@@ -754,8 +754,6 @@ int main(int argc, char* argv[]) {
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
 
-        // SDL_Event sdl_msg;
-
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !exiting && !failed) {
