@@ -32,7 +32,7 @@ import { AWSRegion } from "shared/types/aws"
 import { FractalDirectory } from "shared/types/client"
 import { uploadToS3 } from "shared/utils/files/aws"
 
-import { launchProtocol, writeStream, endStream } from "shared/utils/files/exec"
+import { launchProtocol, writeStream } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
