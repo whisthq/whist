@@ -19,7 +19,7 @@ on:
     workflow_dispatch:
         inputs:
             # If a specific job-name is given, then we always run exactly that job
-            # If "all" is given, then we might filter jobs, it will be done as if a merge is bad to "branch-name"
+            # If "all" is given, then we might filter jobs, it will be done as if a merge is made to "branch-name"
             job-name:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
@@ -59,18 +59,16 @@ jobs:
               run: |
                   # Grab branch_name from workflow_dispatch inputs
                   BRANCH_NAME=${{ github.event.inputs.branch-name }}
+                  # If no workflow_dispatch input was received, then we use the git branch name
                   if [[ -z "$BRANCH_NAME" ]]; then
-                      # If no workflow_dispatch input was received, then use the git branch name
                       if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
                           BRANCH_NAME=master
                       elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
                           BRANCH_NAME=staging
                       elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
                           BRANCH_NAME=dev
-                      elif [[ ${{ github.ref }} =~ ^refs/heads/project/.*$ ]]; then
-                          BRANCH_NAME=project
                       else
-                          BRANCH_NAME=null
+                          exit 1
                       fi
                   fi
                   echo "branch is set to: $BRANCH_NAME"
@@ -134,7 +132,7 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[container-images-publish-images-ghcr]="container-images"
+                  job_dependencies[container-images-publish-images-ghcr]="container-images ecs-task-definitions"
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="client-applications"
@@ -203,7 +201,6 @@ jobs:
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
-            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(needs.fractal-publish-build-config.outputs.jobs, '|container-images-publish-images-ghcr|')
         steps:
             - name: Checkout Git Repository
@@ -266,8 +263,6 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: >
-            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch)
 
         strategy:
             matrix:
@@ -332,7 +327,6 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
             ]
         if: >
-            success() &&
             contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         runs-on: ubuntu-20.04
         steps:
@@ -350,7 +344,6 @@ jobs:
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         if: >
-            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
@@ -513,27 +506,17 @@ jobs:
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
-    # Runs if config succeeds and branch is in ["master", "staging"] and publish-images-ghcr succeeds, or unconditionally if branch is in ["dev"] (since other workflows won't run then)
+    # Runs if publish-images-ghcr succeeds, or if publish-image-ghcr was filtered out
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs:
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
-            (
-              (
-                contains(
-                  fromJSON('["master", "staging"]'),
-                  needs.fractal-publish-build-config.outputs.branch
-                ) && success()
-              ) ||
-              (
-                contains(
-                  fromJSON('["dev"]'),
-                  needs.fractal-publish-build-config.outputs.branch
-                ) && always()
-              )
-            ) &&
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+            always()
+            && needs.fractal-publish-build-config.result == 'success'
+            && (needs.fractal-images-ghcr.result == 'success' || needs.fractal-images-ghcr.result == 'skipped')
+            && contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
         steps:
             - name: Checkout Git Repository
@@ -599,7 +582,6 @@ jobs:
         runs-on: ${{ matrix.config.os }}
         needs: [fractal-publish-build-config]
         if: >
-            contains(fromJSON('["master", "staging", "dev"]'), needs.fractal-publish-build-config.outputs.branch) &&
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
         strategy:
@@ -816,10 +798,9 @@ jobs:
         needs:
             [fractal-publish-build-config, client-applications-publish-build-s3]
         if: >
-            success() &&
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
