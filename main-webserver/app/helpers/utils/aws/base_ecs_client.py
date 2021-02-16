@@ -769,14 +769,19 @@ class ECSClient:
                 network_binding_map[network_binding["containerPort"]] = network_binding["hostPort"]
         return network_binding_map
 
-    def check_tasks_exist(self):
+    def check_task_exists(self, offset=0):
         """
-        Checks whether tasks actually belong to an ecs_client cluster
-        :return: True if the tasks exist, else False
+        Checks whether a task is active and actually belongs to the ecs_client cluster
+        :param offset: The offset of the task to check (default: 0)
+        :return: True if the task exists and is not stopping, else False
         """
-        response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
+        response = self.ecs_client.describe_tasks(tasks=[self.tasks[offset]], cluster=self.cluster)
 
-        # if failures is nonzero, that means this task wasn't found
+        if len(response["tasks"]) > 0 and response["tasks"][0]["desiredStatus"] is "STOPPED":
+            # The container was requested to be stopped. Therefore, it is no longer valid for us.
+            return False
+
+        # If nonempty that means the task wasn't found. Else, the task is active and was found!
         return len(response["failures"]) == 0
 
     def get_task_ip_ports(self, offset=0):
