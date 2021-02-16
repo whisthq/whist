@@ -68,8 +68,16 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Retrieve Current Git Branch Name
-              run: echo "current_git_branch=${GITHUB_REF##*/}" >> $GITHUB_ENV
+            - name: Set deploy environment based on Git Branch
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                  else
+                      echo "DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                  fi
+                  echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
 
             ############################# Windows Configuration Steps START #############################
 
@@ -105,7 +113,7 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
-              run: .\publish.bat -version=1.0.0 -bucket=not-applicable -publish=false
+              run: .\publish.bat -version=1.0.0 -bucket=not-applicable -env=${{ env.DEPLOY_ENVIRONMENT }} -publish=false
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
@@ -124,4 +132,4 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --version 1.0.0 --bucket not-applicable --publish false
+                  ./publish.sh --version 1.0.0 --bucket not-applicable --env ${{ env.DEPLOY_ENVIRONMENT }} --publish false

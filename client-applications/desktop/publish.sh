@@ -104,17 +104,21 @@ else
     then
         if [[ "$env" == "dev" ]]
         then
-            yarn package-development
+            yarn set-prod-env-dev
         elif [[ "$env" == "staging" ]]
         then
-            yarn package-staging
+            yarn set-prod-env-staging
         elif [[ "$env" == "prod" ]]
         then
-            yarn package-prod
+            yarn set-prod-env-prod
         else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
+            exit 1
         fi
+        # Package the application and upload to AWS S3 bucket
+        yarn package-ci
     else
-        yarn package # packages the application locally, without uploading to AWS S3 bucket
+        # Package the application locally, without uploading to AWS S3 bucket
+        yarn package
     fi
 fi
