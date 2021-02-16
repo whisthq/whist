@@ -50,11 +50,15 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-            - name: Install cppcheck via Chocolatey on Windows GHA Machine
+            - name: Install Chocolatey dependencies on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
                   args: install cppcheck ninja
+
+            - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows' && matrix.config.cuda
@@ -85,7 +89,7 @@ jobs:
                   ls $env:CUDA_PATH\bin
                   ls $env:CUDA_PATH\include
 
-            - name: Install OS Compiler Matchers
+            - name: Register OS Compiler Matchers
               shell: bash -e {0}
               run: |
                   # OS-independent matchers
@@ -100,10 +104,6 @@ jobs:
                   elif [ "$RUNNER_OS" == "macOS" ]; then
                       echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
                   fi
-
-            - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
-              if: runner.os == 'Windows'
-              uses: ilammy/msvc-dev-cmd@v1
 
             ############################# Windows Configuration Steps END #############################
 
@@ -151,16 +151,13 @@ jobs:
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient -j
 
-            # This tests building the protocol on the GitHub Actions VM, so that we can run clang-format and clang-tidy
-            - name: Build Protocol Server on Linux Ubuntu
+            - name: Build Protocol Server on Linux
               if: runner.os == 'Linux'
-              env:
-                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
               working-directory: protocol
               run: |
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalServer -j
 
+            # Verify clang-format on Linux
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
               working-directory: protocol
@@ -176,6 +173,7 @@ jobs:
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
 
+            # Verify clang-tidy on all OS's
             - name: Verify Builds with clang-tidy
               shell: bash -e {0}
               working-directory: protocol
@@ -191,6 +189,7 @@ jobs:
               working-directory: protocol
               run: ./build_protocol.sh release
 
+            # This ensures that all the build files from build_protocol.sh have actually been generated
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
               working-directory: container-images
