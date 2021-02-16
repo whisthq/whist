@@ -85,7 +85,6 @@ until [ ! -f $USER_CONFIGS_DIR/.configready ]
 do
     sleep 0.1
 done
-sleep 1 # A sore attempt to wait for the display to start before launching FractalServer
 
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
