@@ -28,10 +28,10 @@ export const Loading = (props: {
     /*
         Loading screen that shows up when the app is launched, stays active until the access
         token is either verified or rejected
- 
+
         Arguments:
             userID: User ID
-            accessToken: Access token  
+            accessToken: Access token
             failures: Number of login failures
     */
 
