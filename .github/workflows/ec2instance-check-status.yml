@@ -1,4 +1,4 @@
-# workflows/ec2-status.yml
+# workflows/ec2instance-check-status.yml
 #
 # EC2 Instance Status: Checks EC2 Instance
 # Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
@@ -19,10 +19,21 @@ on:
     workflow_dispatch:
 
 jobs:
+    # Scanning EC2 Instances
+    # Checks for EC2 instance status and sends flagged instances as a slack message
     ec2instance-check-status-main:
+        name: Scanning EC2 Instances
         runs-on: ubuntu-20.04
-
-        # Steps represent a sequence of tasks that will be executed as part of the job
+        strategy:
+            matrix:
+                aws-region:
+                    - us-east-1
+                    - us-east-2
+                    - us-west-1
+                    - us-west-2
+                    - ca-central-1
+                    - eu-west-1
+                    - eu-central-1
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -30,13 +41,11 @@ jobs:
                   ref: "steveli/ec2-status-workflow"
 
             - name: Configure AWS Credentials
-              # You may pin to the exact commit or the version.
-              # uses: aws-actions/configure-aws-credentials@d2221ce3c7101a35ff049cc8fe652f5c9a64372d
               uses: aws-actions/configure-aws-credentials@v1
               with:
                   aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
+                  aws-region: ${{ matrix.aws-region}}
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
@@ -44,15 +53,23 @@ jobs:
                   python-version: 3.8
 
             - name: Upgrade pip
-              working-directory: .github/workflows/helpers/ec2monitoring
+              working-directory: .github/workflows/helpers/aws/ec2
               run: pip install --upgrade pip
 
             - name: Install Dependencies
-              working-directory: .github/workflows/helpers/ec2monitoring
+              working-directory: .github/workflows/helpers/aws/ec2
               run: pip install -r requirements.txt
 
             - name: Run ec2 instances
-              working-directory: .github/workflows/helpers/ec2monitoring
+              working-directory: .github/workflows/helpers/aws/ec2
               run: python3 main.py
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
+                  AWS_REGION: ${{ matrix.aws-region }}
+
+            - name: Notify Slack if error
+              if: ${{ failure() }}
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
