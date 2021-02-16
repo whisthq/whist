@@ -65,5 +65,7 @@ if __name__ == "__main__":
     obj = get_instances(region)
     df_ec2 = pd.DataFrame(obj["instances"])
     client = slack.WebClient(token=os.environ.get("SLACK_EC2_BOT_TOKEN"))
-    blocks[1]["text"]["text"] = obj["message"]
+    blocks[1]["text"]["text"] = (
+        obj["message"] if len(obj["message"]) > 0 else "No Instances available"
+    )
     client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
