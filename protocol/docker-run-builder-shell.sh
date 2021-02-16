@@ -9,9 +9,10 @@ set -Eeuo pipefail
 container_name=fractal-protocol-builder-$(date +"%s") # The name of the Docker container
 mount_directory=$(cd ${1:-.}; pwd) # The local directory to mount into the Docker container
 username=fractal-builder # The name of the Linux user running the protocol building command
-command=${2:-'/bin/bash'} # The command to run to build the Fractal protocol server
+command=${2:-'/bin/bash'} # The command to run in the container
+docker_run_flags="" # Empty, or if command provided, then flags to open an interactive container instance
 
-if [ -z "$2" ]
+if [ -z "${2:-}" ]
 then
     docker_run_flags=-it # Flag to open an interactive container instance
 fi
