@@ -30,7 +30,7 @@ def ensure_container_exists(container):
 
     ecs_client.add_task(container.container_id)
 
-    if not ecs_client.check_tasks_exist():
+    if not ecs_client.check_task_exists():
         # the task doesn't really exist! we should delete from the database
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
         fractal_log(
