@@ -24,7 +24,7 @@ fi
 
 # in the workflow, $1 will be passed in with the deploy environment in the name (e.g. fractal-prod-browsers-chrome)
 app=$1
-sentry_env="$2"
+sentry_env="${2:-}"
 
 # Generate the task definition JSON for the app
 # It's important to use fractal-taskdef-template here, else we get stdio issues
