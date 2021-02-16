@@ -69,6 +69,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Set deploy environment based on Git Branch
+              shell: bash
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
                       echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
