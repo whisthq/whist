@@ -16,7 +16,7 @@ if "%1%" == "--help" (
     PowerShell.exe -ExecutionPolicy Bypass -Command "& './setVersion.ps1'" -version %version% -bucket %bucket%
 
     cd ..\..\protocol
-    cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
+    cmake . -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" -D BUILD_SERVER=OFF
     nmake FractalClient
     cd ..\client-applications\desktop
     rmdir /S/Q protocol-build
