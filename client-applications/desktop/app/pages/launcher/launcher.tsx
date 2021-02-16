@@ -88,7 +88,7 @@ export const Launcher = (props: {
                 setLoadingMessage(LoadingMessage.TIMEOUT)
                 logger.logError("Protocol took to long to launch", userID)
             }
-        }, 20000)
+        }, 60000)
     }
     // Restores Redux state to before a container was created
     const resetLaunch = () => {
@@ -230,6 +230,9 @@ export const Launcher = (props: {
                         )
                         setTaskState(FractalAppState.FAILURE)
                         setLoadingMessage(LoadingMessage.FAILURE)
+                        break
+                    case FractalAppState.SPINNING_UP_NEW:
+                        setLoadingMessage(LoadingMessage.PENDING)
                         break
                     default:
                         break
