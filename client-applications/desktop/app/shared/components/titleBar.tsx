@@ -15,7 +15,7 @@ const TitleBar = () => {
                     <Titlebar />
                 </div>
             ) : (
-                <div className="macTitleBar"></div>
+                <div className="macTitleBar" />
             )}
         </>
     )
