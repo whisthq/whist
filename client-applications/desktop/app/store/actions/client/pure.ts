@@ -10,7 +10,7 @@ export const updateTimer = (body: Timer) => {
     }
 }
 
-export const updateComputerInfo = (body: Computerinfo) => {
+export const updateComputerInfo = (body: ComputerInfo) => {
     return {
         type: UPDATE_COMPUTER_INFO,
         body,
