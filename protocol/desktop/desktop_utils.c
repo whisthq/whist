@@ -420,14 +420,8 @@ int read_piped_arguments(bool* keep_waiting) {
 
 
 #ifndef _WIN32
-    size_t read_ret = 0;
-
-    // Variables for the `select` function. Timeout 0 yields immediate return.
-    fd_set fds;
-    struct timeval timeout = {0, 0};
-    int select_ret = 0;
+    int available_chars;
 #else
-    size_t read_ret = 0;
     DWORD available_chars;
 
     HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
@@ -442,6 +436,7 @@ int read_piped_arguments(bool* keep_waiting) {
     //    with the argument name and value separated by a "?"
     //    and each argument/value pair on its own line
     while (keep_reading && *keep_waiting) {
+        SDL_Delay(50); // to keep the fan from freaking out
         // If stdin doesn't have any characters, continue the loop
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
@@ -455,13 +450,12 @@ int read_piped_arguments(bool* keep_waiting) {
         if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
             if (GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_PIPE_NOT_CONNECTED) {
                 // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
-                available_chars = 1; 
+                available_chars = 1;
             }
         } else if (available_chars == 0) {
             continue;
         }
 #endif // _WIN32
-
 
         for (int char_idx = 0; char_idx < (int) available_chars; char_idx++) {
             // Read a character from stdin
@@ -530,6 +524,11 @@ int read_piped_arguments(bool* keep_waiting) {
                 // If arg_name is `kill`, then return failure
                 LOG_INFO("Killing client app");
                 return -1;
+            } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
+                // If arg_name is `finished`, then stop reading args from pipe
+                LOG_INFO("Finished piping arguments");
+                keep_reading = false;
+                goto end_of_eval_loop;
             } else {
                 // If arg_name is invalid, then log a warning, but continue
                 LOG_WARNING("Piped arg %s not available", arg_name);
@@ -544,7 +543,7 @@ completed_line_eval:
                 memset(&incoming, 0, MAX_INCOMING_LENGTH);
             }
         }
-
+end_of_eval_loop:
         available_chars = 0;
     }
 

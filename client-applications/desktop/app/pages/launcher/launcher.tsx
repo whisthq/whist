@@ -315,7 +315,8 @@ export const Launcher = (props: {
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             writeStream(protocol, `ports?${portInfo}`)
             writeStream(protocol, `private-key?${container.secretKey}`)
-            endStream(protocol, `ip?${container.publicIP}`)
+            writeStream(protocol, `ip?${container.publicIP}`)
+            writeStream(protocol, `finished?0`)
             setShouldForceQuit(true)
         }
     }, [container, protocol])
