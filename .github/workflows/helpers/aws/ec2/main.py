@@ -25,8 +25,10 @@ def get_instances(region):
             state = instance["State"]["Name"]
             row["Instance ID"] = instance_id
             row["Instance State"] = state
-            icon = ":red_circle" if state == "stopped" else ":white_check_mark:"
-            message += "• " + instance["InstanceId"] + " - " + state + icon + " \n"
+            icon = ":red_circle:" if state == "stopped" else ":white_check_mark:"
+            message += (
+                "• " + instance["InstanceId"] + " - " + state + " - " + icon + " \n"
+            )
             if "Tags" in instance:
                 for tag in instance["Tags"]:
                     if tag["Key"] == "Name":
