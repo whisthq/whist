@@ -29,7 +29,7 @@ if [[ $state =~ SUCCESS ]]; then
     for task in ${subtasks}; do
         if [ $task != null ] && [ ! -z $task ]; then
             # Recursively call script on subtask
-            bash ./poll_webserver_update_region_celery.sh ${1} ${task}
+            bash ./poll_webserver_update_region_celery.sh ${1} ${task} ${3}
             # If subtask exited with 1, exit this script with 1 (failure)
             if [[ $? =~ 1 ]]; then
                 exit 1
