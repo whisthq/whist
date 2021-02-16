@@ -576,7 +576,7 @@ int sync_keyboard_state(void) {
 volatile bool continue_pumping = false;
 
 int read_piped_arguments_thread_function(void* keep_piping) {
-    int ret = read_piped_arguments((bool*) keep_piping);
+    int ret = read_piped_arguments((bool*)keep_piping);
     continue_pumping = false;
     return ret;
 }
@@ -669,7 +669,8 @@ int main(int argc, char* argv[]) {
     //    If the arguments are bad, then skip to the destruction phase
     continue_pumping = true;
     bool keep_piping = true;
-    SDL_Thread* pipe_arg_thread = SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
+    SDL_Thread* pipe_arg_thread =
+        SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
     if (pipe_arg_thread == NULL) {
         failed = true;
     } else {

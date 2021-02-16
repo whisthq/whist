@@ -1221,7 +1221,8 @@ void destroy_video() {
         Free the video thread and VideoContext data to exit
     */
 
-    while (initting_video);
+    while (initting_video)
+        ;
 
     video_data.run_render_screen_thread = false;
     SDL_WaitThread(video_data.render_screen_thread, NULL);
