@@ -4,6 +4,9 @@
 # ${2} the task ID in question
 # ${3} the admin token to use to get full logs
 
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
+
 # poll for task to finish
 state=PENDING
 echo "ID: $2"

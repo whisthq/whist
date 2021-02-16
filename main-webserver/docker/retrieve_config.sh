@@ -7,7 +7,8 @@
 # .env file in the directory containing this script. Print the contents of the
 # file to standard output.
 
-set -eo pipefail
+# Exit on errors and missing environment variables
+set -Eeuo pipefail
 
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself

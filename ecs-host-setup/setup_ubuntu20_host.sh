@@ -5,6 +5,7 @@
 # are setting up an EC2 instance for development, and is part 1/2, with setup_ubuntu20_host_ami.sh, if you
 # are creating a base AMI to run Fractal in production.
 
+# Exit on errors and missing environment variables
 set -Eeuo pipefail
 
 # If we run this script as root, then the "ubuntu"/default user will not be
