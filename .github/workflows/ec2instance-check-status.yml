@@ -12,8 +12,8 @@ on:
 
     # push:
     # triggers workflow on a schedule
-    # schedule:
-    #     - cron: "*/5 * * * *"
+    schedule:
+        - cron: "*/5 * * * *"
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
@@ -37,8 +37,6 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  ref: "steveli/ec2-status-workflow"
 
             - name: Configure AWS Credentials
               uses: aws-actions/configure-aws-credentials@v1
