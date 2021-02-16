@@ -40,7 +40,7 @@ import ChromeBackground from "shared/components/chromeBackground/chromeBackgroun
 import styles from "pages/launcher/launcher.css"
 import { ChildProcess } from "child_process"
 
-/* 
+/*
     Amount of time passed before giving up on container/assign
     60000 = 1 minute
 */
@@ -327,7 +327,8 @@ export const Launcher = (props: {
             const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
             writeStream(protocol, `ports?${portInfo}`)
             writeStream(protocol, `private-key?${container.secretKey}`)
-            endStream(protocol, `ip?${container.publicIP}`)
+            writeStream(protocol, `ip?${container.publicIP}`)
+            writeStream(protocol, `finished?0`)
             setShouldForceQuit(true)
         }
     }, [container, protocol])
