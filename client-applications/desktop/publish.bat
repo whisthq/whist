@@ -44,20 +44,23 @@ if "%1%" == "--help" (
 
     if "%publish%" == "true" (
         if "%env%" == "dev" (
-            yarn package-dev
+            yarn set-prod-env-dev
         ) else (
             if "%env%" == "staging" (
-                yarn package-staging
+                yarn set-prod-env-staging
             ) else (
                 if "%env%" == "prod" (
-                    yarn package-prod
+                    yarn set-prod-env-prod
                 ) else (
                     echo Did not set a valid environment; not publishing. Options are dev/staging/prod
+                    exit 1
                 )
             )
         )
+        REM Package the application and upload to AWS S3 bucket
+        yarn package-ci
     ) else (
-        REM packages the application locally, without uploading to AWS S3 bucket
+        REM Package the application locally, without uploading to AWS S3 bucket
         yarn package
     )
 )
