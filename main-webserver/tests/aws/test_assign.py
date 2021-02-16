@@ -131,5 +131,4 @@ def test_payment_all(test_payment, has_trial, has_subscription, expected):
 
     Tests the @payment_required decorator with whether a user has/does not have a free Fractal trial and has/does not have a subscription
     """
-    raise ValueError(test_payment(has_trial, has_subscription).status_code)
     assert test_payment(has_trial, has_subscription).status_code == expected
