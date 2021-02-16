@@ -4,19 +4,6 @@ import pandas as pd
 import slack
 
 
-# slack message formatter
-blocks = [
-    {"type": "section", "text": {"type": "mrkdwn", "text": "*EC2 Instance Status:*"}},
-    {
-        "type": "section",
-        "text": {
-            "type": "mrkdwn",
-            "text": "• Schedule meetings \n ",
-        },
-    },
-]
-
-
 def get_instances(region):
     """Reads running EC2 instances and formats a slack message to send
 
@@ -34,19 +21,12 @@ def get_instances(region):
         instances = r["Instances"]
         for instance in instances:
             row = {}
-            row["Instance ID"] = instance["InstanceId"]
-            row["region"] = region
-            row["Instance State"] = instance["State"]["Name"]
-            message += (
-                "• "
-                + instance["InstanceId"]
-                + " "
-                + region
-                + " "
-                + instance["State"]["Name"]
-                + " :red_circle:"
-                + " \n"
-            )
+            instance_id = instance["InstanceId"]
+            state = instance["State"]["Name"]
+            row["Instance ID"] = instance_id
+            row["Instance State"] = state
+            icon = ":red_circle" if state == "stopped" else ":white_check_mark:"
+            message += "• " + instance["InstanceId"] + " - " + state + icon + " \n"
             if "Tags" in instance:
                 for tag in instance["Tags"]:
                     if tag["Key"] == "Name":
@@ -61,6 +41,23 @@ def get_instances(region):
 
 
 if __name__ == "__main__":
+    # slack message formatter
+    blocks = [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*EC2 Instance Status for: {}*".format(region),
+            },
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "• Schedule meetings \n ",
+            },
+        },
+    ]
     region = os.environ.get("AWS_REGION")
     obj = get_instances(region)
     df_ec2 = pd.DataFrame(obj["instances"])
