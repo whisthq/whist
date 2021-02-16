@@ -220,6 +220,9 @@ export const Launcher = (props: {
                     case FractalAppState.PENDING:
                         setLoadingMessage(LoadingMessage.PENDING)
                         break
+                    case FractalAppState.SPINNING_UP_NEW:
+                        setLoadingMessage(LoadingMessage.PENDING)
+                        break
                     case FractalAppState.READY:
                         dispatch(getContainerInfo(taskID))
                         break
@@ -230,9 +233,6 @@ export const Launcher = (props: {
                         )
                         setTaskState(FractalAppState.FAILURE)
                         setLoadingMessage(LoadingMessage.FAILURE)
-                        break
-                    case FractalAppState.SPINNING_UP_NEW:
-                        setLoadingMessage(LoadingMessage.PENDING)
                         break
                     default:
                         break
