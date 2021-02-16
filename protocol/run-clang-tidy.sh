@@ -65,7 +65,8 @@ done
 # header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
 headerFilter="desktop/|fractal/|server/"
 
-clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix
+# Run clang-tidy, with || true so that the bash script doesn't exit if clang-tidy fails
+clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
 
 # ---- clean up yaml file before running replacements ----
 
