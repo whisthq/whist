@@ -10,8 +10,8 @@ set -Eeuo pipefail
 # Warn on misconfigured arguments
 if [ $# -eq 0 ] || [ $# -gt 2 ]; then
     echo "Invalid number of arguments"
-    echo "This script takes in up to 2 arguments, $1 the name of the application to generate a task definition for"
-    echo "and $2 the Sentry environment, if provided"
+    echo "This script takes in up to 2 arguments, first the name of the application to generate a task definition for"
+    echo "and second the Sentry environment, if provided"
     exit 0
 fi
 
