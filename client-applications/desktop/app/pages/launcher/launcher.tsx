@@ -214,7 +214,7 @@ export const Launcher = (props: {
                 userID
             )
             if (protocol) {
-                endStream(protocol, "kill?0")
+                writeStream(protocol, "kill?0")
                 protocol.kill("SIGINT")
                 setProtocolLock(false)
                 setProtocol(undefined)
