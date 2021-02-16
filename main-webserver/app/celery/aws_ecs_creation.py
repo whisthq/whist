@@ -382,6 +382,10 @@ def assign_container(
             meta={"msg": "Container assigned"},
         )
     else:
+        self.update_state(
+            state="PENDING",
+            meta={"msg": "No waiting container found -- creating a new one"},
+        )
         db.session.commit()
         if cluster_name is None:
             cluster_name = select_cluster(region_name)
