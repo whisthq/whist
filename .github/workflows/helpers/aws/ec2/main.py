@@ -41,6 +41,8 @@ def get_instances(region):
 
 
 if __name__ == "__main__":
+    region = os.environ.get("AWS_REGION")
+
     # slack message formatter
     blocks = [
         {
@@ -58,7 +60,6 @@ if __name__ == "__main__":
             },
         },
     ]
-    region = os.environ.get("AWS_REGION")
     obj = get_instances(region)
     df_ec2 = pd.DataFrame(obj["instances"])
     client = slack.WebClient(token=os.environ.get("SLACK_EC2_BOT_TOKEN"))
