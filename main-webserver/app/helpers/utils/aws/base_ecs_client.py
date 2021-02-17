@@ -997,24 +997,7 @@ class ECSClient:
 
 
 if __name__ == "__main__":
-    # testclient = ECSClient(base_cluster='cluster_eqbpomqrnp')
-    # pprint(
-    #     testclient.ecs_client.describe_container_instances(
-    #         cluster=testclient.cluster,
-    #         containerInstances=testclient.ecs_client.list_container_instances(
-    #             cluster=testclient.cluster
-    #         )['containerInstanceArns'],
-    #     )
-    # )
-
     testclient = ECSClient(region_name="us-east-1")
-    # instance_profiles = testclient.iam_client.list_instance_profiles()['InstanceProfiles']
-    # for instance_profile in instance_profiles:
-    #     if 'instance_profile_' in instance_profile['InstanceProfileName']:
-    #         print(instance_profile['InstanceProfileName'])
-    #         for role in instance_profile['Roles']:
-    #             testclient.iam_client.remove_role_from_instance_profile(RoleName=role['RoleName'], InstanceProfileName=instance_profile['InstanceProfileName'])
-    #         testclient.iam_client.delete_instance_profile(InstanceProfileName=instance_profile['InstanceProfileName'])
 
     clusters = testclient.ecs_client.list_clusters()["clusterArns"]
     clusters_info = testclient.ecs_client.describe_clusters(clusters=clusters)["clusters"]
