@@ -108,6 +108,7 @@ export const launchProtocol = async (
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
             .flat(),
+        "--skip-taskbar",
         "--read-pipe",
     ]
 

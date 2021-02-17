@@ -95,16 +95,38 @@ const createWindow = async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
 
-    app.on('browser-window-focus', (event, window) => {
-        console.log("FOCUSED");
+    let tray = null;
+
+    // on client app FOCUS => protocol FOCUS
+    // on client app MAXIMIZE => protocol MAXIMIZE
+    // on client app MINIMIZE => protocol MINIMIZE
+    // on client app CLOSE => protocol CLOSE
+    // on protocol MAXIMIZE => client app MAXIMIZE
+    // on protocol MINIMIZE => client app MINIMIZE
+    // TWO-WAY COMMUNICATION (requires socket?)
+    mainWindow.on('focus', () => {
+        console.log("MAIN WINDOW FOCUS")
     })
 
-    app.on('browser-window-blur', (event, window) => {
-        console.log("FOCUSED");
+    mainWindow.on('blur', () => {
+        console.log("MAIN WINDOW BLUR")
     })
 
-    mainWindow.on('hide', () => {
-        console.log("HIDE");
+    mainWindow.on('maximize', () => {
+        console.log("MAIN WINDOW MAXIMIZE")
+    })
+
+    mainWindow.on('minimize', (event) => {
+        console.log("MAIN WINDOW MINIMIZE")
+        event.preventDefault()
+        mainWindow.setSkipTaskbar(true)
+    })
+
+    mainWindow.on('restore', (event) => {
+        console.log("MAIN WINDOW RESTORE")
+        mainWindow.show()
+        mainWindow.setSkipTaskbar(false)
+        // tray.destroy()
     })
 
     // @TODO: Use 'ready-to-show' event
@@ -210,7 +232,15 @@ const createWindow = async () => {
 
     mainWindow.on("maximize", () => {})
 
-    mainWindow.on("minimize", () => {})
+    mainWindow.on("minimize", (event) => {
+        console.log("MINIMIZED")
+        event.preventDefault()
+        mainWindow.hide()
+    })
+
+    mainWindow.on("hide", (event) => {
+        console.log("HIDE")
+    })
 
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
