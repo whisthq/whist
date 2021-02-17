@@ -57,6 +57,8 @@ jobs:
         runs-on: ubuntu-20.04
 ```
 
+Something to keep in mind when writing jobs, is that neither `cmd` nor `powershell` will fail if a command it runs fails. So, you should explicitly check if any commands you want to succeed, does indeed succeed. If you attach a job with `shell: bash`, then the job will _also_ not fail if any command it runs fails, unless it's the very last command (`cmd`/`powershell` will still not fail, even if the last command fails). If you want bash to fail if _any_ command fails, then you must pass `shell: bash -e {0}`. On MacOS/Linux GHA VMs, `bash -e {0}` will be the default shell. On Windows, `cmd` will be the default shell.
+
 ### Styling
 
 These YAML files are formatted with [Prettier](https://github.com/prettier/prettier). After installing, you can check formatting with `cd .github/workflows && prettier --check .`, and you can fix formatting with `cd .github/workflows && prettier --write .`. VSCode and other IDEs and text editors have pretty robust Prettier integration, so if you've set that up, that also works well!

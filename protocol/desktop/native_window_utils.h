@@ -32,6 +32,13 @@ Public Functions
 */
 
 /**
+ * @brief                          Hide the taskbar icon for the app. This only works on
+ *                                 macOS (for Windows and Linux, SDL already implements this in
+ *                                 the `SDL_WINDOW_SKIP_TASKBAR` flag).
+ */
+void hide_native_window_taskbar();
+
+/**
  * @brief                          Set the color of the titlebar of the provided window, and
  *                                 the corresponding titlebar text as well.
  *

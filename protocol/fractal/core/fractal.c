@@ -292,6 +292,7 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
 void terminate_protocol() {
     LOG_INFO("Terminating Protocol");
     destroy_logger();
+    print_stacktrace();
     exit(-1);
 }
 

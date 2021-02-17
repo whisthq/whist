@@ -27,6 +27,7 @@ Includes
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "../fractal/clipboard/clipboard.h"
 #include "../fractal/core/fractal.h"
@@ -35,6 +36,7 @@ Includes
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
+#include "../fractal/utils/string_utils.h"
 #include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
@@ -571,19 +573,16 @@ int sync_keyboard_state(void) {
     return 0;
 }
 
+volatile bool continue_pumping = false;
+
+int read_piped_arguments_thread_function(void* keep_piping) {
+    int ret = read_piped_arguments((bool*)keep_piping);
+    continue_pumping = false;
+    return ret;
+}
+
 int main(int argc, char* argv[]) {
     init_default_port_mappings();
-
-    int ret = parse_args(argc, argv);
-    if (ret == -1) {
-        // invalid usage
-        return -1;
-    } else if (ret == 1) {
-        // --help or --version
-        return 0;
-    }
-
-    LOG_INFO("Client protocol started.");
 
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
@@ -601,6 +600,38 @@ int main(int argc, char* argv[]) {
 
     init_logger(log_dir);
     free(log_dir);
+
+    LOG_INFO("Client protocol started.");
+
+    if (init_socket_library() != 0) {
+        LOG_FATAL("Failed to initialize socket library.");
+    }
+
+    if (alloc_parsed_args() != 0) {
+        return -1;
+    }
+
+    int ret = parse_args(argc, argv);
+    if (ret == -1) {
+        // invalid usage
+        free_parsed_args();
+        return -1;
+    } else if (ret == 1) {
+        // --help or --version
+        free_parsed_args();
+        return 0;
+    }
+
+    // Initialize the SDL window
+    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+
+    if (!window) {
+        destroy_socket_library();
+        LOG_FATAL("Failed to initialize SDL");
+    }
+
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
@@ -619,20 +650,6 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Running in CI mode");
     }
 
-    if (init_socket_library() != 0) {
-        LOG_FATAL("Failed to initialize socket library.");
-    }
-
-    // Initialize the SDL window
-    window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
-
-    if (!window) {
-        destroy_socket_library();
-        LOG_FATAL("Failed to initialize SDL");
-    }
-
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
 // Windows GHA VM cannot render, it just segfaults on creating the renderer
 #if defined(_WIN32)
     if (!running_ci) {
@@ -648,14 +665,46 @@ int main(int argc, char* argv[]) {
     exiting = false;
     bool failed = false;
 
+    // While showing the SDL loading screen, read in any piped arguments
+    //    If the arguments are bad, then skip to the destruction phase
+    continue_pumping = true;
+    bool keep_piping = true;
+    SDL_Thread* pipe_arg_thread =
+        SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
+    if (pipe_arg_thread == NULL) {
+        failed = true;
+    } else {
+        SDL_Event event;
+        while (continue_pumping) {
+            if (SDL_PollEvent(&event) && event.type == SDL_QUIT) {
+                exiting = true;
+                keep_piping = false;
+            }
+        }
+        int pipe_arg_ret;
+        SDL_WaitThread(pipe_arg_thread, &pipe_arg_ret);
+        if (pipe_arg_ret != 0) {
+            failed = true;
+        }
+    }
+
+    SDL_Event sdl_msg;
     // Try connection `MAX_INIT_CONNECTION_ATTEMPTS` times before
     //  closing and destroying the client.
     int max_connection_attempts = MAX_INIT_CONNECTION_ATTEMPTS;
     for (try_amount = 0; try_amount < max_connection_attempts && !exiting && !failed;
          try_amount++) {
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
+        }
+
         if (try_amount > 0) {
             LOG_WARNING("Trying to recover the server connection...");
             SDL_Delay(1000);
+        }
+
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
         }
 
         if (discover_ports(&using_stun) != 0) {
@@ -666,6 +715,10 @@ int main(int argc, char* argv[]) {
         if (connect_to_server(using_stun) != 0) {
             LOG_WARNING("Failed to connect to server.");
             continue;
+        }
+
+        if (SDL_PollEvent(&sdl_msg) && sdl_msg.type == SDL_QUIT) {
+            exiting = true;
         }
 
         connected = true;
@@ -700,8 +753,6 @@ int main(int argc, char* argv[]) {
         start_timer(&ack_timer);
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
-
-        SDL_Event sdl_msg;
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
@@ -815,6 +866,7 @@ int main(int argc, char* argv[]) {
     destroy_video();
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
+    free_parsed_args();
     destroy_logger();
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

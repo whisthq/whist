@@ -3,7 +3,7 @@ import Titlebar from "react-electron-titlebar"
 
 import { OperatingSystem } from "shared/types/client"
 
-import styles from "app.global.css"
+import "app.global.css"
 
 const TitleBar = () => {
     const clientOS = require("os").platform()
@@ -15,7 +15,7 @@ const TitleBar = () => {
                     <Titlebar />
                 </div>
             ) : (
-                <div className={styles.macTitleBar} />
+                <div className="macTitleBar" />
             )}
         </>
     )

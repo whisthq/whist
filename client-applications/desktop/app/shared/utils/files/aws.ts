@@ -1,107 +1,93 @@
-import { debugLog } from "shared/utils/general/logging"
+import ping from "ping"
+
 import { graphQLPost } from "shared/utils/general/api"
-import { allowedRegions } from "shared/types/aws"
-import { fractalBackoff } from "shared/utils/general/helpers"
+import { allowedRegions, AWSRegion } from "shared/types/aws"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
-import { OperatingSystem, FractalDirectory } from "shared/types/client"
 import { config } from "shared/constants/config"
 
-export const setAWSRegion = (accessToken: string, backoff?: true) => {
+const fractalPingTime = async (host: string, numberPings: number) => {
     /*
     Description:
-        Runs AWS ping shell script (tells us which AWS server is closest to the client)
+        Measures the average ping time (in ms) to ping a host (IP address or URL)
 
     Arguments:
-        accessToken (string): Access token, used to query GraphQL for allowed regions
-        backoff (boolean): If true, uses exponential backoff w/ jitter in case AWS ping fails
+        host (string): IP address or URL
+        numberPings (number): Number of times to ping the host
     Returns:
-        promise : Promise
+        (number): Average ping time to ping host (in ms)
     */
 
-    const awsPromise = () => {
-        return new Promise((resolve) => {
-            const { spawn } = require("child_process")
-            const platform = require("os").platform()
-            const path = require("path")
-            const fs = require("fs")
-
-            let executableName
-            const binariesPath = path.join(
-                FractalDirectory.getRootDirectory(),
-                "binaries"
-            )
-
-            if (platform === OperatingSystem.MAC) {
-                executableName = "awsping_osx"
-            } else if (platform === OperatingSystem.WINDOWS) {
-                executableName = "awsping_windows.exe"
-            } else if (platform === OperatingSystem.LINUX) {
-                executableName = "awsping_linux"
-            } else {
-                debugLog(`no suitable os found, instead got ${platform}`)
-            }
-
-            const executablePath = path.join(binariesPath, executableName)
-
-            fs.chmodSync(executablePath, 0o755)
-
-            const regions = spawn(executablePath, ["-n", "3"]) // ping via TCP
-            regions.stdout.setEncoding("utf8")
-
-            regions.stdout.on("data", async (data: string) => {
-                // Gets the line with the closest AWS region, and replace all instances of multiple spaces with one space
-                const output = data.split(/\r?\n/)
-                let finalRegions = null
-                const graphqlRegions = await graphQLPost(
-                    QUERY_REGION_TO_AMI,
-                    "GetRegionToAmi",
-                    {},
-                    accessToken
-                )
-
-                if (
-                    !graphqlRegions ||
-                    !graphqlRegions.json ||
-                    !graphqlRegions.json.data ||
-                    !graphqlRegions.json.data.hardware_region_to_ami
-                ) {
-                    finalRegions = allowedRegions
-                } else {
-                    finalRegions = graphqlRegions.json.data.hardware_region_to_ami.map(
-                        (region: { region_name: string }) => region.region_name
-                    )
-                }
-
-                let index = 0
-                let line = output[index].replace(/  +/g, " ")
-                let items = line.split(" ")
-
-                try {
-                    items[2].slice(1, -1)
-                } catch (err) {
-                    throw new Error("AWS ping failed")
-                }
-
-                while (
-                    !finalRegions.includes(items[2].slice(1, -1)) &&
-                    index < output.length - 1
-                ) {
-                    index += 1
-                    line = output[index].replace(/  +/g, " ")
-                    items = line.split(" ")
-                }
-                // In case data is split and sent separately, only use closest AWS region which has index of 0
-                const region = items[2].slice(1, -1)
-                resolve(region)
-            })
-            return null
-        })
+    // Create list of Promises, where each Promise resolves to a ping time
+    const pingPromises = []
+    for (let i = 0; i < numberPings; i += 1) {
+        pingPromises.push(ping.promise.probe(host))
     }
 
-    if (backoff) {
-        return fractalBackoff(awsPromise)
+    // Resolve list of Promises synchronously to get a list of ping outputs
+    const pingResults = await Promise.all(pingPromises)
+
+    // Calculate the average ping time
+    let totalTime = 0
+    for (let i = 0; i < numberPings; i += 1) {
+        totalTime += Number(pingResults[i].avg)
     }
-    return awsPromise()
+
+    return totalTime / pingResults.length
+}
+
+export const setAWSRegion = async () => {
+    /*
+    Description:
+        Pulls AWS regions from SQL and pings each region, and finds the closest region
+        by shortest ping time
+
+    Arguments:
+        none
+    Returns:
+        (string): Closest region e.g. us-east-1
+    */
+
+    // Pull allowed regions from SQL via GraphQL
+    let finalRegions = []
+    const graphqlRegions = await graphQLPost(
+        QUERY_REGION_TO_AMI,
+        "GetRegionToAmi",
+        {}
+    )
+
+    // Default to hard-coded region list if GraphQL query fails, otherwise parse
+    // GraphQL query output
+    if (
+        !graphqlRegions ||
+        !graphqlRegions.json ||
+        !graphqlRegions.json.data ||
+        !graphqlRegions.json.data.hardware_region_to_ami
+    ) {
+        finalRegions = allowedRegions
+    } else {
+        finalRegions = graphqlRegions.json.data.hardware_region_to_ami.map(
+            (region: { region_name: AWSRegion }) => region.region_name
+        )
+    }
+
+    // Ping each region and find the closest region by lowest ping time
+    let closestRegion = finalRegions[0]
+    let lowestPingTime = Number.MAX_SAFE_INTEGER
+
+    /* eslint-disable no-await-in-loop */
+    for (let i = 0; i < finalRegions.length; i += 1) {
+        const region = finalRegions[i]
+        const averagePingTime = await fractalPingTime(
+            `dynamodb.${region}.amazonaws.com`,
+            3
+        )
+        if (averagePingTime < lowestPingTime) {
+            closestRegion = region
+            lowestPingTime = averagePingTime
+        }
+    }
+
+    return closestRegion
 }
 
 export const uploadToS3 = (

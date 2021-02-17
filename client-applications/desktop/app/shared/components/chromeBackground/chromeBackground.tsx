@@ -1,4 +1,5 @@
 import React from "react"
+import { connect } from "react-redux"
 import {
     FaArrowLeft,
     FaArrowRight,
@@ -8,37 +9,46 @@ import {
     FaTimes,
 } from "react-icons/fa"
 
-// import { FractalIPC } from "shared/types/ipc"
+import { ComputerInfo } from "store/reducers/client/default"
+import { OperatingSystem } from "shared/types/client"
 
 import styles from "shared/components/chromeBackground/chromeBackground.css"
 
-export const ChromeBackground = () => {
+export const ChromeBackground = (props: {
+    operatingSystem: OperatingSystem | undefined
+}) => {
     /*
         Background that looks like an empty Chrome tab
  
         Arguments: none
     */
 
-    // const ipc = require("electron").ipcRenderer
-
-    // const closeTab = () => {
-    //     ipc.sendSync(FractalIPC.FORCE_QUIT)
-    // }
+    const { operatingSystem } = props
 
     return (
         <>
             <div className={styles.titlebar} />
             <div style={{ position: "relative", top: 38 }}>
-                <div className={styles.innerRound} />
-                <div className={styles.tab} />
-                <div className={styles.tabCloseWrapper}>
-                    <FaTimes className={styles.tabClose} />
-                </div>
                 <div
-                    className={styles.innerRound}
-                    style={{ left: 259, transform: "scaleX(-1)" }}
-                />
-                <FaPlus className={styles.addTab} />
+                    style={{
+                        left:
+                            operatingSystem === OperatingSystem.WINDOWS
+                                ? 0
+                                : 80,
+                        position: "absolute",
+                    }}
+                >
+                    <div className={styles.innerRound} />
+                    <div className={styles.tab} />
+                    <div className={styles.tabCloseWrapper}>
+                        <FaTimes className={styles.tabClose} />
+                    </div>
+                    <div
+                        className={styles.innerRound}
+                        style={{ left: 259, transform: "scaleX(-1)" }}
+                    />
+                    <FaPlus className={styles.addTab} />
+                </div>
                 <div className={styles.searchBarWrapper}>
                     <div>
                         <FaArrowLeft className={styles.navigationIcon} />
@@ -77,4 +87,12 @@ export const ChromeBackground = () => {
     )
 }
 
-export default ChromeBackground
+const mapStateToProps = (state: {
+    ClientReducer: { computerInfo: ComputerInfo }
+}) => {
+    return {
+        operatingSystem: state.ClientReducer.computerInfo.operatingSystem,
+    }
+}
+
+export default connect(mapStateToProps)(ChromeBackground)

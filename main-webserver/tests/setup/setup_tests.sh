@@ -53,16 +53,20 @@ fi
 
 docker-compose up -d --build
 
-# let db prepare. TODO: make more robust
-sleep 2
-
 # local testing uses localhost db
 export POSTGRES_LOCAL_HOST="localhost"
 export POSTGRES_LOCAL_PORT="9999"
 # we don't need a pwd because local db trusts all incoming connections
 export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
 export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
+# let db prepare. Check connections using psql.
+echo "Trying to connect to local db..."
+cmds="\q"
+while ! (psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
+do
+    echo "Connection failed. Retrying in 2 seconds..."
+    sleep 2
+done
+
 bash ../../db_setup/db_setup.sh
-
 echo "Success! Teardown when you are done with: tests/setup/setup_tests.sh --down"
-

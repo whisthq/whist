@@ -47,6 +47,7 @@ extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment 
 extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
 extern char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
 extern bool using_sentry;
+extern bool skip_taskbar;
 
 extern volatile CodecType codec_type;
 extern bool using_stun;
@@ -56,6 +57,7 @@ extern volatile SDL_Window *window;
 
 extern unsigned short port_mappings[USHRT_MAX];
 
+volatile bool using_piped_arguments;
 const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
                                      {"bitrate", required_argument, NULL, 'b'},
@@ -68,14 +70,19 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"ports", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
+                                     {"read-pipe", no_argument, NULL, 'r'},
+                                     {"loading", required_argument, NULL, 'l'},
+                                     {"skip-taskbar", no_argument, NULL, 's'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
                                      // end with NULL-termination
                                      {0, 0, 0, 0}};
+const char *usage;
 
+#define MAX_INCOMING_LENGTH 128
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:s"
 
 /*
 ============================
@@ -102,6 +109,172 @@ char *dupstring(char *s1) {
     return ret;
 }
 
+int evaluate_arg(int eval_opt, char *eval_optarg) {
+    /*
+        Evaluate an option given the optcode and the argument
+
+        Arguments:
+            eval_opt (int): optcode
+            eval_optarg (char*): argument (can be NULL) passed with opt
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
+    long int ret;
+    char *endptr;
+
+    switch (eval_opt) {
+        case 'w': {  // width
+            ret = strtol(eval_optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                printf("%s", usage);
+                return -1;
+            }
+            output_width = (int)ret;
+            break;
+        }
+        case 'h': {  // height
+            ret = strtol(eval_optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                printf("%s", usage);
+                return -1;
+            }
+            output_height = (int)ret;
+            break;
+        }
+        case 'b': {  // bitrate
+            ret = strtol(eval_optarg, &endptr, 10);
+            if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
+                printf("%s", usage);
+                return -1;
+            }
+            max_bitrate = (int)ret;
+            break;
+        }
+        case 'c': {  // codec
+            if (!strcmp(eval_optarg, "h264")) {
+                output_codec_type = CODEC_TYPE_H264;
+            } else if (!strcmp(eval_optarg, "h265")) {
+                output_codec_type = CODEC_TYPE_H265;
+            } else {
+                printf("Invalid codec type: '%s'\n", eval_optarg);
+                printf("%s", usage);
+                return -1;
+            }
+            break;
+        }
+        case 'k': {  // private key
+            if (!read_hexadecimal_private_key(eval_optarg, (char *)binary_aes_private_key,
+                                              (char *)hex_aes_private_key)) {
+                printf("Invalid hexadecimal string: %s\n", eval_optarg);
+                printf("%s", usage);
+                return -1;
+            }
+            break;
+        }
+        case 'u': {  // user email
+            if (!safe_strncpy(user_email, eval_optarg, USER_EMAIL_MAXLEN)) {
+                printf("User email is too long: %s\n", eval_optarg);
+                return -1;
+            }
+            break;
+        }
+        case 'e': {  // sentry environment
+            // only log "production" and "staging" env sentry events
+            if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
+                if (!safe_strncpy(sentry_environment, eval_optarg,
+                                  FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
+                    printf("Sentry environment is too long: %s\n", eval_optarg);
+                    return -1;
+                }
+                using_sentry = true;
+            }
+            break;
+        }
+        case 'i': {  // protocol window icon
+            if (!safe_strncpy(icon_png_filename, eval_optarg, ICON_PNG_FILENAME_MAXLEN)) {
+                printf("Icon PNG filename is too long: %s\n", eval_optarg);
+                return -1;
+            }
+            break;
+        }
+        case 'p': {  // port mappings
+            char separator = '.';
+            char c = separator;
+            unsigned short origin_port;
+            unsigned short destination_port;
+            const char *str = eval_optarg;
+            while (c == separator) {
+                int bytes_read;
+                int args_read =
+                    sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
+                // If we read port arguments, then map them
+                if (args_read >= 2) {
+                    LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
+                             destination_port);
+                    port_mappings[origin_port] = destination_port;
+                } else {
+                    char invalid_s[13];
+                    unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
+                    safe_strncpy(invalid_s, str, invalid_s_len);
+                    LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
+                    break;
+                }
+                // if %c was the end of the string, exit
+                if (args_read < 3) {
+                    break;
+                }
+                // Progress the string forwards
+                str += bytes_read;
+            }
+            break;
+        }
+        case 'x': {  // use CI
+            running_ci = 1;
+            break;
+        }
+        case 'z': {  // first connection method to try
+            if (!strcmp(eval_optarg, "STUN")) {
+                using_stun = true;
+            } else if (!strcmp(optarg, "DIRECT")) {
+                using_stun = false;
+            } else {
+                printf("Invalid connection type: '%s'\n", eval_optarg);
+                printf("%s", usage);
+                return -1;
+            }
+            break;
+        }
+        case 'n': {  // window title
+            program_name = calloc(sizeof(char), strlen(eval_optarg));
+            strcpy((char *)program_name, eval_optarg);
+            break;
+        }
+        case 'r': {  // use arguments piped from stdin
+            using_piped_arguments = true;
+            break;
+        }
+        case 'l': {  // loading message
+            LOG_INFO("LOADING: %s", eval_optarg);
+            break;
+        }
+        case 's': {  // skip taskbar
+            skip_taskbar = true;
+            break;
+        }
+        default: {
+            if (eval_opt != -1) {
+                // illegal option
+                printf("%s", usage);
+                return -1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
 /*
 ============================
 Public Function Implementations
@@ -121,7 +294,7 @@ int parse_args(int argc, char *argv[]) {
     */
 
     // TODO: replace `desktop` with argv[0]
-    const char *usage =
+    usage =
         "Usage: desktop [OPTION]... IP_ADDRESS\n"
         "Try 'desktop --help' for more information.\n";
     const char *usage_details =
@@ -132,7 +305,7 @@ int parse_args(int argc, char *argv[]) {
         "  -w, --width=WIDTH             Set the width for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
-        "  -h, --height=HEIGHT            Set the height for the windowed-mode\n"
+        "  -h, --height=HEIGHT           Set the height for the windowed-mode\n"
         "                                  window, if both width and height\n"
         "                                  are specified\n"
         "  -b, --bitrate=BITRATE         Set the maximum bitrate to use\n"
@@ -150,6 +323,11 @@ int parse_args(int argc, char *argv[]) {
         "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME               Set the window title. Default: Fractal\n"
+        "  -r, --read-pipe               Read arguments from stdin until EOF. Don't need to pass\n"
+        "                                  in IP if using this argument and passing with arg `ip`\n"
+        "  -l, --loading                 Custom loading screen message\n"
+        "  -s, --skip-taskbar            Launch the protocol without displaying an icon\n"
+        "                                  in the taskbar\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -165,9 +343,8 @@ int parse_args(int argc, char *argv[]) {
     safe_strncpy(icon_png_filename, "", ICON_PNG_FILENAME_MAXLEN);
 
     int opt;
-    long int ret;
     bool ip_set = false;
-    char *endptr;
+    using_piped_arguments = false;
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
@@ -177,132 +354,10 @@ int parse_args(int argc, char *argv[]) {
             return -1;
         }
         errno = 0;
+
+        // For arguments that are not `help` and `version`, evaluate option
+        //    and argument via `evaluate_arg`
         switch (opt) {
-            case 'w': {  // width
-                ret = strtol(optarg, &endptr, 10);
-                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                    printf("%s", usage);
-                    return -1;
-                }
-                output_width = (int)ret;
-                break;
-            }
-            case 'h': {  // height
-                ret = strtol(optarg, &endptr, 10);
-                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                    printf("%s", usage);
-                    return -1;
-                }
-                output_height = (int)ret;
-                break;
-            }
-            case 'b': {  // bitrate
-                ret = strtol(optarg, &endptr, 10);
-                if (errno != 0 || *endptr != '\0' || ret > INT_MAX || ret < 0) {
-                    printf("%s", usage);
-                    return -1;
-                }
-                max_bitrate = (int)ret;
-                break;
-            }
-            case 'c': {  // codec
-                if (!strcmp(optarg, "h264")) {
-                    output_codec_type = CODEC_TYPE_H264;
-                } else if (!strcmp(optarg, "h265")) {
-                    output_codec_type = CODEC_TYPE_H265;
-                } else {
-                    printf("Invalid codec type: '%s'\n", optarg);
-                    printf("%s", usage);
-                    return -1;
-                }
-                break;
-            }
-            case 'k': {  // private key
-                if (!read_hexadecimal_private_key(optarg, (char *)binary_aes_private_key,
-                                                  (char *)hex_aes_private_key)) {
-                    printf("Invalid hexadecimal string: %s\n", optarg);
-                    printf("%s", usage);
-                    return -1;
-                }
-                break;
-            }
-            case 'u': {  // user email
-                if (!safe_strncpy(user_email, optarg, USER_EMAIL_MAXLEN)) {
-                    printf("User email is too long: %s\n", optarg);
-                    return -1;
-                }
-                break;
-            }
-            case 'e': {  // sentry environment
-                // only log "production" and "staging" env sentry events
-                if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
-                        printf("Sentry environment is too long: %s\n", optarg);
-                        return -1;
-                    }
-                    using_sentry = true;
-                }
-                break;
-            }
-            case 'i': {  // protocol window icon
-                if (!safe_strncpy(icon_png_filename, optarg, ICON_PNG_FILENAME_MAXLEN)) {
-                    printf("Icon PNG filename is too long: %s\n", optarg);
-                    return -1;
-                }
-                break;
-            }
-            case 'p': {  // port mappings
-                char separator = '.';
-                char c = separator;
-                unsigned short origin_port;
-                unsigned short destination_port;
-                const char *str = optarg;
-                while (c == separator) {
-                    int bytes_read;
-                    int args_read = sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c,
-                                           &bytes_read);
-                    // If we read port arguments, then map them
-                    if (args_read >= 2) {
-                        LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
-                                 destination_port);
-                        port_mappings[origin_port] = destination_port;
-                    } else {
-                        char invalid_s[13];
-                        unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
-                        safe_strncpy(invalid_s, str, invalid_s_len);
-                        LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
-                        break;
-                    }
-                    // if %c was the end of the string, exit
-                    if (args_read < 3) {
-                        break;
-                    }
-                    // Progress the string forwards
-                    str += bytes_read;
-                }
-                break;
-            }
-            case 'x': {  // use CI
-                running_ci = 1;
-                break;
-            }
-            case 'z': {  // first connection method to try
-                if (!strcmp(optarg, "STUN")) {
-                    using_stun = true;
-                } else if (!strcmp(optarg, "DIRECT")) {
-                    using_stun = false;
-                } else {
-                    printf("Invalid connection type: '%s'\n", optarg);
-                    printf("%s", usage);
-                    return -1;
-                }
-                break;
-            }
-            case 'n': {  // window title
-                program_name = calloc(sizeof(char), strlen(optarg));
-                strcpy((char *)program_name, optarg);
-                break;
-            }
             case FRACTAL_GETOPT_HELP_CHAR: {  // help
                 printf("%s", usage_details);
                 return 1;
@@ -312,21 +367,19 @@ int parse_args(int argc, char *argv[]) {
                 return 1;
             }
             default: {
-                if (opt != -1) {
-                    // illegal option
-                    printf("%s", usage);
+                if (evaluate_arg(opt, optarg) < 0) {
                     return -1;
                 }
-                break;
             }
         }
+
         if (opt == -1) {
             if (optind < argc && !ip_set) {
                 // there's a valid non-option arg and ip is unset
-                server_ip = argv[optind];
+                safe_strncpy((char *)server_ip, argv[optind], MAX_IP_LEN);
                 ip_set = true;
                 ++optind;
-            } else if (optind < argc || !ip_set) {
+            } else if (optind < argc || (!ip_set && !using_piped_arguments)) {
                 // incorrect usage
                 printf("%s", usage);
                 return -1;
@@ -335,6 +388,172 @@ int parse_args(int argc, char *argv[]) {
                 break;
             }
         }
+    }
+
+    return 0;
+}
+
+int read_piped_arguments(bool *keep_waiting) {
+    /*
+        Read arguments from the stdin pipe if `using_piped_arguments` is
+        set to `true`.
+
+        Can read IP as argument with name `ip`
+
+        Arguments:
+            keep_waiting (bool*): pointer to a boolean indicating whether to continue waiting
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
+    if (!using_piped_arguments) {
+        return 0;
+    }
+
+    // Arguments will arrive from the client application via pipe to stdin
+    char incoming[MAX_INCOMING_LENGTH];
+
+    int total_stored_chars = 0;
+    char read_char = 0;
+    bool keep_reading = true;
+    bool finished_line = false;
+
+#ifndef _WIN32
+    int available_chars;
+#else
+    DWORD available_chars;
+
+    HANDLE h_stdin = GetStdHandle(STD_INPUT_HANDLE);
+    DWORD stdin_filetype = GetFileType(h_stdin);
+    if (stdin_filetype != FILE_TYPE_PIPE) {
+        LOG_ERROR("Stdin must be piped in on Windows");
+        return -1;
+    }
+#endif
+
+    // Each argument will be passed via pipe from the client application
+    //    with the argument name and value separated by a "?"
+    //    and each argument/value pair on its own line
+    while (keep_reading && *keep_waiting) {
+        SDL_Delay(50);  // to keep the fan from freaking out
+                        // If stdin doesn't have any characters, continue the loop
+#ifndef _WIN32
+        if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
+            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+            return -1;
+        } else if (available_chars == 0) {
+            continue;
+        }
+#else
+        // When in piped mode (e.g. from the client app), stdin is a NamedPipe
+        if (!PeekNamedPipe(h_stdin, NULL, 0, NULL, &available_chars, NULL)) {
+            if (GetLastError() == ERROR_BROKEN_PIPE || GetLastError() == ERROR_PIPE_NOT_CONNECTED) {
+                // On closed stdin, fgetc will return 0 for EOF, so force a char read to eval line
+                available_chars = 1;
+            }
+        } else if (available_chars == 0) {
+            continue;
+        }
+#endif  // _WIN32
+
+        for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
+            // Read a character from stdin
+            read_char = (char)fgetc(stdin);
+
+            // If the character is EOF, make sure the loop ends after this iteration
+            if (read_char == EOF) {
+                keep_reading = false;
+            } else if (!finished_line) {
+                incoming[total_stored_chars] = read_char;
+                total_stored_chars++;
+            }
+
+            // Causes some funky behavior if the line being read in is longer than 128 characters
+            // because
+            //   it splits into two and processes as two different pieces
+            if (!keep_reading ||
+                (total_stored_chars > 0 && ((incoming[total_stored_chars - 1] == '\n') ||
+                                            total_stored_chars == MAX_INCOMING_LENGTH - 1))) {
+                finished_line = true;
+                total_stored_chars = 0;
+            } else {
+                continue;
+            }
+
+            // Splits the incoming string from STDIN into arg_name and arg_value
+            char *arg_name = strtok(incoming, "?");
+            if (!arg_name) {
+                goto completed_line_eval;
+            }
+
+            char *arg_value = strtok(NULL, "?");
+            if (arg_value) {
+                arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
+                arg_value[strcspn(arg_value, "\r")] =
+                    0;  // removes trailing carriage return, if exists
+            }
+
+            arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
+            arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
+
+            // Iterate through cmd_options to find the corresponding opt
+            int opt_index = -1;
+            for (int i = 0; cmd_options[i].name; i++) {
+                if (strncmp(arg_name, cmd_options[i].name, strlen(arg_name))) continue;
+
+                if (strlen(cmd_options[i].name) == (unsigned)strlen(arg_name)) {
+                    opt_index = i;
+                    break;
+                }
+            }
+
+            if (opt_index >= 0) {
+                // Evaluate the passed argument, if a valid opt
+                if (evaluate_arg(cmd_options[opt_index].val, arg_value) < 0) {
+                    LOG_ERROR("Piped arg %s with value %s wasn't accepted", arg_name,
+                              arg_value ? arg_value : "NULL");
+                    return -1;
+                }
+            } else if (strlen(arg_name) == 2 && !strncmp(arg_name, "ip", strlen(arg_name))) {
+                // If arg_name is `ip`, then set IP address
+                if (!arg_value) {
+                    LOG_WARNING("Must pass arg_value with `ip` arg_name");
+                } else {
+                    safe_strncpy((char *)server_ip, arg_value, MAX_IP_LEN);
+                    LOG_INFO("Connecting to IP %s", server_ip);
+                }
+            } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
+                // If arg_name is `kill`, then return failure
+                LOG_INFO("Killing client app");
+                return -1;
+            } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
+                // If arg_name is `finished`, then stop reading args from pipe
+                LOG_INFO("Finished piping arguments");
+                keep_reading = false;
+                goto end_of_eval_loop;
+            } else {
+                // If arg_name is invalid, then log a warning, but continue
+                LOG_WARNING("Piped arg %s not available", arg_name);
+            }
+
+            fflush(stdout);
+
+        completed_line_eval:
+            if (finished_line) {
+                // Reset finished_line after evaluating a line
+                finished_line = false;
+                memset(&incoming, 0, MAX_INCOMING_LENGTH);
+            }
+        }
+    end_of_eval_loop:
+        available_chars = 0;
+    }
+
+    if (strlen((char *)server_ip) == 0) {
+        LOG_ERROR(
+            "Need IP: if not passed in directly, IP must be passed in via pipe with arg name `ip`");
+        return -1;
     }
 
     return 0;
@@ -462,6 +681,38 @@ int destroy_socket_library(void) {
 #ifdef _WIN32
     WSACleanup();
 #endif
+    return 0;
+}
+
+int alloc_parsed_args(void) {
+    /*
+        Init any allocated memory for parsed args
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+    server_ip = malloc(MAX_IP_LEN);
+
+    if (!server_ip) {
+        return -1;
+    }
+
+    memset((char *)server_ip, 0, MAX_IP_LEN);
+
+    return 0;
+}
+
+int free_parsed_args(void) {
+    /*
+        Free any allocated memory for parsed args
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+    if (server_ip) {
+        free((char *)server_ip);
+    }
+
     return 0;
 }
 

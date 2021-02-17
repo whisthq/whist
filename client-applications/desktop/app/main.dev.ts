@@ -30,7 +30,7 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = true
+let showMainWindow = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -71,7 +71,6 @@ const createWindow = async () => {
             titleBarStyle: "hidden",
             center: true,
             resizable: true,
-            maximizable: false,
             webPreferences: {
                 nodeIntegration: true,
                 enableRemoteModule: true,
@@ -124,9 +123,9 @@ const createWindow = async () => {
             if (process.env.START_MINIMIZED) {
                 mainWindow.minimize()
             } else {
-                mainWindow.maximize()
                 mainWindow.show()
                 mainWindow.focus()
+                mainWindow.maximize()
             }
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)

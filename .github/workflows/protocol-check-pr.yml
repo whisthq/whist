@@ -50,11 +50,15 @@ jobs:
 
             ############################# Windows Configuration Steps START #############################
 
-            - name: Install cppcheck via Chocolatey on Windows GHA Machine
+            - name: Install Chocolatey dependencies on Windows GHA Machine
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
                   args: install cppcheck ninja
+
+            - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
+              if: runner.os == 'Windows'
+              uses: ilammy/msvc-dev-cmd@v1
 
             - name: Install CUDA on Windows GHA Machine
               if: runner.os == 'Windows' && matrix.config.cuda
@@ -85,8 +89,8 @@ jobs:
                   ls $env:CUDA_PATH\bin
                   ls $env:CUDA_PATH\include
 
-            - name: Install OS Compiler Matchers
-              shell: bash
+            - name: Register OS Compiler Matchers
+              shell: bash -e {0}
               run: |
                   # OS-independent matchers
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/cppcheck_matcher.json"
@@ -101,17 +105,13 @@ jobs:
                       echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
                   fi
 
-            - name: Set up Visual Studio Developer Command Prompt (for nmake) on Windows GHA Machine
-              if: runner.os == 'Windows'
-              uses: ilammy/msvc-dev-cmd@v1
-
             ############################# Windows Configuration Steps END #############################
 
             ############################# Unix Configuration Steps START #############################
 
             - name: Install Linux/MacOS Client Protocol Dependencies on Linux/MacOS GHA Machines
               if: runner.os == 'Linux' || runner.os == 'macOS'
-              shell: bash
+              shell: bash -e {0}
               working-directory: protocol
               run: |
                   if [ "$RUNNER_OS" == "Linux" ]; then
@@ -146,26 +146,20 @@ jobs:
               if: runner.os == 'Linux' || runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
-              shell: bash
               working-directory: protocol
               run: |
                   cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient -j
 
-            # This tests building the protocol on the GitHub Actions VM, so that we can run clang-format and clang-tidy
-            - name: Build Protocol Server on Linux Ubuntu
+            - name: Build Protocol Server on Linux
               if: runner.os == 'Linux'
-              env:
-                  FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
-              shell: bash
               working-directory: protocol
               run: |
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalServer -j
 
+            # Verify clang-format on Linux
             - name: Verify Builds with clang-format
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: protocol
               run: |
                   # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
@@ -179,8 +173,9 @@ jobs:
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
 
+            # Verify clang-tidy on all OS's
             - name: Verify Builds with clang-tidy
-              shell: bash
+              shell: bash -e {0}
               working-directory: protocol
               run: |
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
@@ -191,12 +186,11 @@ jobs:
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: protocol
               run: ./build_protocol.sh release
 
+            # This ensures that all the build files from build_protocol.sh have actually been generated
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
-              shell: bash
               working-directory: container-images
               run: ./helper-scripts/copy_protocol_build.sh

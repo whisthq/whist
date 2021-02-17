@@ -11,10 +11,7 @@ import { DEFAULT } from "store/reducers/auth/default"
 import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
 import { deepCopyObject } from "shared/utils/general/reducer"
-import { setAWSRegion } from "shared/utils/files/aws"
 import { findDPI } from "shared/utils/general/dpi"
-import { allowedRegions } from "shared/types/aws"
-import { FractalLogger } from "shared/utils/general/logging"
 
 import { DEFAULT as ContainerDefault } from "store/reducers/container/default"
 
@@ -25,23 +22,10 @@ function* createContainer() {
 
     Arguments: none
     */
-    const logger = new FractalLogger()
-
     const state = yield select()
     const userID = state.AuthReducer.user.userID
     const accessToken = state.AuthReducer.user.accessToken
-
-    // Get region
-    let region = allowedRegions[0]
-    try {
-        region = yield call(setAWSRegion, accessToken)
-        logger.logInfo(`Fetch AWS region found region ${region}`, userID)
-    } catch (err) {
-        logger.logError(
-            `Fetch AWS region errored with ${err}, using default region ${region}`,
-            userID
-        )
-    }
+    const region = state.ClientReducer.computerInfo.region
 
     // Get client DPI
     const dpi = findDPI()
@@ -64,6 +48,13 @@ function* createContainer() {
         yield put(updateTask({ taskID: json.ID }))
     } else {
         yield put(updateTask(ContainerDefault.task))
+        yield put(
+            updateTask({
+                protocolKillSignal:
+                    state.ContainerReducer.task.protocolKillSignal + 1,
+                shouldLaunchProtocol: false,
+            })
+        )
 
         if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             history.push(FractalRoute.PAYMENT)

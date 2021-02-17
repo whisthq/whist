@@ -6,7 +6,9 @@ import { Dispatch } from "shared/types/redux"
 import { FractalAuthCache } from "shared/types/cache"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
-import { updateTimer } from "store/actions/analytics/pure"
+import { updateTask } from "store/actions/container/pure"
+import { updateTimer } from "store/actions/client/pure"
+import { getComputerInfo } from "store/actions/client/sideEffects"
 import { DEFAULT, User, AuthFlow } from "store/reducers/auth/default"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { history } from "store/history"
@@ -26,10 +28,10 @@ export const Loading = (props: {
     /*
         Loading screen that shows up when the app is launched, stays active until the access
         token is either verified or rejected
- 
+
         Arguments:
             userID: User ID
-            accessToken: Access token  
+            accessToken: Access token
             failures: Number of login failures
     */
 
@@ -49,6 +51,7 @@ export const Loading = (props: {
 
     useEffect(() => {
         dispatch(updateTimer({ appOpened: Date.now() }))
+        dispatch(getComputerInfo())
     }, [dispatch])
 
     useEffect(() => {
@@ -95,6 +98,7 @@ export const Loading = (props: {
         if (userID !== "" && accessToken !== "") {
             logger.logInfo(`Authenticated, redirecting to launcher`, userID)
             dispatch(updateTimer({ appDoneLoading: Date.now() }))
+            dispatch(updateTask({ shouldLaunchProtocol: true }))
             history.push(FractalRoute.LAUNCHER)
             return
         }

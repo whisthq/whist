@@ -29,6 +29,21 @@ Public Function Implementations
 ============================
 */
 
+void hide_native_window_taskbar() {
+    /*
+        Hide the taskbar icon for the app. This only works on macOS (for Window and Linux,
+        SDL already implements this in the `SDL_WINDOW_SKIP_TASKBAR` flag).
+    */
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+
+    // most likely not necessary
+    [NSApp setPresentationOptions:NSApplicationPresentationDefault];
+
+    // hack to make menubar show up
+    [NSMenu setMenuBarVisible:NO];
+    [NSMenu setMenuBarVisible:YES];
+}
+
 int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
     /*
         Set the color of the titlebar of the native macOS window, and the corresponding

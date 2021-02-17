@@ -13,16 +13,10 @@ if "%1%" == "--help" (
 ) else (
     echo Make sure to run this script in a x86_x64 terminal on Windows.
 
-    REM Download binaries
-    mkdir binaries
-    cd binaries
-    powershell -c "Invoke-WebRequest -Uri 'https://fractal-client-application-deps.s3.us-east-1.amazonaws.com/awsping_windows.exe' -OutFile 'awsping_windows.exe'"
-    cd ..
-
     PowerShell.exe -ExecutionPolicy Bypass -Command "& './setVersion.ps1'" -version %version% -bucket %bucket%
 
     cd ..\..\protocol
-    cmake . -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles"
+    cmake . -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" -D BUILD_SERVER=OFF
     nmake FractalClient
     cd ..\client-applications\desktop
     rmdir /S/Q protocol-build

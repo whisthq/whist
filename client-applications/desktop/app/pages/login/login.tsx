@@ -7,6 +7,7 @@ import { Dispatch } from "shared/types/redux"
 import { FractalKey } from "shared/types/input"
 import { FractalRoute } from "shared/types/navigation"
 import { User } from "store/reducers/auth/default"
+import { updateTask } from "store/actions/container/pure"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { history } from "store/history"
 import { FractalIPC } from "shared/types/ipc"
@@ -70,7 +71,12 @@ export const Login = (props: {
     }
 
     useEffect(() => {
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
+    }, [])
+
+    useEffect(() => {
         if (userID && accessToken) {
+            dispatch(updateTask({ shouldLaunchProtocol: true }))
             history.push(FractalRoute.LAUNCHER)
         }
     }, [accessToken, userID])

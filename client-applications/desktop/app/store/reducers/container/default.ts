@@ -1,9 +1,11 @@
 import { FractalTaskStatus } from "shared/types/containers"
+import { AWSRegion } from "shared/types/aws"
 
 export type Task = {
     taskID?: string
-    running?: boolean // True if container is creating or currently being streamed, false otherwise
     status?: FractalTaskStatus
+    shouldLaunchProtocol?: boolean
+    protocolKillSignal?: number
 }
 
 export type Container = {
@@ -15,6 +17,7 @@ export type Container = {
     port32273?: string
     location?: string
     secretKey?: string
+    region?: AWSRegion | undefined
 }
 
 export type ContainerState = {
@@ -25,8 +28,9 @@ export type ContainerState = {
 export const DEFAULT: ContainerState = {
     task: {
         taskID: "",
-        running: false,
         status: FractalTaskStatus.PENDING,
+        shouldLaunchProtocol: false,
+        protocolKillSignal: 0,
     },
     container: {
         publicIP: "",

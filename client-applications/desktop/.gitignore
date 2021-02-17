@@ -1,6 +1,5 @@
 # Fractal protocol
 protocol-build/
-logs/
 rcedit-x64.exe
 .unison
 .protocol
@@ -79,8 +78,3 @@ npm-debug.log.*
 *.sass.d.ts
 *.scss.d.ts
 package-lock.json
-
-# Binaries/AWS ping
-binaries/
-binaries/**
-awsping.darwin.amd64.tgz

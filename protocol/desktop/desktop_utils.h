@@ -23,6 +23,7 @@ Includes
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (3)
 #define MAX_RECONNECTION_ATTEMPTS (10)
+#define MAX_IP_LEN (32)
 
 /*
 ============================
@@ -57,6 +58,16 @@ Public Functions
 int parse_args(int argc, char* argv[]);
 
 /**
+ * @brief                          Read arguments from the stdin pipe if `using_piped_arguments`
+ *                                 is set to `true`.
+ *
+ * @param keep_waiting             Pointer to a boolean indicating whether to continue waiting
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int read_piped_arguments(bool* keep_waiting);
+
+/**
  * @brief                          Get directory of Fractal log
  *
  * @returns                        Log directory string
@@ -87,6 +98,20 @@ int init_socket_library(void);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int destroy_socket_library(void);
+
+/**
+ * @brief                          Init any allocated memory for parsed args
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int alloc_parsed_args(void);
+
+/**
+ * @brief                          Free any allocated memory for parsed args
+ *
+ * @returns                        Returns -1 on failure, 0 on success
+ */
+int free_parsed_args(void);
 
 /**
  * @brief                          Configure the cache folder for non-Windows

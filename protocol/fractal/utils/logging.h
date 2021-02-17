@@ -145,6 +145,12 @@ void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...);
 void sentry_send_event(const char* fmt_str, ...);
 
 /**
+ * @brief                          Print the stacktrace of the calling function to stdout
+ *                                 This will be registered as if it was logged as well
+ */
+void print_stacktrace();
+
+/**
  * @brief                          Initialize the logger
  *
  * @param log_directory            The directory to store the log files in. Pass
