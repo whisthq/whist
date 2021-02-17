@@ -207,7 +207,7 @@ def container(cluster, user):
         """
 
         c = UserContainer(
-            container_id=f"test-container-{uuid.uuid4()}",
+            container_id=f"{uuid.uuid4()}{uuid.uuid4()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
             os="Linux",
