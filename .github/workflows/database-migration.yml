@@ -94,11 +94,13 @@ jobs:
                       exit 1
                   fi
 
+            # Run the Python migration scripts, passing output to jq for
+            # JSON processing, and then to curl to send to the GitHub API.
             - name: Run migra on endpoints and print
               run: |
                   RESULT=$(python3 ${DIFF_SCRIPT})
-
                   export msg="${RESULT}"
+
                   jq -nc '{"body":env.msg}' | \
                   curl -sL  -X POST -d @- \
                   -H "Content-Type: application/json" \
