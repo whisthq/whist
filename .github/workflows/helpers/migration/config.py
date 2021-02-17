@@ -23,7 +23,6 @@ HEROKU_DB_URL_KEY = "DATABASE_URL"
 # It is the "new source of truth".
 SCHEMA_PATH_MERGING = os.environ["SCHEMA_PATH_MERGING"]
 
-
 # The path to the "current" schema. This is the .sql file that contains
 # the commands representing the schema of the dev/staging/prod database.
 # It is the "old source of truth".
@@ -35,7 +34,6 @@ SCHEMA_PATH_MERGING = os.environ["SCHEMA_PATH_MERGING"]
 # This is set to a tempfile, which will be written to with the schema from
 # the live dev/staging/prod database.
 SCHEMA_PATH_CURRENT = Path(tempfile.gettempdir()).joinpath("tempdb.sql")
-
 
 # This temporary file will be written to with the "diff" of the "merging"
 # schema and the "current" schema. It needs to be written to a file so it
@@ -55,7 +53,7 @@ POSTGRES_DEFAULT_USERNAME = "postgres"
 
 POSTGRES_DEFAULT_DBNAME = "postgres"
 
-POSTGRES_DEFAULT_PASSWORD = "password"
+POSTGRES_DEFAULT_PASSWORD = "yKCmXHwMIKVF8rLgry9e"
 
 POSTGRES_DEFAULT_PORT = 5432
 
