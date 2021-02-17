@@ -12,6 +12,7 @@ export type FractalConfig = {
         GOOGLE_ANALYTICS_TRACKING_CODES: string[]
         AWS_ACCESS_KEY: string | undefined
         AWS_SECRET_KEY: string | undefined
+        LOGZ_API_KEY: string | undefined
     }
     deployEnv: string | undefined
     sentryEnv: string | undefined

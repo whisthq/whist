@@ -1,5 +1,6 @@
 import { createLogger, format, transports, config } from "winston"
 import { FractalNodeEnvironment } from "shared/types/config"
+import { config as FractalConfig } from "shared/constants/config"
 import Logzio from "winston-logzio"
 
 const { combine, timestamp, json } = format
@@ -19,7 +20,7 @@ export const debugLog = <T>(callback: T) => {
 export class FractalLogger {
     maxFileSize = 10000000
 
-    token = "IroqVsvNytmNricZSTLUSVtJbxNYBgxp"
+    token = FractalConfig.keys.LOGZ_API_KEY
 
     /*
         Description:
@@ -64,7 +65,7 @@ export class FractalLogger {
         if (process.env.NODE_ENV === FractalNodeEnvironment.PRODUCTION) {
             logger.add(
                 new Logzio({
-                    token: this.token,
+                    token: this.token as string,
                 })
             )
         }
