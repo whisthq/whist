@@ -112,7 +112,6 @@
         }
     ],
     "dependencies": {
-        "-": "^0.0.1",
         "@apollo/client": "^3.2.4",
         "@hot-loader/react-dom": "^16.11.0",
         "@sentry/electron": "^2.0.4",
