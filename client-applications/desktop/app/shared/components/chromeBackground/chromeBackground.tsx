@@ -23,12 +23,6 @@ export const ChromeBackground = (props: {
         Arguments: none
     */
 
-    // const ipc = require("electron").ipcRenderer
-
-    // const closeTab = () => {
-    //     ipc.sendSync(FractalIPC.FORCE_QUIT)
-    // }
-
     const { operatingSystem } = props
 
     return (
