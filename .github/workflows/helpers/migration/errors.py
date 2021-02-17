@@ -51,6 +51,7 @@ def catch_value_error(func):
         Exception: The wrapped function raised a ValueError, which was caught
                    and a formatted Exception was re-raised.
     """
+
     @wraps(func)
     def catch_value_error_wrapper(*args, **kwargs):
         try:
@@ -77,6 +78,7 @@ def catch_timeout_error(func):
         Exception: The wrapped function raised a TimeoutError, which was
                    caught and a formatted Exception was re-raised.
     """
+
     @wraps(func)
     def catch_timeout_error_wrapper(*args, **kwargs):
         try:

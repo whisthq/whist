@@ -52,6 +52,7 @@ def collapse(func):
         A function that prints "collapsible" Markdown around the output
         of the wrapped function.
     """
+
     @wraps(func)
     def collapse_wrapper(*args, **kwargs):
         print("<details>")

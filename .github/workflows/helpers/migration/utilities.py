@@ -15,6 +15,7 @@ def with_timeout(func):
     Returns:
         The input function partially applied with the timeout configuration.
     """
+
     @wraps(func)
     def with_timeout_wrapper(*args, **kwargs):
         return func(config.TIMEOUT_SECONDS, *args, **kwargs)
