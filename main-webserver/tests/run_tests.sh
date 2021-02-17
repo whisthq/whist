@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Exit on errors and missing environment variables
+# exit on error and missing env var
 set -Eeuo pipefail
 
 # Retrieve relative subfolder path
