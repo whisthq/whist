@@ -22,12 +22,35 @@ from config import (
 
 
 def db_from_schema(schema_path, **kwargs):
+    """Creates a Docker container, configured with a PostgreSQL database.
+
+    Given a path to a file containing `.sql` commands, and kwargs representing
+    configuration for a database connection, spin up a Docker container with
+    a PostgreSQL database, wait for the database to initialize, and execute
+    the SQL commands on the database.
+
+    Args:
+        schema_path: A string, representing a path to a .sql file.
+        kwargs: Configuration keywords for the database connection,
+                including "host", "port", "username", "password", and "dbname".
+    Returns:
+        A Docker container object with the initialized database..
+
+    """
     container = containers.run_postgres_container(**kwargs)
     postgres.sql_commands(schema_path, **kwargs)
     return container
 
 
 def write_to_file(path, string):
+    """A helper function to write a string to a file.
+
+    Args:
+        path: A string representing a path to a writeable file.
+        string: A string to be written to the file at "path".
+    Returns:
+        None
+    """
     with open(path, "w") as f:
         f.write(string)
 

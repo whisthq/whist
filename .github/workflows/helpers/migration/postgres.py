@@ -6,24 +6,31 @@ from errors import catch_process_error, catch_value_error
 import config
 
 
-def postgres_parse_url(config):
-    """Formats a URL string given a configuration dictionary"""
-    if config.get("url"):
-        return config["url"]
+def postgres_parse_url(db_config):
+    """Formats a PostgreSQL URL string given a configuration dictionary.
 
-    host = config["host"]
-    port = config["port"]
-    dbname = config["dbname"]
-    username = config["username"]
-    password = config["password"]
+    Args:
+        db_config: A dictionary of database configuration keys, including
+        "host", "port", "dbname", "username", "password".
+    Returns:
+        A URL string formatted with the values in db_config.
+    """
+    if db_config.get("url"):
+        return db_config["url"]
+
+    host = db_config["host"]
+    port = db_config["port"]
+    dbname = db_config["dbname"]
+    username = db_config["username"]
+    password = db_config["password"]
 
     return f"postgres://{username}:{password}@{host}:{port}/{dbname}"
 
 
 def with_postgres_url(func):
-    """A decorator to transform the arguments to PostgreSQL functions
+    """A decorator to transform the arguments to PostgreSQL functions.
 
-    The function signatuers of PostgreSQL commands are inconsistent, so
+    The function signatures of PostgreSQL commands are inconsistent, so
     this function provides a common interface for database configuration
     to the rest of the applicaton. It passes the result along as a formatted
     URL to the decorated PostgreSQL function. It accepts keyword parameters:
@@ -33,12 +40,18 @@ def with_postgres_url(func):
     dbname= a string
     username= a string
     password= a string
+
+    Args:
+        func: A function that accepts a string URL as its first argument.
+    Returns:
+        The input function, partially applied with a PostgreSQL URL as its
+        first argument.
     """
 
     @wraps(func)
     def with_postgres_url_wrapper(*args, **kwargs):
         try:
-            return func(*args, postgres_parse_url(kwargs))
+            return func(postgres_parse_url(kwargs), *args)
         except KeyError:
             raise ValueError(
                 (
@@ -53,15 +66,21 @@ def with_postgres_url(func):
 
 @catch_process_error
 @with_postgres_url
-def sql_commands(sql_file_path, *args):
-    """Runs a .sql file of commands against a database
+def sql_commands(url, sql_file_path):
+    """Runs a .sql file of commands against a database.
 
-    Given an .sql filepath and a database configuration, the .sql file
+    Given a .sql filepath and a database configuration, the .sql file
     is read as a single string. The entire string is executed in a single
     transaction against the database, which must already be running.
+
+    Args:
+        url: A string representing a PostgreSQL connection URL.
+        sql_file_path: A string representing a path to a .sql file.
+    Returns:
+        None
     """
     subprocess.run(
-        ["psql", "--single-transaction", "--file", str(sql_file_path), *args],
+        ["psql", "--single-transaction", "--file", str(sql_file_path), url],
         check=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
@@ -73,12 +92,20 @@ def sql_commands(sql_file_path, *args):
 @catch_value_error
 @catch_process_error
 def is_ready(host=None, port=None, username=None, **kwargs):
-    """Check if a database is ready to accept connections
+    """Check if a database is ready to accept connections.
 
     Given a database configuration, return True or False based
     on whether the database is ready to connect.
 
     Uses the PostgreSQL tool pg_isready to ping the database.
+
+    Args:
+        kwargs: A dictionary representing database configuration.
+    Returns:
+        True if the database is ready for connections, False otherwise.
+    Raises:
+        CalledProcessError: Raised if the return code of the completed process
+                            signals an error.
     """
     try:
         completed = subprocess.run(
@@ -101,16 +128,22 @@ def is_ready(host=None, port=None, username=None, **kwargs):
 @catch_value_error
 @catch_process_error
 @with_postgres_url
-def dump_schema(*args):
-    """Retrieve the schema of a running database
+def dump_schema(url):
+    """Retrieve the schema of a running database.
 
     Given a database configuration, returns a string of SQL statements
     representing the schema of a running database.
 
     Uses the PostGreSQL pg_dump tool to generate the statements.
+
+    Args:
+        url: A string representing a PostgreSQL connection URL.
+    Returns:
+        A string of the SQL commands that represent the schema of the
+        database.
     """
     completed = subprocess.run(
-        ["pg_dump", "--no-owner", "--no-privileges", "--schema-only", *args],
+        ["pg_dump", "--no-owner", "--no-privileges", "--schema-only", url],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=True,
@@ -135,6 +168,12 @@ def schema_diff(db_config_A, db_config_B):
 
     An "unsafe" diff produces destructive SQL statements, and requires Migra
     to be called with the "--unsafe" flag.
+
+    Args:
+        db_config_A: A dictionary representing a database configuration.
+        db_config_B: A dictionary representing a database configuration.
+    Returns:
+       A string representing the diff between two schemas, or None if no diff.
     """
     identity = lambda x: x
     url_A = with_postgres_url(identity)(**db_config_A)

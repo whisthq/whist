@@ -7,7 +7,26 @@ from functools import wraps
 
 
 def format_error(heading, input_data, error_data, suggestion=None):
-    """A utility function to build common error messages"""
+    """A utility function to build common error messages.
+    Args:
+        heading: A string that summarizes the error.
+        input_data: A string that provides context about the error, such as
+                    a list of arguments passed to a function.
+        error_data: A string that provides detail about the error that was
+                    raised. The traceback is a useful piece of data.
+        suggestion: A optional string that provides a helpful hint on how the
+                    user might remedy the error.
+
+    Returns:
+        An Exception object constructured with the formatted error message.
+        It can be raised directly, for example:
+
+        raise format_error(
+                  "A problem happened with the connection on this database:",
+                   db.name,
+                   error.traceback,
+                   "You probably forgot to pass in your access token.")
+    """
     suggestion = ("\n\n" + suggestion) if suggestion else ""
     return Exception(
         heading
@@ -20,8 +39,18 @@ def format_error(heading, input_data, error_data, suggestion=None):
 
 
 def catch_value_error(func):
-    """A decorator used to catch ValueError and format the message"""
+    """A decorator used to catch ValueErrors caused by incorrect arguments.
 
+    Args:
+        func: A function that may raise a ValueError.
+    Returns:
+        A function that will catch any ValueError raised, and raise a
+        new error containing useful context, including a list of arguments
+        that were passed to the wrapped function.
+    Raises:
+        Exception: The wrapped function raised a ValueError, which was caught
+                   and a formatted Exception was re-raised.
+    """
     @wraps(func)
     def catch_value_error_wrapper(*args, **kwargs):
         try:
@@ -38,8 +67,16 @@ def catch_value_error(func):
 
 
 def catch_timeout_error(func):
-    """A decorator used to catch TimeoutError and format the message"""
-
+    """A decorator used to catch TimeoutError and format the message.
+    Args:
+        func: A function that may raise a TimeoutError.
+    Returns:
+        A function that will catch any TimeoutError raised, and raise a
+        new error containing useful context, including the timeout length.
+    Raises:
+        Exception: The wrapped function raised a TimeoutError, which was
+                   caught and a formatted Exception was re-raised.
+    """
     @wraps(func)
     def catch_timeout_error_wrapper(*args, **kwargs):
         try:
@@ -64,6 +101,19 @@ def catch_auth_error(func):
     This function catches the specifc HTTPError emitted by the Requests
     library. While it works for any Requests call, the message is formatted
     to help point the user towards their Heroku credentials.
+
+    Args:
+        func: A function that may raise a HTTPError.
+    Returns:
+        A function that will catch any HTTPError raised, and potentially
+        raise a new, formatted error based on the status of the HTTP response.
+    Raises:
+        Exception: The wrapped function raised a HTTPError with a status code
+                   suggesting that there was an authorization problem with the
+                   request. A new Exception with helpful formatting was raised.
+        HTTPError: The wrapped function raised a HTTPError that was not caused
+                   by an authorization problem with the request, so the
+                   HTTPError is re-raised.
     """
 
     @wraps(func)
@@ -93,7 +143,17 @@ def catch_auth_error(func):
 
 
 def catch_process_error(func):
-    """A decorator used to catch CalledProcessError and format the message"""
+    """A decorator used to catch CalledProcessError and format the message
+    Args:
+        func: A function that may raise a subprocess.CalledProcessError.
+    Returns:
+        A function that will catch any subprocess.CalledProcessError raised,
+        and raise a new, formatted Exception.
+    Raises:
+        Exception: The wrapped function raised a CalledProcessError, which
+                   was caught and an Exception with helpful formatting was
+                   raised.
+    """
 
     @wraps(func)
     def catch_process_error_wrapper(*args, **kwargs):

@@ -14,6 +14,12 @@ def config_vars(app_name):
     configuration variables stored under that app. This function relies
     on ~/.netrc for authentication, which can either be configured manually
     in CI/CD or be configured interactively with `heroku login` in the CLI.
+
+    Args:
+        app_name: A string that represents the name of the app, and configured
+                  in Heroku.
+    Returns:
+        A dictionary of the configuration variable names and values in Heroku.
     """
     url = f"{config.HEROKU_BASE_URL}/apps/{app_name}/config-vars"
 
