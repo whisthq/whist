@@ -7,6 +7,8 @@ import pytest
 from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_modification import update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.celery.aws_ecs_deletion import delete_cluster
+from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer, RegionToAmi
@@ -211,6 +213,83 @@ def test_update_bad_cluster(client, cluster):
 
     assert res.successful()
     assert res.state == "SUCCESS"
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_delete_bad_cluster(cluster):
+    # Regression test for PR 714, tests that a dead cluster doesn't brick
+    res = delete_cluster.delay(cluster=cluster.cluster, region_name="us-east-1")
+
+    # wait for operation to finish
+    # if it takes more than 30 sec, something is wrong
+    res.get(timeout=30)
+
+    assert res.successful()
+    assert res.state == "SUCCESS"
+
+
+@pytest.mark.container_serial
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_ensure_container_exists(container):
+    # Make sure it handles None input appropriately.
+    # The function should throw an exception here.
+    try:
+        ensure_container_exists(None)
+        fractal_log(
+            function="test_ensure_container_exists",
+            label=None,
+            logs="Null container input did not throw Exception.",
+            level=logging.ERROR,
+        )
+        assert False
+    except:
+        assert True
+
+    # We could test here that this works on a real container that
+    # does in fact belong to a cluster. However, we do already
+    # effectively test this in our tests for `assign_container`
+    # and `delete_container`; therefore, we omit this explicit
+    # test for the sake of simplicity.
+
+    # Make sure it handles fake containers properly.
+    with container() as dummy_container:
+        # Instead of using the dummy cluster, use the default cluster for
+        # us-east-1 as the target for our ECS query. It is guaranteed that
+        # this fake container doesn't exist in this real cluster.
+        # To be clear, I am hardcoding this string based on the expectation
+        # that the default cluster in us-east-1 will always be named "default".
+        dummy_container.cluster = "default"
+
+        response_container = ensure_container_exists(dummy_container)
+
+        # First of all, on a dummy container that does not exist, this function
+        # should return None.
+        if response_container:
+            fractal_log(
+                function="test_ensure_container_exists",
+                label=None,
+                logs="Bad container input did not return None.",
+                level=logging.ERROR,
+            )
+            assert False
+
+        # Second, on a dummy container that does not exist, this function
+        # should have deleted the erroneous entry from the database.
+        query_result = UserContainer.query.get(dummy_container.container_id)
+        if query_result:
+            fractal_log(
+                function="test_ensure_container_exists",
+                label=None,
+                logs="Bad container input did not delete erroneous entry from db.",
+                level=logging.ERROR,
+            )
+            assert False
+
+        # Nothing went wrong!
+        assert True
 
 
 @pytest.mark.container_serial
