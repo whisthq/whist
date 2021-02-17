@@ -8,9 +8,11 @@ from app.helpers.blueprint_helpers.auth.google_auth_post import (
 )
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
+from app.models.limiter import limiter, LIMIT
 
 
 @google_auth_bp.route("/google/<action>", methods=["POST"])
+@limiter.limit(LIMIT)
 @fractal_pre_process
 def google_auth_post(action, **kwargs):
     if action == "login":

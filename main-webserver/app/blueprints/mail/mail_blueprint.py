@@ -12,11 +12,13 @@ from app.helpers.blueprint_helpers.mail.mail_post import (
     verification_helper,
     waitlist_referral_helper,
 )
+from app.models.limiter import limiter, LIMIT
 
 mail_bp = Blueprint("mail_bp", __name__)
 
 
 @mail_bp.route("/mail/<action>", methods=["POST"])
+@limiter.limit(LIMIT)
 @fractal_pre_process
 def mail(action, **kwargs):
     """
