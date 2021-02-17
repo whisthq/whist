@@ -35,6 +35,11 @@ let updating = false
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
 let showMainWindow = false
+// Toggles whether FractalClient should be minimized or
+//    restored (maximized). When the showMainWindow is false,
+//    this value gets toggled on "minimize" and "focus"
+//    events
+let protocolMinimized = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -112,28 +117,16 @@ const createWindow = async () => {
     // on protocol MINIMIZE => client app MINIMIZE
     // TWO-WAY COMMUNICATION (requires socket?)
     mainWindow.on('focus', () => {
-        console.log("MAIN WINDOW FOCUS")
-    })
-
-    mainWindow.on('blur', () => {
-        console.log("MAIN WINDOW BLUR")
-    })
-
-    mainWindow.on('maximize', () => {
-        console.log("MAIN WINDOW MAXIMIZE")
+        if (!showMainWindow) {
+            protocolMinimized = false
+        }
     })
 
     mainWindow.on('minimize', (event) => {
-        console.log("MAIN WINDOW MINIMIZE")
-        event.preventDefault()
-        mainWindow.setSkipTaskbar(true)
-    })
-
-    mainWindow.on('restore', (event) => {
-        console.log("MAIN WINDOW RESTORE")
-        mainWindow.show()
-        mainWindow.setSkipTaskbar(false)
-        // tray.destroy()
+        if (!showMainWindow) {
+            mainWindow.restore()
+            protocolMinimized = !protocolMinimized
+        }
     })
 
     // @TODO: Use 'ready-to-show' event
