@@ -6,9 +6,9 @@ from app.helpers.blueprint_helpers.auth.google_auth_post import (
     login_helper,
     reason_helper,
 )
+from app.models.limiter import limiter, LIMIT
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
-from app.models.limiter import limiter, LIMIT
 
 
 @google_auth_bp.route("/google/<action>", methods=["POST"])

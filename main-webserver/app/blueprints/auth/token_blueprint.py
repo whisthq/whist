@@ -4,9 +4,9 @@ from flask_jwt_extended import get_jwt_identity, jwt_refresh_token_required, jwt
 from app import fractal_pre_process, jwtManager
 from app.helpers.blueprint_helpers.auth.token_post import validate_token_helper
 from app.helpers.utils.general.tokens import get_access_tokens
+from app.models.limiter import limiter, LIMIT
 
 token_bp = Blueprint("token_bp", __name__)
-from app.models.limiter import limiter, LIMIT
 
 
 @token_bp.route("/token/refresh", methods=["POST"])
