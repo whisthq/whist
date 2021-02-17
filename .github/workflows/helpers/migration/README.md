@@ -1,6 +1,6 @@
 # Fratal Database Migration Workflow
 
-This subfolder contains all the Python logic to automatically perform database migrations. 
+This subfolder contains all the Python logic to automatically perform database migrations.
 
 ## High-Level Overview
 
@@ -17,7 +17,7 @@ This means that standard `git` discipline applies to how we manage our database 
 5. The "diff" is reviewed and discussed by the team. If the schema changes are approved, your PR is accepted and merged.
 6. Upon merging your PR to `origin/dev`, GitHub Actions automatically executes the "diff" SQL commands on the "live" `dev` database, e.g. `fractal-dev-server`. The database migration is now complete!
 
-As with all good `git` practice, this means that we only ever make changes through the `git` flow. Sure, you *could* update the database though the UI, or manually through SQL commands. You also *could* push your code right to `origin/master`, bypassing the review process. Even though that would save you some steps, we don't do it because we know it breaks the integrity of our codebase.
+As with all good `git` practice, this means that we only ever make changes through the `git` flow. Sure, you _could_ update the database though the UI, or manually through SQL commands. You also _could_ push your code right to `origin/master`, bypassing the review process. Even though that would save you some steps, we don't do it because we know it breaks the integrity of our codebase.
 
 I, for one, welcome our new `db.sql` overlord.
 
