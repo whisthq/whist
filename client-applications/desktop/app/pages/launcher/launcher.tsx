@@ -44,7 +44,8 @@ import { ChildProcess } from "child_process"
     Amount of time passed before giving up on container/assign
     60000 = 1 minute
 */
-const TIMEOUT = 2 * 60000
+const SECOND = 1000
+const TIMEOUT = 60 * SECOND
 
 export const Launcher = (props: {
     userID: string
@@ -123,10 +124,14 @@ export const Launcher = (props: {
             )
         }
 
+        // No more celery task, reset to NO_TASK
         setTaskState(FractalAppState.NO_TASK)
+        // Clear Redux
         resetReduxforLaunch()
         dispatch(updateTask({ shouldLaunchProtocol: true }))
+        // Remove lock so protocol can be relaunched
         setProtocolLock(false)
+        // Reset timeout
         setTimedOut(false)
 
         setTimeout(() => {
