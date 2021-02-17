@@ -219,13 +219,11 @@ jobs:
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
-
     # Put the webserver into maintenance mode while task defs/AMIs update
     fractal-start-webserver-maintenance-mode:
         name: "Put webserver into maintenance mode"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config]
+        needs: [fractal-publish-build-config]
         steps:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
@@ -244,20 +242,23 @@ jobs:
 
     # Notify slack of maintenance mode was started.
     fractal-start-webserver-maintenance-mode-notify-slack:
-      name: "Start webserver maintenance mode: Notify Slack"
-      runs-on: ubuntu-20.04
-      needs:
-          [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
-      if: >
-          success() &&
-          contains(fromJSON('["all", "fractal-start-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
-      steps:
-          - name: Notify Slack
-            if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-            run: |
-                curl -X POST \
-                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Started webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
-                ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+        name: "Start webserver maintenance mode: Notify Slack"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+            ]
+        if: >
+            success() &&
+            contains(fromJSON('["all", "fractal-start-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
+        steps:
+            - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Started webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -971,20 +972,23 @@ jobs:
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to end maintenance" && false
                   fi
-    
+
     # Notify slack of maintenance mode was ended.
     fractal-end-webserver-maintenance-mode-notify-slack:
-      name: "End webserver maintenance mode: Notify Slack"
-      runs-on: ubuntu-20.04
-      needs:
-          [fractal-publish-build-config, fractal-end-webserver-maintenance-mode]
-      if: >
-          success() &&
-          contains(fromJSON('["all", "fractal-end-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
-      steps:
-          - name: Notify Slack
-            if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-            run: |
-                curl -X POST \
-                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Ended webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
-                ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+        name: "End webserver maintenance mode: Notify Slack"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-end-webserver-maintenance-mode,
+            ]
+        if: >
+            success() &&
+            contains(fromJSON('["all", "fractal-end-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
+        steps:
+            - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Ended webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
