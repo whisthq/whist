@@ -78,7 +78,6 @@ DB_CONFIG_MERGING = {**DB_CONFIG_DEFAULT, "port": 9900}
 DB_CONFIG_CURRENT = {**DB_CONFIG_DEFAULT, "port": 9995}
 
 
-
 # These values contain collections of statments that should be ignored in the
 # generated diff for the migration progress. They are statements that are not
 # "compatible" with migra, in the sense that they will always appear in a diff
