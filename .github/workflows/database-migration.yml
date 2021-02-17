@@ -11,9 +11,9 @@ on:
             - master
             - staging
             - dev
-        # # This workflow will run when one of these files changes.
-        # paths:
-        #     - "db.sql"
+        # This workflow will run when one of these files changes.
+        paths:
+            - "db.sql"
     workflow_dispatch:
 
 jobs:
