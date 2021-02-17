@@ -1,12 +1,9 @@
 import time
-import copy
-import decorator
-from typing import Callable
 import datetime
 from datetime import timedelta, datetime as dt
+import os
 
 import pytest
-from celery import shared_task
 
 from app.maintenance.maintenance_manager import (
     _REDIS_TASKS_KEY,
@@ -116,13 +113,20 @@ def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoi
         resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
     elif endpoint_type == "te_ac":
+        #TODO: make this a standardized var in tests
+        deploy_env = "dev"
+        if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
+            deploy_env = "prod"
+        elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
+            deploy_env = "staging"
+
         # test_endpoint assign_container
         assign_container_body = dict(
             username=admin.user_id,
             cluster_name="maintenance-test",
             region_name=region_name,
             region=region_name,
-            task_definition_arn="fractal-browsers-chrome",
+            task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
         )
         resp = client.post("/aws_container/assign_container", json=assign_container_body)
 
