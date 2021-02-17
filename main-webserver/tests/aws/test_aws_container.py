@@ -251,7 +251,7 @@ def test_ensure_container_exists(container):
 
     # Make sure it handles None input appropriately.
     # The function should throw an exception here.
-    with pytest.raises(Exception, match=r"..."):
+    with pytest.raises(Exception, match=r"Invalid parameter: `container` is `None`"):
         ensure_container_exists(None)
 
     # We could test here that this works on a real container that
