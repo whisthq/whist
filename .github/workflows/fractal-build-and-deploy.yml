@@ -51,6 +51,7 @@ jobs:
             publish: ${{ steps.detect-publish.outputs.publish }}
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
+            webserver_url: ${{ steps.set-webserver-url.webserver_url }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -218,21 +219,14 @@ jobs:
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
+
     # Put the webserver into maintenance mode while task defs/AMIs update
     fractal-start-webserver-maintenance-mode:
         name: "Put webserver into maintenance mode"
         runs-on: ubuntu-20.04
+        needs:
+            [fractal-publish-build-config]
         steps:
-            - name: Set webserver URL based on Git Branch (master, staging, dev)
-              run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
-                    echo "webserver_url=https://prod-server.fractal.co" >> $GITHUB_ENV
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                    echo "webserver_url=https://staging-server.fractal.co" >> $GITHUB_ENV
-                  else
-                    echo "webserver_url=https://dev-server.fractal.co" >> $GITHUB_ENV
-                  fi
-
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
@@ -240,13 +234,30 @@ jobs:
                   token=$(curl -X POST \
                         -H "Content-Type: application/json" \
                         --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+                        "${{ needs.fractal-publish-build-config.outputs.webserver_url }}admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash script_utils/poll_maintenance.sh ${{ env.webserver_url }} ${token} start
+                  bash script_utils/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} start
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to start maintenance" && exit 1
                   fi
+
+    # Notify slack of maintenance mode was started.
+    fractal-start-webserver-maintenance-mode-notify-slack:
+      name: "Start webserver maintenance mode: Notify Slack"
+      runs-on: ubuntu-20.04
+      needs:
+          [fractal-publish-build-config, fractal-start-webserver-maintenance-mode]
+      if: >
+          success() &&
+          contains(fromJSON('["all", "fractal-start-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
+      steps:
+          - name: Notify Slack
+            if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+            run: |
+                curl -X POST \
+                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Started webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -937,6 +948,8 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
                 container-images-publish-images-ghcr,
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
@@ -944,16 +957,6 @@ jobs:
                 client-applications-publish-build-s3,
             ]
         steps:
-            - name: Set webserver URL based on Git Branch (master, staging, dev)
-              run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
-                    echo "webserver_url=https://prod-server.fractal.co" >> $GITHUB_ENV
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                    echo "webserver_url=https://staging-server.fractal.co" >> $GITHUB_ENV
-                  else
-                    echo "webserver_url=https://dev-server.fractal.co" >> $GITHUB_ENV
-                  fi
-
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
@@ -961,10 +964,27 @@ jobs:
                   token=$(curl -X POST \
                         -H "Content-Type: application/json" \
                         --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+                        "${{ needs.fractal-publish-build-config.outputs.webserver_url }}admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash script_utils/poll_maintenance.sh ${{ env.webserver_url }} ${token} end
+                  bash script_utils/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} end
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to end maintenance" && false
                   fi
+    
+    # Notify slack of maintenance mode was ended.
+    fractal-end-webserver-maintenance-mode-notify-slack:
+      name: "End webserver maintenance mode: Notify Slack"
+      runs-on: ubuntu-20.04
+      needs:
+          [fractal-publish-build-config, fractal-end-webserver-maintenance-mode]
+      if: >
+          success() &&
+          contains(fromJSON('["all", "fractal-end-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
+      steps:
+          - name: Notify Slack
+            if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+            run: |
+                curl -X POST \
+                --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Ended webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                ${{ secrets.SLACK_HOOKS_ENDPOINT }}
