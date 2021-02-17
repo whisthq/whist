@@ -7,7 +7,7 @@ export type User = {
 
 export type AuthFlow = {
     failures?: number
-    loginToken: string
+    loginToken?: string
 }
 
 export type AuthDefault = {

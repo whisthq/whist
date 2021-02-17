@@ -41,7 +41,6 @@ function* validateAccessToken(action: { accessToken: string }) {
         yield put(
             updateAuthFlow({
                 failures: state.AuthReducer.authFlow.failures + 1,
-                loginToken: state.AuthReducer.authFlow.loginToken,
             })
         )
     }

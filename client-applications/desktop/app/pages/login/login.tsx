@@ -2,7 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from "react"
 import { connect } from "react-redux"
 import { useMutation, useSubscription } from "@apollo/client"
 
-import { openExternal } from "shared/utils/general/helpers"
+import { openExternal, generateToken } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import { Dispatch } from "shared/types/redux"
 import { FractalKey } from "shared/types/input"
@@ -43,7 +43,16 @@ export const Login = (props: {
     const [localAccessToken, setLocalAccessToken] = useState("")
     const [tokenGenerated, setTokenGenerated] = useState(false)
 
-    const [addLogin] = useMutation(ADD_LOGIN_TOKEN)
+    const [addLogin] = useMutation(ADD_LOGIN_TOKEN, {
+        onCompleted: () => {
+            openExternal(
+                `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
+            )
+        },
+        onError: (err) => {
+            throw err
+        },
+    })
     const { data, loading, error } = useSubscription(
         SUBSCRIBE_USER_ACCESS_TOKEN,
         {
@@ -58,37 +67,12 @@ export const Login = (props: {
         },
     })
 
-    const crypto = require("crypto")
-    async function generateToken() {
-        /*
-            Generate a unique one-time use login token
- 
-            Arguments:
-                none     
-        */
-        const buffer = await new Promise((resolve, reject) => {
-            crypto.randomBytes(128, (err, buf) => {
-                if (err) {
-                    reject(err)
-                }
-                resolve(buf)
-            })
-        })
-        return buffer.toString("hex")
-    }
-
-    const handleLogin = () => {
+    const handleLogin = async () => {
         setButtonClicked(true)
-        generateToken()
-            .then((token) => {
-                const tempLoginToken: string = Date.now() + token
-                dispatch(updateAuthFlow({ loginToken: tempLoginToken }))
-                setTokenGenerated(true)
-                return null
-            })
-            .catch((err) => {
-                throw err
-            })
+        const token = await generateToken()
+        const tempLoginToken: string = Date.now() + token
+        dispatch(updateAuthFlow({ loginToken: tempLoginToken }))
+        setTokenGenerated(true)
     }
 
     useEffect(() => {
@@ -101,15 +85,6 @@ export const Login = (props: {
                     },
                 },
             })
-                .then(() => {
-                    openExternal(
-                        `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
-                    )
-                    return null
-                })
-                .catch((err) => {
-                    throw err
-                })
             setTokenGenerated(false)
         }
     }, [tokenGenerated])
