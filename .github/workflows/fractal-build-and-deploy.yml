@@ -245,7 +245,7 @@ jobs:
                   # use a bash script to start update and poll for success
                   bash script_utils/poll_maintenance.sh ${{ env.webserver_url }} ${token} start
                   if [[ $? =~ 1 ]]; then
-                    echo "Failed to start maintenance" && false
+                    echo "Failed to start maintenance" && exit 1
                   fi
 
     # Container Images: Build & Publish to GitHub Container Registry

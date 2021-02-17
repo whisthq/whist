@@ -36,14 +36,14 @@ def check_if_maintenance(region_name: str) -> bool:
     return redis_conn.exists(update_key)
 
 
-def _get_lock(max_tries: int = 100) -> bool:
+def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
     """
-    Tries to get lock using redis SETNX command. Tries `max_tries` time
-    with a sleep time chosen randomly between 0 and 3 to improve lock
-    contention.
+    Tries to get lock using redis SETNX command. Tries `max_tries` time with a
+    sleep time chosen randomly between 0 and 1 seconds to improve lock contention.
 
     Args:
         max_tries: number of tries to get the lock
+        should_sleep: True if method should sleep between attempts to grab lock
 
     Returns:
         True iff the lock is acquired.
@@ -54,8 +54,9 @@ def _get_lock(max_tries: int = 100) -> bool:
         got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
         if got_lock:
             return True
-        sleep_time = random.random() * 3
-        time.sleep(sleep_time)
+        if should_sleep:
+            sleep_time = random.random()
+            time.sleep(sleep_time)
     return False
 
 
@@ -97,7 +98,7 @@ def try_start_update(region_name: str, send_slack=True) -> Tuple[bool, str]:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = _get_lock(100)
+    got_lock = _get_lock(10, should_sleep=False) # only try 10 times since this runs synchronously
     if not got_lock:
         return False, "Did not get lock"
 
@@ -210,7 +211,7 @@ def try_end_update(region_name: str, send_slack=True) -> bool:
     from app import redis_conn
 
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
-    got_lock = _get_lock(100)
+    got_lock = _get_lock(10, should_sleep=False) # only try 10 times since this runs synchronously
     if not got_lock:
         return False, "Did not get lock"
 
@@ -220,6 +221,9 @@ def try_end_update(region_name: str, send_slack=True) -> bool:
     if not update_exists:
         # release lock
         redis_conn.delete(_REDIS_LOCK_KEY)
+        # even if no update exists, we return True because try_update_all does not cache
+        # which regions have stopped updating. A second request to it will try to end updates
+        # in all regions, including ones the first request stopped.
         return True, f"No update in {region_name}"
 
     fractal_log(

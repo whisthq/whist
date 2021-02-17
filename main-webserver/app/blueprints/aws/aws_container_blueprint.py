@@ -117,7 +117,9 @@ def test_endpoint(action, **kwargs):
                 BAD_REQUEST,
             )
 
-    # handle the action
+    # handle the action. The general design pattern is to parse the arguments relevant to
+    # the action and then start a celery task to handle it. `start_update` and `end_update`
+    # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
             cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -208,6 +210,10 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "start_update":
+        # synchronously try to put the webserver into maintenance mode.
+        # return is a dict {"success": <bool>, "msg": <str>}. success
+        # is only True if webserver is in maintenance mode. msg is
+        # human-readable and tells the client what happened.
         region_name = kwargs["body"].get("region_name", None)
         success, msg = None, None
         if region_name is None:
@@ -217,6 +223,10 @@ def test_endpoint(action, **kwargs):
         return jsonify({"success": success, "msg": msg}), ACCEPTED
 
     if action == "end_update":
+        # synchronously try to end maintenance mode.
+        # return is a dict {"success": <bool>, "msg": <str>}. success
+        # is only True if webserver has ended maintenance mode. msg is
+        # human-readable and tells the client what happened.
         region_name = kwargs["body"].get("region_name", None)
         success, msg = None, None
         if region_name is None:

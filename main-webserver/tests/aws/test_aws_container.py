@@ -29,6 +29,8 @@ from tests.maintenance.test_webserver_maintenance import (
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
+GENERIC_LINUX_US_EAST1_AMI = "ami-0ff8a91507f77f867"
+
 
 @pytest.mark.container_serial
 def check_test_database():
@@ -196,7 +198,7 @@ def test_update_cluster(client):
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name=pytest.cluster_name,
-        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ami=GENERIC_LINUX_US_EAST1_AMI,
     )
 
     # wait for operation to finish
@@ -214,7 +216,7 @@ def test_update_bad_cluster(client, cluster):
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name=cluster.cluster,
-        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ami=GENERIC_LINUX_US_EAST1_AMI,
     )
 
     # wait for operation to finish
@@ -395,11 +397,11 @@ def test_update_region(client, admin, monkeypatch):
                 logging.ERROR,
             )
             success = False
-        elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
+        elif ami != GENERIC_LINUX_US_EAST1_AMI:
             fractal_log(
                 "mock_update_cluster",
                 None,
-                f"Expected ami ami-0ff8a91507f77f867, got {ami}",
+                f"Expected ami {GENERIC_LINUX_US_EAST1_AMI}, got {ami}",
                 logging.ERROR,
             )
             success = False
@@ -439,7 +441,7 @@ def test_update_region(client, admin, monkeypatch):
         "/aws_container/update_region",
         json=dict(
             region_name="us-east-1",
-            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+            ami=GENERIC_LINUX_US_EAST1_AMI,
         ),
     )
     assert resp.status_code == BAD_REQUEST
@@ -454,7 +456,7 @@ def test_update_region(client, admin, monkeypatch):
         "/aws_container/update_region",
         json=dict(
             region_name="us-east-1",
-            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+            ami=GENERIC_LINUX_US_EAST1_AMI,
         ),
     )
 
@@ -479,7 +481,7 @@ def test_update_region(client, admin, monkeypatch):
     region_to_ami_post = {region.region_name: region.ami_id for region in all_regions_post}
     for region in region_to_ami_post:
         if region == "us-east-1":
-            assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+            assert region_to_ami_post[region] == GENERIC_LINUX_US_EAST1_AMI
             # restore db to old (correct) AMI in case any future tests need it
             region_to_ami = RegionToAmi.query.filter_by(
                 region_name="us-east-1",
