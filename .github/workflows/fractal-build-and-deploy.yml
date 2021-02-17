@@ -73,7 +73,7 @@ jobs:
 
                   # Verify that a valid branch name was set
                   if [[ ! "$BRANCH_NAME" =~ (dev|staging|master) ]]; then
-                      echo "branch name $BRANCH_NAME is an invalid branch name, only dev/staging/master is allowed"
+                      echo "branch name \"$BRANCH_NAME\" is an invalid branch name, only dev/staging/master is allowed"
                       exit 1
                   fi
 
@@ -166,8 +166,9 @@ jobs:
                       DEPS=$(echo "$DEPS" | tr ' ' '|')
                       echo "Checking $i against $DEPS"
                       # Check if any diff'ed file starts with any of the dependency paths
-                      # Final -- to distinguish commit from list of paths to diff
-                      MATCH=$(git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" -m 1)
+                      # || true to prevent set -e failure exit on this line, to silence grep's return code
+                      # We instead, just want to store grep's result in a variable
+                      MATCH=$(git diff --name-only "$COMPARISON_COMMIT" -- | grep -E "^($DEPS)" -m 1 || true)
                       if [[ -n "$MATCH" ]]; then
                         echo "Dependency \"$MATCH\" of job \"$i\" was changed since $COMPARISON_COMMIT"
                         JOB_LIST="$JOB_LIST $i"
