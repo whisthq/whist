@@ -777,7 +777,7 @@ class ECSClient:
         """
         response = self.ecs_client.describe_tasks(tasks=[self.tasks[offset]], cluster=self.cluster)
 
-        if len(response["tasks"]) > 0 and response["tasks"][0]["desiredStatus"] is "STOPPED":
+        if len(response["tasks"]) > 0 and response["tasks"][0]["desiredStatus"] == "STOPPED":
             # The container was requested to be stopped. Therefore, it is no longer valid for us.
             return False
 
