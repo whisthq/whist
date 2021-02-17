@@ -1,5 +1,3 @@
-@echo off
-
 REM This script downloads pre-built Fractal protocol libraries from AWS S3, on Windows
 ECHO "Downloading Protocol Libraries"
 
