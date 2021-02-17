@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Exit on errors and missing environment variables
-set -Eeuo pipefail
-
 # Close all instances of Google Chrome (to simplify login redirection from the browser to Notion)
 if pgrep chrome; then
     pkill chrome

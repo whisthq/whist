@@ -5,7 +5,6 @@
 # manually sending a DPI request to a locally-run container (two tasks handled by the Fractal
 # webserver, in production), which facilitates local development.
 
-# Exit on errors and missing environment variables
 set -Eeuo pipefail
 
 # Retrieve relative subfolder path

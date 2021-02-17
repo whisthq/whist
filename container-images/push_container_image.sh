@@ -6,7 +6,6 @@
 #   $1 - app name (e.g. browsers/chrome)
 #   $2 - deploy environment (i.e. prod OR staging OR dev)
 
-# Exit on errors and missing environment variables
 set -Eeuo pipefail
 
 # Parameters of the local container image to push to GHCR
