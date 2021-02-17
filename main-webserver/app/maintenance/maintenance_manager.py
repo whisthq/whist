@@ -98,7 +98,7 @@ def try_start_update(region_name: str, send_slack=True) -> Tuple[bool, str]:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = _get_lock(10, should_sleep=False) # only try 10 times since this runs synchronously
+    got_lock = _get_lock(10, should_sleep=False)  # only try 10 times since this runs synchronously
     if not got_lock:
         return False, "Did not get lock"
 
@@ -211,7 +211,7 @@ def try_end_update(region_name: str, send_slack=True) -> bool:
     from app import redis_conn
 
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
-    got_lock = _get_lock(10, should_sleep=False) # only try 10 times since this runs synchronously
+    got_lock = _get_lock(10, should_sleep=False)  # only try 10 times since this runs synchronously
     if not got_lock:
         return False, "Did not get lock"
 
