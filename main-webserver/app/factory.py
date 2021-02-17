@@ -76,7 +76,7 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
         init_celery(kwargs.get("celery"), app)
 
     from .models import db
-    from .models.limiter import limiter
+    from .helpers.utils.general.limiter import limiter
 
     limiter.init_app(app)
     db.init_app(app)

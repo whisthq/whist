@@ -12,7 +12,7 @@ from app.helpers.blueprint_helpers.mail.mail_post import (
     verification_helper,
     waitlist_referral_helper,
 )
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 mail_bp = Blueprint("mail_bp", __name__)
 

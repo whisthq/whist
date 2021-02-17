@@ -5,13 +5,11 @@ from flask.json import jsonify
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
-from app.models.limiter import limiter, LIMIT
 
 host_service_bp = Blueprint("host_service_bp", __name__)
 
 
 @host_service_bp.route("/host_service/auth", methods=("POST",))
-@limiter.limit(LIMIT)
 @fractal_pre_process
 def host_service_auth(**kwargs):
     # pylint: disable=unused-variable
@@ -36,7 +34,6 @@ def host_service_auth(**kwargs):
 
 
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
-@limiter.limit(LIMIT)
 @fractal_pre_process
 def host_service_heartbeat(**kwargs):
     # pylint: disable=unused-variable

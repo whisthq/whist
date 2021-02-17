@@ -2,7 +2,7 @@ from flask import Blueprint, jsonify
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 
 newsletter_bp = Blueprint("newsletter_bp", __name__)

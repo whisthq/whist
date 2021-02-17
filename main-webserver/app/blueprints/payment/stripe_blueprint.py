@@ -17,7 +17,7 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     retrieveHelper,
 )
 from app.helpers.utils.general.auth import fractal_auth
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 
 stripe_bp = Blueprint("stripe_bp", __name__)

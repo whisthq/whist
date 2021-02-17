@@ -6,7 +6,7 @@ from app.helpers.blueprint_helpers.auth.google_auth_post import (
     login_helper,
     reason_helper,
 )
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
 

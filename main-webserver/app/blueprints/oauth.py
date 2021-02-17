@@ -16,7 +16,7 @@ from google_auth_oauthlib.flow import Flow
 from app.models import Credential, db, User
 from app.serializers.oauth import CredentialSchema
 from app.models.oauth import _app_name_to_provider_id, _provider_id_to_app_name
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 
 oauth_bp = Blueprint("oauth", __name__, cli_group="credentials")

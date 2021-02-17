@@ -23,7 +23,7 @@ from app.constants.container_state_values import CANCELLED
 
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)

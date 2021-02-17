@@ -18,7 +18,7 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     verify_password_helper,
 )
 from app.helpers.utils.general.auth import fractal_auth
-from app.models.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, LIMIT
 
 account_bp = Blueprint("account_bp", __name__)
 
