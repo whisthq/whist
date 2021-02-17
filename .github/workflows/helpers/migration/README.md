@@ -10,7 +10,7 @@ The Fractal migration strategy revolves around treating our database schema as c
 
 This means that standard `git` discipline applies to how we manage our database schema. Making a change to the database schema involves these steps:
 
-1. Create a branch of `origin/dev` to work on your feature.
+1. Create a branch off `origin/dev` to work on your feature.
 2. Run and test your branch with a local copy of the `dev` database. Change the schema of your local database until fits your needs.
 3. Run `pg_dump` on your local database, using the output to overwrite`db.sql` in your branch. This new version of `db.sql` is the "source of truth" for your branch.
 4. Commit `db.sql` and open a PR. A GitHub Action (this one) will "diff" your `db.sql` with `origin/dev/db.sql`, placing the "diff" in the PR conversation for convenience. This "diff" represents the changes that are necessary to migrate the `dev` database to conform to your schema changes.
