@@ -215,12 +215,18 @@ def delete_cluster(self, cluster, region_name):
     except ecs_client.ecs_client.exceptions.ClusterNotFoundException:
         # The cluster does not exist! We must simply purge from database if it exists
         bad_entry = ClusterInfo.query.get(cluster)
-        if bad_entry:
+        if bad_entry is not None:
+            fractal_log(
+                function="delete_cluster",
+                label=cluster,
+                logs=f"Cluster did not exist in ${region_name} ECS! "
+                "Removing erroneous entry from our database.",
+            )
             fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
             self.update_state(
                 state="SUCCESS",
                 meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS!"
+                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS! "
                     "Removed an erroneous entry from our database."
                 },
             )
@@ -228,7 +234,7 @@ def delete_cluster(self, cluster, region_name):
             self.update_state(
                 state="SUCCESS",
                 meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS"
+                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS "
                     "or in our database."
                 },
             )

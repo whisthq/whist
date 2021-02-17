@@ -770,10 +770,16 @@ class ECSClient:
         return network_binding_map
 
     def check_task_exists(self, offset=0):
-        """
-        Checks whether a task is active and actually belongs to the ecs_client cluster
-        :param offset: The offset of the task to check (default: 0)
-        :return: True if the task exists and is not stopping, else False
+        """Checks whether a task is active and actually belongs to the ecs_client cluster.
+
+        If a task has been requested to be stopped, or if ECS failed to find the task, then
+        this will tell us so. Else, we have successfully found the task.
+
+        Args:
+            offset: The offset of the task to check in `self.tasks` (default: `0`)
+
+        Returns:
+            `True` if the task exists and is not stopping, else `False`
         """
         response = self.ecs_client.describe_tasks(tasks=[self.tasks[offset]], cluster=self.cluster)
 

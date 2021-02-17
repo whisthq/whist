@@ -1,11 +1,12 @@
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.logs import fractal_log
-from app.models import db
+from app.models import db, UserContainer
 
 
-def ensure_container_exists(container):
-    """
+def ensure_container_exists(container: UserContainer) -> UserContainer:
+    """Determines whether a container in the database actually exists.
+
     Function determining whether a container in the database actually
     exists as a task in ECS. If the container does not exist, delete
     it from the database.
@@ -17,8 +18,14 @@ def ensure_container_exists(container):
     This function should only be called after acquiring a lock on the
     container in question!
 
-    :param container: the UserContainer entry whose task to find
-    :return: `container` if the task exists, else `None`
+    Args:
+        container: The `UserContainer` entry whose task to find
+
+    Returns:
+        `container` if the task exists, else `None`
+
+    Raises:
+        Exception: The input parameter `container` is `None`.
     """
 
     if container is None:
