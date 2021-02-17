@@ -44,25 +44,17 @@ SCHEMA_PATH_DIFFING = Path(tempfile.gettempdir()).joinpath("diffdb.sql")
 # using the postgres Docker container. They are here as config vars
 # so we can be explicit about what we are passing to functions, and so
 # errors are more easily traced.
-
 POSTGRES_DEFAULT_HOST = "localhost"
-
 POSTGRES_DEFAULT_IMAGE = "postgres"
-
 POSTGRES_DEFAULT_USERNAME = "postgres"
-
 POSTGRES_DEFAULT_DBNAME = "postgres"
-
 POSTGRES_DEFAULT_PASSWORD = "yKCmXHwMIKVF8rLgry9e"
-
 POSTGRES_DEFAULT_PORT = 5432
-
 
 # These values are dictionaries that represent the configuration for the
 # databases that need to be initialized to perform the schema diff.
 # The database connection functions used for the migration are set up
 # to directly accept these dictionaries to create a connection
-
 DB_CONFIG_DEFAULT = {
     "host": POSTGRES_DEFAULT_HOST,
     "port": POSTGRES_DEFAULT_PORT,
@@ -70,11 +62,8 @@ DB_CONFIG_DEFAULT = {
     "password": POSTGRES_DEFAULT_PASSWORD,
     "dbname": POSTGRES_DEFAULT_USERNAME,
 }
-
 DB_CONFIG_MERGING = {**DB_CONFIG_DEFAULT, "port": 9900}
-
 DB_CONFIG_CURRENT = {**DB_CONFIG_DEFAULT, "port": 9995}
-
 
 # These values contain collections of statments that should be ignored in the
 # generated diff for the migration progress. They are statements that are not
@@ -88,9 +77,7 @@ DB_CONFIG_CURRENT = {**DB_CONFIG_DEFAULT, "port": 9995}
 #
 # As long as we have randomness involved in our schema design, we'll need to
 # manually "ignore" the statements that use it.
-
 IGNORE_SQL_STATEMENTS_HEAD = {'alter extension "pg_stat_statements" update to'}
-
 IGNORE_SQL_STATEMENTS_COMPLETE = {
     'alter table "hdb_catalog"."event_invocation_logs" alter column "id" set default public.gen_random_uuid();',
     'alter table "hdb_catalog"."event_log" alter column "id" set default public.gen_random_uuid();',
