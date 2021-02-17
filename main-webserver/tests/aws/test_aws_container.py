@@ -219,7 +219,14 @@ def test_update_bad_cluster(client, cluster):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_delete_bad_cluster(cluster):
-    # Regression test for PR 714, tests that a dead cluster doesn't brick
+    """Test that `delete_cluster` handles invalid clusters.
+
+    This tests how `delete_cluster` behaves when passed a dummy cluster,
+    simulating the behavior that occurs when we manually delete an AWS cluster
+    without removing its entry from the database, and `delete_cluster` later
+    gets called on it. We test this by directly using the `delete_cluster`
+    with the fixture for a dummy cluster.
+    """
     res = delete_cluster.delay(cluster=cluster.cluster, region_name="us-east-1")
 
     # wait for operation to finish
@@ -234,19 +241,18 @@ def test_delete_bad_cluster(cluster):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_ensure_container_exists(container):
+    """Test that `ensure_container_exists` handles bad inputs correctly.
+
+    This first tests that passing in an argument of `None` raises the
+    expected exception. Next, it tests calling this on a dummy container
+    that claims it is in the default us-east-1 cluster, and ensures that
+    the dummy container is correctly deleted from the database.
+    """
+
     # Make sure it handles None input appropriately.
     # The function should throw an exception here.
-    try:
+    with pytest.raises(Exception, match=r"..."):
         ensure_container_exists(None)
-        fractal_log(
-            function="test_ensure_container_exists",
-            label=None,
-            logs="Null container input did not throw Exception.",
-            level=logging.ERROR,
-        )
-        assert False
-    except:
-        assert True
 
     # We could test here that this works on a real container that
     # does in fact belong to a cluster. However, we do already
