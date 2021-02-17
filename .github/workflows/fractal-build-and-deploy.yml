@@ -58,7 +58,8 @@ jobs:
               id: detect-branch
               run: |
                   # Grab branch_name from workflow_dispatch inputs
-                  BRANCH_NAME=${{ github.event.inputs.branch-name }}
+                  BRANCH_NAME="${{ github.event.inputs.branch-name }}"
+
                   # If no workflow_dispatch input was received, then we use the git branch name
                   if [[ -z "$BRANCH_NAME" ]]; then
                       if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
@@ -67,10 +68,15 @@ jobs:
                           BRANCH_NAME=staging
                       elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
                           BRANCH_NAME=dev
-                      else
-                          exit 1
                       fi
                   fi
+
+                  # Verify that a valid branch name was set
+                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|master) ]]; then
+                      echo "branch name $BRANCH_NAME is an invalid branch name, only dev/staging/master is allowed"
+                      exit 1
+                  fi
+
                   echo "branch is set to: $BRANCH_NAME"
                   echo "::set-output name=branch::$BRANCH_NAME"
 
@@ -117,14 +123,14 @@ jobs:
                   # Grab branch_name from detect-branch
                   BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
 
-                  if [[ ${{ github.event_name }} == 'push' ]]; then
+                  if [[ "${{ github.event_name }}" == 'push' ]]; then
                     # If this workflow was triggered by push, then we want to run all jobs
                     JOB_NAME=all
                     # Store the commit from before the push was made
                     COMPARISON_COMMIT="${{ github.event.before }}"
                   else
                     # If running from workflow_dispatch, We use the job-name given as the dispatch input
-                    JOB_NAME=${{ github.event.inputs.job-name }}
+                    JOB_NAME="${{ github.event.inputs.job-name }}"
                     # If running from workflow_dispatch, we compare to the branch that we're simulating a build-and-deploy against
                     COMPARISON_COMMIT="origin/$BRANCH_NAME"
                   fi
