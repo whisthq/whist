@@ -82,8 +82,16 @@ jobs:
             - name: Check that db.sql exists
               run: |
                   FILE=${SCHEMA_PATH_MERGING}
-                  if test -f "$FILE"; then
-                  echo "$FILE exists."
+                  SUCCESS="$FILE exists."
+                  ERROR="$FILE does not exist, "
+                  ERROR+="it cannot be deleted as it is necessary for database migration."
+
+                  if test -f "$FILE"
+                  then
+                      echo $SUCCESS
+                  else
+                      echo $ERROR
+                      exit 1
                   fi
 
             - name: Run migra on endpoints and print
