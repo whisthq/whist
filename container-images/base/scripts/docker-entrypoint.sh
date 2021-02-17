@@ -37,5 +37,11 @@ unset FRACTAL_AES_KEY
 # variable (that method has been superseded by a request to the host service)
 unset FRACTAL_DPI
 
+# Remove a vestigal file that we do not use.
+# This is how LXC used to read environment variables: see that deprecated code in
+# https://github.com/moby/moby/blob/v1.9.1/daemon/execdriver/lxc/init.go#L107-L134
+# We remove the file to make it less obvious that we are running in a container.
+rm /.dockerenv
+
 # Start systemd
 exec /lib/systemd/systemd
