@@ -15,15 +15,8 @@ job_dependencies = {
     "container-images-publish-images-ghcr": [
         "container-images",
     ],
-    "ami-publish-ec2": [
-        "ecs-host-setup",
+    "ecs-task-definitions-deploy-task-definitions-ecs": [
         "ecs-host-service",
-    ],
-    "main-webserver-deploy-heroku": [
-        "main-webserver",
-    ],
-    "client-applications-publish-build-s3": [
-        "client-applications",
     ],
 }
 
