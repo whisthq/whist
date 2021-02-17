@@ -58,13 +58,4 @@ mkdir -p lib/64/SDL2/Linux
 aws s3 cp --only-show-errors s3://fractal-protocol-shared-libs/fractal-linux-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Linux
 
 ###############################
-# Download OpenSSL libraries
-###############################
-
-# Emscripten
-mkdir -p lib/64/openssl
-mkdir -p lib/64/openssl/Emscripten
-aws s3 cp --only-show-errors s3://fractal-protocol-shared-libs/fractal-emscripten-libcrypto.tar.gz - | tar xz -C lib/64/openssl/Emscripten
-
-###############################
 echo "Download Completed"
