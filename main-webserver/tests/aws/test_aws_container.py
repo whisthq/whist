@@ -97,7 +97,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 def test_assign_container(client, admin, monkeypatch):
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
 
-    #TODO: make this a standardized var in tests
+    # TODO: make this a standardized var in tests
     deploy_env = "dev"
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
         deploy_env = "prod"
