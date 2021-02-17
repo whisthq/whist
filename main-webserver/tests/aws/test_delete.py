@@ -50,27 +50,3 @@ def test_unauthorized(container, monkeypatch):
 
     with pytest.raises(Exception):
         delete_container(c.container_id, "garbage!")
-
-
-@pytest.mark.skip
-@pytest.mark.usefixtures("celery_session_app")
-@pytest.mark.usefixtures("celery_session_worker")
-def test_delete(container, monkeypatch):
-    """Delete an actual container.
-
-    Based on the visual output of this test, I think the functionality is
-    working. However, I didn't have time to figure out how to mock all of the
-    methods that I needed to mock in order to make it pass.
-    """
-
-    c = container()
-
-    monkeypatch.setattr(ECSClient, "__init__", function())
-    monkeypatch.setattr(ECSClient, "add_task", function())
-    monkeypatch.setattr(ECSClient, "check_if_done", function())
-    monkeypatch.setattr(ECSClient, "stop_task", function())
-    monkeypatch.setattr(ECSClient, "spin_til_done", function())
-
-    delete_container.delay(c.container_id, c.secret_key)
-
-    # TODO: Verify that the container has been deleted.
