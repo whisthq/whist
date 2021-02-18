@@ -74,6 +74,9 @@ lint:
 vet:
 	go vet ./...
 
+check: build vet format lint
+	echo "All checks (build, vet, format, and lint) succeeded!"
+
 clean:
 	$(GOCLEAN)
 	rm -rf $(BUILD_FOLDER)
@@ -96,4 +99,4 @@ runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
 	sudo env PATH=$(PATH) USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
 
-.PHONY: build clean run rundev runstaging runprod format lint vet
+.PHONY: build clean run rundev runstaging runprod format lint vet check
