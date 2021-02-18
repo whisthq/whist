@@ -6,13 +6,13 @@ from app.helpers.blueprint_helpers.auth.google_auth_post import (
     login_helper,
     reason_helper,
 )
-from app.helpers.utils.general.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, RATE_LMIT_PER_MINUTE
 
 google_auth_bp = Blueprint("google_auth_bp", __name__)
 
 
 @google_auth_bp.route("/google/<action>", methods=["POST"])
-@limiter.limit(LIMIT)
+@limiter.limit(RATE_LMIT_PER_MINUTE)
 @fractal_pre_process
 def google_auth_post(action, **kwargs):
     if action == "login":

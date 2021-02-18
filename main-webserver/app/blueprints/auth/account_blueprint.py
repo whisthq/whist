@@ -18,13 +18,13 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     verify_password_helper,
 )
 from app.helpers.utils.general.auth import fractal_auth
-from app.helpers.utils.general.limiter import limiter, LIMIT
+from app.helpers.utils.general.limiter import limiter, RATE_LMIT_PER_MINUTE
 
 account_bp = Blueprint("account_bp", __name__)
 
 
 @account_bp.route("/account/delete", methods=["POST"])
-@limiter.limit(LIMIT)
+@limiter.limit(RATE_LMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required
 @fractal_auth
@@ -38,7 +38,7 @@ def account_post_delete(**kwargs):
 
 
 @account_bp.route("/account/update", methods=["POST"])
-@limiter.limit(LIMIT)
+@limiter.limit(RATE_LMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required
 @fractal_auth
@@ -48,7 +48,7 @@ def account_post_update(**kwargs):
 
 
 @account_bp.route("/account/<action>", methods=["POST"])
-@limiter.limit(LIMIT)
+@limiter.limit(RATE_LMIT_PER_MINUTE)
 @fractal_pre_process
 def account_post(action, **kwargs):
     body = kwargs["body"]
@@ -109,7 +109,7 @@ def account_post(action, **kwargs):
 
 
 @account_bp.route("/account/<action>", methods=["GET"])
-@limiter.limit(LIMIT)
+@limiter.limit(RATE_LMIT_PER_MINUTE)
 @fractal_pre_process
 def account_get_no_auth(action, **kwargs):  # pylint: disable=unused-argument
     if action == "verified":
