@@ -30,7 +30,7 @@ _ConfigMatrix = namedtuple("_ConfigMatrix", ("deployment", "local"))
 _ConfigVector = namedtuple("_ConfigVector", ("serve", "test"))
 
 
-def _callback_webserver_hostname(localhost_ok=False):
+def _callback_webserver_hostname():
     """Return the hostname of the web server with which the protocol server should communicate.
 
     The callback web server will receive pings from the protocol server and will receive the
@@ -47,8 +47,7 @@ def _callback_webserver_hostname(localhost_ok=False):
     Returns:
         A web server hostname.
     """
-    if localhost_ok:
-        return request.host
+
     return (
         request.host
         if not any((host in request.host for host in ("localhost", "127.0.0.1")))
@@ -176,7 +175,6 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
-    SLACK_WEBHOOK = property(getter("SLACK_WEBHOOK"))
 
     @property
     def config_table(self):
@@ -255,7 +253,6 @@ class LocalConfig(DeploymentConfig):
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
-    SLACK_WEBHOOK = property(getter("SLACK_WEBHOOK", default="", fetch=False))
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
