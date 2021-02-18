@@ -60,6 +60,16 @@ SDL_Window* init_sdl(int output_width, int output_height, char* name, char* icon
 int resizing_event_watcher(void* data, SDL_Event* event);
 
 /**
+ * @brief                          Creates a socket between the client app and the desktop protocol
+ *                                 to capture and send forced window minimize and restore events
+ *
+ * @param opaque                   void* pointer to take any arguments for thread
+ *
+ * @returns                        0 on success, -1 on failure
+ */
+int share_client_window_events(void* opaque);
+
+/**
  * @brief                          Destroys an SDL window and associated
  *                                 parameters
  *

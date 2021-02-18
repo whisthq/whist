@@ -12,6 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
+import { createConnection, createServer, Server, Socket } from "net"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
@@ -58,6 +59,24 @@ if (
 // add this handler before emitting any events
 process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
+})
+
+// Create IPC socket to communicate with protocol
+let socketPath = "/tmp/fractal-client.sock";
+
+let protocolSocket: Server = createServer((c) => {
+    console.log('client connected')
+    c.on('end', () => {
+        console.log('client disconnected')
+    })
+    c.write('hello from client app')
+    c.pipe(c)
+})
+protocolSocket.on('error', (err) => {
+    console.log(`error ${err}`)
+})
+protocolSocket.listen(socketPath, () => {
+    console.log('server bound')
 })
 
 // Function to create the browser window
@@ -107,8 +126,6 @@ const createWindow = async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
 
-    let tray = null;
-
     // on client app FOCUS => protocol FOCUS
     // on client app MAXIMIZE => protocol MAXIMIZE
     // on client app MINIMIZE => protocol MINIMIZE
@@ -122,12 +139,14 @@ const createWindow = async () => {
         }
     })
 
-    mainWindow.on('minimize', (event) => {
+    mainWindow.on('minimize', () => {
         if (!showMainWindow) {
             mainWindow.restore()
             protocolMinimized = !protocolMinimized
         }
     })
+
+    // LOOK HERE: https://stackoverflow.com/questions/39841942/communicating-between-nodejs-and-c-using-node-ipc-and-unix-sockets
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -230,18 +249,6 @@ const createWindow = async () => {
         mainWindow = null
     })
 
-    mainWindow.on("maximize", () => {})
-
-    mainWindow.on("minimize", (event) => {
-        console.log("MINIMIZED")
-        event.preventDefault()
-        mainWindow.hide()
-    })
-
-    mainWindow.on("hide", (event) => {
-        console.log("HIDE")
-    })
-
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
     } else {
@@ -285,6 +292,10 @@ app.on("window-all-closed", () => {
     // Respect the OSX convention of having the application in memory even
     // after all windows have been closed
     app.quit()
+})
+
+app.on("quit", () => {
+    protocolSocket.close()
 })
 
 app.setAsDefaultProtocolClient("fractal")
