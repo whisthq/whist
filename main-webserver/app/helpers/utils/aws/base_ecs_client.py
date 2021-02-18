@@ -4,6 +4,7 @@ import string
 import time
 import uuid
 from collections import defaultdict
+from pprint import saferepr
 from typing import List, Dict
 
 import boto3
@@ -24,6 +25,10 @@ class FractalECSClusterNotFoundException(Exception):
         return "FractalECSClusterNotFoundException: Cluster {0} was not found!".format(
             self.cluster_name
         )
+
+
+class ContainerBrokenException(Exception):
+    pass
 
 
 def check_str_param(val, name):
@@ -796,8 +801,13 @@ class ECSClient:
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
+            try:
+                container_instance = resp["containerInstanceArn"]
+            except KeyError:
+                # actually return the response as an exception so we see it in kibana
+                raise ContainerBrokenException(saferepr(resp))
             container_info = self.ecs_client.describe_container_instances(
-                cluster=self.cluster, containerInstances=[resp["containerInstanceArn"]]
+                cluster=self.cluster, containerInstances=[container_instance]
             )
             ec2_id = container_info["containerInstances"][0]["ec2InstanceId"]
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
@@ -809,68 +819,6 @@ class ECSClient:
                 self.task_ports[offset] = network_binding_map
                 return True
         return False
-
-    def pick_subnets(self):
-        subnet_info = self.ec2_client.describe_subnets()
-        for subnet in subnet_info["Subnets"]:
-            if subnet["MapPublicIpOnLaunch"]:
-                if self.vpc is None or self.vpc == subnet["VpcId"]:
-                    self.subnet = subnet["SubnetId"]
-                    self.vpc = subnet["VpcId"]
-                    break
-
-        return [self.subnet]
-
-    def pick_security_groups(self):
-        id_list = []
-        security_group_info = self.ec2_client.describe_security_groups()
-        for security_group in security_group_info["SecurityGroups"]:
-            if security_group["Description"] == "default VPC security group":
-                if self.vpc is None or self.vpc == security_group["VpcId"]:
-                    id_list.append(security_group["GroupId"])
-        self.security_groups = id_list
-        return id_list
-
-    def build_network_config(self):
-        if self.vpc is None:
-            self.get_vpc()
-        if self.subnet is None or self.vpc is None:
-            self.pick_subnets()
-        if self.security_groups is None:
-            self.pick_security_groups()
-        network_configuration = {
-            "awsvpcConfiguration": {
-                "subnets": [self.subnet],
-                "securityGroups": self.security_groups,
-            }
-        }
-        return network_configuration
-
-    def get_vpc(self):
-        container_arns = self.ecs_client.list_container_instances(cluster=self.cluster)[
-            "containerInstanceArns"
-        ]
-        # First try to get VPC from containers running on the cluster
-        if container_arns:
-            container = self.ecs_client.describe_container_instances(
-                cluster=self.cluster,
-                containerInstances=container_arns,
-            )["containerInstances"][0]
-            attributes = container["attributes"]
-            for attribute in attributes:
-                if attribute["name"] == "ecs.vpc-id":
-                    self.vpc = attribute["value"]
-                    return self.vpc
-        else:
-            auto_scaling_groups = self.describe_auto_scaling_groups_in_cluster(self.cluster)
-            if not auto_scaling_groups:
-                raise Exception("Cluster has no instances and no autoscaling group!")
-            if "VPCZoneIdentifier" not in auto_scaling_groups[0]:
-                raise Exception("Cluster autoscaling group has no VPC Zone Identifier!")
-            subnet_ids = auto_scaling_groups[0]["VPCZoneIdentifier"].split(", ")
-            self.subnet = subnet_ids[0]
-            self.vpc = self.ec2_client.describe_subnets(SubnetIds=subnet_ids)["Subnets"][0]["VpcId"]
-            return self.vpc
 
     def check_if_done(self, offset=0):
         """
