@@ -20,7 +20,7 @@ function printhelp {
     echo "  --env ENV                 environment to publish the client app with"
     echo "                            defaults to development, options are dev/staging/prod"
     echo ""
-    echo "  --publish PUBLISH         set whether to publish to S3 and auto-update live apps"
+    echo "  --publish PUBLISH         set whether to notarize the macOS application and publish to AWS S3 and auto-update live apps"
     echo "                            defaults to false, options are true/false"
 }
 
