@@ -4,6 +4,7 @@ import json, sys
 
 bucket = sys.argv[1]
 version = sys.argv[2]
+notarize = sys.argv[3]
 
 # Set package.json bucket
 
@@ -13,6 +14,8 @@ f.close()
 
 data = json.loads(raw_data)
 data["build"]["publish"]["bucket"] = bucket
+if notarize == "true":
+  del data["build"]["afterSign"]
 json_data = json.dumps(data)
 
 f = open("package.json","w")
