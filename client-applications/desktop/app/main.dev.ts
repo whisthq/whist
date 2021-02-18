@@ -69,8 +69,11 @@ let protocolSocket: Server = createServer((c) => {
     c.on('end', () => {
         console.log('client disconnected')
     })
-    c.write('hello from client app')
+    c.write('server:hello from client app')
     c.pipe(c)
+    c.on('data', (data) => {
+        console.log(data.toString())
+    })
 })
 protocolSocket.on('error', (err) => {
     console.log(`error ${err}`)

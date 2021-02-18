@@ -119,10 +119,10 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
             LOG_INFO("MINIMIZE EVENT CAUGHT");
-            message = "MINIMIZE\n";
+            message = "client:MINIMIZE";
         } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-            LOG_INFO("MAXIMIZE EVENT CAUGHT");
-            message = "RESTORE\n";
+            LOG_INFO("RESTORE EVENT CAUGHT");
+            message = "client:RESTORE";
         }
         if (message) {
             if (write(args->socket_fd, message, strlen(message)) < 0) {
@@ -389,7 +389,7 @@ int share_client_window_events(void* opaque) {
     watcher_args->socket_fd = socket_fd;
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
 
-    while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
+    while ((read_chars = read(socket_fd, buf, sizeof(buf), 0)) > 0) {
         // TODO: send SDL event
         LOG_INFO("socket read: %s", buf);
         memset(buf, 0, sizeof(buf));
