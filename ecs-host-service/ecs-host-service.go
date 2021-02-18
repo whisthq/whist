@@ -363,7 +363,7 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	// )
 	scriptpath := fractalTempDir + "config-create-" + configName + ".sh"
 	f, _ := os.Create(scriptpath)
-	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
+	_, _ = f.WriteString(logger.Sprintf("#!/bin/bash\n\n"))
 	_, _ = f.WriteString(strcmd)
 	os.Chmod(scriptpath, 0700)
 	f.Close()
