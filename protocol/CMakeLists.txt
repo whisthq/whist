@@ -113,7 +113,14 @@ option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         MESSAGE(STATUS "Downloading binaries from AWS S3")
-        execute_process(COMMAND CMD /C "bash download-binaries.sh"
+        # Find git
+        find_program(GIT git REQUIRED)
+        # Find git's path
+        get_filename_component(GIT_DIR ${GIT} DIRECTORY)
+        # Look for gitbash based on git's path
+        # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
+        find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
+        execute_process(COMMAND ${BASH} "download-binaries.sh"
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_res)
         if (NOT ${download_res} EQUAL "0")
