@@ -19,6 +19,7 @@ state=PENDING
 echo "ID: $2"
 while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     status=$(curl -L -X GET -H "Authorization: Bearer ${3}" "${1}status/${2}")
+    sleep 0.1
     state=$(echo $status | jq -e ".state")
     echo "Status: $status"
 done
