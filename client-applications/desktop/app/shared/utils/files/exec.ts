@@ -103,7 +103,6 @@ export const launchProtocol = async (
         icon: iconPath,
     }
 
-    // TODO: Make the protocol start without an IP address
     const protocolArguments = [
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
