@@ -121,7 +121,7 @@ export const launchProtocol = async (
     })
 
     // On protocol exit logic, fired only when protocol stops running
-    protocol.on("close", () => {
+    protocol.on("exit", () => {
         protocolOnExit()
     })
 
@@ -132,7 +132,7 @@ export const writeStream = (
     process: ChildProcess | undefined,
     message: string
 ): boolean => {
-    if (process && process.stdin) {
+    if (process && process.stdin && process.stdin.writable) {
         process.stdin.write(message)
         process.stdin.write("\n")
         return true
@@ -144,7 +144,7 @@ export const endStream = (
     process: ChildProcess | undefined,
     message: string
 ): boolean => {
-    if (process && process.stdin) {
+    if (process && process.stdin && process.stdin.writable) {
         process.stdin.end(message)
         return true
     }
