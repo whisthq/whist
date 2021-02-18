@@ -235,7 +235,7 @@ jobs:
                         "${{ needs.fractal-publish-build-config.outputs.webserver_url }}admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash script_utils/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} start
+                  bash scripts/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} start
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to start maintenance" && exit 1
                   fi
@@ -953,7 +953,7 @@ jobs:
                         "${{ needs.fractal-publish-build-config.outputs.webserver_url }}admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash script_utils/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} end
+                  bash scripts/poll_maintenance.sh ${{ needs.fractal-publish-build-config.outputs.webserver_url }} ${token} end
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to end maintenance" && false
                   fi

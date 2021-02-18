@@ -15,7 +15,7 @@ if [ $TYPE != "start" ] && [ $TYPE != "end" ]; then
     exit 1
 fi
 
-for try in {0..1000}
+for try in {0..100}
 do
     echo "Try $try: $TYPE maintenance..."
     resp=$(curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST "$WEBSERVER_URL/aws_container/${TYPE}_update")
