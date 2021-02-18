@@ -39,35 +39,18 @@ jobs:
                   GH_USERNAME: ${{ secrets.GHA_USERNAME }}
                   GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
 
-            # Build go project
-            - name: Build Go project
+            # Check go project (build, vet, format, lint)
+            - name: Check Go project
               env:
                   WEBSERVER_AUTH_SECRET_DEV: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_DEV }}
                   WEBSERVER_AUTH_SECRET_STAGING: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_STAGING }}
                   WEBSERVER_AUTH_SECRET_PROD: ${{ secrets.HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET_PROD }}
               working-directory: ecs-host-service
-              run: make build
-
-            # Check code formatting
-            - name: Check if Code is Formatted with goimports
-              working-directory: ecs-host-service
               run: |
                   PATH=$PATH:~/go/bin
-                  # Apply goimports format changes to the current directory
-                  make format
-                  # Show diff in GitHub Actions logs
+                  # This will fail if unformatted
+                  make check
+                  # Show format-induced diff in GitHub Actions logs
                   git diff HEAD --
                   # This will return an error if there is a non-empty diff
                   git diff-index --quiet HEAD --
-
-            - name: Check Code with govet
-              working-directory: ecs-host-service
-              run: |
-                  PATH=$PATH:~/go/bin
-                  make vet
-
-            - name: Check Code with golint
-              working-directory: ecs-host-service
-              run: |
-                  PATH=$PATH:~/go/bin
-                  make lint
