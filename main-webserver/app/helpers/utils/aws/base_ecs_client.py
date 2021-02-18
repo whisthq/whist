@@ -4,6 +4,7 @@ import string
 import time
 import uuid
 from collections import defaultdict
+from pprint import saferepr
 from typing import List, Dict
 
 import boto3
@@ -24,6 +25,10 @@ class FractalECSClusterNotFoundException(Exception):
         return "FractalECSClusterNotFoundException: Cluster {0} was not found!".format(
             self.cluster_name
         )
+
+
+class ContainerBrokenException(Exception):
+    pass
 
 
 def check_str_param(val, name):
@@ -795,9 +800,14 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
+        try:
+            container_instance = resp["containerInstanceArn"]
+        except KeyError:
+            # actually return the response as an exception so we see it in kibana
+            raise ContainerBrokenException(saferepr(resp))
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
             container_info = self.ecs_client.describe_container_instances(
-                cluster=self.cluster, containerInstances=[resp["containerInstanceArn"]]
+                cluster=self.cluster, containerInstances=[container_instance]
             )
             ec2_id = container_info["containerInstances"][0]["ec2InstanceId"]
             ec2_info = self.ec2_client.describe_instances(InstanceIds=[ec2_id])
