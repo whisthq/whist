@@ -211,6 +211,10 @@ jobs:
                     PUBLISH=${{ github.event.inputs.publish }}
                   fi
 
+                  if [[ ! "$PUBLISH" =~ (true|false) ]]; then
+                    echo "\"$PUBLISH\" is an invalid value of input publish, only \"true\" or \"false\" are valid"
+                  fi
+
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
@@ -782,14 +786,14 @@ jobs:
 
             # (builds the branch that it is run on automatically, so master if running on push to master)
             - name: Publish the Windows Electron Application
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'Windows'
+              if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
-              run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -env=${{ needs.fractal-publish-build-config.outputs.deploy_environment }} -publish=true
+              run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -env=${{ needs.fractal-publish-build-config.outputs.deploy_environment }} -publish=${{ needs.fractal-publish-build-config.outputs.publish }}
 
             # (builds the branch that it is run on automatically, so master if running on push to master)
-            - name: Publish the macOS/Linux Ubuntu Electron Applications
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
+            - name: Publish the MacOS Electron Application
+              if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
               working-directory: client-applications/desktop
@@ -805,7 +809,7 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --env ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} --publish true
+                  ./publish.sh --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --env ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} --publish ${{ needs.fractal-publish-build-config.outputs.publish }}
 
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
