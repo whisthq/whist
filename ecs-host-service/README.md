@@ -44,6 +44,8 @@ If you decide to manually install `goimports` and `golint` by copying the instal
 
 If `goimports` and `golint` are installed, you can manually format and lint your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-format.go]`, respectively.
 
+The easiest way to check that your code is ready for review (i.e. is linted, vetted, and formatted) is just to run `make check`. This is what we use to check the code in CI as well.
+
 ## Publishing
 
 The Fractal host service gets automatically published to an AWS S3 bucket, `fractal-ecs-host-service`, through the `fractal-publish-build.yml` GitHub Actions workflow, under the `ecs-host-service-publish-build-s3` job. The `userdata-bootstrap.sh` script, which gets executed at runtime on the AWS EC2 hosts by the Fractal webserver(s), pulls the latest version of the Fractal host service from its AWS S3 bucket onto the deployed EC2 instance deployed. Once automated AMI-building is complete, we plan on integrating the Fractal ECS host service directly by updating the AMIs, without needing to upload the Fractal host service to AWS S3.
