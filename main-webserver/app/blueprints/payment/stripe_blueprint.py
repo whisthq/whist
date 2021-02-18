@@ -17,14 +17,14 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     retrieveHelper,
 )
 from app.helpers.utils.general.auth import fractal_auth
-from app.helpers.utils.general.limiter import limiter, RATE_LMIT_PER_MINUTE
+from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
 
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
-@limiter.limit(RATE_LMIT_PER_MINUTE)
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required
 @fractal_auth

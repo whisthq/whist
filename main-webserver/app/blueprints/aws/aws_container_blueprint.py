@@ -23,7 +23,7 @@ from app.constants.container_state_values import CANCELLED
 
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
-from app.helpers.utils.general.limiter import limiter, RATE_LMIT_PER_MINUTE
+from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
@@ -251,7 +251,7 @@ def aws_container_ping(**kwargs):
 
 
 @aws_container_bp.route("/container/assign", methods=("POST",))
-@limiter.limit(RATE_LMIT_PER_MINUTE)
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required
 @fractal_auth
