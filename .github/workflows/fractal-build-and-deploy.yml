@@ -671,8 +671,10 @@ jobs:
                   # Check if we actually got back valid json. If not, we should
                   # throw a human-readable error because the config DB might be
                   # down.
-                  if jq -e . > /dev/null 2>&1 <<< cat response.json ; then
-                    echo "Got some valid JSON from the config DB. Continuing..."
+                  if cat response.json | jq -e . > /dev/null 2>&1; then
+                    echo "Got some valid JSON from the config DB:"
+                    cat response.json
+                    echo "Continuing..."
                   else
                     echo "Failed to parse the JSON from the config DB. Is it up?" && false
                   fi
@@ -685,7 +687,11 @@ jobs:
                   STAGING_RC=$(cat response.json | jq '.data.desktop_app_version[0].staging_rc')
 
                   # remove temporary JSON file
-                  rm -rf response.json
+                  rm response.json
+
+                  echo "Current master version: $MAJOR.$MINOR.$MICRO"
+                  echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
+                  echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
 
                   # retrieve Git commit hash for the current branch (master, staging, or dev)
                   echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -726,6 +732,8 @@ jobs:
                   else
                     echo 'Error: Invalid branch' && false
                   fi
+
+                  echo "New $BRANCH_NAME version: ${NEW_VERSION}"
 
                   # store new desktop app version as GitHub env to substitute in client-apps package.json
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
