@@ -96,4 +96,4 @@ runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
 	sudo env PATH=$(PATH) USE_PROD_SENTRY=1 APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
 
-.PHONY: build clean run runprod
+.PHONY: build clean run rundev runstaging runprod format lint vet
