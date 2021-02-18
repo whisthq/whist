@@ -18,11 +18,15 @@ on:
     workflow_dispatch:
         inputs:
             # If a specific job-name is given, then we always run exactly that job
-            # If "all" is given, then we might filter jobs, it will be done as if a merge is made to "branch-name"
+            # If "all" is given, then we never filter jobs, all jobs are guaranteed to run
+            # If "filter" is given, then we might filter jobs based on what files have been changed, between
+            #    the commit this workflow is being run on, and the branch 'branch-name'. Only jobs whose dependency
+            #    files have been changed, will be triggered
+            # If "none" is given, then no jobs will run
             job-name:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
-                default: "" # Avoid accidental mistakes by making the default not run any jobs
+                default: "" # Avoid accidental mistakes by making the default an invalid job name
             # Name of the branch to simulate merging against
             branch-name:
                 description: "Branch to run the job as"
@@ -123,14 +127,21 @@ jobs:
                   BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
 
                   if [[ "${{ github.event_name }}" == 'push' ]]; then
-                    # If this workflow was triggered by push, then we want to run all jobs
-                    JOB_NAME=all
+                    if [[ "$BRANCH_NAME" =~ "(staging|master)" ]]; then
+                    # On push to staging/master, we want to run all jobs
+                      JOB_NAME="all"
+                    else
+                    # On push to dev, we want to filter jobs
+                      JOB_NAME="filter"
+                    fi
                     # Store the commit from before the push was made
+                    # This is only used when filtering
                     COMPARISON_COMMIT="${{ github.event.before }}"
                   else
                     # If running from workflow_dispatch, We use the job-name given as the dispatch input
                     JOB_NAME="${{ github.event.inputs.job-name }}"
                     # If running from workflow_dispatch, we compare to the branch that we're simulating a build-and-deploy against
+                    # This is only used when filtering
                     COMPARISON_COMMIT="origin/$BRANCH_NAME"
                   fi
 
@@ -144,15 +155,11 @@ jobs:
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
-                  # If the job name isn't "all", then we explicitly run exactly that job
-                  if [[ "$JOB_NAME" != "all" ]]; then
-                    JOB_LIST="$JOB_NAME"
-                  # If JOB_NAME=all, then we do indeed run all of them if the branch is staging or master
-                  elif [[ "$BRANCH_NAME" =~ "(staging|master)" ]]; then
+                  if [[ "$JOB_NAME" == "all" ]]; then
+                  # If JOB_NAME=all, then we do indeed run all of jobs in the list
                     JOB_LIST="${!job_dependencies[@]}"
-                  # If JOB_NAME=all, and we're not merging to staging/master,
-                  # then we should filter the job list based on the job's dependencies
-                  else
+                  # If JOB_NAME=filter, then we should filter the job list based on the job's dependencies
+                  elif [[ "$JOB_NAME" == "filter" ]]; then
                     JOB_LIST=""
                     for i in "${!job_dependencies[@]}"
                     do
@@ -176,6 +183,16 @@ jobs:
                       fi
                       echo # Newline for easier readability
                     done
+                  # If JOB_NAME=none, we run exactly no jobs
+                  elif [[ "$JOB_NAME" == "none" ]]; then
+                    JOB_LIST=""
+                  # If we have the name of a job name, we run exactly that job
+                  elif [[ -n "${!job_dependencies[$JOB_NAME]}" ]]; then
+                    JOB_LIST="$JOB_NAME"
+                  # Otherwise, an invalid job name was given
+                  else
+                    echo "\"$JOB_NAME\" not a valid job name"
+                    exit 1
                   fi
 
                   echo "Jobs that have been selected to run: $JOB_LIST"
