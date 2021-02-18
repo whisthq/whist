@@ -5,7 +5,7 @@
 
 # The '*' pattern is global owners.
 # Global rule:
-*                       @fractal/code-standard-reviewers @rpadaki @philippemnoel @djsavvy
+*                       @fractal/code-standard-reviewers @rpadaki @sardination @djsavvy @philippemnoel
 
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
