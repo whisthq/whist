@@ -67,13 +67,15 @@ format:
 	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
 	goimports -l -w $$(find $(CURDIR) -name "*.go" | xargs)
 
-lint:
+lint: build
 	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
 	golint -set_exit_status ./...
 
-vet:
+vet: build
 	go vet ./...
 
+# Note that we should build before we lint or vet, since build updates the fractal dependencies.
+.NOTPARALLEL:
 check: build vet format lint
 	echo "All checks (build, vet, format, and lint) succeeded!"
 
