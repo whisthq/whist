@@ -13,6 +13,7 @@ jobs:
             - name: "temp"
               run: |
                   echo "hey there"
+                  echo false
 
     kill-packer-instances:
         name: "Kill Packer Instances if Workflow Failed"
