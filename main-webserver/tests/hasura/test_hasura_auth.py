@@ -20,7 +20,6 @@ def test_no_headers(client):
 
 
 def test_login_header(client):
-
     response = client.get("/hasura/auth", headers={"X-Hasura-Login-Token": "login_token"})
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
@@ -31,7 +30,6 @@ def test_login_header(client):
 
 
 def test_auth_header(client, monkeypatch, make_authorized_user):
-
     response = client.get("/hasura/auth", headers={"Authorization": "Bearer auth_token"})
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
