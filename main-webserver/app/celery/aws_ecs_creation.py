@@ -371,11 +371,13 @@ def assign_container(
                     return user_container_schema.dump(existing_container)
 
         # otherwise, we see if there's an unassigned container
+        # specifically avoiding ones on test clusters
         try:
             base_container = ensure_container_exists(
                 UserContainer.query.filter_by(
                     is_assigned=False, task_definition=task_definition_arn, location=region_name
                 )
+                .filter(UserContainer.cluster.not_like("%test%"))
                 .with_for_update()
                 .limit(1)
                 .first()
