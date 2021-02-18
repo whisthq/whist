@@ -20,6 +20,7 @@
 .tabClose {
     color: #333333;
     font-size: 10px;
+    cursor: pointer;
 }
 
 .tabCloseWrapper {
@@ -27,7 +28,7 @@
     left: 235px;
     top: -30px;
     cursor: pointer;
-    pointer-events: none;
+    z-index: 9999;
 }
 
 .addTab {
