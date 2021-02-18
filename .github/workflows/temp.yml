@@ -11,6 +11,9 @@ jobs:
         if: always()
         runs-on: ubuntu-20.04
         steps:
+            - name: Configure Python
+              uses: actions/setup-python@v1
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -18,7 +21,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
             - name: Kill All Packer Instances
-              uses: actions/setup-python@v1
+              run: |
                   pip install aws-hashicorp-packer-reaper
                   aws-hashicorp-packer-reaper list
                   aws-hashicorp-packer-reaper terminate --older-than 1s
