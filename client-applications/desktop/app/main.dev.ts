@@ -102,7 +102,7 @@ const createWindow = async () => {
         // to the renderer thread
         if (os.platform() === "win32" && mainWindow) {
             // Keep only command line / deep linked arguments
-            if(process.argv) {
+            if (process.argv) {
                 const url = process.argv.slice(1)
                 mainWindow.webContents.send(
                     FractalIPC.CUSTOM_URL,
