@@ -1,7 +1,7 @@
 #[[
 ###################################### Fractal Protocol ######################################
 This is the root CmakeLists.txt for the protocol repository. We define various project level
-settings here as well as include the subdirectories of the repository. We also look for the 
+settings here as well as include the subdirectories of the repository. We also look for the
 protocol libraries needed here (FFmpeg, SDL, etc.).
 
 To support WSL running with Ubuntu 18.04, which only has Cmake v3.10 in its repositories, manually
@@ -9,7 +9,7 @@ set cmake_minimum_required(VERSION 3.10) and comment cmake_policy(SET CMP0091 NE
 version 3.15.
 
 If you want to compile on Windows with MSVC, set cmake_minimum_required(VERSION 3.15) and uncomment
-cmake_policy(SET CMP0091 NEW). 
+cmake_policy(SET CMP0091 NEW).
 
 Additional VERBOSE message output is a feature of Cmake v3.15 and later. If you use an earlier version,
 the verbose messages will be printed regardless of whether verbose output is set to ON or OFF.
@@ -113,7 +113,7 @@ option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         MESSAGE(STATUS "Downloading binaries from AWS S3")
-        execute_process(COMMAND CMD /C "download-binaries.bat"
+        execute_process(COMMAND CMD /C "bash download-binaries.sh"
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_res)
         if (NOT ${download_res} EQUAL "0")

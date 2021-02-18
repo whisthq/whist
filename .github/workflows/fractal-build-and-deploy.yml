@@ -11,7 +11,6 @@ on:
             - master
             - staging
             - dev
-            - project/**
         paths-ignore:
             - "README.md"
             - "**/README.md"
@@ -513,17 +512,12 @@ jobs:
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
-    # Runs if publish-images-ghcr succeeds, or if publish-image-ghcr was filtered out
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs: [fractal-publish-build-config]
         if: >
-            always()
-            && needs.fractal-publish-build-config.result == 'success'
-            && (needs.fractal-images-ghcr.result == 'success' || needs.fractal-images-ghcr.result == 'skipped')
-            && contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
         steps:
             - name: Checkout Git Repository
