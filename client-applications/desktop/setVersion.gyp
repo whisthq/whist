@@ -18,7 +18,7 @@ data["build"]["publish"]["bucket"] = bucket
 # on macOS, we need to notarize the client application before
 # publishing, so that users can properly install it on their
 # machines -- this is not needed if we're not publishing
-if notarize == "true":
+if notarize == "false":
   del data["build"]["afterSign"]
 
 json_data = json.dumps(data)
