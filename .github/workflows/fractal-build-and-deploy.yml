@@ -239,25 +239,10 @@ jobs:
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to start maintenance" && exit 1
                   fi
-
-    # Notify slack of maintenance mode was started.
-    fractal-start-webserver-maintenance-mode-notify-slack:
-        name: "Start webserver maintenance mode: Notify Slack"
-        runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-            ]
-        if: >
-            success() &&
-            contains(fromJSON('["all", "fractal-start-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
-        steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Started webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at ${{ needs.fractal-publish-build-config.outputs.webserver_url }} has been put in maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
@@ -958,7 +943,7 @@ jobs:
                 client-applications-publish-build-s3,
             ]
         steps:
-            - name: Put webserver into maintenance mode
+            - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -972,23 +957,8 @@ jobs:
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to end maintenance" && false
                   fi
-
-    # Notify slack of maintenance mode was ended.
-    fractal-end-webserver-maintenance-mode-notify-slack:
-        name: "End webserver maintenance mode: Notify Slack"
-        runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                fractal-end-webserver-maintenance-mode,
-            ]
-        if: >
-            success() &&
-            contains(fromJSON('["all", "fractal-end-webserver-maintenance-mode"]'), needs.fractal-publish-build-config.outputs.job)
-        steps:
             - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Ended webserver maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at ${{ needs.fractal-publish-build-config.outputs.webserver_url }} has ended maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
