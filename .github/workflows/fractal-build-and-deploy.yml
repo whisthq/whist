@@ -674,6 +674,7 @@ jobs:
                   if cat response.json | jq -e . > /dev/null 2>&1; then
                     echo "Got some valid JSON from the config DB:"
                     cat response.json
+                    echo
                     echo "Continuing..."
                   else
                     echo "Failed to parse the JSON from the config DB. Is it up?" && false
