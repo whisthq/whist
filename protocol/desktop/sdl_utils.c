@@ -16,9 +16,10 @@ close the window.
 Includes
 ============================
 */
-
+#include <sys/un.h>
 #include "sdl_utils.h"
 #include "utils/png.h"
+#include "utils/string_utils.h"
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include "utils/color.h"
@@ -39,6 +40,19 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 volatile SDL_Renderer* renderer;
 #endif
+
+/*
+============================
+Custom Types
+============================
+*/
+
+// Hold information to pass onto the window control event watcher
+typedef struct WindowControlArguments {
+    SDL_Window* window;
+    int socket_fd;
+} WindowControlArguments;
+
 
 /*
 ============================
@@ -66,30 +80,6 @@ void send_captured_key(SDL_Keycode key, int type, int time) {
     SDL_PushEvent(&e);
 }
 
-int resizing_event_watcher(void* data, SDL_Event* event) {
-    /*
-        Event watcher to be used in SDL_AddEventWatch to capture
-        and handle window resize events
-
-        Arguments:
-            data (void*): SDL Window data
-            event (SDL_Event*): SDL event to be analyzed
-
-        Return:
-            (int): 0 on success
-    */
-
-    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
-        // If the resize event if for the current window
-        SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
-        if (win == (SDL_Window*)data) {
-            // Notify video.c about the active resizing
-            set_video_active_resizing(true);
-        }
-    }
-    return 0;
-}
-
 void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
     /*
         Set the icon for a SDL window from a PNG file
@@ -108,6 +98,128 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
     // surface can now be freed
     SDL_FreeSurface(icon_surface);
 }
+
+int window_control_event_watcher(void* data, SDL_Event* event) {
+    /*
+        Event watcher to be used in SDL_AddEventWatch to capture
+        and communicate window minimize and restore events to the
+        client app via socket.
+
+        Arguments:
+            data (void*): struct of SDL Window data and socket fd
+            event (SDL_Event*): SDL event to be analyzed
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    WindowControlArguments* args = (WindowControlArguments*) data;
+
+    const char* message = NULL;
+    if (event->type == SDL_WINDOWEVENT) {
+        if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
+            LOG_INFO("MINIMIZE EVENT CAUGHT");
+            message = "MINIMIZE\n";
+        } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
+            LOG_INFO("MAXIMIZE EVENT CAUGHT");
+            message = "RESTORE\n";
+        }
+        if (message) {
+            if (write(args->socket_fd, message, strlen(message)) < 0) {
+                LOG_ERROR("write window event to client app socket failed, %s", strerror(errno));
+                return -1;
+            }
+        }
+    } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
+        LOG_INFO("QUITTING AND CLOSING FD");
+        close(args->socket_fd);
+    }
+    return 0;
+
+}
+
+#if defined(_WIN32)
+HHOOK mule;
+LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
+    /*
+        Function to capture keyboard strokes and block them if they encode special
+        key combinations, with intent to redirect them to send_captured_key so that the
+        keys can still be streamed over to the host
+
+        Arguments:
+            n_code (INT): keyboard code
+            w_param (WPARAM): w_param to be passed to CallNextHookEx
+            l_param (LPARAM): l_param to be passed to CallNextHookEx
+
+        Return:
+            (LRESULT CALLBACK): CallNextHookEx return callback value
+    */
+
+    // By returning a non-zero value from the hook procedure, the
+    // message does not get passed to the target window
+    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
+    int flags = SDL_GetWindowFlags((SDL_Window*)window);
+    if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
+        switch (n_code) {
+            case HC_ACTION: {
+                // Check to see if the CTRL key is pressed
+                BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
+                BOOL b_alt_key_down = pkbhs->flags & LLKHF_ALTDOWN;
+
+                int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
+                int time = pkbhs->time;
+
+                // Disable LWIN
+                if (pkbhs->vkCode == VK_LWIN) {
+                    send_captured_key(SDLK_LGUI, type, time);
+                    return 1;
+                }
+
+                // Disable RWIN
+                if (pkbhs->vkCode == VK_RWIN) {
+                    send_captured_key(SDLK_RGUI, type, time);
+                    return 1;
+                }
+
+                // Disable CTRL+ESC
+                if (pkbhs->vkCode == VK_ESCAPE && b_control_key_down) {
+                    send_captured_key(SDLK_ESCAPE, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+ESC
+                if (pkbhs->vkCode == VK_ESCAPE && b_alt_key_down) {
+                    send_captured_key(SDLK_ESCAPE, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+TAB
+                if (pkbhs->vkCode == VK_TAB && b_alt_key_down) {
+                    send_captured_key(SDLK_TAB, type, time);
+                    return 1;
+                }
+
+                // Disable ALT+F4
+                if (pkbhs->vkCode == VK_F4 && b_alt_key_down) {
+                    send_captured_key(SDLK_F4, type, time);
+                    return 1;
+                }
+
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return CallNextHookEx(mule, n_code, w_param, l_param);
+}
+#endif
+
+/*
+============================
+Public Function Implementations
+============================
+*/
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename) {
@@ -217,6 +329,83 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     return sdl_window;
 }
 
+int resizing_event_watcher(void* data, SDL_Event* event) {
+    /*
+        Event watcher to be used in SDL_AddEventWatch to capture
+        and handle window resize events
+
+        Arguments:
+            data (void*): SDL Window data
+            event (SDL_Event*): SDL event to be analyzed
+
+        Return:
+            (int): 0 on success
+    */
+
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_RESIZED) {
+        // If the resize event is for the current window
+        SDL_Window* win = SDL_GetWindowFromID(event->window.windowID);
+        if (win == (SDL_Window*)data) {
+            // Notify video.c about the active resizing
+            set_video_active_resizing(true);
+        }
+    }
+    return 0;
+}
+
+int share_client_window_events(void* opaque) {
+    /*
+        Creates a socket between the client app and the desktop protocol
+        to capture and send forced window minimize and restore events
+
+        Return:
+            (int): 0 on success, -1 on failure
+    */
+
+    char* socket_path = "/tmp/fractal-client.sock"; // max 127 char length
+
+    struct sockaddr_un addr;
+    char buf[100];
+    int socket_fd;
+    ssize_t read_chars;
+
+    if ((socket_fd = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0) {
+        LOG_ERROR("socket error in share_client_window_events");
+        return -1;
+    }
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sun_family = AF_UNIX;
+    safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
+
+    if (connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        LOG_ERROR("connect error in share_client_window_events");
+        return -1;
+    }
+
+    WindowControlArguments* watcher_args = malloc(sizeof(WindowControlArguments));
+    memset(watcher_args, 0, sizeof(WindowControlArguments));
+    watcher_args->window = (SDL_Window*) window;
+    watcher_args->socket_fd = socket_fd;
+    SDL_AddEventWatch(window_control_event_watcher, watcher_args);
+
+    while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
+        // TODO: send SDL event
+        LOG_INFO("socket read: %s", buf);
+        memset(buf, 0, sizeof(buf));
+    }
+
+    if (read_chars < 0) {
+        LOG_ERROR("read error in share_client_window_events %s", strerror(errno));
+        return -1;
+    } else if (read_chars == 0) {
+        LOG_INFO("client app socket closed (EOF)");
+        close(socket_fd);
+    }
+
+    return 0;
+}
+
 void destroy_sdl(SDL_Window* window_param) {
     /*
         Destroy the SDL resources
@@ -235,80 +424,3 @@ void destroy_sdl(SDL_Window* window_param) {
     }
     SDL_Quit();
 }
-
-#if defined(_WIN32)
-HHOOK mule;
-LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_param) {
-    /*
-        Function to capture keyboard strokes and block them if they encode special
-        key combinations, with intent to redirect them to send_captured_key so that the
-        keys can still be streamed over to the host
-
-        Arguments:
-            n_code (INT): keyboard code
-            w_param (WPARAM): w_param to be passed to CallNextHookEx
-            l_param (LPARAM): l_param to be passed to CallNextHookEx
-
-        Return:
-            (LRESULT CALLBACK): CallNextHookEx return callback value
-    */
-
-    // By returning a non-zero value from the hook procedure, the
-    // message does not get passed to the target window
-    KBDLLHOOKSTRUCT* pkbhs = (KBDLLHOOKSTRUCT*)l_param;
-    int flags = SDL_GetWindowFlags((SDL_Window*)window);
-    if ((flags & SDL_WINDOW_INPUT_FOCUS)) {
-        switch (n_code) {
-            case HC_ACTION: {
-                // Check to see if the CTRL key is pressed
-                BOOL b_control_key_down = GetAsyncKeyState(VK_CONTROL) >> ((sizeof(SHORT) * 8) - 1);
-                BOOL b_alt_key_down = pkbhs->flags & LLKHF_ALTDOWN;
-
-                int type = (pkbhs->flags & LLKHF_UP) ? SDL_KEYUP : SDL_KEYDOWN;
-                int time = pkbhs->time;
-
-                // Disable LWIN
-                if (pkbhs->vkCode == VK_LWIN) {
-                    send_captured_key(SDLK_LGUI, type, time);
-                    return 1;
-                }
-
-                // Disable RWIN
-                if (pkbhs->vkCode == VK_RWIN) {
-                    send_captured_key(SDLK_RGUI, type, time);
-                    return 1;
-                }
-
-                // Disable CTRL+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_control_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+ESC
-                if (pkbhs->vkCode == VK_ESCAPE && b_alt_key_down) {
-                    send_captured_key(SDLK_ESCAPE, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+TAB
-                if (pkbhs->vkCode == VK_TAB && b_alt_key_down) {
-                    send_captured_key(SDLK_TAB, type, time);
-                    return 1;
-                }
-
-                // Disable ALT+F4
-                if (pkbhs->vkCode == VK_F4 && b_alt_key_down) {
-                    send_captured_key(SDLK_F4, type, time);
-                    return 1;
-                }
-
-                break;
-            }
-            default:
-                break;
-        }
-    }
-    return CallNextHookEx(mule, n_code, w_param, l_param);
-}
-#endif

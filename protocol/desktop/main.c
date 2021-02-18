@@ -659,6 +659,11 @@ int main(int argc, char* argv[]) {
     init_video();
 #endif
 
+    SDL_Thread* client_app_socket_thread = SDL_CreateThread(share_client_window_events, "ClientAppSocketThread", NULL);
+    if (client_app_socket_thread == NULL) {
+        LOG_ERROR("NO CLIENT APP SOCKET THREAD");
+    }
+
     print_system_info();
     LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
 
@@ -861,6 +866,7 @@ int main(int argc, char* argv[]) {
         sentry_capture_event(event);
     }
 
+    SDL_WaitThread(client_app_socket_thread, NULL);
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
     destroy_video();
