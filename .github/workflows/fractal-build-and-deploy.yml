@@ -521,7 +521,7 @@ jobs:
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
     kill-packer-instances:
-        name: "Kill Packer Instances if Workflow Failed"
+        name: "Kill Packer Instances"
         needs: ami-publish-ec2
         if: always()
         runs-on: ubuntu-20.04
