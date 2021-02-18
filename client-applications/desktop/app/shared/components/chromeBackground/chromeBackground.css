@@ -21,6 +21,8 @@
     color: #333333;
     font-size: 10px;
     cursor: pointer;
+    position: relative;
+    top: 2px;
 }
 
 .tabCloseWrapper {

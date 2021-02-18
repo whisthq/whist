@@ -34,7 +34,14 @@ export const ChromeBackground = (props: {
     return (
         <>
             <div className={styles.titlebar} />
-            <div style={{ position: "absolute", top: 38, left: 0, width: "100vw" }}>
+            <div
+                style={{
+                    position: "absolute",
+                    top: 38,
+                    left: 0,
+                    width: "100vw",
+                }}
+            >
                 <div
                     style={{
                         left:
@@ -46,9 +53,13 @@ export const ChromeBackground = (props: {
                 >
                     <div className={styles.innerRound} />
                     <div className={styles.tab} />
-                    <div className={styles.tabCloseWrapper} onClick={closeTab}>
+                    <button
+                        className={styles.tabCloseWrapper}
+                        onClick={closeTab}
+                        type="button"
+                    >
                         <FaTimes className={styles.tabClose} />
-                    </div>
+                    </button>
                     <div
                         className={styles.innerRound}
                         style={{ left: 259, transform: "scaleX(-1)" }}
