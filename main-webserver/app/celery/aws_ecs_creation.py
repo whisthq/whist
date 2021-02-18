@@ -363,7 +363,8 @@ def assign_container(
                 )
             except Exception:
                 # If the `filter_by` gave us `None`, that is okay, we handle that below.
-                pass
+                # Simply set the output appropriately.
+                existing_container = None
 
             if existing_container:
                 if _poll(existing_container.container_id):
@@ -381,7 +382,8 @@ def assign_container(
             )
         except Exception:
             # If the `filter_by` gave us `None`, that is okay, we handle that below.
-            pass
+            # Simply set the output appropriately.
+            base_container = None
 
         num_extra = _get_num_extra(task_definition_arn)
     else:
