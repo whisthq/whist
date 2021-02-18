@@ -12,7 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import { createConnection, createServer, Server, Socket } from "net"
+import { createServer, Server } from "net"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
@@ -41,6 +41,12 @@ let showMainWindow = false
 //    this value gets toggled on "minimize" and "focus"
 //    events
 let protocolMinimized = false
+// Server for socket communication with FractalClient
+let protocolSocketServer: Server | null = null
+// Unix IPC socket address for communication with FractalClient
+let socketPath = "/tmp/fractal-client.sock"
+// Track whether we manually restored from a minimize event
+let manuallyRestored = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -59,27 +65,6 @@ if (
 // add this handler before emitting any events
 process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
-})
-
-// Create IPC socket to communicate with protocol
-let socketPath = "/tmp/fractal-client.sock";
-
-let protocolSocket: Server = createServer((c) => {
-    console.log('client connected')
-    c.on('end', () => {
-        console.log('client disconnected')
-    })
-    c.write('server:hello from client app')
-    c.pipe(c)
-    c.on('data', (data) => {
-        console.log(data.toString())
-    })
-})
-protocolSocket.on('error', (err) => {
-    console.log(`error ${err}`)
-})
-protocolSocket.listen(socketPath, () => {
-    console.log('server bound')
 })
 
 // Function to create the browser window
@@ -136,17 +121,61 @@ const createWindow = async () => {
     // on protocol MAXIMIZE => client app MAXIMIZE
     // on protocol MINIMIZE => client app MINIMIZE
     // TWO-WAY COMMUNICATION (requires socket?)
-    mainWindow.on('focus', () => {
-        if (!showMainWindow) {
-            protocolMinimized = false
-        }
-    })
+    protocolSocketServer = createServer((socket) => {
+        console.log('client connected')
+        socket.on('end', () => {
+            console.log('client disconnected')
+        })
+        socket.write('server:hello from client app')
+        socket.pipe(socket)
+        socket.on('data', (data) => {
+            let parts = data.toString().split(":")
+            if (parts[0] == "client") {
+                if (parts[1] == "MINIMIZE") {
+                    console.log("MINIMIZE")
+                    protocolMinimized = true
+                } else {
+                    console.log("MAXIMIZE")
+                    protocolMinimized = false
+                }
+            }
+        })
+        socket.on('error', (err) => {
+            console.log(`error ${err}`)
+        })
 
-    mainWindow.on('minimize', () => {
-        if (!showMainWindow) {
-            mainWindow.restore()
-            protocolMinimized = !protocolMinimized
-        }
+        mainWindow.on('focus', (event) => {
+            if (!showMainWindow && !manuallyRestored) {
+                protocolMinimized = false
+                socket.write("server:FOCUS")
+            }
+            manuallyRestored = false
+        })
+
+        mainWindow.on('minimize', () => {
+            if (!showMainWindow) {
+                protocolMinimized = !protocolMinimized
+                if (protocolMinimized) {
+                    socket.write("server:MINIMIZE")
+                } else {
+                    socker.write("server:FOCUS")
+                }
+                manuallyRestored = true
+                mainWindow.restore()
+            }
+        })
+
+        mainWindow.on("close", (event) => {
+            if (!showMainWindow) {
+                socket.write("server:QUIT")
+            }
+        })
+    })
+    protocolSocketServer.on('error', (err) => {
+        console.log(`error ${err}`)
+    })
+    protocolSocketServer.listen(socketPath, () => {
+        console.log('server bound')
     })
 
     // LOOK HERE: https://stackoverflow.com/questions/39841942/communicating-between-nodejs-and-c-using-node-ipc-and-unix-sockets
@@ -242,12 +271,6 @@ const createWindow = async () => {
         app.quit()
     })
 
-    mainWindow.on("close", (event) => {
-        if (!showMainWindow) {
-            event.preventDefault()
-        }
-    })
-
     mainWindow.on("closed", () => {
         mainWindow = null
     })
@@ -298,7 +321,9 @@ app.on("window-all-closed", () => {
 })
 
 app.on("quit", () => {
-    protocolSocket.close()
+    if (protocolSocketServer) {
+        protocolSocketServer.close()
+    }
 })
 
 app.setAsDefaultProtocolClient("fractal")

@@ -118,11 +118,9 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
     const char* message = NULL;
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-            LOG_INFO("MINIMIZE EVENT CAUGHT");
             message = "client:MINIMIZE";
-        } else if (event->window.event == SDL_WINDOWEVENT_RESTORED) {
-            LOG_INFO("RESTORE EVENT CAUGHT");
-            message = "client:RESTORE";
+        } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+            message = "client:FOCUS";
         }
         if (message) {
             if (write(args->socket_fd, message, strlen(message)) < 0) {
@@ -131,7 +129,6 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
             }
         }
     } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
-        LOG_INFO("QUITTING AND CLOSING FD");
         close(args->socket_fd);
     }
     return 0;
@@ -389,9 +386,24 @@ int share_client_window_events(void* opaque) {
     watcher_args->socket_fd = socket_fd;
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
 
-    while ((read_chars = read(socket_fd, buf, sizeof(buf), 0)) > 0) {
+    while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
         // TODO: send SDL event
         LOG_INFO("socket read: %s", buf);
+        char* source_name = strtok(buf, ":");
+        if (source_name && !strncmp(source_name, "server", 6)) {
+            char* window_status = strtok(NULL, ":");
+            if (window_status) {
+                if (!strncmp(window_status, "MINIMIZE", 8)) {
+                    SDL_MinimizeWindow((SDL_Window*) window);
+                } else if (!strncmp(window_status, "FOCUS", 5)) {
+                    SDL_RaiseWindow((SDL_Window*) window);
+                } else if (!strncmp(window_status, "QUIT", 4)) {
+                    SDL_Event quit_event;
+                    quit_event.type = SDL_QUIT;
+                    SDL_PushEvent(&quit_event);
+                }
+            }
+        }
         memset(buf, 0, sizeof(buf));
     }
 
