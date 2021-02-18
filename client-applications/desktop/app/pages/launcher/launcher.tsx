@@ -211,7 +211,7 @@ export const Launcher = (props: {
     }, [timedOut])
 
     useEffect(() => {
-        if (shouldForceQuit && disconnected) {
+        if (disconnected && (shouldForceQuit || !(container && container.containerID))) {
             forceQuit()
         }
     }, [shouldForceQuit, disconnected])
