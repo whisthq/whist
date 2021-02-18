@@ -6,8 +6,17 @@ on:
             - mia/kill-packer-instances
 
 jobs:
+    temp:
+        name: "Temp"
+        runs-on: ubuntu-20.04
+        steps:
+            - name: "temp"
+              run: |
+                  echo "hey there"
+
     kill-packer-instances:
         name: "Kill Packer Instances if Workflow Failed"
+        needs: temp
         if: always()
         runs-on: ubuntu-20.04
         steps:
