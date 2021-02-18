@@ -800,12 +800,12 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
-        try:
-            container_instance = resp["containerInstanceArn"]
-        except KeyError:
-            # actually return the response as an exception so we see it in kibana
-            raise ContainerBrokenException(saferepr(resp))
         if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
+            try:
+                container_instance = resp["containerInstanceArn"]
+            except KeyError:
+                # actually return the response as an exception so we see it in kibana
+                raise ContainerBrokenException(saferepr(resp))
             container_info = self.ecs_client.describe_container_instances(
                 cluster=self.cluster, containerInstances=[container_instance]
             )
