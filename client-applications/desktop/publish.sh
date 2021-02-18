@@ -42,7 +42,9 @@ else
     shift
     done
 
-    python3 setVersion.gyp $bucket $version
+    # Only notarize, when publish=true
+    notarize=$publish
+    python3 setVersion.gyp $bucket $version $notarize
 
     cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
