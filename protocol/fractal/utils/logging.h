@@ -172,19 +172,6 @@ void mprintf(const char* fmt_str, ...);
 void destroy_logger();
 
 /**
- * @brief                          Send the log history to the webserver
- *
- * @param host                     The webserver host to send the message to.
- * @param identifier               The string that uniquely identifies this
- *                                 instance of the protocol to the webserver.
- * @param hex_aes_private_key      The private key, as a hex string.
- *
- * @returns                         0: success -1: failure to send file,
- *                                  sent cache instead   -2: outright failure
- */
-int send_connection_history(char* host, char* identifier, char* hex_aes_private_key);
-
-/**
  * @brief                          Set the logger to categorize all logs from now
  *                                  on as a new connection. Only these will be sent
  *                                  on a sendConnectionHistory call.
