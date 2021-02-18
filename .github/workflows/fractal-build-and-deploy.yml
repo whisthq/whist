@@ -387,6 +387,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install Utility to Kill Lingering AWS Packer Builder Instances
+              run: pip install aws-hashicorp-packer-reaper
+
             ######################## Building ECS Host Service ########################
 
             # To build ECS Host Service
