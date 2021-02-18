@@ -62,7 +62,7 @@ export const Login = (props: {
     const [deleteTokens] = useMutation(DELETE_USER_TOKENS, {
         context: {
             headers: {
-                Login: loginToken,
+                "X-Hasura-Login-Token": loginToken,
             },
         },
     })
@@ -121,6 +121,7 @@ export const Login = (props: {
         }
     }
 
+    const ipc = require("electron").ipcRenderer
     useEffect(() => {
         ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
     }, [])

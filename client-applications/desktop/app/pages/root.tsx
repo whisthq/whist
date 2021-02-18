@@ -43,7 +43,7 @@ const Root = (props: { loginToken: string }) => {
                 reconnect: true,
                 connectionParams: {
                     headers: {
-                        Login: tempLoginToken,
+                        "X-Hasura-Login-Token": tempLoginToken,
                     },
                 },
             },

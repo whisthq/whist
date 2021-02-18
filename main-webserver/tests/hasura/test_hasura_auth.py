@@ -21,7 +21,7 @@ def test_no_headers(client):
 
 def test_login_header(client):
 
-    response = client.get("/hasura/auth", headers={"Login": "login_token"})
+    response = client.get("/hasura/auth", headers={"X-Hasura-Login-Token": "login_token"})
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
         "X-Hasura-Role": "anonymous",

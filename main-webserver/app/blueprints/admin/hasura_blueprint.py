@@ -25,7 +25,7 @@ def hasura_auth_get(**kwargs):  # pylint: disable=unused-argument
     auth_token = request.headers.get("Authorization")
     auth_output = auth_token_helper(auth_token)
 
-    login_token = request.headers.get("Login")
+    login_token = request.headers.get("X-Hasura-Login-Token")
     login_output = login_token_helper(login_token)
 
     output = dict(auth_output)
