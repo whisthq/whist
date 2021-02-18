@@ -657,15 +657,14 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
             - name: Retrieve Desktop App Version from Config Database, Increment Minor Version, and Update Config Database Version
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: bash -e {0}
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
                   # curl GraphQL API to retrieve version number from config database
                   curl -X POST \
-                  -H 'Content-Type: application/json' \
-                  -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
+                  -H "Content-Type: application/json" \
+                  -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}" \
                   --data "{ \"query\": \"query { desktop_app_version { major minor micro dev_rc staging_rc } }\" }" \
                   https://config-database.fractal.co/v1/graphql > response.json
 
@@ -704,14 +703,6 @@ jobs:
                     echo "new_micro_version=${NEW_MICRO}" >> $GITHUB_ENV
                     echo "new_staging_rc_version=0" >> $GITHUB_ENV
                     echo "new_dev_rc_version=0" >> $GITHUB_ENV
-
-                    # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
-                    curl -X POST \
-                    -H 'Content-Type: application/json' \
-                    -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
-                    https://config-database.fractal.co/v1/graphql
-
                   elif [[ "$BRANCH_NAME" == "staging" ]]; then
                     echo 'Using staging configuration...'
                     # increment version by staging-rc.1
@@ -722,13 +713,6 @@ jobs:
 
                     # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
                     echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
-
-                    # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
-                    curl -X POST \
-                    -H 'Content-Type: application/json' \
-                    -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
-                    https://config-database.fractal.co/v1/graphql
                   elif [[ "$BRANCH_NAME" == "dev" ]]; then
                     echo 'Using dev configuration...'
                     # increment version by dev-rc.1
@@ -739,13 +723,6 @@ jobs:
 
                     # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
                     echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
-
-                    # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
-                    curl -X POST \
-                    -H 'Content-Type: application/json' \
-                    -H 'X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}' \
-                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
-                    https://config-database.fractal.co/v1/graphql
                   else
                     echo 'Error: Invalid branch' && false
                   fi
@@ -810,6 +787,34 @@ jobs:
 
                   # Build the Fractal protocol and package the Electron application
                   ./publish.sh --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --env ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} --publish ${{ needs.fractal-publish-build-config.outputs.publish }}
+
+            # Update hasura version
+            # Run only on Mac, to prevent updating the database multiple times
+            - name: Update config database version
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && runner.os == 'macOS'
+              run: |
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
+                  # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
+                  if [[ "$BRANCH_NAME" == "master" ]]; then
+                    curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {micro: ${{ env.new_micro_version }}, staging_rc: ${{ env.new_staging_rc_version }}, dev_rc: ${{ env.new_dev_rc_version }}, prod_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    https://config-database.fractal.co/v1/graphql
+                  elif [[ "$BRANCH_NAME" == "staging" ]]; then
+                    curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {staging_rc: ${{ env.new_staging_rc_version }}, staging_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    https://config-database.fractal.co/v1/graphql
+                  elif [[ "$BRANCH_NAME" == "dev" ]]; then
+                    curl -X POST \
+                    -H "Content-Type: application/json" \
+                    -H "X-Hasura-Admin-Secret: ${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}" \
+                    --data "{ \"query\": \"mutation { update_desktop_app_version_by_pk(pk_columns: {id: 1}, _set: {dev_rc: ${{ env.new_dev_rc_version }}, dev_commit_hash: \\\"${{ env.commit_hash }}\\\"}) { id } }\" }" \
+                    https://config-database.fractal.co/v1/graphql
+                  fi
 
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
