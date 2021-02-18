@@ -81,8 +81,6 @@ char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
 
-SDL_mutex* container_destruction_mutex;
-
 volatile double max_mbps;
 volatile int client_width = -1;
 volatile int client_height = -1;
@@ -133,14 +131,6 @@ Private Functions
 ============================
 */
 
-/**
- * @brief                          Sends a message to the webserver to destroy
- *                                 the container running the server protocol.
- *
- * @returns                        Returns -1 on failure, 0 on success.
- */
-int send_container_destroy_message();
-
 /*
 ============================
 Private Function Implementations
@@ -162,101 +152,36 @@ int xioerror_handler(Display* d) {
             * quitClients
     */
 
-    safe_SDL_LockMutex(container_destruction_mutex);
-
     exiting = true;
 
-    // Try sending a container destroy message - if this is the first destruction
-    //  message being sent, then also quit all clients. Quitting clients will
-    //  still happen on SendContainerDestroyMessage failure in case
-    //  it is failure on the first attempt of sending a message. This means that there
-    //  is a possibility of the quitClients() pipeline happening more than once
-    //  if SendContainerDestroyMessage fails and then is called again because
-    //  this error handler can be called multiple times.
-    if (send_container_destroy_message() != 1) {
-        // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
+    //  Quit all clients. This means that there is a possibility
+    //  of the quitClients() pipeline happening more than once
+    //  because this error handler can be called multiple times.
 
-        // Broadcast client quit message
-        FractalServerMessage fmsg_response = {0};
-        fmsg_response.type = SMESSAGE_QUIT;
-        read_lock(&is_active_rwlock);
-        if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response,
-                                 sizeof(FractalServerMessage), 1, STARTING_BURST_BITRATE, NULL,
-                                 NULL) != 0) {
-            LOG_WARNING("Could not send Quit Message");
-        }
-        read_unlock(&is_active_rwlock);
+    // POSSIBLY below locks are not necessary if we're quitting everything and dying anyway?
 
-        // Kick all clients
-        write_lock(&is_active_rwlock);
-        safe_SDL_LockMutex(state_lock);
-        if (quit_clients() != 0) {
-            LOG_ERROR("Failed to quit clients.");
-        }
-        safe_SDL_UnlockMutex(state_lock);
-        write_unlock(&is_active_rwlock);
+    // Broadcast client quit message
+    FractalServerMessage fmsg_response = {0};
+    fmsg_response.type = SMESSAGE_QUIT;
+    read_lock(&is_active_rwlock);
+    if (broadcast_udp_packet(PACKET_MESSAGE, (uint8_t*)&fmsg_response, sizeof(FractalServerMessage),
+                             1, STARTING_BURST_BITRATE, NULL, NULL) != 0) {
+        LOG_WARNING("Could not send Quit Message");
     }
+    read_unlock(&is_active_rwlock);
 
-    safe_SDL_UnlockMutex(container_destruction_mutex);
+    // Kick all clients
+    write_lock(&is_active_rwlock);
+    safe_SDL_LockMutex(state_lock);
+    if (quit_clients() != 0) {
+        LOG_ERROR("Failed to quit clients.");
+    }
+    safe_SDL_UnlockMutex(state_lock);
+    write_unlock(&is_active_rwlock);
 
     return 0;
 }
 #endif
-
-int send_container_destroy_message() {
-    /*
-        Sends a message to the webserver to destroy the container on which
-        the server is running. This will only work for contianers spun up using
-        the webserver endpoint /container/create
-
-        Surround this call by a mutex lock to be sure that it isn't sending a message twice.
-
-        Returns:
-            int: 0 on success, -1 on failure
-    */
-
-    // static, so only sets to false on first call
-    static bool already_sent_destroy_message = false;
-
-    if (already_sent_destroy_message) {
-        return 0;
-    }
-
-    LOG_INFO("CONTAINER DESTROY SIGNAL");
-
-    char* container_id = get_container_id();
-    if (!container_id) {
-        // If container_id is not found, then get protocol_info again
-        LOG_INFO("Container ID not found, re-requesting protocol_info");
-        update_webserver_parameters();
-        container_id = get_container_id();
-
-        // If container_id is still not found, then fail
-        if (!container_id) {
-            LOG_ERROR("Container destroy could not find container_id");
-            return -1;
-        }
-    }
-
-    char payload[256];
-    snprintf(payload, sizeof(payload),
-             "{\n"
-             "  \"container_id\": \"%s\",\n"
-             "  \"private_key\": \"%s\"\n"
-             "}",
-             container_id, hex_aes_private_key);
-
-    // send destroy request, don't require response -> update this later
-    char* resp_buf = NULL;
-    size_t resp_buf_maxlen = 4800;
-    send_post_request(webserver_url, "/container/delete", payload, &resp_buf, resp_buf_maxlen);
-
-    LOG_INFO("/container/delete response: %s", resp_buf);
-
-    already_sent_destroy_message = true;
-
-    return 0;
-}
 
 int32_t multithreaded_encoder_factory(void* opaque) {
     UNUSED(opaque);
@@ -1190,7 +1115,6 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Failed to initialize client objects.");
     }
 
-    container_destruction_mutex = safe_SDL_CreateMutex();
 #ifdef __linux__
     XSetIOErrorHandler(xioerror_handler);
 #endif
@@ -1378,13 +1302,6 @@ int main(int argc, char* argv[]) {
 
     destroy_logger();
     destroy_clients();
-
-    safe_SDL_LockMutex(container_destruction_mutex);
-    if (send_container_destroy_message() == -1) {
-        safe_SDL_UnlockMutex(container_destruction_mutex);
-        return -1;
-    }
-    safe_SDL_UnlockMutex(container_destruction_mutex);
 
     return 0;
 }
