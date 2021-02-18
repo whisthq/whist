@@ -211,7 +211,10 @@ export const Launcher = (props: {
     }, [timedOut])
 
     useEffect(() => {
-        if (disconnected && (shouldForceQuit || !(container && container.containerID))) {
+        // Either the user has force quit during usage after all arguments have been
+        //    piped to FractalClient, or the user has quit before the app has
+        //    even loaded or received arguments.
+        if (disconnected && (shouldForceQuit || taskState !== FractalAppState.FAILURE)) {
             forceQuit()
         }
     }, [shouldForceQuit, disconnected])
