@@ -91,17 +91,39 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/fractal/FractalServer $OPTIONS
 
-# Send logs to webserver
-curl \
+# Send logs to webserver and grab the task id
+LOGS_TASK_ID=$(curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
     $WEBSERVER_URL/logs \
-    <<END
+    << END \
+    | jq -er ".ID"
 {
     "sender": "server",
     "identifier": "$IDENTIFIER",
     "secret_key": "$FRACTAL_AES_KEY",
     "logs": $(jq -Rs . </usr/share/fractal/log.txt)
+}
+END
+)
+
+# Poll for logs upload to finish
+state=PENDING
+while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
+    state=$(curl -L -X GET -H "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
+    sleep 0.1
+done
+
+# Delete the container
+curl \
+--header "Content-Type: application/json" \
+--request POST \
+--data @- \
+$WEBSERVER_URL/container/delete \
+<< END
+{
+    "container_id": "$IDENTIFIER",
+    "private_key":  "$FRACTAL_AES_KEY"
 }
 END
