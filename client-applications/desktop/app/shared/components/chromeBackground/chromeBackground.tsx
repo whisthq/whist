@@ -11,6 +11,7 @@ import {
 
 import { ComputerInfo } from "store/reducers/client/default"
 import { OperatingSystem } from "shared/types/client"
+import { FractalIPC } from "shared/types/ipc"
 
 import styles from "shared/components/chromeBackground/chromeBackground.css"
 
@@ -24,11 +25,23 @@ export const ChromeBackground = (props: {
     */
 
     const { operatingSystem } = props
+    const ipc = require("electron").ipcRenderer
+
+    const closeTab = () => {
+        ipc.sendSync(FractalIPC.FORCE_QUIT)
+    }
 
     return (
         <>
             <div className={styles.titlebar} />
-            <div style={{ position: "relative", top: 38 }}>
+            <div
+                style={{
+                    position: "absolute",
+                    top: 38,
+                    left: 0,
+                    width: "100vw",
+                }}
+            >
                 <div
                     style={{
                         left:
@@ -40,9 +53,13 @@ export const ChromeBackground = (props: {
                 >
                     <div className={styles.innerRound} />
                     <div className={styles.tab} />
-                    <div className={styles.tabCloseWrapper}>
+                    <button
+                        className={styles.tabCloseWrapper}
+                        onClick={closeTab}
+                        type="button"
+                    >
                         <FaTimes className={styles.tabClose} />
-                    </div>
+                    </button>
                     <div
                         className={styles.innerRound}
                         style={{ left: 259, transform: "scaleX(-1)" }}
