@@ -1,5 +1,6 @@
 export enum FractalIPC {
     SHOW_MAIN_WINDOW = "showMainWindow",
+    LOAD_BROWSER = "loadBrowser",
     FORCE_QUIT = "forceQuit",
     UPDATE = "update",
     CUSTOM_URL = "customURL",

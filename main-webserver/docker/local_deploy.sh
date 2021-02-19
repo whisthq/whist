@@ -36,7 +36,6 @@ export POSTGRES_REMOTE_USER=$POSTGRES_USER
 export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
 export POSTGRES_REMOTE_DB=$POSTGRES_DB
 
-
 if [ -f ../db_setup/db_schema.sql ]; then
     echo "Found existing schema and data sql scripts. Skipping fetching db."
 else
