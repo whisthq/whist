@@ -25,9 +25,36 @@ from celery.app.task import Task
 from hirefire.contrib.flask.blueprint import build_hirefire_blueprint
 from hirefire.procs.celery import CeleryProc
 
-# Celery configuration options used to configure all Celery application instances.
+# Celery configuration options used to configure all Celery application instances. The WORKER is
+# the program that is started with
+#
+#     celery --app ... worker ...
+#
+# The BROKER and the BACKEND are the same Redis instance, but the broker stores information about
+# tasks that are due to be processed and the backend stores the results of processed tasks.
 CELERY_CONFIG = {
+    # Whether or not the worker should retry a failed connection.
+    "broker_connection_retry": False,
+    # See the Kombu source file containing the implementation of the Redis transport for a list of
+    # valid transport options. These options configure the connection to the broker.
+    # https://github.com/celery/kombu/blob/6cb9d6639e800012e733a0535db34653705290b9/kombu/transport/redis.py#L28
+    "broker_transport_options": {
+        "max_retries": 1,
+        "socket_timeout": 1,
+    },
     "redis_max_connections": 40,
+    # This key seems to set the socket timeout for the connection to the Redis backend (i.e.
+    # result store). It is important to set the socket timeout so that a failed SSL handshake will
+    # cause a TimeoutError to be raised rather than hanging.
+    "redis_socket_timeout": 1,
+    # These options configure the connection to the backend. Acceptable keys in the retry_policy
+    # dictionary are arguments to the Kombu retry_over_time function. See
+    # https://docs.celeryproject.org/en/stable/getting-started/brokers/redis.html#connection-timeouts
+    "result_backend_transport_options": {
+        "retry_policy": {
+            "max_retries": 1,
+        },
+    },
     "task_track_started": True,
 }
 
