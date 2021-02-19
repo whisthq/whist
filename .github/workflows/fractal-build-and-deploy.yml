@@ -524,6 +524,13 @@ jobs:
                   done
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
+            - name: Notify Slack
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # AMI: Kill "Packer Builder" Instances
     # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
     # Runs unconditionally after ami-publish-ec2
@@ -552,24 +559,6 @@ jobs:
               run: |
                   aws-hashicorp-packer-reaper list
                   aws-hashicorp-packer-reaper terminate --older-than 1s
-
-    # AMI: Notify Slack
-    # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
-    # Runs if ami-publish-ec2 succeeds.
-    ami-notify-slack:
-        name: "AMI: Notify Slack"
-        needs: [fractal-publish-build-config, ami-publish-ec2]
-        if: >
-            success() &&
-            contains(fromJSON('["all", "ami-publish-ec2"]'), needs.fractal-publish-build-config.outputs.job)
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Notify Slack
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
