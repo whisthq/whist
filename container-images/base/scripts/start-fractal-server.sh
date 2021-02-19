@@ -112,7 +112,10 @@ END
 state=PENDING
 while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     state=$(curl -L -X GET -H "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
-    sleep 0.1
+    # Since this is post-disconnect, we can afford to query with such a low frequency.
+    # We choose to do this to reduce strain on the webserver, with the understanding
+    # that we're adding at most 5 seconds to container shutdown time in expectation.
+    sleep 5
 done
 
 # Delete the container
