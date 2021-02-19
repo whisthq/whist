@@ -53,7 +53,9 @@ else
     cd protocol-build
     mkdir desktop
     cd ..
-    cp ../../protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop
+
+    # Rename FractalClient to Fractal for consistency with Electron app name, and move over to client-app
+    mv ../../protocol/desktop/build64/Darwin/FractalClient protocol-build/desktop/Fractal
     cp -R ../../protocol/desktop/build64/Darwin/loading protocol-build/desktop
 
     # Note: we no longer add the logo to the executable because the logo gets set
@@ -61,7 +63,7 @@ else
 
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         # Linux Ubuntu
-        sudo chmod +x protocol-build/desktop/FractalClient
+        sudo chmod +x protocol-build/desktop/Fractal
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         # Mac OSX
         # copy over the FFmpeg dylibs
@@ -74,8 +76,8 @@ else
         cp ../../protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/desktop
         cp ../../protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/desktop
         cp ../../protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/desktop
-        # codesign the FractalClient executable
-        codesign -s "Fractal Computers, Inc." protocol-build/desktop/FractalClient
+        # codesign the Fractal client protocol executable
+        codesign -s "Fractal Computers, Inc." protocol-build/desktop/Fractal
     fi
 
     # Initialize yarn first
