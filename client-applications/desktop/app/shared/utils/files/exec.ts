@@ -99,8 +99,6 @@ export const launchProtocol = async (
 
     // Protocol arguments
     const protocolParameters = {
-        width: 800,
-        height: 600,
         name: "Fractalized Chrome",
         icon: iconPath,
     }
