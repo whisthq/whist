@@ -6,6 +6,7 @@ from app.helpers.blueprint_helpers.mail.mail_post import mail_helper
 
 mail_bp = Blueprint("mail_bp", __name__)
 
+
 @mail_bp.route("/mail", methods=["POST"])
 @fractal_pre_process
 def mail(**kwargs):
