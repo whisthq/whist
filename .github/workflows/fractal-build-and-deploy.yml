@@ -524,11 +524,11 @@ jobs:
                   done
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
-    # AMI: Kill Packer Instances
-    # Kills all Packer instances using aws-hashicorp-packer-reaper utility
+    # AMI: Kill "Packer Builder" Instances
+    # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
     # Runs unconditionally after ami-publish-ec2
-    kill-packer-instances:
-        name: "Kill Packer Instances"
+    kill-packer-builder-instances:
+        name: "Kill Packer Builder Tagged EC2 Instances"
         needs: ami-publish-ec2
         if: always()
         runs-on: ubuntu-20.04
@@ -537,7 +537,7 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: 3.8
-                  
+
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
 
