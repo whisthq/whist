@@ -40,3 +40,25 @@ bool safe_strncpy(char* destination, const char* source, size_t num) {
     }
     return false;
 }
+
+char* safe_strtok(char* str, char* delim, char** saveptr) {
+    /*
+        strtok is unsafe and the safe version in Unix systems is strtok_r
+        while the safe version in Windows is strtok_s. This function calls
+        the respective thread-safe strtok version for each OS.
+
+        Arguments:
+            str (char*): the string being parsed for tokens
+            delim (char*): the string delimiter
+            saveptr (char**): the save pointer, which should remain unchanged between
+                calls to this function
+
+        Returns:
+            (char*): the next token in the string    
+    */
+#ifdef _WIN32
+    return strtok_s(str, delim, saveptr);
+#else
+    return strtok_r(str, delim, saveptr);
+#endif
+}
