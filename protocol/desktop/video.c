@@ -78,6 +78,7 @@ extern volatile SDL_Renderer* renderer;
 #define LOG_VIDEO false
 
 #define BITRATE_BUCKET_SIZE 500000
+#define NUMBER_LOADING_FRAMES 59
 
 #define CURSORIMAGE_A 0xff000000
 #define CURSORIMAGE_R 0x00ff0000
@@ -280,7 +281,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 loading_sdl(renderer, loading_index);
             }
 
-            SDL_Delay(1);
+            SDL_Delay(50);
             continue;
         }
 
@@ -533,13 +534,12 @@ int32_t render_screen(SDL_Renderer* renderer) {
 void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     /*
         Make the screen black and show the loading screen
-
         Arguments:
             renderer (SDL_Renderer*): video renderer
             loading_index (int): the index of the loading frame
     */
 
-    int gif_frame_index = loading_index % 83;
+    int gif_frame_index = loading_index % NUMBER_LOADING_FRAMES;
 
     clock c;
     start_timer(&c);
@@ -576,7 +576,7 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     dstrect.w = w;
     dstrect.h = h;
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, loading_screen_texture, NULL, &dstrect);
     SDL_RenderPresent(renderer);
@@ -588,8 +588,13 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     if (remaining_ms > 0) {
         SDL_Delay(remaining_ms);
     }
+
+    if(gif_frame_index == 0) {
+        SDL_Delay(1000);
+    }
+
     gif_frame_index += 1;
-    gif_frame_index %= 83;  // number of loading frames
+    gif_frame_index %= NUMBER_LOADING_FRAMES;
 }
 
 void nack(int id, int index) {
