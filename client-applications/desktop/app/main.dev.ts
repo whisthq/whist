@@ -85,6 +85,8 @@ const createWindow = async () => {
                 contextIsolation: false,
             },
         })
+        socketPath = '\\\\.\\pipe\\' + socketPath
+        console.log(socketPath)
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
             show: false,
@@ -97,6 +99,11 @@ const createWindow = async () => {
                 contextIsolation: false,
             },
         })
+        socketPath = require("path").join(
+            FractalDirectory.getRootDirectory(),
+            "protocol-build/desktop",
+            socketPath
+        )
     } else {
         // if (os.platform() === "linux") case
         mainWindow = new BrowserWindow({
@@ -113,6 +120,11 @@ const createWindow = async () => {
             icon: path.join(__dirname, "/build/icon.png"),
             transparent: true,
         })
+        socketPath = require("path").join(
+            FractalDirectory.getRootDirectory(),
+            "protocol-build/desktop",
+            socketPath
+        )
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
