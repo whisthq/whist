@@ -504,11 +504,9 @@ int share_client_window_events(void* opaque) {
         }
 #endif
     } else if (read_chars == 0) {
-        LOG_INFO("client app socket closed (EOF)");
 #ifdef _WIN32
-        if (CloseHandle(socket_fd) < 0) {
-            LOG_ERROR("CloseHandle failed with errno: %d", GetLastError());
-        }
+        CloseHandle(socket_fd);
+        CloseHandle(watcher_args->write_socket_fd);
 #else
         close(socket_fd);
 #endif
