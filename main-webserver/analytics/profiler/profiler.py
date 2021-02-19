@@ -1,9 +1,10 @@
-import argparse
 import time
-
 from dataclasses import dataclass
+import sys
+import argparse
+import os
 
-from tasks import app, simulate_cpu_io_task
+from tasks import celery_app, estimate_loop_iters_per_ms, simulate_cpu_io_task
 
 
 @dataclass
@@ -33,12 +34,12 @@ def profile():
     num_done = 0
     while True:
         for tid in list(to_poll):
-            res = app.AsyncResult(tid)
+            res = celery_app.AsyncResult(tid)
             if res.status == "SUCCESS":
                 to_poll.remove(tid)
                 num_done += 1
 
-        print(f"Progress: {int(num_done / CONFIG.num_tasks * 100)}%", end="\r")
+        print(f"Progress: {round(num_done / CONFIG.num_tasks, 2)}%", end="\r")
         if len(to_poll) == 0:
             break
 
@@ -47,8 +48,7 @@ def profile():
     end = time.time()
     print(f"Completed in {end - start} sec")
     print(
-        "Theoretical optimal on single core with no timeshare yielding:",
-        f"{CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec",
+        f"Theoretical optimal on single core with no timeshare yielding: {CONFIG.num_tasks * CONFIG.task_time_ms / 1000} sec"
     )
 
 
