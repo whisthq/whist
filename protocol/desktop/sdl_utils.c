@@ -54,9 +54,10 @@ Custom Types
 typedef struct WindowControlArguments {
     SDL_Window* window;
 #ifdef _WIN32
-    HANDLE socket_fd;
+    HANDLE read_socket_fd;
+    HANDLE write_socket_fd;
 #else
-    int socket_fd;
+    int write_socket_fd;
 #endif
 } WindowControlArguments;
 
@@ -139,20 +140,32 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         }
         if (message) {
 #ifdef _WIN32
-            if (!WriteFile(args->socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+            if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+                if (GetLastError() == ERROR_INVALID_HANDLE) {
+                    LOG_INFO("Client app socket closed for writing");
+                    return 0;
+                }
                 LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
-#else
-            if ((wrote_chars = write(args->socket_fd, message, (int) strlen(message))) < 0) {
-                LOG_ERROR("write window event to client app socket failed: errno %d", errno);
-#endif
                 return -1;
             }
+#else
+            if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
+                if (errno == EBADF) {
+                    LOG_INFO("Client app socket closed for writing");
+                    return 0;
+                }
+                LOG_ERROR("write window event to client app socket failed: errno %d", errno);
+                return -1;
+            }
+#endif
+            LOG_INFO("WROTE %s", message);
         }
     } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
 #ifdef _WIN32
-        CloseHandle(args->socket_fd);
+        CloseHandle(args->write_socket_fd);
+        CloseHandle(args->read_socket_fd);
 #else
-        close(args->socket_fd);
+        close(args->write_socket_fd); // use the same fd for R/W on Unix
 #endif
     }
     return 0;
@@ -400,7 +413,7 @@ int share_client_window_events(void* opaque) {
 #ifdef _WIN32
     socket_fd = CreateFileA(
         socket_path, 
-        GENERIC_READ | GENERIC_WRITE, 
+        GENERIC_READ, 
         FILE_SHARE_READ | FILE_SHARE_WRITE, 
         NULL,
         OPEN_EXISTING,
@@ -430,7 +443,20 @@ int share_client_window_events(void* opaque) {
     WindowControlArguments* watcher_args = malloc(sizeof(WindowControlArguments));
     memset(watcher_args, 0, sizeof(WindowControlArguments));
     watcher_args->window = (SDL_Window*) window;
-    watcher_args->socket_fd = socket_fd;
+#ifdef _WIN32
+    watcher_args->write_socket_fd = CreateFileA(
+        socket_path, 
+        GENERIC_WRITE, 
+        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+    watcher_args->read_socket_fd = socket_fd;
+#else
+    watcher_args->write_socket_fd = socket_fd;
+#endif
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
 
     bool successful_read = true;
@@ -463,15 +489,26 @@ int share_client_window_events(void* opaque) {
 
     if (read_chars < 0 || !successful_read) {
 #ifdef _WIN32
-        LOG_ERROR("ReadFile error in share_client_window_events, errno: %d", GetLastError());
+        if (GetLastError() == ERROR_INVALID_HANDLE) {
+            LOG_INFO("Client app socket closed for reading");
+        } else {
+            LOG_ERROR("ReadFile error in share_client_window_events, errno: %d", GetLastError());
+            return -1;
+        }
 #else
-        LOG_ERROR("read error in share_client_window_events, errno: %d", errno);
+        if (errno == EBADF) {
+            LOG_INFO("Client app socket closed for reading");
+        } else {
+            LOG_ERROR("read error in share_client_window_events, errno: %d", errno);
+            return -1;
+        }
 #endif
-        return -1;
     } else if (read_chars == 0) {
         LOG_INFO("client app socket closed (EOF)");
 #ifdef _WIN32
-        CloseHandle(socket_fd);
+        if (CloseHandle(socket_fd) < 0) {
+            LOG_ERROR("CloseHandle failed with errno: %d", GetLastError());
+        }
 #else
         close(socket_fd);
 #endif
