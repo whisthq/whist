@@ -214,6 +214,10 @@ export const Launcher = (props: {
             taskState === FractalAppState.FAILURE ||
             protocolKillSignal > killSignalsReceived
         ) {
+            // If the task failed or we manually kill the protocol due to a login
+            // or payment issue, don't quit the entire Electron app
+            setShouldForceQuit(false)
+
             logger.logError(
                 "Task state is FAILURE, sending protocol kill",
                 userID
@@ -258,6 +262,7 @@ export const Launcher = (props: {
                     protocolOnExit
                 )
                 setProtocol(childProcess)
+                setShouldForceQuit(true)
             }
 
             launchProtocolAsync()
@@ -334,7 +339,6 @@ export const Launcher = (props: {
             writeStream(protocol, `private-key?${container.secretKey}`)
             writeStream(protocol, `ip?${container.publicIP}`)
             writeStream(protocol, `finished?0`)
-            setShouldForceQuit(true)
         }
     }, [container, protocol])
 

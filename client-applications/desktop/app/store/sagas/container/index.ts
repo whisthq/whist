@@ -30,16 +30,18 @@ function* createContainer() {
     // Get client DPI
     const dpi = findDPI()
 
+    const body = {
+        username: userID,
+        region: region,
+        app: "Google Chrome",
+        dpi: dpi,
+    }
+
     // Send container assign request
     const { json, success, response } = yield call(
         apiPost,
         FractalAPI.CONTAINER.ASSIGN,
-        {
-            username: userID,
-            region: region,
-            app: "Google Chrome",
-            dpi: dpi,
-        },
+        body,
         accessToken
     )
 
@@ -56,7 +58,7 @@ function* createContainer() {
             })
         )
 
-        if (response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
+        if (response && response.status === FractalHTTPCode.PAYMENT_REQUIRED) {
             history.push(FractalRoute.PAYMENT)
         } else {
             yield put(updateUser(deepCopyObject(DEFAULT.user)))
