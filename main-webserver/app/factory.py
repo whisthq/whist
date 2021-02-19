@@ -12,7 +12,10 @@ from hirefire.procs.celery import CeleryProc
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 
+from .celery_utils import init_celery
 from .config import CONFIG_MATRIX
+
+PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -34,18 +37,15 @@ class WorkerProc(CeleryProc):
     simple_queues = True
 
 
-def create_app(testing=False):
-    """A Flask application factory.
-
-    See https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/?highlight=factory.
+def create_app(app_name=PKG_NAME, testing=False, **kwargs):
+    """
+    Create app.
 
     Args:
-        testing: A boolean indicating whether or not to configure the application for testing.
-
-    Returns:
-        A Flask application instance.
+        app_name (str)
+        testing (bool)
+        kwargs: can contain `celery`, which should be an initialized celery instance
     """
-
     # Set up Sentry - only log errors on prod (main) and staging webservers
     env = None
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
@@ -62,7 +62,8 @@ def create_app(testing=False):
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
-    app = Flask(__name__.split(".")[0], template_folder=template_dir)
+
+    app = Flask(app_name, template_folder=template_dir)
 
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
@@ -70,6 +71,9 @@ def create_app(testing=False):
     config = getattr(getattr(CONFIG_MATRIX, location), action)
 
     app.config.from_object(config())
+
+    if kwargs.get("celery"):
+        init_celery(kwargs.get("celery"), app)
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
