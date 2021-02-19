@@ -589,7 +589,7 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
         SDL_Delay(remaining_ms);
     }
 
-    if(gif_frame_index == 0) {
+    if (gif_frame_index == 0) {
         SDL_Delay(1000);
     }
 
