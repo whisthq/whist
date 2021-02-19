@@ -143,7 +143,7 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         closesocket(args->socket_fd);
 #else
         close(args->socket_fd);
-#endif 
+#endif
     }
     return 0;
 
@@ -373,26 +373,14 @@ int share_client_window_events(void* opaque) {
             (int): 0 on success, -1 on failure
     */
 
-#ifdef _WIN32
-    char socket_path[128];
-    const char* socket_subpath = "fractal-client.sock";
-    size_t max_dir_pathlen = sizeof(socket_path) - strlen(socket_subpath);
-    memset(socket_path, 0, max_dir_pathlen);
-    int dir_pathlen = 0;
-    if ((dir_pathlen = GetTempPathA(sizeof(socket_path), socket_path)) > max_dir_pathlen) {
-        LOG_WARNING("socket_path is not large enough for full TEMP path");
-        return -1;
-    }
-    safe_strncpy(socket_path + dir_pathlen, socket_subpath, sizeof(socket_path) - dir_pathlen);
+const char* socket_path = "fractal-client.sock"; // max 127 char length
 
+#ifdef _WIN32
     SOCKET socket_fd;
 #else
-    const char* socket_path = "/tmp/fractal-client.sock"; // max 127 char length
-
     int socket_fd;
 #endif
 
-    
     char buf[64];
     int read_chars;
     struct sockaddr_un addr;
