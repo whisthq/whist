@@ -324,6 +324,10 @@ int send_clipboard_packets(void* opaque) {
 }
 // END UPDATER CODE
 
+// This function polls for UDP packets from the server
+// NOTE: This contains a very sensitive hotpath.
+// The total execution time of inner for loop must not take longer than 0.001ms-0.1ms
+// Please do not put any for loops, and do not make any non-trivial system calls
 int receive_packets(void* opaque) {
     /*
         Receive any packets from the server and handle them appropriately
