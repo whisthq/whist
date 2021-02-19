@@ -40,7 +40,7 @@ export const execPromise = (
 const getExecutableName = (): string => {
     /*
     Description:
-        Helper function for launchProtocol(). Gets the FractalClient executable name
+        Helper function for launchProtocol(). Gets the Fractal client protocol executable name
         depending on the user's operating system
 
     Arguments: none
@@ -52,10 +52,10 @@ const getExecutableName = (): string => {
     const currentOS = require("os").platform()
 
     if (currentOS === OperatingSystem.MAC) {
-        return "./FractalClient"
+        return "./Fractal"
     }
     if (currentOS === OperatingSystem.WINDOWS) {
-        return "FractalClient.exe"
+        return "Fractal.exe"
     }
     return ""
 }
@@ -92,7 +92,7 @@ export const launchProtocol = async (
     const executable = getExecutableName()
 
     // On Mac, run chmod to allow the protocol to run
-    await execPromise("chmod +x FractalClient", protocolPath, [
+    await execPromise("chmod +x Fractal", protocolPath, [
         OperatingSystem.MAC,
         OperatingSystem.LINUX,
     ])
