@@ -40,6 +40,8 @@ Right now, Heroku handles scaling our web workers, but we need to scale our cele
 
 Our helpers are divided into 2 sections — `blueprint_helpers`, which directly perform blueprint tasks that don't belong in Celery (generally, querying our DB for information), and `utils`, which contain all our client wrappers and API callers. Nothing in `utils` should interact with fractal DBs unless explicitly necessary. In fact, none of your tests for those utilities should in any way require fractal to work unless explicitly necessary — any code that interacts with fractal DBs should live in celery tasks or the blueprint helpers. This makes helpers tests significantly easier to mock, as the entire DB doesn't need to be mocked.
 
+For more details, see the [README for the `helpers` directory](helpers/README.md).
+
 ## Models/Serializers
 
 We leverage `flask-sqlalchemy` as our object-relational mapping (ORM), which helps us to easily execute SQL commands without writing raw SQL and catch inconsistencies between the server's understanding of SQL structure and the actual SQL structure at import-time rather than run-time. Specifically, `sqlalchemy` lets us represent database tables as Python objects, making programmatic table modifications more closely resemble the surrounding code.
