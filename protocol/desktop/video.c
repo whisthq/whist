@@ -78,7 +78,7 @@ extern volatile SDL_Renderer* renderer;
 #define LOG_VIDEO false
 
 #define BITRATE_BUCKET_SIZE 500000
-#define NUMBER_LOADING_FRAMES 59
+#define NUMBER_LOADING_FRAMES 50
 
 #define CURSORIMAGE_A 0xff000000
 #define CURSORIMAGE_R 0x00ff0000
