@@ -130,8 +130,8 @@ const createWindow = async () => {
         socket.pipe(socket)
         socket.on('data', (data) => {
             let parts = data.toString().split(":")
-            if (parts[0] == "client") {
-                if (parts[1] == "MINIMIZE") {
+            if (parts[0] === "client") {
+                if (parts[1] === "MINIMIZE") {
                     console.log("MINIMIZE")
                     protocolMinimized = true
                 } else {
@@ -144,7 +144,7 @@ const createWindow = async () => {
             console.log(`error ${err}`)
         })
 
-        mainWindow.on('focus', (event) => {
+        mainWindow.on('focus', () => {
             if (!showMainWindow && !manuallyRestored) {
                 protocolMinimized = false
                 socket.write("server:FOCUS")
@@ -158,14 +158,14 @@ const createWindow = async () => {
                 if (protocolMinimized) {
                     socket.write("server:MINIMIZE")
                 } else {
-                    socker.write("server:FOCUS")
+                    socket.write("server:FOCUS")
                 }
                 manuallyRestored = true
                 mainWindow.restore()
             }
         })
 
-        mainWindow.on("close", (event) => {
+        mainWindow.on("close", () => {
             if (!showMainWindow) {
                 socket.write("server:QUIT")
             }
