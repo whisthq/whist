@@ -990,6 +990,19 @@ class ECSClient:
         containers_list = self.get_containers_in_cluster(self.cluster)
         if len(containers_list) > 0:
             self.set_containers_to_draining(containers_list)
+        # Now we have to create a new undrained instance
+        asg_info = self.auto_scaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=[
+                asg_name,
+            ]
+        )["AutoScalingGroups"][0]
+        current_cap = int(asg_info["DesiredCapacity"])
+        if current_cap < asg_info["MaxSize"]:
+            # if we can open a new instance, do so to handle new reqs
+            self.auto_scaling_client.set_desired_capacity(
+                AutoScalingGroupName=asg_name,
+                DesiredCapacity=current_cap + 1,
+            )
         self.auto_scaling_client.delete_launch_configuration(
             LaunchConfigurationName=old_launch_config_name
         )
