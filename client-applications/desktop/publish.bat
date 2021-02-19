@@ -25,6 +25,9 @@ if "%1%" == "--help" (
     mkdir desktop
     mkdir desktop\loading
     cd ..
+    
+    REM Rename FractalClient to Fractal for consistency with Electron app name, and move over to client-app
+    rename ..\..\protocol\desktop\build64\Windows\FractalClient.exe Fractal.exe
     xcopy /s ..\..\protocol\desktop\build64\Windows protocol-build\desktop
 
     REM Note: we no longer add the logo to the executable because the logo gets set
