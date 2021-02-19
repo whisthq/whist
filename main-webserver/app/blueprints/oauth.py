@@ -16,6 +16,8 @@ from google_auth_oauthlib.flow import Flow
 from app.models import Credential, db, User
 from app.serializers.oauth import CredentialSchema
 from app.models.oauth import _app_name_to_provider_id, _provider_id_to_app_name
+from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
+
 
 oauth_bp = Blueprint("oauth", __name__, cli_group="credentials")
 Token = namedtuple(
@@ -72,6 +74,7 @@ class ConnectedAppsAPI(MethodView):
 
 
 @oauth_bp.route("/oauth/authorize")
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 @jwt_required
 def authorize():
     """Initiate the OAuth exchange by requesting an authorization grant.
@@ -121,6 +124,7 @@ def authorize():
 
 
 @oauth_bp.route("/oauth/callback")
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 def callback():
     """Redeem an OAuth 2.0 authorization code for an access token.
 
@@ -182,6 +186,7 @@ def callback():
 
 
 @oauth_bp.route("/external_apps")
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 def external_apps():
     """List metadata for all available external applications."""
 
