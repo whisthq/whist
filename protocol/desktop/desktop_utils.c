@@ -440,7 +440,7 @@ int read_piped_arguments(bool *keep_waiting) {
                         // If stdin doesn't have any characters, continue the loop
 #ifndef _WIN32
         if (ioctl(STDIN_FILENO, FIONREAD, &available_chars) < 0) {
-            LOG_ERROR("ioctl error with piped arguments: %s", strerror(errno));
+            LOG_ERROR("ioctl error with piped arguments: errno %d", errno);
             return -1;
         } else if (available_chars == 0) {
             continue;
@@ -482,12 +482,13 @@ int read_piped_arguments(bool *keep_waiting) {
             }
 
             // Splits the incoming string from STDIN into arg_name and arg_value
-            char *arg_name = strtok(incoming, "?");
+            char* strtok_saveptr;
+            char *arg_name = safe_strtok(incoming, "?", &strtok_saveptr);
             if (!arg_name) {
                 goto completed_line_eval;
             }
 
-            char *arg_value = strtok(NULL, "?");
+            char *arg_value = safe_strtok(NULL, "?", &strtok_saveptr);
             if (arg_value) {
                 arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
                 arg_value[strcspn(arg_value, "\r")] =

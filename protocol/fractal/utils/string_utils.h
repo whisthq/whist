@@ -47,4 +47,23 @@ Public Functions
  */
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
+/**
+ * @brief                          Safely retrieve the next delimited token in a string.
+ *
+ * @details                        strtok is unsafe and the safe version in Unix systems is strtok_r
+ *       						   while the safe version in Windows is strtok_s. This function calls
+ *							       the respective thread-safe strtok version for each OS.
+ *
+ * @param str                      The string being parsed for tokens.
+ *
+ * @param delim                    The string delimiter.
+ *
+ * @param saveptr				   The save pointer, which should remain unchanged between
+ *								   calls to this function.
+ *
+ * @returns                        True if all bytes of source were copied (i.e. strlen(source) <=
+ *                                 num - 1)
+ */
+char* safe_strtok(char* str, char* delim, char** saveptr);
+
 #endif  // STRING_UTILS_H
