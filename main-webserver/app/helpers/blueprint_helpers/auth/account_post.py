@@ -20,7 +20,7 @@ from app.models import db, User
 from app.helpers.utils.datadog.events import (
     datadogEvent_userLogon,
 )
-from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound, SendGridException
+from app.helpers.utils.mail.mail_client import MailClient
 
 
 def login_helper(email, password):

@@ -1,39 +1,30 @@
 import logging
-import json
 import requests
-from bs4 import BeautifulSoup
 from jinja2 import Template
 
-from flask import current_app, redirect
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from app.helpers.utils.general.logs import fractal_log
 from app.models import EmailTemplates
 
-""" 
-Welcome to the mail client. The mail client uses the Sendgrid API to 
-send emails to users.
+# Welcome to the mail client. The mail client uses the Sendgrid API to
+# send emails to users.
 
-Let's say you want to send an email to a user. Here's how to do it:
+# Let's say you want to send an email to a user. Here's how to do it:
 
-1. Create an email template as a .html file and upload it to the fractal-email-templates
-   bucket in S3. You can use Jinja formatting for variables. Make sure it's set to public.
-2. Add the email template to the sales.email_templates table in the SQL database.
-3. MailClient.get_available_templates() will pull all the email templates from the 
-   SQL table, and MailClient.send_email will send any email template.
-"""
+# 1. Create an email template as a .html file and upload it to the fractal-email-templates
+#    bucket in S3. You can use Jinja formatting for variables. Make sure it's set to public.
+# 2. Add the email template to the sales.email_templates table in the SQL database.
+# 3. get_available_templates() will pull all the email templates from the
+#    SQL table, and MailClient.send_email will send any email template.
 
 
 class TemplateNotFound(Exception):
     """This exception is raised when an email template ID is requested that does not exist"""
 
-    pass
-
 
 class SendGridException(Exception):
     """This exception is raised when SendGrid email sending API throws an exception"""
-
-    pass
 
 
 class MailClient:
@@ -52,7 +43,7 @@ class MailClient:
         subject="",
         html_file=None,
         email_id=None,
-        jinja_args={},
+        jinja_args=None,
     ):
         """Sends an email via Sendgrid with a given subject and HTML file (for email body)
 
@@ -61,7 +52,7 @@ class MailClient:
             to_emails (list): List of email addresses to send to
             subject (str): Email title
             html_file (str): File of HTML content e.g. example.html
-            email_id (str): Email ID that maps to html_file, found in database. 
+            email_id (str): Email ID that maps to html_file, found in database.
                 NOTE: Either email_id or html_file
                 must be provided. If both are provided, email_id is used.
             jinja_args (dict): Dict of Jinja arguments to pass into render_template()
@@ -73,7 +64,7 @@ class MailClient:
             raise TemplateNotFound
 
         if email_id:
-            templates = self.get_available_templates()
+            templates = get_available_templates()
 
             if not email_id in templates.keys():
                 raise TemplateNotFound
@@ -97,24 +88,26 @@ class MailClient:
                 subject=subject,
                 html_content=jinja_template.render(**jinja_args),
             )
-            response = self.sendgrid_client.send(message)
+            self.sendgrid_client.send(message)
         except Exception as e:
             fractal_log(
-                logs=f"An exception occured: {str(e)}", label=from_email, function="send_email", level=logging.ERROR
+                logs=f"An exception occured: {str(e)}",
+                label=from_email,
+                function="send_email",
+                level=logging.ERROR,
             )
-            raise SendGridException
+            raise SendGridException from e
 
-    def get_available_templates(self):
-        """Retrieves all available HTML email templates stored in S3
 
-        Args:
-            none
+def get_available_templates():
+    """Retrieves all available HTML email templates stored in S3
 
-        Returns:
-            dict: Dictionary mapping email template ID (string) to HTML url (string)
-        """
+    Args:
+        none
 
-        templates = EmailTemplates.query.all()
-        return {
-            template.id: {"url": template.url, "title": template.title} for template in templates
-        }
+    Returns:
+        dict: Dictionary mapping email template ID (string) to HTML url (string)
+    """
+
+    templates = EmailTemplates.query.all()
+    return {template.id: {"url": template.url, "title": template.title} for template in templates}
