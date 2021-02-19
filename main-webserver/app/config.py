@@ -167,7 +167,6 @@ class DeploymentConfig:
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
     JWT_TOKEN_LOCATION = ("headers", "query_string")
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
-    REDIS_URL = property(getter("REDIS_URL", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
@@ -207,6 +206,19 @@ class DeploymentConfig:
         with open("client_secret.json") as secret_file:
             return json.loads(secret_file.read())
 
+    @property
+    def REDIS_URL(self):  # pylint: disable=invalid-name
+        """Select the most secure Redis connection URI from the program's environment.
+
+        Heroku dynos contain up to two environment variables containing Redis connection strings.
+        REDIS_URL should always be present, and REDIS_TLS_URL will sometimes be present as well.
+
+        Returns:
+            A Redis connection URI as a string.
+        """
+
+        return os.environ.get("REDIS_TLS_URL") or os.environ["REDIS_URL"]
+
 
 class LocalConfig(DeploymentConfig):
     """Application configuration for applications running on local development machines.
@@ -224,15 +236,21 @@ class LocalConfig(DeploymentConfig):
     # When deploying the web server locally, a developer may want to connect to a local Postgres
     # instance. The following lines allow developers to specify individual parts of the connection
     # URI and to fill in the remaining values with reasonable defaults rather than requiring them
-    # to specify the whole thing. Prioritizes looking at URI over connection components.
-    db_uri = property(getter("POSTGRES_URI", default="", fetch=False))
+    # to specify the whole thing.
     db_host = property(getter("POSTGRES_HOST", default="localhost", fetch=False))
     db_name = property(getter("POSTGRES_DB", default="postgres", fetch=False))
     db_password = property(getter("POSTGRES_PASSWORD", fetch=False))
     db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
     db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
 
-    REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
+    # When deploying locally, allow developers to tune individual Redis connection parameters.
+    redis_db = property(getter("REDIS_DB", default=0, fetch=False))
+    redis_host = property(getter("REDIS_HOST", default="localhost", fetch=False))
+    redis_password = property(getter("REDIS_PASSWORD", default="", fetch=False))
+    redis_port = property(getter("REDIS_PORT", default=6379, fetch=False))
+    redis_scheme = property(getter("REDIS_SCHEME", default="rediss", fetch=False))
+    redis_user = property(getter("REDIS_USER", default="", fetch=False))
+
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
 
@@ -254,25 +272,46 @@ class LocalConfig(DeploymentConfig):
         return secret
 
     @property
+    def REDIS_URL(self):  # pylint: disable=invalid-name
+        """Generate the Redis connection URI.
+
+        This property's implementation allows developers to specify individual components of the
+        connection URI in environment variables ratherthan requiring that they specify the entire
+        connection URI themselves. However, the value of the REDIS_URL environment variable will
+        be used if that variable is present, overriding any generated value.
+
+        Returns:
+            A Redis connection URI as a string.
+        """
+
+        return os.environ.get(
+            "REDIS_URL",
+            (
+                f"{self.redis_scheme}://{self.redis_user}:{self.redis_password}@{self.redis_host}:"
+                f"{self.redis_port}/{self.redis_db}"
+            ),
+        )
+
+    @property
     def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
         """Generate the PostgreSQL connection URI.
 
         This property's implementation allows developers to specify individual components of the
         connection URI in environment variables rather than requiring that they specify the entire
-        connection URI themselves.
+        connection URI themselves. However, the value of the POSTGRES_URI environment variable will
+        be used if that variable is present, overriding any generated value.
 
         Returns:
-            A PostgreSQL connection URI.
+            A PostgreSQL connection URI as a string.
         """
 
-        if self.db_uri != "":
-            return self.db_uri
-        else:
-            # create URI from components
-            return (
+        return os.environ.get(
+            "POSTGRES_URI",
+            (
                 f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
                 f"{self.db_name}"
-            )
+            ),
+        )
 
 
 def _TestConfig(BaseConfig):  # pylint: disable=invalid-name

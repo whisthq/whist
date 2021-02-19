@@ -1,63 +1,23 @@
 import os
-import time
 import ssl
+import time
 
-from celery import Celery, shared_task
-
-from utils import get_redis_url
+from celery import Celery
 
 
-def make_celery():
+def chew_cpu_cycles(iters):
     """
-    Returns a Celery object with initialized redis parameters.
+    Does a simple for loop for the number of iterations given.
+
+    Args:
+        (int) iters
+
+    Returns:
+        None
     """
-    # TODO: replace this with get_redis_url when stuff merges
-    redis_url = get_redis_url()
-
-    app = None
-    if redis_url[:6] == "rediss":
-        # use SSL
-        app = Celery(
-            "",
-            broker=redis_url,
-            backend=redis_url,
-            broker_use_ssl={
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-            redis_backend_use_ssl={
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-        )
-
-    elif redis_url[:5] == "redis":
-        # use regular
-        app = Celery(
-            "",
-            broker=redis_url,
-            backend=redis_url,
-        )
-
-    else:
-        # unexpected input, fail out
-        raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
-
-    # allow many redis connections
-    app.conf.update(
-        celery_redis_max_connections=1000,
-    )
-
-    TaskBase = app.Task
-    loop_iters_ms = estimate_loop_iters_per_ms()
-
-    class ContextTask(TaskBase):
-        def __call__(self, *args, **kwargs):
-            # pass loop_iters_ms to the task as a keyword arg
-            kwargs["cpu_loop_iters_per_ms"] = loop_iters_ms
-            return TaskBase.__call__(self, *args, **kwargs)
-
-    app.Task = ContextTask
-
-    return app
+    _ = 0
+    for i in range(iters):
+        _ = i
 
 
 def estimate_loop_iters_per_ms():
@@ -80,10 +40,46 @@ def estimate_loop_iters_per_ms():
     return guess / time_ms
 
 
-celery_app = make_celery()
+loop_iters_ms = estimate_loop_iters_per_ms()
+redis_url = os.environ.get("REDIS_URL", "redis://")
+celery_kwargs = {
+    "broker": redis_url,
+    "backend": redis_url,
+}
+
+if redis_url.startswith("rediss"):
+    celery_kwargs["broker_use_ssl"] = {"ssl_cert_reqs": ssl.CERT_NONE}
+    celery_kwargs["redis_backend_use_ssl"] = {"ssl_cert_reqs": ssl.CERT_NONE}
+
+app = Celery("profiler", **celery_kwargs)
 
 
-@celery_app.task
+class MyTask(app.Task):
+    def __call__(self, *args, **kwargs):
+        # Pass loop_iters_ms to the task as a keyword argument.
+        kwargs["cpu_loop_iters_per_ms"] = loop_iters_ms
+        return self.run(*args, **kwargs)
+
+
+app.Task = MyTask
+app.conf.update(
+    {
+        "broker_connection_retry": False,
+        "broker_transport_options": {
+            "max_retries": 1,
+            "socket_timeout": 1,
+        },
+        "redis_socket_timeout": 1,
+        "result_backend_transport_options": {
+            "retry_policy": {
+                "max_retries": 1,
+            },
+        },
+    }
+)
+
+
+@app.task
 def simulate_cpu_io_task(frac_cpu, total_time_ms, **kwargs):
     """
     Simulate an IO and CPU task.
@@ -93,8 +89,8 @@ def simulate_cpu_io_task(frac_cpu, total_time_ms, **kwargs):
         total_time_ms (int): Number of milliseconds to run the task
 
         kwargs:
-            cpu_loop_iters_per_ms (float): Number of loop iterations per ms in the CPU task. Should be placed
-                by celery task context.
+            cpu_loop_iters_per_ms (float): Number of loop iterations per ms in the CPU task. Should
+                be placed by celery task context.
 
     Returns:
         None
@@ -110,18 +106,3 @@ def simulate_cpu_io_task(frac_cpu, total_time_ms, **kwargs):
     for _ in range(total_time_ms):
         chew_cpu_cycles(cpu_loops)
         time.sleep(io_timeshare)
-
-
-def chew_cpu_cycles(iters):
-    """
-    Does a simple for loop for the number of iterations given.
-
-    Args:
-        (int) iters
-
-    Returns:
-        None
-    """
-    _ = 0
-    for i in range(iters):
-        _ = i

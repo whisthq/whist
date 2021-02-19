@@ -156,3 +156,32 @@ ext install ms-python.python
 5. Search for “Python formatting provider” and select “Black”.
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
+
+# FAQ
+
+### How do the Flask and Celery applications know where Redis is running?
+
+It depends.
+
+For Heroku deployments (i.e. Heroku apps including review apps and CI apps), both applications try to read the value of the `REDIS_TLS_URL` environment variable, falling back on the value of the `REDIS_URL` environment variable if `REDIS_TLS_URL` is not set and failing if `REDIS_URL` is not set.
+
+For local deployments, including local test deployments, both applications may try to generate a Redis connection string from the environment variables `REDIS_DB`, `REDIS_HOST`, `REDIS_PASSWORD`, `REDIS_PORT`, `REDIS_SCHEME`, and `REDIS_USER`. The connection string is constructed as follows:
+
+```bash
+REDIS_URL="$REDIS_SCHEME://$REDIS_USER:$REDIS_PASSWORD@$REDIS_HOST:$REDIS_PORT/$REDIS_DB"
+```
+
+If not set, the environment variables assume the following default values:
+
+- `REDIS_SCHEME`: `rediss://`
+- `REDIS_USER`: the empty string
+- `REDIS_PASSWORD`: the empty string
+- `REDIS_HOST`: `localhost`
+- `REDIS_PORT`: `6379`
+- `REDIS_DB`: `0`
+
+**However,** the presence of the environment variable `REDIS_URL` will prevent a connection string from being generated from these six environment variables. Instead, the value of the `REDIS_URL` environment variable will be read.
+
+In case the Redis connection string identifies an invalid Redis instance (e.g. the connection string is `rediss://`, but there is either no Redis instance running on `localhost:6379` or it is running, but without TLS), any attempts to connect to the instance identified by the connection string will immediately cause an exception.
+
+In most cases, you should not have to worry about setting any of these environment variables manually, as `REDIS_URL` will be set automatically in `docker-compose.yml` files.

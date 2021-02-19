@@ -8,12 +8,13 @@ This folder contains code to profile celery task execution. The main questions a
 
 Results and more detail can be found [here](https://docs.google.com/spreadsheets/d/1ykcQvhhCdNhCl0IvZ7LQGtpNFIPMi8BS1Lls3xmZrtk/edit?usp=sharing).
 
-To do this yourself, on a multi-core laptop run each of the following on a unique terminal. You should close out of as many applications as possible to not waste any CPU resources.
+To do this yourself, on a multi-core laptop run each of the following on a unique terminal. You should close out of as many applications as possible to not waste any CPU resources. If you choose to run Redis anywhere other than `redis://localhost:6379` please set the environment variable `REDIS_URL` to the appropriate value.
 
-```
-docker run -p 6379:6379 --name redis redis
-celery --app tasks worker --pool prefork --concurrency NUM_WORKERS
-python profiler.py
+```bash
+$ docker run -p 6379:6379 --name redis redis
+$ # export REDIS_URL=...
+$ celery --app tasks worker --pool prefork --concurrency NUM_WORKERS
+$ python profiler.py
 ```
 
 Set NUM_WORKERS to whatever level of parallelism you want (use `nproc` to see how many cores you have).
