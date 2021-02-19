@@ -532,6 +532,8 @@ int read_piped_arguments(bool *keep_waiting) {
                 LOG_INFO("Finished piping arguments");
                 keep_reading = false;
                 goto end_of_eval_loop;
+            } else if (strlen(arg_name) == 7 && !strncmp(arg_name, "loading", strlen(arg_name))) {
+                LOG_INFO("Loading message found %s", arg_value);
             } else {
                 // If arg_name is invalid, then log a warning, but continue
                 LOG_WARNING("Piped arg %s not available", arg_name);
