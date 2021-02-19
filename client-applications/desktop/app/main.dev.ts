@@ -176,11 +176,9 @@ const createWindow = async () => {
     })
 
     mainWindow.on("maximize", () => {
-        console.log("MAXIMIZED")
     })
 
     mainWindow.on("minimize", () => {
-        console.log("MINIMIZED")
     })
 
     if (process.env.NODE_ENV === "development") {
@@ -236,9 +234,11 @@ app.on("open-url", (event, data) => {
     customURL = data.toString()
     if (mainWindow && mainWindow.webContents) {
         mainWindow.webContents.send(FractalIPC.CUSTOM_URL, customURL)
-        mainWindow.show()
-        mainWindow.focus()
-        mainWindow.restore()
+        if(showMainWindow) {
+            mainWindow.show()
+            mainWindow.focus()
+            mainWindow.restore()
+        }
     }
 })
 
