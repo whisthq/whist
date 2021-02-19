@@ -11,7 +11,6 @@ on:
             - master
             - staging
             - dev
-            - project/**
         paths:
             - "README.md"
             - "**/README.md"
@@ -28,10 +27,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Install Node.js 12
+            - name: Install Node.js 14
               uses: actions/setup-node@v1
               with:
-                  node-version: 12
+                  node-version: 14
 
             - name: Install Prettier
               run: npm install -g prettier

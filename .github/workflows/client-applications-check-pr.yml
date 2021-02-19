@@ -11,7 +11,6 @@ on:
             - master
             - staging
             - dev
-            - project/**
         paths:
             - "client-applications/**"
             - "!client-applications/README.md"
@@ -68,7 +67,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Set deploy environment based on Git Branch
+            - name: Set Deploy Environment Based on Git Branch
               shell: bash
               run: |
                   if [ "${GITHUB_REF##*/}" == "master" ]; then
