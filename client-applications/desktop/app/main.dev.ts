@@ -16,6 +16,7 @@ import { createServer, Server } from "net"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
+import { FractalDirectory } from "./shared/types/client"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -44,7 +45,10 @@ let protocolMinimized = false
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
-let socketPath = "/tmp/fractal-client.sock"
+let socketPath = require("path").join(
+    FractalDirectory.getRootDirectory(),
+    "protocol-build/desktop/fractal-client.sock"
+)
 // Track whether we manually restored from a minimize event
 let manuallyRestored = false
 
