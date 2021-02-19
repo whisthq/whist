@@ -1,30 +1,29 @@
 import logging
-import traceback
 import time
 
-from celery import shared_task
+import boto3
+import botocore
+
+from celery import current_task, shared_task
 from flask import current_app
 
+from app.celery.aws_ecs_modification import manual_scale_cluster
+from app.celery_utils import BenignError
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
 )
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+from app.helpers.utils.datadog.events import (
+    datadogEvent_containerDelete,
+)
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
     fractal_sql_update,
 )
-from app.models import db
-from app.serializers.hardware import ClusterInfo, UserContainer
-
-from app.helpers.utils.datadog.events import (
-    datadogEvent_containerDelete,
-    datadogEvent_clusterDelete,
-)
-
-from app.celery.aws_ecs_modification import manual_scale_cluster
+from app.models import ClusterInfo, db, UserContainer
 
 
 @shared_task(bind=True)
@@ -147,110 +146,128 @@ def delete_container(self, container_name, aes_key):
             pass
 
 
-@shared_task(bind=True)
-def delete_cluster(self, cluster, region_name):
-    task_start_time = time.time()
+@shared_task
+def deregister_container_instances(cluster_name, region):
+    """Deregister all ECS container instances from the specified ECS cluster.
 
-    ecs_client = ECSClient(region_name=region_name)
+    This Celery task will forcibly stop all ECS tasks that are currently running on the cluster
+    whose container instances are to be deregistered.
+
+    Args:
+        cluster_name: The short name of the cluster to delete as a string.
+        region: The region in which the cluster is located as a string (e.g. "us-east-1").
+
+    Returns:
+        None
+    """
+
+    ecs_client = boto3.client("ecs", region_name=region)
+    pages = ecs_client.get_paginator("list_container_instances").paginate(cluster=cluster_name)
+
     try:
-        running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus="RUNNING")[
-            "taskArns"
-        ]
-        if running_tasks:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs=(
-                    f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
-                    "delete the tasks first."
-                ),
-                level=logging.ERROR,
-            )
-            self.update_state(
-                state="FAILURE",
-                meta={"msg": "Cannot delete clusters with running tasks"},
-            )
-        else:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs="Deleting cluster {} in region {} and all associated instances".format(
-                    cluster, region_name
-                ),
-            )
-            ecs_client.terminate_containers_in_cluster(cluster)
-            self.update_state(
-                state="PENDING",
-                meta={
-                    "msg": "Terminating containers in {}".format(
-                        cluster,
-                    )
-                },
-            )
-            cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
-            fractal_sql_commit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
-            ecs_client.spin_til_no_containers(cluster)
+        instances = tuple(arn for page in pages for arn in page["containerInstanceArns"])
+    except ecs_client.exceptions.ClusterNotFoundException as error:
+        raise BenignError(error)  # pylint: disable=raise-missing-from
 
-            asg_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
-                "AutoScalingGroupName"
-            ]
-            launch_config_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
-                "LaunchConfigurationName"
-            ]
-            cluster_info = ClusterInfo.query.get(cluster)
+    else:
+        for instance in instances:
+            ecs_client.deregister_container_instance(
+                cluster=cluster_name, containerInstance=instance, force=True
+            )
 
-            fractal_sql_commit(db, lambda db, x: db.session.delete(x), cluster_info)
-            ecs_client.auto_scaling_client.delete_auto_scaling_group(
-                AutoScalingGroupName=asg_name, ForceDelete=True
-            )
-            ecs_client.auto_scaling_client.delete_launch_configuration(
-                LaunchConfigurationName=launch_config_name
-            )
-            try:
-                ecs_client.ecs_client.delete_cluster(cluster=cluster)
-            except ecs_client.ecs_client.exceptions.ClusterContainsContainerInstancesException:
-                # sometimes metadata takes time to update
-                time.sleep(30)
-                ecs_client.ecs_client.delete_cluster(cluster=cluster)
-    except ecs_client.ecs_client.exceptions.ClusterNotFoundException:
-        # The cluster does not exist! We must simply purge from database if it exists
-        bad_entry = ClusterInfo.query.get(cluster)
-        if bad_entry is not None:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs=f"Cluster did not exist in ${region_name} ECS! "
-                "Removing erroneous entry from our database.",
-            )
-            fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
-            self.update_state(
-                state="SUCCESS",
-                meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS! "
-                    "Removed an erroneous entry from our database."
-                },
-            )
-        else:
-            self.update_state(
-                state="SUCCESS",
-                meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS "
-                    "or in our database."
-                },
-            )
-    except Exception as error:
-        traceback_str = "".join(traceback.format_tb(error.__traceback__))
-        print(traceback_str)
-        fractal_log(
-            function="delete_cluster",
-            label="None",
-            logs=f"Encountered error: {error}, Traceback: {traceback_str}",
-            level=logging.ERROR,
+
+@shared_task
+def delete_cluster(cluster_name, region):
+    """Delete the specified ECS cluster.
+
+    This Celery task will fail if there are any container instances that are still registered to
+    the cluster.
+
+    Args:
+        cluster_name: The short name of the cluster to delete as a string.
+        region: The region in which the cluster is located as a string (e.g. "us-east-1").
+
+    Returns:
+        A list of strings representing the short names of capacity providers that were attached to
+        the cluster before it was deleted.
+    """
+
+    ecs_client = boto3.client("ecs", region_name=region)
+
+    try:
+        response = ecs_client.delete_cluster(cluster=cluster_name)
+    except botocore.exceptions.ClientError as error:
+        if error.response["Error"]["Code"] == "ClusterNotFoundException":
+            # The cluster doesn't exist and the task has failed, but the failure is not a cause
+            # for concern because the cluster pointer was removed from the database before the
+            # ECS cluster deletion pipeline was initiated.
+            raise BenignError(error)  # pylint: disable=raise-missing-from
+
+        if error.response["Error"]["Code"] == "UpdateInProgressException":
+            # Try again in a few seconds after the update has completed.
+            current_task.retry(countdown=5, max_retries=5)
+
+        raise error
+    else:
+        capacity_providers = response["cluster"]["capacityProviders"]
+
+    return capacity_providers
+
+
+@shared_task
+def delete_capacity_providers(capacity_providers, region):
+    """Delete the specified capacity providers.
+
+    All of the specified capacity providers must be auto-scaling capacity providers.
+
+    Args:
+        capacity_providers: A list of strings representing the names of the capacity providers to
+            be deleted.
+        region: The AWS region in which the capacity providers are located (e.g. "us-east-1").
+
+    Returns:
+        A list of strings representing the ARNs of each capacity provider's underlying auto-scaling
+        group.
+    """
+
+    ecs_client = boto3.client("ecs", region_name=region)
+    auto_scaling_groups = []
+
+    for provider in capacity_providers:
+        try:
+            response = ecs_client.delete_capacity_provider(capacityProvider=provider)
+        except botocore.exceptions.ClientError:
+            # Skip any capacity providers that cause errors.
+            continue
+
+        arn = response["capacityProvider"]["autoScalingGroupProvider"]["autoScalingGroupArn"]
+        _, name = arn.rsplit("/", maxsplit=1)
+        auto_scaling_groups.append(name)
+
+    return auto_scaling_groups
+
+
+@shared_task
+def delete_auto_scaling_groups(auto_scaling_groups, region):
+    """Delete the specified auto-scaling groups.
+
+    All of the specified auto-scaling groups must use launch configurations instead of launch
+    templates.
+
+    Args:
+        auto_scaling_groups: A list of strings representing the ARNs of the auto-scaling groups to
+            be deleted.
+        region: The AWS region in which all of the auto-scaling groups are located (e.g.
+            "us-east-1").
+
+    Returns:
+        None
+    """
+
+    autoscaling_client = boto3.client("autoscaling", region_name=region)
+
+    for asg in auto_scaling_groups:
+        autoscaling_client.delete_auto_scaling_group(
+            AutoScalingGroupName=asg,
+            ForceDelete=True,
         )
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
-        )
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_clusterDelete(cluster, lifecycle=True, time_taken=task_time_taken)

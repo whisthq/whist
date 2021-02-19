@@ -8,6 +8,7 @@ from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_modification import update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_deletion import delete_cluster
+from app.celery_utils import BenignFailure
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -218,7 +219,7 @@ def test_update_bad_cluster(client, cluster):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_delete_bad_cluster(cluster):
+def test_delete_bad_cluster():
     """Test that `delete_cluster` handles invalid clusters.
 
     This tests how `delete_cluster` behaves when passed a dummy cluster,
@@ -227,14 +228,12 @@ def test_delete_bad_cluster(cluster):
     gets called on it. We test this by directly using the `delete_cluster`
     with the fixture for a dummy cluster.
     """
-    res = delete_cluster.delay(cluster=cluster.cluster, region_name="us-east-1")
+    res = delete_cluster.delay("not-a-cluster", "us-east-1")
 
-    # wait for operation to finish
-    # if it takes more than 30 sec, something is wrong
-    res.get(timeout=30)
+    with pytest.raises(BenignFailure, match=r".*\(ClusterNotFoundException\).*DeleteCluster.*: Cluster not found."):
+        res.get(timeout=5)
 
-    assert res.successful()
-    assert res.state == "SUCCESS"
+    assert not res.successful()
 
 
 @pytest.mark.container_serial

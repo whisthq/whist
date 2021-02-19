@@ -1,4 +1,4 @@
-from flask import Blueprint
+from flask import abort, Blueprint, make_response, request
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
@@ -9,8 +9,15 @@ from app.celery.aws_ecs_creation import (
     send_commands,
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
-from app.celery.aws_ecs_deletion import delete_cluster, delete_container
+from app.celery.aws_ecs_deletion import (
+    delete_auto_scaling_groups,
+    delete_capacity_providers,
+    delete_container,
+    deregister_container_instances,
+)
+from app.celery.aws_ecs_deletion import delete_cluster as _delete_cluster
 from app.celery.aws_ecs_modification import update_region
+from app.constants.container_state_values import CANCELLED
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
@@ -19,7 +26,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     protocol_info,
     set_stun,
 )
-from app.constants.container_state_values import CANCELLED
+from app.models import ClusterInfo, db
 
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
@@ -60,6 +67,58 @@ def container_state(action, **kwargs):
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
 
+@aws_container_bp.route("/aws_container/delete_cluster", methods=("POST",))
+@jwt_required
+@developer_required
+def delete_cluster():
+    """Delete the specified cluster.
+
+    POST keys:
+        cluster_name: The short name of the cluster to delete as a string.
+        region_name: The name of the AWS region in which the cluster is running as a string.
+        force: Optional. A boolean indiciating whether or not to delete the cluster even if there
+            are still ECS tasks running on the cluster.
+
+    Returns:
+        A dictionary containing a single key, "ID", whose value is the task ID of a Celery task
+        whose progress may be monitored through the /status/ endpoint.
+    """
+
+    # Make sure the POST body is formatted as either form data or JSON, and that it contains the
+    # keys "cluster_name" and "region_name"
+    try:
+        if request.is_json:
+            body = request.json
+        else:
+            body = request.form
+
+        cluster_name = body["cluster_name"]
+        region = body["region_name"]
+    except KeyError:
+        abort(400)
+
+    force = body.get("force", False)
+    cluster = ClusterInfo.query.with_for_update().get(cluster_name)
+
+    if cluster is None:
+        abort((make_response({"error": f"The cluster {cluster_name} does not exist."}, 400)))
+
+    if cluster.containers.count() > 0 and not force:
+        abort((make_response({"error": f"There are still tasks running on {cluster_name}."}, 400)))
+
+    db.session.delete(cluster)
+    db.session.commit()
+
+    task = (
+        deregister_container_instances.s(cluster_name, region)
+        | _delete_cluster.si(cluster_name, region)
+        | delete_capacity_providers.s(region)
+        | delete_auto_scaling_groups.s(region)
+    )()
+
+    return make_response({"ID": task.id}), ACCEPTED
+
+
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required
@@ -94,18 +153,6 @@ def test_endpoint(action, **kwargs):
         task = create_new_cluster.apply_async(
             [cluster_name, instance_type, ami, region_name, min_size, max_size]
         )
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "delete_cluster":
-        cluster, region_name = (
-            kwargs["body"]["cluster_name"],
-            kwargs["body"]["region_name"],
-        )
-        task = delete_cluster.apply_async([cluster, region_name])
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

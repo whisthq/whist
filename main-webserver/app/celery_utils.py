@@ -32,6 +32,18 @@ CELERY_CONFIG = {
 }
 
 
+class BenignFailure(Exception):
+    """TODO"""
+
+
+def BenignError(exc):  # pylint: disable=invalid-name
+    """TODO"""
+
+    exc.__class__ = BenignFailure
+
+    return exc
+
+
 def celery_params(flask_app):
     """Generate the parameters to use to instantiate a Flask application's Celery instance.
 
@@ -54,6 +66,10 @@ def celery_params(flask_app):
 
         See https://flask.palletsprojects.com/en/1.1.x/patterns/celery/#configure.
         """
+
+        default_retry_delay = 0
+        max_retries = None
+        throws = (BenignFailure,)
 
         def __call__(self, *args, **kwargs):
             with flask_app.app_context():
