@@ -820,10 +820,12 @@ jobs:
         steps:
             - name: Notify Slack
               run: |
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+
                   # Retrieve Fractal website associated with current deployment
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "master" ]; then
                       WEBSITE_URL=https://fractal.co
-                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
                       WEBSITE_URL=https://staging.fractal.co
                   else
                       WEBSITE_URL=https://dev.fractal.co
