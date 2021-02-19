@@ -113,3 +113,23 @@ export const fractalBackoff = <T>(fn: () => Promise<T>) => {
         numOfAttempts: 5,
     })
 }
+
+export const generateToken = async () => {
+    /*
+            Generate a unique one-time use login token
+ 
+            Arguments:
+                none     
+    */
+    const crypto = require("crypto")
+
+    const buffer = await new Promise((resolve, reject) => {
+        crypto.randomBytes(128, (err, buf) => {
+            if (err) {
+                reject(err)
+            }
+            resolve(buf)
+        })
+    })
+    return buffer.toString("hex")
+}
