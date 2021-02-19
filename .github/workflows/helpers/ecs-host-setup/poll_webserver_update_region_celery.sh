@@ -19,7 +19,11 @@ state=PENDING
 echo "ID: $2"
 while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     status=$(curl -L -X GET -H "Authorization: Bearer ${3}" "${1}status/${2}")
-    sleep 0.1
+    # Since Github Actions are not time-sensitive on the order of a few seconds, we can
+    # totally afford to query status with such a low frequency. We choose to do this to
+    # alleviate unnecessary strain on the webserver. The recursive nature of this script
+    # does, however, imply that the total time cost will be much more than just 3 seconds.
+    sleep 3
     state=$(echo $status | jq -e ".state")
     echo "Status: $status"
 done
