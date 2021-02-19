@@ -22,8 +22,8 @@ while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     # Since Github Actions are not time-sensitive on the order of a few seconds, we can
     # totally afford to query status with such a low frequency. We choose to do this to
     # alleviate unnecessary strain on the webserver. The recursive nature of this script
-    # does, however, imply that the total time cost will be much more than just 3 seconds.
-    sleep 3
+    # does, however, imply that the total time cost will be much more than just 1 second.
+    sleep 1
     state=$(echo $status | jq -e ".state")
     echo "Status: $status"
 done
