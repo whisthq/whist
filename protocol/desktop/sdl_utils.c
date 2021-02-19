@@ -396,6 +396,7 @@ int share_client_window_events(void* opaque) {
                 if (!strncmp(window_status, "MINIMIZE", 8)) {
                     SDL_MinimizeWindow((SDL_Window*) window);
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
+                    SDL_RestoreWindow((SDL_Window*) window);
                     SDL_RaiseWindow((SDL_Window*) window);
                 } else if (!strncmp(window_status, "QUIT", 4)) {
                     SDL_Event quit_event;
