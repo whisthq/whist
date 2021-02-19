@@ -16,10 +16,7 @@ close the window.
 Includes
 ============================
 */
-#ifdef _WIN32
-#include <winsock2.h>
-#include <afunix.h>
-#else
+#ifndef _WIN32
 #include <sys/un.h>
 #endif
 
@@ -57,7 +54,7 @@ Custom Types
 typedef struct WindowControlArguments {
     SDL_Window* window;
 #ifdef _WIN32
-    SOCKET socket_fd;
+    HANDLE socket_fd;
 #else
     int socket_fd;
 #endif
@@ -126,6 +123,12 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
     WindowControlArguments* args = (WindowControlArguments*) data;
 
     const char* message = NULL;
+#ifdef _WIN32
+    DWORD wrote_chars;
+#else
+    int wrote_chars;
+#endif
+
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
             message = "client:MINIMIZE";
@@ -135,14 +138,19 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
             message = "client:UNFOCUS";
         }
         if (message) {
-            if (send(args->socket_fd, message, (int) strlen(message), 0) < 0) {
+#ifdef _WIN32
+            if (!WriteFile(args->socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+                LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
+#else
+            if ((wrote_chars = write(args->socket_fd, message, (int) strlen(message))) < 0) {
                 LOG_ERROR("write window event to client app socket failed: errno %d", errno);
+#endif
                 return -1;
             }
         }
     } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
 #ifdef _WIN32
-        closesocket(args->socket_fd);
+        CloseHandle(args->socket_fd);
 #else
         close(args->socket_fd);
 #endif
@@ -375,20 +383,37 @@ int share_client_window_events(void* opaque) {
             (int): 0 on success, -1 on failure
     */
 
-const char* socket_path = "fractal-client.sock"; // max 127 char length
+    char buf[64];
+    memset(buf, 0, sizeof(buf));
 
 #ifdef _WIN32
-    SOCKET socket_fd;
+    const char* socket_path = "\\\\.\\pipe\\fractal-client.sock"; // max 127 char length
+    HANDLE socket_fd;
+    DWORD read_chars;
 #else
+    const char* socket_path = "fractal-client.sock"; // max 127 char length
     int socket_fd;
-#endif
-
-    char buf[64];
     int read_chars;
     struct sockaddr_un addr;
+#endif
+
+#ifdef _WIN32
+    socket_fd = CreateFileA(
+        socket_path, 
+        GENERIC_READ | GENERIC_WRITE, 
+        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL
+    );
+    if (socket_fd == INVALID_HANDLE_VALUE) {
+        LOG_ERROR("CreateFileA error in share_client_window_events: %d", GetLastError());
+    }
+#else
 
     if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
-        LOG_ERROR("socket error in share_client_window_events");
+        LOG_ERROR("socket error in share_client_window_events: %d", errno);
         return -1;
     }
 
@@ -397,9 +422,10 @@ const char* socket_path = "fractal-client.sock"; // max 127 char length
     safe_strncpy(addr.sun_path, socket_path, sizeof(addr.sun_path) - 1);
 
     if (connect(socket_fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        LOG_ERROR("connect error in share_client_window_events");
+        LOG_ERROR("connect error in share_client_window_events: %d", errno);
         return -1;
     }
+#endif
 
     WindowControlArguments* watcher_args = malloc(sizeof(WindowControlArguments));
     memset(watcher_args, 0, sizeof(WindowControlArguments));
@@ -407,7 +433,12 @@ const char* socket_path = "fractal-client.sock"; // max 127 char length
     watcher_args->socket_fd = socket_fd;
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
 
-    while ((read_chars = recv(socket_fd, buf, sizeof(buf), 0)) > 0) {
+    bool successful_read = true;
+#ifdef _WIN32
+    while ((successful_read = ReadFile(socket_fd, buf, sizeof(buf), &read_chars, NULL)) == true && read_chars > 0) {
+#else
+    while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
+#endif
         // TODO: send SDL event
         LOG_INFO("socket read: %s", buf);
         char* strtok_saveptr;
@@ -430,13 +461,17 @@ const char* socket_path = "fractal-client.sock"; // max 127 char length
         memset(buf, 0, sizeof(buf));
     }
 
-    if (read_chars < 0) {
+    if (read_chars < 0 || !successful_read) {
+#ifdef _WIN32
+        LOG_ERROR("ReadFile error in share_client_window_events, errno: %d", GetLastError());
+#else
         LOG_ERROR("read error in share_client_window_events, errno: %d", errno);
+#endif
         return -1;
     } else if (read_chars == 0) {
         LOG_INFO("client app socket closed (EOF)");
 #ifdef _WIN32
-        closesocket(socket_fd);
+        CloseHandle(socket_fd);
 #else
         close(socket_fd);
 #endif
