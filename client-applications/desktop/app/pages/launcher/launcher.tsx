@@ -253,7 +253,7 @@ export const Launcher = (props: {
                     shouldLaunchProtocol: false,
                 })
             )
-                        
+
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
 
             const launchProtocolAsync = async () => {
