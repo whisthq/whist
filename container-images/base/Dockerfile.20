@@ -414,8 +414,8 @@ RUN systemctl enable fractal-protocol
 COPY services/fractal-audio.service /etc/systemd/system
 RUN systemctl enable fractal-audio
 
-COPY scripts/start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
-RUN chmod +x /usr/share/fractal/start-fractal-server.sh
+COPY scripts/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
+RUN chmod +x /usr/share/fractal/run-fractal-server.sh
 
 VOLUME [ "/sys/fs/cgroup" ]
 
