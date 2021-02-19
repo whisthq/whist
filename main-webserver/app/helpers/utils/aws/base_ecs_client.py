@@ -999,6 +999,7 @@ class ECSClient:
         current_cap = int(asg_info["DesiredCapacity"])
         if current_cap < asg_info["MaxSize"]:
             # if we can open a new instance, do so to handle new reqs
+            # Since aws doesn't realize that we need new undrained instances
             self.auto_scaling_client.set_desired_capacity(
                 AutoScalingGroupName=asg_name,
                 DesiredCapacity=current_cap + 1,
