@@ -72,7 +72,9 @@ def create_app(testing=False):
     app.config.from_object(config())
 
     from .models import db
+    from .helpers.utils.general.limiter import limiter
 
+    limiter.init_app(app)
     db.init_app(app)
     jwtManager.init_app(app)
     ma.init_app(app)
