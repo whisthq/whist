@@ -173,7 +173,7 @@ def update_region(self, region_name="us-east-1", ami=None):
     )
 
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
-    all_clusters = [cluster for cluster in all_clusters if "test" not in cluster.cluster]
+    all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
 
     if len(all_clusters) == 0:
         fractal_log(
