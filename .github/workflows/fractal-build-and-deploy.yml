@@ -820,6 +820,16 @@ jobs:
         steps:
             - name: Notify Slack
               run: |
+                  # Retrieve Fractal website associated with current deployment
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                      WEBSITE_URL=https://fractal.co
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                      WEBSITE_URL=https://staging.fractal.co
+                  else
+                      WEBSITE_URL=https://dev.fractal.co
+                  fi
+
+                  # Notify Slack
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` via Upload to AWS S3. You can download it from $WEBSITE_URL.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
