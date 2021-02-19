@@ -30,15 +30,18 @@ Right now, Heroku handles scaling our web workers, but we need to scale our cele
 
 ## Helpers
 
-Our helpers are divided into 2 sections — blueprint-helpers, which directly perform blueprint tasks that don't belong in Celery (generally, querying our DB for information), and utils, which contain all our client wrappers and API callers. Nothing in utils should interact with fractal DBs unless explicitly necessary. In fact, none of your tests for those utils should in any way require fractal to work unless explicitly necessary — any code that interacts with fractal DBs should live in celery tasks or the blueprint helpers. This makes helpers tests significantly easier to mock, as the entire DB doesn't need to be mocked.
+Our helpers are divided into 2 sections — `blueprint_helpers`, which directly perform blueprint tasks that don't belong in Celery (generally, querying our DB for information), and `utils`, which contain all our client wrappers and API callers. Nothing in `utils` should interact with fractal DBs unless explicitly necessary. In fact, none of your tests for those utilities should in any way require fractal to work unless explicitly necessary — any code that interacts with fractal DBs should live in celery tasks or the blueprint helpers. This makes helpers tests significantly easier to mock, as the entire DB doesn't need to be mocked.
 
 ## Models/Serializers
 
-We leverage `flask-sqlalchemy` as our object-relational mapping (ORM), which helps us to easily execute SQL commands without writing raw SQL and catch inconsistencies between the server's understanding of SQL structure and the actual SQL structure at import-time rather than run-time.
+We leverage `flask-sqlalchemy` as our object-relational mapping (ORM), which helps us to easily execute SQL commands without writing raw SQL and catch inconsistencies between the server's understanding of SQL structure and the actual SQL structure at import-time rather than run-time. Specifically, `sqlalchemy` lets us represent database tables as Python objects, making programmatic table modifications more closely resemble the surrounding code.
 
-Files in these directories are named after the DB schemata which they're representing in the ORM.
+Files in `app/models` and `app/serializers` are named after the DB schemata which they're representing in the ORM.
+
+If you're adding a table to the DB, you should add a corresponding model class to the file for the schema that table is part of. Examples can be found in the files.
 
 Models should exactly mimic the DB tables they're based on (down to column names, constraints, and foreign/primary keys), and one model should exist for every DB table. Serializers should use the pattern already shown in the `serializers` files and are a convenient tool to json-ify SQLAlchemy objects (e.g. rows).
+
 
 # Most important code:
 
