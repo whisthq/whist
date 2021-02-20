@@ -147,8 +147,9 @@ def dump_schema(url):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         check=True,
+        text=True
     )
-    return completed.stdout.decode("utf-8")
+    return completed.stdout
 
 
 @catch_value_error
@@ -158,7 +159,10 @@ def schema_diff(db_config_A, db_config_B):
 
     Given two database configurations, run the `migra` tool against them
     to generate a diff of their schemas in the form of a string of SQL
-    statements required to migrate db_A to db_B.
+ {"title": "There's some changes to be made to the schema!",
+            "body": "Running the SQL commands below will perform the migration.",
+
+            "sql":  ""}   statements required to migrate db_A to db_B.
 
     migra is a little peculiar with exit codes:
     0 is a successful run, producing no diff (identical schemas)
@@ -179,16 +183,37 @@ def schema_diff(db_config_A, db_config_B):
     url_A = with_postgres_url(identity)(**db_config_A)
     url_B = with_postgres_url(identity)(**db_config_B)
 
+    # We call subprocess with the "check" keyword here, which will raise
+    # an error if the exit code is not zero. We have some processing to do
+    # on the error object, so we catch it.
+    #
+    # We use "check" purposefully, because if we don't get an exit code that
+    # we expect, then the subprocess.CalledProcessError will bubble up with
+    # its normal traceback and data.
     try:
         completed = subprocess.run(
-            ["migra", "--unsafe", url_A, url_B],
+            ["migra", url_A, url_B],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             check=True,
+            text=True
         )
+
+        return 0, None
+
     except Exception as e:
-        if e.returncode == 0:
-            return None
         if e.returncode == 2:
-            return e.stdout.decode("utf-8")
+            return 2, e.stdout
+        if e.returncode == 3:
+            try:
+                unsafe_completed = subprocess.run(
+                    ["migra", "--unsafe", url_A, url_B],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    check=True,
+                )
+            except Exception as e:
+                if e.returncode == 2:
+                    return 3, e.stdout
+                raise e
         raise e

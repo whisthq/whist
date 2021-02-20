@@ -11,7 +11,7 @@ HEROKU_BASE_URL = "https://api.heroku.com"
 
 # The name of the app as recorded in Heroku,
 # for example: fractal-dev-server.
-HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
+# HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
 
 # The name of the Heroku config variable that contains the
 # URL to connect to the database.
@@ -21,7 +21,7 @@ HEROKU_DB_URL_KEY = "DATABASE_URL"
 # the commands representing the schema of the database from the perspective
 # of the feature branch that is being merged in.
 # It is the "new source of truth".
-SCHEMA_PATH_MERGING = os.environ["SCHEMA_PATH_MERGING"]
+# SCHEMA_PATH_MERGING = os.environ["SCHEMA_PATH_MERGING"]
 
 # The path to the "current" schema. This is the .sql file that contains
 # the commands representing the schema of the dev/staging/prod database.

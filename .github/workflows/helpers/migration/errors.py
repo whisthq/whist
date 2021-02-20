@@ -163,7 +163,10 @@ def catch_process_error(func):
             return func(*args, **kwargs)
 
         except subprocess.CalledProcessError as e:
-            stderr = e.stderr.decode("utf-8").strip()
+            if isinstance(e.stderr, str):
+                stderr = e.stderr
+            else:
+                stderr = e.stderr.decode("utf-8").strip()
             raise format_error(
                 f"The following command returned status {e.returncode}:",
                 str(e.cmd).strip(),

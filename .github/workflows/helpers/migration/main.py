@@ -1,24 +1,13 @@
 #!/usr/bin/env python
 import os
-import pretty_errors
 import containers
-import heroku
-import postgres
 import sys
 import tempfile
 import output
+from postgres import sql_commands, schema_diff
 from pprint import pprint
 from pathlib import Path
-from config import (
-    HEROKU_APP_NAME,
-    HEROKU_DB_URL_KEY,
-    SCHEMA_PATH_CURRENT,
-    SCHEMA_PATH_MERGING,
-    SCHEMA_PATH_DIFFING,
-    DB_CONFIG_MERGING,
-    DB_CONFIG_CURRENT,
-    PERFORM_DATABASE_MIGRATION,
-)
+from config import DB_CONFIG_CURRENT, DB_CONFIG_MERGING
 
 
 def db_from_schema(schema_path, **kwargs):
@@ -38,7 +27,7 @@ def db_from_schema(schema_path, **kwargs):
 
     """
     container = containers.run_postgres_container(**kwargs)
-    postgres.sql_commands(schema_path, **kwargs)
+    sql_commands(schema_path, **kwargs)
     return container
 
 
@@ -56,33 +45,47 @@ def write_to_file(path, string):
 
 
 if __name__ == "__main__":
+    _, PATH_CURRENT, PATH_MERGING = sys.argv
+    PATH_VALIDATE = tempfile.NamedTemporaryFile()
+
     # Dump the schema from the "current" database (fractal server)
-    # using Heroku credentials, and save to a temporary file
-    heroku_config = heroku.config_vars(HEROKU_APP_NAME)
-    heroku_db_url = heroku_config[HEROKU_DB_URL_KEY]
-
-    write_to_file(SCHEMA_PATH_CURRENT, postgres.dump_schema(url=heroku_db_url))
-
-    # Load the merging .sql schema into a fresh postgres database
-    merging = db_from_schema(SCHEMA_PATH_MERGING, **DB_CONFIG_MERGING)
+    # write_to_file(SCHEMA_PATH_CURRENT, postgres.dump_schema(url=DB_URL))
 
     # Load the current .sql schema into a fresh postgres database
-    current = db_from_schema(SCHEMA_PATH_CURRENT, **DB_CONFIG_CURRENT)
+    current = db_from_schema(PATH_CURRENT, **DB_CONFIG_CURRENT)
+
+    # Load the merging .sql schema into a fresh postgres database
+    merging = db_from_schema(PATH_MERGING, **DB_CONFIG_MERGING)
 
     # Generate a diff of sql commands between merging and current
-    diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
+    code, diff = schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
+
+    # The exit codes for this script will mimic the migra diff tool
+    # that it depends on.
+    #
+    # migra uses the following exit codes:
+    # 0 is a successful run, producing no diff (identical schemas)
+    # 1 is a error
+    # 2 is a successful run, producing a diff (non-identical schemas)
+    # 3 is a successful run, but producing no diff, meaning the diff is "unsafe"
+    #
+    # We'll introduce our own exit codes to mark certain issues:
+    # 4 is a successful run, but producing a diff that does not result in
+    #   identical databases upon application.
+
+    if code not in {0, 2, 3, 4}:
+        raise Exception(f"Received an unexpected return code '{code}' from "
+                        + "postgres diff tool 'migra'.")
 
     # If there's no schema diff, exit with code 0.
-    if not diff:
-        output.title("No schema changes for this PR!")
-        output.body("No database migration will be performed.")
+    if code == 0:
         sys.exit(0)
 
     # If there's a diff, we need to test it against the current database
     # Create a temporary file for the diff we just generated, so that
     # it can be run as a SQL command script against the current database
-    write_to_file(SCHEMA_PATH_DIFFING, diff)
-    postgres.sql_commands(SCHEMA_PATH_DIFFING, **DB_CONFIG_CURRENT)
+    write_to_file(PATH_VALIDATE.name, diff)
+    sql_commands(PATH_VALIDATE.name, **DB_CONFIG_CURRENT)
 
     # A successful diff between current and merging should render
     # current and merging when the diff is applied
@@ -91,28 +94,23 @@ if __name__ == "__main__":
     # we run generate a diff once more in hopes of receiving nothing back
     # If this new diff is empty, then current and merging are identical
     # and we can expect the migration to be successful
-    test_diff = postgres.schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
+    _, verification_diff = schema_diff(DB_CONFIG_CURRENT, DB_CONFIG_MERGING)
 
-    if not test_diff:
-        if PERFORM_DATABASE_MIGRATION:
-            # Actually perform migration
-            # postgres.sql_commands(SCHEMA_PATH_DIFFING,
-            #                       url=heroku_db_url)
+    if not verification_diff:
+        # The verification_diff is empty, so the two databases are identical.
+        # This indicates the migration will go smoothly.
+        if code == 2:
+            print(diff)
+            sys.exit(2)
+            # sys.exit(0)
+        if code == 3:
+            print(diff)
+            sys.exit(3)
+            # sys.exit(0)
 
-            output.title("Database migration performed!")
-            output.body(f"The follow SQL commands were sent to {HEROKU_APP_NAME}.")
-            output.sql(diff)
-            sys.exit(0)
-        else:
-            output.title("There's some changes to be made to the schema!")
-            output.body("Running the SQL commands below will perform the migration.")
-            output.sql(diff)
-            sys.exit(0)
     else:
-        output.alert("This migration might not go properly.")
-        output.body("Here's the diff between schemas:")
-        output.sql(diff)
-        output.sep()
-        print("Here's what didn't make it through the diff test:")
-        output.sql(test_diff)
-        sys.exit(0)
+        # The diff will not produce an identical database schema.
+        # Output the SQL commands that will not migrate properly.
+        print(verification_diff)
+        sys.exit(4)
+        # sys.exit(0)
