@@ -1,2 +1,2 @@
 web: waitress-serve --url-scheme=https --port=$PORT app:app
-celery: celery --app celery_worker.celery_instance worker --pool gevent --concurrency $NUM_WORKERS
+celery: celery --app app.worker worker --pool gevent --concurrency $NUM_WORKERS
