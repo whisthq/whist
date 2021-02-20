@@ -1,7 +1,5 @@
 import os
 import uuid
-import ssl
-import logging
 
 from contextlib import contextmanager
 from datetime import datetime, timezone
@@ -9,10 +7,9 @@ from random import getrandbits as randbits
 
 import pytest
 
-from celery.app.task import Task
 from flask_jwt_extended import create_access_token
 
-from app.helpers.utils.general.redis import get_redis_url
+from app.celery_utils import CELERY_CONFIG, celery_params
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 
@@ -111,54 +108,31 @@ def authorized(client, user, monkeypatch):
     return user
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def celery_config():
-    """Configure the Celery application for testing.
+    """Set celery configuration variables.
 
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
+
+    Returns:
+        A dictionary whose keys are celery configuration variables.
     """
 
-    redis_url = get_redis_url()
-
-    if redis_url[:6] == "rediss":
-        # use SSL
-        return {
-            "broker_url": redis_url,
-            "result_backend": redis_url,
-            "broker_use_ssl": {
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-            "redis_backend_use_ssl": {
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-        }
-
-    elif redis_url[:5] == "redis":
-        # use regular
-        return {
-            "broker_url": redis_url,
-            "result_backend": redis_url,
-        }
-
-    # unexpected input, fail out
-    raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
+    return CELERY_CONFIG
 
 
 @pytest.fixture(scope="session")
 def celery_parameters(app):
-    """Continue configuring the Celery application for testing.
+    """Generate celery keyword arguments.
 
     https://docs.celeryproject.org/en/latest/userguide/testing.html#session-scope.
+
+    Returns:
+        A dictionary whose keys are keyword arguments that will be passed to the Celery
+        constructor.
     """
 
-    class ContextTask(Task):
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    return {
-        "task_cls": ContextTask,
-    }
+    return celery_params(app)
 
 
 @pytest.fixture(scope="session")
