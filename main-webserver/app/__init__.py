@@ -5,7 +5,6 @@ from functools import wraps
 
 from flask import current_app, request
 
-from .celery_utils import make_celery
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
@@ -71,9 +70,3 @@ def fractal_pre_process(func):
         return func(*args, **kwargs)
 
     return wrapper
-
-
-app = create_app()
-worker = make_celery(app)
-
-worker.set_default()
