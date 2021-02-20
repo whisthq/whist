@@ -1,58 +1,13 @@
 import json
 import logging
-import os
 
 from functools import wraps
 
-import ssl
-from celery import Celery
 from flask import current_app, request
 
-from app.helpers.utils.general.redis import get_redis_url
-
+from .celery_utils import make_celery
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
-
-
-def make_celery(app_name=__name__):
-    """
-    Returns a Celery object with initialized redis parameters.
-
-    Args:
-        app_name (str): the name of the app to pass to the initial Celery object
-
-    Returns:
-        an initialized `celery.Celery` instance with Redis broker/backend
-    """
-    redis_url = get_redis_url()
-    celery_app = None
-    if redis_url[:6] == "rediss":
-        # use SSL
-        celery_app = Celery(
-            app_name,
-            broker=redis_url,
-            backend=redis_url,
-            broker_use_ssl={
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-            redis_backend_use_ssl={
-                "ssl_cert_reqs": ssl.CERT_NONE,
-            },
-        )
-
-    elif redis_url[:5] == "redis":
-        # use regular
-        celery_app = Celery(
-            app_name,
-            broker=redis_url,
-            backend=redis_url,
-        )
-
-    else:
-        # unexpected input, fail out
-        raise ValueError(f"Unexpected prefix in redis url: {redis_url}")
-
-    return celery_app
 
 
 def fractal_pre_process(func):
@@ -118,8 +73,7 @@ def fractal_pre_process(func):
     return wrapper
 
 
-celery_instance = make_celery()
+app = create_app()
+worker = make_celery(app)
 
-celery_instance.set_default()
-
-app = create_app(celery=celery_instance)
+worker.set_default()
