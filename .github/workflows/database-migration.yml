@@ -1,0 +1,157 @@
+# workflows/main-webserver-check-pr.yml
+#
+# Main Webserver: Check PR
+# Checks a main-webserver PR for linting and unit testing success.
+
+name: "Database Migration"
+
+on:
+    push:
+        branches:
+            - master
+            - staging
+            - dev
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+    workflow_dispatch:
+
+jobs:
+    run-migra-diff:
+        name: Run Migra Diff
+        runs-on: ubuntu-20.04
+
+        env:
+            HEROKU_API_TOKEN: "33c4b079-d5a8-43a7-9c53-119e2da8fcfb"
+            HEROKU_DB_KEY: "DATABASE_URL"
+            SCRIPT_DIFF: ".github/workflows/helpers/migration/main.py"
+            SCRIPT_NOTIFY: ".github/workflows/helpers/migration/notifications.py"
+            SCRIPT_HEROKU: ".github/workflows/helpers/migration/heroku.py"
+            SCRIPT_DUMP_SCHEMA: ".github/workflows/helpers/migration/dump_schema.py"
+            PATH_CURRENT: "../temporary_db_schema.sql"
+            PATH_MERGING: "db.sql"
+            PATH_DIFF: "../temporary_diff_file.sql"
+            # GITHUB_ISSUE_NUMBER: ${{ github.event.number }}
+            # GITHUB_ISSUE_NUMBER: $GITHUB_ISSUE_NUMBER
+
+            # Service containers to run with `container-job`
+        services:
+            # Label used to access the service container
+            postgres:
+                # Docker Hub image
+                image: postgres
+                # Provide the password for postgres
+                env:
+                    POSTGRES_PASSWORD: postgres
+                    # Set health checks to wait until loaded
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    # Maps tcp port 5432 on service container to the host
+                    - 5432:5432
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            # - name: Set up Python 3.8
+            #   uses: actions/setup-python@v2
+            #   with:
+            #       python-version: 3.8
+
+            - name: Install Python and pg tools
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install python3-pip -y
+                  sudo apt-get install libpq-dev -y
+                  sudo apt-get install postgresql-client -y
+                  export python=python3
+
+            - name: Install Python dependencies
+              working-directory: main-webserver
+              run: |
+                  pip3 install docker
+                  pip3 install migra
+                  pip3 install pretty-errors
+                  pip3 install toolz
+                  pip3 install rich
+                  pip3 install psycopg2
+                  pip3 install requests
+                  pip3 install stopit
+                  pip3 install PyGithub
+
+            - name: Choose Heroku App
+              id: heroku-name
+              shell:
+                python3 {0}
+              run: |
+                base_ref = "${{ github.base_ref }}"
+                ref = "${{ github._ref }}"
+                print("it prints:")
+                print(ref)
+                print(base_ref)
+                # appnames = {
+                #     "refs/heads/dev":     "fractal-dev-server",
+                #     "refs/heads/staging": "fractal-staging-server",
+                #     "refs/heads/master":  "fractal-prod-server"
+                # }
+                # app = appnames.get(base_ref)
+                # print(f"::set-output name=name::{app}")
+
+            # - name: Retrieve current database URL
+            #   id: db-url
+            #   run: |
+            #     HEROKU_APP="${{ steps.heroku-name.outputs.name }}"
+            #     URL=$(python3 $SCRIPT_HEROKU $HEROKU_APP $HEROKU_DB_KEY)
+            #     echo "::set-output name=url::$URL"
+
+            # # - name: Dump current database schema to file
+            # #   id: db-dump
+            # #   run: |
+            # #     rm -f $PATH_CURRENT
+            # #     OUT=$(python3 $SCRIPT_DUMP_SCHEMA ${{ steps.db-url.outputs.url }})
+            # #     echo $OUT >> $PATH_CURRENT
+
+            # # - name: Diff current and merging schema files
+            # #   id: db-diff
+            # #   run: |
+            # #      set +e
+            # #      python3 $SCRIPT_DIFF $PATH_CURRENT $PATH_MERGING >> $PATH_DIFF
+            # #      STATUS=$?
+            # #      echo "::set-output name=status::$STATUS"
+
+            # # - name: Send alerts on diff result
+            # #   run: |
+            # #     python3 $SCRIPT_NOTIFY \
+            # #     ${{ steps.db-diff.outputs.status }} \
+            # #     "$(cat ${PATH_DIFF})"
+
+            # - name: Prepare for database migration
+            #   run: |
+            #     import sys
+            #     status = ${{steps.db-diff.outputs.status}}
+            #     if status not in {2, 3}:
+            #         print(f"IT'S NOT VALID: {status}")
+            #         sys.exit(0)
+            #     else:
+            #         print(f"IT'S VALID: {status}")
+            #         sys.exit(0)
+            #   shell: python3 {0}
+
+            # - name: Print GitHub event
+            #   run: |
+            #     from pprint import pprint
+            #     pprint(${{ github.event }})
+
+            #   shell: python3 {0}
+
+            # # - name: Perform database migration
+            # #   if:  success() && ${{}} ==
+            # #   run: |
+            # #     psql --single-transaction --file ${PATH_DIFF} \
+            # #     ${{ steps.db-url.outputs.url }}
