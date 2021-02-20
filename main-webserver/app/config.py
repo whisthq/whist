@@ -20,6 +20,8 @@ from flask import request
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
 
+from app.helpers.utils.general.redis import get_redis_url
+
 # A _ConfigMatrix instance is a two-dimensional object that resembles a 2x2 matrix and is used to
 # look up Flask application configuration objects. The first dimension maps the strings "deployed"
 # and "local" to _ConfigVector instances, which in turn map the strings "serve" and "test" to
@@ -142,8 +144,8 @@ class DeploymentConfig:
     """Flask application configuration for deployed applications.
 
     "Deployed applications" are those running on deployment platforms such as Heroku. They must be
-    started with CONFIG_DB_URL, DATABASE_URL, and REDIS_URL set in the process's execution
-    environment.
+    started with CONFIG_DB_URL, DATABASE_URL, and REDIS_URL or REDIS_TLS_URL set in the process's
+    execution environment.
     """
 
     def __init__(self):
@@ -167,7 +169,7 @@ class DeploymentConfig:
     JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
     JWT_TOKEN_LOCATION = ("headers", "query_string")
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
-    REDIS_URL = property(getter("REDIS_URL", fetch=False))
+    REDIS_URL = get_redis_url()
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
@@ -232,7 +234,6 @@ class LocalConfig(DeploymentConfig):
     db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
     db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
 
-    REDIS_URL = property(getter("REDIS_URL", default="", fetch=False))
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
 
