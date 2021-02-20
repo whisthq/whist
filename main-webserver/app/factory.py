@@ -7,45 +7,28 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
-from hirefire.contrib.flask.blueprint import build_hirefire_blueprint
-from hirefire.procs.celery import CeleryProc
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
 
-from .celery_utils import init_celery
 from .config import CONFIG_MATRIX
-
-PKG_NAME = os.path.dirname(os.path.realpath(__file__)).split("/")[-1]
 
 jwtManager = JWTManager()
 ma = Marshmallow()
 mail = SendGrid()
 
 
-class WorkerProc(CeleryProc):
-    """
-    This is the class that gives hirefire visibility into our
-    celery workers.  These are the default settings from
-    their docs.
-    The name and queues settings both need to be celery--
-    Name because it's our heroku worker name, queues because
-    that's the queue backend.
-    """
+def create_app(testing=False):
+    """A Flask application factory.
 
-    name = "celery"
-    queues = ["celery"]
-    simple_queues = True
-
-
-def create_app(app_name=PKG_NAME, testing=False, **kwargs):
-    """
-    Create app.
+    See https://flask.palletsprojects.com/en/1.1.x/patterns/appfactories/?highlight=factory.
 
     Args:
-        app_name (str)
-        testing (bool)
-        kwargs: can contain `celery`, which should be an initialized celery instance
+        testing: A boolean indicating whether or not to configure the application for testing.
+
+    Returns:
+        A Flask application instance.
     """
+
     # Set up Sentry - only log errors on prod (main) and staging webservers
     env = None
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
@@ -62,8 +45,7 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
 
     template_dir = os.path.dirname(os.path.realpath(__file__))
     template_dir = os.path.join(template_dir, "templates")
-
-    app = Flask(app_name, template_folder=template_dir)
+    app = Flask(__name__.split(".")[0], template_folder=template_dir)
 
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
@@ -71,9 +53,6 @@ def create_app(app_name=PKG_NAME, testing=False, **kwargs):
     config = getattr(getattr(CONFIG_MATRIX, location), action)
 
     app.config.from_object(config())
-
-    if kwargs.get("celery"):
-        init_celery(kwargs.get("celery"), app)
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
@@ -117,15 +96,6 @@ def register_blueprints(app):
     from .blueprints.host_service.host_service_blueprint import host_service_bp
 
     from .blueprints.oauth import oauth_bp
-
-    if not app.testing:
-        # Here we enable hirefire to get the status of our celery tasks and the task queue size.
-        # Arguments are defaults in the hirefire docs.
-
-        hirefire_bp = build_hirefire_blueprint(
-            app.config["HIREFIRE_TOKEN"], ["app.factory.WorkerProc"]
-        )
-        app.register_blueprint(hirefire_bp)
 
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
