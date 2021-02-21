@@ -24,10 +24,10 @@ sudo apt-get install -y jq
 DEVICES=""
 for DEVICE_INDEX in {0..64}
 do
-  DEVICE_PATH="/dev/nvidia${DEVICE_INDEX}"
-  if [ -e "$DEVICE_PATH" ]; then
-    DEVICES="${DEVICES} --device ${DEVICE_PATH}:${DEVICE_PATH} "
-  fi
+    DEVICE_PATH="/dev/nvidia${DEVICE_INDEX}"
+    if [ -e "$DEVICE_PATH" ]; then
+        DEVICES="${DEVICES} --device ${DEVICE_PATH}:${DEVICE_PATH} "
+    fi
 done
 DEVICE_MOUNTS=`printf "$DEVICES"`
 
@@ -59,7 +59,7 @@ EOF
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
-# The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and 
+# The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
 # uploaded from this Git repository to the AMI during Packer via ami_config.json
 # It gets enabled in base_userdata_template.sh
 

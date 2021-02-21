@@ -33,7 +33,7 @@ jobs:
             - name: Check that Bash Scripts are Linted with beautysh
               uses: illvart/beautysh-action@latest
               with:
-                args: '*.sh --indent-size 4 --check'
+                args: '**/*.sh --indent-size 4 --check'
 
             - name: Check that All Bash Scripts Start with "#!/bin/bash"
               run: |

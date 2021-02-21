@@ -84,21 +84,21 @@ create_container() {
 # Helper function to kill a locally running Docker container
 # Args: container_id
 kill_container() {
-  docker kill $1 > /dev/null || true
-  docker rm $1 > /dev/null || true
+    docker kill $1 > /dev/null || true
+    docker rm $1 > /dev/null || true
 }
 
 # Helper function to print error message and then kill a locally running Docker container
 # Args: container_id, error_message
 print_error_and_kill_container() {
-  echo "$2" && kill_container $1 && exit 1
+    echo "$2" && kill_container $1 && exit 1
 }
 
 # Check if host service is even running
 # Args: none
 check_if_host_service_running() {
-  sudo lsof -i :4678 | grep ecs-host > /dev/null \
-  || (echo "Cannot start container because the ecs-host-service is not listening on port 4678. Is it running successfully?" && exit 1)
+    sudo lsof -i :4678 | grep ecs-host > /dev/null \
+        || (echo "Cannot start container because the ecs-host-service is not listening on port 4678. Is it running successfully?" && exit 1)
 }
 
 # Send a start values request to the Fractal ECS host service HTTP server running on localhost
@@ -107,36 +107,36 @@ check_if_host_service_running() {
 # to send it manually until our development pipeline is fully built
 # Args: container_id, DPI, user_id
 send_start_values_request() {
-  # Send the DPI/container-ready request
-  response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_start_values' \
-    --header 'Content-Type: application/json' \
-    --data-raw '{
+    # Send the DPI/container-ready request
+    response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_start_values' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
       "user_id": "'"${3:-}"'"
     }') \
-  || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
-  echo "Sent DPI/container-ready request to container $1!"
-  echo "Response to DPI/container-ready request from host service: $response"
+        || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
+    echo "Sent DPI/container-ready request to container $1!"
+    echo "Response to DPI/container-ready request from host service: $response"
 }
 
 # Send a request to the host service (pretending to be the ecs-agent) setting
 # up the mappings between FractalID and DockerID and AppName.
 # Args: container_id, fractal_id, app_name
 send_register_docker_container_id_request() {
-  # Send the request
-  response=$(curl --insecure --silent --location --request POST 'https://localhost:4678/register_docker_container_id' \
-    --header 'Content-Type: application/json' \
-    --data-raw '{
+    # Send the request
+    response=$(curl --insecure --silent --location --request POST 'https://localhost:4678/register_docker_container_id' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "docker_id": "'"$1"'",
       "fractal_id": "'"$2"'",
       "app_name": "'"$3"'"
     }') \
-  || (print_error_and_kill_container $1 "register_docker_container_id request to the host service failed!")
-  echo "Sent register_docker_container_id request to container $1!"
-  echo "Response to register_docker_container_id request from host service: $response"
+        || (print_error_and_kill_container $1 "register_docker_container_id request to the host service failed!")
+    echo "Sent register_docker_container_id request to container $1!"
+    echo "Response to register_docker_container_id request from host service: $response"
 }
 
 # Send a request to the host service (pretending to be the ecs-agent) asking
@@ -144,24 +144,24 @@ send_register_docker_container_id_request() {
 # that the returned devices will be /dev/input/event{3,4,5}
 # Args: fractal_id
 send_uinput_device_request() {
-  # Send the request
-  response=$(curl --insecure --silent --location --request POST 'https://localhost:4678/create_uinput_devices' \
-    --header 'Content-Type: application/json' \
-    --data-raw '{
+    # Send the request
+    response=$(curl --insecure --silent --location --request POST 'https://localhost:4678/create_uinput_devices' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
       "auth_secret": "testwebserverauthsecretdev",
       "fractal_id": "'"$1"'"
     }') \
-  || (echo "create_uinput_devices request to the host service failed!" && exit 1)
-  echo "Sent create_uinput_devices request for container with FractalID $1!"
-  echo "Response to create_uinput_devices request from host service: $response"
-  host_paths=($((jq -r '.result | fromjson | .[].path_on_host | @sh' <<< "$response") | tr -d \'))
-  container_paths=($((jq -r '.result | fromjson | .[].path_in_container | @sh' <<< "$response") | tr -d \'))
-  device_perms=($((jq -r '.result | fromjson | .[].cgroup_permissions | @sh' <<< "$response") | tr -d \'))
-  devices_arg=$(printf -- "--device=%s:%s:%s\n--device=%s:%s:%s\n--device=%s:%s:%s\n" \
-    "${host_paths[0]}" "${container_paths[0]}" "${device_perms[0]}" \
-    "${host_paths[1]}" "${container_paths[1]}" "${device_perms[1]}" \
-    "${host_paths[2]}" "${container_paths[2]}" "${device_perms[2]}" \
-  )
+        || (echo "create_uinput_devices request to the host service failed!" && exit 1)
+    echo "Sent create_uinput_devices request for container with FractalID $1!"
+    echo "Response to create_uinput_devices request from host service: $response"
+    host_paths=($((jq -r '.result | fromjson | .[].path_on_host | @sh' <<< "$response") | tr -d \'))
+    container_paths=($((jq -r '.result | fromjson | .[].path_in_container | @sh' <<< "$response") | tr -d \'))
+    device_perms=($((jq -r '.result | fromjson | .[].cgroup_permissions | @sh' <<< "$response") | tr -d \'))
+    devices_arg=$(printf -- "--device=%s:%s:%s\n--device=%s:%s:%s\n--device=%s:%s:%s\n" \
+            "${host_paths[0]}" "${container_paths[0]}" "${device_perms[0]}" \
+            "${host_paths[1]}" "${container_paths[1]}" "${device_perms[1]}" \
+            "${host_paths[2]}" "${container_paths[2]}" "${device_perms[2]}" \
+        )
 }
 
 
@@ -172,10 +172,10 @@ container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id $app_name
 docker start $container_id
-send_start_values_request $container_id $dpi $user_id
+send_start_values_request "$container_id" "$dpi" "$user_id"
 
 # Run the Docker container
-docker exec -it $container_id /bin/bash || true
+docker exec -it "$container_id" /bin/bash || true
 
 # Kill the Docker container once we are done
-kill_container $container_id
+kill_container "$container_id"

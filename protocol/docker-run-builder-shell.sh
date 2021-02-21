@@ -20,8 +20,8 @@ fi
 # Run the protocol build command in the Docker container with the right parameters
 docker run $docker_run_flags \
     --rm \
-    --mount type=bind,source=$mount_directory,destination=/workdir \
-    --name $container_name \
+    --mount type=bind,source="$mount_directory",destination=/workdir \
+    --name "$container_name" \
     --user $username \
     fractal/protocol-builder \
     sh -c "$command"

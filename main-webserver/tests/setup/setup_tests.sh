@@ -12,9 +12,9 @@ cd "$DIR"
 # Allow passing `--down` to spin down the docker-compose stack, instead of
 # having to cd into this directory and manually run the command.
 if [[ $* =~ [:space:]*--down[:space:]* ]]; then
-  echo "Running \"docker-compose down\"..."
-  docker-compose down
-  exit 0
+    echo "Running \"docker-compose down\"..."
+    docker-compose down
+    exit 0
 fi
 
 # check if in CI; if so just run fetch and setup scripts then exit

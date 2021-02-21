@@ -4,7 +4,8 @@
 set -Eeuo pipefail
 
 function printhelp {
-    echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
+    echo "Usage: build [OPTION 1] [OPTION 2] ..."
+    echo ""
     echo "Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu."
     echo ""
     echo "  --version VERSION         set the version number of the client app"
@@ -38,16 +39,16 @@ else
 
     # get named params
     while [ $# -gt 0 ]; do
-    if [[ $1 == *"--"* ]]; then
-        param="${1/--/}"
-        declare $param="$2"
-    fi
-    shift
+        if [[ $1 == *"--"* ]]; then
+            param="${1/--/}"
+            declare $param="$2"
+        fi
+        shift
     done
 
     # Only notarize, when publish=true
     notarize=$publish
-    python3 setVersion.gyp $bucket $version $notarize
+    python3 setVersion.gyp "$bucket" "$version" "$notarize"
 
     cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
@@ -96,10 +97,10 @@ else
         if [[ "$env" == "dev" ]]
         then
             yarn set-prod-env-dev
-        elif [[ "$env" == "staging" ]]
+    elif [[ "$env" == "staging" ]]
         then
             yarn set-prod-env-staging
-        elif [[ "$env" == "prod" ]]
+    elif [[ "$env" == "prod" ]]
         then
             yarn set-prod-env-prod
         else

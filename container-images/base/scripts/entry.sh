@@ -26,11 +26,11 @@ done
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 
 # Create a TTY within the container so we don't have to hook it up to one of the host's
-# Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that 
+# Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
 # this CANNOT be done in the Dockerfile because it affects /dev/, so we have to do it here.
 # Note that we always use /dev/tty10 even though the minor number below (i.e.
 # the number after 4) may change
-sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
+sudo mknod -m 620 /dev/tty10 c 4 "$ASSIGNED_TTY"
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 

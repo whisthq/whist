@@ -34,4 +34,4 @@ sentry_env="${2:-}"
 cat fractal-taskdef-template.json | jq '.family |= "'$app'"' | jq -r '{"name":"SENTRY_ENV", "value":"'$sentry_env'"} as $v | (.containerDefinitions[].environment[] | select(.name==$v.name))|=$v' > $app.json
 
 # Echo the task definition filename so the GitHub Actions CI workflow can get the app name
-echo $app.json
+echo "$app".json

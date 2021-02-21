@@ -6,7 +6,7 @@
 # Exit on errors and missing environment variables
 set -Eeuo pipefail
 
-# Set/Retrieve Container parameters 
+# Set/Retrieve Container parameters
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
@@ -57,9 +57,9 @@ fi
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
-    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+    SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -r '.source')
     SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+    DEST_CONFIG_PATH=$(echo "${row}" | jq -r '.destination')
 
     # If original config path does not exist, then continue
     if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -68,13 +68,13 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
 
     # If the source path doesn't exist, then copy default configs to the synced app config folder
     if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+        cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
     fi
 
     # Remove the original configs and symlink the new ones to the original locations
-    rm -rf $DEST_CONFIG_PATH
-    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-    chown -R fractal $SOURCE_CONFIG_PATH
+    rm -rf "$DEST_CONFIG_PATH"
+    ln -sfnT "$SOURCE_CONFIG_PATH $DEST_CONFIG_PATH"
+    chown -R fractal "$SOURCE_CONFIG_PATH"
 done
 
 # Delete broken symlinks from config

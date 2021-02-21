@@ -30,8 +30,8 @@ shift $((OPTIND-1))
 isWindows=0
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    CYGWIN*)    isWindows=1;;
-    MINGW*)     isWindows=1;;
+    CYGWIN*)    isWindows=1 ;;
+    MINGW*)     isWindows=1 ;;
 esac
 
 # array of all folders to be checked and modified
@@ -66,7 +66,7 @@ done
 headerFilter="desktop/|fractal/|server/"
 
 # Run clang-tidy, with || true so that the bash script doesn't exit if clang-tidy fails
-clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
+clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename "$filesToFix" || true
 
 # ---- clean up yaml file before running replacements ----
 

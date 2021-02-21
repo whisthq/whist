@@ -13,11 +13,11 @@ cd "$DIR"
 # If copying the protocol build fails,
 # try compiling first and then copying again
 if ./helper-scripts/copy_protocol_build.sh ; then
-  echo "A protocol build exists, though it is not guaranteed to be up-to-date."
+    echo "A protocol build exists, though it is not guaranteed to be up-to-date."
 else
-  echo "Attempting to copy an existing protocol build failed with the above error. Building ourselves a fresh copy..."
-  ../protocol/build_protocol.sh
-  ./helper-scripts/copy_protocol_build.sh
+    echo "Attempting to copy an existing protocol build failed with the above error. Building ourselves a fresh copy..."
+    ../protocol/build_protocol.sh
+    ./helper-scripts/copy_protocol_build.sh
 fi
 
 # NVIDIA DRIVERS -- DOWNLOAD AND EXTRACT
