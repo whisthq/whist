@@ -116,7 +116,7 @@ LOGS_TASK_ID=$(curl \
 END
 )
 
-# POST $WEBSERVER_URL/protocol_info
+# POST $WEBSERVER_URL/container/protocol_info
 #   Get the AWS container id for this container, for use with the container delete request.
 #   We do this right now because we anyways have to wait for uploading logs to finish.
 # JSON Parameters:
@@ -128,7 +128,7 @@ CONTAINER_ID=$(curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
-    $WEBSERVER_URL/protocol_info \
+    $WEBSERVER_URL/container/protocol_info \
     << END \
     | jq -er ".container_id"
 {
@@ -146,7 +146,7 @@ while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     # JSON Response:
     #   state: The status for the task, "SUCCESS" on completion
     state=$(curl -L -X GET "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
-    
+
     # Since this is post-disconnect, we can afford to query with such a low frequency.
     # We choose to do this to reduce strain on the webserver, with the understanding
     # that we're adding at most 5 seconds to container shutdown time in expectation.
