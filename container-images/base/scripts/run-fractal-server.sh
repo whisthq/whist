@@ -91,7 +91,15 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/fractal/FractalServer $OPTIONS
 
-# Send logs to webserver and grab the task id
+# POST $WEBSERVER_URL/logs
+#   Upload the logs from the protocol run to S3.
+# JSON Parameters:
+#   sender: "server" because these are server protocol logs
+#   identifier: "$IDENTIFIER" because this endpoint wants port mapping for 32262
+#   secret_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
+#   logs: Appropriately JSON-sanitize `log.txt`
+# JSON Response:
+#   ID: the ID for the task for uploading logs; we need this to finish before container delete
 LOGS_TASK_ID=$(curl \
     --header "Content-Type: application/json" \
     --request POST \
@@ -108,17 +116,48 @@ LOGS_TASK_ID=$(curl \
 END
 )
 
+# POST $WEBSERVER_URL/protocol_info
+#   Get the AWS container id for this container, for use with the container delete request.
+#   We do this right now because we anyways have to wait for uploading logs to finish.
+# JSON Parameters:
+#   identifier: "$IDENTIFIER" because this endpoint wants port mapping for 32262
+#   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
+# JSON Response:
+#   container_id: The AWS container id for this container
+CONTAINER_ID=$(curl \
+    --header "Content-Type: application/json" \
+    --request POST \
+    --data @- \
+    $WEBSERVER_URL/protocol_info \
+    << END \
+    | jq -er ".container_id"
+{
+    "identifier": "$IDENTIFIER",
+    "private_key": "$FRACTAL_AES_KEY"
+}
+END
+)
+
 # Poll for logs upload to finish
 state=PENDING
 while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
+    # GET $WEBSERVER_URL/status/$LOGS_TASK_ID
+    #   Get the status of the logs upload task.
+    # JSON Response:
+    #   state: The status for the task, "SUCCESS" on completion
     state=$(curl -L -X GET "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
+    
     # Since this is post-disconnect, we can afford to query with such a low frequency.
     # We choose to do this to reduce strain on the webserver, with the understanding
     # that we're adding at most 5 seconds to container shutdown time in expectation.
     sleep 5
 done
 
-# Delete the container
+# POST $WEBSERVER_URL/container/delete
+#   Trigger the container deletion request in AWS.
+# JSON Parameters:
+#   container_id: The AWS container id for this container.
+#   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
 curl \
 --header "Content-Type: application/json" \
 --request POST \
@@ -126,7 +165,7 @@ curl \
 $WEBSERVER_URL/container/delete \
 << END
 {
-    "container_id": "$IDENTIFIER",
+    "container_id": "$CONTAINER_ID",
     "private_key":  "$FRACTAL_AES_KEY"
 }
 END
