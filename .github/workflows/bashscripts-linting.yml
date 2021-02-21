@@ -1,0 +1,31 @@
+# workflows/bashscripts-linting.yml
+#
+# Bash Scripts: Linting
+# Lint and enforce good practices for Bash Scripts using Shellcheck.
+
+name: "Bash Scripts: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+        paths:
+            - "**/**/*.sh"
+            - ".github/workflows/bashscripts-linting.yml"
+    workflow_dispatch:
+
+jobs:
+    bashscripts-linting-main:
+        name: Lint Bash Scripts
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Run ShellCheck
+              uses: ludeeus/action-shellcheck@master
+              with:
+                check_together: 'yes' # If you run into SC1090/SC1091 errors you may need to tell shellcheck to check all files at once
