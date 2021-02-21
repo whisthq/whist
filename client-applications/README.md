@@ -4,8 +4,6 @@ This repository contains the Fractal client applications, which users download t
 
 See [desktop/README.md](desktop/README.md) for details on contributing to the desktop applications project.
 
-See [mobile/README.md](mobile/README.md) for details on contributing to the mobile applications project. NOTE: This is currently a stale repo with no active development.
-
 ## Supported Applications
 
 The following platforms are supported by the Fractal applications (links are to S3 buckets containing the platform's latest `production` release):
