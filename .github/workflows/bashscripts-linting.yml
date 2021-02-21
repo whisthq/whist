@@ -12,7 +12,7 @@ on:
             - staging
             - dev
         paths:
-            - "**/**/*.sh"
+            - "**/*.sh"
             - ".github/workflows/bashscripts-linting.yml"
     workflow_dispatch:
 
@@ -25,7 +25,33 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Run ShellCheck 
+            - name: Run ShellCheck to Check for Bash Script Good Practices
               uses: ludeeus/action-shellcheck@master
               with:
-                  check_together: "yes" # If you run into SC1090/SC1091 errors you may need to tell shellcheck to check all files at once
+                  check_together: "yes" # Tell Shellcheck to check all files at once
+
+            - name: Check that All Bash Scripts Start with "#!/bin/bash"
+              run: |
+                  find . -name '*.sh' -exec bash -c 'for file do
+
+                    if [[ "`head -c 11 $file`" = "#!/bin/bash" ]]; then
+                        echo "[#!/bin/bash -> Present] $file"
+                    else
+                        echo "[#!/bin/bash -> NOT FOUND] $file" && exit 1
+                    fi
+                  done' -- {} +
+
+            - name: Check that All Bash Scripts Contain "-set -Eeuo pipefail"
+              run: |
+                  find . -name '*.sh' -exec bash -c 'for file do
+                      if grep -q "-set -Eeuo pipefail" "$file"; then
+                        echo "[-set -Eeuo pipefail -> Present] $file"
+                      else
+                          echo "[-set -Eeuo pipefail -> NOT FOUND] $file" && exit 1
+                      fi
+                  done' -- {} +
+
+
+
+
+
