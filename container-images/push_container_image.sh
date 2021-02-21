@@ -18,10 +18,10 @@ deploy_name=fractal/$deploy_env/$1
 ghcr_uri=ghcr.io
 
 # Authenticate to GHCR
-echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
+echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin $ghcr_uri
 
 # Tag the container image following the Fractal naming convention
 docker tag $local_name:$local_tag $ghcr_uri/$deploy_name:$git_hash
 
 # Upload to GHCR
-docker push $ghcr_uri/$deploy_name:$git_hash
+docker push $ghcr_uri/"$deploy_name":"$git_hash"

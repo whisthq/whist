@@ -19,4 +19,4 @@ image=fractal/$app_path:current-build
 mount=${2:-}
 
 # Run the container image stored locally
-./helper-scripts/run_container_image.sh $image $mount
+./helper-scripts/run_container_image.sh "$image" "$mount"

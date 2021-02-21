@@ -53,7 +53,7 @@ echo "Running clang-tidy into ${yamlFolder}/${fixesFilename}"
 filesToFix="desktop/main.c server/main.c"
 for folder in "${includeFolders[@]}"
 do
-    for cFilePath in $(find $folder -type f -regex ".*\.\c")
+    for cFilePath in $(find "$folder" -type f -regex ".*\.\c")
     do
         if [[ "$cFilePath" != *"desktop/main.c"* && "$cFilePath" != *"server/main.c"* ]]
         then
@@ -101,7 +101,7 @@ else
     echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
     echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
 
-    read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
+    read -n -r 1 -p "'c' to replace, ano other key to quit without replacing: " k
     if [[ $k == c ]]
     then
         echo

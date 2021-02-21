@@ -22,7 +22,7 @@ else
     echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
     # add env vars to current env. these tell us the host, db, role, pwd
-    export $(cat ../docker/.env | xargs)
+    export "$(cat ../docker/.env | xargs)"
 
     # override POSTGRES_HOST and POSTGRES_PORT to be local
     export POSTGRES_HOST="localhost"

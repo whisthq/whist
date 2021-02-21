@@ -6,6 +6,6 @@
 set -Eeuo pipefail
 
 docker build . \
-    --build-arg uid=$(id -u ${USER}) \
+    --build-arg uid=$(id -u "${USER}") \
     -f Dockerfile \
     -t fractal/protocol-builder

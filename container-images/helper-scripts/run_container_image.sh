@@ -171,7 +171,7 @@ send_uinput_device_request $fractal_id
 container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id $app_name
-docker start $container_id
+docker start "$container_id"
 send_start_values_request "$container_id" "$dpi" "$user_id"
 
 # Run the Docker container

@@ -22,10 +22,10 @@ ghcr_uri=ghcr.io
 image=$ghcr_uri/$repo_name:$remote_tag
 
 # Authenticate to GHCR
-echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
+echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin $ghcr_uri
 
 # Download the container image from GHCR
-docker pull $image
+docker pull "$image"
 
 # Run the container image retrieved from GHCR
-./helper-scripts/run_container_image.sh $image $mount
+./helper-scripts/run_container_image.sh "$image" "$mount"

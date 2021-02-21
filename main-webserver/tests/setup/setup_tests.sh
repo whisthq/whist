@@ -36,7 +36,7 @@ fi
 bash ../../dummy_certs/create_dummy_certs.sh
 
 # add env vars to current env. these tell us the host, db, role, pwd
-export $(cat ../../docker/.env | xargs)
+export "$(cat ../../docker/.env | xargs)"
 
 # rename for clarity, as we have a remote host and a local host
 export POSTGRES_REMOTE_HOST=$POSTGRES_HOST

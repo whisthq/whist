@@ -10,5 +10,5 @@ fi
 
 # Start Notion
 pushd "/opt/notion-app/" >/dev/null || exit 1
-./electron app $@
+./electron app "$@"
 popd >/dev/null || exit 1

@@ -24,7 +24,7 @@ fi
 (cd "$DIR" && ./download-binaries.sh)
 (cd "$DIR" && ./docker-create-builder.sh)
 (cd "$DIR" && ./docker-run-builder-shell.sh \
-        $(pwd)/.. \
+        "$(pwd)"/.. \
         "                              \
     cd protocol &&                 \
     cmake                          \
