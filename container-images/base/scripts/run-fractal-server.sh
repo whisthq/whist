@@ -96,7 +96,7 @@ done
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-/usr/share/fractal/FractalServer $OPTIONS
+/usr/share/fractal/FractalServer "$OPTIONS"
 
 
 # POST $WEBSERVER_URL/logs
@@ -112,7 +112,7 @@ LOGS_TASK_ID=$(curl \
         --header "Content-Type: application/json" \
         --request POST \
         --data @- \
-        $WEBSERVER_URL/logs \
+        "$WEBSERVER_URL"/logs \
         << END \
     | jq -er ".ID"
 {
@@ -148,7 +148,7 @@ curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
-    $WEBSERVER_URL/container/delete \
+    "$WEBSERVER_URL"/container/delete \
     << END
 {
     "container_id": "$CONTAINER_ID",

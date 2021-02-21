@@ -9,13 +9,13 @@ set -Eeuo pipefail
 # Retrieve the Fractal NVIDIA display config
 XCONFIG="/usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf"
 if [ ! -f ${XCONFIG} ]; then
-    echo "Xconfig at location ${XONFIG} not found (or is not a file)"
+    echo "Xconfig at location ${XCONFIG} not found (or is not a file)"
     exit 1
 fi
 
 # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
-OLDBUSID=`awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG}`
-NEWBUSID=`nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}'`
+OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
+NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}')
 
 # Update the current NVIDIA BusID to the new NVIDIA BusID
 if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then

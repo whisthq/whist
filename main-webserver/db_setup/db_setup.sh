@@ -16,12 +16,12 @@ if [ $IN_CI == "true" ]; then
     echo "=== Initializing db for CI ==="
 
     # copy (slightly modified; see modify_ci_db_schema.py) schema
-    psql -d $POSTGRES_LOCAL_URI -f db_schema.sql
+    psql -d "$POSTGRES_LOCAL_URI" -f db_schema.sql
     echo "===   Errors are ok as long as the db was made   ==="
 
     # copy select data
     echo "===             Putting data into db             ==="
-    psql -d $POSTGRES_LOCAL_URI -f db_data.sql
+    psql -d "$POSTGRES_LOCAL_URI" -f db_data.sql
 
     exit 0
 fi
@@ -36,13 +36,13 @@ cmds="CREATE ROLE $POSTGRES_LOCAL_USER WITH LOGIN CREATEDB;\q"
 psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds
 
 cmds="CREATE DATABASE $POSTGRES_LOCAL_DB;\q"
-psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U $POSTGRES_LOCAL_USER -d postgres <<< $cmds
+psql -h "$POSTGRES_LOCAL_HOST" -p "$POSTGRES_LOCAL_PORT" -U "$POSTGRES_LOCAL_USER" -d postgres <<< $cmds
 
 # copy schema
-psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U $POSTGRES_LOCAL_USER -d $POSTGRES_LOCAL_DB -f db_schema.sql
+psql -h "$POSTGRES_LOCAL_HOST" -p "$POSTGRES_LOCAL_PORT" -U "$POSTGRES_LOCAL_USER" -d "$POSTGRES_LOCAL_DB" -f db_schema.sql
 echo "===   Errors are ok as long as the db was made   ==="
 
 # copy select data
 echo "===             Putting data into db             ==="
-psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U $POSTGRES_LOCAL_USER -d $POSTGRES_LOCAL_DB -f db_data.sql
+psql -h "$POSTGRES_LOCAL_HOST" -p "$POSTGRES_LOCAL_PORT" -U "$POSTGRES_LOCAL_USER" -d "$POSTGRES_LOCAL_DB" -f db_data.sql
 

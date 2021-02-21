@@ -24,7 +24,7 @@ fi
 mkdir -p "base/build-temp/nvidia-driver"
 ../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
 
-python3 ./helper-scripts/build_container_image.py $@
+python3 ./helper-scripts/build_container_image.py "$@"
 
 echo "Cleaning up..."
 rm -rf "base/build-temp"
