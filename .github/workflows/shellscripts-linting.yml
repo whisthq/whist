@@ -1,9 +1,9 @@
-# workflows/bashscripts-linting.yml
+# workflows/shellscripts-linting.yml
 #
-# Bash Scripts: Linting
-# Lint and enforce good practices for Bash Scripts using Shellcheck.
+# Shell Scripts: Linting
+# Lint and enforce good practices for Shell Scripts using Shellcheck.
 
-name: "Bash Scripts: Linting"
+name: "Shell Scripts: Linting"
 
 on:
     pull_request:
@@ -13,11 +13,11 @@ on:
             - dev
         paths:
             - "**/*.sh"
-            - ".github/workflows/bashscripts-linting.yml"
+            - ".github/workflows/shellscripts-linting.yml"
     workflow_dispatch:
 
 jobs:
-    bashscripts-linting-main:
+    shellscripts-linting-main:
         name: Lint Bash Scripts
         runs-on: ubuntu-20.04
 
@@ -33,7 +33,7 @@ jobs:
             - name: Check that Bash Scripts are Linted with beautysh
               uses: illvart/beautysh-action@latest
               with:
-                args: '**/*.sh --indent-size 4 --check'
+                  args: "**/*.sh --indent-size 4 --check"
 
             - name: Check that All Bash Scripts Start with "#!/bin/bash"
               run: |
