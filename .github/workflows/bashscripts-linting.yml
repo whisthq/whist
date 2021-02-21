@@ -30,6 +30,11 @@ jobs:
               with:
                   check_together: "yes" # Tell Shellcheck to check all files at once
 
+            - name: Check that Bash Scripts are Linted with beautysh
+              uses: illvart/beautysh-action@latest
+              with:
+                args: '*.sh --indent-size 4 --check'
+
             - name: Check that All Bash Scripts Start with "#!/bin/bash"
               run: |
                   find . -name '*.sh' -exec bash -c 'for file do
@@ -50,8 +55,3 @@ jobs:
                           echo "[-set -Eeuo pipefail -> NOT FOUND] $file" && exit 1
                       fi
                   done' -- {} +
-
-
-
-
-
