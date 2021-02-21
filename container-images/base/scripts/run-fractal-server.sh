@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This script starts the Fractal protocol server, and assumes that it is
 # being run within a Fractal Docker container.
@@ -111,7 +111,7 @@ END
 # Poll for logs upload to finish
 state=PENDING
 while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
-    state=$(curl -L -X GET -H "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
+    state=$(curl -L -X GET "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
     # Since this is post-disconnect, we can afford to query with such a low frequency.
     # We choose to do this to reduce strain on the webserver, with the understanding
     # that we're adding at most 5 seconds to container shutdown time in expectation.
