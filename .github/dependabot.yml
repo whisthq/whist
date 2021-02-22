@@ -20,14 +20,14 @@ updates:
   #####################################################
   ################ Client-Applications ################
 
-  - package-ecosystem: "yarn"
-    directory: "/client-applications/desktop" # looks for package.json and yarn.lock file in this directory
+  - package-ecosystem: "npm"
+    directory: "/client-applications/desktop" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "daily" # runs on every weekday, Monday to Friday
     open-pull-requests-limit: 10
   
-  - package-ecosystem: "yarn"
-    directory: "/client-applications/desktop/app" # looks for package.json and yarn.lock file in this directory
+  - package-ecosystem: "npm"
+    directory: "/client-applications/desktop/app" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
       interval: "daily" # runs on every weekday, Monday to Friday
     open-pull-requests-limit: 10
