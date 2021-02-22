@@ -14,8 +14,14 @@ export const openExternal = (url: string) => {
         void
     */
 
-    const { shell } = require("electron")
-    shell.openExternal(url)
+    const BrowserWindow = require("electron").remote.BrowserWindow
+
+    let win = new BrowserWindow({ width: 800, height: 600 })
+    win.on("close", () => {
+        win = null
+    })
+    win.loadURL(url)
+    win.show()
 }
 
 export const searchArrayByKey = (
@@ -123,8 +129,8 @@ export const generateToken = async () => {
     */
     const crypto = require("crypto")
 
-    const buffer = await new Promise((resolve, reject) => {
-        crypto.randomBytes(128, (err, buf) => {
+    const buffer: Buffer = await new Promise((resolve, reject) => {
+        crypto.randomBytes(128, (err: Error, buf: Buffer) => {
             if (err) {
                 reject(err)
             }
