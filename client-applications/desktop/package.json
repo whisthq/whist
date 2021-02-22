@@ -119,7 +119,7 @@
         "@testing-library/jest-dom": "^5.11.6",
         "@testing-library/react": "^11.2.2",
         "autoprefixer": "9",
-        "aws-sdk": "^2.830.0",
+        "aws-sdk": "^2.849.0",
         "bootstrap": "^4.5.2",
         "connected-react-router": "^6.6.1",
         "core-js": "^3",
