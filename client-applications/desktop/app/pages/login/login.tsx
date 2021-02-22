@@ -123,6 +123,7 @@ export const Login = (props: {
     }
 
     const ipc = require("electron").ipcRenderer
+
     useEffect(() => {
         ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
     }, [])
