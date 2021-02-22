@@ -1,6 +1,6 @@
 /* eslint-disable */
 export const categories = {
-    // auth, joining the waitlist, etcetera
+    // auth, etcetera
     USER: "User",
     // clicking buttons looking around the site
     POINTS: "Points",
@@ -24,13 +24,11 @@ export const actions = {
             SIGNUP_FACEBOOK: "Created account with facebook",
         },
 
-        JOIN_WAITLIST: "Joind the waitlist",
         VERIFY_EMAIL: "Verified email",
         FORGOT_PASSWORD: "Forgot password",
         RESET_PASSWORD: "Reset password",
 
         LOGOUT: "Logged out",
-        LOGOUT_WAITLIST: "Logged out from the waitlist",
     },
     POINTS: {
         CLICKED_EASTEREG: "Clicked an easter egg",

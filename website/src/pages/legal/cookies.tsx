@@ -4,8 +4,9 @@ import { HashLink } from "react-router-hash-link"
 import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
-function Cookies(props: any) {
+const Cookies = () => {
     const { width } = useContext(MainContext)
+
     return (
         <div style={{ overflowX: "hidden" }} id="top">
             <div
@@ -16,26 +17,20 @@ function Cookies(props: any) {
                     margin: "auto",
                 }}
             >
-                <div style={{ fontSize: 40 }}>
-COOKIE POLICY
-</div>
+                <div style={{ fontSize: 40 }}>COOKIE POLICY</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
                     Last updated October 8th, 2020
                 </div>
                 <p>
                     Fractal Computers, Inc. (“we” or “us” or “our”) may use
                     cookies and other tracking technologies when you visit our
-                    website,
-{" "}
-                    <HashLink to="/privacy#top">
-www.fractal.co
-</HashLink>
-,
+                    website,{" "}
+                    <HashLink to="/privacy#top">www.fractal.co</HashLink>,
                     including any other media form, media channel, mobile
                     website, or mobile application related or connected thereto
                     (collectively, the “Site”) to help customize the Site and
                     improve your experience.
-</p>
+                </p>
                 <p>
                     We reserve the right to make changes to this Cookie Policy
                     at any time and for any reason. We will alert you about any
@@ -107,9 +102,7 @@ www.fractal.co
                     experience possible when using the Site.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: "bold" }}>
-Account Cookies
-</p>
+                    <p style={{ fontWeight: "bold" }}>Account Cookies</p>
                     <p>
                         When you create an account with us, we use cookies for
                         the management of the signup process and general
@@ -148,9 +141,7 @@ Account Cookies
                         that your order is remembered between pages so that we
                         can process it properly.
                     </p>
-                    <p style={{ fontWeight: "bold" }}>
-Survey Cookies
-</p>
+                    <p style={{ fontWeight: "bold" }}>Survey Cookies</p>
                     <p>
                         From time to time we offer user surveys and
                         questionnaires to provide you with interesting insights,
@@ -159,9 +150,7 @@ Survey Cookies
                         who has already taken part in a survey or to provide you
                         with accurate results across pages.
                     </p>
-                    <p style={{ fontWeight: "bold" }}>
-Preference Cookies
-</p>
+                    <p style={{ fontWeight: "bold" }}>Preference Cookies</p>
                     <p>
                         In order to provide you with a great experience on this
                         Site, we provide the functionality to set your
@@ -198,27 +187,18 @@ Preference Cookies
                 <p>
                     For more information about how we use information collected
                     by cookies and other tracking technologies, please refer to
-                    our 
-{' '}
-<HashLink to="/privacy#top">
-Privacy Policy
-</HashLink>
-.
+                    our <HashLink to="/privacy#top">Privacy Policy</HashLink>.
                     This Cookie Policy is part of and is incorporated into our
                     Privacy Policy. By using the Site, you agree to be bound by
                     this Cookie Policy and our Privacy Policy.
-</p>
+                </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     More Information
                 </p>
                 <p>
                     If you are looking for more information, you can contact us
-                    via email at
-{" "}
-                    <a href="mailto: support@fractal.co">
-                        support@fractal.co
-                    </a>
-                    .
+                    via email at{" "}
+                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
                 </p>
             </div>
         </div>

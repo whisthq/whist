@@ -1,12 +1,10 @@
 import AuthReducer from "store/reducers/auth/reducer"
-import WaitlistReducer from "store/reducers/waitlist/reducer"
 import DashboardReducer from "store/reducers/dashboard/reducer"
 
 import { combineReducers } from "redux"
 
 const reducers = combineReducers({
     AuthReducer: AuthReducer,
-    WaitlistReducer: WaitlistReducer,
     DashboardReducer: DashboardReducer,
 })
 

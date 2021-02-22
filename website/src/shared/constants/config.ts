@@ -1,5 +1,7 @@
 /* eslint-disable */
-const environment: any = {
+import { FractalEnvironment, FractalConfig } from "shared/types/config"
+
+const environment: FractalEnvironment = {
     local: {
         url: {
             WEBSERVER_URL: "http://127.0.0.1:7730",
@@ -14,10 +16,10 @@ const environment: any = {
         },
         sentry_env: "development",
         client_download_urls: {
-            MacOS:
-                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+            macOS:
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: true,
         video_enabled: true,
@@ -36,10 +38,10 @@ const environment: any = {
         },
         sentry_env: "development",
         client_download_urls: {
-            MacOS:
-                "https://fractal-mac-application-testing.s3.amazonaws.com/Fractal.dmg",
+            macOS:
+                "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-testing.s3.amazonaws.com/Fractal.exe   ",
+                "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: true,
         video_enabled: true,
@@ -58,10 +60,10 @@ const environment: any = {
         },
         sentry_env: "staging",
         client_download_urls: {
-            MacOS:
-                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+            macOS:
+                "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
         },
         video_enabled: false,
         payment_enabled: false,
@@ -80,10 +82,10 @@ const environment: any = {
         },
         sentry_env: "production",
         client_download_urls: {
-            MacOS:
-                "https://fractal-mac-application-release.s3.amazonaws.com/Fractal.dmg",
+            macOS:
+                "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
             Windows:
-                "https://fractal-windows-application-base.s3.amazonaws.com/Fractal.exe",
+                "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
         },
         payment_enabled: false,
         video_enabled: false,
@@ -93,9 +95,12 @@ const environment: any = {
 const LIVE_ENV = process.env.REACT_APP_ENVIRONMENT
     ? process.env.REACT_APP_ENVIRONMENT.toString()
     : "development"
-
 // export const config: any = environment.local
-export const config: any =
-    process.env.NODE_ENV === "development"
-        ? environment.local
-        : environment[LIVE_ENV]
+export const config: FractalConfig = (() => {
+    if (process.env.NODE_ENV !== "development")
+        return environment[LIVE_ENV as keyof FractalEnvironment]
+
+    if (process.env.REACT_APP_USE_DOCKER) return environment.local
+
+    return environment.development
+})()

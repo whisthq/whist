@@ -6,6 +6,8 @@ import MasterCard from "assets/cards/masterCard.svg"
 import UnionPay from "assets/cards/unionPay.svg"
 import Visa from "assets/cards/visa.svg"
 
+import { FractalPlan } from "shared/types/payment"
+
 export const CARDS: { [key: string]: any } = {
     "American Express": AmericanExpress,
     "Diners Club": DinersClub,
@@ -25,10 +27,27 @@ export const STRIPE_OPTIONS = {
     ],
 }
 
-export const PLANS: { [key: string]: { price: number; subtext: string } } = {
-    Hourly: { price: 5, subtext: "+$0.70 /hr of usage" },
-    Monthly: { price: 39, subtext: "6 hr/day +$0.50 per extra hour" },
-    Unlimited: { price: 99, subtext: "unlimited daily usage" },
+// TODO: This should be stored in a database and pulled via GraphQL
+export const PLANS: {
+    [key: string]: {
+        price: number
+        name: FractalPlan
+        subText: string
+        details: string[]
+    }
+} = {
+    Starter: {
+        price: 50,
+        name: FractalPlan.STARTER,
+        subText: "Additional 7-day free trial",
+        details: ["Unlimited usage", "Access to alpha features"],
+    },
+    Pro: {
+        price: 99,
+        name: FractalPlan.PRO,
+        subText: "Coming Soon",
+        details: ["Everything in Starter", "Stream other browsers"],
+    },
 }
 
 export const TAX_RATES: { [key: string]: number } = {

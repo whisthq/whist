@@ -1,15 +1,8 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import SecretPoints from "shared/components/secretPoints"
-import WaitlistForm from "shared/components/waitlistForm"
 import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
-import {
-    SECRET_POINTS,
-    EASTEREGG_POINTS,
-    EASTEREGG_RAND,
-} from "shared/utils/points"
 
 import GraphicsImage from "assets/largeGraphics/graphics.svg"
 import SpeedTestBackground from "assets/largeGraphics/speedTestBackground.svg"
@@ -23,7 +16,7 @@ import BlenderShadow from "assets/largeGraphics/blenderShadow.svg"
 import MayaShadow from "assets/largeGraphics/mayaShadow.svg"
 import UnityShadow from "assets/largeGraphics/unityShadow.svg"
 
-const SideBySide = (props: { case: string }) => {
+export const SideBySide = (props: any) => {
     const { appHighlight, width } = useContext(MainContext)
 
     const yourApps = appHighlight ? appHighlight : "your apps"
@@ -44,32 +37,25 @@ const SideBySide = (props: { case: string }) => {
         Graphics: (
             <div>
                 <div>
-                    Fractal runs 
-{' '}
-{yourApplications}
-{' '}
-on cloud GPUs. Unlike
-                    virtual desktops, Fractal streams just the app, so using
-{" "}
-                    {theApp}
-{' '}
-feels native.
-</div>
+                    Fractal runs {yourApplications} on cloud GPUs. Unlike
+                    virtual desktops, Fractal streams just the app, so using{" "}
+                    {theApp} feels native.
+                </div>
             </div>
         ),
         Gaming: (
-            <div>
-                <div>
+            <span>
+                <span>
                     Fractal leverages our high-fidelity streaming tech to run
                     and stream your app from the nearest AWS server.
-                </div>
-                <div style={{ marginTop: 20 }}>
+                </span>
+                <span style={{ marginTop: 20, display: "block" }}>
                     Using an app on Fractal is as easy as using the app
                     normally. We handle all the complexity so that your
                     experience is seamless. All that's required to run Fractal
                     is an 8 Mbps Internet connection.
-                </div>
-            </div>
+                </span>
+            </span>
         ),
     }
 
@@ -98,7 +84,7 @@ feels native.
                     position: "absolute",
                     top: "50%",
                     left: "50%",
-                    transform: "translate(-53%, -50%)",
+                    transform: "translate(-50%, -50%)",
                     width: "50%",
                     display: "inline-block",
                 }}
@@ -115,7 +101,7 @@ feels native.
                     display: "inline-block",
                 }}
                 src={ChromeShadow}
-                className="bounce"
+                className="animate-bounce"
                 alt=""
             />
             <img
@@ -127,7 +113,7 @@ feels native.
                     display: "inline-block",
                 }}
                 src={FirefoxShadow}
-                className="bounce"
+                className="animate-bounce"
                 alt=""
             />
             <img
@@ -139,7 +125,7 @@ feels native.
                     animationDelay: "0.4s",
                     display: "inline-block",
                 }}
-                className="bounce"
+                className="animate-bounce"
                 src={FigmaShadow}
                 alt=""
             />
@@ -188,7 +174,7 @@ feels native.
                         animationDelay: "0.2s",
                     }}
                     src={BlenderShadow}
-                    className="bounce"
+                    className="animate-bounce"
                     alt=""
                 />
                 <img
@@ -199,7 +185,7 @@ feels native.
                         width: width > ScreenSize.SMALL ? "100px" : "60px",
                     }}
                     src={MayaShadow}
-                    className="bounce"
+                    className="animate-bounce"
                     alt=""
                 />
                 <img
@@ -210,7 +196,7 @@ feels native.
                         width: width > ScreenSize.SMALL ? "70px" : "40px",
                         animationDelay: "0.4s",
                     }}
-                    className="bounce"
+                    className="animate-bounce"
                     src={UnityShadow}
                     alt=""
                 />
@@ -276,9 +262,7 @@ feels native.
                     lg={{ span: 6 }}
                 >
                     <div style={{ position: "relative" }}>
-                        <div>
-{images[props.case]}
-</div>
+                        <div>{images[props.case]}</div>
                     </div>
                 </Col>
                 <Col
@@ -303,7 +287,6 @@ feels native.
                         <h2
                             style={{
                                 fontSize: 50,
-                                fontWeight: "bold",
                                 color: "#111111",
                                 lineHeight: 1.3,
                             }}
@@ -318,23 +301,8 @@ feels native.
                         >
                             {descriptions[props.case]}
                         </p>
-                        {props.case === "Gaming" ||
-                        props.case === "Graphics" ? (
-                            <SecretPoints
-                                points={EASTEREGG_POINTS + EASTEREGG_RAND()}
-                                name={
-                                    props.case === "Graphics"
-                                        ? SECRET_POINTS.LANDING_NO_GPU_NO_PROBLEM
-                                        : SECRET_POINTS.ABOUT_HOW_IT_WORKS
-                                }
-                            />
-                        ) : (
-                            <div />
-                        )}
                         {props.case === "Gaming" && (
-                            <div style={{ marginTop: 30 }}>
-                                <WaitlistForm />
-                            </div>
+                            <div style={{ marginTop: 30 }}></div>
                         )}
                     </div>
                 </Col>

@@ -1,32 +1,26 @@
-import React, { useEffect } from "react"
+import React, { useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
 
-import Landing from "pages/landing/landing"
-import Application from "pages/application/application"
-import About from "pages/about/about"
+// import Landing from "pages/homepage/landing/landing"
+import About from "pages/homepage/about/about"
 import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
 import Privacy from "pages/legal/privacy"
 import Auth from "pages/auth/auth"
-import Verify from "pages/auth/verify"
-import Reset from "pages/auth/reset"
+import Verify from "pages/auth/verify/verify"
+import Reset from "pages/auth/reset/reset"
 import Dashboard from "pages/dashboard/dashboard"
-import Profile from "pages/profile/profile"
-import AuthCallback from "pages/auth/callback"
-import Plan from "pages/plan/plan"
-import Payment from "pages/payment/payment"
-import Cancel from "pages/cancel/cancel"
-import Canceled from "pages/cancel/canceled"
-import Confirmation from "pages/confirmation/confirmation"
+import AuthCallback from "pages/auth/callback/callback"
+import Products from "pages/homepage/products/products"
 
+import routes from "shared/constants/routes"
 import withTracker from "shared/utils/withTracker"
 
 import * as SharedAction from "store/actions/shared"
 
-const RootApp = (props: any) => {
+const RootApp = (props: { dispatch: Dispatch<any> }) => {
     const { dispatch } = props
-
     const refreshState = () => {
         // this will do a smart merge that will basically
         // keep them logged in if they existed and update the other state variables
@@ -45,60 +39,62 @@ const RootApp = (props: any) => {
     return (
         <div>
             <Switch>
-                <Route exact path="/about" component={withTracker(About)} />
                 <Route
                     exact
-                    path="/application"
-                    component={withTracker(Application)}
+                    path={routes.ABOUT}
+                    component={withTracker(About)}
                 />
-                <Route exact path="/cookies" component={withTracker(Cookies)} />
-                <Route exact path="/privacy" component={withTracker(Privacy)} />
                 <Route
                     exact
-                    path="/termsofservice"
+                    path={routes.COOKIES}
+                    component={withTracker(Cookies)}
+                />
+                <Route
+                    exact
+                    path={routes.PRIVACY}
+                    component={withTracker(Privacy)}
+                />
+                <Route
+                    exact
+                    path={routes.TOS}
                     component={withTracker(TermsOfService)}
                 />
-                <Route
-                    path="/auth/:first?/:second?"
-                    component={withTracker(Auth)}
-                />
-                <Route exact path="/verify" component={withTracker(Verify)} />
-                <Route exact path="/reset" component={withTracker(Reset)} />
+                <Route path={routes.AUTH} component={withTracker(Auth)} />
                 <Route
                     exact
-                    path="/callback"
+                    path={routes.VERIFY}
+                    component={withTracker(Verify)}
+                />
+                <Route
+                    exact
+                    path={routes.RESET}
+                    component={withTracker(Reset)}
+                />
+                <Route
+                    exact
+                    path={routes.AUTH_CALLBACK}
                     component={withTracker(AuthCallback)}
                 />
                 <Route
-                    exact
-                    path="/dashboard"
+                    path={routes.DASHBOARD}
                     component={withTracker(Dashboard)}
                 />
-                <Route exact path="/profile" component={withTracker(Profile)} />
-                <Route exact path="/plan" component={withTracker(Plan)} />
-                <Route exact path="/payment" component={withTracker(Payment)} />
+                {/* <Route
+                    exact
+                    path={routes.PRODUCTS}
+                    component={withTracker(Products)}
+                /> */}
                 <Route
                     exact
-                    path="/confirmation"
-                    component={withTracker(Confirmation)}
-                />
-                <Route exact path="/cancel" component={withTracker(Cancel)} />
-                <Route
-                    exact
-                    path="/canceled"
-                    component={withTracker(Canceled)}
-                />
-                <Route
-                    exact
-                    path="/:first?/:second?"
-                    component={withTracker(Landing)}
+                    path={routes.LANDING}
+                    component={withTracker(Products)}
                 />
             </Switch>
         </div>
     )
 }
 
-function mapStateToProps(state: any) {
+const mapStateToProps = () => {
     return {}
 }
 

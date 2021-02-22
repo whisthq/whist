@@ -18,7 +18,7 @@ export const SEND_VERIFICATION_EMAIL = "SEND_VERIFICATION_EMAIL"
 
 export const FETCH_PAYMENT_INFO = "FETCH_PAYMENT_INFO"
 
-export function googleLogin(code: any, rememberMe?: boolean) {
+export const googleLogin = (code: any, rememberMe?: boolean) => {
     return {
         type: GOOGLE_LOGIN,
         code,
@@ -26,11 +26,11 @@ export function googleLogin(code: any, rememberMe?: boolean) {
     }
 }
 
-export function emailLogin(
+export const emailLogin = (
     email: string,
     password: string,
     rememberMe?: boolean
-) {
+) => {
     return {
         type: EMAIL_LOGIN,
         email,
@@ -39,12 +39,12 @@ export function emailLogin(
     }
 }
 
-export function emailSignup(
+export const emailSignup = (
     email: string,
     name: string,
     password: string,
     rememberMe?: boolean
-) {
+) => {
     return {
         type: EMAIL_SIGNUP,
         email,
@@ -54,7 +54,7 @@ export function emailSignup(
     }
 }
 
-export function googleSignup(code: any, rememberMe?: boolean) {
+export const googleSignup = (code: string, rememberMe?: boolean) => {
     return {
         type: GOOGLE_SIGNUP,
         code,
@@ -62,32 +62,33 @@ export function googleSignup(code: any, rememberMe?: boolean) {
     }
 }
 
-export function validateVerificationToken(token: any) {
+export const validateVerificationToken = (token: string) => {
     return {
         type: VALIDATE_VERIFY_TOKEN,
         token,
     }
 }
 
-export function validateResetToken(token: any) {
+export const validateResetToken = (token: string) => {
     return {
         type: VALIDATE_RESET_TOKEN,
         token,
     }
 }
 
-export function forgotPassword(username: string) {
+export const forgotPassword = (username: string, token?: string) => {
     return {
         type: FORGOT_PASSWORD,
         username,
+        token,
     }
 }
 
-export function resetPassword(
-    username: string,
+export const resetPassword = (
     password: string,
-    token: string
-) {
+    token?: string,
+    username?: string
+) => {
     return {
         type: RESET_PASSWORD,
         username,
@@ -96,7 +97,7 @@ export function resetPassword(
     }
 }
 
-export function sendVerificationEmail(email: string, token: string) {
+export const sendVerificationEmail = (email?: string, token?: string) => {
     return {
         type: SEND_VERIFICATION_EMAIL,
         email,
@@ -104,7 +105,10 @@ export function sendVerificationEmail(email: string, token: string) {
     }
 }
 
-export function updatePassword(currentPassword: string, newPassword: string) {
+export const updatePassword = (
+    currentPassword: string,
+    newPassword: string
+) => {
     return {
         type: UPDATE_PASSWORD,
         currentPassword,
@@ -112,7 +116,7 @@ export function updatePassword(currentPassword: string, newPassword: string) {
     }
 }
 
-export function fetchPaymentInfo(email: string) {
+export const fetchPaymentInfo = (email: string) => {
     return {
         type: FETCH_PAYMENT_INFO,
         email,

@@ -1,5 +1,5 @@
 import React from "react"
-import "styles/auth.css"
+import styles from "styles/auth.module.css"
 
 /**
  * A title component that announces the state of the Verify page when it is not processing. It is used
@@ -12,7 +12,7 @@ export const Title = (props: { title: string; subtitle?: string }) => {
 
     return (
         <div>
-            <div className="auth-title" style={{ marginBottom: 15 }}>
+            <div className={styles.authTitle} style={{ marginBottom: 15 }}>
                 {title}
             </div>
             {subtitle && (

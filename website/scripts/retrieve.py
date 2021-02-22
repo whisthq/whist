@@ -13,35 +13,36 @@ AWS_SECRET_ACCESS_KEY = "AWS_ACCESS_KEY_ID"
 AWS_REGION = "us-east-1"
 
 # local filenames by the types
-TYPES_LOCAL = {
-    "env" : "../.env"
-}
+TYPES_LOCAL = {"env": "../.env"}
+
 
 def get_upload_filename(repo, filetype, timestamp=None):
-    return "-".join([
-        repo,
-        filetype,
-        timestamp if timestamp else datetime.now().strftime("%Y%m%d")
-    ])
+    return "-".join(
+        [repo, filetype, timestamp if timestamp else datetime.now().strftime("%Y%m%d")]
+    )
+
 
 def get_latest_filename(repo, filetype, s3):
     file_objects = s3.Bucket(SECRET_BUCKET).objects.all()
 
     # the latest name in the format repo-filetype-name
     repo, filetype, timestamp = max(
-            filter(
-                lambda name: name[0] == repo and name[1] == filetype, # such that repo and filetype match
-                map(
-                    lambda fo: fo.key.split("-"), # only by name
-                    file_objects,
-                    ),
+        filter(
+            lambda name: name[0] == repo
+            and name[1] == filetype,  # such that repo and filetype match
+            map(
+                lambda fo: fo.key.split("-"),  # only by name
+                file_objects,
             ),
-            key=lambda name: name[-1], # sorting by the timestamp
-        ) # and take filetype and get it's mapped version from TYPES_LOCAL to store as secret correctly
+        ),
+        key=lambda name: name[-1],  # sorting by the timestamp
+    )  # and take filetype and get it's mapped version from TYPES_LOCAL to store as secret correctly
 
     # remote, local
-    return get_upload_filename(repo, filetype, timestamp=timestamp), TYPES_LOCAL[filetype]
-
+    return (
+        get_upload_filename(repo, filetype, timestamp=timestamp),
+        TYPES_LOCAL[filetype],
+    )
 
 
 if __name__ == "__main__":
@@ -90,8 +91,7 @@ if __name__ == "__main__":
         remote, local = get_latest_filename(args.repo, args.type, s3)
     else:
         remote, local = args.file, TYPES_LOCAL[args.file.split("-")[1]]
-    
+
     s3.Bucket(SECRET_BUCKET).download_file(remote, local)
 
     print(f"Downloaded {remote} to {local}.")
-    

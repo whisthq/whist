@@ -1,10 +1,12 @@
-import React from "react"
+import React, { ChangeEvent, KeyboardEvent } from "react"
 
 import Input from "shared/components/input"
 
 import { checkPassword } from "pages/auth/constants/authHelpers"
 
-import "styles/auth.css"
+import "styles/auth.module.css"
+import PLACEHOLDER from "shared/constants/form"
+import { E2E_AUTH_IDS } from "testing/utils/testIDs"
 
 /**
  * This is a simple form meant to help us do a confirm-password form (given that there is a lot of overlap).
@@ -27,9 +29,9 @@ import "styles/auth.css"
  * We'd like to have logic in one place to make it easier to work with.
  */
 const PasswordConfirmForm = (props: {
-    changePassword: (evt: any) => any
-    changeConfirmPassword: (evt: any) => any
-    onKeyPress: (evt: any) => any
+    changePassword: (evt: ChangeEvent<HTMLInputElement>) => void
+    changeConfirmPassword: (evt: ChangeEvent<HTMLInputElement>) => void
+    onKeyPress: (evt: KeyboardEvent) => void
     password: string
     confirmPassword: string
     passwordWarning?: string
@@ -53,9 +55,12 @@ const PasswordConfirmForm = (props: {
         <div style={{ width: "100%" }}>
             <div style={{ marginTop: isFirstElement ? 40 : 13 }}>
                 <Input
+                    id={E2E_AUTH_IDS.PASSWORD}
                     text={profile ? "New Password" : "Password"}
                     type="password"
-                    placeholder={profile ? "New Password" : "Password"}
+                    placeholder={
+                        profile ? PLACEHOLDER.NEWPASSWORD : PLACEHOLDER.PASSWORD
+                    }
                     onChange={changePassword}
                     onKeyPress={onKeyPress}
                     value={password}
@@ -65,9 +70,10 @@ const PasswordConfirmForm = (props: {
             </div>
             <div style={{ marginTop: 13 }}>
                 <Input
+                    id={E2E_AUTH_IDS.CONFIRMPASSWORD}
                     text="Confirm Password"
                     type="password"
-                    placeholder="Password"
+                    placeholder={PLACEHOLDER.CONFIRMPASSWORD}
                     onChange={changeConfirmPassword}
                     onKeyPress={onKeyPress}
                     value={confirmPassword}

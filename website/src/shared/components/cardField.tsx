@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import { CardElement, useStripe, useElements } from "@stripe/react-stripe-js"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
@@ -7,9 +7,15 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import * as PaymentSideEffect from "store/actions/dashboard/payment/sideEffects"
 
-import "styles/profile.css"
+import { StripeInfo } from "shared/types/reducers"
+import { User } from "shared/types/reducers"
+import { PAYMENT_IDS } from "testing/utils/testIDs"
 
-const CardField = (props: any) => {
+const CardField = (props: {
+    dispatch: Dispatch<any>
+    stripeInfo: StripeInfo
+    setEditingCard: any
+}) => {
     const { dispatch, stripeInfo, setEditingCard } = props
 
     const [savingCard, setSavingCard] = useState(false)
@@ -22,7 +28,7 @@ const CardField = (props: any) => {
     const elements = useElements()
 
     useEffect(() => {
-        if (stripeInfo.stripeRequestRecieved) {
+        if (stripeInfo.stripeRequestReceived) {
             if (stripeInfo.stripeStatus === "success") {
                 setSavingCard(false)
                 dispatch(
@@ -30,7 +36,7 @@ const CardField = (props: any) => {
                         cardBrand: currentBrand,
                         cardLastFour: currentLastFour,
                         postalCode: currentPostalCode,
-                        stripeRequestRecieved: false,
+                        stripeRequestReceived: false,
                         stripeStatus: null,
                     })
                 )
@@ -40,7 +46,7 @@ const CardField = (props: any) => {
                 setSavingCard(false)
                 dispatch(
                     PaymentPureAction.updateStripeInfo({
-                        stripeRequestRecieved: false,
+                        stripeRequestReceived: false,
                         stripeStatus: null,
                     })
                 )
@@ -112,7 +118,7 @@ const CardField = (props: any) => {
                 fontSmoothing: "antialiased",
                 fontSize: "15px",
                 "::placeholder": {
-                    color: "#777777",
+                    color: "#999999",
                 },
             },
             invalid: {
@@ -143,18 +149,16 @@ const CardField = (props: any) => {
                 </div>
             )}
             <CardElement
-                className={warning ? "MyCardElementWarning" : "MyCardElement"}
+                className="bg-blue-100 py-3 px-5 w-full rounded"
                 options={CARD_OPTIONS}
                 onChange={() => setWarning(false)}
+                id={PAYMENT_IDS.CARD_FORM}
             />
-            <div
-                style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                }}
-            >
-                <button type="submit" className="save-button">
+            <div className="flex">
+                <button
+                    type="submit"
+                    className="w-3/6 py-2.5 bg-blue text-white mt-4 rounded mr-2 hover:bg-mint hover:text-black duration-500"
+                >
                     {savingCard ? (
                         <FontAwesomeIcon
                             icon={faCircleNotch}
@@ -164,19 +168,11 @@ const CardField = (props: any) => {
                             }}
                         />
                     ) : (
-                        <span>
-SAVE
-</span>
+                        <span>SAVE</span>
                     )}
                 </button>
                 <button
-                    className="white-button"
-                    style={{
-                        width: "47%",
-                        padding: "15px 0px",
-                        fontSize: "16px",
-                        marginTop: "20px",
-                    }}
+                    className="w-5/12 py-2.5 text-gray mt-4"
                     onClick={() => setEditingCard(false)}
                 >
                     CANCEL
@@ -187,8 +183,8 @@ SAVE
 }
 
 const mapStateToProps = (state: {
-    AuthReducer: { user: any }
-    DashboardReducer: { stripeInfo: any }
+    AuthReducer: { user: User }
+    DashboardReducer: { stripeInfo: StripeInfo }
 }) => {
     return {
         user: state.AuthReducer.user,

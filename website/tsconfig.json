@@ -14,7 +14,13 @@
         "resolveJsonModule": true,
         "isolatedModules": true,
         "noEmit": true,
-        "jsx": "react"
+        "jsx": "react-jsx",
+        "plugins": [
+            {
+                "name": "typescript-plugin-css-modules"
+            }
+        ],
+        "noFallthroughCasesInSwitch": true
     },
     "include": ["src", "src/bin/Fractal.exe"]
 }

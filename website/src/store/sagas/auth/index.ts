@@ -1,42 +1,40 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
-import { apiGet, apiPost, graphQLPost } from "shared/utils/api"
 import history from "shared/utils/history"
-
-import * as AuthPureAction from "store/actions/auth/pure"
+import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import { updateStripeInfo } from "store/actions/dashboard/payment/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
-import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
-import {
-    UPDATE_WAITLIST_AUTH_EMAIL,
-    UPDATE_WAITLIST_REFERRALS,
-} from "shared/constants/graphql"
-import { SIGNUP_POINTS } from "shared/utils/points"
 
-function* emailLogin(action: any) {
-    const { json } = yield call(
-        apiPost,
-        "/account/login",
-        {
-            username: action.email,
-            password: action.password,
-        },
-        ""
-    )
+import * as api from "shared/api"
+
+function* emailLogin(action: {
+    email: string
+    password: string
+    rememberMe?: boolean
+    type: string
+}) {
+    const { json } = yield call(api.loginEmail, action.email, action.password)
 
     if (json && json.access_token) {
         yield put(
-            AuthPureAction.updateUser({
+            updateUser({
                 userID: action.email,
                 name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerified: json.verified,
-                canLogin: json.can_login,
                 emailVerificationToken: json.verification_token,
             })
         )
+
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateStripeInfo({
+                createdTimestamp: json.created_timestamp,
+            })
+        )
+
+        yield put(
+            updateAuthFlow({
                 loginWarning: "",
             })
         )
@@ -52,7 +50,7 @@ function* emailLogin(action: any) {
         }
     } else {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 loginWarning: "Invalid email or password. Try again.",
             })
         )
@@ -60,74 +58,38 @@ function* emailLogin(action: any) {
 }
 
 // also used for signup
-function* googleLogin(action: any) {
-    const state = yield select()
-
+export function* googleLogin(action: any) {
     if (action.code) {
-        var { json, response } = yield call(
-            apiPost,
-            "/google/login",
-            {
-                code: action.code,
-            },
-            ""
-        )
+        var { json, response } = yield call(api.loginGoogle, action.code)
         if (json) {
             if (response.status === 200) {
                 yield put(
-                    AuthPureAction.updateUser({
+                    updateUser({
                         userID: json.username,
                         name: json.name, //might want to change this later
                         accessToken: json.access_token,
                         refreshToken: json.refreshToken,
                         emailVerified: true,
-                        canLogin: json.can_login,
                         usingGoogleLogin: json.using_google_login,
                     })
                 )
 
                 yield put(
-                    AuthPureAction.updateAuthFlow({
+                    updateAuthFlow({
                         loginWarning: "",
                         signupWarning: "",
                     })
                 )
-
-                if (state.WaitlistReducer.waitlistUser.userID) {
-                    yield call(
-                        graphQLPost,
-                        UPDATE_WAITLIST_AUTH_EMAIL,
-                        "UpdateWaitlistAuthEmail",
-                        {
-                            userID: state.WaitlistReducer.waitlistUser.userID,
-                            authEmail: json.username,
-                        }
-                    )
-
-                    yield call(
-                        graphQLPost,
-                        UPDATE_WAITLIST_REFERRALS,
-                        "UpdateWaitlistReferrals",
-                        {
-                            userID: state.WaitlistReducer.waitlistUser.userID,
-                            points:
-                                state.WaitlistReducer.waitlistUser.points +
-                                SIGNUP_POINTS,
-                            referrals:
-                                state.WaitlistReducer.waitlistUser.referrals,
-                        }
-                    )
-                }
             } else if (response.status === 403) {
                 yield put(
-                    AuthPureAction.updateAuthFlow({
+                    updateAuthFlow({
                         loginWarning: "Try using non-Google login.",
                         signupWarning: "Try using non-Google login.",
                     })
                 )
             } else {
                 yield put(
-                    AuthPureAction.updateAuthFlow({
+                    updateAuthFlow({
                         loginWarning: "Google Login failed. Try another email.",
                         signupWarning:
                             "Google Login failed. Try another email.",
@@ -136,7 +98,7 @@ function* googleLogin(action: any) {
             }
         } else {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     loginWarning: "Error: No response from Google server.",
                     signupWarning: "Error: No response from Google server.",
                 })
@@ -145,27 +107,35 @@ function* googleLogin(action: any) {
     }
 }
 
-function* emailSignup(action: any) {
+function* emailSignup(action: {
+    email: string
+    password: string
+    rememberMe?: boolean
+    type: string
+    name: string
+}) {
     const { json, response } = yield call(
-        apiPost,
-        "/account/register",
-        {
-            username: action.email,
-            password: action.password,
-            name: action.name,
-            feedback: "", //this will need to be changed later!
-        },
+        api.signupEmail,
+        action.email,
+        action.password,
+        action.name,
         ""
     )
 
     if (json && response.status === 200) {
         yield put(
-            AuthPureAction.updateUser({
+            updateUser({
                 userID: action.email,
                 name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
                 emailVerificationToken: json.verification_token,
+            })
+        )
+
+        yield put(
+            updateStripeInfo({
+                createdTimestamp: json.created_timestamp,
             })
         )
 
@@ -175,7 +145,7 @@ function* emailSignup(action: any) {
         })
 
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 signupWarning: "",
                 signupSuccess: true,
             })
@@ -184,7 +154,7 @@ function* emailSignup(action: any) {
         history.push("/verify")
     } else {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 signupWarning:
                     "Email already registered. Please log in instead.",
             })
@@ -192,25 +162,22 @@ function* emailSignup(action: any) {
     }
 }
 
-function* sendVerificationEmail(action: any) {
+export function* sendVerificationEmail(action: any) {
     const state = yield select()
     if (action.email !== "" && action.token !== "") {
         const { json, response } = yield call(
-            apiPost,
-            "/mail/verification",
-            {
-                username: action.email,
-                token: action.token,
-            },
-            ""
+            api.emailVerification,
+            action.email,
+            action.token
         )
+
         const emailsSent = state.AuthReducer.authFlow.verificationEmailsSent
             ? state.AuthReducer.authFlow.verificationEmailsSent
             : 0
 
         if (json && response.status === 200) {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     verificationEmailsSent: emailsSent + 1,
                 })
             )
@@ -218,63 +185,43 @@ function* sendVerificationEmail(action: any) {
     }
 }
 
-function* validateVerificationToken(action: any) {
+export function* validateVerificationToken(action: any) {
     const state = yield select()
     const { json, response } = yield call(
-        apiPost,
-        "/account/verify",
-        {
-            username: state.AuthReducer.user.userID,
-            token: action.token,
-        },
+        api.validateVerification,
         state.AuthReducer.user.accessToken,
-        state.AuthReducer.user.refreshToken
+        state.AuthReducer.user.refreshToken,
+        state.AuthReducer.user.userID,
+        action.token
     )
 
     if (json && response.status === 200 && json.verified) {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 verificationStatus: "success",
             })
         )
         yield delay(2000)
         yield put(
-            AuthPureAction.updateUser({
+            updateUser({
                 emailVerified: true,
             })
         )
-        if (state.WaitlistReducer.waitlistUser.userID) {
-            yield call(
-                graphQLPost,
-                UPDATE_WAITLIST_REFERRALS,
-                "UpdateWaitlistReferrals",
-                {
-                    userID: state.WaitlistReducer.waitlistUser.userID,
-                    points:
-                        state.WaitlistReducer.waitlistUser.points +
-                        SIGNUP_POINTS,
-                    referrals: state.WaitlistReducer.waitlistUser.referrals,
-                }
-            )
-        }
     } else {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 verificationStatus: "failed",
             })
         )
     }
 }
 
-function* forgotPassword(action: any) {
+export function* forgotPassword(action: any) {
     const state = yield select()
     const { json } = yield call(
-        apiPost,
-        "/mail/forgot",
-        {
-            username: action.username,
-        },
-        ""
+        api.passwordForgot,
+        action.username,
+        action.token
     )
 
     const emailsSent = state.AuthReducer.authFlow.forgotEmailsSent
@@ -282,16 +229,24 @@ function* forgotPassword(action: any) {
         : 0
 
     if (json) {
+        if (json.token) {
+            yield put(
+                updateAuthFlow({
+                    token: json.token,
+                    url: json.url,
+                })
+            )
+        }
         if (json.verified) {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     forgotStatus: "Email sent",
                     forgotEmailsSent: emailsSent + 1,
                 })
             )
         } else {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     forgotStatus: "Not verified",
                     forgotEmailsSent: emailsSent + 1,
                 })
@@ -299,7 +254,7 @@ function* forgotPassword(action: any) {
         }
     } else {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 forgotStatus: "No response",
                 forgotEmailsSent: emailsSent + 1,
             })
@@ -307,44 +262,41 @@ function* forgotPassword(action: any) {
     }
 }
 
-function* validateResetToken(action: any) {
+export function* validateResetToken(action: any) {
     yield select()
-    const { json } = yield call(apiGet, "/token/validate", action.token)
+    const { json } = yield call(api.validatePasswordReset, action.token)
 
     // at some later point in time we may find it helpful to change strings here to some sort of enum
     if (json && json.status === 200) {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 resetTokenStatus: "verified",
-                passwordResetEmail: json.user.user_id,
+                passwordResetEmail: json.user.user_id, // changed from userID
                 passwordResetToken: action.token,
             })
         )
     } else {
         // this happens when the server 500s or token is invalid/expired
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 resetTokenStatus: "invalid",
             })
         )
     }
 }
 
-function* resetPassword(action: any) {
+export function* resetPassword(action: any) {
     const { response } = yield call(
-        apiPost,
-        "/account/update",
-        {
-            username: action.username,
-            password: action.password,
-        },
-        action.token
+        api.passwordReset,
+        action.token,
+        action.username,
+        action.password
     )
 
     // TODO do something with the response
     if (response && response.status === 200) {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 resetDone: true,
                 passwordResetEmail: null,
                 passwordResetToken: null,
@@ -352,7 +304,7 @@ function* resetPassword(action: any) {
         )
     } else {
         yield put(
-            AuthPureAction.updateAuthFlow({
+            updateAuthFlow({
                 resetDone: false,
                 passwordResetEmail: null,
                 passwordResetToken: null,
@@ -361,34 +313,31 @@ function* resetPassword(action: any) {
     }
 }
 
-function* updatePassword(action: any) {
+export function* updatePassword(action: any) {
     const state = yield select()
 
     const { json } = yield call(
-        apiPost,
-        "/account/verify_password",
-        {
-            username: state.AuthReducer.user.userID,
-            password: action.currentPassword,
-        },
-        state.AuthReducer.user.accessToken
+        api.passwordUpdate,
+        state.AuthReducer.user.accessToken,
+        state.AuthReducer.user.userID,
+        action.currentPassword
     )
 
     if (json && json.status) {
         if (json.status === 200) {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     passwordVerified: "success",
                 })
             )
             yield call(resetPassword, {
-                username: state.AuthReducer.user.userID,
                 password: action.newPassword,
                 token: state.AuthReducer.user.accessToken,
+                username: state.AuthReducer.user.userID,
             })
         } else {
             yield put(
-                AuthPureAction.updateAuthFlow({
+                updateAuthFlow({
                     passwordVerified: "failed",
                 })
             )
@@ -399,16 +348,13 @@ function* updatePassword(action: any) {
 function* fetchPaymentInfo(action: any) {
     const state = yield select()
     const { json } = yield call(
-        apiPost,
-        `/stripe/retrieve`,
-        {
-            email: action.email,
-        },
-        state.AuthReducer.user.accessToken
+        api.stripePaymentInfo,
+        state.AuthReducer.user.accessToken,
+        action.email
     )
     if (json) {
         yield put(
-            PaymentPureAction.updateStripeInfo({
+            updateStripeInfo({
                 cardBrand: json.source ? json.source.card.brand : null,
                 cardLastFour: json.source ? json.source.card.last4 : null,
                 postalCode: json.source
@@ -422,7 +368,7 @@ function* fetchPaymentInfo(action: any) {
     }
 }
 
-export default function* () {
+export default function* authSaga() {
     yield all([
         takeEvery(AuthSideEffect.EMAIL_LOGIN, emailLogin),
         takeEvery(AuthSideEffect.EMAIL_SIGNUP, emailSignup),

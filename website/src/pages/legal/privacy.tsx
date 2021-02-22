@@ -4,7 +4,7 @@ import { HashLink } from "react-router-hash-link"
 import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
-function Privacy(props: any) {
+const Privacy = () => {
     const { width } = useContext(MainContext)
     return (
         <div style={{ overflowX: "hidden" }} id="top">
@@ -16,9 +16,7 @@ function Privacy(props: any) {
                     margin: "auto",
                 }}
             >
-                <div style={{ fontSize: 40 }}>
-PRIVACY POLICY
-</div>
+                <div style={{ fontSize: 40 }}>PRIVACY POLICY</div>
                 <div style={{ color: "#555555", marginBottom: 40 }}>
                     Last updated October 8th, 2020
                 </div>
@@ -27,84 +25,49 @@ PRIVACY POLICY
                     Thank you for choosing to be part of our community at
                     Fractal Computers, Inc., doing business as Fractal
                     (“Fractal”, “we”, “us”, or “our”). When you visit our
-                    website,
-{" "}
-                    <a href="https://www.fractal.co">
-www.fractal.co
-</a>
-,
-                    and use our services, you trust us with your personal
+                    website, <a href="https://www.fractal.co">www.fractal.co</a>
+                    , and use our services, you trust us with your personal
                     information. We want you to know that we are committed to
                     protecting your personal information and your right to
                     privacy. This privacy policy explains what happens to the
-                    personal information we collect through our website (such as
-{" "}
-                    <a href="https://www.fractal.co">
-www.fractal.co
-</a>
+                    personal information we collect through our website (such as{" "}
+                    <a href="https://www.fractal.co">www.fractal.co</a>
                     ), and/or any related services, sales, marketing or events
                     (we refer to them collectively in this privacy policy as the
                     "Services"). This policy will also identify your rights
                     regarding your personal information. If you have any
                     questions or concerns about our policy, or our practices
                     with regards to your personal information, please contact us
-                    at
-{" "}
-                    <a href="mailto: support@fractal.co">
-                        support@fractal.co
-                    </a>
-                    . We encourage you to read through this important
-                    information. If there are any terms in this privacy policy
-                    that you disagree with, please discontinue the use of our
-                    Sites and our Services.
+                    at{" "}
+                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
+                    We encourage you to read through this important information.
+                    If there are any terms in this privacy policy that you
+                    disagree with, please discontinue the use of our Sites and
+                    our Services.
                 </p>
 
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     Table Of Contents
                 </p>
                 <ol>
-                    <li>
-What Information Do We Collect?
-</li>
-                    <li>
-How Do We Use Your Information?
-</li>
-                    <li>
-Will Your Information Be Shared With Anyone?
-</li>
-                    <li>
-Do We Use Cookies And Other Tracking Technologies?
-</li>
-                    <li>
-How Do We Handle Your Social Logins?
-</li>
-                    <li>
-How Long Do We Keep Your Information?
-</li>
-                    <li>
-How Do We Keep Your Information Safe?
-</li>
-                    <li>
-Do We Collect Information From Minors?
-</li>
+                    <li>What Information Do We Collect?</li>
+                    <li>How Do We Use Your Information?</li>
+                    <li>Will Your Information Be Shared With Anyone?</li>
+                    <li>Do We Use Cookies And Other Tracking Technologies?</li>
+                    <li>How Do We Handle Your Social Logins?</li>
+                    <li>How Long Do We Keep Your Information?</li>
+                    <li>How Do We Keep Your Information Safe?</li>
+                    <li>Do We Collect Information From Minors?</li>
                     <li>
                         Advertising And Analytics Services Provided By Others
                     </li>
-                    <li>
-What Are Your Privacy Rights?
-</li>
-                    <li>
-Controls For Do-not-track Features
-</li>
+                    <li>What Are Your Privacy Rights?</li>
+                    <li>Controls For Do-not-track Features</li>
                     <li>
                         Do California Residents Have Specific Privacy Rights?
                     </li>
-                    <li>
-Do We Make Updates To This Policy?
-</li>
-                    <li>
-How Can You Contact Us About This Policy?
-</li>
+                    <li>Do We Make Updates To This Policy?</li>
+                    <li>How Can You Contact Us About This Policy?</li>
                     <li>
                         How Can You Review, Update, Or Delete The Data We
                         Collect From You?
@@ -126,15 +89,11 @@ How Can You Contact Us About This Policy?
                     Personal Information You Disclose To Us
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We collect personal information that you
+                    <u>Summary:</u> We collect personal information that you
                     provide to us such as your name, address, contact
                     information, passwords and security data, payment
                     information, and social media login data.
-</p>
+                </p>
                 <p>
                     We also collect personal information that you provide when
                     you register your interest in our services and products,
@@ -169,17 +128,13 @@ We collect personal information that you
                         location; data collected from surveys; and other similar
                         data.
                     </p>
-                    <p style={{ fontWeight: "bold" }}>
-Credentials
-</p>
+                    <p style={{ fontWeight: "bold" }}>Credentials</p>
                     <p>
                         We may collect passwords, password hints, and similar
                         security information used for authentication and account
                         access.
                     </p>
-                    <p style={{ fontWeight: "bold" }}>
-Payment Data
-</p>
+                    <p style={{ fontWeight: "bold" }}>Payment Data</p>
                     <p>
                         We collect data necessary to process your payment if you
                         make purchases, such as your payment instrument
@@ -187,8 +142,7 @@ Payment Data
                         credit card we would collect the credit card’s number,
                         its card verification code and its expiration date. All
                         payment data is stored by Stripe. You may find their
-                        privacy policy linked here:
-{" "}
+                        privacy policy linked here:{" "}
                         <a href="https://www.stripe.com/privacy">
                             stripe.com/privacy
                         </a>
@@ -217,15 +171,11 @@ Payment Data
                     Information Automatically Collected
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-Some information — such as IP address and/or
+                    <u>Summary:</u> Some information — such as IP address and/or
                     browser and device characteristics — is collected
                     automatically when you visit our Services but it is not tied
                     to your name.
-</p>
+                </p>
                 <p>
                     Each time you interact with the Services, we automatically
                     collect some information to maintain the security and
@@ -241,9 +191,7 @@ Some information — such as IP address and/or
                     identifiers (like your contact details).
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: "bold" }}>
-Online Identifiers
-</p>
+                    <p style={{ fontWeight: "bold" }}>Online Identifiers</p>
                     <p>
                         We collect device identification (i.e. type, make, and
                         other identifiers); applications; tools and protocols,
@@ -257,11 +205,7 @@ Online Identifiers
                     2. How Do We Use Your Information?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We process your information with your
+                    <u>Summary:</u> We process your information with your
                     consent to advance our legitimate business interests in
                     compliance with our legal obligations. We use personal
                     information collected via our Services for a variety of
@@ -272,7 +216,7 @@ We process your information with your
                     with our legal obligations. We indicate the specific
                     processing grounds we rely on next to each purpose listed
                     below.
-</p>
+                </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>
                         We Use The Information We Collect Or Receive:
@@ -312,12 +256,10 @@ We process your information with your
                         Services that may contain personal information. Prior to
                         posting a testimonial, we will seek your consent to use
                         your name and testimonial. If you wish to update or
-                        delete your testimonial, please contact us at
-{" "}
+                        delete your testimonial, please contact us at{" "}
                         <a href="mailto: support@fractal.co">
                             support@fractal.co
-                        </a>
-{" "}
+                        </a>{" "}
                         and be sure to include your name, testimonial location,
                         and contact information.
                     </p>
@@ -374,72 +316,48 @@ We process your information with your
                     3. Will Your Information Be Shared With Anyone?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We only share information with your consent,
+                    <u>Summary:</u> We only share information with your consent,
                     to comply with laws, to provide you with services, to
                     protect your rights, or to fulfill business obligations.
-</p>
+                </p>
                 <div style={{ paddingLeft: 20 }}>
                     <p style={{ fontWeight: "bold" }}>
                         We May Process Or Share Data Based On The Following
                         Legal Basis:
                     </p>
                     <p>
-                        <u>
-Consent:
-</u>
-{' '}
-We may process your data if you have
+                        <u>Consent:</u> We may process your data if you have
                         given us specific consent to use your personal
                         information for a specific purpose.
-</p>
+                    </p>
                     <p>
-                        <u>
-Legal Obligations:
-</u>
-{' '}
-We may disclose your
+                        <u>Legal Obligations:</u> We may disclose your
                         information where we are legally required to do so in
                         order to comply with applicable law, governmental
                         requests, a judicial proceeding, court order, or legal
                         process, such as in response to a court order or a
                         subpoena (including in response to public authorities to
                         meet national security or law enforcement requirements).
-</p>
+                    </p>
                     <p>
-                        <u>
-Vital Interests:
-</u>
-{' '}
-We may disclose your information
+                        <u>Vital Interests:</u> We may disclose your information
                         where we believe it is necessary to investigate,
                         prevent, or take action regarding potential violations
                         of our policies, suspected fraud, situations involving
                         potential threats to the safety of any person and
                         illegal activities, or as evidence in litigation in
                         which we are involved.
-</p>
+                    </p>
                     <p>
-                        <u>
-Legitimate Interests:
-</u>
-{' '}
-We may process your data
+                        <u>Legitimate Interests:</u> We may process your data
                         when it is reasonably necessary to achieve our
                         legitimate business interests.
-</p>
+                    </p>
                     <p>
-                        <u>
-Performance of a Contract:
-</u>
-{' '}
-Where we have entered
+                        <u>Performance of a Contract:</u> Where we have entered
                         into a contract with you, we may process your personal
                         information to fulfill the terms of our contract.
-</p>
+                    </p>
                     <p>
                         More specifically, we may need to process your data or
                         share your personal information in the following
@@ -484,41 +402,29 @@ Where we have entered
                     4. Do We Use Cookies And Other Tracking Technologies?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We may use cookies and other tracking
+                    <u>Summary:</u> We may use cookies and other tracking
                     technologies to collect and store your information.
-</p>
+                </p>
                 <p>
                     We may use cookies and similar tracking technologies (like
                     web beacons and pixels) to access or store information.
                     Specific information about how we use such technologies and
-                    how you can refuse certain cookies is set out in our
-{" "}
-                    <HashLink to="/cookies#top">
-Cookie Policy
-</HashLink>
-. Our
+                    how you can refuse certain cookies is set out in our{" "}
+                    <HashLink to="/cookies#top">Cookie Policy</HashLink>. Our
                     Services are not officially offered in the European Union,
                     but they may be accessible from that area; we take no
                     responsibility for access from the European Union region
                     with regards to cookies and other tracking technologies, as
                     defined in the GDPR.
-</p>
+                </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     5. How Do We Handle Your Social Logins?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-If you choose to register or log in to our
+                    <u>Summary:</u> If you choose to register or log in to our
                     Services using a social media account, we may have access to
                     certain information about you.
-</p>
+                </p>
                 <p>
                     Our Services offer you the ability to register and login
                     using your third party social media account details (like
@@ -545,14 +451,10 @@ If you choose to register or log in to our
                     6. How Long Do We Keep Your Information?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We keep your information for as long as
+                    <u>Summary:</u> We keep your information for as long as
                     necessary to fulfill the purposes outlined in this privacy
                     policy, unless otherwise required by law.
-</p>
+                </p>
                 <p>
                     We will only keep your personal information for as long as
                     it is necessary for the purposes set out in this privacy
@@ -573,14 +475,10 @@ We keep your information for as long as
                     7. How Do We Keep Your Information Safe?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We aim to protect your personal information
+                    <u>Summary:</u> We aim to protect your personal information
                     through a system of organizational and technical security
                     measures.
-</p>
+                </p>
                 <p>
                     Although we do our best to protect your personal
                     information, transmission of personal information to and
@@ -595,13 +493,9 @@ We aim to protect your personal information
                     8. Do We Collect Information From Minors?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We do not knowingly collect data from, or
+                    <u>Summary:</u> We do not knowingly collect data from, or
                     market to, children under 18 years of age.
-</p>
+                </p>
                 <p>
                     By using the Services, you represent that you are at least
                     18 years old or that you are the parent or guardian of such
@@ -611,25 +505,17 @@ We do not knowingly collect data from, or
                     deactivate the account and take reasonable measures to
                     promptly delete such data from our records. If you become
                     aware of any data we have collected from children under age
-                    18, please contact us at
-{" "}
-                    <a href="mailto: support@fractal.co">
-                        support@fractal.co
-                    </a>
-                    .
+                    18, please contact us at{" "}
+                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     9. Advertising And Analytics Services Provided By Others
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-We may work with, and share non-personal
+                    <u>Summary:</u> We may work with, and share non-personal
                     information with, third parties to serve advertisements on
                     our behalf.
-</p>
+                </p>
                 <p>
                     We may allow third parties to serve advertisements on our
                     behalf across the Internet and to provide analytics services
@@ -655,8 +541,7 @@ We may work with, and share non-personal
                     address) in a hashed, non-human readable form. For more
                     information about interest-based ads, or to opt-out of
                     having your web browsing information used for behavioral
-                    advertising purposes, please visit
-{" "}
+                    advertising purposes, please visit{" "}
                     <a href="https://www.aboutads.info/choices">
                         www.aboutads.info/choices
                     </a>
@@ -666,43 +551,31 @@ We may work with, and share non-personal
                     10. What Are Your Privacy Rights?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-You may review, change, or terminate your
+                    <u>Summary:</u> You may review, change, or terminate your
                     account at any time.
-</p>
+                </p>
                 <p>
                     If you are resident in the European Economic Area and you
                     believe we are unlawfully processing your personal
                     information, you have the right to complain to your local
                     data protection supervisory authority. You can find their
-                    contact details
-{" "}
+                    contact details{" "}
                     <a href="http://ec.europa.eu/justice/data-protection/bodies/authorities/index_en.htm">
                         here
                     </a>
                     . If you have questions or comments about your privacy
-                    rights, you may email us at
-{" "}
-                    <a href="mailto: support@fractal.co">
-                        support@fractal.co
-                    </a>
-                    .
+                    rights, you may email us at{" "}
+                    <a href="mailto: support@fractal.co">support@fractal.co</a>.
                 </p>
                 <div style={{ paddingLeft: 20 }}>
-                    <p style={{ fontWeight: "bold" }}>
-Account Information
-</p>
+                    <p style={{ fontWeight: "bold" }}>Account Information</p>
                     <p>
                         If you would like to review or change the information in
                         your account, or terminate your account, you can:
                     </p>
                     <p>
                         Log into your account settings and update your user
-                        account, or contact us at
-{" "}
+                        account, or contact us at{" "}
                         <a href="mailto: support@fractal.co">
                             support@fractal.co
                         </a>
@@ -713,34 +586,43 @@ Account Information
                         deactivate or delete your account and information from
                         our active databases. However, some information may be
                         retained in our files to prevent fraud, troubleshoot
-                        problems, assist with any investigations, enforce our
-{" "}
+                        problems, assist with any investigations, enforce our{" "}
                         <a href="https://www.fractal.co/termsofservice">
                             Terms of Service
-                        </a>
-{" "}
+                        </a>{" "}
                         and/or comply with legal requirements.
                     </p>
                     <p>
-                        <p style={{ fontWeight: "bold" }}>
+                        <span
+                            style={{
+                                fontWeight: "bold",
+                                display: "block",
+                                marginBottom: "1em",
+                            }}
+                        >
                             Cookies And Similar Technologies
-                        </p>
+                        </span>
                         Most Web browsers are set to accept cookies by default.
                         You may be able to configure your browser to remove and
                         reject cookies. Removing or rejecting cookies may reduce
                         the effectiveness of certain features of our Services.
                         To opt-out of interest-based advertising by advertisers
-                        on our Services, visit
-{" "}
+                        on our Services, visit{" "}
                         <a href="https://www.aboutads.info/choices">
                             www.aboutads.info/choices
                         </a>
                         .
                     </p>
                     <p>
-                        <p style={{ fontWeight: "bold" }}>
+                        <span
+                            style={{
+                                fontWeight: "bold",
+                                display: "block",
+                                marginBottom: "1em",
+                            }}
+                        >
                             Opting Out Of Email Marketing
-                        </p>
+                        </span>
                         You can unsubscribe from our marketing email list at any
                         time by clicking on the unsubscribe link in the emails
                         that we send or by contacting us using the details
@@ -752,8 +634,7 @@ Account Information
                     <p>
                         Note your preferences when you register an account with
                         the site, access your account settings and update
-                        preferences, or contact us by email at
-{" "}
+                        preferences, or contact us by email at{" "}
                         <a href="mailto: support@fractal.co">
                             support@fractal.co
                         </a>
@@ -764,15 +645,11 @@ Account Information
                     11. Controls For Do-not-track Features
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-You may opt-in to Do-not-track features in
+                    <u>Summary:</u> You may opt-in to Do-not-track features in
                     your browser, but we will not respond to DNT browser signals
                     unless a standard for online tracking is adopted in the
                     future.
-</p>
+                </p>
                 <p>
                     Most web browsers and some mobile operating systems and
                     mobile applications include a Do-Not-Track (“DNT”) feature
@@ -791,14 +668,10 @@ You may opt-in to Do-not-track features in
                     12. Do California Residents Have Specific Privacy Rights?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-Yes, if you are a resident of California,
+                    <u>Summary:</u> Yes, if you are a resident of California,
                     you are granted specific rights regarding access to your
                     personal information.
-</p>
+                </p>
                 <p>
                     California Civil Code Section 1798.83, also known as the
                     “Shine The Light” law, permits our users who are California
@@ -828,13 +701,9 @@ Yes, if you are a resident of California,
                     13. Do We Make Updates To This Policy?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-Yes, we will update this policy as necessary
+                    <u>Summary:</u> Yes, we will update this policy as necessary
                     to stay compliant with relevant laws.
-</p>
+                </p>
                 <p>
                     We may update this privacy policy from time to time. The
                     updated version will be indicated by the “Revised” date and
@@ -851,40 +720,24 @@ Yes, we will update this policy as necessary
                 </p>
                 <p>
                     If you have questions or comments about this policy, you may
-                    email us at
-{" "}
-                    <a href="mailto: support@fractal.co">
-                        support@fractal.co
-                    </a>
-{" "}
+                    email us at{" "}
+                    <a href="mailto: support@fractal.co">support@fractal.co</a>{" "}
                     or by post to:
                 </p>
                 <p>
-                    Fractal Computers, Inc. 
-{' '}
-<br />
-                    Six Landmark Square, 4th Floor 
-{' '}
-<br />
-                    Stamford, CT 06901 
-{' '}
-<br />
-                    United States 
-{' '}
-<br />
+                    Fractal Computers, Inc. <br />
+                    Six Landmark Square, 4th Floor <br />
+                    Stamford, CT 06901 <br />
+                    United States <br />
                 </p>
                 <p style={{ fontWeight: "bold", fontSize: 20 }}>
                     15. How Can You Review, Update, Or Delete The Data We
                     Collect From You?
                 </p>
                 <p>
-                    <u>
-Summary:
-</u>
-{' '}
-Please contact us via email to update the
+                    <u>Summary:</u> Please contact us via email to update the
                     data we collect from you.
-</p>
+                </p>
                 <p>
                     Based on the laws of some countries, you may have the right
                     to request access to the personal information we collect

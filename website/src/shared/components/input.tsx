@@ -1,7 +1,20 @@
-import React from "react"
+import React, { ChangeEvent, KeyboardEvent } from "react"
 //import { FormControl } from "react-bootstrap"
 
-const Input = (props: any) => {
+import styles from "styles/shared.module.css"
+
+const Input = (props: {
+    onChange?: (evt: ChangeEvent<HTMLInputElement>) => void
+    onKeyPress?: (evt: KeyboardEvent) => void
+    placeholder: string
+    text?: string
+    type: string
+    valid?: boolean
+    value?: string
+    warning?: string
+    altText?: JSX.Element
+    id?: string
+}) => {
     return (
         <div style={{ width: "100%" }}>
             <div
@@ -41,11 +54,12 @@ const Input = (props: any) => {
                 )}
             </div>
             <input
+                id={props.id}
                 type={props.type}
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 placeholder={props.placeholder}
-                className="input-form"
+                className={styles.inputForm}
                 onChange={props.onChange}
                 onKeyPress={props.onKeyPress}
                 value={props.value}
