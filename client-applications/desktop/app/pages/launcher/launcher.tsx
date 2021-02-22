@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react"
 import { connect } from "react-redux"
 import { useSubscription } from "@apollo/client"
 
-// import { FadeIn } from "react-fade-in"
-
 import { FractalLogger } from "shared/utils/general/logging"
 import { Dispatch } from "shared/types/redux"
 import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
