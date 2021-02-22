@@ -280,7 +280,8 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 loading_index++;
                 loading_sdl(renderer, loading_index);
             }
-
+            // Delay by 50 milliseconds to control the speed of the animation,
+            // not delaying will cause it to go too fast
             SDL_Delay(50);
             continue;
         }
