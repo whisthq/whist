@@ -131,6 +131,8 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
             message = "client:MINIMIZE";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
             message = "client:FOCUS";
+        } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+            message = "client:UNFOCUS";
         }
         if (message) {
             if (send(args->socket_fd, message, (int) strlen(message), 0) < 0) {
