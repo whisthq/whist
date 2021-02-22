@@ -23,8 +23,11 @@ def fractal_pre_process(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # We don't use X-Forwarded-For because that breaks AWS proxies
-        received_from = request.remote_addr
+        received_from = (
+            request.headers.getlist("X-Forwarded-For")[0]
+            if request.headers.getlist("X-Forwarded-For")
+            else request.remote_addr
+        )
 
         # If a post body is malformed, we should treat it as an empty dict
         # that way trying to pop from it raises a KeyError, which we have proper error handling for
