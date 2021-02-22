@@ -6,7 +6,7 @@ click==7.1.2
 cryptography==3.3.2
 dropbox==11.0.0
 Flask==1.1.2
-Flask-Cors==3.0.9
+Flask-Cors==3.0.10
 Flask-JWT-Extended==3.25.0
 Flask-Limiter==1.4
 flask-marshmallow==0.14.0
