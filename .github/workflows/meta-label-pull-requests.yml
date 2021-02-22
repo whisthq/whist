@@ -14,6 +14,6 @@ jobs:
 
         steps:
             - name: Label Pull Request
-              uses: adamzolyak/monorepo-pr-labeler-action@2.0.1
+              uses: adamzolyak/monorepo-pr-labeler-action@3.0.0
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
