@@ -22,6 +22,6 @@ crate-type = ["dylib"]
 neon-build = "0.3.3"
 
 [dependencies]
-neon = "0.4.0"
+neon = "0.7.1"
 libfonthelper = "0.2.8"
 log = "0.4"
