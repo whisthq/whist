@@ -276,13 +276,18 @@ int32_t render_screen(SDL_Renderer* renderer) {
         safe_SDL_UnlockMutex(render_mutex);
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
+            // This runs if nothing post'ed to our semaphore
             if (loading_index >= 0) {
+                // Delay by 50 milliseconds to control the speed of the animation,
+                // not delaying will cause it to go too fast
+                SDL_Delay(50);
                 loading_index++;
                 loading_sdl(renderer, loading_index);
+                continue;
             }
-            // Delay by 50 milliseconds to control the speed of the animation,
-            // not delaying will cause it to go too fast
-            SDL_Delay(50);
+            // This SDL_Delay will wait 1ms before checking the semaphore again
+            // Not doing this will make this a tight loop that will make CPU usage far too high
+            SDL_Delay(1);
             continue;
         }
 
