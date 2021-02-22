@@ -22,6 +22,10 @@ const Update = () => {
     const ipc = require("electron").ipcRenderer
 
     useEffect(() => {
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW)
+    }, [])
+
+    useEffect(() => {
         if (!listenerCreated) {
             setListenerCreated(true)
             ipc.on(
