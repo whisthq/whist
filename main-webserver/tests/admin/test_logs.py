@@ -2,7 +2,6 @@
 
 import uuid
 
-from datetime import datetime
 from http import HTTPStatus
 
 import boto3
@@ -19,12 +18,12 @@ from ..patches import function, Object
 
 def test_bad_sender():
     with pytest.raises(BadSenderError):
-        upload_logs_to_s3("USPS", "x.x.x.x", 0, "", "Log message.")
+        upload_logs_to_s3("USPS", "x.x.x.x", "", "Log message.")
 
 
 def test_no_container():
     with pytest.raises(ContainerNotFoundError):
-        upload_logs_to_s3("client", "x.x.x.x", 0, "", "Log message.")
+        upload_logs_to_s3("client", "x.x.x.x", "", "Log message.")
 
 
 def test_unauthorized(container):
@@ -32,8 +31,7 @@ def test_unauthorized(container):
         with pytest.raises(ContainerNotFoundError):
             upload_logs_to_s3(
                 "client",
-                c.ip,
-                c.port_32262,
+                c.container_id,
                 "garbage!",
                 "Log message.",
             )
@@ -49,8 +47,7 @@ def test_s3_failure(container, monkeypatch):
         with pytest.raises(Exception):
             upload_logs_to_s3(
                 "client",
-                c.ip,
-                c.port_32262,
+                c.container_id,
                 c.secret_key,
                 "Log message.",
             )
@@ -70,8 +67,7 @@ def test_s3_success(container, sender, monkeypatch):
     with container() as c:
         response = upload_logs_to_s3(
             "server",
-            c.ip,
-            c.port_32262,
+            c.container_id,
             c.secret_key,
             "Log message.",
         )
