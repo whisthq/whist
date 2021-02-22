@@ -7,12 +7,16 @@
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
+CONTAINER_ID_FILENAME=ID
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
+
+# Pull out the webserver identifier for this container
+CONTAINER_ID=$(cat $FRACTAL_MAPPINGS_DIR/$CONTAINER_ID_FILENAME)
 
 # Create list of command-line arguments to pass to the Fractal protocol server
 OPTIONS=""
@@ -61,7 +65,7 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
 
     # If the source path doesn't exist, then copy default configs to the synced app config folder
     if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-	   cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
     fi
 
     # Remove the original configs and symlink the new ones to the original locations
@@ -101,39 +105,17 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 # JSON Response:
 #   ID: the ID for the task for uploading logs; we need this to finish before container delete
 LOGS_TASK_ID=$(curl \
-    --header "Content-Type: application/json" \
-    --request POST \
-    --data @- \
-    $WEBSERVER_URL/logs \
-    << END \
+        --header "Content-Type: application/json" \
+        --request POST \
+        --data @- \
+        $WEBSERVER_URL/logs \
+        << END \
     | jq -er ".ID"
 {
     "sender": "server",
     "identifier": "$IDENTIFIER",
     "secret_key": "$FRACTAL_AES_KEY",
     "logs": $(jq -Rs . </usr/share/fractal/log.txt)
-}
-END
-)
-
-# POST $WEBSERVER_URL/container/protocol_info
-#   Get the AWS container id for this container, for use with the container delete request.
-#   We do this right now because we anyways have to wait for uploading logs to finish.
-# JSON Parameters:
-#   identifier: "$IDENTIFIER" because this endpoint wants port mapping for 32262
-#   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
-# JSON Response:
-#   container_id: The AWS container id for this container
-CONTAINER_ID=$(curl \
-    --header "Content-Type: application/json" \
-    --request POST \
-    --data @- \
-    $WEBSERVER_URL/container/protocol_info \
-    << END \
-    | jq -er ".container_id"
-{
-    "identifier": "$IDENTIFIER",
-    "private_key": "$FRACTAL_AES_KEY"
 }
 END
 )
@@ -159,11 +141,11 @@ done
 #   container_id: The AWS container id for this container.
 #   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
 curl \
---header "Content-Type: application/json" \
---request POST \
---data @- \
-$WEBSERVER_URL/container/delete \
-<< END
+    --header "Content-Type: application/json" \
+    --request POST \
+    --data @- \
+    $WEBSERVER_URL/container/delete \
+    << END
 {
     "container_id": "$CONTAINER_ID",
     "private_key":  "$FRACTAL_AES_KEY"
