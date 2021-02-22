@@ -1,6 +1,6 @@
 better-profanity==0.6.1
 blinker==1.4
-boto3==1.16.0
+boto3==1.17.12
 celery==5.0.5
 click==7.1.2
 cryptography==3.3.2
