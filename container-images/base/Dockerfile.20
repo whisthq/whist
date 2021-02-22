@@ -435,22 +435,9 @@ RUN systemctl disable sshd
 COPY config/systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
 
 # Set our fractal systemd files to be root-visible only
-RUN chgrp root /etc/systemd/system/fractal-entrypoint.service
-RUN chgrp root /etc/systemd/system/fractal-display.service
-RUN chgrp root /etc/systemd/system/fractal-protocol.service
-RUN chgrp root /etc/systemd/system/fractal-audio.service
-RUN chgrp root /etc/systemd/system/fractal-update-xorg-conf.service
-RUN chown root:root /etc/systemd/system/fractal-entrypoint.service
-RUN chown root:root /etc/systemd/system/fractal-display.service
-RUN chown root:root /etc/systemd/system/fractal-protocol.service
-RUN chown root:root /etc/systemd/system/fractal-audio.service
-RUN chown root:root /etc/systemd/system/fractal-update-xorg-conf.service
-RUN chmod 600 /etc/systemd/system/fractal-entrypoint.service
-RUN chmod 600 /etc/systemd/system/fractal-display.service
-RUN chmod 600 /etc/systemd/system/fractal-protocol.service
-RUN chmod 600 /etc/systemd/system/fractal-audio.service
-RUN chmod 600 /etc/systemd/system/fractal-update-xorg-conf.service
-
+RUN chgrp root /etc/systemd/system/fractal*
+RUN chown root:root /etc/systemd/system/fractal*
+RUN chmod 600 /etc/systemd/system/fractal*
 
 # Set up Fractal Protocol symlink
 RUN mkdir /usr/share/fractal/bin
