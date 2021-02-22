@@ -140,7 +140,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
             f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
             json={
                 "host_port": port,
-                "container_id": container_id,
+                "container_ARN": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
@@ -766,7 +766,11 @@ def create_new_container(
 
             _mount_cloud_storage(user, container)
             _pass_start_values_to_instance(
-                container.ip, container.port_32262, container.dpi, user.user_id
+                container.ip,
+                container.container_id,
+                container.port_32262,
+                container.dpi,
+                user.user_id,
             )
 
             if not _poll(container.container_id):
