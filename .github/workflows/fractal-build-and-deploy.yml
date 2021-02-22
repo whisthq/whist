@@ -187,7 +187,7 @@ jobs:
                   elif [[ "$JOB_NAME" == "none" ]]; then
                     JOB_LIST=""
                   # If we have the name of a job name, we run exactly that job
-                  elif [[ -n "${!job_dependencies[$JOB_NAME]}" ]]; then
+                  elif [[ -n "${job_dependencies[$JOB_NAME]}" ]]; then
                     JOB_LIST="$JOB_NAME"
                   # Otherwise, an invalid job name was given
                   else
