@@ -558,7 +558,7 @@ jobs:
             - name: Kill All Packer Instances
               run: |
                   aws-hashicorp-packer-reaper list
-                  aws-hashicorp-packer-reaper terminate --older-than 1s
+                  aws-hashicorp-packer-reaper terminate --older-than 45m
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
