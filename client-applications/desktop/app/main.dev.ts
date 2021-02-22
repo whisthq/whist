@@ -42,6 +42,7 @@ let showMainWindow = false
 //    this value gets toggled on "minimize" and "focus"
 //    events
 let protocolMinimized = false
+let protocolFocused = false
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
@@ -49,8 +50,6 @@ let socketPath = require("path").join(
     FractalDirectory.getRootDirectory(),
     "protocol-build/desktop/fractal-client.sock"
 )
-// Track whether we manually restored from a minimize event
-let manuallyRestored = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -136,11 +135,15 @@ const createWindow = async () => {
             let parts = data.toString().split(":")
             if (parts[0] === "client") {
                 if (parts[1] === "MINIMIZE") {
-                    console.log("MINIMIZE")
+                    console.log("client says MINIMIZE")
                     protocolMinimized = true
-                } else {
-                    console.log("MAXIMIZE")
+                } else if (parts[1] == "FOCUS") {
+                    console.log("client says FOCUS")
+                    protocolFocused = true
                     protocolMinimized = false
+                } else if (parts[1] == "UNFOCUS") {
+                    console.log("client says UNFOCUS")
+                    protocolFocused = false
                 }
             }
         })
@@ -148,31 +151,23 @@ const createWindow = async () => {
             console.log(`error ${err}`)
         })
 
-        mainWindow.on('focus', () => {
-            if (!showMainWindow && !manuallyRestored) {
-                protocolMinimized = false
-                socket.write("server:FOCUS")
-            }
-            manuallyRestored = false
-        })
-
-        mainWindow.on('minimize', () => {
-            if (!showMainWindow) {
-                protocolMinimized = !protocolMinimized
-                if (protocolMinimized) {
+        app.on("activate", () => {
+            // "activate" event is thrown when the taskbar/dock icon is pressed
+            if (os.platform() == "win32") {
+                // on Windows, if the app is focused and not minimized, then an "activate event" should minimize
+                if (protocolFocused) {
                     socket.write("server:MINIMIZE")
                 } else {
                     socket.write("server:FOCUS")
                 }
-                manuallyRestored = true
-                mainWindow.restore()
+            } else if (os.platform() == "darwin") {
+                // on Mac, an "activate event" should focus
+                socket.write("server:FOCUS")
             }
         })
 
-        mainWindow.on("close", () => {
-            if (!showMainWindow) {
-                socket.write("server:QUIT")
-            }
+        app.on("will-quit", () => {
+            socket.write("server:QUIT")
         })
     })
     protocolSocketServer.on('error', (err) => {
@@ -213,16 +208,14 @@ const createWindow = async () => {
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }
-        if (!showMainWindow) {
-            mainWindow.setOpacity(0.0)
-            mainWindow.setIgnoreMouseEvents(true)
-        }
-        if (process.env.START_MINIMIZED) {
-            mainWindow.minimize()
-        } else {
-            mainWindow.show()
-            mainWindow.focus()
-            mainWindow.maximize()
+        if (showMainWindow) {
+            if (process.env.START_MINIMIZED) {
+                mainWindow.minimize()
+            } else {
+                mainWindow.show()
+                mainWindow.focus()
+                mainWindow.maximize()
+            }
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
@@ -239,11 +232,8 @@ const createWindow = async () => {
             mainWindow.show()
             mainWindow.focus()
             mainWindow.restore()
-            mainWindow.setOpacity(1.0)
-            mainWindow.setIgnoreMouseEvents(false)
         } else if (!showMainWindow && mainWindow) {
-            mainWindow.setOpacity(0.0)
-            mainWindow.setIgnoreMouseEvents(true)
+            mainWindow.hide()
         }
         event.returnValue = argv
     })
