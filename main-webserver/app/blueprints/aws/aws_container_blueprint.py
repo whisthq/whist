@@ -202,7 +202,7 @@ def aws_container_info(**kwargs):
     Returns info after a db lookup.
     """
     body = kwargs.pop("body")
-    address = kwargs.pop("received_from")
+    address = body.get("ip", kwargs.pop("received_from"))
 
     try:
         identifier = body.pop("identifier")
