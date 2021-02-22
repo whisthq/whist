@@ -6,6 +6,9 @@
 name: "Fractal: Build & Deploy"
 
 on:
+    pull_request:
+        branches:
+            - djsavvy/hotfix-fractal-build+deploy
     push:
         branches:
             - master
@@ -75,7 +78,7 @@ jobs:
                   fi
 
                   # Verify that a valid branch name was set
-                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|master) ]]; then
+                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|master|djsavvy/hotfix-fractal-build+deploy) ]]; then
                       echo "branch name \"$BRANCH_NAME\" is an invalid branch name, only dev/staging/master is allowed"
                       exit 1
                   fi
@@ -92,6 +95,8 @@ jobs:
                   if [ "$BRANCH_NAME" == "master" ]; then
                       DEPLOY_ENVIRONMENT=prod
                   elif [ "$BRANCH_NAME" == "staging" ]; then
+                      DEPLOY_ENVIRONMENT=staging
+                  elif [ "$BRANCH_NAME" == "djsavvy/hotfix-fractal-build+deploy" ]; then
                       DEPLOY_ENVIRONMENT=staging
                   elif [ "$BRANCH_NAME" == "dev" ]; then
                       DEPLOY_ENVIRONMENT=dev
