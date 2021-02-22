@@ -13,11 +13,16 @@ echo "Downloading Protocol Libraries"
 
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    CYGWIN*)      OS=Windows;;
-    MINGW*)       OS=Windows;;
-    *Microsoft*)  OS=Windows;;
-    Linux*)       OS=Linux;;
-    Darwin*)      OS=Mac;;
+    CYGWIN*)      OS="Windows";;
+    MINGW*)       OS="Windows";;
+    *Microsoft*)  OS="Windows";;
+    Linux*)
+        if grep -qi Microsoft /proc/version; then
+                  OS="Windows+Linux"
+        else
+                  OS="Linux"
+        fi;;
+    Darwin*)      OS="Mac";;
     *)            echo "Unknown Machine: ${unameOut}" && exit 1;;
 esac
 
@@ -38,7 +43,7 @@ mkdir -p lib/64/SDL2
 aws s3 cp --only-show-errors s3://fractal-protocol-shared-libs/shared-libs.tar.gz - | tar xz
 
 # Copy Windows files
-if [[ "$OS" == "Windows" ]]; then
+if [[ "$OS" =~ "Windows" ]]; then
     cp share/64/Windows/* desktop/build64/Windows/
     cp share/64/Windows/* server/build64
 fi
@@ -64,7 +69,7 @@ rm -rf include/SDL2/include
 ###############################
 
 # Windows
-if [[ "$OS" == "Windows" ]]; then
+if [[ "$OS" =~ "Windows" ]]; then
     mkdir -p lib/64/SDL2/Windows
     aws s3 cp --only-show-errors s3://fractal-protocol-shared-libs/fractal-windows-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Windows
 fi
@@ -76,7 +81,7 @@ if [[ "$OS" == "Mac" ]]; then
 fi
 
 # Linux Ubuntu
-if [[ "$OS" == "Linux" ]]; then
+if [[ "$OS" =~ "Linux" ]]; then
     mkdir -p lib/64/SDL2/Linux
     aws s3 cp --only-show-errors s3://fractal-protocol-shared-libs/fractal-linux-sdl2-static-lib.tar.gz - | tar xz -C lib/64/SDL2/Linux
 fi
