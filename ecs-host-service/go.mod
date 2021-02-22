@@ -11,7 +11,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fractal/ecs-agent/agent v0.0.0-20210216143804-67304cc35ea7
 	github.com/fractal/uinput-go v1.4.1-0.20210205223251-85bbf8899b6a
-	github.com/getsentry/sentry-go v0.7.0
+	github.com/getsentry/sentry-go v0.10.0
 	github.com/gogo/protobuf v1.3.1 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
