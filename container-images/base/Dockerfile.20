@@ -429,6 +429,7 @@ RUN systemctl mask systemd-hostnamed
 RUN systemctl mask acpid
 RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
+RUN systemctl disable sshd
 
 # Ubuntu 20-specific systemd fix (pre-systemd 246)
 COPY config/systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
