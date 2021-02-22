@@ -132,35 +132,39 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
 
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-            message = "client:MINIMIZE";
+            message = "client:MINIMIZE\0";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-            message = "client:FOCUS";
+            message = "client:FOCUS\0";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-            message = "client:UNFOCUS";
-        }
-        if (message) {
-#ifdef _WIN32
-            if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
-                if (GetLastError() == ERROR_INVALID_HANDLE) {
-                    LOG_INFO("Client app socket closed for writing");
-                    return 0;
-                }
-                LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
-                return -1;
-            }
-#else
-            if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
-                if (errno == EBADF) {
-                    LOG_INFO("Client app socket closed for writing");
-                    return 0;
-                }
-                LOG_ERROR("write window event to client app socket failed: errno %d", errno);
-                return -1;
-            }
-#endif
-            LOG_INFO("WROTE %s", message);
+            message = "client:UNFOCUS\0";
         }
     } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
+        message = "client:QUIT\0";
+    }
+
+    if (message) {
+#ifdef _WIN32
+        if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+            if (GetLastError() == ERROR_INVALID_HANDLE) {
+                LOG_INFO("Client app socket closed for writing");
+                return 0;
+            }
+            LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
+            return -1;
+        }
+#else
+        if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
+            if (errno == EBADF) {
+                LOG_INFO("Client app socket closed for writing");
+                return 0;
+            }
+            LOG_ERROR("write window event to client app socket failed: errno %d", errno);
+            return -1;
+        }
+#endif
+    }
+
+    if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
 #ifdef _WIN32
         CloseHandle(args->write_socket_fd);
         CloseHandle(args->read_socket_fd);
@@ -168,6 +172,7 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         close(args->write_socket_fd); // use the same fd for R/W on Unix
 #endif
     }
+
     return 0;
 
 }
@@ -486,6 +491,7 @@ int share_client_window_events(void* opaque) {
         }
         memset(buf, 0, sizeof(buf));
     }
+    LOG_INFO("FINISHED READING");
 
     if (read_chars < 0 || !successful_read) {
 #ifdef _WIN32

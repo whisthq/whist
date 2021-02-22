@@ -32,7 +32,7 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = false
+let showMainWindow = true
 // Toggles whether FractalClient should be minimized or
 //    restored (maximized). When the showMainWindow is false,
 //    this value gets toggled on "minimize" and "focus"
@@ -42,10 +42,7 @@ let protocolFocused = false
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
-let socketPath = require("path").join(
-    FractalDirectory.getRootDirectory(),
-    "protocol-build/desktop/fractal-client.sock"
-)
+let socketPath = "fractal-client.sock"
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -81,7 +78,6 @@ const createWindow = async () => {
             },
         })
         socketPath = '\\\\.\\pipe\\' + socketPath
-        console.log(socketPath)
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
             show: false,
@@ -142,13 +138,18 @@ const createWindow = async () => {
                 if (parts[1] === "MINIMIZE") {
                     console.log("client says MINIMIZE")
                     protocolMinimized = true
-                } else if (parts[1] == "FOCUS") {
+                } else if (parts[1] === "FOCUS") {
                     console.log("client says FOCUS")
                     protocolFocused = true
                     protocolMinimized = false
-                } else if (parts[1] == "UNFOCUS") {
+                } else if (parts[1] === "UNFOCUS") {
                     console.log("client says UNFOCUS")
                     protocolFocused = false
+                } else if (parts[1] === "QUIT") {
+                    console.log("client says QUIT")
+                    app.quit()
+                } else {
+                    console.log("client gives unknown command " + parts[1])
                 }
             }
         })
@@ -156,17 +157,20 @@ const createWindow = async () => {
             console.log(`error ${err}`)
         })
 
-        if (os.platform() == "win32") {
+        if (os.platform() === "win32") {
+            console.log("WIN32")
             mainWindow.on("focus", () => {
                 if (protocolFocused && !protocolMinimized) {
+                    console.log("MINIMIZE")
                     // When the protocol is focused and not minimized, then minimize
                     socket.write("server:MINIMIZE")
                 } else {
+                    console.log("FOCUS")
                     // When the protocol is not focused or minimized, then focus
                     socket.write("server:FOCUS")
                 }
             })
-        } else if (os.platform() == "darwin") {
+        } else if (os.platform() === "darwin") {
             app.on("activate", () => {
                 // OSX: "activate" event is thrown when the dock icon is pressed
                 socket.write("server:FOCUS")
@@ -215,7 +219,11 @@ const createWindow = async () => {
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }
-        if (showMainWindow) {
+        if (!showMainWindow) {
+            // mainWindow.setOpacity(0.0)
+            // mainWindow.setIgnoreMouseEvents(true)
+        }
+        if (os.platform() === "win32" || showMainWindow) {
             if (process.env.START_MINIMIZED) {
                 mainWindow.minimize()
             } else {
@@ -223,10 +231,6 @@ const createWindow = async () => {
                 mainWindow.focus()
                 mainWindow.maximize()
             }
-        } else if (os.platform() == "win32") {
-            // To keep the icon on the taskbar in Windows, don't hide - just make transparent
-            mainWindow.setOpacity(0.0)
-            mainWindow.setIgnoreMouseEvents(true)
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
@@ -243,11 +247,13 @@ const createWindow = async () => {
             mainWindow.show()
             mainWindow.focus()
             mainWindow.restore()
+            mainWindow.setOpacity(1.0)
+            mainWindow.setIgnoreMouseEvents(false)
         } else if (!showMainWindow && mainWindow) {
-            if (os.platform() == "win32") {
+            if (os.platform() === "win32") {
                 // To keep the icon on the taskbar in Windows, don't hide - just make transparent
-                mainWindow.setOpacity(0.0)
-                mainWindow.setIgnoreMouseEvents(true)
+                // mainWindow.setOpacity(0.0)
+                // mainWindow.setIgnoreMouseEvents(true)
             } else {
                 mainWindow.hide()
             }
