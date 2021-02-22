@@ -31,14 +31,12 @@ class ContainerNotFoundError(Exception):
 
 
 @shared_task
-def upload_logs_to_s3(sender, ip, port, aes_key, message):
+def upload_logs_to_s3(sender, container_id, aes_key, message):
     """Upload logs to S3.
 
     Arguments:
         sender (str): Either "client" or "server" (case-insensitive).
-        ip (str): The IP address of the instance on which the task is running.
-        port (int): The port number on the instance that is forwarded to port
-            32262 inside the container.
+        container_id (str):  the ARN of the container
         aes_key (str): A secret key that the client uses to authenticate with
             the container and the container uses to authenticate with the web
             server.
@@ -61,7 +59,7 @@ def upload_logs_to_s3(sender, ip, port, aes_key, message):
 
         raise BadSenderError(sender)
 
-    container = UserContainer.query.filter_by(ip=ip, port_32262=port).first()
+    container = UserContainer.query.get(container_id)
 
     # Make sure that the container with the specified networking attributes
     # exists.
