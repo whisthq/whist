@@ -1,6 +1,6 @@
 # dependabot.yml
 #
-# Configuration file for Dependabot on the fracta/fractal monorepository.
+# Configuration file for Dependabot on the fractal/fractal monorepository.
 
 # Note: Dependabot does not support globbing as the writing of this file. As
 # a result, this configuration file is structured on a per-subrepo basis and
