@@ -68,12 +68,12 @@ dependencies = [
 
 [[package]]
 name = "figma-font-bindings"
-version = "0.1.1"
+version = "0.1.5"
 dependencies = [
  "libfonthelper",
  "log",
  "neon",
- "neon-build 0.3.3",
+ "neon-build",
 ]
 
 [[package]]
@@ -180,18 +180,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6cac4691701b686e6c07b2eb5b51a9f26f5c11179c5d7924b78100dd387fc99d"
 dependencies = [
  "cslice",
- "neon-build 0.4.0",
+ "neon-build",
  "neon-runtime",
  "semver",
-]
-
-[[package]]
-name = "neon-build"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae406bf1065c4399e69d328a3bd8d4f088f2a205dc3881bf68c0ac775bfef337"
-dependencies = [
- "cfg-if",
 ]
 
 [[package]]
