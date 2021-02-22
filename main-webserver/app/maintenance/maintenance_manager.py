@@ -396,7 +396,8 @@ def maintenance_track_task(func: Callable):
                 msg,
                 level=logging.ERROR,
             )
-            raise ValueError("MAINTENANCE ERROR. Failed to deregister task.")
+            # exception can be None here
+            raise ValueError("MAINTENANCE ERROR. Failed to deregister task.") from exception
 
         # raise any exception to caller
         if exception is not None:
