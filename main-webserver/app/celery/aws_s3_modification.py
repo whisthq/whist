@@ -26,8 +26,8 @@ class ContainerNotFoundError(Exception):
     arguments does not exist.
     """
 
-    def __init__(self, ip, port):
-        super().__init__(f"IP: {ip}, port: {port}")
+    def __init__(self, container_id):
+        super().__init__(f"ID: {container_id}")
 
 
 @shared_task
@@ -76,7 +76,7 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
             level=logging.ERROR,
         )
 
-        raise ContainerNotFoundError(ip, port)
+        raise ContainerNotFoundError(container_id)
 
     # Do logging.
     username = str(container.user_id)
