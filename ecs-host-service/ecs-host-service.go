@@ -555,8 +555,8 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	// Actually write ID information to file
-	id_filename := datadir + "ID"
-	err = writeAssignmentToFile(id_filename, req.ContainerID)
+	idFilename := datadir + "ContainerARN"
+	err = writeAssignmentToFile(idFilename, req.ContainerARN)
 	if err != nil {
 		return logger.MakeError("Could not write value %v to ID file %v. Error: %s", req.ContainerID, filename, err)
 	}

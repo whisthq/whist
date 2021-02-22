@@ -126,7 +126,7 @@ type SetContainerStartValuesRequest struct {
 	HostPort   int                `json:"host_port"` // Port on the host to whose container the start values correspond
 	DPI        int                `json:"dpi"`       // DPI to set for the container
 	UserID     string             `json:"user_id"`   // User ID of the container user
-	ContainerID     string             `json:"container_id"`   // User ID of the container user
+	ContainerARN     string             `json:"container_ARN"`   // AWS ID of the container
 	resultChan chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
