@@ -8,4 +8,4 @@ pylint==2.6.0
 pytest==6.1.1
 pytest-celery==0.0.0.a1
 pytest-dotenv==0.5.2
-pytest-flask==1.0.0
+pytest-flask==1.1.0
