@@ -277,12 +277,12 @@ int32_t render_screen(SDL_Renderer* renderer) {
 
         if (ret == SDL_MUTEX_TIMEDOUT) {
             if (loading_index >= 0) {
+                // Delay by 50 milliseconds to control the speed of the animation,
+                // not delaying will cause it to go too fast
+                SDL_Delay(50);
                 loading_index++;
                 loading_sdl(renderer, loading_index);
             }
-            // Delay by 50 milliseconds to control the speed of the animation,
-            // not delaying will cause it to go too fast
-            SDL_Delay(50);
             continue;
         }
 
