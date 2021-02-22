@@ -123,12 +123,13 @@ def _mount_cloud_storage(user, container):
         )
 
 
-def _pass_start_values_to_instance(ip, port, dpi, user_id):
+def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
     """
     Send the instance start values to the host service.
 
     Arguments:
         ip: The IP address of the instance on which the container is running.
+        container_id: The id (currently ARN) of the container.
         port: The port on the instance to which port 32262 within the container has been mapped.
         dpi: The DPI of the client display.
         user_id: The container's assigned user's user ID
@@ -139,6 +140,7 @@ def _pass_start_values_to_instance(ip, port, dpi, user_id):
             f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
             json={
                 "host_port": port,
+                "container_id": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
@@ -538,7 +540,11 @@ def assign_container(
 
     _mount_cloud_storage(user, base_container)  # Not tested
     _pass_start_values_to_instance(
-        base_container.ip, base_container.port_32262, base_container.dpi, user.user_id
+        base_container.ip,
+        base_container.container_id,
+        base_container.port_32262,
+        base_container.dpi,
+        user.user_id,
     )
     time.sleep(1)
 
