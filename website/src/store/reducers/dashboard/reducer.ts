@@ -4,7 +4,7 @@ import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 
 import { deep_copy } from "shared/utils/reducerHelpers"
 
-export default function (state = DEFAULT, action: any) {
+const DashboardReducer = (state = DEFAULT, action: any) => {
     const stateCopy: any = deep_copy(state)
     switch (action.type) {
         case PaymentPureAction.UPDATE_STRIPE_INFO:
@@ -21,3 +21,5 @@ export default function (state = DEFAULT, action: any) {
             return state
     }
 }
+
+export default DashboardReducer

@@ -2,7 +2,7 @@ export const DEFAULT = {
     user: {
         // identifiers
         userID: null, // email
-        name: null, // not really used except for waitlist
+        name: null, // name
         // session auth tokens
         accessToken: null, // access token that lets you talk to the server when logged in
         refreshToken: null, // refresh token to refresh your access token when it is used up
@@ -11,8 +11,6 @@ export const DEFAULT = {
         resetToken: null, // the token that shows up in /reset?token needed to validate a reset
         // verification status for this specific user
         emailVerified: false, // keeps track of whether this user is verified so we can display the proper info
-        canLogin: false, // are they off the waitlist?
-        waitlistToken: null,
         usingGoogleLogin: false, // if the user signed in using Google
     },
     authFlow: {
@@ -33,5 +31,10 @@ export const DEFAULT = {
         passwordResetToken: null,
         passwordVerified: null, // null | "success" | "failed"
         callback: null,
+        // fields for testing reset password
+        token: null, //reset password token
+        url: null, // should be dev.fractal.co
     },
 }
+
+export default DEFAULT

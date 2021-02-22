@@ -1,0 +1,19 @@
+:root {
+    --accent-border-color: #69f5b2;
+    --dark-border-color: #aaaaaa;
+    --light-border-color: #dfdfdf;
+
+    --alert-background-color: #cf1720;
+    --accent-background-color: #69f5b2;
+    --primary-background-color: #553de9;
+    --white-background-color: #ffffff;
+    --light-background-color: #f6f9ff;
+    --dark-background-color: #bbbbbb;
+    --black-background-color: #000000;
+
+    --accent-text-color: #69f5b2;
+    --white-text-color: #ffffff;
+    --light-text-color: #efefef;
+    --dark-text-color: #555555;
+    --black-text-color: #000000;
+}

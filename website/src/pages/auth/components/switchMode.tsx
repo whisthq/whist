@@ -3,15 +3,18 @@ import React, { useContext } from "react"
 import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
-const SwitchMode = (props: {
+import styles from "styles/shared.module.css"
+
+export const SwitchMode = (props: {
     question: string
     link: string
     closer: string
-    onClick: () => any
+    onClick: () => void
+    id?: string
 }) => {
     const { width } = useContext(MainContext)
 
-    const { question, link, closer, onClick } = props
+    const { question, link, closer, id, onClick } = props
 
     return (
         <div style={{ textAlign: "center" }}>
@@ -19,8 +22,9 @@ const SwitchMode = (props: {
             {width < ScreenSize.SMALL && <br />}
             <span
                 style={{ color: "#3930b8" }}
-                className="hover"
+                className={styles.hover}
                 onClick={onClick}
+                id={id}
             >
                 {link}
             </span>

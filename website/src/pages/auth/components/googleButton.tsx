@@ -1,4 +1,5 @@
-import React, { useContext } from "react"
+/* eslint-disable no-console */
+import React, { Dispatch, useContext } from "react"
 import { connect } from "react-redux"
 import { GoogleLogin } from "react-google-login"
 import { FaGoogle } from "react-icons/fa"
@@ -7,21 +8,17 @@ import MainContext from "shared/context/mainContext"
 import { config } from "shared/constants/config"
 import { ScreenSize } from "shared/constants/screenSizes"
 
-import "styles/auth.css"
-import { updateAuthFlow } from "store/actions/auth/pure"
+import styles from "styles/auth.module.css"
 
-const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
+const GoogleButton = (props: {
+    dispatch: Dispatch<any>
+    login: (code: string) => void
+}) => {
     const { width } = useContext(MainContext)
 
     const responseGoogleSuccess = (res: any) => {
         props.login(res.code)
         //TODO might want to remove this and use the warnings in auth?
-        props.dispatch(
-            updateAuthFlow({
-                loginWarning: "",
-                signupWarning: "",
-            })
-        )
     }
 
     const responseGoogleFailure = (res: any) => {
@@ -38,7 +35,7 @@ const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
         <button
             onClick={renderProps.onClick}
             disabled={renderProps.disabled}
-            className="google-button"
+            className={styles.googleButton}
         >
             <FaGoogle
                 style={{
@@ -58,10 +55,17 @@ const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
         </button>
     )
 
+    let GOOGLE_CLIENT_ID: string = ""
+    if (config.keys.GOOGLE_CLIENT_ID == null) {
+        console.error("Error: environment variable GOOGLE_CLIENT_ID not set")
+    } else {
+        GOOGLE_CLIENT_ID = config.keys.GOOGLE_CLIENT_ID as string
+    }
+
     return (
         <div>
             <GoogleLogin
-                clientId={config.keys.GOOGLE_CLIENT_ID}
+                clientId={GOOGLE_CLIENT_ID}
                 buttonText={"Sign in with Google"}
                 accessType={"offline"}
                 responseType={"code"}
@@ -77,7 +81,7 @@ const GoogleButton = (props: { dispatch: any; login: (code: any) => any }) => {
     )
 }
 
-function mapStateToProps(state: any) {
+const mapStateToProps = () => {
     return {}
 }
 

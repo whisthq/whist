@@ -1,39 +1,59 @@
 # Fractal Website
 
-![Website: Node.js Build and Test](https://github.com/fractal/website/workflows/Website:%20Node.js%20Build%20and%20Test/badge.svg)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f65a863e-37d0-4407-babd-09b2b4802661/deploy-status)](https://app.netlify.com/sites/fractal-prod/deploys) ![Website: Node.js Build and Test](https://github.com/fractal/website/workflows/Website:%20Node.js%20Build%20and%20Test/badge.svg) ![Website: Linting](https://github.com/fractal/website/workflows/Website:%20Linting/badge.svg)
 
-This repository contains the code for the Fractal website for application streaming. The Fractal website is used to advertise the product, and handle account management and authentication.
+This repository contains the code for the Fractal website.
 
-## Development
 
-This project is developed using the `npm` package manager. You can start developing by running `npm install`, and can launch into a localhost via `npm start`. If you need to update dependencies, you can run `npm upgrade`, followed by `npm prune` to remove unnecessary dependencies.
+## Setting Up for Development
 
-### Retrieving Environment Variables
+Note: Steps 1, 2, and 3 only need to be done once.
 
-If you do not have the `.env` environment folder, run `python retrieve.py` in the `scripts` folder. This will download the environment secrets necessary to fully run the site locally. You will need to have configured your AWS Access Key and Secret Access Key locally for the script to work properly. If you haven't done so already, you can do it by running `aws configure`.
+1. Download the AWS CLI and run `aws configure`. You'll be prompted to enter your AWS Access Key
+and Secret Key, which you received in an onboarding email titled "AWS Credentials."
 
-### Logging
+2. `cd` into the `scripts` folder and run `python3 retrieve.py` to download the necessary environment variables. Depending on your compuer, you may need to replace `python3` with `py`, `py3`, `python`, etc.
 
-To ensure that no lingering `console.log()` statements make it to production and can be inspected by users, please use `debugLog()` to print to the console. This custom logging function gets automatically hidden in production.
+3. Authenticate to GitHub Packages with `npm login --scope=@fractal --registry=https://npm.pkg.github.com`. Your `username` is your GitHub username, your `password` is a GitHub personal authentication token, and your email is your `fractal.co` email.
 
-### Continous Integration and Netlify Deployments
+4. Run `npm install` to install package dependencies and launch localhost via `npm start`. If you need to update dependencies, you can run `npm upgrade`, followed by `npm prune` to remove unnecessary dependencies. NOTE: If you are on an M1 Mac, make sure you are running your terminal in Rosetta and are on Node 14, which you can install by running `nvm install 14.14.0 && nvm use 14.14.0`.
+
+## How to Contribute
+
+Before making a pull request, ensure that the following steps are taken:
+
+1. Make sure the application is fully working via `npm start`.
+
+2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
+
+3. Lint your code by running `npm run lint-fix`. If this does not pass, your code will fail Github CI.
+
+4. Add docstrings to every new component and function that you created.
+
+5. Run all test files by running `npm run test` and `jest`. If this does not pass, your code will fail Github CI. If you've changed React code, your code will likely fail the corresponding snapshot test, so you'll need to update snapshots. NOTE: Any new functions or React components created must be accompanied by unit/snapshot tests, or code reviewers will request changes on your PR.
+
+6. Rebase against `dev` by pulling `dev` and running `git rebase dev`. 
+
+Finally, you can open PR to `dev`.
+
+## Running tests
+If you've created new React components, please write unit and/or integration tests as necessary. Tests are currently written in `Jest`, `react-testing-library`, and `jest-puppeteer`. Unit and integration test files can be found in each page under the `__tests__` folder in the format `<TESTNAME>.test.tsx`, while e2e tests can be found under `testing/e2e` in the format `<TESTNAME>.e2e.ts`. Running unit/integration tests can be done by calling `npm run test <FILENAME>` or just `npm run test` for the whole suite, while e2e tests are called by `jest <FILENAME>` or `jest`. To leanr more about writing tests, go to the engineering wiki for documentation: https://www.notion.so/tryfractal/Testing-Website-d95465a920784670838f130620cd5d87
+
+## Publishing the Website
+
+The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/master), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
+
+- The branch `dev` deploys to https://dev.fractal.co.
+- The branch `staging` deploys to https://staging.fractal.co.
+- The branch `master` deploys to https://fractal.co.
+
+For `dev` and `staging`, the password is `><mc?@,>YF?v&p,e`.
 
 Basic continuous integration is set up for this project. For every PR, basic Node.js tests will be compiled and run within GitHub Actions, including linting. Your code needs to pass all linting and tests to be approved for merge. If you create new functions, make sure to create tests for them and add them to the continuous integration, when relevant.
 
-The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches, the code in that branch will be automatically built and deployed on Netlify. You will also see deploy previews for your branches when you make a PR - they *need* to pass for merging to be approved. You most likely won't need to access Netlify directly, but if you do ask one of the code owners.
-
-- The branch `dev` deploys to https://fractal-dev.netlify.app.
-- The branch `staging` deploys to https://fractal-staging.netlify.app.
-- The branch `master` deploys to https://fractal.co.
-
 ## Google Analytics, A/B Testing, and Tracking
 
-To improve our retention rates and scientifically approach the question of *"what makes a user stick in our website?"*, we use basic pageview and event tracking with Google Analytics. When users click a button, a Google Analytics (GA) event will trigger that will inform GA of the fact that they clicked, and it will also keep track of their rough geographical location and of which page(s) they are viewing.
-
-The Google Analytics code is in the `withTracker.tsx` component as well as in `gaEvents`. The Google Analytics IDs that you need to connect this to your own GA account are included in `shared/constants/config`. There can be multiple IDs since Google Analytics allows us to connect multiple GA accounts to one website.
-
-To set up your GA dashboard follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
+To view our Google Analytics dashboard, follow the tutorial on the [Notion Engineering Wiki](https://www.notion.so/tryfractal/Setting-up-Your-Google-Analytics-Dashboard-d5bcc39ee6c1433fa2006945d4469615).
 
 ## Styling
 
@@ -61,7 +81,3 @@ To ensure that this extension is used over other extensions you may have install
   }
 }
 ```
-
-## Contributing
-
-Before contributing, please familiarize yourself with our [Coding Philosophy](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b). Unless otherwise specified, contributors should branch off `dev` and PR back into `dev`. Because all three of `dev`, `staging` and `master` auto-deploy the their respective Netlify sites, pushing to `staging` and `master` is blocked by non-code owners.

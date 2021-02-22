@@ -98,7 +98,7 @@ export const if_exists_spread_f = (
 export const merge1f = if_exists_spread_f
 
 // this is whether we should just paste in the object, or recurse further instead (!base)
-const is_basic_type = (obj: any) =>
+export const is_basic_type = (obj: any) =>
     typeof obj === "string" ||
     typeof obj === "number" ||
     typeof obj === "boolean" ||

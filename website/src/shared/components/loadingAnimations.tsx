@@ -8,7 +8,7 @@ import PuffLoader from "react-spinners/PuffLoader"
  * A puff loader that takes over the middle of the page.
  * @param props unused
  */
-export const PuffAnimation = (props: any) => (
+export const PuffAnimation = () => (
     <div
         style={{
             position: "relative",

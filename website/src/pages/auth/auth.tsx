@@ -1,87 +1,94 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
+import { useMutation } from "@apollo/client"
 
 import Header from "shared/components/header"
-import LoginView from "pages/auth/views/loginView"
-import SignupView from "pages/auth/views/signupView"
-import ForgotView from "pages/auth/views/forgotView"
+import Login from "pages/auth/login/login"
+import Signup from "pages/auth/signup/signup"
+import Forgot from "pages/auth/forgot/forgot"
 
-import "styles/auth.css"
+import sharedStyles from "styles/shared.module.css"
 
-import history from "shared/utils/history"
-import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
+import { User, AuthFlow } from "shared/types/reducers"
+import { updateAuthFlow } from "store/actions/auth/pure"
+import { HEADER, AUTH_IDS, NEVER } from "testing/utils/testIDs"
+import { UPDATE_ACCESS_TOKEN } from "shared/constants/graphql"
 
 const Auth = (props: {
-    dispatch: any
-    user: {
-        userID: string
-        emailVerified: boolean
-        canLogin: boolean
-        accessToken: string
+    /*
+        Wrapper component for all authentication components (sign in,
+        client-app redirect)
+ 
+        Quick summary of the authentication flow here: https://www.notion.so/tryfractal/How-does-our-auth-flow-work-94ae6ae18742491795bb2f565fedc827
+
+        Arguments:
+            dispatch (Dispatch<any>): Action dispatcher
+            user (User): User from Redux state
+            authFlow (AuthFlow): AuthFlow from Redux state
+            location: a Location object from react router
+            testLocation: a test Location object for testing this component
+            testSignup: a test boolean to determine whether to test signup or not
+            emailToken (String): email verification token
+
+    */
+    dispatch: Dispatch<any>
+    user: User
+    mode: string
+    authFlow: AuthFlow
+    location: {
+        pathname: string
     }
-    waitlistUser: {
-        userID: string
-    }
-    mode: any
-    authFlow: {
-        callback: string
-    }
-    match: any
-    location: any
-    window: any
+    testLocation?: any
+    testSignup?: boolean
+    emailToken?: string
 }) => {
-    const { user, waitlistUser, match, mode, authFlow, dispatch } = props
+    const { user, mode, authFlow, testSignup, emailToken, dispatch } = props
 
     const [redirectToCallback, setRedirectToCallback] = useState(false)
-    const [initialCallback, setInitialCallback] = useState("")
+    const [callback, setCallback] = useState("")
     const [callbackChecked, setCallbackChecked] = useState(false)
+    const [loginToken, setLoginToken] = useState("")
+
+    const [updateAccessToken] = useMutation(UPDATE_ACCESS_TOKEN, {
+        context: {
+            headers: {
+                Authorization: `Bearer ${user.accessToken}`,
+                Login: loginToken,
+            },
+        },
+    })
 
     useEffect(() => {
-        // Read callback search param
-        const qs = require("qs")
-        const callback = qs.parse(props.location.search, {
-            ignoreQueryPrefix: true,
-        }).callback
+        let location = props.testLocation ? props.testLocation : props.location
 
         // Clear any previous callback URL
-        dispatch(updateAuthFlow({ callback: undefined }))
+        dispatch(
+            updateAuthFlow({
+                callback: undefined,
+                loginWarning: "",
+                signupWarning: "",
+            })
+        )
 
-        // Save new callback to local state, if any
-        if (callback && callback !== "") {
-            setInitialCallback(callback)
+        // Check to see if URL contains a login token
+        if (
+            location.pathname &&
+            location.pathname.substring(6, 17) === "loginToken="
+        ) {
+            setLoginToken(location.pathname.substring(17))
+            setCallback("fractal://")
         }
 
         setCallbackChecked(true)
-
-        // Read other params
-        const firstParam = match.params.first
-        const secondParam = match.params.second
-
-        if (firstParam !== "bypass" && !waitlistUser.userID) {
-            history.push("/")
-        }
-
-        if (secondParam && secondParam !== "") {
-            dispatch(updateUser({ waitlistToken: secondParam }))
-        }
-    }, [match, waitlistUser.userID, dispatch, props.location.search])
+    }, [dispatch, props.location.pathname, props.testLocation, props.location])
 
     // If a callback was provided, save it to Redux
     useEffect(() => {
-        if (initialCallback && initialCallback !== "") {
-            if (
-                initialCallback.includes("fractal://auth") &&
-                user.accessToken
-            ) {
-                const finalCallback =
-                    initialCallback + "?accessToken=" + user.accessToken
-                dispatch(updateAuthFlow({ callback: finalCallback }))
-            } else if (!initialCallback.includes("fractal://auth")) {
-                dispatch(updateAuthFlow({ callback: initialCallback }))
-            }
+        if (callback && callback !== "") {
+            dispatch(updateAuthFlow({ callback: callback }))
         }
-    }, [authFlow.callback, user.accessToken, dispatch, initialCallback])
+    }, [callback, dispatch, authFlow.callback, user.accessToken])
 
     // If Redux callback found and we have not redirected to the callback yet, then redirect
     useEffect(() => {
@@ -89,21 +96,33 @@ const Auth = (props: {
             !redirectToCallback &&
             authFlow.callback &&
             authFlow.callback !== "" &&
-            initialCallback &&
-            initialCallback !== "" &&
+            callbackChecked &&
             user.accessToken &&
-            user.emailVerified &&
-            window
+            user.emailVerified
         ) {
-            window.location.replace(authFlow.callback)
+            updateAccessToken({
+                variables: {
+                    loginToken: loginToken,
+                    accessToken: user.accessToken,
+                },
+            }).catch((error) => {
+                throw error
+            })
+
+            if (!props.testLocation) window.location.replace(authFlow.callback)
+
             setRedirectToCallback(true)
         }
     }, [
         authFlow.callback,
-        initialCallback,
+        props.testLocation,
         redirectToCallback,
+        user,
         user.accessToken,
         user.emailVerified,
+        loginToken,
+        updateAccessToken,
+        callbackChecked,
     ])
 
     if (redirectToCallback) {
@@ -111,51 +130,73 @@ const Auth = (props: {
     }
 
     if (user.userID && user.userID !== "") {
-        if (user.emailVerified && initialCallback === "" && callbackChecked) {
+        if (user.emailVerified && callback === "" && callbackChecked) {
             return <Redirect to="/dashboard" />
-        } else if (
-            !user.emailVerified &&
-            initialCallback === "" &&
-            callbackChecked
-        ) {
+        } else if (!user.emailVerified && callback === "" && callbackChecked) {
+            // testing email verification token just to get values to check user flow
+            if (testSignup === true || testSignup === false) {
+                return (
+                    <div>
+                        <p data-testid={AUTH_IDS.EMAILTOKEN}>
+                            {user.emailVerificationToken}
+                        </p>
+                        <p data-testid={AUTH_IDS.USERID}>{user.userID}</p>
+                        <p data-testid={AUTH_IDS.REFRESHTOKEN}>
+                            {user.refreshToken}
+                        </p>
+                        <p data-testid={AUTH_IDS.ACCESSTOKEN}>
+                            {user.accessToken}
+                        </p>
+                    </div>
+                )
+            }
             return <Redirect to="/verify" />
         }
     }
 
     if (mode === "Log in") {
         return (
-            <div className="fractalContainer">
-                <Header dark={false} />
-                <LoginView />
+            <div className={sharedStyles.fractalContainer}>
+                <div data-testid={HEADER}>
+                    <Header dark={false} />
+                </div>
+                <div data-testid={AUTH_IDS.LOGIN}>
+                    <Login />
+                </div>
             </div>
         )
     } else if (mode === "Sign up") {
         return (
-            <div className="fractalContainer">
-                <Header dark={false} />
-
-                <SignupView />
+            <div className={sharedStyles.fractalContainer}>
+                <div data-testid={HEADER}>
+                    <Header dark={false} />
+                </div>
+                <div data-testid={AUTH_IDS.SIGNUP}>
+                    <Signup />
+                </div>
             </div>
         )
     } else if (mode === "Forgot") {
         return (
-            <div className="fractalContainer">
-                <Header dark={false} />
-                <ForgotView />
+            <div className={sharedStyles.fractalContainer}>
+                <div data-testid={HEADER}>
+                    <Header dark={false} />
+                </div>
+                <div data-testid={AUTH_IDS.FORGOT}>
+                    <Forgot emailToken={emailToken} />
+                </div>
             </div>
         )
     } else {
         // should never happen
-        return <div />
+        return <div data-testid={NEVER} />
     }
 }
 
-function mapStateToProps(state: {
-    AuthReducer: { authFlow: any; user: any }
-    WaitlistReducer: { waitlistUser: any }
-}) {
+const mapStateToProps = (state: {
+    AuthReducer: { authFlow: AuthFlow; user: User }
+}) => {
     return {
-        waitlistUser: state.WaitlistReducer.waitlistUser,
         mode:
             state.AuthReducer.authFlow && state.AuthReducer.authFlow.mode
                 ? state.AuthReducer.authFlow.mode

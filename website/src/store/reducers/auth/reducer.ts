@@ -5,7 +5,7 @@ import * as SharedAction from "store/actions/shared"
 
 import { deep_copy } from "shared/utils/reducerHelpers"
 
-export default function (state = DEFAULT, action: any) {
+const AuthReducer = (state = DEFAULT, action: any) => {
     const stateCopy: any = deep_copy(state)
     switch (action.type) {
         case PureAction.UPDATE_USER:
@@ -47,3 +47,5 @@ export default function (state = DEFAULT, action: any) {
             return state
     }
 }
+
+export default AuthReducer

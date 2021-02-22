@@ -12,8 +12,13 @@ import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import rootSaga from "store/sagas/root"
 import * as Sentry from "@sentry/react"
-import { ApolloProvider } from "@apollo/react-hooks"
-import { ApolloClient, InMemoryCache, HttpLink, split } from "@apollo/client"
+import {
+    ApolloProvider,
+    ApolloClient,
+    InMemoryCache,
+    HttpLink,
+    split,
+} from "@apollo/client"
 import { getMainDefinition } from "@apollo/client/utilities"
 import { WebSocketLink } from "@apollo/client/link/ws"
 import { loadStripe } from "@stripe/stripe-js"
@@ -25,8 +30,10 @@ import { config } from "shared/constants/config"
 import rootReducer from "store/reducers/root"
 import * as serviceWorker from "serviceWorker"
 import { STRIPE_OPTIONS } from "shared/constants/stripe"
+import { debugLog } from "shared/utils/logging"
 
-import "styles/shared.css"
+import "styles/shared.module.css"
+import "styles/tailwind.css"
 import "bootstrap/dist/css/bootstrap.min.css"
 
 import RootApp from "rootApp"
@@ -98,31 +105,40 @@ const apolloClient = new ApolloClient({
     cache: new InMemoryCache(),
 })
 
-const stripePromise = loadStripe(config.keys.STRIPE_PUBLIC_KEY)
+let STRIPE_PUBLIC_KEY: string = ""
+if (config.keys.STRIPE_PUBLIC_KEY == null) {
+    debugLog("Error: environment variable STRIPE_PUBLIC_KEY not set")
+} else {
+    STRIPE_PUBLIC_KEY = config.keys.STRIPE_PUBLIC_KEY
+}
+const stripePromise = loadStripe(STRIPE_PUBLIC_KEY)
 
-ReactDOM.render(
-    <React.StrictMode>
-        <Sentry.ErrorBoundary fallback={"An error has occurred"}>
-            <Router history={history}>
-                <Provider store={store}>
-                    <PersistGate loading={null} persistor={persistor}>
-                        <ApolloProvider client={apolloClient}>
-                            <Elements
-                                stripe={stripePromise}
-                                options={STRIPE_OPTIONS}
-                            >
-                                <MainProvider>
-                                    <RootApp />
-                                </MainProvider>
-                            </Elements>
-                        </ApolloProvider>
-                    </PersistGate>
-                </Provider>
-            </Router>
-        </Sentry.ErrorBoundary>
-    </React.StrictMode>,
-    document.getElementById("root")
-)
+const RootComponent = () => {
+    return (
+        <React.StrictMode>
+            <Sentry.ErrorBoundary fallback={"An error has occurred"}>
+                <Router history={history}>
+                    <Provider store={store}>
+                        <PersistGate loading={null} persistor={persistor}>
+                            <ApolloProvider client={apolloClient}>
+                                <Elements
+                                    stripe={stripePromise}
+                                    options={STRIPE_OPTIONS}
+                                >
+                                    <MainProvider>
+                                        <RootApp />
+                                    </MainProvider>
+                                </Elements>
+                            </ApolloProvider>
+                        </PersistGate>
+                    </Provider>
+                </Router>
+            </Sentry.ErrorBoundary>
+        </React.StrictMode>
+    )
+}
+
+ReactDOM.render(<RootComponent />, document.getElementById("root"))
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.

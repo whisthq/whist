@@ -5,24 +5,22 @@ export const UPDATE_AUTH_FLOW = "UPDATE_AUTH_FLOW"
 
 export const RESET_USER = "RESET_USER"
 
-export function updateUser(body: {
+export const updateUser = (body: {
     userID?: string
     name?: string
     accessToken?: string
     refreshToken?: string
     emailVerificationToken?: string
     emailVerified?: boolean
-    canLogin?: boolean
-    waitlistToken?: string
     usingGoogleLogin?: boolean
-}) {
+}) => {
     return {
         type: UPDATE_USER,
         body,
     }
 }
 
-export function updateAuthFlow(body: {
+export const updateAuthFlow = (body: {
     mode?: string
     loginWarning?: string | null
     signupWarning?: string | null
@@ -37,20 +35,22 @@ export function updateAuthFlow(body: {
     passwordResetToken?: string | null
     passwordVerified?: string | null
     callback?: string
-}) {
+    token?: string
+    url?: string
+}) => {
     return {
         type: UPDATE_AUTH_FLOW,
         body,
     }
 }
 
-export function resetUser() {
+export const resetUser = () => {
     return {
         type: RESET_USER,
     }
 }
 
-export function resetState() {
+export const resetState = () => {
     return {
         type: SharedAction.RESET_STATE,
     }

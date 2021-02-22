@@ -59,20 +59,28 @@ module.exports = {
 
     // A set of global variables that need to be available in all test environments
     // globals: {},
+    globals: {
+        "ts-jest": {
+            diagnostics: {
+                ignoreCodes: [2322, 2345, 2532, 1208, 7053],
+            },
+        },
+    },
 
     // The maximum amount of workers used to run your tests. Can be specified as % or a number. E.g. maxWorkers: 10% will use 10% of your CPU amount + 1 as the maximum worker number. maxWorkers: 2 will use a maximum of 2 workers.
     // maxWorkers: "50%",
 
     // An array of directory names to be searched recursively up from the requiring module's location
-    // moduleDirectories: [
-    //   "node_modules"
-    // ],
+    moduleDirectories: ["node_modules", "src"],
 
     // An array of file extensions your modules use
     moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
 
     // A map from regular expressions to module names or to arrays of module names that allow to stub out resources with a single module
     // moduleNameMapper: {},
+    // moduleNameMapper: {
+    //     pages: "<rootDir>/src/pages",
+    // },
 
     // An array of regexp pattern strings, matched against all module paths before considered 'visible' to the module loader
     // modulePathIgnorePatterns: [],
@@ -85,6 +93,7 @@ module.exports = {
 
     // A preset that is used as a base for Jest's configuration
     // preset: undefined,
+    preset: "jest-puppeteer",
 
     // Run tests from one or more projects
     // projects: undefined,
@@ -123,10 +132,11 @@ module.exports = {
     // slowTestThreshold: 5,
 
     // A list of paths to snapshot serializer modules Jest should use for snapshot testing
-    snapshotSerializers: ["enzyme-to-json/serializer"],
+    //snapshotSerializers: ["enzyme-to-json/serializer"], // we won't be using enzyme
 
     // The test environment that will be used for testing
     // testEnvironment: 'node',
+    testEnvironment: "jest-environment-jsdom-sixteen",
 
     // Options that will be passed to the testEnvironment
     // testEnvironmentOptions: {},
@@ -146,7 +156,7 @@ module.exports = {
     // ],
 
     // The regexp pattern or array of patterns that Jest uses to detect test files
-    testRegex: ["(/__tests__/.*|(\\.|/)(test|spec))\\.tsx?$"],
+    testRegex: ["(/__tests__/.*|(\\.|/)(e2e))\\.ts?$"],
 
     // This option allows the use of a custom results processor
     // testResultsProcessor: undefined,
@@ -163,6 +173,9 @@ module.exports = {
     // A map from regular expressions to paths to transformers
     transform: {
         "^.+\\.tsx?$": "ts-jest",
+        "^.+\\.svg$": "<rootDir>/src/testing/transformers/svgTransform.js",
+        "^.+\\.css$": "<rootDir>/src/testing/transformers/cssTransform.js",
+        "^.+\\.gif$": "<rootDir>/src/testing/transformers/gifTransform.js",
     }, // ts-jest warns but is necessary to run typescript tests
 
     // An array of regexp pattern strings that are matched against all source file paths, matched files will skip transformation

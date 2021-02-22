@@ -1,268 +1,81 @@
-import React, { useEffect, useCallback, useState } from "react"
+import React from "react"
+import { Row, Col } from "react-bootstrap"
 import { connect } from "react-redux"
 import { Redirect } from "react-router"
-import { useQuery, useSubscription, useMutation } from "@apollo/client"
-import { HashLink } from "react-router-hash-link"
+import { Switch, Route } from "react-router-dom"
 
 import Header from "shared/components/header"
-import DownloadBox from "pages/dashboard/components/downloadBox"
-import {
-    SUBSCRIBE_USER,
-    GET_WAITLIST_USER_FROM_TOKEN,
-    NULLIFY_WAITLIST_TOKEN,
-    UPDATE_USER_CAN_LOGIN,
-} from "pages/dashboard/constants/graphql"
-import { PuffAnimation } from "shared/components/loadingAnimations"
-import { updateUser } from "store/actions/auth/pure"
+import Home from "pages/dashboard/home/home"
+import Settings from "pages/dashboard/settings/settings"
+import withTracker from "shared/utils/withTracker"
+import LeftButton from "pages/dashboard/components/leftButton"
+import SignoutButton from "pages/dashboard/components/signoutButton"
+
+import { LeftButtonType } from "shared/types/ui"
+
+import { HEADER, DASHBOARD_IDS, E2E_DASHBOARD_IDS } from "testing/utils/testIDs"
 
 //import { CopyToClipboard } from "react-copy-to-clipboard"
-// use copy to clipboard functionality when we add back in linux
 
-import "styles/dashboard.css"
+import sharedStyles from "styles/shared.module.css"
 
-// Important Note: if you are allowed to login you will be allowed to download
-// Basically, all users who are not allowed to download won't be allowed to login
-// (and thus get off the waitlist) for now. A more complicated fix would require us
-// to use more endpoints or somehow let the server know if the login is on the
-// site or on the client
-const Dashboard = (props: {
-    dispatch: any
-    user: {
-        userID: string
-        canLogin: boolean
-        accessToken: string
-        waitlistToken: string
-        emailVerificationToken: string
-    }
-}) => {
-    const { user, dispatch } = props
-    const [canLogin, setCanLogin] = useState(false)
+import { User, AuthFlow } from "shared/types/reducers"
+
+const Dashboard = (props: { user: User }) => {
+    const { user } = props
 
     //const [copiedtoClip, setCopiedtoClip] = useState(false)
     //const linuxCommands = "sudo apt-get install libavcodec-dev libavdevice-dev libx11-dev libxtst-dev xclip x11-xserver-utils -y"
     const validUser = user.userID && user.userID !== ""
-    const name = user.userID ? user.userID.split("@")[0] : ""
 
-    const { data, loading, error } = useSubscription(SUBSCRIBE_USER, {
-        variables: { userID: user.userID },
-    })
-
-    const waitlistUserData = useQuery(GET_WAITLIST_USER_FROM_TOKEN, {
-        variables: { waitlistAccessToken: user.waitlistToken },
-        context: {
-            headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-            },
-        },
-        skip: !user.waitlistToken,
-    })
-
-    const [nullifyWaitlistToken, nullifyWaitlistTokenResult] = useMutation(
-        NULLIFY_WAITLIST_TOKEN,
-        {
-            context: {
-                headers: {
-                    Authorization: `Bearer ${user.accessToken}`,
-                },
-            },
-        }
-    )
-
-    const [updateUserCanLogin, updateUserCanLoginResult] = useMutation(
-        UPDATE_USER_CAN_LOGIN,
-        {
-            context: {
-                headers: {
-                    Authorization: `Bearer ${user.accessToken}`,
-                },
-            },
-        }
-    )
-
-    const toggleCanLogin = useCallback(
-        (canLogin: boolean) => {
-            setCanLogin(canLogin)
-            dispatch(
-                updateUser({
-                    canLogin: canLogin,
-                })
-            )
-        },
-        [dispatch]
-    )
-
-    useEffect(() => {
-        if (
-            waitlistUserData &&
-            waitlistUserData.data &&
-            waitlistUserData.data.waitlist &&
-            waitlistUserData.data.waitlist.length > 0
-        ) {
-            toggleCanLogin(true)
-
-            const offboardedUserID = waitlistUserData.data.waitlist[0].user_id
-            if (user.userID) {
-                updateUserCanLogin({
-                    variables: {
-                        userID: user.userID,
-                    },
-                })
-            }
-            if (offboardedUserID) {
-                nullifyWaitlistToken({
-                    variables: {
-                        userID: offboardedUserID,
-                    },
-                })
-            }
-        }
-    }, [
-        waitlistUserData,
-        nullifyWaitlistToken,
-        updateUserCanLogin,
-        toggleCanLogin,
-        user.userID,
-    ])
-
-    useEffect(() => {
-        if (data && data.users && data.users[0] && user.userID) {
-            toggleCanLogin(
-                data.users[0].can_login ||
-                    user.userID.includes("@fractal.co")
-            )
-        }
-    }, [
-        data,
-        dispatch,
-        user.userID,
-        user.waitlistToken,
-        user.emailVerificationToken,
-        toggleCanLogin,
-    ])
-
-    if (error || waitlistUserData.error) {
-        return (
-            <div className="fractalContainer">
-                <Header dark={false} account />
-                <div className="dashboard-container">
-                    There was an error retrieving the dashboard. Please refresh
-                    to try again.
-                </div>
-            </div>
-        )
-    } else if (
-        nullifyWaitlistTokenResult.error ||
-        updateUserCanLoginResult.error
-    ) {
-        return (
-            <div className="fractalContainer">
-                <Header dark={false} account />
-                <div className="dashboard-container">
-                    There was an error taking you off the waitlist. Please
-                    refresh to try again, or contact
-{" "}
-                    <a
-                        href="mailto: support@fractal.co"
-                        className="email-link"
-                    >
-                        support@fractal.co
-                    </a>
-{" "}
-                    if you think there was a mistake.
-                </div>
-            </div>
-        )
-    } else if (loading || waitlistUserData.loading) {
-        return (
-            <div
-                style={{
-                    position: "relative",
-                    height: "100vh",
-                    marginTop: "-35%",
-                }}
-            >
-                <PuffAnimation />
-            </div>
-        )
+    if (!validUser) {
+        return <Redirect to="/auth" />
     } else {
-        if (!validUser) {
-            return <Redirect to="/auth" />
-        } else if (!user.canLogin && !canLogin) {
-            return (
-                <div className="fractalContainer">
-                    <Header dark={false} account />
-                    <div className="dashboard-container">
-                        <div
-                            style={{
-                                color: "#111111",
-                                fontSize: 32,
-                                fontWeight: "bold",
-                            }}
-                        >
-                            You're still on the waitlist!
-                        </div>
-                        <div
-                            style={{
-                                marginTop: 15,
-                            }}
-                        >
-                            The more friends you refer, the faster we'll take
-                            you off the waitlist.
-                        </div>
-                        <HashLink to="/#top">
-                            <button
-                                className="white-button"
-                                style={{
-                                    width: "100%",
-                                    marginTop: 25,
-                                    color: "white",
-                                    background: "rgba(66, 133, 244, 0.9)",
-                                    border: "none",
-                                    fontSize: 16,
-                                }}
-                            >
-                                Back to Home
-                            </button>
-                        </HashLink>
-                    </div>
+        return (
+            <div className={sharedStyles.fractalContainer}>
+                <div data-testid={HEADER}>
+                    <Header account />
                 </div>
-            )
-        } else {
-            return (
-                <div className="fractalContainer">
-                    <Header dark={false} account />
-                    <div className="dashboard-container">
-                        <div>
-                            <div
-                                style={{
-                                    color: "#111111",
-                                    fontSize: 32,
-                                    fontWeight: "bold",
-                                }}
-                            >
-                                Congratulations
-                                {name.length < 7 ? " " + name : ""}
-!
-</div>
-                            <div
-                                style={{
-                                    marginTop: 20,
-                                    color: "#333333",
-                                }}
-                            >
-                                You've been selected to join our private beta!
-                                Click the button below to download Fractal.
-                            </div>
-                            <DownloadBox />
+                <Row>
+                    <Col md={1} className="hidden md:inline mt-44">
+                        <LeftButton
+                            id={E2E_DASHBOARD_IDS.HOME}
+                            exact={true}
+                            path="/dashboard"
+                            iconName={LeftButtonType.HOME}
+                        />
+                        <LeftButton
+                            id={E2E_DASHBOARD_IDS.SETTINGS}
+                            exact={false}
+                            path="/dashboard/settings"
+                            iconName={LeftButtonType.SETTINGS}
+                        />
+                        <SignoutButton id={E2E_DASHBOARD_IDS.SIGNOUT} />
+                    </Col>
+                    <Col sm={12} md={11} className="mt-12">
+                        <div data-testid={DASHBOARD_IDS.RIGHT}>
+                            <Switch>
+                                <Route
+                                    exact
+                                    path="/dashboard"
+                                    component={withTracker(Home)}
+                                />
+                                <Route
+                                    path="/dashboard/settings"
+                                    component={withTracker(Settings)}
+                                />
+                            </Switch>
                         </div>
-                    </div>
-                </div>
-            )
-        }
+                    </Col>
+                </Row>
+            </div>
+        )
     }
 }
 
-function mapStateToProps(state: { AuthReducer: { user: any; authFlow: any } }) {
+const mapStateToProps = (state: {
+    AuthReducer: { user: User; authFlow: AuthFlow }
+}) => {
     return {
         user: state.AuthReducer.user,
     }
