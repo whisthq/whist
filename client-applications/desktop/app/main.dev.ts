@@ -163,20 +163,22 @@ const createWindow = async () => {
             console.log(`error ${err}`)
         })
 
-        app.on("activate", () => {
-            // "activate" event is thrown when the taskbar/dock icon is pressed
-            if (os.platform() == "win32") {
-                // on Windows, if the app is focused and not minimized, then an "activate event" should minimize
-                if (protocolFocused) {
+        if (os.platform() == "win32") {
+            mainWindow.on("focus", () => {
+                if (protocolFocused && !protocolMinimized) {
+                    // When the protocol is focused and not minimized, then minimize
                     socket.write("server:MINIMIZE")
                 } else {
+                    // When the protocol is not focused or minimized, then focus
                     socket.write("server:FOCUS")
                 }
-            } else if (os.platform() == "darwin") {
-                // on Mac, an "activate event" should focus
+            })
+        } else if (os.platform() == "darwin") {
+            app.on("activate", () => {
+                // OSX: "activate" event is thrown when the dock icon is pressed
                 socket.write("server:FOCUS")
-            }
-        })
+            })
+        }
 
         app.on("will-quit", () => {
             socket.write("server:QUIT")
@@ -228,6 +230,10 @@ const createWindow = async () => {
                 mainWindow.focus()
                 mainWindow.maximize()
             }
+        } else if (os.platform() == "win32") {
+            // To keep the icon on the taskbar in Windows, don't hide - just make transparent
+            mainWindow.setOpacity(0.0)
+            mainWindow.setIgnoreMouseEvents(true)
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
@@ -245,7 +251,13 @@ const createWindow = async () => {
             mainWindow.focus()
             mainWindow.restore()
         } else if (!showMainWindow && mainWindow) {
-            mainWindow.hide()
+            if (os.platform() == "win32") {
+                // To keep the icon on the taskbar in Windows, don't hide - just make transparent
+                mainWindow.setOpacity(0.0)
+                mainWindow.setIgnoreMouseEvents(true)
+            } else {
+                mainWindow.hide()
+            }
         }
         event.returnValue = argv
     })
