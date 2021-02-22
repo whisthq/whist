@@ -18,7 +18,6 @@ def logs_post(**kwargs):
     try:
         args = (
             body.pop("sender"),
-            body.pop("ip", kwargs.pop("received_from")),
             body.pop("identifier"),
             body.pop("secret_key"),
             body.pop("logs"),
