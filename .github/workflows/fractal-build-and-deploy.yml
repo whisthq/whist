@@ -157,11 +157,11 @@ jobs:
 
                   if [[ "$JOB_NAME" == "all" ]]; then
                   # If JOB_NAME=all, then we do indeed run all of jobs in the list
-                    JOB_LIST="${!job_dependencies[@]}"
+                    JOB_LIST="${job_dependencies[@]}"
                   # If JOB_NAME=filter, then we should filter the job list based on the job's dependencies
                   elif [[ "$JOB_NAME" == "filter" ]]; then
                     JOB_LIST=""
-                    for i in "${!job_dependencies[@]}"
+                    for i in "${job_dependencies[@]}"
                     do
                       DEPS="${job_dependencies[$i]}"
                       # If there are universal_dependencies, include them in the space-separated list
