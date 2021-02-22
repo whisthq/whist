@@ -7,7 +7,7 @@
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 USER_CONFIGS_DIR=/fractal/userConfigs
 IDENTIFIER_FILENAME=hostPort_for_my_32262_tcp
-CONTAINER_ID_FILENAME=ID
+CONTAINER_ID_FILENAME=ContainerARN
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
