@@ -126,7 +126,7 @@ echo "================================================"
 echo "Cleaning up the image a bit..."
 echo "================================================"
 
-sudo apt-get autoremove
+sudo apt-get autoremove -y
 
 echo
 echo "Install complete. Please 'sudo reboot' before continuing."
