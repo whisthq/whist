@@ -1,4 +1,4 @@
-better-profanity==0.6.1
+better-profanity==0.7.0
 blinker==1.4
 boto3==1.16.0
 celery==5.0.5
