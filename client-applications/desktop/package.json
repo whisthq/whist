@@ -170,7 +170,7 @@
         "source-map-support": "^0.5.16",
         "spawn-sync": "^2.0.0",
         "subscriptions-transport-ws": "^0.9.18",
-        "systeminformation": "^5.3.1",
+        "systeminformation": "^5.3.4",
         "tailwindcss": "npm:@tailwindcss/postcss7-compat",
         "tcp-ping": "^0.1.1",
         "temp": "^0.9.4",
