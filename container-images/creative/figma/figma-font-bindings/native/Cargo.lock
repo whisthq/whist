@@ -79,7 +79,7 @@ dependencies = [
  "libfonthelper",
  "log",
  "neon",
- "neon-build 0.3.3",
+ "neon-build",
 ]
 
 [[package]]
@@ -186,19 +186,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e98cdd7a8f84ad67b8b3b15806a2972914533d3af7e4ec32cb24e3a101955b9"
 dependencies = [
  "cslice",
- "neon-build 0.7.1",
+ "neon-build",
  "neon-runtime",
  "semver",
  "smallvec",
-]
-
-[[package]]
-name = "neon-build"
-version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae406bf1065c4399e69d328a3bd8d4f088f2a205dc3881bf68c0ac775bfef337"
-dependencies = [
- "cfg-if 0.1.10",
 ]
 
 [[package]]
