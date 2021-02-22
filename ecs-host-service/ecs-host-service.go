@@ -558,7 +558,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	filename := datadir + "ID"
 	err := writeAssignmentToFile(filename, req.ContainerID)
 	if err != nil {
-		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
+		return logger.MakeError("Could not write value %v to ID file %v. Error: %s", req.ContainerID, filename, err)
 	}
 
 	// Populate the user config folder for the container's app
