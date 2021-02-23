@@ -12,7 +12,11 @@ from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer, RegionToAmi
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST
+from app.constants.http_codes import (
+    SUCCESS,
+    ACCEPTED,
+    BAD_REQUEST,
+)
 
 from ..helpers.general.progress import queryStatus
 from ..patches import function
@@ -449,7 +453,7 @@ def test_update_region(client, admin, monkeypatch):
 
     # then, we put server into maintenance mode
     resp = try_start_maintenance(client, "us-east-1")
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # now we try again
@@ -473,7 +477,7 @@ def test_update_region(client, admin, monkeypatch):
 
     # finally, we end maintenance mode
     resp = try_end_maintenance(client, "us-east-1")
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
     # -- webserver requests end -- #
 
