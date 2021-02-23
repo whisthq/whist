@@ -482,7 +482,6 @@ int share_client_window_events(void* opaque) {
                 if (!strncmp(window_status, "MINIMIZE", 8)) {
                     SDL_MinimizeWindow((SDL_Window*) window);
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
-                    LOG_INFO("NEED TO FOCUS");
 #ifdef _WIN32
                     // a crappy yet effective way to make Windows allow this window to take focus
                     SDL_MinimizeWindow((SDL_Window*) window);
@@ -498,7 +497,6 @@ int share_client_window_events(void* opaque) {
         }
         memset(buf, 0, sizeof(buf));
     }
-    LOG_INFO("FINISHED READING");
 
     if (read_chars < 0 || !successful_read) {
 #ifdef _WIN32
