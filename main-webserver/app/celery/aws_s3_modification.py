@@ -7,6 +7,7 @@ from app.constants.http_codes import SUCCESS
 
 from app.helpers.utils.general.logs import fractal_log
 from app.models import UserContainer
+from app.exceptions import ContainerNotFoundException
 
 BUCKET_NAME = "fractal-protocol-logs"
 
@@ -18,16 +19,6 @@ class BadSenderError(Exception):
     "client" or "server" (case-insensitive).
     """
 
-
-class ContainerNotFoundError(Exception):
-    """Raised by upload_logs_to_s3.
-
-    Raised by upload_logs_to_s3 when the container identified by the ip and port
-    arguments does not exist.
-    """
-
-    def __init__(self, container_id):
-        super().__init__(f"ID: {container_id}")
 
 
 @shared_task
@@ -76,7 +67,7 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
             level=logging.ERROR,
         )
 
-        raise ContainerNotFoundError(container_id)
+        raise ContainerNotFoundException(container_id)
 
     # Do logging.
     username = str(container.user_id)
