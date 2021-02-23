@@ -122,7 +122,7 @@
         "autoprefixer": "9",
         "aws-sdk": "^2.849.0",
         "bootstrap": "^4.5.2",
-        "connected-react-router": "^6.6.1",
+        "connected-react-router": "^6.9.1",
         "core-js": "^3",
         "dedent-js": "^1.0.1",
         "devtron": "^1.4.0",
