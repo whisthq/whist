@@ -16,7 +16,9 @@ close the window.
 Includes
 ============================
 */
-#ifndef _WIN32
+#ifdef _WIN32
+#include "SDL_syswm.h"
+#else
 #include <sys/un.h>
 #endif
 
@@ -132,14 +134,14 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
 
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
-            message = "client:MINIMIZE\0";
+            message = "client:MINIMIZE\n";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-            message = "client:FOCUS\0";
+            message = "client:FOCUS\n";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
-            message = "client:UNFOCUS\0";
+            message = "client:UNFOCUS\n";
         }
     } else if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
-        message = "client:QUIT\0";
+        message = "client:QUIT\n";
     }
 
     if (message) {
@@ -480,6 +482,11 @@ int share_client_window_events(void* opaque) {
                 if (!strncmp(window_status, "MINIMIZE", 8)) {
                     SDL_MinimizeWindow((SDL_Window*) window);
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
+                    LOG_INFO("NEED TO FOCUS");
+#ifdef _WIN32
+                    // a crappy yet effective way to make Windows allow this window to take focus
+                    SDL_MinimizeWindow((SDL_Window*) window);
+#endif
                     SDL_RestoreWindow((SDL_Window*) window);
                     SDL_RaiseWindow((SDL_Window*) window);
                 } else if (!strncmp(window_status, "QUIT", 4)) {
