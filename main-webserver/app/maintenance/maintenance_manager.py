@@ -4,6 +4,10 @@ from functools import wraps
 import inspect
 import random
 from typing import Callable, Tuple
+import ssl
+
+import redis
+from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_log
 from app.models import RegionToAmi
@@ -12,6 +16,33 @@ from app.models import RegionToAmi
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_UPDATE_KEY = "WEBSERVER_UPDATE_{region_name}"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS_{region_name}"
+
+_REDIS_CONN = None
+
+
+def maintenance_init_redis_conn(redis_uri: str):
+    """
+    Create a connection to redis if None already exists.
+
+    Args:
+        redis_uri: redis uri to connect to
+
+    Returns:
+        A redis connection
+    """
+    global _REDIS_CONN
+
+    if redis_uri.startswith("rediss"):
+        _REDIS_CONN = redis.from_url(
+            redis_uri,
+            db=1,  # this uses a different db than celery
+            ssl_cert_reqs=ssl.CERT_NONE,
+        )
+    else:
+        _REDIS_CONN = redis.from_url(
+            redis_uri,
+            db=1,  # this uses a different db than celery
+        )
 
 
 def check_if_maintenance(region_name: str) -> bool:
@@ -24,14 +55,12 @@ def check_if_maintenance(region_name: str) -> bool:
     Returns:
         True iff the web server is currently in maintenance mode.
     """
-    from app import redis_conn
-
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     # we don't need a lock because we are just checking if the key exists,
     # not modifying data. it is posisble for an update to start right after
     # the check happens; that is handled through task tracking and failing out
     # celery tasks that try to start during an update
-    return redis_conn.exists(update_key)
+    return _REDIS_CONN.exists(update_key)
 
 
 def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
@@ -46,10 +75,8 @@ def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
     Returns:
         True iff the lock is acquired.
     """
-    from app import redis_conn
-
     for _ in range(max_tries):
-        got_lock = redis_conn.setnx(_REDIS_LOCK_KEY, 1)
+        got_lock = _REDIS_CONN.setnx(_REDIS_LOCK_KEY, 1)
         if got_lock:
             return True
         if should_sleep:
@@ -62,9 +89,7 @@ def _release_lock():
     """
     Release the lock
     """
-    from app import redis_conn
-
-    redis_conn.delete(_REDIS_LOCK_KEY)
+    _REDIS_CONN.delete(_REDIS_LOCK_KEY)
 
 
 def try_start_update(region_name: str) -> Tuple[bool, str]:
@@ -89,8 +114,6 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
         success: True if webserver in update mode, otherwise false
         human_readable_msg: explains exactly what has happened
     """
-    from app import redis_conn
-
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
@@ -101,11 +124,11 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     # now we freely operate on the keys. we need to make sure no tasks are going
     success = False
     return_msg = None
-    tasks = redis_conn.lrange(tasks_key, 0, -1)
+    tasks = _REDIS_CONN.lrange(tasks_key, 0, -1)
     if tasks is None or not tasks:
         # no tasks, we can start the update
         success = True
-        redis_conn.set(update_key, 1)
+        _REDIS_CONN.set(update_key, 1)
 
         fractal_log(
             "try_start_update",
@@ -117,7 +140,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     else:
         # no tasks, we cannot start the update. However, we set update_key so no new tasks start.
         success = False
-        redis_conn.set(update_key, 1)
+        _REDIS_CONN.set(update_key, 1)
 
         log = (
             "cannot start update, but stopping new tasks from running."
@@ -180,8 +203,6 @@ def try_end_update(region_name: str) -> bool:
         True iff there is no update in the region. This can be because there
         already was no update, or because the update was ended by this function.
     """
-    from app import redis_conn
-
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     got_lock = _get_lock(10, should_sleep=False)  # only try 10 times since this runs synchronously
     if not got_lock:
@@ -189,10 +210,10 @@ def try_end_update(region_name: str) -> bool:
 
     #  now we freely operate on the keys. first make sure we are not already in update mode
     # then, we need to make sure no tasks are going
-    update_exists = redis_conn.exists(update_key)
+    update_exists = _REDIS_CONN.exists(update_key)
     if not update_exists:
         # release lock
-        redis_conn.delete(_REDIS_LOCK_KEY)
+        _REDIS_CONN.delete(_REDIS_LOCK_KEY)
         # even if no update exists, we return True because try_update_all does not cache
         # which regions have stopped updating. A second request to it will try to end updates
         # in all regions, including ones the first request stopped.
@@ -204,7 +225,7 @@ def try_end_update(region_name: str) -> bool:
         f"ending webserver maintenance mode on region {region_name}",
     )
 
-    redis_conn.delete(update_key)
+    _REDIS_CONN.delete(update_key)
     _release_lock()
 
     return True, f"Ended update in {region_name}"
@@ -251,8 +272,6 @@ def try_register_task(region_name: str, task_id: int) -> bool:
     Returns:
         True if registered, False if lock was not acquired or an update is happening
     """
-    from app import redis_conn
-
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
@@ -263,11 +282,11 @@ def try_register_task(region_name: str, task_id: int) -> bool:
     success = False
     # now we freely operate on the keys. first check if an update is in progress. if so,
     # the task does not get registered. otherwise, register it.
-    update_exists = redis_conn.exists(update_key)
+    update_exists = _REDIS_CONN.exists(update_key)
     if update_exists:
         success = False
     else:
-        redis_conn.rpush(tasks_key, task_id)
+        _REDIS_CONN.rpush(tasks_key, task_id)
         success = True
 
     _release_lock()
@@ -288,8 +307,6 @@ def try_deregister_task(region_name: str, task_id: int) -> bool:
     Returns:
         True if deregistered, False if lock was not acquired or task_id does not exist in list
     """
-    from app import redis_conn
-
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
     got_lock = _get_lock(100)
@@ -297,7 +314,7 @@ def try_deregister_task(region_name: str, task_id: int) -> bool:
         return False
 
     # remove from list
-    success = redis_conn.lrem(tasks_key, 1, task_id) == 1
+    success = _REDIS_CONN.lrem(tasks_key, 1, task_id) == 1
     _release_lock()
     return success
 

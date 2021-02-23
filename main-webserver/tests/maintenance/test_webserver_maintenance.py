@@ -174,7 +174,7 @@ def test_maintenance_mode_single_region(
     1. have multiple celery workers to concurrently run all problematic endpoints? Current strategy
     is to do a mix of them throughout test execution.
     """
-    from app import redis_conn
+    from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
     authorized = make_authorized_user(
@@ -187,7 +187,7 @@ def test_maintenance_mode_single_region(
     tasks_key = _REDIS_TASKS_KEY.format(region_name="us-east-1")
 
     # wipe db for a fresh start
-    redis_conn.flushall()
+    _REDIS_CONN.flushall()
 
     # -- Start the test -- #
 
@@ -198,10 +198,10 @@ def test_maintenance_mode_single_region(
     # let celery actually start handling the task but not finish
     time.sleep(0.5)
     # update key should not exist yet.
-    assert not redis_conn.exists(update_key)
+    assert not _REDIS_CONN.exists(update_key)
     # task key should exist and have one item
-    assert redis_conn.exists(tasks_key)
-    tasks = redis_conn.lrange(tasks_key, 0, -1)
+    assert _REDIS_CONN.exists(tasks_key)
+    tasks = _REDIS_CONN.lrange(tasks_key, 0, -1)
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
@@ -210,7 +210,7 @@ def test_maintenance_mode_single_region(
     assert resp.status_code == ACCEPTED
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
-    assert redis_conn.exists(update_key)
+    assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
     resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
@@ -247,7 +247,7 @@ def test_maintenance_mode_single_region(
     assert resp.json["success"] is True
 
     # update key should not exist anymore
-    assert not redis_conn.exists(update_key)
+    assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
     resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
@@ -283,7 +283,7 @@ def test_maintenance_mode_all_regions(
     See test_maintenance_mode_single_region. Only difference is that we try maintenance
     in all regions. This means the request in us-east-2 should also fail.
     """
-    from app import redis_conn
+    from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
     authorized = make_authorized_user(
@@ -296,7 +296,7 @@ def test_maintenance_mode_all_regions(
     tasks_key = _REDIS_TASKS_KEY.format(region_name="us-east-1")
 
     # wipe db for a fresh start
-    redis_conn.flushall()
+    _REDIS_CONN.flushall()
 
     # -- Start the test -- #
 
@@ -307,10 +307,10 @@ def test_maintenance_mode_all_regions(
     # let celery actually start handling the task but not finish
     time.sleep(0.5)
     # update key should not exist yet.
-    assert not redis_conn.exists(update_key)
+    assert not _REDIS_CONN.exists(update_key)
     # task key should exist and have one item
-    assert redis_conn.exists(tasks_key)
-    tasks = redis_conn.lrange(tasks_key, 0, -1)
+    assert _REDIS_CONN.exists(tasks_key)
+    tasks = _REDIS_CONN.lrange(tasks_key, 0, -1)
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
@@ -319,7 +319,7 @@ def test_maintenance_mode_all_regions(
     assert resp.status_code == ACCEPTED
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
-    assert redis_conn.exists(update_key)
+    assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
     resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
@@ -355,7 +355,7 @@ def test_maintenance_mode_all_regions(
     assert resp.json["success"] is True
 
     # update key should not exist anymore
-    assert not redis_conn.exists(update_key)
+    assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
     resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
