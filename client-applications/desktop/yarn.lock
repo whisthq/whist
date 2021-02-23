@@ -1824,7 +1824,7 @@
   dependencies:
     defer-to-connect "^1.0.1"
 
-"@tailwindcss/postcss7-compat@npm:@tailwindcss/postcss7-compat", "tailwindcss@npm:@tailwindcss/postcss7-compat":
+"@tailwindcss/postcss7-compat@^2.0.2", "tailwindcss@npm:@tailwindcss/postcss7-compat":
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/@tailwindcss/postcss7-compat/-/postcss7-compat-2.0.3.tgz#d212aa672eb5aa789fbf1ac253000707603d7676"
   integrity sha512-R43aiSzwlybDMhDld8vkSIKPSLXxbbmotZ+I2GIrX+IzFNy9JAByC7Ncf9A81Dg0JLBWHY5m769lBbBnJCF8cw==
@@ -15199,10 +15199,10 @@ test-exclude@^6.0.0:
     glob "^7.1.4"
     minimatch "^3.0.4"
 
-testcafe-browser-provider-electron@0.0.15-alpha.1:
-  version "0.0.15-alpha.1"
-  resolved "https://registry.yarnpkg.com/testcafe-browser-provider-electron/-/testcafe-browser-provider-electron-0.0.15-alpha.1.tgz#545911287ae8c91ccebb716b392cc5c7a7241a1c"
-  integrity sha512-lzLr+6hjklUBwtkEzqmwT/yNdxn+tW7WoCzEDiBJESfRDIpQ9H9n9jncktATMuoY0FTO/2NkiMtB7aojlOCIJQ==
+testcafe-browser-provider-electron@0.0.16:
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/testcafe-browser-provider-electron/-/testcafe-browser-provider-electron-0.0.16.tgz#cb4255b775bdec226ec76699f408a4aba20a8146"
+  integrity sha512-3qBIXdlV2gN0I3pLYbEdVlhe6rgfGdihaB6hc/339ZYVtpXE/AOt4CW+EubBJLG6gkwJI+39rv8azzQ6NebgKg==
   dependencies:
     babel-runtime "^6.25.0"
     chrome-remote-interface "^0.27.0"

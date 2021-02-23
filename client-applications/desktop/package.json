@@ -278,7 +278,7 @@
         "stylelint-config-standard": "^20.0.0",
         "terser-webpack-plugin": "^4.2.3",
         "testcafe": "^1.8.0",
-        "testcafe-browser-provider-electron": "0.0.15-alpha.1",
+        "testcafe-browser-provider-electron": "0.0.16",
         "testcafe-react-selectors": "^4.0.0",
         "ts-jest": "26.4.4",
         "typed-css-modules-webpack-plugin": "^0.2.0",
