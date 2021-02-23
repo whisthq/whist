@@ -220,7 +220,7 @@ def test_endpoint(action, **kwargs):
             success, msg = try_start_update_all()
         else:
             success, msg = try_start_update(region_name=region_name)
-        return jsonify({"success": success, "msg": msg}), ACCEPTED
+        return jsonify({"success": success, "msg": msg}), SUCCESS
 
     if action == "end_update":
         # synchronously try to end maintenance mode.
@@ -235,7 +235,7 @@ def test_endpoint(action, **kwargs):
             success, msg = try_end_update(
                 region_name=region_name,
             )
-        return jsonify({"success": success, "msg": msg}), ACCEPTED
+        return jsonify({"success": success, "msg": msg}), SUCCESS
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 

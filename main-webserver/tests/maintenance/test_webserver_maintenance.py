@@ -15,6 +15,7 @@ from app.celery.aws_ecs_creation import (
 )
 from app.constants.http_codes import (
     ACCEPTED,
+    SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
 from app.helpers.utils.general.logs import fractal_log
@@ -207,7 +208,7 @@ def test_maintenance_mode_single_region(
     # start maintenance while existing task is running
     resp = try_start_maintenance(client, "us-east-1")
 
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
     assert _REDIS_CONN.exists(update_key)
@@ -226,7 +227,7 @@ def test_maintenance_mode_single_region(
 
     # now maintenance request should succeed
     resp = try_start_maintenance(client, "us-east-1")
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # new requests should still fail out
@@ -243,7 +244,7 @@ def test_maintenance_mode_single_region(
 
     # now end maintenance
     resp = try_end_maintenance(client, "us-east-1")
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # update key should not exist anymore
@@ -251,7 +252,7 @@ def test_maintenance_mode_single_region(
 
     # tasks should work again
     resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
-    assert resp.status_code == ACCEPTED
+    assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
     assert task["status"] == 1, f"TASK: {task}"
@@ -316,7 +317,7 @@ def test_maintenance_mode_all_regions(
     # start maintenance while existing task is running
     resp = try_start_maintenance(client)
 
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
     assert _REDIS_CONN.exists(update_key)
@@ -335,7 +336,7 @@ def test_maintenance_mode_all_regions(
 
     # now maintenance request should succeed
     resp = try_start_maintenance(client)
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # new requests should still fail out
@@ -351,7 +352,7 @@ def test_maintenance_mode_all_regions(
 
     # now end maintenance
     resp = try_end_maintenance(client)
-    assert resp.status_code == ACCEPTED
+    assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # update key should not exist anymore
@@ -359,7 +360,7 @@ def test_maintenance_mode_all_regions(
 
     # tasks should work again
     resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
-    assert resp.status_code == ACCEPTED
+    assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
     assert task["status"] == 1, f"TASK: {task}"

@@ -1,3 +1,22 @@
+"""Maintenance mode implementation.
+
+This module implements the core functionality for webserver maintenance mode. We need a
+maintenance mode because certain parts of our system are very susceptible to race
+conditions during updates. A system update involves new task definitions, new AMIs,
+and critical database updates (in Region2AMI, for example) that are MUCH easier to
+guarantee correctness when we know no one is creating new clusters/containers during
+these updates. This file implements a distributed lock system using Redis that
+tracks problematic tasks (create_cluster, assign_container). The webserver cannot be
+put into maintenance mode in a region while a problematic task exists in that region.
+Also vice versa - when the webserver is in maintenance mode, no problematic task
+can be run.
+
+Any user of this module generally cares about the following functions:
+- try_start_update
+- try_end_update
+- maintenance_track_task (decorator on celery functions that need to be tracked)
+"""
+
 import logging
 import time
 from functools import wraps
@@ -7,7 +26,6 @@ from typing import Callable, Tuple
 import ssl
 
 import redis
-from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_log
 from app.models import RegionToAmi
