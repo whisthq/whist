@@ -12,7 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import { createServer, Server } from "net"
+import { createServer, Server, Socket } from "net"
 import { Mutex } from "async-mutex"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
@@ -43,8 +43,8 @@ let showMainWindow = true
 //    this value gets toggled on "minimize" and "focus"
 //    events
 let protocolFocused = false
-let protocolJustMinimized = false
-let lastState = {clientApp: false, protocol: false}
+let protocolMinimized = false
+let lastState = {clientApp: true, protocol: false}
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
@@ -53,6 +53,7 @@ let socketPath = "fractal-client.sock"
 //    Messages from the client are not kept separate by default
 let socketReceivedData = ""
 const socketMutex = new Mutex()
+let clients: Socket[] = [];
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -131,127 +132,138 @@ const createWindow = async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
 
-    // on client app FOCUS => protocol FOCUS
-    // on client app MAXIMIZE => protocol MAXIMIZE
-    // on client app MINIMIZE => protocol MINIMIZE
-    // on client app CLOSE => protocol CLOSE
-    // on protocol MAXIMIZE => client app MAXIMIZE
-    // on protocol MINIMIZE => client app MINIMIZE
-    // TWO-WAY COMMUNICATION (requires socket?)
-    let clientsConnected = 0 // windows will connect 2 because of read and write clients, but we only want
-                                //   1 listener for each event
     protocolSocketServer = createServer((socket) => {
         console.log('client connected')
+        clients.push(socket)
         socket.on('end', () => {
             console.log('client disconnected')
+            let socketIndex = clients.indexOf(socket)
+            if (socketIndex >= 0) {
+                delete clients[socketIndex]
+            }
         })
+
         socket.write('server:hello from client app')
         socket.pipe(socket)
         socket.on('data', (data) => {
-            let sender = ""
-            let message = ""
+            let messagePairs : {"sender": string, "message": string}[] = []
             socketMutex.runExclusive(() => {
                 socketReceivedData += data.toString()
                 console.log("RECEIVED DATA: " + socketReceivedData)
                 while (socketReceivedData.includes("\n")) {
                     let parts = socketReceivedData.split("\n")[0].split(":")
-                    sender = parts[0]
-                    message = parts[1]
-                    console.log("PARSED MESSAGE " + sender + " " + message)
+                    messagePairs.push({"sender": parts[0], "message": parts[1]})
+                    console.log("PARSED MESSAGE " + parts[0] + " " + parts[1])
                     socketReceivedData = socketReceivedData.substring(socketReceivedData.indexOf("\n") + 1)
                 }
                 console.log("REMAINING DATA: " + socketReceivedData)
             }).then(() => {
                 if (mainWindow) {
-                    lastState['protocol'] = protocolFocused
-                    if (sender === "client") {
-                        if (message === "MINIMIZE") {
-                            console.log("client says MINIMIZE")
-                            protocolJustMinimized = true
-                        } else if (message === "FOCUS") {
-                            console.log("client says FOCUS")
-                            protocolFocused = true
-                            mainWindow.restore()
-                        } else if (message === "UNFOCUS") {
-                            console.log("client says UNFOCUS")
-                            protocolFocused = false
-                        } else if (message === "QUIT") {
-                            console.log("client says QUIT")
-                            app.quit()
-                            socket.end()
-                        } else {
-                            console.log("client gives unknown command " + message)
+                    messagePairs.forEach((pair) => {
+                        let sender = pair["sender"]
+                        let message = pair["message"]
+                        if (sender === "client") {
+                            if (message === "MINIMIZE") {
+                                console.log("client says MINIMIZE")
+                                protocolMinimized = true
+                                // don't set protocolFocused here, let UNFOCUS take care of that
+                            } else if (message === "FOCUS") {
+                                console.log("client says FOCUS")
+                                lastState['protocol'] = protocolFocused
+                                if (mainWindow) {
+                                    lastState['clientApp'] = mainWindow.isFocused()
+                                }
+                                protocolFocused = true
+                                protocolMinimized = false
+                                if (mainWindow) {
+                                    mainWindow.restore()
+                                }
+                            } else if (message === "UNFOCUS") {
+                                console.log("client says UNFOCUS")
+                                lastState['protocol'] = protocolFocused
+                                if (mainWindow) {
+                                    lastState['clientApp'] = mainWindow.isFocused()
+                                }
+                                protocolFocused = false
+                            } else if (message === "QUIT") {
+                                console.log("client says QUIT")
+                                app.quit()
+                                socket.end()
+                            } else {
+                                console.log("client gives unknown command " + message)
+                            }
                         }
-                    }
+                        console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
+                    })
                 }
             })
         })
         socket.on('error', (err) => {
-            console.log(`error ${err}`)
-        })
-
-        socketMutex.runExclusive(() => {
-            clientsConnected += 1
-            if (clientsConnected > 1) return
-            if (os.platform() === "win32") {
-                console.log("WIN32")
-                if (mainWindow) {
-                    mainWindow.on("focus", () => {
-                        // any state where mainWindow.isFocused() = true is unstable
-                        let message = ""
-                        console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolJustMinimized}`)
-                        if (!protocolFocused) {
-                            if (lastState['protocol'] && !lastState['clientApp']) {
-                                console.log("MINIMIZE")
-                                // When the protocol is focused and not minimized, then minimize
-                                message = "server:MINIMIZE"
-                            } else if (!protocolJustMinimized) {
-                                console.log("FOCUS")
-                                // When the protocol is not focused or minimized, then focus
-                                message = "server:FOCUS"
-                            } else {
-                                if (mainWindow) {
-                                    mainWindow.minimize()
-                                }
-                                protocolJustMinimized = false
-                            }
-                        } else { 
-                            // this should never be true because the client app and the protocol
-                            //    can't be focused at the same time, but keep it here just in case
-                            //    state maintenance gets messed up somewhere
-                            console.log("FOCUS")
-                            message = "server:FOCUS"
-                        }
-                        lastState['clientApp'] = true
-                        if (message !== "") {
-                            socket.write(message)
-                        }
-                    })
-
-                    mainWindow.on("blur", () => {
-                        lastState['clientApp'] = false
-                    })
-                }
-            } else if (os.platform() === "darwin") {
-                app.on("activate", () => {
-                    // OSX: "activate" event is thrown when the dock icon is pressed
-                    socket.write("server:FOCUS")
-                    socket.end()
-                })
-            }
-        }).then(() => {
-            console.log("created listeners")
-        })
-
-        app.on("will-quit", () => {
-            socket.write("server:QUIT")
+            console.log(`Socket error (likely ignorable): ${err}`)
         })
     })
     protocolSocketServer.on('error', (err) => {
-        console.log(`error ${err}`)
+        console.log(`Socket server error (likely ignorable): error ${err}`)
     })
     protocolSocketServer.listen(socketPath, () => {
         console.log('server bound')
+
+        if (os.platform() === "win32") {
+            if (mainWindow) {
+                mainWindow.on("focus", () => {
+                    // any state where mainWindow.isFocused() = true is unstable
+                    let message = ""
+                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
+                    if (!lastState['protocol']) {
+                        console.log("FOCUS")
+                        // If the protocol was last unfocused and then client app focuses => focus protocol
+                        message = "server:FOCUS"
+                    } else {
+                        if (protocolMinimized) {
+                            console.log("FOCUS")
+                            // If the protocol was last focused and minimized (probably won't happen)
+                            //    and then client app focuses => focus protocol
+                            message = "server:FOCUS"
+                        } else {
+                            console.log("MINIMIZE")
+                            // If the protocol was last focused and not minimized and then client
+                            //    app focuses => minimize protocol
+                            message = "server:MINIMIZE"
+                            if (mainWindow) {
+                                mainWindow.minimize()
+                            }
+                        }
+                    }
+                    lastState['protocol'] = protocolFocused
+                    if (message !== "") {
+                        clients.forEach((socket) => {
+                            socket.write(message)
+                        })
+                    }
+                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
+                })
+
+                mainWindow.on("blur", () => {
+                    lastState['protocol'] = protocolFocused
+                    console.log("blurring...")
+                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
+                })
+            }
+        } else if (os.platform() === "darwin") {
+            app.on("activate", () => {
+                // OSX: "activate" event is thrown when the dock icon is pressed
+                clients.forEach((socket) => {
+                    socket.write("server:FOCUS")
+                    socket.end()
+                })
+            })
+        }
+
+        app.on("will-quit", () => {
+            clients.forEach((socket) => {
+                socket.write("server:QUIT")
+            })
+        })
     })
 
     // LOOK HERE: https://stackoverflow.com/questions/39841942/communicating-between-nodejs-and-c-using-node-ipc-and-unix-sockets
