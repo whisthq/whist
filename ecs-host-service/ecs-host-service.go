@@ -554,7 +554,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
 	}
 
-	// Actually write ID information to file
+	// Actually write Container ARN information to file
 	idFilename := datadir + "ContainerARN"
 	err = writeAssignmentToFile(idFilename, req.ContainerARN)
 	if err != nil {
