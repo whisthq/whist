@@ -4,6 +4,9 @@ import { graphQLPost } from "shared/utils/general/api"
 import { allowedRegions, AWSRegion } from "shared/types/aws"
 import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
 import { config } from "shared/constants/config"
+import { FractalLogger } from "shared/utils/general/logging"
+
+const logger = new FractalLogger()
 
 const fractalPingTime = async (host: string, numberPings: number) => {
     /*
@@ -81,6 +84,8 @@ export const setAWSRegion = async () => {
             `dynamodb.${region}.amazonaws.com`,
             3
         )
+        logger.logInfo(`It took ${averagePingTime.toString()} to ping ${region}`)
+        
         if (averagePingTime < lowestPingTime) {
             closestRegion = region
             lowestPingTime = averagePingTime
