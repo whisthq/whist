@@ -54,15 +54,16 @@ def _create_fractal_logger():
     logger.setLevel(logging.DEBUG)
 
     # add message handler
-    mh = _MessageHandler()
-    logger.addHandler(mh)
+    message_handler = _MessageHandler()
+    logger.addHandler(message_handler)
 
     # add extra handler
-    eh = _ExtraHandler()
-    logger.addHandler(eh)
+    extra_handler = _ExtraHandler()
+    logger.addHandler(extra_handler)
     return logger
 
 
+# pylint: disable=pointless-string-statement
 """
 Usage:
 from app.helpers.utils.general.logs import fractal_logger

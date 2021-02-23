@@ -136,24 +136,19 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
             verify=False,
         )
     except (ConnectionError, Timeout, TooManyRedirects) as error:
-        log_kwargs = {
-            "logs": (
+        fractal_logger.error(
+            (
                 "Encountered an error while attempting to connect to the ECS host service running "
                 f"on {ip}: {error}"
             ),
-            "level": logging.ERROR,
-        }
+        )
     else:
         if response.ok:
-            log_kwargs = {
-                "logs": "Container user values set.",
-                "level": logging.INFO,
-            }
+            fractal_logger.info("Container user values set.")
         else:
-            log_kwargs = {
-                "logs": f"Received unsuccessful set-start-values response: {response.text}",
-                "level": logging.ERROR,
-            }
+            fractal_logger.error(
+                f"Received unsuccessful set-start-values response: {response.text}"
+            )
 
 
 def _poll(container_id):
