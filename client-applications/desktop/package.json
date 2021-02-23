@@ -148,7 +148,7 @@
         "png2icons": "^2.0.1",
         "popper.js": "^1.16.1",
         "postcss": "8",
-        "postcss-import": "^13.0.0",
+        "postcss-import": "^14.0.0",
         "postcss-loader": "^4.1.0",
         "prop-types": "^15.6.0",
         "react": "^16.12.0",
