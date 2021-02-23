@@ -10,6 +10,7 @@ from app.helpers.utils.general.time import (
     shift_unix_by_minutes,
 )
 from app.models import db, UserContainer
+from app.exceptions import ContainerNotFoundException
 
 
 def lock_container_and_update(container_name, state, lock, temporary_lock):
@@ -103,7 +104,7 @@ def spin_lock(container_name, state_obj=None):
             ),
             level=logging.ERROR,
         )
-        return -1
+        raise ContainerNotFoundException(container_name)
 
     locked = check_lock(container_name)
     num_tries = 0
