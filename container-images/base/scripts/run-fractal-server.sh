@@ -95,26 +95,6 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/fractal/FractalServer $OPTIONS
 
-# POST $WEBSERVER_URL/container/protocol_info
-#   Get the AWS container id for this container, for use with the container delete and logs request.
-# JSON Parameters:
-#   identifier: "$IDENTIFIER" because this endpoint wants port mapping for 32262
-#   private_key: "$FRACTAL_AES_KEY" to verify that we are authorized to make this request
-# JSON Response:
-#   container_id: The AWS container id for this container
-CONTAINER_ID=$(curl \
-        --header "Content-Type: application/json" \
-        --request POST \
-        --data @- \
-        $WEBSERVER_URL/container/protocol_info \
-        << END \
-    | jq -er ".container_id"
-{
-    "identifier": "$IDENTIFIER",
-    "private_key": "$FRACTAL_AES_KEY"
-}
-END
-)
 
 # POST $WEBSERVER_URL/logs
 #   Upload the logs from the protocol run to S3.
