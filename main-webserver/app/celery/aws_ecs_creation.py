@@ -317,9 +317,7 @@ def _assign_container(
     """
     See assign_container. This is helpful to mock.
     """
-    fractal_logger.info(
-        logs=f"Starting to assign container in {region_name}", extra={"label": username}
-    )
+    fractal_logger.info(f"Starting to assign container in {region_name}", extra={"label": username})
 
     set_container_state(
         keyuser=username,
