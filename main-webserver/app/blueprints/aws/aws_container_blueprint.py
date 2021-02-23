@@ -104,18 +104,21 @@ def test_endpoint(action, **kwargs):
                 ),
                 WEBSERVER_MAINTENANCE,
             )
-    elif action in ["update_region"]:
-        region_name = kwargs["body"]["region_name"]
-        if not check_if_maintenance(region_name):
-            # server must be in maintenance mode to do this
-            return (
-                jsonify(
-                    {
-                        "error": "Webserver must be put in maintenance mode before doing this.",
-                    }
-                ),
-                BAD_REQUEST,
-            )
+    # TODO: uncomment below when webserver is deployed with update_region
+    # if we keep this for the first deploy, webserver will reject github workflow's
+    # update_region request
+    # elif action in ["update_region"]:
+    #     region_name = kwargs["body"]["region_name"]
+    #     if not check_if_maintenance(region_name):
+    #         # server must be in maintenance mode to do this
+    #         return (
+    #             jsonify(
+    #                 {
+    #                     "error": "Webserver must be put in maintenance mode before doing this.",
+    #                 }
+    #             ),
+    #             BAD_REQUEST,
+    #         )
 
     # handle the action. The general design pattern is to parse the arguments relevant to
     # the action and then start a celery task to handle it. `start_update` and `end_update`
