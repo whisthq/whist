@@ -13,6 +13,7 @@ import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import { createServer, Server } from "net"
+import { Mutex } from "async-mutex"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
@@ -41,12 +42,17 @@ let showMainWindow = true
 //    restored (maximized). When the showMainWindow is false,
 //    this value gets toggled on "minimize" and "focus"
 //    events
-let protocolMinimized = false
 let protocolFocused = false
+let protocolJustMinimized = false
+let lastState = {clientApp: false, protocol: false}
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
 let socketPath = "fractal-client.sock"
+// Current socket data - to deal with the fact that the named pipe is in byte mode, not message mode
+//    Messages from the client are not kept separate by default
+let socketReceivedData = ""
+const socketMutex = new Mutex()
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -132,6 +138,8 @@ const createWindow = async () => {
     // on protocol MAXIMIZE => client app MAXIMIZE
     // on protocol MINIMIZE => client app MINIMIZE
     // TWO-WAY COMMUNICATION (requires socket?)
+    let clientsConnected = 0 // windows will connect 2 because of read and write clients, but we only want
+                                //   1 listener for each event
     protocolSocketServer = createServer((socket) => {
         console.log('client connected')
         socket.on('end', () => {
@@ -140,49 +148,100 @@ const createWindow = async () => {
         socket.write('server:hello from client app')
         socket.pipe(socket)
         socket.on('data', (data) => {
-            let parts = data.toString().split(":")
-            if (parts[0] === "client") {
-                if (parts[1] === "MINIMIZE") {
-                    console.log("client says MINIMIZE")
-                    protocolMinimized = true
-                } else if (parts[1] === "FOCUS") {
-                    console.log("client says FOCUS")
-                    protocolFocused = true
-                    protocolMinimized = false
-                } else if (parts[1] === "UNFOCUS") {
-                    console.log("client says UNFOCUS")
-                    protocolFocused = false
-                } else if (parts[1] === "QUIT") {
-                    console.log("client says QUIT")
-                    app.quit()
-                } else {
-                    console.log("client gives unknown command " + parts[1])
+            let sender = ""
+            let message = ""
+            socketMutex.runExclusive(() => {
+                socketReceivedData += data.toString()
+                console.log("RECEIVED DATA: " + socketReceivedData)
+                while (socketReceivedData.includes("\n")) {
+                    let parts = socketReceivedData.split("\n")[0].split(":")
+                    sender = parts[0]
+                    message = parts[1]
+                    console.log("PARSED MESSAGE " + sender + " " + message)
+                    socketReceivedData = socketReceivedData.substring(socketReceivedData.indexOf("\n") + 1)
                 }
-            }
+                console.log("REMAINING DATA: " + socketReceivedData)
+            }).then(() => {
+                if (mainWindow) {
+                    lastState['protocol'] = protocolFocused
+                    if (sender === "client") {
+                        if (message === "MINIMIZE") {
+                            console.log("client says MINIMIZE")
+                            protocolJustMinimized = true
+                        } else if (message === "FOCUS") {
+                            console.log("client says FOCUS")
+                            protocolFocused = true
+                            mainWindow.restore()
+                        } else if (message === "UNFOCUS") {
+                            console.log("client says UNFOCUS")
+                            protocolFocused = false
+                        } else if (message === "QUIT") {
+                            console.log("client says QUIT")
+                            app.quit()
+                            socket.end()
+                        } else {
+                            console.log("client gives unknown command " + message)
+                        }
+                    }
+                }
+            })
         })
         socket.on('error', (err) => {
             console.log(`error ${err}`)
         })
 
-        if (os.platform() === "win32") {
-            console.log("WIN32")
-            mainWindow.on("focus", () => {
-                if (protocolFocused && !protocolMinimized) {
-                    console.log("MINIMIZE")
-                    // When the protocol is focused and not minimized, then minimize
-                    socket.write("server:MINIMIZE")
-                } else {
-                    console.log("FOCUS")
-                    // When the protocol is not focused or minimized, then focus
-                    socket.write("server:FOCUS")
+        socketMutex.runExclusive(() => {
+            clientsConnected += 1
+            if (clientsConnected > 1) return
+            if (os.platform() === "win32") {
+                console.log("WIN32")
+                if (mainWindow) {
+                    mainWindow.on("focus", () => {
+                        // any state where mainWindow.isFocused() = true is unstable
+                        let message = ""
+                        console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolJustMinimized}`)
+                        if (!protocolFocused) {
+                            if (lastState['protocol'] && !lastState['clientApp']) {
+                                console.log("MINIMIZE")
+                                // When the protocol is focused and not minimized, then minimize
+                                message = "server:MINIMIZE"
+                            } else if (!protocolJustMinimized) {
+                                console.log("FOCUS")
+                                // When the protocol is not focused or minimized, then focus
+                                message = "server:FOCUS"
+                            } else {
+                                if (mainWindow) {
+                                    mainWindow.minimize()
+                                }
+                                protocolJustMinimized = false
+                            }
+                        } else { 
+                            // this should never be true because the client app and the protocol
+                            //    can't be focused at the same time, but keep it here just in case
+                            //    state maintenance gets messed up somewhere
+                            console.log("FOCUS")
+                            message = "server:FOCUS"
+                        }
+                        lastState['clientApp'] = true
+                        if (message !== "") {
+                            socket.write(message)
+                        }
+                    })
+
+                    mainWindow.on("blur", () => {
+                        lastState['clientApp'] = false
+                    })
                 }
-            })
-        } else if (os.platform() === "darwin") {
-            app.on("activate", () => {
-                // OSX: "activate" event is thrown when the dock icon is pressed
-                socket.write("server:FOCUS")
-            })
-        }
+            } else if (os.platform() === "darwin") {
+                app.on("activate", () => {
+                    // OSX: "activate" event is thrown when the dock icon is pressed
+                    socket.write("server:FOCUS")
+                    socket.end()
+                })
+            }
+        }).then(() => {
+            console.log("created listeners")
+        })
 
         app.on("will-quit", () => {
             socket.write("server:QUIT")
@@ -227,8 +286,8 @@ const createWindow = async () => {
             throw new Error('"mainWindow" is not defined')
         }
         if (!showMainWindow) {
-            // mainWindow.setOpacity(0.0)
-            // mainWindow.setIgnoreMouseEvents(true)
+            mainWindow.setOpacity(0.0)
+            mainWindow.setIgnoreMouseEvents(true)
         }
         if (os.platform() === "win32" || showMainWindow) {
             if (process.env.START_MINIMIZED) {
@@ -259,8 +318,8 @@ const createWindow = async () => {
         } else if (!showMainWindow && mainWindow) {
             if (os.platform() === "win32") {
                 // To keep the icon on the taskbar in Windows, don't hide - just make transparent
-                // mainWindow.setOpacity(0.0)
-                // mainWindow.setIgnoreMouseEvents(true)
+                mainWindow.setOpacity(0.0)
+                mainWindow.setIgnoreMouseEvents(true)
             } else {
                 mainWindow.hide()
             }
