@@ -48,7 +48,10 @@ def _create_fractal_logger():
     Create and configure a logger for fractal's purposes.
     """
     # TODO: remove function and use funcName when fractal_log deprecated
-    format = "%(asctime)s %(levelname)s [%(filename)s:%(function)s#L%(lineno)d]: | %(label)s | %(message)s"
+    format = (
+        "%(asctime)s %(levelname)s [%(filename)s:%(function)s#L%(lineno)d]: "
+        "| %(label)s | %(message)s"
+    )
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
