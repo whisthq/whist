@@ -84,8 +84,10 @@ export const setAWSRegion = async () => {
             `dynamodb.${region}.amazonaws.com`,
             3
         )
-        logger.logInfo(`It took ${averagePingTime.toString()} to ping ${region}`)
-        
+        logger.logInfo(
+            `It took ${averagePingTime.toString()} to ping ${region}`
+        )
+
         if (averagePingTime < lowestPingTime) {
             closestRegion = region
             lowestPingTime = averagePingTime
