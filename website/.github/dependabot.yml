@@ -1,0 +1,12 @@
+# dependabot.yml
+#
+# Configuration file for Dependabot on the fractal/website repository
+
+version: 2
+
+updates:  
+  - package-ecosystem: "npm"
+    directory: "/" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "daily" # runs on every weekday, Monday to Friday
+    open-pull-requests-limit: 10
