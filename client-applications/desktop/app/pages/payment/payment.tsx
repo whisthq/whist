@@ -5,7 +5,6 @@ import { Dispatch } from "shared/types/redux"
 import { User, DEFAULT as AuthDefault } from "store/reducers/auth/default"
 import { FractalLogger } from "shared/utils/general/logging"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
-import { openExternal } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
@@ -35,7 +34,10 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
     const ipc = require("electron").ipcRenderer
 
     const upgrade = () => {
-        openExternal(`${config.url.FRONTEND_URL}/dashboard/settings/payment`)
+        ipc.sendSync(
+            FractalIPC.LOAD_BROWSER,
+            `${config.url.FRONTEND_URL}/dashboard/settings/payment`
+        )
     }
 
     const refresh = () => {
