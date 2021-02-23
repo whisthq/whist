@@ -2,7 +2,7 @@ import React, { useState, useEffect, ChangeEvent } from "react"
 import { connect } from "react-redux"
 import { useMutation, useSubscription } from "@apollo/client"
 
-import { openExternal, generateToken } from "shared/utils/general/helpers"
+import { generateToken } from "shared/utils/general/helpers"
 import { config } from "shared/constants/config"
 import { Dispatch } from "shared/types/redux"
 import { FractalKey } from "shared/types/input"
@@ -44,9 +44,12 @@ export const Login = (props: {
     const [localAccessToken, setLocalAccessToken] = useState("")
     const [tokenGenerated, setTokenGenerated] = useState(false)
 
+    const ipc = require("electron").ipcRenderer
+
     const [addLogin] = useMutation(ADD_LOGIN_TOKEN, {
         onCompleted: () => {
-            openExternal(
+            ipc.sendSync(
+                FractalIPC.LOAD_BROWSER,
                 `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
             )
         },
@@ -121,9 +124,6 @@ export const Login = (props: {
             dispatch(validateAccessToken(localAccessToken))
         }
     }
-
-    const ipc = require("electron").ipcRenderer
-
     useEffect(() => {
         ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
     }, [])
