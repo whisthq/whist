@@ -86,12 +86,9 @@ fractal_logger = _create_fractal_logger()
 
 
 def fractal_log(function, label, logs, level=logging.INFO):
-    """
-    Deprecated old logging function.
-    """
     fractal_logger.warning(f"fractal_log is deprecated. Called by function {function}.")
     fractal_logger.log(
-        logs,
         level=level,
+        msg=logs,
         extra={"label": label, "function": function},
     )
