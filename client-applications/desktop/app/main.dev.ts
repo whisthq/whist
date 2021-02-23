@@ -160,6 +160,28 @@ const createWindow = async () => {
         event.returnValue = argv
     })
 
+    ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
+        const url = argv
+        const win = new BrowserWindow({ width: 800, height: 600 })
+        win.on("close", () => {
+            if (win) {
+                event.preventDefault()
+            }
+        })
+        win.loadURL(url)
+        win.show()
+        event.returnValue = argv
+    })
+
+    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event, argv) => {
+        BrowserWindow.getAllWindows().forEach((win) => {
+            if (win.id !== 1) {
+                win.close()
+            }
+        })
+        event.returnValue = argv
+    })
+
     ipc.on(FractalIPC.FORCE_QUIT, () => {
         app.exit(0)
         app.quit()

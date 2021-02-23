@@ -2,28 +2,6 @@ import { deepCopyObject } from "shared/utils/general/reducer"
 import { cloneDeep } from "lodash"
 import { backOff } from "exponential-backoff"
 
-export const openExternal = (url: string) => {
-    /*
-    Description:
-        Opens a link in a browser from Electron.
-
-    Arguments:
-        url (string): Link URL to open
-
-    Returns:
-        void
-    */
-
-    const BrowserWindow = require("electron").remote.BrowserWindow
-
-    let win = new BrowserWindow({ width: 800, height: 600 })
-    win.on("close", () => {
-        win = null
-    })
-    win.loadURL(url)
-    win.show()
-}
-
 export const searchArrayByKey = (
     arr: Record<string, any>[],
     key: string,

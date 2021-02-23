@@ -87,6 +87,8 @@ export const Launcher = (props: {
     const [killSignalsReceived, setKillSignalsReceived] = useState(0)
     const [loadingMessage, setLoadingMessage] = useState("")
 
+    const [loginClosed, setLoginClosed] = useState(false)
+
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
     })
@@ -186,6 +188,13 @@ export const Launcher = (props: {
             setTimedOut(true)
         }, TIMEOUT)
     }, [])
+
+    useEffect(() => {
+        if (!loginClosed) {
+            ipc.sendSync(FractalIPC.CLOSE_OTHER_WINDOWS)
+            setLoginClosed(true)
+        }
+    }, [loginClosed])
 
     useEffect(() => {
         if (timedOut) {
