@@ -33,6 +33,7 @@ from hirefire.procs.celery import CeleryProc
 # The BROKER and the BACKEND are the same Redis instance, but the broker stores information about
 # tasks that are due to be processed and the backend stores the results of processed tasks.
 CELERY_CONFIG = {
+    "accept_content": ("pickle",),
     # Whether or not the worker should retry a failed connection.
     "broker_connection_retry": False,
     # See the Kombu source file containing the implementation of the Redis transport for a list of
@@ -43,6 +44,7 @@ CELERY_CONFIG = {
         "socket_timeout": 1,
     },
     "redis_max_connections": 40,
+    "result_accept_content": ("json",),
     # This key seems to set the socket timeout for the connection to the Redis backend (i.e.
     # result store). It is important to set the socket timeout so that a failed SSL handshake will
     # cause a TimeoutError to be raised rather than hanging.
@@ -55,6 +57,7 @@ CELERY_CONFIG = {
             "max_retries": 1,
         },
     },
+    "task_serializer": "pickle",
     "task_track_started": True,
     # this stops celery from overriding our logger
     "worker_hijack_root_logger": False,
