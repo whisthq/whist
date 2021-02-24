@@ -79,7 +79,8 @@ const createWindow = async () => {
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
-            show: false,
+            // show: false,
+            opacity: 0.0,
             frame: false,
             center: true,
             resizable: true,
@@ -89,6 +90,7 @@ const createWindow = async () => {
                 contextIsolation: false,
             },
         })
+        mainWindow.setIgnoreMouseEvents(true)
         socketPath = '\\\\.\\pipe\\' + socketPath
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
@@ -274,7 +276,7 @@ const createWindow = async () => {
             throw new Error('"mainWindow" is not defined')
         }
         if (!showMainWindow && os.platform() === "win32") {
-            // mainWindow.setOpacity(0.0)
+            mainWindow.setOpacity(0.0)
             mainWindow.setIgnoreMouseEvents(true)
             mainWindow.minimize()
         }
@@ -307,7 +309,7 @@ const createWindow = async () => {
         } else if (!showMainWindow && mainWindow) {
             if (os.platform() === "win32") {
                 // To keep the icon on the taskbar in Windows, don't hide - just make transparent
-                // mainWindow.setOpacity(0.0)
+                mainWindow.setOpacity(0.0)
                 mainWindow.setIgnoreMouseEvents(true)
                 mainWindow.minimize()
             } else {
