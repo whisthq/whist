@@ -11,4 +11,5 @@ export enum FractalIPC {
     DOWNLOAD_ERROR = "error",
     PERCENT_TRANSFERRED = "transferred",
     DOWNLOADED = "downloaded",
+    KILL_RENDER_THREAD = "killRenderThread",
 }

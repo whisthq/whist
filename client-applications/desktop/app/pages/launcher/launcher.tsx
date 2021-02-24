@@ -346,6 +346,7 @@ export const Launcher = (props: {
             writeStream(protocol, `private-key?${container.secretKey}`)
             writeStream(protocol, `ip?${container.publicIP}`)
             writeStream(protocol, `finished?0`)
+            ipc.sendSync(FractalIPC.KILL_RENDER_THREAD, true)
         }
     }, [container, protocol])
 

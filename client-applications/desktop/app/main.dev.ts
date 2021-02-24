@@ -141,6 +141,11 @@ const createWindow = async () => {
     const electron = require("electron")
     const ipc = electron.ipcMain
 
+    ipc.on(FractalIPC.KILL_RENDER_THREAD, (event, argv) => {
+        mainWindow?.destroy()
+        event.returnValue = argv
+    })
+
     ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
         showMainWindow = argv
         if (showMainWindow && mainWindow) {
