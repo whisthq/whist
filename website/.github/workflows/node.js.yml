@@ -36,7 +36,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Install Node.js 14
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v2.1.5
               with:
                   node-version: 14
 
