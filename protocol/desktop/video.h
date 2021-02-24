@@ -39,7 +39,7 @@ void init_video();
  * @brief                          Receive video packet
  *
  * @param packet                   Packet received from the server, which gets
- *                                 sorted as video packet with proper parameters
+ *                                 stored as video packet with proper parameters
  *
  * @returns                        Return -1 if failed to receive packet into
  *                                 video frame, else 0

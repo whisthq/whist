@@ -410,6 +410,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
             "Given Buffer Size did not match computed buffer size: given %d vs "
             "computed %d",
             buffer_size, computed_size);
+        return false;
     }
 
     char* char_buffer = (void*)int_buffer;
