@@ -150,7 +150,7 @@ def cluster():
         An instance of the ClusterInfo model.
     """
 
-    c = ClusterInfo(cluster=f"test-cluster-{uuid.uuid4()}")
+    c = ClusterInfo(cluster=f"test-cluster-{uuid.uuid4()}", location="us-east-1")
 
     db.session.add(c)
     db.session.commit()
