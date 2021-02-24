@@ -247,7 +247,7 @@ jobs:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  export WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN=$(curl -X POST \
                         -H "Content-Type: application/json" \
