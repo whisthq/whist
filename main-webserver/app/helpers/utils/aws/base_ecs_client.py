@@ -13,6 +13,9 @@ from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_logger
 
+from . import ecs
+from . import autoscaling
+
 
 class FractalECSClusterNotFoundException(Exception):
     """
@@ -980,6 +983,45 @@ class ECSClient:
             LaunchConfigurationName=old_launch_config_name
         )
         return cluster_name, ami
+
+    @staticmethod
+    def delete_cluster(cluster_name, region):
+        """Tear down an ECS cluster and the entire ECS/AutoScaling stack beneath it.
+
+        This function and all of its callees are solely responsible for sending AWS requests. They
+        don't even know that Fractal maintains cluster pointers in a database.
+
+        Args:
+            cluster_name: The short name of the cluster to delete as a string.
+            region: The name of the region in whicht the cluster to delete is located as a string
+                (e.g. "us-east-1").
+
+        Returns:
+            None
+        """
+
+        ecs.deregister_container_instances(cluster_name, region)
+
+        capacity_providers = ecs.delete_cluster(cluster_name, region)
+        autoscaling_groups = [
+            ecs.delete_capacity_provider(capacity_provider, region)
+            for capacity_provider in capacity_providers
+        ]
+
+        for autoscaling_group in autoscaling_groups:
+            # delete_capacity_provider() and get_launch_configuration() should return None rather
+            # than raising an exception if the capacity provider to be deleted or the launch
+            # configuration to retrieve respectively do not exist. They do this because requests to
+            # delete AWS resources that do not exist should be considered successful. We have to
+            # filter out any potential None values in this loop.
+            if autoscaling_group is not None:
+                launch_configuration = autoscaling.get_launch_configuration(
+                    autoscaling_group, region
+                )
+                autoscaling.delete_autoscaling_group(autoscaling_group, region)
+
+                if launch_configuration is not None:
+                    autoscaling.delete_launch_configuration(launch_configuration, region)
 
 
 if __name__ == "__main__":
