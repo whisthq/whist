@@ -1,9 +1,11 @@
 import time
+import typing
 
 from celery import shared_task
 from flask import current_app
 
-
+from app.celery.aws_ecs_modification import manual_scale_cluster
+from app.exceptions import ClusterNotIdle
 from app.exceptions import ContainerNotFoundException
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
@@ -12,19 +14,14 @@ from app.helpers.utils.aws.aws_resource_locks import (
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_logger
+from app.helpers.utils.datadog.events import (
+    datadogEvent_containerDelete,
+)
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
     fractal_sql_update,
 )
-from app.models import db
-from app.serializers.hardware import ClusterInfo, UserContainer
-
-from app.helpers.utils.datadog.events import (
-    datadogEvent_containerDelete,
-    datadogEvent_clusterDelete,
-)
-
-from app.celery.aws_ecs_modification import manual_scale_cluster
+from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
 
 @shared_task(bind=True)
@@ -142,99 +139,55 @@ def delete_container(self, container_name, aes_key):
             pass
 
 
-@shared_task(bind=True)
-def delete_cluster(self, cluster, region_name):
-    task_start_time = time.time()
+@shared_task(throws=(ClusterNotIdle,))
+def delete_cluster(cluster: typing.Union[ClusterInfo, SortedClusters], *, force: bool) -> None:
+    """Tear down the specified cluster's cloud infrastructure and remove it from the database.
 
-    ecs_client = ECSClient(region_name=region_name)
+    This Celery task is responsible for updating the cluster pointer in the database appropriately.
+    It initially deletes the row from the hardware.user_containers table, but later rolls that
+    deletion back if anything goes wrong while the cloud stack is being torn down.
+    ECSClient.delete_cluster() is responsible for making AWS queries.
+
+    All arguments following the * in the argument list must be supplied as keyword arguments, even
+    if they are not assigned defaults. This decision was made for two reasons:
+
+    1. force=True and force=False are much more descriptive than just True and False and
+    2. a default value for the force keyword argument is already chosen by the view function,
+        which is this Celery task's only callee, that processes POST /aws_container/delete_cluster
+        requests. If a "force" key is not supplied in the request's POST body, the view function
+        automatically calls delete_cluster.delay() with force=False. Setting the default value in
+        two different places would be redundant.
+
+    Args:
+        cluster: An instance of the ClusterInfo model representing the cluster to delete. The
+            object must be in the persistent state (see below).
+        force: A boolean indicating whether or not to delete the cluster even if there are still
+            database records of tasks running on it.
+
+    Returns:
+        None
+
+    Raises:
+        ClusterNotIdle: There exist database records of Fractalized applications running on the
+            specified the database and the force option is falsy.
+    """
+
+    # The cluster object with which this task is called must be in the persistent state. Otherwise,
+    # load=False will cause the following line to raise an exception. Read more at
+    # https://docs.sqlalchemy.org/en/13/orm/session_api.html#sqlalchemy.orm.session.Session.merge.params.load
+    cluster_to_delete = db.session.merge(cluster, load=False)
+
+    if cluster_to_delete.containers.count() > 0 and not force:
+        raise ClusterNotIdle(cluster_to_delete.cluster, cluster_to_delete.location)
+
+    db.session.delete(cluster_to_delete)
+    db.session.flush()
+
     try:
-        running_tasks = ecs_client.ecs_client.list_tasks(cluster=cluster, desiredStatus="RUNNING")[
-            "taskArns"
-        ]
-        if running_tasks:
-            fractal_logger.error(
-                (
-                    f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
-                    "delete the tasks first."
-                ),
-                extra={"label": cluster},
-            )
-            self.update_state(
-                state="FAILURE",
-                meta={"msg": "Cannot delete clusters with running tasks"},
-            )
-        else:
-            fractal_logger.info(
-                "Deleting cluster {} in region {} and all associated instances".format(
-                    cluster, region_name
-                ),
-                extra={"label": cluster},
-            )
-            ecs_client.terminate_containers_in_cluster(cluster)
-            self.update_state(
-                state="PENDING",
-                meta={
-                    "msg": "Terminating containers in {}".format(
-                        cluster,
-                    )
-                },
-            )
-            cluster_info = ClusterInfo.query.filter_by(cluster=cluster)
-            fractal_sql_commit(db, lambda _, x: x.update({"status": "INACTIVE"}), cluster_info)
-            ecs_client.spin_til_no_containers(cluster)
+        ECSClient.delete_cluster(cluster_to_delete.cluster, cluster_to_delete.location)
+    except:
+        # Reinstate the deleted row if any of our cloud API requests fail.
+        db.session.rollback()
+        raise
 
-            asg_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
-                "AutoScalingGroupName"
-            ]
-            launch_config_name = ecs_client.describe_auto_scaling_groups_in_cluster(cluster)[0][
-                "LaunchConfigurationName"
-            ]
-            cluster_info = ClusterInfo.query.get(cluster)
-
-            fractal_sql_commit(db, lambda db, x: db.session.delete(x), cluster_info)
-            ecs_client.auto_scaling_client.delete_auto_scaling_group(
-                AutoScalingGroupName=asg_name, ForceDelete=True
-            )
-            ecs_client.auto_scaling_client.delete_launch_configuration(
-                LaunchConfigurationName=launch_config_name
-            )
-            try:
-                ecs_client.ecs_client.delete_cluster(cluster=cluster)
-            except ecs_client.ecs_client.exceptions.ClusterContainsContainerInstancesException:
-                # sometimes metadata takes time to update
-                time.sleep(30)
-                ecs_client.ecs_client.delete_cluster(cluster=cluster)
-    except ecs_client.ecs_client.exceptions.ClusterNotFoundException:
-        # The cluster does not exist! We must simply purge from database if it exists
-        bad_entry = ClusterInfo.query.get(cluster)
-        if bad_entry is not None:
-            fractal_logger.info(
-                f"Cluster did not exist in ${region_name} ECS! "
-                "Removing erroneous entry from our database.",
-                extra={"label": cluster},
-            )
-            fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
-            self.update_state(
-                state="SUCCESS",
-                meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS! "
-                    "Removed an erroneous entry from our database."
-                },
-            )
-        else:
-            self.update_state(
-                state="SUCCESS",
-                meta={
-                    "msg": f"Cluster {cluster} did not exist in {region_name} ECS "
-                    "or in our database."
-                },
-            )
-    except Exception as error:
-        fractal_logger.error(f"Encountered error: {error}", exc_info=True)
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
-        )
-    if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
-        datadogEvent_clusterDelete(cluster, lifecycle=True, time_taken=task_time_taken)
+    db.session.commit()
