@@ -266,8 +266,8 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
-              fractal-publish-build-config,
-              fractal-start-webserver-maintenance-mode,
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
             ]
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
@@ -334,9 +334,9 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
-              fractal-publish-build-config,
-              fractal-start-webserver-maintenance-mode,
-              container-images-publish-images-ghcr
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+                container-images-publish-images-ghcr,
             ]
         strategy:
             matrix:
@@ -416,10 +416,10 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: 
+        needs:
             [
-              fractal-publish-build-config,
-              fractal-start-webserver-maintenance-mode
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
@@ -616,10 +616,10 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs: 
+        needs:
             [
-              fractal-publish-build-config,
-              fractal-start-webserver-maintenance-mode
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
@@ -686,10 +686,10 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs: 
+        needs:
             [
-              fractal-publish-build-config,
-              fractal-start-webserver-maintenance-mode
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
@@ -978,4 +978,3 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at ${{ needs.fractal-publish-build-config.outputs.webserver_url }} has ended maintenance mode.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
