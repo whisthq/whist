@@ -46,7 +46,7 @@ let socketReceivedData = ""
 // Mutex to keep the received socket data in order
 const socketMutex = new Mutex()
 // Inventory of client sockets: will be two on Windows, 1 elsewhere
-let clientSockets: Socket[] = []
+const clientSockets: Socket[] = []
 // Indicates whether a TOGGLE message is being processed by the protocol
 let toggling = false
 
@@ -85,7 +85,7 @@ const createWindow = async () => {
             },
         })
         mainWindow.setIgnoreMouseEvents(true)
-        socketPath = '\\\\.\\pipe\\' + socketPath
+        socketPath = `\\\\.\\pipe\\${socketPath}`
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
             show: false,
@@ -132,8 +132,8 @@ const createWindow = async () => {
         clientSockets.push(socket)
 
         // When a client disconnects, remove it from inventory
-        socket.on('end', () => {
-            let socketIndex = clientSockets.indexOf(socket)
+        socket.on("end", () => {
+            const socketIndex = clientSockets.indexOf(socket)
             if (socketIndex >= 0) {
                 delete clientSockets[socketIndex]
             }
@@ -143,60 +143,73 @@ const createWindow = async () => {
         socket.pipe(socket)
 
         // Handle data received on this socket
-        socket.on('data', (data) => {
-            let messagePairs : {"sender": string, "message": string}[] = []
-            socketMutex.runExclusive(() => {
-                // Append received data to the received data record
-                socketReceivedData += data.toString()
-                // Parse each message, separated by '\n'
-                while (socketReceivedData.includes("\n")) {
-                    let parts = socketReceivedData.split("\n")[0].split(":")
-                    messagePairs.push({"sender": parts[0], "message": parts[1]})
-                    socketReceivedData = socketReceivedData.substring(socketReceivedData.indexOf("\n") + 1)
-                }
-            }).then(() => {
-                if (mainWindow) {
-                    mainWindow.minimize()
-                    messagePairs.forEach((pair) => {
-                        let sender = pair["sender"]
-                        let message = pair["message"]
-                        if (sender === "client") {
-                            if (message === "MINIMIZE") {
-                                if (mainWindow) {
-                                    mainWindow.minimize()
+        socket.on("data", (data) => {
+            const messagePairs: { sender: string; message: string }[] = []
+            socketMutex
+                .runExclusive(() => {
+                    // Append received data to the received data record
+                    socketReceivedData += data.toString()
+                    // Parse each message, separated by '\n'
+                    while (socketReceivedData.includes("\n")) {
+                        const parts = socketReceivedData
+                            .split("\n")[0]
+                            .split(":")
+                        messagePairs.push({
+                            sender: parts[0],
+                            message: parts[1],
+                        })
+                        socketReceivedData = socketReceivedData.substring(
+                            socketReceivedData.indexOf("\n") + 1
+                        )
+                    }
+                })
+                .then(() => {
+                    if (mainWindow) {
+                        mainWindow.minimize()
+                        messagePairs.forEach((pair) => {
+                            const sender = pair.sender
+                            const message = pair.message
+                            if (sender === "client") {
+                                if (message === "MINIMIZE") {
+                                    if (mainWindow) {
+                                        mainWindow.minimize()
+                                    }
+                                    protocolMinimized = true
+                                } else if (message === "FOCUS") {
+                                    if (mainWindow) {
+                                        mainWindow.minimize()
+                                    }
+                                    protocolMinimized = false
+                                } else if (message === "UNFOCUS") {
+                                    // This is currently unused, but left as an option
+                                    //    because it is a message sent by the protocol
+                                } else if (message === "TOGGLE_ACK") {
+                                    // When the protocol has acknowledged the TOGGLE communication sequence
+                                    //    beginning, then blur the client app window to trigger a blur event
+                                    toggling = true
+                                    if (mainWindow) {
+                                        mainWindow.blur()
+                                    }
+                                } else if (message === "QUIT") {
+                                    app.quit()
                                 }
-                                protocolMinimized = true
-                            } else if (message === "FOCUS") {
-                                if (mainWindow) {
-                                    mainWindow.minimize()
-                                }
-                                protocolMinimized = false
-                            } else if (message === "UNFOCUS") {
-                                // This is currently unused, but left as an option
-                                //    because it is a message sent by the protocol
-                            } else if (message === "TOGGLE_ACK") {
-                                // When the protocol has acknowledged the TOGGLE communication sequence
-                                //    beginning, then blur the client app window to trigger a blur event
-                                toggling = true
-                                if (mainWindow) {
-                                    mainWindow.blur()
-                                }
-                            } else if (message === "QUIT") {
-                                app.quit()
                             }
-                        }
-                    })
-                }
-            })
+                        })
+                    }
+                    return null
+                })
+                .catch((err) => {
+                    Sentry.captureException(err)
+                })
         })
         // These errors are usually thrown as a result of the other end disconnecting
-        socket.on('error', (err) => {
+        socket.on("error", (err) => {
             console.log(`Socket error (likely ignorable): ${err}`)
         })
     })
 
     // These errors are usually thrown as a result of the other end disconnecting
-    protocolSocketServer.on('error', (err) => {
+    protocolSocketServer.on("error", (err) => {
         console.log(`Socket server error (likely ignorable): error ${err}`)
     })
 
@@ -296,14 +309,12 @@ const createWindow = async () => {
                 mainWindow.setIgnoreMouseEvents(true)
                 mainWindow.minimize()
             }
+        } else if (process.env.START_MINIMIZED) {
+            mainWindow.minimize()
         } else {
-            if (process.env.START_MINIMIZED) {
-                mainWindow.minimize()
-            } else {
-                mainWindow.show()
-                mainWindow.focus()
-                mainWindow.maximize()
-            }
+            mainWindow.show()
+            mainWindow.focus()
+            mainWindow.maximize()
         }
         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
