@@ -378,7 +378,7 @@ void update_audio() {
     // }
 
     // Find pending audio packets and NACK them
-    int MAX_NACKED = 1;
+#define MAX_NACKED 1
     FractalClientMessage fmsg[MAX_NACKED];
     int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
