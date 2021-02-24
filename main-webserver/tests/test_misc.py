@@ -1,9 +1,6 @@
 """Tests for miscellaneous helper functions."""
-import time
 
 from flask import current_app
-import pytest
-from func_timeout import func_set_timeout, FunctionTimedOut
 
 from app.config import _callback_webserver_hostname
 
