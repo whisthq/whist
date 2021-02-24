@@ -12,6 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
+import { unlink } from "fs";
 import { createServer, Server, Socket } from "net"
 import { Mutex } from "async-mutex"
 import * as Sentry from "@sentry/electron"
@@ -108,6 +109,9 @@ const createWindow = async () => {
             "protocol-build/desktop",
             socketPath
         )
+        unlink(socketPath, (err) => {
+            if (err) Sentry.captureException(err)
+        })
     } else {
         // if (os.platform() === "linux") case
         mainWindow = new BrowserWindow({
@@ -129,6 +133,9 @@ const createWindow = async () => {
             "protocol-build/desktop",
             socketPath
         )
+        unlink(socketPath, (err) => {
+            if (err) Sentry.captureException(err)
+        })
     }
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
@@ -206,7 +213,7 @@ const createWindow = async () => {
                     return null
                 })
                 .catch((err) => {
-                    Sentry.captureException(err)
+                    if (err) Sentry.captureException(err)
                 })
         })
         // These errors are usually thrown as a result of the other end disconnecting
@@ -230,12 +237,10 @@ const createWindow = async () => {
 
                     if (protocolMinimized) {
                         // If the protocol is minimized, then the protocol should focus
-                        console.log("FOCUS")
                         message = "server:FOCUS"
                         protocolMinimized = false
                     } else {
                         // If the protocol window is open, then begin a TOGGLE communication sequence
-                        console.log("TOGGLE")
                         message = "server:TOGGLE"
                     }
 
