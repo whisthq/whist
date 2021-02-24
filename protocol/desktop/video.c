@@ -153,10 +153,10 @@ SDLVideoContext video_context;
 volatile double working_mbps;
 
 // Context of the frame that is currently being rendered
-volatile FrameData render_context;
+static volatile FrameData render_context;
 
 // True if RenderScreen is currently rendering a frame
-volatile bool rendering = false;
+static volatile bool rendering = false;
 volatile bool skip_render = false;
 volatile bool can_render;
 
