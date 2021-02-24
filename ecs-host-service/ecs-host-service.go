@@ -120,6 +120,7 @@ type uinputDevices struct {
 	keyboard uinput.Keyboard
 }
 
+// keep track of mapping from FractalID to uinput devices
 var devices map[string]uinputDevices = make(map[string]uinputDevices)
 
 // Updates the fractalIDs mapping with a request from the ecs-agent
@@ -135,21 +136,21 @@ func addFractalIDMappings(req *httpserver.RegisterDockerContainerIDRequest) erro
 	return nil
 }
 
-// from ioctl.h and uinput.h
-const (
-	iocDirshift  = 30
-	iocSizeshift = 16
-	iocTypeshift = 8
-	iocNrshift   = 0
-	iocRead      = 2
-	uiIoctlBase  = 85 // 'U'
-)
-
-func linuxIoc(dir uintptr, requestType uintptr, nr uintptr, size uintptr) uintptr {
-	return (dir << iocDirshift) + (requestType << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
-}
-
 func linuxUIGetSysName(len uintptr) uintptr {
+	// from ioctl.h and uinput.h
+	const (
+		iocDirshift  = 30
+		iocSizeshift = 16
+		iocTypeshift = 8
+		iocNrshift   = 0
+		iocRead      = 2
+		uiIoctlBase  = 85 // 'U'
+	)
+
+	linuxIoc := func(dir uintptr, requestType uintptr, nr uintptr, size uintptr) uintptr {
+		return (dir << iocDirshift) + (requestType << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
+	}
+
 	return linuxIoc(iocRead, uiIoctlBase, 44, len)
 }
 

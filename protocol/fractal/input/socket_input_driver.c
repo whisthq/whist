@@ -484,6 +484,7 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+
     // There seems to be a bug with precision scrolling on GTK apps, where the first mouse wheel
     // click after mouse movement is not registered. I tried setting GDK_CORE_DEVICE_EVENTS=1 as
     // suggested but it didn't work. This is a hacky solution where we emit the event twice after
