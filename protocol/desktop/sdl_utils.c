@@ -53,6 +53,7 @@ Custom Types
 */
 
 // Hold information to pass onto the window control event watcher
+//     This is used for socket/named pipe communication to the client app
 typedef struct WindowControlArguments {
     SDL_Window* window;
 #ifdef _WIN32
@@ -62,9 +63,8 @@ typedef struct WindowControlArguments {
     int write_socket_fd;
 #endif
 } WindowControlArguments;
+// Whether a TOGGLE communciation sequence is active
 volatile bool toggling = false;
-volatile bool clientapp_blurred = false;
-
 
 /*
 ============================
@@ -112,6 +112,19 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
 }
 
 int write_to_socket(const char* message, WindowControlArguments* args) {
+    /*
+        Write `message` to the write socket in `args`. This is used
+        for communication via socket or named pipe to the client app.
+
+        Arguments:
+            message (const char*): message to be sent
+            args (WindowControlArguments*): struct of args used for communication
+                with the client app
+
+        Returns:
+            (int): -1 on failure, 1 on a closed pipe or socket, 0 on other success
+    */
+
 #ifdef _WIN32
     DWORD wrote_chars;
     if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
@@ -158,10 +171,11 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
             message = "client:MINIMIZE\n";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+            // If the TOGGLE communication sequence is active, then a
+            //     return of focus to the protocol indicates that the protocol
+            //     window should minimize, instead of communicating FOCUS.
             if (toggling) {
-                LOG_INFO("TOGGLE focus gained... setting toggling to false");
                 toggling = false;
-                LOG_INFO("TOGGLE MINIMIZE");
                 SDL_MinimizeWindow(args->window);
             } else {
                 message = "client:FOCUS\n";
@@ -179,6 +193,8 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         if (write_ret < 0) {
             return -1;
         } else if (write_ret > 0) {
+            // Return 0 for success if `write_to_socket` indicates that the pipe
+            //     or socket has closed.
             return 0;
         }
     }
@@ -412,8 +428,18 @@ int resizing_event_watcher(void* data, SDL_Event* event) {
 }
 
 void focus_window(SDL_Window* window_to_focus) {
+    /*
+        Bring the window `window_to_focus` to the front and transfer input focus
+        to it.
+
+        Arguments:
+            window_to_focus (SDL_Window*): pointer to the target window
+    */
+
     SDL_RestoreWindow(window_to_focus);
     SDL_RaiseWindow(window_to_focus);
+
+    // On Windows, focusing the window requires more manipulation of the window handle itself
 #ifdef _WIN32
     SDL_SysWMinfo window_info;
     SDL_VERSION(&window_info.version);
@@ -421,7 +447,6 @@ void focus_window(SDL_Window* window_to_focus) {
         HWND window_handle = window_info.info.win.window;
         SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
         SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
-        SetWindowPos(window_handle, HWND_TOP, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
         SetForegroundWindow(window_handle);
     } else {
         LOG_ERROR("SDL_GetWindowWMInfo failed with error %s", SDL_GetError());
@@ -452,11 +477,12 @@ int share_client_window_events(void* opaque) {
     struct sockaddr_un addr;
 #endif
 
+    // Connect to the client app named pipe or socket server
 #ifdef _WIN32
     socket_fd = CreateFileA(
-        socket_path, 
-        GENERIC_READ, 
-        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        socket_path,
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
         NULL,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
@@ -466,7 +492,6 @@ int share_client_window_events(void* opaque) {
         LOG_ERROR("CreateFileA error in share_client_window_events: %d", GetLastError());
     }
 #else
-
     if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
         LOG_ERROR("socket error in share_client_window_events: %d", errno);
         return -1;
@@ -482,14 +507,15 @@ int share_client_window_events(void* opaque) {
     }
 #endif
 
+    // Set up an event watcher to communicate specific events to the client app
     WindowControlArguments* watcher_args = malloc(sizeof(WindowControlArguments));
     memset(watcher_args, 0, sizeof(WindowControlArguments));
     watcher_args->window = (SDL_Window*) window;
 #ifdef _WIN32
     watcher_args->write_socket_fd = CreateFileA(
-        socket_path, 
-        GENERIC_WRITE, 
-        FILE_SHARE_READ | FILE_SHARE_WRITE, 
+        socket_path,
+        GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
         NULL,
         OPEN_EXISTING,
         FILE_ATTRIBUTE_NORMAL,
@@ -501,14 +527,13 @@ int share_client_window_events(void* opaque) {
 #endif
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
 
+    // Read messages from the client app and handle accordingly
     bool successful_read = true;
 #ifdef _WIN32
     while ((successful_read = ReadFile(socket_fd, buf, sizeof(buf), &read_chars, NULL)) == true && read_chars > 0) {
 #else
     while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
 #endif
-        // TODO: send SDL event
-        LOG_INFO("socket read: %s", buf);
         char* strtok_saveptr;
         char* source_name = safe_strtok(buf, ":", &strtok_saveptr);
         if (source_name && !strncmp(source_name, "server", 6)) {
@@ -521,17 +546,19 @@ int share_client_window_events(void* opaque) {
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
                     focus_window((SDL_Window*) window);
                 } else if (!strncmp(window_status, "TOGGLE_COMPLETE", 15)) {
-                    SDL_Delay(1); // this allows a focus window event, if any, to be processed first
+                    SDL_Delay(1); // This enforces that a focus window event, if any, will be processed first
+                    // If a TOGGLE communication sequence is in progress and no focus window event has been
+                    //     detected, then finish the sequence and focus the window.
                     if (toggling) {
-                        LOG_INFO("TOGGLE_COMPLETE: BRING WINDOW TO FRONT... setting toggling to false");
                         toggling = false;
                         focus_window((SDL_Window*) window);
                     }
                 } else if (!strncmp(window_status, "TOGGLE", 6)) {
+                    // This means that a TOGGLE communication sequence has begun and needs to be acknowledged
                     toggling = true;
-                    LOG_INFO("WRITING TOGGLE_ACK");
                     write_to_socket("client:TOGGLE_ACK\n", watcher_args);
                 } else if (!strncmp(window_status, "QUIT", 4)) {
+                    // When the client app quits, the protocol should quit as well
                     SDL_Event quit_event;
                     quit_event.type = SDL_QUIT;
                     SDL_PushEvent(&quit_event);
@@ -541,6 +568,7 @@ int share_client_window_events(void* opaque) {
         memset(buf, 0, sizeof(buf));
     }
 
+    // Handle unsuccessful or 0 char reads appropriately
     if (read_chars < 0 || !successful_read) {
 #ifdef _WIN32
         if (GetLastError() == ERROR_INVALID_HANDLE) {
