@@ -983,6 +983,7 @@ jobs:
                 client-applications-notify-slack,
             ]
         if: >
+            always() &&
             needs.fractal-publish-build-config.status == 'success' &&
             (needs.fractal-start-webserver-maintenance-mode.status == 'skipped' || needs.fractal-start-webserver-maintenance-mode.status == 'success') &&
             (needs.container-images-publish-images-ghcr.status == 'skipped' || needs.container-images-publish-images-ghcr.status == 'success') &&
