@@ -10,9 +10,9 @@ from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound, Sen
 
 @pytest.fixture(scope="session")
 def get_mailslurp_key():
-    """Gets the mail client api key
-    """
+    """Gets the mail client api key"""
     return "ade68d47a8ba39c57a8e8358e5e86d6d99a04cf8aeebf9c11c08f851f2fa438f"
+
 
 @pytest.fixture(scope="session")
 def mail_client(app):
@@ -27,9 +27,7 @@ def mail_client(app):
 @pytest.fixture(scope="session")
 def mailslurp(get_mailslurp_key):
     configuration = mailslurp_client.Configuration()
-    configuration.api_key[
-        "x-api-key"
-    ] = get_mailslurp_key
+    configuration.api_key["x-api-key"] = get_mailslurp_key
 
     api_client = mailslurp_client.ApiClient(configuration)
 

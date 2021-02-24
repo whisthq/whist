@@ -18,7 +18,7 @@ if [[ ^$POSTGRES_REMOTE_URI =~ "postgres://" ]]; then
   (pg_dump -C -d $POSTGRES_REMOTE_URI -s) > db_schema.sql
 
   echo "===  Retrieving DB data  === \n"
-  (pg_dump -d $POSTGRES_REMOTE_URI --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
+  (pg_dump -d $POSTGRES_REMOTE_URI --data-only --column-inserts -t sales.email_templates -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
 
 else
   # pg_dump will look at this and skip asking for a prompt
@@ -28,7 +28,7 @@ else
   (pg_dump -C -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB -s) > db_schema.sql
 
   echo "=== Retrieving DB data ===\n"
-  (pg_dump -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB --data-only --column-inserts -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
+  (pg_dump -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB --data-only --column-inserts -t sales.email_templates -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
 fi
 
 # in CI we need to slightly modify the download script because Heroku does not let us run
