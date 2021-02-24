@@ -659,8 +659,10 @@ int main(int argc, char* argv[]) {
     init_video();
 #endif
 
-    // Create a thread to handle socket/named pipe communication between the protocol and the client app
-    SDL_Thread* client_app_socket_thread = SDL_CreateThread(share_client_window_events, "ClientAppSocketThread", NULL);
+    // Create a thread to handle socket/named pipe communication between the protocol and the client
+    //    app
+    SDL_Thread* client_app_socket_thread =
+        SDL_CreateThread(share_client_window_events, "ClientAppSocketThread", NULL);
     if (client_app_socket_thread == NULL) {
         LOG_ERROR("Client app socket thread was not created");
     }

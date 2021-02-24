@@ -127,7 +127,7 @@ int write_to_socket(const char* message, WindowControlArguments* args) {
 
 #ifdef _WIN32
     DWORD wrote_chars;
-    if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+    if (!WriteFile(args->write_socket_fd, message, (DWORD)strlen(message), &wrote_chars, NULL)) {
         if (GetLastError() == ERROR_INVALID_HANDLE) {
             LOG_INFO("Client app socket closed for writing");
             return 1;
@@ -137,7 +137,7 @@ int write_to_socket(const char* message, WindowControlArguments* args) {
     }
 #else
     int wrote_chars;
-    if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
+    if ((wrote_chars = write(args->write_socket_fd, message, (int)strlen(message))) < 0) {
         if (errno == EBADF) {
             LOG_INFO("Client app socket closed for writing");
             return 1;
@@ -163,7 +163,7 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
             (int): 0 on success, -1 on failure
     */
 
-    WindowControlArguments* args = (WindowControlArguments*) data;
+    WindowControlArguments* args = (WindowControlArguments*)data;
 
     const char* message = NULL;
 
@@ -204,12 +204,12 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         CloseHandle(args->write_socket_fd);
         CloseHandle(args->read_socket_fd);
 #else
-        close(args->write_socket_fd); // use the same fd for R/W on Unix
+        // use the same fd for R/W on Unix
+        close(args->write_socket_fd);
 #endif
     }
 
     return 0;
-
 }
 
 #if defined(_WIN32)
@@ -445,8 +445,11 @@ void focus_window(SDL_Window* window_to_focus) {
     SDL_VERSION(&window_info.version);
     if (SDL_GetWindowWMInfo(window_to_focus, &window_info)) {
         HWND window_handle = window_info.info.win.window;
-        SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
-        SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        // Bring window to the very top, then remove "topmost" status
+        SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0,
+                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0,
+                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
         SetForegroundWindow(window_handle);
     } else {
         LOG_ERROR("SDL_GetWindowWMInfo failed with error %s", SDL_GetError());
@@ -467,11 +470,12 @@ int share_client_window_events(void* opaque) {
     memset(buf, 0, sizeof(buf));
 
 #ifdef _WIN32
-    const char* socket_path = "\\\\.\\pipe\\fractal-client.sock"; // max 127 char length
+    // In Windows, we will refer to fds as sockets, but they are actually a named pipes
+    const char* socket_path = "\\\\.\\pipe\\fractal-client.sock";
     HANDLE socket_fd;
     DWORD read_chars;
 #else
-    const char* socket_path = "fractal-client.sock"; // max 127 char length
+    const char* socket_path = "fractal-client.sock";  // max 127 char length
     int socket_fd;
     int read_chars;
     struct sockaddr_un addr;
@@ -479,15 +483,8 @@ int share_client_window_events(void* opaque) {
 
     // Connect to the client app named pipe or socket server
 #ifdef _WIN32
-    socket_fd = CreateFileA(
-        socket_path,
-        GENERIC_READ,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
-    );
+    socket_fd = CreateFileA(socket_path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     if (socket_fd == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileA error in share_client_window_events: %d", GetLastError());
     }
@@ -510,17 +507,11 @@ int share_client_window_events(void* opaque) {
     // Set up an event watcher to communicate specific events to the client app
     WindowControlArguments* watcher_args = malloc(sizeof(WindowControlArguments));
     memset(watcher_args, 0, sizeof(WindowControlArguments));
-    watcher_args->window = (SDL_Window*) window;
+    watcher_args->window = (SDL_Window*)window;
 #ifdef _WIN32
-    watcher_args->write_socket_fd = CreateFileA(
-        socket_path,
-        GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
-        NULL
-    );
+    watcher_args->write_socket_fd =
+        CreateFileA(socket_path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                    OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     watcher_args->read_socket_fd = socket_fd;
 #else
     watcher_args->write_socket_fd = socket_fd;
@@ -530,7 +521,8 @@ int share_client_window_events(void* opaque) {
     // Read messages from the client app and handle accordingly
     bool successful_read = true;
 #ifdef _WIN32
-    while ((successful_read = ReadFile(socket_fd, buf, sizeof(buf), &read_chars, NULL)) == true && read_chars > 0) {
+    while ((successful_read = ReadFile(socket_fd, buf, sizeof(buf), &read_chars, NULL)) == true &&
+           read_chars > 0) {
 #else
     while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
 #endif
@@ -540,21 +532,23 @@ int share_client_window_events(void* opaque) {
             char* window_status = safe_strtok(NULL, ":", &strtok_saveptr);
             if (window_status) {
                 if (!strncmp(window_status, "MINIMIZE", 8)) {
-                    if ((SDL_GetWindowFlags((SDL_Window*) window) & SDL_WINDOW_MINIMIZED) == 0) {
-                        SDL_MinimizeWindow((SDL_Window*) window);
+                    if ((SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_MINIMIZED) == 0) {
+                        SDL_MinimizeWindow((SDL_Window*)window);
                     }
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
-                    focus_window((SDL_Window*) window);
+                    focus_window((SDL_Window*)window);
                 } else if (!strncmp(window_status, "TOGGLE_COMPLETE", 15)) {
-                    SDL_Delay(1); // This enforces that a focus window event, if any, will be processed first
-                    // If a TOGGLE communication sequence is in progress and no focus window event has been
-                    //     detected, then finish the sequence and focus the window.
+                    SDL_Delay(1);  // This enforces that a focus window event, if any, will be
+                                   //     processed first
+                    // If a TOGGLE communication sequence is in progress and no focus window event
+                    //     has been detected, then finish the sequence and focus the window.
                     if (toggling) {
                         toggling = false;
-                        focus_window((SDL_Window*) window);
+                        focus_window((SDL_Window*)window);
                     }
                 } else if (!strncmp(window_status, "TOGGLE", 6)) {
-                    // This means that a TOGGLE communication sequence has begun and needs to be acknowledged
+                    // This means that a TOGGLE communication sequence has begun and needs to be
+                    //     acknowledged
                     toggling = true;
                     write_to_socket("client:TOGGLE_ACK\n", watcher_args);
                 } else if (!strncmp(window_status, "QUIT", 4)) {
