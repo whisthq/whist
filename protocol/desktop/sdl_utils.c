@@ -149,6 +149,36 @@ int write_to_socket(const char* message, WindowControlArguments* args) {
     return 0;
 }
 
+void focus_window(SDL_Window* window_to_focus) {
+    /*
+        Bring the window `window_to_focus` to the front and transfer input focus
+        to it.
+
+        Arguments:
+            window_to_focus (SDL_Window*): pointer to the target window
+    */
+
+    SDL_RestoreWindow(window_to_focus);
+    SDL_RaiseWindow(window_to_focus);
+
+    // On Windows, focusing the window requires more manipulation of the window handle itself
+#ifdef _WIN32
+    SDL_SysWMinfo window_info;
+    SDL_VERSION(&window_info.version);
+    if (SDL_GetWindowWMInfo(window_to_focus, &window_info)) {
+        HWND window_handle = window_info.info.win.window;
+        // Bring window to the very top, then remove "topmost" status
+        SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0,
+                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0,
+                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetForegroundWindow(window_handle);
+    } else {
+        LOG_ERROR("SDL_GetWindowWMInfo failed with error %s", SDL_GetError());
+    }
+#endif
+}
+
 int window_control_event_watcher(void* data, SDL_Event* event) {
     /*
         Event watcher to be used in SDL_AddEventWatch to capture
@@ -425,36 +455,6 @@ int resizing_event_watcher(void* data, SDL_Event* event) {
         }
     }
     return 0;
-}
-
-void focus_window(SDL_Window* window_to_focus) {
-    /*
-        Bring the window `window_to_focus` to the front and transfer input focus
-        to it.
-
-        Arguments:
-            window_to_focus (SDL_Window*): pointer to the target window
-    */
-
-    SDL_RestoreWindow(window_to_focus);
-    SDL_RaiseWindow(window_to_focus);
-
-    // On Windows, focusing the window requires more manipulation of the window handle itself
-#ifdef _WIN32
-    SDL_SysWMinfo window_info;
-    SDL_VERSION(&window_info.version);
-    if (SDL_GetWindowWMInfo(window_to_focus, &window_info)) {
-        HWND window_handle = window_info.info.win.window;
-        // Bring window to the very top, then remove "topmost" status
-        SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0,
-                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
-        SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0,
-                     SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
-        SetForegroundWindow(window_handle);
-    } else {
-        LOG_ERROR("SDL_GetWindowWMInfo failed with error %s", SDL_GetError());
-    }
-#endif
 }
 
 int share_client_window_events(void* opaque) {

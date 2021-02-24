@@ -172,7 +172,6 @@ const createWindow = async () => {
                 })
                 .then(() => {
                     if (mainWindow) {
-                        mainWindow.minimize()
                         messagePairs.forEach((pair) => {
                             const sender = pair.sender
                             const message = pair.message
@@ -198,6 +197,9 @@ const createWindow = async () => {
                                         mainWindow.blur()
                                     }
                                 } else if (message === "QUIT") {
+                                    if (protocolSocketServer) {
+                                        protocolSocketServer.close()
+                                    }
                                     app.quit()
                                 }
                             }
@@ -212,12 +214,18 @@ const createWindow = async () => {
         // These errors are usually thrown as a result of the other end disconnecting
         socket.on("error", (err) => {
             console.log(`Socket error (likely ignorable): ${err}`)
+            clientSockets.forEach((connectedSocket) => {
+                connectedSocket.end()
+            })
         })
     })
 
     // These errors are usually thrown as a result of the other end disconnecting
     protocolSocketServer.on("error", (err) => {
         console.log(`Socket server error (likely ignorable): error ${err}`)
+        if (protocolSocketServer) {
+            protocolSocketServer.close()
+        }
     })
 
     // Start the server to listen for connections
