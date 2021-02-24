@@ -14,7 +14,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/" # default location of `.github/workflows`
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
@@ -23,13 +23,13 @@ updates:
   - package-ecosystem: "npm"
     directory: "/client-applications/desktop" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
   
   - package-ecosystem: "npm"
     directory: "/client-applications/desktop/app" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
@@ -38,31 +38,31 @@ updates:
   - package-ecosystem: "docker"
     directory: "/container-images/base" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/browsers/brave" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/browsers/chrome" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/browsers/firefox" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
     
   - package-ecosystem: "docker"
     directory: "/container-images/browsers/sidekick" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
@@ -74,57 +74,57 @@ updates:
   - package-ecosystem: "docker"
     directory: "/container-images/creative/blockbench" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/creative/figma" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/creative/gimp" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/creative/godot" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/creative/lightworks" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/productivity/notion" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/container-images/productivity/slack" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   # Helper project for Figma on Linux
   - package-ecosystem: "npm"
     directory: "/container-images/creative/figma/figma-font-bindings" # looks for package.json and package-lock.json in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   # Helper project for Figma on Linux
   - package-ecosystem: "cargo"
     directory: "/container-images/creative/figma/figma-font-bindings/native" # looks for cargo.toml and cargo.lock in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
@@ -133,7 +133,7 @@ updates:
   - package-ecosystem: "gomod"
     directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
@@ -142,19 +142,19 @@ updates:
   - package-ecosystem: "pip"
     directory: "/main-webserver" # looks for requirements.txt in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday.
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
     directory: "/main-webserver/analytics" # looks for requirements.txt in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
     directory: "/main-webserver/docker" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
@@ -163,7 +163,7 @@ updates:
   - package-ecosystem: "docker"
     directory: "/protocol" # looks for Dockerfile in this directory
     schedule:
-      interval: "daily" # runs on every weekday, Monday to Friday
+      interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
 
   #####################################################
