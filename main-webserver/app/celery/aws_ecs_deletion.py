@@ -5,6 +5,8 @@ import time
 from celery import shared_task
 from flask import current_app
 
+
+from app.exceptions import ContainerNotFoundException
 from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
@@ -41,15 +43,26 @@ def delete_container(self, container_name, aes_key):
     """
     task_start_time = time.time()
 
-    if spin_lock(container_name) < 0:
-        fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs="spin_lock took too long.",
-            level=logging.ERROR,
-        )
+    try:
+        if spin_lock(container_name) < 0:
+            fractal_log(
+                function="delete_container",
+                label=container_name,
+                logs="spin_lock took too long.",
+                level=logging.ERROR,
+            )
 
-        raise Exception("Failed to acquire resource lock.")
+            raise Exception("Failed to acquire resource lock.")
+    except ContainerNotFoundException as no_container_exc:
+        if "test" in container_name and not current_app.testing:
+            fractal_log(
+                function="upload_logs_to_s3",
+                label=container_name,
+                logs="Test container attempted to communicate with nontest server",
+                level=logging.ERROR,
+            )
+            return
+        raise no_container_exc
 
     try:
         container = ensure_container_exists(UserContainer.query.get(container_name))
