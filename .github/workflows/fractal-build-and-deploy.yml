@@ -244,7 +244,7 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              
+
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
@@ -984,7 +984,7 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              
+
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
