@@ -47,6 +47,20 @@ class _FractalError(Exception):
         raise NotImplementedError
 
 
+class ClusterNotIdle(_FractalError):
+    """Raised when a cluster may not be modified because it is busy.
+
+    A cluster may not be deleted while there are tasks still running on it.
+
+    Args:
+        cluster: The name of the cluster that is not idle as a string.
+        region: The name of the region in which the cluster is located as a string.
+    """
+
+    params = ("cluster", "region")
+    message = "Cluster {cluster} in {region} is not idle"
+
+
 class ContainerNotFoundException(_FractalError):
     """
     Raised by any method that fails to find a given container in the db
