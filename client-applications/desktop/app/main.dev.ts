@@ -33,22 +33,21 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = true
-// Toggles whether FractalClient should be minimized or
-//    restored (maximized). When the showMainWindow is false,
-//    this value gets toggled on "minimize" and "focus"
-//    events
+let showMainWindow = false
+// Whether FractalClient is currently minimized
 let protocolMinimized = false
-let ignoreClientAppFocus = false
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
 let socketPath = "fractal-client.sock"
-// Current socket data - to deal with the fact that the named pipe is in byte mode, not message mode
-//    Messages from the client are not kept separate by default
+// Current socket data - to deal with the fact that the named pipe is in byte mode, not message mode.
+//    Messages from the client are not kept separate by default, and should be recorded as a stream.
 let socketReceivedData = ""
+// Mutex to keep the received socket data in order
 const socketMutex = new Mutex()
-let clients: Socket[] = []
+// Inventory of client sockets: will be two on Windows, 1 elsewhere
+let clientSockets: Socket[] = []
+// Indicates whether a TOGGLE message is being processed by the protocol
 let toggling = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
@@ -75,7 +74,7 @@ const createWindow = async () => {
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
-            // show: false,
+            // show: false, // Windows does not show the taskbar icon if the window is hidden
             opacity: 0.0,
             frame: false,
             center: true,
@@ -127,21 +126,29 @@ const createWindow = async () => {
     mainWindow.loadURL(`file://${__dirname}/app.html`)
     // mainWindow.webContents.openDevTools()
 
+    // Create a socket server to send and receive message to the protocol
     protocolSocketServer = createServer((socket) => {
-        clients.push(socket)
+        // When a client connects, store it in inventory
+        clientSockets.push(socket)
+
+        // When a client disconnects, remove it from inventory
         socket.on('end', () => {
-            let socketIndex = clients.indexOf(socket)
+            let socketIndex = clientSockets.indexOf(socket)
             if (socketIndex >= 0) {
-                delete clients[socketIndex]
+                delete clientSockets[socketIndex]
             }
         })
 
-        socket.write('server:hello from client app')
+        // Set the socket to be readable and writable to the same stream
         socket.pipe(socket)
+
+        // Handle data received on this socket
         socket.on('data', (data) => {
             let messagePairs : {"sender": string, "message": string}[] = []
             socketMutex.runExclusive(() => {
+                // Append received data to the received data record
                 socketReceivedData += data.toString()
+                // Parse each message, separated by '\n'
                 while (socketReceivedData.includes("\n")) {
                     let parts = socketReceivedData.split("\n")[0].split(":")
                     messagePairs.push({"sender": parts[0], "message": parts[1]})
@@ -155,65 +162,75 @@ const createWindow = async () => {
                         let message = pair["message"]
                         if (sender === "client") {
                             if (message === "MINIMIZE") {
-                                ignoreClientAppFocus = true
                                 if (mainWindow) {
                                     mainWindow.minimize()
                                 }
-                                console.log("client says MINIMIZE")
                                 protocolMinimized = true
                             } else if (message === "FOCUS") {
-                                console.log("client says FOCUS")
                                 if (mainWindow) {
                                     mainWindow.minimize()
                                 }
                                 protocolMinimized = false
                             } else if (message === "UNFOCUS") {
+                                // This is currently unused, but left as an option
+                                //    because it is a message sent by the protocol
                             } else if (message === "TOGGLE_ACK") {
+                                // When the protocol has acknowledged the TOGGLE communication sequence
+                                //    beginning, then blur the client app window to trigger a blur event
                                 toggling = true
                                 if (mainWindow) {
                                     mainWindow.blur()
                                 }
                             } else if (message === "QUIT") {
                                 app.quit()
-                            } else {
-                                console.log("client gives unknown command " + message)
                             }
                         }
                     })
                 }
             })
         })
+        // These errors are usually thrown as a result of the other end disconnecting
         socket.on('error', (err) => {
             console.log(`Socket error (likely ignorable): ${err}`)
         })
     })
+
+    // These errors are usually thrown as a result of the other end disconnecting
     protocolSocketServer.on('error', (err) => {
         console.log(`Socket server error (likely ignorable): error ${err}`)
     })
+
+    // Start the server to listen for connections
     protocolSocketServer.listen(socketPath, () => {
         if (os.platform() === "win32") {
             if (mainWindow) {
+                // This event is triggered when the taskbar icon is pressed
                 mainWindow.on("focus", () => {
                     let message = ""
+
                     if (protocolMinimized) {
+                        // If the protocol is minimized, then the protocol should focus
                         console.log("FOCUS")
                         message = "server:FOCUS"
                         protocolMinimized = false
                     } else {
+                        // If the protocol window is open, then begin a TOGGLE communication sequence
                         console.log("TOGGLE")
                         message = "server:TOGGLE"
                     }
 
                     if (message !== "") {
-                        clients.forEach((socket) => {
+                        clientSockets.forEach((socket) => {
                             socket.write(message)
                         })
                     }
                 })
 
+                // If the window has been blurred during a TOGGLE communication sequence, then indicate to
+                //    the protocol that the TOGGLE communication and activity sequence is complete.
                 mainWindow.on("blur", () => {
                     if (toggling) {
-                        clients.forEach((writeSocket) => {
+                        clientSockets.forEach((writeSocket) => {
                             writeSocket.write("server:TOGGLE_COMPLETE")
                         })
                     }
@@ -221,16 +238,18 @@ const createWindow = async () => {
                 })
             }
         } else if (os.platform() === "darwin") {
+            // This event is triggered when the dock icon is pressed, indicating that
+            //    the protocol window should be focused
             app.on("activate", () => {
-                // OSX: "activate" event is thrown when the dock icon is pressed
-                clients.forEach((socket) => {
+                clientSockets.forEach((socket) => {
                     socket.write("server:FOCUS")
                 })
             })
         }
 
+        // When the app is about to quit, send a message to the protocol that it should quit
         app.on("will-quit", () => {
-            clients.forEach((socket) => {
+            clientSockets.forEach((socket) => {
                 socket.write("server:QUIT")
                 socket.end()
             })
@@ -268,12 +287,16 @@ const createWindow = async () => {
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }
-        if (!showMainWindow && os.platform() === "win32") {
-            mainWindow.setOpacity(0.0)
-            mainWindow.setIgnoreMouseEvents(true)
-            mainWindow.minimize()
-        }
-        if (os.platform() === "win32" || showMainWindow) {
+
+        if (!showMainWindow) {
+            // If the window is to be hidden, but we're on Windows, then make the window
+            //    transparent and set mouse events to pass through the window.
+            if (os.platform() === "win32") {
+                mainWindow.setOpacity(0.0)
+                mainWindow.setIgnoreMouseEvents(true)
+                mainWindow.minimize()
+            }
+        } else {
             if (process.env.START_MINIMIZED) {
                 mainWindow.minimize()
             } else {
@@ -297,11 +320,13 @@ const createWindow = async () => {
             mainWindow.show()
             mainWindow.focus()
             mainWindow.restore()
+            // Make sure the window is not transparent and that it captures mouse events
             mainWindow.setOpacity(1.0)
             mainWindow.setIgnoreMouseEvents(false)
         } else if (!showMainWindow && mainWindow) {
+            // To keep the icon on the taskbar in Windows, don't hide the window
+            //    - just make it transparent
             if (os.platform() === "win32") {
-                // To keep the icon on the taskbar in Windows, don't hide - just make transparent
                 mainWindow.setOpacity(0.0)
                 mainWindow.setIgnoreMouseEvents(true)
                 mainWindow.minimize()
