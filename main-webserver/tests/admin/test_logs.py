@@ -9,7 +9,7 @@ import pytest
 
 from app.celery.aws_s3_modification import (
     BadSenderError,
-    ContainerNotFoundError,
+    ContainerNotFoundException,
     upload_logs_to_s3,
 )
 
@@ -22,13 +22,13 @@ def test_bad_sender():
 
 
 def test_no_container():
-    with pytest.raises(ContainerNotFoundError):
+    with pytest.raises(ContainerNotFoundException):
         upload_logs_to_s3("client", "x.x.x.x", "", "Log message.")
 
 
 def test_unauthorized(container):
     with container() as c:
-        with pytest.raises(ContainerNotFoundError):
+        with pytest.raises(ContainerNotFoundException):
             upload_logs_to_s3(
                 "client",
                 c.container_id,
