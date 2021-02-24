@@ -12,7 +12,7 @@
 import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
-import { unlink } from "fs";
+import { unlink } from "fs"
 import { createServer, Server, Socket } from "net"
 import { Mutex } from "async-mutex"
 import * as Sentry from "@sentry/electron"
