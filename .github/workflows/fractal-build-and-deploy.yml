@@ -172,9 +172,6 @@ jobs:
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
-                  echo $job_dependencies
-                  echo $JOB_NAME
-
                   if [[ "$JOB_NAME" == "all" ]]; then
                   # If JOB_NAME=all, then we do indeed run all of jobs in the list
                     JOB_LIST="${!job_dependencies[@]}"
@@ -244,10 +241,14 @@ jobs:
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
         steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
-                  export WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN=$(curl -X POST \
                         -H "Content-Type: application/json" \
