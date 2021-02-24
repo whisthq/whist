@@ -974,25 +974,25 @@ jobs:
             [
                 fractal-publish-build-config,
                 fractal-start-webserver-maintenance-mode,
-                # container-images-publish-images-ghcr,
-                # ecs-task-definitions-deploy-task-definitions-ecs,
-                # ecs-task-definitions-notify-slack,
-                # ami-publish-ec2,
-                # main-webserver-deploy-heroku,
-                # client-applications-publish-build-s3,
-                # client-applications-notify-slack,
+                container-images-publish-images-ghcr,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                ecs-task-definitions-notify-slack,
+                ami-publish-ec2,
+                main-webserver-deploy-heroku,
+                client-applications-publish-build-s3,
+                client-applications-notify-slack,
             ]
-        # if: >
-        #     always() &&
-        #     needs.fractal-publish-build-config.result == 'success' &&
-        #     (needs.fractal-start-webserver-maintenance-mode.outcome == 'skipped' || needs.fractal-start-webserver-maintenance-mode.outcome == 'success') &&
-        #     (needs.container-images-publish-images-ghcr.outcome == 'skipped' || needs.container-images-publish-images-ghcr.outcome == 'success') &&
-        #     (needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome == 'skipped' || needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome == 'success') &&
-        #     (needs.ecs-task-definitions-notify-slack.outcome == 'skipped' || needs.ecs-task-definitions-notify-slack.outcome == 'success') &&
-        #     (needs.ami-publish-ec2.outcome == 'skipped' || needs.ami-publish-ec2.outcome == 'success') &&
-        #     (needs.main-webserver-deploy-heroku.outcome == 'skipped' || needs.main-webserver-deploy-heroku.outcome == 'success') &&
-        #     (needs.client-applications-publish-build-s3.outcome == 'skipped' || needs.client-applications-publish-build-s3.outcome == 'success') &&
-        #     (needs.client-applications-notify-slack.outcome == 'skipped' || needs.client-applications-notify-slack.outcome == 'success')
+        if: >
+            always() &&
+            needs.fractal-publish-build-config.result == 'success' &&
+            (needs.fractal-start-webserver-maintenance-mode.result == 'skipped' || needs.fractal-start-webserver-maintenance-mode.result == 'success') &&
+            (needs.container-images-publish-images-ghcr.result == 'skipped' || needs.container-images-publish-images-ghcr.result == 'success') &&
+            (needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'skipped' || needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success') &&
+            (needs.ecs-task-definitions-notify-slack.result == 'skipped' || needs.ecs-task-definitions-notify-slack.result == 'success') &&
+            (needs.ami-publish-ec2.result == 'skipped' || needs.ami-publish-ec2.result == 'success') &&
+            (needs.main-webserver-deploy-heroku.result == 'skipped' || needs.main-webserver-deploy-heroku.result == 'success') &&
+            (needs.client-applications-publish-build-s3.result == 'skipped' || needs.client-applications-publish-build-s3.result == 'success') &&
+            (needs.client-applications-notify-slack.result == 'skipped' || needs.client-applications-notify-slack.result == 'success')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
