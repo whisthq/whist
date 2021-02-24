@@ -972,14 +972,14 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-                container-images-publish-images-ghcr,
-                ecs-task-definitions-deploy-task-definitions-ecs,
-                ecs-task-definitions-notify-slack,
-                ami-publish-ec2,
-                main-webserver-deploy-heroku,
-                client-applications-publish-build-s3,
-                client-applications-notify-slack,
+                # fractal-start-webserver-maintenance-mode,
+                # container-images-publish-images-ghcr,
+                # ecs-task-definitions-deploy-task-definitions-ecs,
+                # ecs-task-definitions-notify-slack,
+                # ami-publish-ec2,
+                # main-webserver-deploy-heroku,
+                # client-applications-publish-build-s3,
+                # client-applications-notify-slack,
             ]
         steps:
             - name: Checkout Git Repository
