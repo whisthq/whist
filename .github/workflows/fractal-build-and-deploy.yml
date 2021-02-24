@@ -164,11 +164,12 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[fractal-start-webserver-maintenance-mode]="fractal config"
+                  job_dependencies[fractal-start-webserver-maintenance-mode]="fractal-config"
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
+                  job_dependencies[fractal-end-webserver-maintenance-mode]="web-maintenance fractal-config"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
