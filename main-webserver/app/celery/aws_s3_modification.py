@@ -3,6 +3,7 @@ import time
 import boto3
 
 from celery import shared_task
+from flask import current_app
 from app.constants.http_codes import SUCCESS
 
 from app.helpers.utils.general.logs import fractal_log
@@ -18,7 +19,6 @@ class BadSenderError(Exception):
     Raised by upload_logs_to_s3 when the sender argument is anything other than
     "client" or "server" (case-insensitive).
     """
-
 
 
 @shared_task
@@ -66,6 +66,15 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
             logs=message,
             level=logging.ERROR,
         )
+
+        if "test" in container_id and not current_app.testing:
+            fractal_log(
+                function="upload_logs_to_s3",
+                label=container_id,
+                logs="Test container attempted to communicate with nontest server",
+                level=logging.ERROR,
+            )
+            return {"status": SUCCESS}
 
         raise ContainerNotFoundException(container_id)
 
