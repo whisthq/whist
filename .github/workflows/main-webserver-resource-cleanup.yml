@@ -37,7 +37,7 @@ jobs:
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
-                #   aws-hashicorp-packer-reaper terminate --older-than 1s
+              #   aws-hashicorp-packer-reaper terminate --older-than 1s
 
             - name: Check for Hanging ASGs and Clusters
               working-directory: .github/workflows
