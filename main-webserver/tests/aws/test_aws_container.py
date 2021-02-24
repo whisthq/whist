@@ -12,12 +12,28 @@ from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.models import ClusterInfo, db, UserContainer, RegionToAmi
+from app.constants.http_codes import (
+    SUCCESS,
+    ACCEPTED,
+    BAD_REQUEST,
+)
 
 from ..helpers.general.progress import queryStatus
 from ..patches import function
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+from app.celery.aws_ecs_modification import manual_scale_cluster
+
+from tests.maintenance.test_webserver_maintenance import (
+    try_start_maintenance,
+    try_end_maintenance,
+)
+
+
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
+
+GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 
 
 @pytest.mark.container_serial
@@ -85,6 +101,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 def test_assign_container(client, admin, monkeypatch):
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
 
+    # TODO: make this a standardized var in tests
     deploy_env = "dev"
     if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
         deploy_env = "prod"
@@ -186,7 +203,7 @@ def test_update_cluster(client):
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name=pytest.cluster_name,
-        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
     # wait for operation to finish
@@ -204,7 +221,7 @@ def test_update_bad_cluster(client, cluster):
     res = update_cluster.delay(
         region_name="us-east-1",
         cluster_name=cluster.cluster,
-        ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+        ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
     # wait for operation to finish
@@ -385,11 +402,11 @@ def test_update_region(client, admin, monkeypatch):
                 logging.ERROR,
             )
             success = False
-        elif ami != "ami-0ff8a91507f77f867":  # a generic Linux AMI
+        elif ami != GENERIC_UBUNTU_SERVER_2004_LTS_AMI:
             fractal_log(
                 "mock_update_cluster",
                 None,
-                f"Expected ami ami-0ff8a91507f77f867, got {ami}",
+                f"Expected ami {GENERIC_UBUNTU_SERVER_2004_LTS_AMI}, got {ami}",
                 logging.ERROR,
             )
             success = False
@@ -405,7 +422,7 @@ def test_update_region(client, admin, monkeypatch):
 
         class FakeReturn:
             def __init__(self):
-                self.id = "this-is-a-fake-test-id"
+                self.id = "this-is-a-fake-celery-test-id"
 
         return FakeReturn()
 
@@ -422,11 +439,31 @@ def test_update_region(client, admin, monkeypatch):
     all_regions_pre = RegionToAmi.query.all()
     region_to_ami_pre = {region.region_name: region.ami_id for region in all_regions_pre}
 
+    # -- actual webserver requests start -- #
+
+    # TODO: bring back this test once the original maint mode PR merges in
+    # first, we try to do update_region without putting server in maintenance mode
+    # this should fail
+    # resp = client.post(
+    #     "/aws_container/update_region",
+    #     json=dict(
+    #         region_name="us-east-1",
+    #         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
+    #     ),
+    # )
+    # assert resp.status_code == BAD_REQUEST
+
+    # then, we put server into maintenance mode
+    resp = try_start_maintenance(client, "us-east-1")
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+
+    # now we try again
     resp = client.post(
         "/aws_container/update_region",
         json=dict(
             region_name="us-east-1",
-            ami="ami-0ff8a91507f77f867",  # a generic Linux AMI
+            ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
         ),
     )
 
@@ -440,12 +477,18 @@ def test_update_region(client, admin, monkeypatch):
         )
         assert False
 
+    # finally, we end maintenance mode
+    resp = try_end_maintenance(client, "us-east-1")
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+    # -- webserver requests end -- #
+
     db.session.expire_all()
     all_regions_post = RegionToAmi.query.all()
     region_to_ami_post = {region.region_name: region.ami_id for region in all_regions_post}
     for region in region_to_ami_post:
         if region == "us-east-1":
-            assert region_to_ami_post[region] == "ami-0ff8a91507f77f867"  # a generic Linux AMI
+            assert region_to_ami_post[region] == GENERIC_UBUNTU_SERVER_2004_LTS_AMI
             # restore db to old (correct) AMI in case any future tests need it
             region_to_ami = RegionToAmi.query.filter_by(
                 region_name="us-east-1",

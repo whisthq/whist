@@ -3,6 +3,13 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
+from app.maintenance.maintenance_manager import (
+    check_if_maintenance,
+    try_start_update,
+    try_end_update,
+    try_start_update_all,
+    try_end_update_all,
+)
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
@@ -11,7 +18,13 @@ from app.celery.aws_ecs_creation import (
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container
 from app.celery.aws_ecs_modification import update_region
-from app.constants.http_codes import ACCEPTED, BAD_REQUEST, NOT_FOUND, SUCCESS
+from app.constants.http_codes import (
+    ACCEPTED,
+    BAD_REQUEST,
+    NOT_FOUND,
+    SUCCESS,
+    WEBSERVER_MAINTENANCE,
+)
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     ping_helper,
@@ -78,6 +91,38 @@ def test_endpoint(action, **kwargs):
         json, int: the json http response and the http status code
         (which is an int like 200, 400, ...).
     """
+    # check for maintenance-related things
+    if action in ["create_cluster", "assign_container"]:
+        region_name = kwargs["body"]["region_name"]
+        if check_if_maintenance(region_name):
+            # server cannot be in maintenance mode to do this
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver is in maintenance mode.",
+                    }
+                ),
+                WEBSERVER_MAINTENANCE,
+            )
+    # TODO: uncomment below when webserver is deployed with update_region
+    # if we keep this for the first deploy, webserver will reject github workflow's
+    # update_region request
+    # elif action in ["update_region"]:
+    #     region_name = kwargs["body"]["region_name"]
+    #     if not check_if_maintenance(region_name):
+    #         # server must be in maintenance mode to do this
+    #         return (
+    #             jsonify(
+    #                 {
+    #                     "error": "Webserver must be put in maintenance mode before doing this.",
+    #                 }
+    #             ),
+    #             BAD_REQUEST,
+    #         )
+
+    # handle the action. The general design pattern is to parse the arguments relevant to
+    # the action and then start a celery task to handle it. `start_update` and `end_update`
+    # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
             cluster_name, instance_type, ami, region_name, max_size, min_size = (
@@ -91,8 +136,13 @@ def test_endpoint(action, **kwargs):
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
 
-        task = create_new_cluster.apply_async(
-            [cluster_name, instance_type, ami, region_name, min_size, max_size]
+        task = create_new_cluster.delay(
+            cluster_name,
+            instance_type,
+            ami,
+            region_name,
+            min_size,
+            max_size,
         )
 
         if not task:
@@ -134,21 +184,18 @@ def test_endpoint(action, **kwargs):
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
-
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
-        task = assign_container.apply_async(
-            [username, task_definition_arn],
-            {
-                "cluster_name": cluster_name,
-                "region_name": region_name,
-                "webserver_url": kwargs["webserver_url"],
-            },
+        task = assign_container.delay(
+            username,
+            task_definition_arn,
+            region_name,
+            cluster_name,
+            webserver_url=kwargs["webserver_url"],
         )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
-
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "send_commands":
@@ -164,6 +211,34 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
 
         return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "start_update":
+        # synchronously try to put the webserver into maintenance mode.
+        # return is a dict {"success": <bool>, "msg": <str>}. success
+        # is only True if webserver is in maintenance mode. msg is
+        # human-readable and tells the client what happened.
+        region_name = kwargs["body"].get("region_name", None)
+        success, msg = None, None
+        if region_name is None:
+            success, msg = try_start_update_all()
+        else:
+            success, msg = try_start_update(region_name=region_name)
+        return jsonify({"success": success, "msg": msg}), SUCCESS
+
+    if action == "end_update":
+        # synchronously try to end maintenance mode.
+        # return is a dict {"success": <bool>, "msg": <str>}. success
+        # is only True if webserver has ended maintenance mode. msg is
+        # human-readable and tells the client what happened.
+        region_name = kwargs["body"].get("region_name", None)
+        success, msg = None, None
+        if region_name is None:
+            success, msg = try_end_update_all()
+        else:
+            success, msg = try_end_update(
+                region_name=region_name,
+            )
+        return jsonify({"success": success, "msg": msg}), SUCCESS
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
@@ -266,14 +341,22 @@ def aws_container_assign(**kwargs):
 
     Returns container status
     """
-    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     body = kwargs.pop("body")
-
+    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
+        if check_if_maintenance(region):
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver is in maintenance mode.",
+                    }
+                ),
+                WEBSERVER_MAINTENANCE,
+            )
     except KeyError:
         response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     else:
