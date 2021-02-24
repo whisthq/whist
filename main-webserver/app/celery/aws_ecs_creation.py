@@ -219,7 +219,7 @@ def select_cluster(region_name):
         if len(all_clusters) > 2:
             for cluster in all_clusters[2:]:
                 if cluster.pendingTasksCount + cluster.runningTasksCount == 0:
-                    delete_cluster.delay(cluster.cluster, cluster.location)
+                    delete_cluster.delay(cluster, force=True)
     return cluster_name
 
 

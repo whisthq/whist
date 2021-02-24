@@ -5,9 +5,9 @@ import uuid
 import pytest
 
 from app.celery import aws_ecs_creation
+from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.celery.aws_ecs_deletion import delete_cluster
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -183,26 +183,30 @@ def test_update_bad_cluster(client, cluster):
     assert res.state == "SUCCESS"
 
 
-@pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_delete_bad_cluster(cluster):
+def test_delete_bad_cluster():
     """Test that `delete_cluster` handles invalid clusters.
 
     This tests how `delete_cluster` behaves when passed a dummy cluster,
     simulating the behavior that occurs when we manually delete an AWS cluster
     without removing its entry from the database, and `delete_cluster` later
-    gets called on it. We test this by directly using the `delete_cluster`
-    with the fixture for a dummy cluster.
+    gets called on it.
     """
-    res = delete_cluster.delay(cluster=cluster.cluster, region_name="us-east-1")
 
-    # wait for operation to finish
-    # if it takes more than 30 sec, something is wrong
-    res.get(timeout=30)
+    # This cluster doesn't actually exist on our AWS account.
+    cluster = ClusterInfo(cluster="test-cluster-{uuid.uuid4()}", location="us-east-1")
 
-    assert res.successful()
-    assert res.state == "SUCCESS"
+    db.session.add(cluster)  # Change the cluster object's state to pending.
+    db.session.flush()  # Change the cluster object's state to persistent.
+
+    # The cluster object's state must be persistent so it can be merged into the worker process's
+    # transaction with load=False at the beginning of delete_cluster.run()
+    task = delete_cluster.delay(cluster, force=False)
+
+    task.get()
+
+    assert task.successful()
 
 
 @pytest.mark.container_serial
