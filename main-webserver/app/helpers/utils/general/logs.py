@@ -12,8 +12,10 @@ class _MessageHandler(logging.StreamHandler):
     def emit(self, record: logging.LogRecord):
         """
         This is called prior to any logging. We do the following checks:
-        - make sure the log ends in a ".", "!", or "?"
+            - make sure the log ends in a ".", "!", or "?"
 
+        Args:
+            record: provided by logging library, contains info for a specific logging instance
         """
         log = record.msg
         if not log.endswith(".") and not log.endswith("!") and not log.endswith("?"):
@@ -34,8 +36,11 @@ class _ExtraHandler(logging.StreamHandler):
         This is called prior to any logging. We check which variables are
         given by the caller and fill them with defaults if not provided.
         Specifically, this handles the following parameters:
-        - "function" (default: record.funcName, which is the function where logger is invoked)
-        - "label" (default: None)
+            - "function" (default: record.funcName, which is the function where logger is invoked)
+            - "label" (default: None)
+
+        Args:
+            record: provided by logging library, contains info for a specific logging instance
         """
         if "function" not in record.__dict__:
             record.__dict__["function"] = record.funcName
@@ -47,7 +52,7 @@ def _create_fractal_logger():
     """
     Create and configure a logger for fractal's purposes.
     """
-    # TODO: remove function and use funcName when fractal_log deprecated
+    # TODO: remove function and use funcName when fractal_log is fully deprecated
     format = (
         "%(asctime)s %(levelname)s [%(filename)s:%(function)s#L%(lineno)d]: "
         "| %(label)s | %(message)s"
@@ -80,7 +85,7 @@ containing the following supported keys:
 Examples:
 fractal_logger.info("hi")
 fractal_logger.error("oh no")
-fractal_logger.error("oh no", extra={"label": "fake_label"})
+fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
 
