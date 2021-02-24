@@ -3,6 +3,9 @@
 # This script starts the AwesomeWM window manager inside the container, retrieves
 # the container ID and DPI, and starts the container's application (i.e. Google Chrome)
 
+# Install keymapping
+xmodmap /root/.Xmodmap
+
 # Start the AwesomeWM window manager
 # Things running outside runuser are run as root
 runuser --login fractal -c \
