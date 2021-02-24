@@ -51,7 +51,7 @@ jobs:
             publish: ${{ steps.detect-publish.outputs.publish }}
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
-            webserver_url: ${{ steps.set-webserver-url.webserver_url }}
+            webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -243,24 +243,32 @@ jobs:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
-                  webserver_url=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  token=$(curl -X POST \
+                  TOKEN=$(curl -X POST \
                         -H "Content-Type: application/json" \
                         --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "${webserver_url}/admin/login" | jq -r ".access_token")
+                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh ${webserver_url} ${token} start
+                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN start
 
                   if [[ $? =~ 1 ]]; then
-                    echo "Failed to start maintenance" && exit 1
+                    echo "Failed to start maintenance"
+
+                    # Notify slack of failure
+                    curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL has failed to start maintenance mode in workflow ${{ github.run_id }}. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                    
+                    exit 1
+
                   fi
             - name: Notify Slack
               run: |
                   curl -X POST \
                   --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at ${webserver_url} has been put in maintenance mode due to deploy on branch ${{ needs.fractal-publish-build-config.outputs.branch }}.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL has been put in maintenance mode due to deploy on branch `${{ needs.fractal-publish-build-config.outputs.branch }}` by github workflow ${{ github.run_id }}.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
@@ -969,26 +977,31 @@ jobs:
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
-                  webserver_url=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  token=$(curl -X POST \
+                  TOKEN=$(curl -X POST \
                         -H "Content-Type: application/json" \
                         --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "${webserver_url}/admin/login" | jq -r ".access_token")
+                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
 
                   # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh ${webserver_url} ${token} end
+                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
                   if [[ $? =~ 1 ]]; then
                     echo "Failed to end maintenance"
+
+                    # Notify slack of failure
                     curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Failed to end maintenance mode on webserver at ${webserver_url} from workflow. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL has failed to end maintenance mode in workflow ${{ github.run_id }}. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
                     exit 1
 
                   fi
             - name: Notify Slack
               run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at ${webserver_url} has ended maintenance mode from github workflow.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL has ended maintenance mode from github workflow ${{ github.run_id }}.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
