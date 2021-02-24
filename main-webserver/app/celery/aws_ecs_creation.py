@@ -8,8 +8,8 @@ from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
+from app.maintenance.maintenance_manager import maintenance_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
-
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_log
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -306,6 +306,7 @@ def _get_num_extra(taskdef):
 
 
 @shared_task(bind=True)
+@maintenance_track_task
 def assign_container(
     self,
     username,
@@ -326,8 +327,27 @@ def assign_container(
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
     :return: the generated container, in json form
-    """
 
+    We directly call _assign_container because it can easily be mocked. The __code__ attribute
+    does not exist for functions with celery decorators like this one.
+    """
+    return _assign_container(
+        self, username, task_definition_arn, region_name, cluster_name, dpi, webserver_url
+    )
+
+
+def _assign_container(
+    self,
+    username,
+    task_definition_arn,
+    region_name="us-east-1",
+    cluster_name=None,
+    dpi=96,
+    webserver_url=None,
+):
+    """
+    See assign_container. This is helpful to mock.
+    """
     fractal_log(
         function="assign_container",
         label=username,
@@ -606,6 +626,7 @@ def assign_container(
 
 
 @shared_task(bind=True)
+@maintenance_track_task
 def create_new_container(
     self,
     username,
@@ -630,7 +651,6 @@ def create_new_container(
         dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
-
     task_start_time = time.time()
 
     set_container_state(
@@ -829,6 +849,7 @@ def create_new_container(
 
 
 @shared_task(bind=True)
+@maintenance_track_task
 def create_new_cluster(
     self,
     cluster_name=None,
@@ -840,6 +861,11 @@ def create_new_cluster(
     availability_zones=None,
 ):
     """
+    Create a new cluster.
+
+    We directly call _create_new_cluster because it can easily be mocked. The __code__ attribute
+    does not exist for functions with celery decorators like this one.
+
     Args:
         self: the celery instance running the task
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults
@@ -855,6 +881,17 @@ def create_new_cluster(
             the auto scaling group
     Returns:
         user_cluster_schema: information on cluster created
+    """
+    return _create_new_cluster(
+        self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
+    )
+
+
+def _create_new_cluster(
+    self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
+):
+    """
+    See create_new_cluster. This is helpful to mock.
     """
     task_start_time = time.time()
     all_regions = RegionToAmi.query.all()

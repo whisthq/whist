@@ -10,6 +10,7 @@ import pytest
 from flask_jwt_extended import create_access_token
 
 from app.celery_utils import CELERY_CONFIG, celery_params
+from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 
@@ -83,6 +84,7 @@ def app():
     """
 
     _app = create_app(testing=True)
+    maintenance_init_redis_conn(_app.config["REDIS_URL"])
 
     return _app
 

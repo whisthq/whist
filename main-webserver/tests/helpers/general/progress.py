@@ -12,7 +12,7 @@ def queryStatus(client, resp, timeout=10):
         resp        - Required  : Flask response
         timeout     - Required  : Timeout in minutes, return -1 if timeout is succeeded
     """
-    assert resp.status_code == 202
+    assert resp.status_code == 202, f"Instead got: {resp}"
 
     def getStatus(status_id):
         if status_id:
