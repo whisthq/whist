@@ -984,15 +984,15 @@ jobs:
             ]
         if: >
             always() &&
-            needs.fractal-publish-build-config.status == 'success' &&
-            (needs.fractal-start-webserver-maintenance-mode.status == 'skipped' || needs.fractal-start-webserver-maintenance-mode.status == 'success') &&
-            (needs.container-images-publish-images-ghcr.status == 'skipped' || needs.container-images-publish-images-ghcr.status == 'success') &&
-            (needs.ecs-task-definitions-deploy-task-definitions-ecs.status == 'skipped' || needs.ecs-task-definitions-deploy-task-definitions-ecs.status == 'success') &&
-            (needs.ecs-task-definitions-notify-slack.status == 'skipped' || needs.ecs-task-definitions-notify-slack.status == 'success') &&
-            (needs.ami-publish-ec2.status == 'skipped' || needs.ami-publish-ec2.status == 'success') &&
-            (needs.main-webserver-deploy-heroku.status == 'skipped' || needs.main-webserver-deploy-heroku.status == 'success') &&
-            (needs.client-applications-publish-build-s3.status == 'skipped' || needs.client-applications-publish-build-s3.status == 'success') &&
-            (needs.client-applications-notify-slack.status == 'skipped' || needs.client-applications-notify-slack.status == 'success')
+            needs.fractal-publish-build-config.outcome == 'success' &&
+            (needs.fractal-start-webserver-maintenance-mode.outcome == 'skipped' || needs.fractal-start-webserver-maintenance-mode.outcome == 'success') &&
+            (needs.container-images-publish-images-ghcr.outcome == 'skipped' || needs.container-images-publish-images-ghcr.outcome == 'success') &&
+            (needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome == 'skipped' || needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome == 'success') &&
+            (needs.ecs-task-definitions-notify-slack.outcome == 'skipped' || needs.ecs-task-definitions-notify-slack.outcome == 'success') &&
+            (needs.ami-publish-ec2.outcome == 'skipped' || needs.ami-publish-ec2.outcome == 'success') &&
+            (needs.main-webserver-deploy-heroku.outcome == 'skipped' || needs.main-webserver-deploy-heroku.outcome == 'success') &&
+            (needs.client-applications-publish-build-s3.outcome == 'skipped' || needs.client-applications-publish-build-s3.outcome == 'success') &&
+            (needs.client-applications-notify-slack.outcome == 'skipped' || needs.client-applications-notify-slack.outcome == 'success')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
