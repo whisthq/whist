@@ -54,7 +54,7 @@ char* safe_strtok(char* str, char* delim, char** saveptr) {
                 calls to this function
 
         Returns:
-            (char*): the next token in the string    
+            (char*): the next token in the string
     */
 #ifdef _WIN32
     return strtok_s(str, delim, saveptr);

@@ -482,7 +482,7 @@ int read_piped_arguments(bool *keep_waiting) {
             }
 
             // Splits the incoming string from STDIN into arg_name and arg_value
-            char* strtok_saveptr;
+            char *strtok_saveptr;
             char *arg_name = safe_strtok(incoming, "?", &strtok_saveptr);
             if (!arg_name) {
                 goto completed_line_eval;
