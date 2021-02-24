@@ -40,10 +40,14 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
-struct AudioData {
+typedef struct AudioContext {
+    SDL_mutex* mutex;
     SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
-} volatile audio_data;
+    int decoder_frequency;
+} AudioContext;
+
+AudioContext volatile audio_context;
 
 clock nack_timer;
 
@@ -51,80 +55,191 @@ int last_nacked_id = -1;
 int most_recent_audio_id = -1;
 int last_played_id = -1;
 
-bool triggered = false;
+// Audio flush happens when the audio buffer gets too large, and we need to clear it out
+bool audio_flush_triggered = false;
+
+// Audio refresh happens when the user plugs in a new audio device,
+// or unplugs their current audio device
+bool audio_refresh = false;
 
 #define MAX_FREQ 128000
-static int decoder_frequency = 48000;  // Hertz
 
 clock test_timer;
 double test_time;
-SDL_mutex* audio_mutex;
 
-void reinit_audio() {
+// Audio Rendering
+typedef struct RenderContext {
+    // Whether or not the audio is encoded
+    bool encoded;
+    // Raw audio packets
+    AudioPacket audio_data[MAX_NUM_AUDIO_INDICES];
+} RenderContext;
+
+static RenderContext volatile render_context;
+SDL_sem* render_semaphore = NULL;
+static bool volatile rendering = false;
+
+void init_audio_device() {
+    safe_SDL_LockMutex(audio_context.mutex);
+    // cast socket and SDL variables back to their data type for usage
+    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
+    audio_context.decoder_frequency = audio_frequency;
+    audio_context.audio_decoder = create_audio_decoder(audio_context.decoder_frequency);
+
+    SDL_zero(wanted_spec);
+    SDL_zero(audio_spec);
+    wanted_spec.channels = 2;
+    wanted_spec.freq = audio_context.decoder_frequency;
+    LOG_INFO("Audio Freqency: %d", wanted_spec.freq);
+    wanted_spec.format = AUDIO_F32SYS;
+    wanted_spec.silence = 0;
+    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
+
+    audio_context.dev =
+        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (audio_context.dev == 0) {
+        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
+    } else {
+        SDL_PauseAudioDevice(audio_context.dev, 0);
+    }
+    safe_SDL_UnlockMutex(audio_context.mutex);
+}
+
+void destroy_audio_device() {
     /*
-        Hold the mutex, destroy the audio, and then recreate it
+        Destroys the audio device
+        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
     */
-    LOG_INFO("Re-init'ing Audio!");
-    safe_SDL_LockMutex(audio_mutex);
-    destroy_audio();
-    init_audio();
-    safe_SDL_UnlockMutex(audio_mutex);
+    safe_SDL_LockMutex(audio_context.mutex);
+    if (audio_context.dev) {
+        SDL_CloseAudioDevice(audio_context.dev);
+        audio_context.dev = 0;
+    }
+    if (audio_context.audio_decoder) {
+        destroy_audio_decoder(audio_context.audio_decoder);
+        audio_context.audio_decoder = NULL;
+    }
+    safe_SDL_UnlockMutex(audio_context.mutex);
 }
 
-int multithreaded_reinit_audio(void* opaque) {
-    UNUSED(opaque);
-    reinit_audio();
-    return 0;
+unsigned int get_audio_device_queue() {
+    safe_SDL_LockMutex(audio_context.mutex);
+    int ret;
+    if (audio_context.dev) {
+        ret = SDL_GetQueuedAudioSize(audio_context.dev);
+    } else {
+        ret = 0;
+    }
+    safe_SDL_UnlockMutex(audio_context.mutex);
+    return ret;
 }
+
+int multithreaded_render_audio(void* opaque);
 
 void init_audio() {
     /*
         Initialize the audio device
         NOTE: Does not hold audio mutex! Must be held prior to calling this function!
     */
-    if (!audio_mutex) {
-        audio_mutex = safe_SDL_CreateMutex();
+    if (!render_semaphore) {
+        render_semaphore = SDL_CreateSemaphore(0);
+    }
+    if (!audio_context.mutex) {
+        audio_context.mutex = safe_SDL_CreateMutex();
     }
     start_timer(&nack_timer);
-
-    // cast socket and SDL variables back to their data type for usage
-    SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
-    audio_data.audio_decoder = create_audio_decoder(decoder_frequency);
-
-    SDL_zero(wanted_spec);
-    SDL_zero(audio_spec);
-    wanted_spec.channels = 2;
-    wanted_spec.freq = decoder_frequency;
-    LOG_INFO("Freq: %d", wanted_spec.freq);
-    wanted_spec.format = AUDIO_F32SYS;
-    wanted_spec.silence = 0;
-    wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
-
-    audio_data.dev =
-        SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
-    if (audio_data.dev == 0) {
-        LOG_ERROR("Failed to open audio: %s", SDL_GetError());
-    } else {
-        SDL_PauseAudioDevice(audio_data.dev, 0);
-        for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
-            receiving_audio[i].id = -1;
-            receiving_audio[i].nacked_amount = 0;
-            receiving_audio[i].nacked_for = -1;
-        }
+    for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
+        receiving_audio[i].id = -1;
+        receiving_audio[i].nacked_amount = 0;
+        receiving_audio[i].nacked_for = -1;
     }
+    // Set audio to be reinit'ed
+    audio_refresh = true;
+    SDL_CreateThread(multithreaded_render_audio, "render_audio", NULL);
 }
 
-void destroy_audio() {
-    /*
-        Destroys the audio device
-        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
-    */
-    if (audio_data.dev) {
-        SDL_CloseAudioDevice(audio_data.dev);
-        audio_data.dev = 0;
-    }
-    if (audio_data.audio_decoder) {
-        destroy_audio_decoder(audio_data.audio_decoder);
+void destroy_audio() { destroy_audio_device(); }
+
+int multithreaded_render_audio(void* opaque) {
+    UNUSED(opaque);
+
+    while (true) {
+        int ret = SDL_SemWait(render_semaphore);
+
+        if (audio_frequency > MAX_FREQ) {
+            LOG_ERROR("Frequency received was too large: %d, silencing audio now.",
+                      audio_frequency);
+            audio_frequency = -1;
+        }
+
+        // If no audio frequency has been received yet, don't render the audio
+        if (audio_frequency < 0) {
+            rendering = false;
+            continue;
+        }
+
+        if (audio_context.decoder_frequency != audio_frequency) {
+            LOG_INFO("Updating audio frequency to %d!", audio_frequency);
+            audio_refresh = true;
+        }
+
+        if (audio_refresh) {
+            destroy_audio_device();
+            init_audio_device();
+            audio_refresh = false;
+        }
+
+        safe_SDL_LockMutex(audio_context.mutex);
+        if (render_context.encoded) {
+            AVPacket encoded_packet;
+            av_init_packet(&encoded_packet);
+            encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
+            encoded_packet.size = 0;
+
+            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+                AudioPacket* packet = (AudioPacket*)&render_context.audio_data[i];
+                memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
+                encoded_packet.size += packet->size;
+            }
+
+            // Decode encoded audio
+            int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
+            av_free(encoded_packet.data);
+            av_packet_unref(&encoded_packet);
+
+            if (res == 0) {
+                uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+
+                // Get decoded data
+                audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
+
+                // Play decoded audio
+                res =
+                    SDL_QueueAudio(audio_context.dev, &decoded_data,
+                                   audio_decoder_get_frame_data_size(audio_context.audio_decoder));
+
+                if (res < 0) {
+                    LOG_ERROR("Could not play audio!");
+                }
+            }
+        } else {
+            // Play raw audio
+            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+                AudioPacket* packet = (AudioPacket*)&render_context.audio_data[i];
+                if (packet->size > 0) {
+#if LOG_AUDIO
+                    LOG_DEBUG("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
+                              packet->size, SDL_GetQueuedAudioSize(audio_context.dev));
+#endif
+                    if (SDL_QueueAudio(audio_context.dev, packet->data, packet->size) < 0) {
+                        LOG_ERROR("Could not play audio!\n");
+                    }
+                }
+            }
+        }
+        safe_SDL_UnlockMutex(audio_context.mutex);
+        // No longer rendering audio
+        rendering = false;
     }
 }
 
@@ -134,33 +249,14 @@ void update_audio() {
         and it will play any queued audio packets.
         This function will hold the audio mutex.
     */
-    if (!audio_mutex) {
-        LOG_FATAL("Mutex or audio is not initialized yet!");
-    }
-    int status = SDL_TryLockMutex(audio_mutex);
-    if (status != 0) {
-        LOG_INFO("Couldn't lock mutex in updateAudio!");
+    // If we're currently rendering an audio packet, don't update audio
+    if (rendering) {
         return;
     }
-    if (!audio_data.dev) {
-        // No Audio Device found
-        return;
-    }
+
 #if LOG_AUDIO
-    // mprintf("Queue: %d", SDL_GetQueuedAudioSize(AudioData.dev));
+    LOG_DEBUG("Queue: %d", get_audio_device_queue());
 #endif
-    if (audio_frequency > MAX_FREQ) {
-        LOG_ERROR("Frequency received was too large: %d, silencing audio now.", audio_frequency);
-        audio_frequency = MAX_FREQ;
-    }
-
-    if (audio_frequency > 0 && decoder_frequency != audio_frequency) {
-        LOG_INFO("Updating audio frequency to %d!", audio_frequency);
-        decoder_frequency = audio_frequency;
-        destroy_audio();
-        init_audio();
-    }
-
     bool still_more_audio_packets = true;
 
     // Catch up to most recent ID if nothing has played yet
@@ -179,27 +275,30 @@ void update_audio() {
         }
     }
 
-    // Wait to delay
-    static bool gapping = false;
-    int bytes_until_can_play = (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE +
-                               SDL_GetQueuedAudioSize(audio_data.dev);
-    if (!gapping && bytes_until_can_play < AUDIO_QUEUE_LOWER_LIMIT) {
-        LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_can_play);
-        gapping = true;
+    unsigned int audio_device_queue = get_audio_device_queue();
+
+    // Buffering audio controls whether or not we're trying to accumulate an audio buffer
+    static bool buffering_audio = false;
+
+    int bytes_until_no_more_audio =
+        (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE + audio_device_queue;
+
+    // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT
+    if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
+        LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_no_more_audio);
+        buffering_audio = true;
     }
 
-    if (gapping) {
-        if (bytes_until_can_play < TARGET_AUDIO_QUEUE_LIMIT) {
-            safe_SDL_UnlockMutex(audio_mutex);
+    if (buffering_audio) {
+        if (bytes_until_no_more_audio < TARGET_AUDIO_QUEUE_LIMIT) {
             return;
         } else {
-            LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_can_play);
-            gapping = false;
+            LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_no_more_audio);
+            buffering_audio = false;
         }
     }
 
     if (last_played_id == -1) {
-        safe_SDL_UnlockMutex(audio_mutex);
         return;
     }
 
@@ -210,7 +309,6 @@ void update_audio() {
 
         if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
             LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
-            safe_SDL_UnlockMutex(audio_mutex);
             return;
         }
 
@@ -223,69 +321,50 @@ void update_audio() {
 
         still_more_audio_packets = false;
         if (valid) {
-            still_more_audio_packets = true;
+            // dont keep checking for more audio packets
+            // still_more_audio_packets = true;
 
-            int real_limit = triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
+            // If an audio flush is triggered,
+            // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
+            int real_limit =
+                audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-            if (SDL_GetQueuedAudioSize(audio_data.dev) > (unsigned int)real_limit) {
+            if (audio_device_queue > (unsigned int)real_limit) {
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
-                            next_to_play_id / MAX_NUM_AUDIO_INDICES,
-                            SDL_GetQueuedAudioSize(audio_data.dev));
+                            next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
+                // Clear out audio instead of playing it
                 for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
                     AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
-                triggered = true;
+                // Trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
+                if (!audio_flush_triggered) {
+                    audio_flush_triggered = true;
+                }
             } else {
-                triggered = false;
-#if USING_AUDIO_ENCODE_DECODE
-                AVPacket encoded_packet;
-                int res;
-                av_init_packet(&encoded_packet);
-                encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
-                encoded_packet.size = 0;
+                // When the audio queue is no longer full, we stop flushing the audio queue
+                audio_flush_triggered = false;
 
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
-                    encoded_packet.size += packet->size;
+                // Store the audio render context information
+                render_context.encoded = USING_AUDIO_ENCODE_DECODE;
+                for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+                    int buffer_index = next_to_play_id + i;
+                    // Save buffer in render context
+                    // fprintf(stderr, "%p %p %ld\n", &render_context.audio_data[i],
+                    // &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
+                    // sizeof(AudioPacket));
+                    memcpy((AudioPacket*)&render_context.audio_data[i],
+                           &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE], sizeof(AudioPacket));
+                    // Reset packet in receiving audio buffer
+                    AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
                     packet->nacked_amount = 0;
                 }
-                res = audio_decoder_decode_packet(audio_data.audio_decoder, &encoded_packet);
-                av_free(encoded_packet.data);
-                av_packet_unref(&encoded_packet);
 
-                if (res == 0) {
-                    uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-
-                    audio_decoder_packet_readout(audio_data.audio_decoder, decoded_data);
-
-                    res =
-                        SDL_QueueAudio(audio_data.dev, &decoded_data,
-                                       audio_decoder_get_frame_data_size(audio_data.audio_decoder));
-
-                    if (res < 0) {
-                        LOG_WARNING("Could not play audio!");
-                    }
-                }
-#else
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    if (packet->size > 0) {
-#if LOG_AUDIO
-                        mprintf("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
-                                packet->size, SDL_GetQueuedAudioSize(AudioData.dev));
-#endif
-                        if (SDL_QueueAudio(AudioData.dev, packet->data, packet->size) < 0) {
-                            mprintf("Could not play audio!\n");
-                        }
-                    }
-                    packet->id = -1;
-                    packet->nacked_amount = 0;
-                }
-#endif
+                // Render audio on audio thread
+                rendering = true;
+                SDL_SemPost(render_semaphore);
             }
 
             last_played_id += MAX_NUM_AUDIO_INDICES;
@@ -298,23 +377,22 @@ void update_audio() {
     //     }
     // }
 
-    // Find all pending audio packets and NACK them
+    // Find pending audio packets and NACK them
+    int MAX_NACKED = 1;
+    FractalClientMessage fmsg[MAX_NACKED];
+    int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
-        int num_nacked = 0;
         last_nacked_id = max(last_played_id, last_nacked_id);
-        for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < 1; i++) {
+        for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < MAX_NACKED;
+             i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
             AudioPacket* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
                 i_packet->nacked_amount++;
-                FractalClientMessage fmsg;
-                fmsg.type = MESSAGE_AUDIO_NACK;
-                fmsg.nack_data.id = i / MAX_NUM_AUDIO_INDICES;
-                fmsg.nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg.nack_data.id,
-                         fmsg.nack_data.index);
+                fmsg[num_nacked].type = MESSAGE_AUDIO_NACK;
+                fmsg[num_nacked].nack_data.id = i / MAX_NUM_AUDIO_INDICES;
+                fmsg[num_nacked].nack_data.index = i % MAX_NUM_AUDIO_INDICES;
                 i_packet->nacked_for = i;
-                send_fmsg(&fmsg);
                 num_nacked++;
 
                 start_timer(&nack_timer);
@@ -322,7 +400,13 @@ void update_audio() {
             last_nacked_id = i;
         }
     }
-    safe_SDL_UnlockMutex(audio_mutex);
+
+    // Send nacks out
+    for (int i = 0; i < num_nacked; i++) {
+        LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg[i].nack_data.id,
+                 fmsg[i].nack_data.index);
+        send_fmsg(&fmsg[i]);
+    }
 }
 
 int32_t receive_audio(FractalPacket* packet) {
@@ -408,8 +492,8 @@ int32_t receive_audio(FractalPacket* packet) {
         audio_pkt->nacked_for = -1;
 
 #if LOG_AUDIO
-        mprintf("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id,
-                packet->payload_size, last_played_id + 1, SDL_GetQueuedAudioSize(AudioData.dev));
+        LOG_DEBUG("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id,
+                  packet->payload_size, last_played_id + 1, audio_device_queue);
 #endif
         audio_pkt->id = audio_id;
         most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);

@@ -48,6 +48,8 @@ extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
+extern bool audio_refresh;
+
 /*
 ============================
 Private Functions
@@ -379,8 +381,8 @@ int handle_sdl_event(SDL_Event *event) {
             break;
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED:
-            SDL_DetachThread(
-                SDL_CreateThread(multithreaded_reinit_audio, "MultithreadedReinitAudio", NULL));
+            // Refresh the audio device
+            audio_refresh = true;
             break;
         case SDL_KEYDOWN:
         case SDL_KEYUP:
