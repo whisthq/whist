@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+# Note that we can't set "o" or "pipefail" since xinitrc is run as a non-compatible shell script.
+set -Eeu
 
 # This script starts the AwesomeWM window manager inside the container, retrieves
 # the container ID and DPI, and starts the container's application (i.e. Google Chrome)
