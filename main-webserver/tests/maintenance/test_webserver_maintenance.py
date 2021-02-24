@@ -18,7 +18,6 @@ from app.constants.http_codes import (
     SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
-from app.helpers.utils.general.logs import fractal_log
 from app.constants.time import (
     SECONDS_IN_MINUTE,
     MINUTES_IN_HOUR,
@@ -29,6 +28,10 @@ from tests.aws.test_assign import set_valid_subscription
 
 
 def mock_create_cluster(*args, **kwargs):
+    # need to import this here because this is no guarantee that the file
+    # where this is executed has imported this
+    from app.helpers.utils.general.logs import fractal_logger
+
     if hasattr(_create_new_cluster, "num_calls"):
         num_calls = getattr(_create_new_cluster, "num_calls") + 1
         setattr(_create_new_cluster, "num_calls", num_calls)
@@ -36,12 +39,16 @@ def mock_create_cluster(*args, **kwargs):
         setattr(_create_new_cluster, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_create_cluster", None, f"Running mocked version of task {celery_id}")
+    fractal_logger.info(f"Running mocked version of task {celery_id}")
 
     time.sleep(1)
 
 
 def mock_assign_container(*args, **kwargs):
+    # need to import this here because this is no guarantee that the file
+    # where this is executed has imported this
+    from app.helpers.utils.general.logs import fractal_logger
+
     if hasattr(_assign_container, "num_calls"):
         num_calls = getattr(_assign_container, "num_calls") + 1
         setattr(_assign_container, "num_calls", num_calls)
@@ -49,7 +56,7 @@ def mock_assign_container(*args, **kwargs):
         setattr(_assign_container, "num_calls", 1)
 
     celery_id = args[0].request.id
-    fractal_log("mock_assign_container", None, f"Running mocked version of task {celery_id}")
+    fractal_logger.info(f"Running mocked version of task {celery_id}")
 
     time.sleep(1)
 
