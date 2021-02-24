@@ -983,6 +983,8 @@ jobs:
                 client-applications-notify-slack,
             ]
         if: >
+            # this makes it so the job can be triggered independently
+            # failures on any dependencies will still stop this from being run
             always() &&
             needs.fractal-publish-build-config.result == 'success' &&
             (needs.fractal-start-webserver-maintenance-mode.result == 'skipped' || needs.fractal-start-webserver-maintenance-mode.result == 'success') &&
@@ -1000,9 +1002,6 @@ jobs:
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
-                  echo ${{ needs.fractal-publish-build-config.result }}
-                  echo ${{ needs.fractal-publish-build-config.outcome }}
-                  echo ${{ needs.fractal-publish-build-config.status }}
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
