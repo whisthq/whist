@@ -38,9 +38,8 @@ let showMainWindow = true
 //    restored (maximized). When the showMainWindow is false,
 //    this value gets toggled on "minimize" and "focus"
 //    events
-let protocolFocused = false
 let protocolMinimized = false
-let lastState = {clientApp: true, protocol: false}
+let ignoreClientAppFocus = false
 // Server for socket communication with FractalClient
 let protocolSocketServer: Server | null = null
 // Unix IPC socket address for communication with FractalClient
@@ -49,7 +48,8 @@ let socketPath = "fractal-client.sock"
 //    Messages from the client are not kept separate by default
 let socketReceivedData = ""
 const socketMutex = new Mutex()
-let clients: Socket[] = [];
+let clients: Socket[] = []
+let toggling = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -126,10 +126,8 @@ const createWindow = async () => {
     // mainWindow.webContents.openDevTools()
 
     protocolSocketServer = createServer((socket) => {
-        console.log('client connected')
         clients.push(socket)
         socket.on('end', () => {
-            console.log('client disconnected')
             let socketIndex = clients.indexOf(socket)
             if (socketIndex >= 0) {
                 delete clients[socketIndex]
@@ -142,51 +140,43 @@ const createWindow = async () => {
             let messagePairs : {"sender": string, "message": string}[] = []
             socketMutex.runExclusive(() => {
                 socketReceivedData += data.toString()
-                console.log("RECEIVED DATA: " + socketReceivedData)
                 while (socketReceivedData.includes("\n")) {
                     let parts = socketReceivedData.split("\n")[0].split(":")
                     messagePairs.push({"sender": parts[0], "message": parts[1]})
-                    console.log("PARSED MESSAGE " + parts[0] + " " + parts[1])
                     socketReceivedData = socketReceivedData.substring(socketReceivedData.indexOf("\n") + 1)
                 }
-                console.log("REMAINING DATA: " + socketReceivedData)
             }).then(() => {
                 if (mainWindow) {
+                    mainWindow.minimize()
                     messagePairs.forEach((pair) => {
                         let sender = pair["sender"]
                         let message = pair["message"]
                         if (sender === "client") {
                             if (message === "MINIMIZE") {
+                                ignoreClientAppFocus = true
+                                if (mainWindow) {
+                                    mainWindow.minimize()
+                                }
                                 console.log("client says MINIMIZE")
                                 protocolMinimized = true
-                                // don't set protocolFocused here, let UNFOCUS take care of that
                             } else if (message === "FOCUS") {
                                 console.log("client says FOCUS")
-                                lastState['protocol'] = protocolFocused
                                 if (mainWindow) {
-                                    lastState['clientApp'] = mainWindow.isFocused()
+                                    mainWindow.minimize()
                                 }
-                                protocolFocused = true
                                 protocolMinimized = false
-                                if (mainWindow) {
-                                    mainWindow.restore()
-                                }
                             } else if (message === "UNFOCUS") {
-                                console.log("client says UNFOCUS")
-                                lastState['protocol'] = protocolFocused
+                            } else if (message === "TOGGLE_ACK") {
+                                toggling = true
                                 if (mainWindow) {
-                                    lastState['clientApp'] = mainWindow.isFocused()
+                                    mainWindow.blur()
                                 }
-                                protocolFocused = false
                             } else if (message === "QUIT") {
-                                console.log("client says QUIT")
                                 app.quit()
-                                socket.end()
                             } else {
                                 console.log("client gives unknown command " + message)
                             }
                         }
-                        console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
                     })
                 }
             })
@@ -199,47 +189,33 @@ const createWindow = async () => {
         console.log(`Socket server error (likely ignorable): error ${err}`)
     })
     protocolSocketServer.listen(socketPath, () => {
-        console.log('server bound')
-
         if (os.platform() === "win32") {
             if (mainWindow) {
                 mainWindow.on("focus", () => {
-                    // any state where mainWindow.isFocused() = true is unstable
                     let message = ""
-                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
-                    if (!lastState['protocol']) {
+                    if (protocolMinimized) {
                         console.log("FOCUS")
-                        // If the protocol was last unfocused and then client app focuses => focus protocol
                         message = "server:FOCUS"
+                        protocolMinimized = false
                     } else {
-                        if (protocolMinimized) {
-                            console.log("FOCUS")
-                            // If the protocol was last focused and minimized (probably won't happen)
-                            //    and then client app focuses => focus protocol
-                            message = "server:FOCUS"
-                        } else {
-                            console.log("MINIMIZE")
-                            // If the protocol was last focused and not minimized and then client
-                            //    app focuses => minimize protocol
-                            message = "server:MINIMIZE"
-                            if (mainWindow) {
-                                mainWindow.minimize()
-                            }
-                        }
+                        console.log("TOGGLE")
+                        message = "server:TOGGLE"
                     }
-                    lastState['protocol'] = protocolFocused
+
                     if (message !== "") {
                         clients.forEach((socket) => {
                             socket.write(message)
                         })
                     }
-                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
                 })
 
                 mainWindow.on("blur", () => {
-                    lastState['protocol'] = protocolFocused
-                    console.log("blurring...")
-                    console.log(`${lastState['protocol']} ${lastState['clientApp']} ${protocolMinimized} ${protocolFocused}`)
+                    if (toggling) {
+                        clients.forEach((writeSocket) => {
+                            writeSocket.write("server:TOGGLE_COMPLETE")
+                        })
+                    }
+                    toggling = false
                 })
             }
         } else if (os.platform() === "darwin") {
@@ -247,7 +223,6 @@ const createWindow = async () => {
                 // OSX: "activate" event is thrown when the dock icon is pressed
                 clients.forEach((socket) => {
                     socket.write("server:FOCUS")
-                    socket.end()
                 })
             })
         }
@@ -255,6 +230,7 @@ const createWindow = async () => {
         app.on("will-quit", () => {
             clients.forEach((socket) => {
                 socket.write("server:QUIT")
+                socket.end()
             })
         })
     })
@@ -290,9 +266,10 @@ const createWindow = async () => {
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }
-        if (!showMainWindow) {
-            mainWindow.setOpacity(0.0)
+        if (!showMainWindow && os.platform() === "win32") {
+            // mainWindow.setOpacity(0.0)
             mainWindow.setIgnoreMouseEvents(true)
+            mainWindow.minimize()
         }
         if (os.platform() === "win32" || showMainWindow) {
             if (process.env.START_MINIMIZED) {
@@ -323,8 +300,9 @@ const createWindow = async () => {
         } else if (!showMainWindow && mainWindow) {
             if (os.platform() === "win32") {
                 // To keep the icon on the taskbar in Windows, don't hide - just make transparent
-                mainWindow.setOpacity(0.0)
+                // mainWindow.setOpacity(0.0)
                 mainWindow.setIgnoreMouseEvents(true)
+                mainWindow.minimize()
             } else {
                 mainWindow.hide()
             }

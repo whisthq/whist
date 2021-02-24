@@ -62,6 +62,8 @@ typedef struct WindowControlArguments {
     int write_socket_fd;
 #endif
 } WindowControlArguments;
+volatile bool toggling = false;
+volatile bool clientapp_blurred = false;
 
 
 /*
@@ -109,6 +111,31 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
     SDL_FreeSurface(icon_surface);
 }
 
+int write_to_socket(const char* message, WindowControlArguments* args) {
+#ifdef _WIN32
+    DWORD wrote_chars;
+    if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
+        if (GetLastError() == ERROR_INVALID_HANDLE) {
+            LOG_INFO("Client app socket closed for writing");
+            return 1;
+        }
+        LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
+        return -1;
+    }
+#else
+    int wrote_chars;
+    if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
+        if (errno == EBADF) {
+            LOG_INFO("Client app socket closed for writing");
+            return 1;
+        }
+        LOG_ERROR("write window event to client app socket failed: errno %d", errno);
+        return -1;
+    }
+#endif
+    return 0;
+}
+
 int window_control_event_watcher(void* data, SDL_Event* event) {
     /*
         Event watcher to be used in SDL_AddEventWatch to capture
@@ -126,17 +153,19 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
     WindowControlArguments* args = (WindowControlArguments*) data;
 
     const char* message = NULL;
-#ifdef _WIN32
-    DWORD wrote_chars;
-#else
-    int wrote_chars;
-#endif
 
     if (event->type == SDL_WINDOWEVENT) {
         if (event->window.event == SDL_WINDOWEVENT_MINIMIZED) {
             message = "client:MINIMIZE\n";
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
-            message = "client:FOCUS\n";
+            if (toggling) {
+                LOG_INFO("TOGGLE focus gained... setting toggling to false");
+                toggling = false;
+                LOG_INFO("TOGGLE MINIMIZE");
+                SDL_MinimizeWindow(args->window);
+            } else {
+                message = "client:FOCUS\n";
+            }
         } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
             message = "client:UNFOCUS\n";
         }
@@ -144,26 +173,14 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
         message = "client:QUIT\n";
     }
 
+    int write_ret = 0;
     if (message) {
-#ifdef _WIN32
-        if (!WriteFile(args->write_socket_fd, message, (DWORD) strlen(message), &wrote_chars, NULL)) {
-            if (GetLastError() == ERROR_INVALID_HANDLE) {
-                LOG_INFO("Client app socket closed for writing");
-                return 0;
-            }
-            LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
+        write_ret = write_to_socket(message, args);
+        if (write_ret < 0) {
             return -1;
+        } else if (write_ret > 0) {
+            return 0;
         }
-#else
-        if ((wrote_chars = write(args->write_socket_fd, message, (int) strlen(message))) < 0) {
-            if (errno == EBADF) {
-                LOG_INFO("Client app socket closed for writing");
-                return 0;
-            }
-            LOG_ERROR("write window event to client app socket failed: errno %d", errno);
-            return -1;
-        }
-#endif
     }
 
     if (event->type == SDL_QUIT || event->type == SDL_APP_TERMINATING) {
@@ -394,6 +411,24 @@ int resizing_event_watcher(void* data, SDL_Event* event) {
     return 0;
 }
 
+void focus_window(SDL_Window* window_to_focus) {
+    SDL_RestoreWindow(window_to_focus);
+    SDL_RaiseWindow(window_to_focus);
+#ifdef _WIN32
+    SDL_SysWMinfo window_info;
+    SDL_VERSION(&window_info.version);
+    if (SDL_GetWindowWMInfo(window_to_focus, &window_info)) {
+        HWND window_handle = window_info.info.win.window;
+        SetWindowPos(window_handle, HWND_TOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(window_handle, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetWindowPos(window_handle, HWND_TOP, 0, 0, 0, 0, SWP_ASYNCWINDOWPOS | SWP_NOMOVE | SWP_NOSIZE);
+        SetForegroundWindow(window_handle);
+    } else {
+        LOG_ERROR("SDL_GetWindowWMInfo failed with error %s", SDL_GetError());
+    }
+#endif
+}
+
 int share_client_window_events(void* opaque) {
     /*
         Creates a socket between the client app and the desktop protocol
@@ -480,14 +515,22 @@ int share_client_window_events(void* opaque) {
             char* window_status = safe_strtok(NULL, ":", &strtok_saveptr);
             if (window_status) {
                 if (!strncmp(window_status, "MINIMIZE", 8)) {
-                    SDL_MinimizeWindow((SDL_Window*) window);
+                    if ((SDL_GetWindowFlags((SDL_Window*) window) & SDL_WINDOW_MINIMIZED) == 0) {
+                        SDL_MinimizeWindow((SDL_Window*) window);
+                    }
                 } else if (!strncmp(window_status, "FOCUS", 5)) {
-#ifdef _WIN32
-                    // a crappy yet effective way to make Windows allow this window to take focus
-                    SDL_MinimizeWindow((SDL_Window*) window);
-#endif
-                    SDL_RestoreWindow((SDL_Window*) window);
-                    SDL_RaiseWindow((SDL_Window*) window);
+                    focus_window((SDL_Window*) window);
+                } else if (!strncmp(window_status, "TOGGLE_COMPLETE", 15)) {
+                    SDL_Delay(1); // this allows a focus window event, if any, to be processed first
+                    if (toggling) {
+                        LOG_INFO("TOGGLE_COMPLETE: BRING WINDOW TO FRONT... setting toggling to false");
+                        toggling = false;
+                        focus_window((SDL_Window*) window);
+                    }
+                } else if (!strncmp(window_status, "TOGGLE", 6)) {
+                    toggling = true;
+                    LOG_INFO("WRITING TOGGLE_ACK");
+                    write_to_socket("client:TOGGLE_ACK\n", watcher_args);
                 } else if (!strncmp(window_status, "QUIT", 4)) {
                     SDL_Event quit_event;
                     quit_event.type = SDL_QUIT;
