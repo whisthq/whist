@@ -1,22 +1,20 @@
-# workflows/main-webserver-resource-cleanup.yml
+# workflows/main-webserver-hanging-resource-notification.yml
 #
-# Main Webserver: Resource Cleanup
-# Check for Dangling Auto-Scaling Groups and Clusters
+# Main Webserver: Hanging Resource Notification
+# Checks for Dangling Auto-Scaling Groups, Clusters, and Packer Build Instances
 
-name: "Main Webserver: Resource Cleanup"
-
+name: "Main Webserver: Hanging Resource Notification"
 on:
     push:
         branches:
             - mia/main-webserver/hanging-resource-alerts
     # schedule:
-    #     - cron: "0 0 * * *" # runs at the end of each day
+    #     - cron: "0 0 * * *" # runs at 11am each day
 
 jobs:
-    main-webserver-resource-cleanup:
-        name: Main Webserver Resource Cleanup
+    main-webserver-hanging-resource-notification:
+        name: Main Webserver Hanging Resource Notification
         runs-on: ubuntu-20.04
-
         strategy:
             matrix:
                 aws-region:
@@ -35,6 +33,40 @@ jobs:
             db_url_staging: "https://staging-database.fractal.co/v1/graphql"
             db_url_prod: "https://prod-database.fractal.co/v1/graphql"
         
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Check for Resources and Notify in Slack if they Exist
+              working-directory: .github\workflows\helpers\aws
+              run: |
+                  hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
+                                          ${{ env.db_url_dev}} \
+                                          ${{ env.db_url_staging}} \
+                                          ${{ env.db_url_prod}} \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
+                                      | sed 's/[][]//g')
+                  echo $hanging_resource
+
+                  # notify slack if there are hanging resources
+                  if [ ! -z "$hanging_resource" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
+
+    main-webserver-hanging-packer-instance-notification :
+        name: Main Webserver AWS Packer Instance Notification
+        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -64,24 +96,3 @@ jobs:
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
-
-            - name: Check for Hanging ASGs and Clusters and Notify in Slack if There Are Any
-              working-directory: .github/workflows/helpers/aws
-              run: |
-                  hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
-                                          ${{ env.db_url_dev}} \
-                                          ${{ env.db_url_staging}} \
-                                          ${{ env.db_url_prod}} \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
-                                      | sed 's/[][]//g')
-                  echo $hanging_resource
-
-                  # notify slack if there are hanging resources
-                  if [ ! -z "$hanging_resource" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
-
