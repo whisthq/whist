@@ -27,19 +27,19 @@ set -Eeuo pipefail
 
 case "$1" in
     "web")
-	if [ -n "$HOT_RELOAD" ]; then
-	    FLASK_ENV=development flask run --host "0.0.0.0" --port "$PORT"
-	else
-	    waitress-serve --port="$PORT" --url-scheme=https entry:app
-	fi ;;
+        if [ -n "$HOT_RELOAD" ]; then
+            FLASK_ENV=development flask run --host "0.0.0.0" --port "$PORT"
+        else
+            waitress-serve --port="$PORT" --url-scheme=https entry:app
+        fi
+        ;;
     "celery")
-	# The two containers share the same requirements.txt file, but we only
-	# want the watchmedo utility to be installed in the Celery container.
-	$([ -n "$HOT_RELOAD" ] && \
-	      (pip install watchdog[watchmedo] >&2
-	       echo "watchmedo auto-restart -R -d . --")) \
-		   celery --app entry.celery worker --pool gevent \
-		   --concurrency $NUM_WORKERS;;
-    *) echo "Specify either 'web' or 'celery' to determine what this" \
-	    "instance will manifest as." ;;
+        # The two containers share the same requirements.txt file, but we only
+        # want the watchmedo utility to be installed in the Celery container.
+        $([ -n "$HOT_RELOAD" ] && (pip install watchdog[watchmedo] >&2 echo "watchmedo auto-restart -R -d . --")) \
+        celery --app entry.celery worker --pool gevent --concurrency $NUM_WORKERS
+        ;;
+    *)
+        echo "Specify either 'web' or 'celery' to determine what this instance will manifest as."
+        ;;
 esac

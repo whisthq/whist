@@ -13,17 +13,17 @@ echo "Downloading Protocol Libraries"
 
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    CYGWIN*)      OS="Windows";;
-    MINGW*)       OS="Windows";;
-    *Microsoft*)  OS="Windows";;
+    CYGWIN*)      OS="Windows" ;;
+    MINGW*)       OS="Windows" ;;
+    *Microsoft*)  OS="Windows" ;;
     Linux*)
         if grep -qi Microsoft /proc/version; then
-                  OS="Windows+Linux"
+            OS="Windows+Linux"
         else
-                  OS="Linux"
-        fi;;
-    Darwin*)      OS="Mac";;
-    *)            echo "Unknown Machine: ${unameOut}" && exit 1;;
+            OS="Linux"
+        fi ;;
+    Darwin*)      OS="Mac" ;;
+    *)            echo "Unknown Machine: ${unameOut}" && exit 1 ;;
 esac
 
 ###############################
