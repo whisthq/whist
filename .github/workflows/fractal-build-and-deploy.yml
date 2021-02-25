@@ -983,16 +983,7 @@ jobs:
                 client-applications-notify-slack,
             ]
         if: >
-            always() &&
-            needs.fractal-publish-build-config.result == 'success' &&
-            (needs.fractal-start-webserver-maintenance-mode.result == 'skipped' || needs.fractal-start-webserver-maintenance-mode.result == 'success') &&
-            (needs.container-images-publish-images-ghcr.result == 'skipped' || needs.container-images-publish-images-ghcr.result == 'success') &&
-            (needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'skipped' || needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success') &&
-            (needs.ecs-task-definitions-notify-slack.result == 'skipped' || needs.ecs-task-definitions-notify-slack.result == 'success') &&
-            (needs.ami-publish-ec2.result == 'skipped' || needs.ami-publish-ec2.result == 'success') &&
-            (needs.main-webserver-deploy-heroku.result == 'skipped' || needs.main-webserver-deploy-heroku.result == 'success') &&
-            (needs.client-applications-publish-build-s3.result == 'skipped' || needs.client-applications-publish-build-s3.result == 'success') &&
-            (needs.client-applications-notify-slack.result == 'skipped' || needs.client-applications-notify-slack.result == 'success')
+            !failure()
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
