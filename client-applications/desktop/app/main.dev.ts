@@ -14,6 +14,7 @@ import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import { FractalIPC } from "./shared/types/ipc"
+import Store from "electron-store"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -22,6 +23,9 @@ if (process.env.NODE_ENV === "production") {
         release: `client-applications@${app.getVersion()}`,
     })
 }
+
+// Initialize electron-store https://github.com/sindresorhus/electron-store#initrenderer
+Store.initRenderer()
 
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
@@ -63,6 +67,7 @@ const createWindow = async () => {
             webPreferences: {
                 nodeIntegration: true,
                 enableRemoteModule: true,
+                contextIsolation: false,
             },
         })
     } else if (os.platform() === "darwin") {
@@ -74,6 +79,7 @@ const createWindow = async () => {
             webPreferences: {
                 nodeIntegration: true,
                 enableRemoteModule: true,
+                contextIsolation: false,
             },
         })
     } else {
@@ -87,6 +93,7 @@ const createWindow = async () => {
             webPreferences: {
                 nodeIntegration: true,
                 enableRemoteModule: true,
+                contextIsolation: false,
             },
             icon: path.join(__dirname, "/build/icon.png"),
             transparent: true,
