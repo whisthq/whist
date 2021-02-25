@@ -164,12 +164,12 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[fractal-start-webserver-maintenance-mode]="fractal-config"
+                  job_dependencies[fractal-start-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
-                  job_dependencies[fractal-end-webserver-maintenance-mode]="web-maintenance fractal-config"
+                  job_dependencies[fractal-end-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -264,7 +264,7 @@ jobs:
 
                     # Notify slack of failure
                     curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow ${{ github.run_id }}. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     
                     exit 1
@@ -277,7 +277,7 @@ jobs:
 
                   curl -X POST \
                   --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow ${{ github.run_id }}.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
@@ -983,8 +983,6 @@ jobs:
                 client-applications-notify-slack,
             ]
         if: >
-            # this makes it so the job can be triggered independently
-            # failures on any dependencies will still stop this from being run
             always() &&
             needs.fractal-publish-build-config.result == 'success' &&
             (needs.fractal-start-webserver-maintenance-mode.result == 'skipped' || needs.fractal-start-webserver-maintenance-mode.result == 'success') &&
@@ -1017,7 +1015,7 @@ jobs:
 
                     # Notify slack of failure
                     curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow ${{ github.run_id }}. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
                     exit 1
@@ -1028,5 +1026,5 @@ jobs:
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow ${{ github.run_id }}.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
