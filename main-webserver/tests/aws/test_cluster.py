@@ -2,6 +2,8 @@
 
 import uuid
 
+from collections import namedtuple
+
 import boto3
 import pytest
 
@@ -15,6 +17,85 @@ from app.models import ClusterInfo, db
 
 from ..patches import function
 
+_Stack = namedtuple(
+    "_Stack",
+    ("cluster", "capacity_provider", "autoscaling_group", "launch_configuration", "region"),
+)
+
+
+class Stack(_Stack):
+    """Represents an ECS stack.
+
+    Attributes:
+        autoscaling_group: The short name of the capacity provider's auto-scaling group as a
+            string.
+        capacity_provider: The short name of the cluster's capacity provider as a string.
+        cluster: The short name of the ECS cluster as a string.
+        launch_configuration: The short name of the auto-scaling group's launch configuration as a
+            string.
+    """
+
+    @classmethod
+    def of(cls, cluster, region):
+        """Query ECS for the names of the remaining members of a particular cluster's ECS stack.
+
+        This is not a particularly well-error-handled constructor method.
+
+        Args:
+            cluster: The short name of the cluster whose stack is to be represented as a string.
+            region: The region in which the cluster is located as a string (e.g. "us-east-1").
+
+        Returns:
+            An instance of the Stack class representing the specified cluster's ECS stack.
+        """
+
+        ecs_client = boto3.client("ecs", region_name=region)
+        cluster_data = ecs_client.describe_clusters(clusters=(cluster,))
+        capacity_provider = cluster_data["clusters"][0]["capacityProviders"][0]
+        capacity_provider_data = ecs_client.describe_capacity_providers(
+            capacityProviders=(capacity_provider,)
+        )
+        _, autoscaling_group = capacity_provider_data["capacityProviders"][0][
+            "autoScalingGroupProvider"
+        ]["autoScalingGroupArn"].rsplit("/", maxsplit=1)
+        launch_configuration = autoscaling.get_launch_configuration(autoscaling_group, region)
+
+        return cls(cluster, capacity_provider, autoscaling_group, launch_configuration, region)
+
+    @property
+    def exists(self):
+        """Indicate whether or not teardown of all members of the stack has begun.
+
+        This is also not a particularly well-error-handled method.
+
+        Returns:
+            True iff the teardown process has at least begun for every member of the stack.
+        """
+
+        autoscaling_client = boto3.client("autoscaling", region_name=self.region)
+        ecs_client = boto3.client("ecs", region_name=self.region)
+        clusters = ecs_client.describe_clusters(clusters=(self.cluster,))["clusters"]
+        capacity_providers = ecs_client.describe_capacity_providers(
+            capacityProviders=(self.capacity_provider,)
+        )["capacityProviders"]
+        autoscaling_groups = autoscaling_client.describe_auto_scaling_groups(
+            AutoScalingGroupNames=(self.autoscaling_group,)
+        )["AutoScalingGroups"]
+        launch_configurations = autoscaling_client.describe_launch_configurations(
+            LaunchConfigurationNames=(self.launch_configuration,)
+        )["LaunchConfigurations"]
+
+        return (
+            (clusters and clusters[0]["status"] not in ("DEPROVISIONING", "INACTIVE"))
+            or (
+                capacity_providers
+                and capacity_providers[0]["updateStatus"]
+                not in ("DELETE_COMPLETE", "DELETE_IN_PROGRESS")
+            )
+            or (autoscaling_groups and "Status" not in autoscaling_groups[0])
+            or launch_configurations
+        )
+
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
@@ -24,6 +105,7 @@ def test_lifecycle(region):
 
     cluster_name = f"test-cluster-{uuid.uuid4()}"
     ecs_client = boto3.client("ecs", region_name=region)
+    exception = None
 
     create_new_cluster.delay(
         cluster_name=cluster_name, region_name=region, max_size=0, ami=None
@@ -32,27 +114,28 @@ def test_lifecycle(region):
     # Make sure the cluster actually got created.
     cluster = ClusterInfo.query.filter_by(cluster=cluster_name, location=region).one()
 
-    assert ecs_client.describe_clusters(clusters=(cluster_name,))[
-        "clusters"
-    ], f"Failed to create {cluster_name} in {region}"
+    # Prevent poor error handling from breaking the test.
+    try:
+        stack = Stack.of(cluster_name, region)
+    except Exception as exc:
+        exception = exc
 
     delete_cluster.delay(cluster, force=False).get()
     db.session.expunge(cluster)
 
-    # Make sure the cluster was actually deleted. The list of clusters returned by this request
-    # should either be empty or contain a single cluster. If the list is empty, the cluster has
-    # been deleted. If the list is non-empty, the only cluster in the list should be in one of the
-    # "DEPROVISIONING" or "INACTIVE" states.
-    clusters = ecs_client.describe_clusters(clusters=(cluster_name,))["clusters"]
-
-    assert len(clusters) in (0, 1)  # Sanity check
-
-    if len(clusters) == 1:
-        assert clusters[0]["clusterName"] == cluster_name
-        assert clusters[0]["status"] in ("DEPROVISIONING", "INACTIVE")
-
     with pytest.raises(NoResultFound):
         ClusterInfo.query.filter_by(cluster=cluster_name, location=region).one()
+
+    # Prevent poor error handling from breaking the test.
+    try:
+        assert not stack.exists
+    except Exception as exc:
+        # Chain exceptions together manually.
+        exc.__context__ = exception
+        exception = exc
+
+    if exception:
+        raise exception
 
 
 @pytest.mark.usefixtures("celery_app")
