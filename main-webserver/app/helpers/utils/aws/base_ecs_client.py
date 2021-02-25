@@ -802,7 +802,7 @@ class ECSClient:
         resp = response["tasks"][offset]
         # if the container is stopped, it's broken -- raise an exception
         if resp["lastStatus"] == "STOPPED":
-            raise ContainerBrokenException(saferepr(resp))
+            raise ContainerBrokenException(saferepr(response))
         if resp["lastStatus"] == "RUNNING":
             try:
                 container_instance = resp["containerInstanceArn"]
