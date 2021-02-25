@@ -1000,7 +1000,7 @@ jobs:
               uses: actions/checkout@v2
 
             - name: End webserver maintenance mode
-              working-directory: main-webserver`
+              working-directory: main-webserver
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
