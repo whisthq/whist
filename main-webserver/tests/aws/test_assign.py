@@ -90,6 +90,7 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             authorized = make_authorized_user(
                 stripe_customer_id="random1234",
                 created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+                domain="gmail.com",
             )
         else:
             # create a user with a timestamp of more than 7 days ago
@@ -97,6 +98,7 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
                 stripe_customer_id="random1234",
                 created_timestamp=dt.now(datetime.timezone.utc).timestamp()
                 - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
+                domain="gmail.com",
             )
 
         task = Object()

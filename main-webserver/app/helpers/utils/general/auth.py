@@ -195,8 +195,8 @@ def payment_required(func):
 
         current_user = get_jwt_identity()
 
-        # admin override
-        if current_app.config["DASHBOARD_USERNAME"] not in current_user:
+        # admin/developer override
+        if not check_developer():
 
             user = User.query.get(current_user)
             stripe_client = StripeClient(current_app.config["STRIPE_SECRET"])
