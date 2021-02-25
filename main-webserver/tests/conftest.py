@@ -244,6 +244,7 @@ def make_user():
         stripe_customer_id: Optional. The test user's Stripe customer ID.
         created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
             a timezone-aware time stamp. Defaults to the current time.
+        domain (Optional[str]): Which domain the user email address should be in.
 
     Returns:
         An instance of the User model.
@@ -286,6 +287,7 @@ def make_authorized_user(client, make_user, monkeypatch):
         stripe_customer_id: Optional. The test user's Stripe customer ID.
         created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
             a timezone-aware time stamp. Defaults to the current time.
+        domain (Optional[str]): Which domain the user email address should be in.
 
     Returns:
         An instance of the User model representing the authorized user.
