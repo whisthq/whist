@@ -26,8 +26,8 @@ jobs:
                     - eu-west-1
                     - eu-central-1
                 resource:
-                    - asgs
-                    - clusters
+                    - ASGs
+                    - Clusters
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
             db_url_staging: "https://staging-database.fractal.co/v1/graphql"
@@ -60,7 +60,7 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "$hanging_resource" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${resource}* in _${region}_: \`${hanging_resource}\`\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
@@ -92,7 +92,7 @@ jobs:
                   do 
                     if [ "$(echo $line | sed 's/.*- //')" = "running" ]; then
                         curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \'${line}\'\", \"icon_emoji\": \":fractal:\"}" \
+                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \`${line}\`\", \"icon_emoji\": \":fractal:\"}" \
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
