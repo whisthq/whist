@@ -991,6 +991,8 @@ jobs:
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
+                  # this only runs if there are no failures in the workflow so far
+                  # if there are, the webserver stays in maintenance mode
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
