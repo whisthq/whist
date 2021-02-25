@@ -6560,10 +6560,10 @@ etag@~1.8.1:
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha1-Qa4u62XvpiJorr/qg6x9eSmbCIc=
 
-eval@^0.1.5:
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/eval/-/eval-0.1.5.tgz#72a878737083edbd192bf6b0265689b86bdfa6aa"
-  integrity sha512-lI2uJc7qLCLUon2VQpl4ZQi5JvLkybD4fj1CII6Jszgte+fWRotYkFYj8v8urNkVvT1hsc638HLX8u5g3xlEzg==
+eval@^0.1.6:
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/eval/-/eval-0.1.6.tgz#9620d7d8c85515e97e6b47c5814f46ae381cb3cc"
+  integrity sha512-o0XUw+5OGkXw4pJZzQoXUk+H87DHuC+7ZE//oSrRGtatTmr12oTnLfg6QOq9DyTt0c/p4TwzgmkKrBzWTSizyQ==
   dependencies:
     require-like ">= 0.1.1"
 
