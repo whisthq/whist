@@ -5,11 +5,8 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    push:
-        branches:
-            - mia/main-webserver/hanging-resource-alerts
-    # schedule:
-    #     - cron: "0 0 * * *" # runs at 11am each day
+    schedule:
+        - cron: "0 11 * * *" # runs at 11am each day
 
 jobs:
     main-webserver-hanging-resource-notification:
