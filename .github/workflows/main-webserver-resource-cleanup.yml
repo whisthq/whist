@@ -16,12 +16,24 @@ jobs:
     main-webserver-resource-cleanup:
         name: Main Webserver Resource Cleanup
         runs-on: ubuntu-20.04
+
+        strategy:
+            matrix:
+                aws-region:
+                    - us-east-1
+                    - us-east-2
+                    - us-west-1
+                    - us-west-2
+                    - ca-central-1
+                    - eu-west-1
+                    - eu-central-1
+                resource:
+                    - asgs
+                    - clusters
         env:
-            regions="us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-central-1 eu-west-1"
-            resources="asgs clusters"
-            db_url_dev="https://dev-database.fractal.co/v1/graphql"
-            db_url_staging="https://staging-database.fractal.co/v1/graphql"
-            db_url_prod="https://prod-database.fractal.co/v1/graphql"
+            db_url_dev: "https://dev-database.fractal.co/v1/graphql"
+            db_url_staging: "https://staging-database.fractal.co/v1/graphql"
+            db_url_prod: "https://prod-database.fractal.co/v1/graphql"
         
         steps:
             - name: Checkout Git Repository
@@ -56,26 +68,20 @@ jobs:
             - name: Check for Hanging ASGs and Clusters and Notify in Slack if There Are Any
               working-directory: .github/workflows/helpers/aws
               run: |
-                  for region in ${{ env.regions }}
-                  do
-                    echo $region
-                    for resource in ${{ env.resources }}
-                    do
-                        echo $resource
-                        hanging_resource=$(python resource_cleanup.py $resource $region \
-                                                ${{ env.db_url_dev}} \
-                                                ${{ env.db_url_staging}} \
-                                                ${{ env.db_url_prod}} \
-                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
-                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
-                                            | sed 's/[][]//g')
-                        echo $hanging_resource
-                        
-                        # notify slack if there are hanging resources
-                        if [ ! -z "$hanging_resource" ]; then
-                            curl -X POST \
-                            --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
-                            ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                        fi
-                  done
+                  hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
+                                          ${{ env.db_url_dev}} \
+                                          ${{ env.db_url_staging}} \
+                                          ${{ env.db_url_prod}} \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
+                                      | sed 's/[][]//g')
+                  echo $hanging_resource
+
+                  # notify slack if there are hanging resources
+                  if [ ! -z "$hanging_resource" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
+
