@@ -6,17 +6,32 @@
 name: "Main Webserver: Resource Cleanup"
 
 on:
-    schedule:
-        - cron: "0 0 * * *" # runs at the end of each day
+    push:
+        branches:
+            - mia/main-webserver/hanging-resource-alerts
+    # schedule:
+    #     - cron: "0 0 * * *" # runs at the end of each day
 
 jobs:
     main-webserver-resource-cleanup:
         name: Main Webserver Resource Cleanup
         runs-on: ubuntu-20.04
+        env:
+            regions="us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-central-1 eu-west-1"
+            resources="asgs clusters"
+            db_url_dev="https://dev-database.fractal.co/v1/graphql"
+            db_url_staging="https://staging-database.fractal.co/v1/graphql"
+            db_url_prod="https://prod-database.fractal.co/v1/graphql"
+        
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-            - uses: actions/setup-python@v1
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -24,7 +39,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Dangling Packer Instances
+            - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
               working-directory: main-webserver
               run: |
                   pip install aws-hashicorp-packer-reaper
@@ -33,34 +48,34 @@ jobs:
                   do 
                     if [ "$(echo $line | sed 's/.*- //')" = "running" ]; then
                         curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: ${line}\", \"icon_emoji\": \":fractal:\"}" \
+                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \'${line}\'\", \"icon_emoji\": \":fractal:\"}" \
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
-              #   aws-hashicorp-packer-reaper terminate --older-than 1s
 
-            - name: Check for Hanging ASGs and Clusters
-              working-directory: .github/workflows
+            - name: Check for Hanging ASGs and Clusters and Notify in Slack if There Are Any
+              working-directory: .github/workflows/helpers/aws
               run: |
-                  regions="us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-central-1 eu-west-1"
-                  for region in $regions
+                  for region in ${{ env.regions }}
                   do
                     echo $region
-                    hanging_clusters=$(python helpers/resource_cleanup.py "clusters" $region "https://dev-database.fractal.co/v1/graphql" "https://staging-database.fractal.co/v1/graphql" "https://prod-database.fractal.co/v1/graphql" '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' | sed 's/[][]//g')
-                    echo $hanging_clusters
-                    # notify slack if there are hanging ASGs
-                    if [ ! -z "$hanging_clusters" ]; then
-                        curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Clusters in ${region}: ${hanging_clusters}\", \"icon_emoji\": \":fractal:\"}" \
-                        ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                    fi
-
-                    hanging_asgs=$(python helpers/resource_cleanup.py "asgs" $region "https://dev-database.fractal.co/v1/graphql" "https://staging-database.fractal.co/v1/graphql" "https://prod-database.fractal.co/v1/graphql" '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' | sed 's/[][]//g')
-                    echo $hanging_asgs
-                    # notify slack if there are hanging ASGs
-                    if [ ! -z "$hanging_asgs" ]; then
-                        curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ASGs in ${region}: ${hanging_asgs}\", \"icon_emoji\": \":fractal:\"}" \
-                        ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                    fi
+                    for resource in ${{ env.resources }}
+                    do
+                        echo $resource
+                        hanging_resource=$(python resource_cleanup.py $resource $region \
+                                                ${{ env.db_url_dev}} \
+                                                ${{ env.db_url_staging}} \
+                                                ${{ env.db_url_prod}} \
+                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
+                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
+                                                '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
+                                            | sed 's/[][]//g')
+                        echo $hanging_resource
+                        
+                        # notify slack if there are hanging resources
+                        if [ ! -z "$hanging_resource" ]; then
+                            curl -X POST \
+                            --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging ${resource} in ${region}: \'${hanging_resource}\'\", \"icon_emoji\": \":fractal:\"}" \
+                            ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                        fi
                   done
