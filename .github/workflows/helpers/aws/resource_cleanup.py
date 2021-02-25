@@ -112,9 +112,9 @@ def main():
     urls = sys.argv[3:6]
     secrets = sys.argv[6:9]
 
-    if component == "asgs":
+    if component == "ASGs":
         print([str(x) for x in get_hanging_asgs(region)])
-    elif component == "clusters":
+    elif component == "Clusters":
         print([str(x) for x in get_hanging_clusters(urls, secrets, region)])
 
 if __name__ == "__main__":
