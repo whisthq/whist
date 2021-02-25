@@ -59,7 +59,7 @@ typedef struct WindowControlArguments {
 #ifdef _WIN32
     HANDLE read_socket_fd;
     HANDLE write_socket_fd;
-#else
+#else  // UNIX
     int write_socket_fd;
 #endif
 } WindowControlArguments;
@@ -135,7 +135,7 @@ int write_to_socket(const char* message, WindowControlArguments* args) {
         LOG_ERROR("WriteFile window event to client app socket failed: errno %d", GetLastError());
         return -1;
     }
-#else
+#else  // UNIX
     int wrote_chars;
     if ((wrote_chars = write(args->write_socket_fd, message, (int)strlen(message))) < 0) {
         if (errno == EBADF) {
@@ -233,8 +233,8 @@ int window_control_event_watcher(void* data, SDL_Event* event) {
 #ifdef _WIN32
         CloseHandle(args->write_socket_fd);
         CloseHandle(args->read_socket_fd);
-#else
-        // use the same fd for R/W on Unix
+#else  // UNIX
+       // use the same fd for R/W on Unix
         close(args->write_socket_fd);
 #endif
     }
@@ -474,7 +474,7 @@ int share_client_window_events(void* opaque) {
     const char* socket_path = "\\\\.\\pipe\\fractal-client.sock";
     HANDLE socket_fd;
     DWORD read_chars;
-#else
+#else  // UNIX
     const char* socket_path = "fractal-client.sock";  // max 127 char length
     int socket_fd;
     int read_chars;
@@ -488,7 +488,7 @@ int share_client_window_events(void* opaque) {
     if (socket_fd == INVALID_HANDLE_VALUE) {
         LOG_ERROR("CreateFileA error in share_client_window_events: %d", GetLastError());
     }
-#else
+#else  // UNIX
     if ((socket_fd = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
         LOG_ERROR("socket error in share_client_window_events: %d", errno);
         return -1;
@@ -513,7 +513,7 @@ int share_client_window_events(void* opaque) {
         CreateFileA(socket_path, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
                     OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
     watcher_args->read_socket_fd = socket_fd;
-#else
+#else  // UNIX
     watcher_args->write_socket_fd = socket_fd;
 #endif
     SDL_AddEventWatch(window_control_event_watcher, watcher_args);
@@ -523,7 +523,7 @@ int share_client_window_events(void* opaque) {
 #ifdef _WIN32
     while ((successful_read = ReadFile(socket_fd, buf, sizeof(buf), &read_chars, NULL)) == true &&
            read_chars > 0) {
-#else
+#else  // UNIX
     while ((read_chars = read(socket_fd, buf, sizeof(buf))) > 0) {
 #endif
         char* strtok_saveptr;
@@ -571,7 +571,7 @@ int share_client_window_events(void* opaque) {
             LOG_ERROR("ReadFile error in share_client_window_events, errno: %d", GetLastError());
             return -1;
         }
-#else
+#else  // UNIX
         if (errno == EBADF) {
             LOG_INFO("Client app socket closed for reading");
         } else {
@@ -583,7 +583,7 @@ int share_client_window_events(void* opaque) {
 #ifdef _WIN32
         CloseHandle(socket_fd);
         CloseHandle(watcher_args->write_socket_fd);
-#else
+#else  // UNIX
         close(socket_fd);
 #endif
     }
