@@ -45,7 +45,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Check for Resources and Notify in Slack if they Exist
-              working-directory: .github\workflows\helpers\aws
+              working-directory: .github/workflows/helpers/aws
               run: |
                   hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
                                           ${{ env.db_url_dev}} \
