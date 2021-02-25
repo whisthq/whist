@@ -32,7 +32,7 @@ jobs:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
             db_url_staging: "https://staging-database.fractal.co/v1/graphql"
             db_url_prod: "https://prod-database.fractal.co/v1/graphql"
-        
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -64,7 +64,7 @@ jobs:
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
-    main-webserver-hanging-packer-instance-notification :
+    main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
         runs-on: ubuntu-20.04
         steps:
