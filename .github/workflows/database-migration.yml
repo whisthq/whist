@@ -74,6 +74,15 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              
+            - name: Log context
+              run: |
+                  echo "HEAD_REF:"
+                  echo ${{ github.head_ref }}
+                  echo "REF:"
+                  echo ${{ github.ref }}
+                  echo "BASE_REF:"
+                  echo ${{ github.base_ref }}
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
