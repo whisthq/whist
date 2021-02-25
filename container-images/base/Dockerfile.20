@@ -15,8 +15,6 @@ RUN apt-get update \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install systemd
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     systemd \
     systemd-sysv \
@@ -44,8 +42,6 @@ RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
 
 # Install some useful utilities and their dependencies for debugging/testing
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     liblua5.2-0 \
     libsmbclient \
@@ -66,8 +62,6 @@ RUN apt-get install --no-install-recommends -y \
 
 # Install X Server and window manager dependencies and basic Ubuntu packages
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     lsb-release \
     ufw \
@@ -102,8 +96,6 @@ RUN apt-get install --no-install-recommends -y \
 
 # Install FFmpeg and Libav dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     libavcodec58 \
     libavdevice58 \
@@ -147,8 +139,6 @@ RUN apt-get install --no-install-recommends -y \
 
 # Install Pulse Audio & XDummy dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     libunwind8 \
     xserver-xorg-core-hwe-18.04 \
@@ -171,8 +161,6 @@ RUN apt-get install --no-install-recommends -y \
 
 # Install Nvidia CUDA Drivers dependencies explicitly
 # These packages need to be installed before installing/updating Python
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     pkg-config \
     screen-resolution-extra \
@@ -183,8 +171,6 @@ RUN apt-get install --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install general Ubuntu packages
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
     apt-utils \
     x11vnc \
@@ -206,17 +192,13 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
 # Install libinput driver for XServer input.
 # For some reason, this installation does not work if included with the previous
 # commands.
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
-RUN apt-get update && apt-get install --no-install-recommends -y \
+RUN apt-get install --no-install-recommends -y \
     xserver-xorg-input-libinput \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install xterm dependencies explicitly
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libc6 \
     libfontconfig1 \
@@ -239,8 +221,6 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install xterm
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --allow-downgrades --no-install-recommends -y \
     xterm \
     && apt-get autoremove -y \
@@ -248,8 +228,6 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install time while avoiding interactive installation for tzdata - uses UTC
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 ENV LOCAL="yes"
 RUN apt-get install --no-install-recommends -y \
     tzdata \
@@ -282,8 +260,6 @@ RUN useradd --create-home fractal \
     && echo fractal:"${password}" | chpasswd
 
 # Install Pulse Audio
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     pulseaudio \
     && apt-get autoremove -y \
@@ -309,8 +285,6 @@ RUN chmod 600 -R /usr/share/fractal/
 
 
 # Install system FFmpeg
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     ffmpeg \
     libavcodec-dev \
@@ -327,8 +301,6 @@ RUN chmod +x /usr/share/fractal/entry.sh
 COPY config/fractal-display-config.env /usr/share/fractal
 
 # Install and enable OpenSSH
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     openssh-client \
     openssh-sftp-server \
@@ -378,8 +350,6 @@ RUN systemctl enable fractal-update-xorg-conf
 ENV DISPLAY :10
 
 # Install libraries for (limited) hardware acceleration
-# Note that all installations need to be prefixed by an `apt-get update` to
-# prevent certain errors.
 RUN apt-get install --no-install-recommends -y \
     vainfo \
     vdpauinfo \
