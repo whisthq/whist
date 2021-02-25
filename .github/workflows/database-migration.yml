@@ -75,6 +75,10 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               
+            - name: Random new step
+              run: |
+                  echo "RANDOM NEW STEP"
+              
             - name: Log context
               run: |
                   echo "HEAD_REF:"
