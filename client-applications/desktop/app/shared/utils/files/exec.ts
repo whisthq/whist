@@ -114,8 +114,8 @@ export const launchProtocol = async (
 
     const protocolArguments = [
         ...Object.entries(protocolFlags)
-            .filter(([_, arg]) => arg)
-            .map(([flag, _]) => `--${flag}`),
+            .filter(([_flag, arg]) => arg)
+            .map(([flag, _arg]) => `--${flag}`),
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
             .flat(),

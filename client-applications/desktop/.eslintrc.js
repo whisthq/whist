@@ -23,6 +23,8 @@ module.exports = {
         'no-shadow': 1,
         'react/jsx-props-no-spreading': 1,
         'import/no-named-as-default': 'off',
+        // anything beginning with an underscore is excused
+        '@typescript-eslint/no-unused-vars': [1, { argsIgnorePattern: "^_" }],
     },
     settings: {
         'import/resolver': {
