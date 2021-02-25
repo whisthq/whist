@@ -8,6 +8,7 @@
         "extends browserslist-config-erb"
     ],
     "build": {
+        "afterSign": "build/notarize.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
         "asar": true,
@@ -90,7 +91,7 @@
             ]
         },
         "publish": {
-            "bucket": "fractal-chromium-macos-dev",
+            "bucket": "PLACEHOLDER",
             "provider": "s3",
             "region": "us-east-1"
         },
