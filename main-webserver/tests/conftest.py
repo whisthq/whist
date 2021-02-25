@@ -253,9 +253,11 @@ def make_user():
     # can be deleted during this fixture's teardown phase.
     users = []
 
-    def _user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
+    def _user(
+        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
+    ):
         user = User(
-            user_id=f"test-user+{uuid.uuid4()}@fractal.co",
+            user_id=f"test-user+{uuid.uuid4()}@{domain}",
             password="",
             created_timestamp=created_timestamp,
             stripe_customer_id=stripe_customer_id,
@@ -289,10 +291,13 @@ def make_authorized_user(client, make_user, monkeypatch):
         An instance of the User model representing the authorized user.
     """
 
-    def _authorized_user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
+    def _authorized_user(
+        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
+    ):
         user = make_user(
             stripe_customer_id=stripe_customer_id,
             created_timestamp=created_timestamp,
+            domain=domain,
         )
         access_token = create_access_token(identity=user.user_id)
 
