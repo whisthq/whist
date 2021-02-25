@@ -97,18 +97,28 @@ export const launchProtocol = async (
         OperatingSystem.LINUX,
     ])
 
-    // Protocol arguments
+    // Protocol arguments that do not take parameters.
+    // e.g. `./FractalClient --read-pipe IP_ADDRESS`.
+    // `true` means to use it, `false` means to skip.
+    const protocolFlags = {
+        "skip-taskbar": true,
+        "read-pipe": true,
+    }
+
+    // Protocol arguments that do take parameters.
+    // e.g. `./FractalClient --icon /path/to/icon.png IP_ADDRESS`.
     const protocolParameters = {
         name: "Fractalized Chrome",
         icon: iconPath,
     }
 
     const protocolArguments = [
+        ...Object.entries(protocolFlags)
+            .filter(([_, arg]) => arg)
+            .map(([flag, _]) => `--${flag}`),
         ...Object.entries(protocolParameters)
             .map(([flag, arg]) => [`--${flag}`, arg])
             .flat(),
-        "--skip-taskbar",
-        "--read-pipe",
     ]
 
     // Starts the protocol
