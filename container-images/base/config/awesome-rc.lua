@@ -56,6 +56,24 @@ awful.mouse.snap.edge_enabled = true
 awful.mouse.snap.client_enabled = true
 awful.mouse.drag_to_tag.enabled = false
 
+-- Global keyboard shortcuts
+globalkeys = gears.table.join(
+    awful.key({ }, "XF86AudioPlay", function ()
+      awful.util.spawn("playerctl play-pause", { hidden = true })
+    end),
+    awful.key({ }, "XF86AudioPause", function ()
+      awful.util.spawn("playerctl play-pause", { hidden = true })
+    end),
+    awful.key({ }, "XF86AudioNext", function ()
+      awful.util.spawn("playerctl next", { hidden = true })
+    end),
+    awful.key({ }, "XF86AudioPrev", function ()
+      awful.util.spawn("playerctl previous", { hidden = true })
+    end)
+)
+root.keys(globalkeys)
+
+
 -- {{{ Wibar
 -- Create a wibox for each screen and add it
 local tasklist_buttons = gears.table.join(
@@ -94,6 +112,7 @@ awful.screen.connect_for_each_screen(function(s)
     }
 end)
 -- }}}
+
 
 clientkeys = gears.table.join(
     awful.key({ modkey,           }, "m",
@@ -143,6 +162,7 @@ clientbuttons = gears.table.join(
         end
     end)
 )
+
 
 -- {{{ Rules
 -- Rules to apply to new clients (through the "manage" signal).

@@ -4,19 +4,27 @@ set -Eeu
 # This script starts the AwesomeWM window manager inside the container, retrieves
 # the container ID and DPI, and starts the container's application (i.e. Google Chrome)
 
-# Install keymapping
+# Things running outside run_as_fractal are run as root.
+# Running with login means that we lose all environment variables, so we need to pass them in manually.
+run_as_fractal() {
+    runuser --login fractal -c \
+        'DISPLAY=:10 \
+        LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
+        LOCAL=yes \
+        LC_ALL=C \
+        PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+        DEBIAN_FRONTEND=noninteractive '"$1"''
+}
+
+# Install keymappings
 xmodmap /root/.Xmodmap
+
+# Start playerctl to respond to media keys
+run_as_fractal "playerctl daemon" &
 
 # Start the AwesomeWM window manager
 # Things running outside runuser are run as root
-runuser --login fractal -c \
-    'DISPLAY=:10 \
-	LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
-	LOCAL=yes \
-	LC_ALL=C \
-	PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-	DEBIAN_FRONTEND=noninteractive \
-    awesome' &
+run_as_fractal "awesome" &
 
 # Retrieve container parameters
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
@@ -38,12 +46,4 @@ done
 rm $USER_CONFIGS_DIR/.configready
 
 # Start the application that this container runs
-# Running with login means that we lose all environment variables, so we need to pass them in manually
-exec runuser --login fractal -c \
-    'DISPLAY=:10 \
-	LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
-	LOCAL=yes \
-	LC_ALL=C \
-	PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-	DEBIAN_FRONTEND=noninteractive \
-    fractal-application'
+run_as_fractal fractal-application

@@ -85,9 +85,9 @@ RUN apt-get install --no-install-recommends -y \
     xinput \
     evtest \
     dkms \
-    i3 \
     awesome \
     awesome-extra \
+    playerctl \
     lxappearance \
     xinit \
     materia-gtk-theme \
