@@ -800,7 +800,10 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
-        if resp["lastStatus"] == "RUNNING" or resp["lastStatus"] == "STOPPED":
+        # if the container is stopped, it's broken -- raise an exception
+        if resp["lastStatus"] == "STOPPED":
+            raise ContainerBrokenException(saferepr(resp))
+        if resp["lastStatus"] == "RUNNING":
             try:
                 container_instance = resp["containerInstanceArn"]
             except KeyError:
