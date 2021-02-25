@@ -158,7 +158,12 @@ void focus_window(SDL_Window* window_to_focus) {
             window_to_focus (SDL_Window*): pointer to the target window
     */
 
-    SDL_RestoreWindow(window_to_focus);
+    // If window is minimized, then restore it
+    if ((SDL_GetWindowFlags(window_to_focus) & SDL_WINDOW_MINIMIZED) != 0) {
+        SDL_RestoreWindow(window_to_focus);
+    }
+
+    // Bring window to front
     SDL_RaiseWindow(window_to_focus);
 
     // On Windows, focusing the window requires more manipulation of the window handle itself

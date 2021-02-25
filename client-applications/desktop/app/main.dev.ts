@@ -184,12 +184,12 @@ const createWindow = async () => {
                             const message = pair.message
                             if (sender === "client") {
                                 if (message === "MINIMIZE") {
-                                    if (mainWindow) {
+                                    if (mainWindow && mainWindow.isVisible()) {
                                         mainWindow.minimize()
                                     }
                                     protocolMinimized = true
                                 } else if (message === "FOCUS") {
-                                    if (mainWindow) {
+                                    if (mainWindow && mainWindow.isVisible()) {
                                         mainWindow.minimize()
                                     }
                                     protocolMinimized = false
