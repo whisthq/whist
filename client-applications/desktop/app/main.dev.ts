@@ -13,8 +13,8 @@ import path from "path"
 import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
-import { FractalIPC } from "./shared/types/ipc"
 import Store from "electron-store"
+import { FractalIPC } from "./shared/types/ipc"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
