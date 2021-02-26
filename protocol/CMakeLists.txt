@@ -293,9 +293,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 endif()
 
 # Tell CMake where to look for includes
-include_directories(fractal)
 include_directories(include)
-include_directories(include/SDL2)
 include_directories(sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt

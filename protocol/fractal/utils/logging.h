@@ -9,7 +9,8 @@
 Usage
 ============================
 We have several levels of logging.
-- NO_LOG: only log fatal errors. Fatal errors are irrecoverable and cause the protocol to immediately exit.
+- NO_LOG: only log fatal errors. Fatal errors are irrecoverable and cause the protocol to
+immediately exit.
 - ERROR_LEVEL: only log errors. Errors are conditions that necessarily
                imply that the protocol has done something wrong and must be fixed.
                However, Errors remain recoverable can the protocol can ignore them.
