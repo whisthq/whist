@@ -27,8 +27,8 @@ def mail_helper(email_id, from_email, to_email, email_args):
         mail_client.send_email(
             from_email=from_email, to_email=to_email, email_id=email_id, jinja_args=email_args
         )
-        return {"status": SUCCESS}
+        return {"verified": True, "status": SUCCESS}
     except SendGridException:
-        return {"status": BAD_REQUEST}
+        return {"verified": False, "status": BAD_REQUEST}
     except TemplateNotFound:
-        return {"status": BAD_REQUEST}
+        return {"verified": False, "status": BAD_REQUEST}
