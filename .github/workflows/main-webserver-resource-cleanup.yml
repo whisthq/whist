@@ -6,7 +6,7 @@
 name: "Main Webserver: Hanging Resource Notification"
 on:
     schedule:
-        - cron: "0 16 * * *" # runs at 11am each day
+        - cron: "0 16 * * *" # runs at 11am (EST/UTC+5) each day
 
 jobs:
     main-webserver-hanging-resource-notification:
