@@ -1,6 +1,6 @@
 from celery import current_app
 from flask import Blueprint, jsonify, make_response
-from flask_jwt_extended import jwt_optional
+from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.celery.dummy import dummy_task
@@ -17,7 +17,7 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 
 @celery_status_bp.route("/status/<task_id>", methods=["GET"])
 @fractal_pre_process
-@jwt_optional
+@jwt_required(optional=True)
 def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     try:
         result = current_app.AsyncResult(task_id)
