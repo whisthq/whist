@@ -1091,6 +1091,9 @@ void update_video() {
     }
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int32_t receive_video(FractalPacket* packet) {
     /*
         Receive video packet

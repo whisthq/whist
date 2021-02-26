@@ -115,6 +115,9 @@ void destroy_clipboard_synchronizer() {
     SDL_SemPost(clipboard_semaphore);
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
     /*
         When called, signal that the clipboard can be set to the given contents
