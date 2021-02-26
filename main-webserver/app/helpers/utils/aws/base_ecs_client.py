@@ -57,7 +57,6 @@ class ECSClient:
         starter_log_client (boto3.client): starter log client, used for mocking
         starter_ec2_client (boto3.client): starter log client, used for mocking
         starter_s3_client (boto3.client): starter s3 client, used for mocking
-        starter_ssm_client (boto3.client): starter ssm client, used for mocking
         starter_iam_client (boto3.client): starter iam client, used for mocking
         starter_auto_scaling_client (boto3.client): starter auto scaling client, used for mocking
     TODO: find ECS specific logs, if they exist -- right now logs are stdout and stderr
@@ -74,7 +73,6 @@ class ECSClient:
         starter_log_client=None,
         starter_ec2_client=None,
         starter_s3_client=None,
-        starter_ssm_client=None,
         starter_iam_client=None,
         starter_auto_scaling_client=None,
         grab_logs=True,
@@ -119,10 +117,6 @@ class ECSClient:
             self.s3_client = self.make_client("s3")
         else:
             self.s3_client = starter_s3_client
-        if starter_ssm_client is None:
-            self.ssm_client = self.make_client("ssm")
-        else:
-            self.ssm_client = starter_ssm_client
         if starter_iam_client is None:
             self.iam_client = self.make_client("iam")
         else:
@@ -426,34 +420,6 @@ class ECSClient:
         if container_arns:
             containers = self.get_container_instance_ids(cluster, container_arns)
             self.ec2_client.terminate_instances(InstanceIds=containers)
-
-    def exec_commands_on_containers(self, cluster, containers, commands):
-        """
-        Runs shell commands on the specified containers in the cluster
-        Args:
-            cluster (str): name of cluster
-            containers (List[str]): either the ARN or ec2 instance IDs of the containers
-            commands (List[str]): shell commands to run on the containers
-        """
-        resp = self.ssm_client.send_command(
-            DocumentName="AWS-RunShellScript",  # One of AWS' preconfigured documents
-            Parameters={"commands": commands},
-            InstanceIds=self.get_container_instance_ids(cluster, containers),
-            OutputS3Region=self.region_name,
-            OutputS3BucketName="fractal-container-outputs",
-        )
-        return resp
-
-    def exec_commands_all_containers(self, commands):
-        """
-        Runs shell commands on all containers in all clusters associated with current AWS account
-        Args:
-            commands (List[str]): shell commands to run on the containers
-        """
-        clusters = self.get_all_clusters()
-        for cluster in clusters:
-            containers = self.get_containers_in_cluster(cluster)
-            self.exec_commands_on_containers(cluster, containers, commands)
 
     def get_clusters_usage(self, clusters=None):
         """Fetch usage info of clusters.
@@ -891,24 +857,6 @@ class ECSClient:
 
         # let AWS info propagate
         time.sleep(10)
-
-    def spin_til_command_executed(self, command_id, time_delay=5):
-        """
-        spinpolls until command has been executed
-        Args:
-            command_id (str): the command to wait on
-            time_delay (int): how long to wait between polls, seconds
-        Returns:
-            bool: True if the command executed successfully
-        """
-        while True:
-            status = self.ssm_client.list_commands(CommandId=command_id)["Commands"][0]["Status"]
-            if status == "Success":
-                return True
-            if status == "Pending" or status == "InProgress":
-                time.sleep(time_delay)
-            else:
-                return False
 
     def spin_til_done(self, offset=0, time_delay=5):
         """
