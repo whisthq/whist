@@ -89,15 +89,15 @@ char* current_time_str() {
 #if defined(_WIN32)
     SYSTEMTIME time_now;
     GetSystemTime(&time_now);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%03i", time_now.wHour, time_now.wMinute,
-             time_now.wSecond, time_now.wMilliseconds);
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_now.wHour, time_now.wMinute,
+             time_now.wSecond, (long)time_now.wMilliseconds);
 #else
     struct tm* time_str_tm;
     struct timeval time_now;
     gettimeofday(&time_now, NULL);
 
     time_str_tm = gmtime(&time_now.tv_sec);
-    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i:%06li", time_str_tm->tm_hour,
+    snprintf(buffer, sizeof(buffer), "%02i:%02i:%02i.%06li", time_str_tm->tm_hour,
              time_str_tm->tm_min, time_str_tm->tm_sec, (long)time_now.tv_usec);
 #endif
 
