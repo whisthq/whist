@@ -77,7 +77,7 @@ typedef enum ClipboardType {
 typedef struct ClipboardData {
     int size;            // Number of bytes for the clipboard data
     ClipboardType type;  // The type of data for the clipboard
-    char data[1];         // The data that stores the clipboard information
+    char data[0];        // The data that stores the clipboard information
 } ClipboardData;
 
 /**
