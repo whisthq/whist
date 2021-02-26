@@ -319,6 +319,15 @@ void safe_SDL_LockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-na
     }
 }
 
+int safe_SDL_TryLockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    int status = SDL_TryLockMutex(mutex);
+    if (status == 0 && status == SDL_MUTEX_TIMEDOUT) {
+        return status;
+    } else {
+        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
+    }
+}
+
 void safe_SDL_UnlockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
     if (SDL_UnlockMutex(mutex) < 0) {
         LOG_FATAL("Failed to safe_SDL_UnlockMutex! %s", SDL_GetError());

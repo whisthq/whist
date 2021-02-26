@@ -653,22 +653,28 @@ int get_fmsg_size(FractalClientMessage* fmsg);
 NORETURN void terminate_protocol();
 
 /**
- * @brief                          Wrapper around malloc that will correctly exit the protocol when
- * malloc fails
+ * @brief                          Wrapper around malloc that will correctly exit the
+ *                                 protocol when malloc fails
  */
 void* safe_malloc(size_t size);
 
 /**
  * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
- * protocol when SDL_CreateMutex fails
+ *                                 protocol when SDL_LockMutex fails
  */
 SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
 
 /**
  * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
- * protocol when SDL_LockMutex fails
+ *                                 protocol when SDL_LockMutex fails
  */
 void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_TryLockMutex that will correctly exit the
+ *                                 protocol when SDL_TryLockMutex fails
+ */
+int safe_SDL_TryLockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
 
 /**
  * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
@@ -677,8 +683,8 @@ void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-nam
 void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
 
 /**
- * @brief                          Wrapper around SDL_CondWait that will correctly exit the protocol
- * when SDL_CondWait fails
+ * @brief                          Wrapper around SDL_CondWait that will correctly exit the
+ *                                 protocol when SDL_LockMutex fails
  */
 void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
 
