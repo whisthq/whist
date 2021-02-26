@@ -233,16 +233,6 @@ class LocalConfig(DeploymentConfig):
 
     config_table = "dev"
 
-    # When deploying the web server locally, a developer may want to connect to a local Postgres
-    # instance. The following lines allow developers to specify individual parts of the connection
-    # URI and to fill in the remaining values with reasonable defaults rather than requiring them
-    # to specify the whole thing.
-    db_host = property(getter("POSTGRES_HOST", default="localhost", fetch=False))
-    db_name = property(getter("POSTGRES_DB", default="postgres", fetch=False))
-    db_password = property(getter("POSTGRES_PASSWORD", fetch=False))
-    db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
-    db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
-
     # When deploying locally, allow developers to tune individual Redis connection parameters.
     redis_db = property(getter("REDIS_DB", default=0, fetch=False))
     redis_host = property(getter("REDIS_HOST", default="localhost", fetch=False))
