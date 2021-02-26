@@ -197,10 +197,10 @@ jobs:
             # the top of this file.
             - name: Send alerts on diff result
               shell: python3 {0}
+              if: ${{ github.event_name }} == "pull_request"
               run: |
                   import os
                   import sys
-
                   sys.path.append(os.environ["PATH_HELPERS"])
                   from notifications import (github_debug_once,
                                              github_info_once,
