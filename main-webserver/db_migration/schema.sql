@@ -1159,8 +1159,7 @@ ALTER SEQUENCE oauth.credentials_id_seq OWNED BY oauth.credentials.id;
 
 CREATE TABLE public.invites (
     user_id character varying NOT NULL,
-    access_granted boolean NOT NULL,
-    invite_code character varying NOT NULL,
+    access_granted boolean DEFAULT false NOT NULL,
     invites_remaining integer DEFAULT 2 NOT NULL,
     typeform_submitted boolean DEFAULT false NOT NULL
 );
@@ -1549,19 +1548,11 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: invites invites_invite_code_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.invites
-    ADD CONSTRAINT invites_invite_code_key UNIQUE (invite_code);
-
-
---
 -- Name: invites invites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.invites
-    ADD CONSTRAINT invites_pkey PRIMARY KEY (invite_code);
+    ADD CONSTRAINT invites_pkey PRIMARY KEY (user_id);
 
 
 --
