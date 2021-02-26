@@ -12,14 +12,12 @@ x-app: &base-app
 
 services:
   redis:
-    # Matches version being used by staging as of 2020-07-08
-    image: madflojo/redis-tls
+    # Matches version being used by dev as of 2021-02-26
+    image: redis:6.0.11
     ports:
       - "7810:6379" # Proxy redis on localhost:7810
     networks:
       - primary
-    volumes:
-      - ../dummy_certs:/certs
 
   postgres_db:
     image: postgres:12.5
@@ -37,7 +35,7 @@ services:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: rediss://redis
+      REDIS_URL: redis://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
     volumes:

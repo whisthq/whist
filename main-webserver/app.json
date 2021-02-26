@@ -3,7 +3,7 @@
     "review": {
       "addons": [
         {
-          "plan": "heroku-redis:premium-0",
+          "plan": "redisgreen:dev",
           "as": "REDIS"
         },
         {
@@ -35,7 +35,7 @@
     "test": {
       "addons": [
         {
-          "plan": "heroku-redis:in-dyno",
+          "plan": "redisgreen:minidev",
           "as": "REDIS"
         },
         {
