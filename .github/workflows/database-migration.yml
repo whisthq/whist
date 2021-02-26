@@ -75,6 +75,27 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Log GitHub context
+              shell: python3 {0}
+              run: |
+                  context = """
+                  GITHUB_BRANCH VARIABLE
+                  $GITHUB_BRANCH
+                  GITHUB CONTEXT
+                  ${{ toJSON(github) }}
+                  JOB CONTEXT
+                  ${{ toJSON(job) }}
+                  STEPS CONTEXT
+                  ${{ toJSON(steps) }}
+                  RUNNER CONTEXT
+                  ${{ toJSON(runner) }}
+                  STRATEGY CONTEXT
+                  ${{ toJSON(strategy) }}
+                  MATRIX CONTEXT
+                  ${{ toJSON(matrix) }}
+                  """
+                  print(context)
+
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
               with:
