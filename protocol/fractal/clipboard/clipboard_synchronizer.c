@@ -9,7 +9,7 @@
 Usage
 ============================
 
-initClipboardSynchronizer("76.106.92.11");
+initClipboardSynchronizer();
 
 ClipboardData server_clipboard;
 
@@ -53,16 +53,29 @@ clock last_clipboard_update;
 SDL_sem* clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
 ClipboardData* clipboard;
 SDL_Thread* clipboard_synchronizer_thread;
-static bool connected;
+static bool connected = false;
 
 bool pending_clipboard_push;
 
-bool is_clipboard_synchronizing() { return updating_clipboard; }
+bool is_clipboard_synchronizing() {
+    if (!connected) {
+        LOG_ERROR("Tried to is_clipboard_synchronizing, but the clipboard is not initialized");
+        return true;
+    }
+    return updating_clipboard;
+}
 
 void init_clipboard_synchronizer() {
     /*
         Initialize the clipboard and the synchronizer thread
     */
+
+    LOG_INFO("Initializing clipboard");
+
+    if (connected) {
+        LOG_ERROR("Tried to init_clipboard, but the clipboard is already initialized");
+        return;
+    }
 
     init_clipboard();
 
@@ -84,7 +97,18 @@ void destroy_clipboard_synchronizer() {
         Destroy the clipboard synchronizer
     */
 
+    LOG_INFO("Destroying clipboard");
+
+    if (!connected) {
+        LOG_ERROR("Tried to destroy_clipboard, but the clipboard is already destroyed");
+        return;
+    }
+
     connected = false;
+
+    if (updating_clipboard) {
+        LOG_FATAL("Trying to destroy clipboard while the clipboard is being updated");
+    }
 
     destroy_clipboard();
 
@@ -101,6 +125,11 @@ bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
         Returns:
             updatable (bool): whether the clipboard can be set right now
     */
+
+    if (!connected) {
+        LOG_ERROR("Tried to set_clipboard, but the clipboard is not initialized");
+        return false;
+    }
 
     if (updating_clipboard) {
         LOG_INFO("Tried to SetClipboard, but clipboard is updating");
@@ -125,6 +154,11 @@ ClipboardData* clipboard_synchronizer_get_new_clipboard() {
         Returns:
             cb (ClipboardData*): pointer to the current clipboard
     */
+
+    if (!connected) {
+        LOG_ERROR("Tried to get_new_clipboard, but the clipboard is not initialized");
+        return NULL;
+    }
 
     if (pending_clipboard_push) {
         pending_clipboard_push = false;

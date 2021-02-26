@@ -63,11 +63,11 @@ int discover_ports(bool *using_stun) {
 
     // Create TCP context
     SocketContext context;
-    LOG_INFO("using stun is %d", *using_stun);
+    LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
     if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT, *using_stun,
                            (char *)binary_aes_private_key) < 0) {
         *using_stun = !*using_stun;
-        LOG_INFO("using stun is updated to %d", *using_stun);
+        LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
         if (create_tcp_context(&context, server_ip, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
                                *using_stun, (char *)binary_aes_private_key) < 0) {
             LOG_WARNING("Failed to connect to server's discovery port.");
@@ -97,10 +97,10 @@ int discover_ports(bool *using_stun) {
         packet = read_tcp_packet(&context, true);
         SDL_Delay(5);
     } while (packet == NULL && get_timer(timer) < 5.0);
+    closesocket(context.s);
 
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
-        closesocket(context.s);
         return -1;
     }
 
@@ -112,10 +112,10 @@ int discover_ports(bool *using_stun) {
             "%d",
             sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
             packet->payload_size);
+        return -1;
     }
     if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
-        closesocket(context.s);
         return -1;
     }
 
@@ -126,7 +126,6 @@ int discover_ports(bool *using_stun) {
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
     if (reply_msg->client_id == -1) {
         LOG_ERROR("Not awarded a client id from server.");
-        closesocket(context.s);
         return -1;
     }
 
@@ -141,11 +140,8 @@ int discover_ports(bool *using_stun) {
 
     if (log_connection_id(reply_msg->connection_id) < 0) {
         LOG_ERROR("Failed to log connection ID.");
-        closesocket(context.s);
         return -1;
     }
-
-    closesocket(context.s);
 
     return 0;
 }

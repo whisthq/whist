@@ -41,7 +41,6 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
 typedef struct AudioContext {
-    SDL_mutex* mutex;
     SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
     int decoder_frequency;
@@ -79,8 +78,23 @@ static RenderContext volatile render_context;
 SDL_sem* render_semaphore = NULL;
 static bool volatile rendering = false;
 
-void init_audio_device() {
-    safe_SDL_LockMutex(audio_context.mutex);
+void destroy_audio_device() {
+    /*
+        Destroys the audio device
+    */
+    if (audio_context.dev) {
+        SDL_CloseAudioDevice(audio_context.dev);
+        audio_context.dev = 0;
+    }
+    if (audio_context.audio_decoder) {
+        destroy_audio_decoder(audio_context.audio_decoder);
+        audio_context.audio_decoder = NULL;
+    }
+}
+
+void reinit_audio_device() {
+    destroy_audio_device();
+
     // cast socket and SDL variables back to their data type for usage
     SDL_AudioSpec wanted_spec = {0}, audio_spec = {0};
     audio_context.decoder_frequency = audio_frequency;
@@ -102,36 +116,6 @@ void init_audio_device() {
     } else {
         SDL_PauseAudioDevice(audio_context.dev, 0);
     }
-    safe_SDL_UnlockMutex(audio_context.mutex);
-}
-
-void destroy_audio_device() {
-    /*
-        Destroys the audio device
-        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
-    */
-    safe_SDL_LockMutex(audio_context.mutex);
-    if (audio_context.dev) {
-        SDL_CloseAudioDevice(audio_context.dev);
-        audio_context.dev = 0;
-    }
-    if (audio_context.audio_decoder) {
-        destroy_audio_decoder(audio_context.audio_decoder);
-        audio_context.audio_decoder = NULL;
-    }
-    safe_SDL_UnlockMutex(audio_context.mutex);
-}
-
-unsigned int get_audio_device_queue() {
-    safe_SDL_LockMutex(audio_context.mutex);
-    int ret;
-    if (audio_context.dev) {
-        ret = SDL_GetQueuedAudioSize(audio_context.dev);
-    } else {
-        ret = 0;
-    }
-    safe_SDL_UnlockMutex(audio_context.mutex);
-    return ret;
 }
 
 int multithreaded_render_audio(void* opaque);
@@ -139,13 +123,9 @@ int multithreaded_render_audio(void* opaque);
 void init_audio() {
     /*
         Initialize the audio device
-        NOTE: Does not hold audio mutex! Must be held prior to calling this function!
     */
     if (!render_semaphore) {
         render_semaphore = SDL_CreateSemaphore(0);
-    }
-    if (!audio_context.mutex) {
-        audio_context.mutex = safe_SDL_CreateMutex();
     }
     start_timer(&nack_timer);
     for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
@@ -158,7 +138,10 @@ void init_audio() {
     SDL_CreateThread(multithreaded_render_audio, "render_audio", NULL);
 }
 
-void destroy_audio() { destroy_audio_device(); }
+void destroy_audio() {
+    destroy_audio_device();
+    SDL_DestroySemaphore(render_semaphore);
+}
 
 int multithreaded_render_audio(void* opaque) {
     UNUSED(opaque);
@@ -184,12 +167,13 @@ int multithreaded_render_audio(void* opaque) {
         }
 
         if (audio_refresh) {
-            destroy_audio_device();
-            init_audio_device();
+            // This gap between audio_refresh and audio_refresh=false creates a minor race
+            // condition with sdl_event_handler.c trying to refresh the audio when the audio
+            // device has changed.
             audio_refresh = false;
+            reinit_audio_device();
         }
 
-        safe_SDL_LockMutex(audio_context.mutex);
         if (render_context.encoded) {
             AVPacket encoded_packet;
             av_init_packet(&encoded_packet);
@@ -237,7 +221,6 @@ int multithreaded_render_audio(void* opaque) {
                 }
             }
         }
-        safe_SDL_UnlockMutex(audio_context.mutex);
         // No longer rendering audio
         rendering = false;
     }
@@ -247,15 +230,23 @@ void update_audio() {
     /*
         This function will create or reinit the audio device if needed,
         and it will play any queued audio packets.
-        This function will hold the audio mutex.
     */
+
     // If we're currently rendering an audio packet, don't update audio
     if (rendering) {
+        // Additionally, if rendering == true, the audio_context struct is being used,
+        // so a race condition will occur if call SDL_GetQueuedAudioSize at the same time
         return;
     }
 
+    int audio_device_queue = 0;
+    if (audio_context.dev) {
+        // If we have a device, get the queue size
+        audio_device_queue = (int)SDL_GetQueuedAudioSize(audio_context.dev);
+    }  // Otherwise, the queue size is 0
+
 #if LOG_AUDIO
-    LOG_DEBUG("Queue: %d", get_audio_device_queue());
+    LOG_DEBUG("Queue: %d", audio_device_queue);
 #endif
     bool still_more_audio_packets = true;
 
@@ -274,8 +265,6 @@ void update_audio() {
             }
         }
     }
-
-    unsigned int audio_device_queue = get_audio_device_queue();
 
     // Buffering audio controls whether or not we're trying to accumulate an audio buffer
     static bool buffering_audio = false;
@@ -329,7 +318,7 @@ void update_audio() {
             int real_limit =
                 audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-            if (audio_device_queue > (unsigned int)real_limit) {
+            if (audio_device_queue > real_limit) {
                 LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                             next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
                 // Clear out audio instead of playing it
