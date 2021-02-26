@@ -29,7 +29,6 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GITHUB_ISSUE: ${{ github.event.number }}
-            GITHUB_BRANCH: ${{ github.base_ref }}
             HEROKU_DB_KEY: "DATABASE_URL"
             HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
             SERVER_DEV: "fractal-dev-server"
@@ -74,6 +73,19 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+            # A non-pull_request event does not have a github.base_ref set
+            # We have to dig into the event object, which has a ref string
+            # such as "refs/heads/dev". We trim "refs/heads/" to get the
+            # substring that is the name of the branch.
+            - name: Set GITHUB_BRANCH environment variable
+              run: |
+                  if [ "${{ github.event_name }}" = "pull_request" ]; then
+                      echo "GITHUB_BRANCH=${{ github.base_ref }}" >> $GITHUB_ENV
+                  else
+                      ref="${{ github.event.ref }}"
+                      echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
+                  fi
 
             - name: Log GitHub context
               shell: python3 {0}
