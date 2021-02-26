@@ -14,11 +14,15 @@ on:
             - master
             - staging
             - dev
+        paths:
+            - main-webserver
     pull_request:
         branches:
             - master
             - staging
             - dev
+        paths:
+            - main-webserver
     workflow_dispatch:
 
 jobs:
