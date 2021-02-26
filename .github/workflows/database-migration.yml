@@ -15,18 +15,18 @@ on:
             - staging
             - dev
         paths:
-          - “main-webserver/**”
-          - “!main-webserver/README.md”
-          - “.github/workflows/database-migration.yml”
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+            - ".github/workflows/database-migration.yml"
     pull_request:
         branches:
             - master
             - staging
             - dev
         paths:
-          - “main-webserver/**”
-          - “!main-webserver/README.md”
-          - “.github/workflows/database-migration.yml”
+            - "main-webserver/**"
+            - "!main-webserver/README.md"
+            - ".github/workflows/database-migration.yml"
     workflow_dispatch:
 
 jobs:
@@ -317,7 +317,7 @@ jobs:
                   title = "Database migration performed"
                   body = (f"PR number {github_issue} was merged and triggered "
                           + "an automatic schema migration on branch: "
-                          + "{github_branch}.\n\n"
+                          + "`{github_branch}`.\n\n"
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
