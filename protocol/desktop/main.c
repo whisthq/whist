@@ -29,7 +29,6 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
-#include "../fractal/clipboard/clipboard.h"
 #include "../fractal/core/fractal.h"
 #include "../fractal/network/network.h"
 #include "../fractal/utils/aes.h"
@@ -44,7 +43,7 @@ Includes
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
-#include "SDL_syswm.h"
+#include <SDL2/SDL_syswm.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include "utils/color.h"
