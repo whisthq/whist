@@ -51,6 +51,7 @@ jobs:
             publish: ${{ steps.detect-publish.outputs.publish }}
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
+            webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -119,6 +120,21 @@ jobs:
                   echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
+            - name: Set webserver URL based on Git Branch (master, staging, dev)
+              id: set-webserver-url
+              run: |
+                  # Grab branch_name from detect-branch
+                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+                  if [ "$BRANCH_NAME" == "master" ]; then
+                    WEBSERVER_URL=https://prod-server.fractal.co
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
+                    WEBSERVER_URL=https://staging-server.fractal.co
+                  else
+                    WEBSERVER_URL=https://dev-server.fractal.co
+                  fi
+                  echo "webserver_url is set to: $WEBSERVER_URL"
+                  echo "::set-output name=webserver_url::$WEBSERVER_URL"
+
             # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
             - name: Detect Job(s)
               id: detect-jobs
@@ -148,10 +164,12 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
+                  job_dependencies[fractal-start-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
+                  job_dependencies[fractal-end-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -218,13 +236,61 @@ jobs:
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
+    # Put the webserver into maintenance mode while task defs/AMIs update
+    fractal-start-webserver-maintenance-mode:
+        name: "Put webserver into maintenance mode"
+        runs-on: ubuntu-20.04
+        needs: [fractal-publish-build-config]
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Put webserver into maintenance mode
+              working-directory: main-webserver
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Log in as Admin to get Bearer Token for Update Region API call
+                  TOKEN=$(curl -X POST \
+                        -H "Content-Type: application/json" \
+                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+
+                  # use a bash script to start update and poll for success
+                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN start
+
+                  if [[ $? =~ 1 ]]; then
+                    echo "Failed to start maintenance"
+
+                    # Notify slack of failure
+                    curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                    
+                    exit 1
+
+                  fi
+            - name: Notify Slack
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+
+                  curl -X POST \
+                  --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["master", "staging", "dev"].
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+            ]
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
@@ -289,8 +355,11 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
-
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+                container-images-publish-images-ghcr,
+            ]
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -369,7 +438,11 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+            ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
@@ -565,7 +638,11 @@ jobs:
     main-webserver-deploy-heroku:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+            ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
@@ -631,7 +708,11 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs: [fractal-publish-build-config]
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+            ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
@@ -883,4 +964,60 @@ jobs:
                   # Notify Slack
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # End maintenance mode
+    fractal-end-webserver-maintenance-mode:
+        name: "End webserver maintenance mode"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                fractal-start-webserver-maintenance-mode,
+                container-images-publish-images-ghcr,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                ecs-task-definitions-notify-slack,
+                ami-publish-ec2,
+                main-webserver-deploy-heroku,
+                client-applications-publish-build-s3,
+                client-applications-notify-slack,
+            ]
+        if: >
+            !failure()
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: End webserver maintenance mode
+              working-directory: main-webserver
+              run: |
+                  # this only runs if there are no failures in the workflow so far
+                  # if there are, the webserver stays in maintenance mode
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Log in as Admin to get Bearer Token for Update Region API call
+                  TOKEN=$(curl -X POST \
+                        -H "Content-Type: application/json" \
+                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
+                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+
+                  # use a bash script to start update and poll for success
+                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
+                  if [[ $? =~ 1 ]]; then
+                    echo "Failed to end maintenance"
+
+                    # Notify slack of failure
+                    curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+                    exit 1
+
+                  fi
+            - name: Notify Slack
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}

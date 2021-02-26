@@ -440,18 +440,14 @@ def test_update_region(client, admin, monkeypatch):
     region_to_ami_pre = {region.region_name: region.ami_id for region in all_regions_pre}
 
     # -- actual webserver requests start -- #
-
-    # TODO: bring back this test once the original maint mode PR merges in
-    # first, we try to do update_region without putting server in maintenance mode
-    # this should fail
-    # resp = client.post(
-    #     "/aws_container/update_region",
-    #     json=dict(
-    #         region_name="us-east-1",
-    #         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
-    #     ),
-    # )
-    # assert resp.status_code == BAD_REQUEST
+    resp = client.post(
+        "/aws_container/update_region",
+        json=dict(
+            region_name="us-east-1",
+            ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
+        ),
+    )
+    assert resp.status_code == BAD_REQUEST
 
     # then, we put server into maintenance mode
     resp = try_start_maintenance(client, "us-east-1")
