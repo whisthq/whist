@@ -27,8 +27,10 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
+            SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GITHUB_ISSUE: ${{ github.event.number }}
+            GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
             HEROKU_DB_KEY: "DATABASE_URL"
             HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
             SERVER_DEV: "fractal-dev-server"
@@ -275,3 +277,38 @@ jobs:
               run: |
                   psql --single-transaction --file ${PATH_DIFF} \
                   ${{ steps.db-url.outputs.url }}
+
+            - name: Notify Slack
+              if: github.event.pull_request.merged == true
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  import urllib.parse
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  from notifications import slack_debug
+
+                  github_issue = os.environ["GITHUB_ISSUE"]
+                  github_branch = os.environ["GITHUB_BRANCH"]
+
+
+                  def issue_url(number):
+                      return urllib.parse.urljoin(os.environ["GITHUB_PR_URL"],
+                                                  number)
+
+
+                  slack_redirect = (f"You can take a look at PR number {github_issue} "
+                                     + f"here:\n{issue_url(github_issue)}")
+
+
+                  title = "Database migration performed"
+                  body = (f"PR number {github_issue} was merged and triggered "
+                          + "an automatic schema migration on branch: "
+                          + "{github_branch}.\n\n"
+                          + "Check the GitHub Actions logs for details. "
+                          + slack_redirect)
+
+                  slack_debug(github_issue,
+                              identifier,
+                              body,
+                              title=title)
