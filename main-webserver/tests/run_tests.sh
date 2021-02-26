@@ -14,7 +14,7 @@ IN_CI=${CI:=false} # default: false
 if [ $IN_CI == true ]; then
     # these are needed to migrate schema/data
     export POSTGRES_REMOTE_URI=$DATABASE_URL # set in config vars on Heroku
-    export POSTGRES_LOCAL_URI=$POSTGRES_EPHEMERAL_DB # set in app.json
+    export POSTGRES_LOCAL_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
     # this sets up the local db to look like the remote db
     bash setup/setup_tests.sh
     # override DATABASE_URL to the ephemeral db
