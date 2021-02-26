@@ -185,8 +185,8 @@ def startswith_id(identifier, text):
     return text.split("\n")[0] == html_comment(identifier)
 
 
-def default_message(body, title=None, code=None, lang=None):
-    """Formats a message to be used as a comment body
+def default_message_github(body, title=None, code=None, lang=None):
+    """Formats a message to be used as a github comment body
     Args:
         body: a string, the main content of the comment
         title: a optional string, formatted at the top of the comment
@@ -195,4 +195,24 @@ def default_message(body, title=None, code=None, lang=None):
     Returns:
         A string containing the parameters, formatted to post as a comment
     """
-    return join_newline(h2(title), body, code_overflow_collapsed(code, lang=lang))
+    return join_newline(h2(title),
+                        body,
+                        code_overflow_collapsed(code, lang=lang))
+
+
+def default_message_slack(body, title=None, code=None, lang=None):
+    """Formats a message to be used as a slack post body
+    Args:
+        body: a string, the main content of the post
+        title: a optional string, formatted at the top of the post
+        code: a optional string, placed in a block at the bottom of the post
+        lang: a optional string, used to format the post's code block
+    Returns:
+        A string containing the parameters, formatted to post to slack
+    """
+    # Slack doesn't support most markdown formatting, so we need to keep the
+    # message very simple.
+    # It also doesn't support the language argument, so we'll just omit it.
+    return join_newline("*" + title + "*",
+                        body,
+                        code(code))
