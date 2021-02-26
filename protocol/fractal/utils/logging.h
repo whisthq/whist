@@ -9,13 +9,16 @@
 Usage
 ============================
 We have several levels of logging.
-- NO_LOG: self explanatory
-- ERROR_LEVEL: only log errors. Errors are conditions that cause the program to
-               terminate or lead to an irrecoverable state.
-- WARNING_LEVEL: log warnings and above (warnings and errors). Warnings are when
-                 things do not work as expected, but we can recover.
-- INFO_LEVEL: log info and above. Info is just for logs that provide additional
-              information on state. e.g decode time
+- NO_LOG: only log fatal errors. Fatal errors are irrecoverable and cause the protocol to immediately exit.
+- ERROR_LEVEL: only log errors. Errors are conditions that necessarily
+               imply that the protocol has done something wrong and must be fixed.
+               However, Errors remain recoverable can the protocol can ignore them.
+- WARNING_LEVEL: log warnings and above (warnings and errors). Warnings might indicate
+                 that something is wrong, but it not necessarily the fault of the protocol,
+                 it may be the fault of the environment (e.g. No audio device detected,
+                 packet loss during handshake, etc).
+- INFO_LEVEL: log info and above. Info is for logs that provide additional
+              information on the state of the protocol. e.g. decode time
 - DEBUG_LEVEL: log debug and above. For use when actively debugging a problem,
                but for things that don't need to be logged regularly
 
@@ -25,11 +28,6 @@ Debug builds and WARNING_LEVEL for release builds.
 
 Note that these macros do not need an additional \n character at the end of your
 format strings.
-
-We also have a LOG_IF(condition, format string) Macro which only logs if the
-condition is true. This can be used for debugging or if we want to more
-aggressively log something when a flag changes. For example in this file you
-could #define LOG_AUDIO True and then use LOG_IF(LOG_AUDIO, "my audio logging").
 */
 
 /*
@@ -59,13 +57,6 @@ Defines
 #define WARNING_LEVEL 0x02
 #define INFO_LEVEL 0x04
 #define DEBUG_LEVEL 0x05
-
-/**
- * Defines for conditional logging go here
- * e.g if you are debugging audio and only want to see your debug statements
- * then you would #define LOG_AUDIO True and use LOG_IF(LOG_AUDIO, "your debug
- * statement here")
- */
 
 // Cut-off for which log level is required
 #ifndef LOG_LEVEL
@@ -105,7 +96,7 @@ Defines
 #if LOG_LEVEL >= WARNING_LEVEL
 #define LOG_WARNING(message, ...)                                                 \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__); \
-    SENTRYBREADCRUMB(WARNING_TAG, message, ##__VA_ARGS__)
+    SENTRYBREADCRUMB(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
 #else
 #define LOG_WARNING(message, ...)
 #endif
@@ -115,7 +106,7 @@ Defines
 #if LOG_LEVEL >= ERROR_LEVEL
 #define LOG_ERROR(message, ...)                                                 \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
-    SENTRYEVENT(message, ##__VA_ARGS__)
+    SENTRYEVENT(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__);
 #else
 #define LOG_ERROR(message, ...)
 #endif
@@ -124,15 +115,8 @@ Defines
 // wrong with our code (Or e.g. the host is out of RAM etc)
 #define LOG_FATAL(message, ...)                                                       \
     PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
-    SENTRYEVENT(message, ##__VA_ARGS__);                                              \
+    SENTRYEVENT(LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__);   \
     terminate_protocol()
-
-#if LOG_LEVEL >= NO_LOGS
-#define LOG_IF(condition, message, ...) \
-    if (condition) PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
-#else
-#define LOG_IF(condition, message, args...)
-#endif
 
 /*
 ============================
