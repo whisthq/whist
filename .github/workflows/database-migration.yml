@@ -217,43 +217,53 @@ jobs:
                   identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
                   if return_code == 0:
+                    title = os.environ["TITLE_NO_CHANGES"]
+                    body = os.environ["BODY_NO_CHANGES"]
                     github_info_once(github_issue,
                                      identifier,
-                                     os.environ["BODY_NO_CHANGES"],
-                                     title=os.environ["TITLE_NO_CHANGES"],
+                                     body,
+                                     title=title,
                                      code=sql_diff,
                                      lang="sql")
 
                   elif return_code == 2:
+                    title = os.environ["TITLE_SAFE_CHANGES"]
+                    body = os.environ["BODY_SAFE_CHANGES"]
                     github_debug_once(github_issue,
                                       identifier,
-                                      os.environ["BODY_SAFE_CHANGES"],
-                                      title=os.environ["TITLE_SAFE_CHANGES"],
+                                      body,
+                                      title=title,
                                       code=sql_diff,
                                       lang="sql")
 
                   elif return_code == 3:
+                    title = os.environ["TITLE_UNSAFE_CHANGES"]
+                    body = os.environ["BODY_UNSAFE_CHANGES"]
                     github_warning_once(github_issue,
                                         identifier,
-                                        os.environ["BODY_UNSAFE_CHANGES"],
-                                        title=os.environ["TITLE_UNSAFE_CHANGES"],
+                                        body,
+                                        title=title,
                                         code=sql_diff,
                                         lang="sql")
 
                   elif return_code == 4:
+                    title = os.environ["TITLE_INVALID_CHANGES"],
+                    body = os.environ["BODY_INVALID_CHANGES"]
                     github_critical_once(github_issue,
                                          identifier,
-                                         os.environ["BODY_INVALID_CHANGES"],
-                                         title=os.environ["TITLE_INVALID_CHANGES"],
+                                         body,
+                                         title=title,
                                          code=sql_diff,
                                          lang="sql")
                     raise Exception(os.environ["TITLE_INVALID_CHANGES"])
 
                   else:
+                    title = os.environ["TITLE_ERROR"]
+                    body = os.environ["BODY_ERROR"]
                     github_error_once(github_issue,
                                       identifier,
-                                      os.environ["BODY_ERROR"],
-                                      title=os.environ["TITLE_ERROR"],
+                                      body,
+                                      title=title,
                                       code=sql_diff,
                                       lang="python")
                     raise Exception(os.environ["TITLE_ERROR"])
