@@ -131,12 +131,19 @@ def admin_required(func):
 
 
 def check_developer() -> bool:
-    """
-    Check if the requester is a developer.
+    """Determine whether or not the sender of the current request is a Fractal developer.
 
-    Note: any decorated function must call @jwt_optional or @jwt_required for
-    an authorized developer to be identified.
+    This function may only be called from within view functions decorated by the @jwt_required()
+    decorator.
+
+    Returns:
+        True iff the requester is a Fractal developer or the admin user.
+
+    Raises:
+        RuntimeError: This function was either called without Flask application context or before
+            calling either @jwt_required() or verify_jwt_in_request().
     """
+
     current_user = get_jwt_identity()
     if current_user is None:
         return False
