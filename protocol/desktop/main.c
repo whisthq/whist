@@ -787,10 +787,14 @@ int main(int argc, char* argv[]) {
             }
 
             // Check if window title should be updated
+            // SDL_SetWindowTitle must be called in the main thread for
+            // some clients (e.g. all Macs), hence why we update the title here
+            // and not in handle_server_message
             if (should_update_window_title) {
                 if (window_title) {
                     SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
                     free((char*)window_title);
+                    window_title = NULL;
                 } else {
                     LOG_ERROR("Window Title should not be null!");
                 }
