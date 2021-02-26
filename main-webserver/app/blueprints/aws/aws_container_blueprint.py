@@ -43,7 +43,7 @@ aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 @aws_container_bp.route("/container_state/<action>", methods=["POST"])
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 def container_state(action, **kwargs):
     """This is an endpoint which accesses our container_state_values table.
@@ -74,7 +74,7 @@ def container_state(action, **kwargs):
 
 @aws_container_bp.route("/aws_container/<action>", methods=["POST"])
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @developer_required
 def test_endpoint(action, **kwargs):
     """This is an endpoint for administrators and developers to test
@@ -310,7 +310,7 @@ def aws_container_ping(**kwargs):
 @aws_container_bp.route("/container/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 @payment_required
 def aws_container_assign(**kwargs):
@@ -362,7 +362,7 @@ def aws_container_assign(**kwargs):
 
 @aws_container_bp.route("/container/<action>", methods=["POST"])
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 def aws_container_post(action, **kwargs):
     """

@@ -26,7 +26,7 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 def payment(action, **kwargs):
     """Covers payment endpoints for stripe. Right now has seven endpoints:

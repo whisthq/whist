@@ -26,7 +26,7 @@ account_bp = Blueprint("account_bp", __name__)
 @account_bp.route("/account/delete", methods=["POST"])
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 def account_post_delete(**kwargs):
     # Account deletion endpoint
@@ -40,7 +40,7 @@ def account_post_delete(**kwargs):
 @account_bp.route("/account/update", methods=["POST"])
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
-@jwt_required
+@jwt_required()
 @fractal_auth
 def account_post_update(**kwargs):
     # Change the user's name, email, or password
