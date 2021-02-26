@@ -368,7 +368,8 @@ void update_audio() {
 
     // Find pending audio packets and NACK them
 #define MAX_NACKED 1
-    FractalClientMessage fmsg[MAX_NACKED];
+    unsigned char fmsg_buffer[MAX_NACKED * sizeof(FractalClientMessage)];
+    FractalClientMessage* fmsg[MAX_NACKED];
     int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
         last_nacked_id = max(last_played_id, last_nacked_id);
@@ -378,9 +379,14 @@ void update_audio() {
             AudioPacket* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
                 i_packet->nacked_amount++;
-                fmsg[num_nacked].type = MESSAGE_AUDIO_NACK;
-                fmsg[num_nacked].nack_data.id = i / MAX_NUM_AUDIO_INDICES;
-                fmsg[num_nacked].nack_data.index = i % MAX_NUM_AUDIO_INDICES;
+                // Set fmsg pointer to location in buffer
+                fmsg[num_nacked] =
+                    (FractalClientMessage*)(fmsg_buffer +
+                                            num_nacked * sizeof(FractalClientMessage));
+                // Populate FractalClientMessage
+                fmsg[num_nacked]->type = MESSAGE_AUDIO_NACK;
+                fmsg[num_nacked]->nack_data.id = i / MAX_NUM_AUDIO_INDICES;
+                fmsg[num_nacked]->nack_data.index = i % MAX_NUM_AUDIO_INDICES;
                 i_packet->nacked_for = i;
                 num_nacked++;
 
@@ -392,9 +398,9 @@ void update_audio() {
 
     // Send nacks out
     for (int i = 0; i < num_nacked; i++) {
-        LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg[i].nack_data.id,
-                 fmsg[i].nack_data.index);
-        send_fmsg(&fmsg[i]);
+        LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg[i]->nack_data.id,
+                 fmsg[i]->nack_data.index);
+        send_fmsg(fmsg[i]);
     }
 }
 
