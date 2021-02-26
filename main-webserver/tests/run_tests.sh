@@ -11,7 +11,7 @@ cd "$DIR"
 
 # if in CI, run setup tests and set env vars
 IN_CI=${CI:=false} # default: false
-if [ $IN_CI == "true" ]; then
+if [ $IN_CI == true ]; then
     # these are needed to migrate schema/data
     export POSTGRES_REMOTE_URI=$DATABASE_URL # set in config vars on Heroku
     export POSTGRES_LOCAL_URI=$POSTGRES_EPHEMERAL_DB # set in app.json
@@ -31,7 +31,7 @@ else
 
     # we use the remote user and remote db to make ephemeral db look as close to dev as possible
     # but of course, host and port are local
-    export DATABASE_URL=postgres://${POSTGRES_REMOTE_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_REMOTE_DB}
+    export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
 fi
 
 # pass args to pytest
