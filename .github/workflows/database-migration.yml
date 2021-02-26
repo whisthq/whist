@@ -16,6 +16,7 @@ on:
             - dev
         paths:
             - main-webserver
+            - .github/workflows/database-migration.yml
     pull_request:
         branches:
             - master
@@ -23,6 +24,7 @@ on:
             - dev
         paths:
             - main-webserver
+            - .github/workflows/database-migration.yml
     workflow_dispatch:
 
 jobs:
