@@ -161,42 +161,6 @@ def test_assign_container(client, admin, monkeypatch):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("_save_user")
-@pytest.mark.usefixtures("admin")
-def test_send_commands(client):
-    fractal_log(
-        function="test_send_commands",
-        label="cluster/send_commands",
-        logs="Starting to send commands to cluster {}".format(pytest.cluster_name),
-    )
-
-    resp = client.post(
-        "/aws_container/send_commands",
-        json=dict(
-            cluster=pytest.cluster_name,
-            region_name="us-east-1",
-            commands=["echo test_send_commands"],
-        ),
-    )
-
-    task = queryStatus(client, resp, timeout=10)
-
-    if task["status"] < 1:
-        fractal_log(
-            function="test_send_commands",
-            label="cluster/send_commands",
-            logs=task["output"],
-            level=logging.ERROR,
-        )
-        assert False
-
-    assert True
-
-
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
 def test_update_cluster(client):
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
