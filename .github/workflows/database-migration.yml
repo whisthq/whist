@@ -28,6 +28,7 @@ jobs:
 
         env:
             SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+            SLACK_CHANNEL: "alerts"
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GITHUB_ISSUE: ${{ github.event.number }}
             GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
@@ -199,7 +200,6 @@ jobs:
             # the top of this file.
             - name: Send alerts on diff result
               shell: python3 {0}
-              if: ${{ github.event_name }} == "pull_request"
               run: |
                   import os
                   import sys
@@ -210,11 +210,16 @@ jobs:
                                              github_critical_once,
                                              github_error_once)
 
+
+                  # If this is no issue number, then we're merging
+                  # and there is nowhere to post to, so quit early
+                  github_issue = os.environ["GITHUB_ISSUE"]
+                  if not github_issue:
+                      sys.exit(0)
+
                   return_code = int(${{ steps.db-diff.outputs.code }})
                   with open(os.environ["PATH_DIFF"]) as f:
                       sql_diff = f.read().strip("\n")
-
-                  github_issue = os.environ["GITHUB_ISSUE"]
 
                   identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
 
@@ -308,7 +313,6 @@ jobs:
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
-                  slack_debug(github_issue,
-                              identifier,
+                  slack_debug(os.environ["SLACK_CHANNEL"],
                               body,
                               title=title)
