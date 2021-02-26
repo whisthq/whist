@@ -89,7 +89,8 @@ def get_hanging_asgs(region):
         if cluster_arn is not None
     ]
     all_asgs = get_all_aws_asgs(region)
-
+    
+    # return list of ASGs not assocated a clusters (note: could be more than one ASG per cluster)
     return list(set(all_asgs) - set(cluster_asgs))
 
 # Compares list of clusters in AWS to list of clusters in all DBs
