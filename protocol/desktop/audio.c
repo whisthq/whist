@@ -404,6 +404,9 @@ void update_audio() {
     }
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int32_t receive_audio(FractalPacket* packet) {
     /*
         This function will store an audio packet in its internal buffer, to be played on later

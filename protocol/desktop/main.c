@@ -338,9 +338,15 @@ int send_clipboard_packets(void* opaque) {
 // END UPDATER CODE
 
 // This function polls for UDP packets from the server
-// NOTE: This contains a very sensitive hotpath.
-// The total execution time of inner for loop must not take longer than 0.001ms-0.1ms
-// Please do not put any for loops, and do not make any non-trivial system calls
+// NOTE: This contains a very sensitive hotpath,
+// as recvp will potentially receive tens of thousands packets per second.
+// The total execution time of inner for loop must not take longer than 0.01ms-0.1ms
+// i.e., this function should not take any more than 10,000 assembly instructions per loop.
+// Please do not put any for loops, and do not make any non-trivial system calls.
+// Please label any functions in the hotpath with the following lines:
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int receive_packets(void* opaque) {
     /*
         Receive any packets from the server and handle them appropriately
@@ -464,7 +470,7 @@ int receive_packets(void* opaque) {
         FractalPacket* packet;
 
         if (is_currently_dropping) {
-            // Simulate dropping packets but just not calling recvp
+            // Simulate dropping packets by just not calling recvp
             SDL_Delay(1);
             LOG_INFO("DROPPING");
             packet = NULL;
@@ -483,7 +489,7 @@ int receive_packets(void* opaque) {
         if (packet) {
             // Log if it's been a while since the last packet was received
             if (lastrecv > 50.0 / MS_IN_SECOND) {
-                LOG_INFO(
+                LOG_WARNING(
                     "Took more than 50ms to receive something!! Took %fms "
                     "total!",
                     lastrecv * MS_IN_SECOND);

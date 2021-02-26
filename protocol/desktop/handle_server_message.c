@@ -61,6 +61,9 @@ Private Function Implementations
 ============================
 */
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int handle_server_message(FractalServerMessage *fmsg, size_t fmsg_size) {
     /*
         Handle message packets from the server
@@ -185,6 +188,7 @@ static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size
         return -1;
     }
     LOG_INFO("Received %d byte clipboard message from server!", fmsg_size);
+    // Known to run in less than ~100 assembly instructions
     if (!clipboard_synchronizer_set_clipboard(&fmsg->clipboard)) {
         LOG_ERROR("Failed to set local clipboard from server message.");
         return -1;
