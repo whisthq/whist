@@ -4,6 +4,10 @@
 SDL_mutex* mutex;
 
 void init_clipboard() {
+    if (mutex) {
+        LOG_ERROR("Clipboard is being initialized twice!");
+        return;
+    }
     mutex = safe_SDL_CreateMutex();
     unsafe_init_clipboard();
 }
@@ -58,4 +62,7 @@ void destroy_clipboard() {
     safe_SDL_LockMutex(mutex);
     unsafe_destroy_clipboard();
     safe_SDL_UnlockMutex(mutex);
+
+    SDL_DestroyMutex(mutex);
+    mutex = NULL;
 }

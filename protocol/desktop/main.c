@@ -155,6 +155,8 @@ Private Function Implementations
 ============================
 */
 
+static bool updater_initialized = false;
+
 void init_update() {
     /*
         Initialize desktop update handler.
@@ -170,6 +172,8 @@ void init_update() {
     ping_failures = -2;
 
     init_clipboard_synchronizer();
+
+    updater_initialized = true;
 }
 
 void destroy_update() {
@@ -179,6 +183,7 @@ void destroy_update() {
         destroyed.
     */
 
+    updater_initialized = false;
     destroy_clipboard_synchronizer();
 }
 
@@ -189,6 +194,10 @@ void update() {
         This function expects to be called at minimum every 5ms to keep
         the program up-to-date.
     */
+
+    if (!updater_initialized) {
+        LOG_ERROR("Tried to update, but updater not initialized!");
+    }
 
     FractalClientMessage fmsg;
 
@@ -298,7 +307,12 @@ int send_clipboard_packets(void* opaque) {
     */
 
     UNUSED(opaque);
-    LOG_INFO("SendClipboardPackets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("send_clipboard_packets running on Thread %p", SDL_GetThreadID(NULL));
+
+    // Wait for the updater to be initialized before trying to update clipboard
+    while (!updater_initialized) {
+        SDL_Delay(16);
+    }
 
     clock clipboard_time;
     while (run_send_clipboard_packets) {
@@ -854,10 +868,10 @@ int main(int argc, char* argv[]) {
         LOG_INFO("Disconnecting...");
         if (exiting || failed || try_amount + 1 == max_connection_attempts)
             send_server_quit_messages(3);
-        run_receive_packets = false;
         run_send_clipboard_packets = false;
-        SDL_WaitThread(receive_packets_thread, NULL);
         SDL_WaitThread(send_clipboard_thread, NULL);
+        run_receive_packets = false;
+        SDL_WaitThread(receive_packets_thread, NULL);
         destroy_audio();
         close_connections();
     }
