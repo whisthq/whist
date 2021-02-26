@@ -53,8 +53,7 @@ const Auth = (props: {
     const [updateAccessToken] = useMutation(UPDATE_ACCESS_TOKEN, {
         context: {
             headers: {
-                Authorization: `Bearer ${user.accessToken}`,
-                Login: loginToken,
+                "X-Hasura-Login-Token": loginToken,
             },
         },
     })
