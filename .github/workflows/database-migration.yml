@@ -15,16 +15,18 @@ on:
             - staging
             - dev
         paths:
-            - main-webserver
-            - .github/workflows/database-migration.yml
+          - “main-webserver/**”
+          - “!main-webserver/README.md”
+          - “.github/workflows/database-migration.yml”
     pull_request:
         branches:
             - master
             - staging
             - dev
         paths:
-            - main-webserver
-            - .github/workflows/database-migration.yml
+          - “main-webserver/**”
+          - “!main-webserver/README.md”
+          - “.github/workflows/database-migration.yml”
     workflow_dispatch:
 
 jobs:
