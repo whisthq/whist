@@ -2,6 +2,7 @@
 from functools import wraps, partial
 from . import formatters as fmt
 from . import github_bot
+from . import slack_bot
 
 
 def apply_format(func, **kwargs):
@@ -57,7 +58,11 @@ def github_comment(issue, body, title=None, code=None, lang=None):
         lang: a optional string, used to format the comment's code block
     Returns
         None"""
-    github_bot.create_comment(issue, fmt.default_message(body, title, code, lang))
+    github_bot.create_comment(issue,
+                              fmt.default_message_github(body,
+                                                         title,
+                                                         code,
+                                                         lang))
 
 
 def github_comment_update(issue, identifier, body, title=None, code=None, lang=None):
@@ -79,7 +84,7 @@ def github_comment_update(issue, identifier, body, title=None, code=None, lang=N
         lang: a optional string, used to format the comment's code block
     Returns:
         None"""
-    content = fmt.default_message(body, title, code, lang)
+    content = fmt.default_message_github(body, title, code, lang)
     github_bot.edit_comments_by(
         issue,
         partial(filter_identifier, identifier),
@@ -112,12 +117,34 @@ def github_comment_once(issue, identifier, body, title=None, code=None, lang=Non
         lang: a optional string, used to format the comment's code block
     Returns:
         None"""
-    content = fmt.default_message(body, title, code, lang)
-    github_bot.delete_comments_by(issue, partial(filter_identifier, identifier))
+    content = fmt.default_message_github(body, title, code, lang)
+    github_bot.delete_comments_by(issue,
+                                  partial(filter_identifier, identifier))
     github_bot.create_comment(issue, fmt.concat_id(identifier, content))
 
 
-# The functions below represent the main GitHub logging API.
+def slack_post(channel, body, title=None, code=None, lang=None):
+    """Creates a post on a Slack channel
+
+    Requires the environment variable SLACK_TOKEN to be set.
+
+    Defaults to using the Fractal Bot as username. The environment variable
+    SLACK_USERNAME can be set to choose a different username.
+
+    Args:
+        channel: a string that represents the channel to post to
+        body: a string, the main content of the comment
+        title: a optional string, formatted at the top of the comment
+        code: a optional string, placed in a block at the bottom of the comment
+        lang: a optional string, used to format the comment's code block
+    Returns
+        None"""
+    slack_bot.create_post(channel,
+                          fmt.default_message_slack(body, title, code, lang),
+                          text=(title or body))
+
+
+# The functions below represent the main logging API for each service.
 # They have the same behavior and function signatures as the functions
 # above, which they wrap. In the spirit of brevity, we're decorating each one
 # with functools.wraps, passing in ["__doc__"] as the second argument.
@@ -201,3 +228,28 @@ def github_error_update(*args, **kwargs):
 @wraps(github_comment_update, ["__doc__"])
 def github_critical_update(*args, **kwargs):
     return github_comment_update(*args, **format_critical(**kwargs))
+
+
+@wraps(slack_post, ["__doc__"])
+def slack_debug(*args, **kwargs):
+    return slack_post(*args, **format_debug(**kwargs))
+
+
+@wraps(slack_post, ["__doc__"])
+def slack_info(*args, **kwargs):
+    return slack_post(*args, **format_info(**kwargs))
+
+
+@wraps(slack_post, ["__doc__"])
+def slack_warning(*args, **kwargs):
+    return slack_post(*args, **format_warning(**kwargs))
+
+
+@wraps(slack_post, ["__doc__"])
+def slack_error(*args, **kwargs):
+    return slack_post(*args, **format_error(**kwargs))
+
+
+@wraps(slack_post, ["__doc__"])
+def slack_critical(*args, **kwargs):
+    return slack_post(*args, **format_critical(**kwargs))
