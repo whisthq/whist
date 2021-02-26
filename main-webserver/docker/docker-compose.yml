@@ -6,7 +6,6 @@ x-app: &base-app
     dockerfile: docker/Dockerfile
   depends_on:
     - redis
-    - postgres_db
   networks:
     # docker networks make sure web/celery can find redis
     - primary
@@ -22,13 +21,22 @@ services:
     volumes:
       - ../dummy_certs:/certs
 
+  postgres_db:
+    image: postgres:12.5
+    ports:
+      - "9999:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      - primary
+
   web:
     <<: *base-app
     command: web
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
-      DATABASE_URL: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+      POSTGRES_URI: ${POSTGRES_LOCAL_URI}
       REDIS_URL: rediss://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
@@ -39,33 +47,13 @@ services:
     <<: *base-app
     command: celery
     environment:
-      DATABASE_URL: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+      POSTGRES_URI: ${POSTGRES_LOCAL_URI}
       REDIS_URL: rediss://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 50
     volumes:
       - ..:/app
       - $HOME/.aws:/.aws
-
-  postgres_db:
-    image: postgres:12.5
-    ports:
-      - "9999:5432"
-    environment:
-      POSTGRES_HOST_AUTH_METHOD: trust
-    networks:
-      - primary
-
-# TODO use a local DB (as commented out below) instead of the staging/production DB
-#   db:
-#     image: postgres:9.4
-#     volumes:
-#       - db-data:/var/lib/postgresql/data
-#     networks:
-#       - primary
-#
-# volumes:
-#   db-data:
 
 networks:
   primary:
