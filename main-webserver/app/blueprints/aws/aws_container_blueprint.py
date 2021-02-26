@@ -13,7 +13,6 @@ from app.maintenance.maintenance_manager import (
 from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
-    send_commands,
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container
@@ -193,20 +192,6 @@ def test_endpoint(action, **kwargs):
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
-        return jsonify({"ID": task.id}), ACCEPTED
-
-    if action == "send_commands":
-        cluster, region_name, commands, containers = (
-            kwargs["body"]["cluster"],
-            kwargs["body"]["region_name"],
-            kwargs["body"]["commands"],
-            kwargs["body"].get("containers"),
-        )
-        task = send_commands.apply_async([cluster, region_name, commands, containers])
-
-        if not task:
-            return jsonify({"ID": None}), BAD_REQUEST
-
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "start_update":
