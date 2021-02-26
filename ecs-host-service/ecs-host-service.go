@@ -615,15 +615,6 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 		return logger.MakeError("Error running ContainerInspect on container %s: %v", id, err)
 	}
 
-	// We ignore the ecs-agent container, since we don't need to do anything to
-	// it, and we want to avoid triggering an error that '32262/tcp' is unmapped
-	// (which gets sent to Sentry).
-	// TODO: get rid of this once new AMIs are fully rolled out.
-	if c.Name == "ecs-agent" || c.Name == "fractal-owned-ecs-agent" {
-		logger.Info("Detected ecs-agent starting. Doing nothing.")
-		return nil
-	}
-
 	// Create a container-specific directory to store mappings. Exit if it's a
 	// non-fractal container.
 	//   Get the fractalID and use it to compute the right directory
