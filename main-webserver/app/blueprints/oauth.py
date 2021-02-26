@@ -32,7 +32,7 @@ oauth_bp.cli.help = "Manipulate encrypted OAuth credentials in the database."
 class ConnectedAppsAPI(MethodView):
     """Manage connected external applications."""
 
-    decorators = (jwt_required,)
+    decorators = (jwt_required(),)
 
     def get(self):  # pylint: disable=no-self-use
         """Fetch the list of external apps that the user has connected to her Fractal account."""
@@ -75,7 +75,7 @@ class ConnectedAppsAPI(MethodView):
 
 @oauth_bp.route("/oauth/authorize")
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
-@jwt_required
+@jwt_required()
 def authorize():
     """Initiate the OAuth exchange by requesting an authorization grant.
 
