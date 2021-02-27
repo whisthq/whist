@@ -142,7 +142,7 @@ def main():
     elif component == "Clusters":
         clusters = get_hanging_clusters(urls, secrets, region)
         if len(clusters) > 0:
-            print("- \\`" + "\\`\\n- `".join([str(x) for x in clusters]) + "\\`")
+            print("- \\`" + "\\`\\n- \\`".join([str(x) for x in clusters]) + "\\`")
 
 
 if __name__ == "__main__":

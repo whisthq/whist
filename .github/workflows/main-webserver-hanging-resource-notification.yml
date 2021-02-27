@@ -53,8 +53,7 @@ jobs:
                                           ${{ env.db_url_prod}} \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
-                                      | sed 's/[][]//g')
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
                   echo $hanging_resource
 
                   # notify slack if there are hanging resources
