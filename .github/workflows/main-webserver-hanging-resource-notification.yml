@@ -5,8 +5,11 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    schedule:
-        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    # schedule:
+    #     - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    push:
+        branches:
+            - mia/hotfix/slack-notif-formatting-fix
 
 jobs:
     main-webserver-hanging-resource-notification:
@@ -57,7 +60,7 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "$hanging_resource" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${resource}* in _${region}_: \`${hanging_resource}\`\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: \`${hanging_resource}\`\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
