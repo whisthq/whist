@@ -117,7 +117,8 @@ def get_hanging_clusters(urls, secrets, region):
     aws_clusters = set(
         [cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)]
     )
-    aws_clusters.pop("default", None)
+    if "default" in aws_clusters:
+        aws_clusters.remove("default")
 
     # loop through each of dev, staging, and prod; add clusters to db_clusters
     db_clusters = set()
