@@ -136,15 +136,13 @@ def main():
 
     # format as bulleted list for Slack notification
     if component == "ASGs":
-        print("- `" + "`\\n- `".join([str(x) for x in get_hanging_asgs(region)]) + "`")
+        asgs = get_hanging_asgs(region)
+        if len(asgs) > 0:
+            print("- `" + "`\\n- `".join([str(x) for x in asgs]) + "`")
     elif component == "Clusters":
-        print(
-            "- `"
-            + "`\\n- `".join(
-                [str(x) for x in get_hanging_clusters(urls, secrets, region)]
-            )
-            + "`"
-        )
+        clusters = get_hanging_clusters(urls, secrets, region)
+        if len(clusters) > 0:
+            print("- `" + "`\\n- `".join([str(x) for x in clusters]) + "`")
 
 
 if __name__ == "__main__":
