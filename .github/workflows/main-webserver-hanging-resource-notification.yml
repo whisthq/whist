@@ -47,13 +47,13 @@ jobs:
             - name: Check for Resources and Notify in Slack if they Exist
               working-directory: .github/workflows/helpers/aws
               run: |
-                  hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
+                  hanging_resource='$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
                                           ${{ env.db_url_dev}} \
                                           ${{ env.db_url_staging}} \
                                           ${{ env.db_url_prod}} \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')'
                   echo $hanging_resource
 
                   # notify slack if there are hanging resources

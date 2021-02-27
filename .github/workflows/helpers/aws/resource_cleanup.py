@@ -139,13 +139,11 @@ def main():
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
-            print("\\\\n- \\`" + "\\`\\\\n- \\`".join([str(x) for x in asgs]) + "\\`")
+            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
     elif component == "Clusters":
         clusters = get_hanging_clusters(urls, secrets, region)
         if len(clusters) > 0:
-            print(
-                "\\\\n- \\`" + "\\`\\\\n- \\`".join([str(x) for x in clusters]) + "\\`"
-            )
+            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in clusters]) + "\\`")
 
 
 if __name__ == "__main__":
