@@ -344,7 +344,7 @@ def test_delete_container(client, monkeypatch):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_update_region(client, admin, monkeypatch):
+def test_update_region(client, admin, monkeypatch, try_end_maintenance, try_start_maintenance):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
     def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
@@ -414,7 +414,7 @@ def test_update_region(client, admin, monkeypatch):
     assert resp.status_code == BAD_REQUEST
 
     # then, we put server into maintenance mode
-    resp = try_start_maintenance(client, "us-east-1")
+    resp = try_start_maintenance("us-east-1")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -438,7 +438,7 @@ def test_update_region(client, admin, monkeypatch):
         assert False
 
     # finally, we end maintenance mode
-    resp = try_end_maintenance(client, "us-east-1")
+    resp = try_end_maintenance("us-east-1")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
     # -- webserver requests end -- #

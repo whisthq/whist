@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 
 from contextlib import contextmanager
@@ -207,6 +208,19 @@ def container(cluster, user):
     return _container
 
 
+@pytest.fixture(scope="session")
+def deployment_stage():
+    """Determine the deployment stage of the code that we are testing.
+
+    Returns:
+        Either "dev", "staging", or "prod".
+    """
+
+    match = re.fullmatch(r"fractal-(prod|staging)-server", os.environ.get("HEROKU_APP_NAME", ""))
+
+    return match.group() if match else "dev"
+
+
 @pytest.fixture
 def user(request):
     """Create a test user.
@@ -253,7 +267,7 @@ def make_user():
     # can be deleted during this fixture's teardown phase.
     users = []
 
-    def _user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
+    def _user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc).timestamp()):
         user = User(
             user_id=f"test-user+{uuid.uuid4()}@fractal.co",
             password="",
@@ -289,7 +303,9 @@ def make_authorized_user(client, make_user, monkeypatch):
         An instance of the User model representing the authorized user.
     """
 
-    def _authorized_user(stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc)):
+    def _authorized_user(
+        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc).timestamp()
+    ):
         user = make_user(
             stripe_customer_id=stripe_customer_id,
             created_timestamp=created_timestamp,
