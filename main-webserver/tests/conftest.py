@@ -22,6 +22,8 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from app.celery_utils import make_celery
 
+from tests.client import FractalAPITestClient
+
 
 @pytest.fixture
 def _retrieve_user():
@@ -69,6 +71,7 @@ def app():
     """
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
+    _app.test_client_class = FractalAPITestClient
 
     # enable web requests
     if not set_web_requests_status(True):
