@@ -51,6 +51,10 @@ const fractalTempDir = fractalDir + "temp/"
 const containerResourceMappings = "containerResourceMappings/"
 const userConfigs = "userConfigs/"
 
+// The filenames (NOT paths) for the encrypted and decrypted user config archives
+const encArchiveFilename = "fractal-app-config.tar.gz.enc"
+const decArchiveFilename = "fractal-app-config.tar.gz"
+
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
 // Opens all permissions on /fractal directory
@@ -456,9 +460,14 @@ func saveUserConfig(fractalID string) {
 
 	// Only tar and save the config back to S3 if the user ID is set
 	if userID != "" {
-		tarPath := configPath + "fractal-app-config.tar.gz"
+		encTarPath := configPath + encArchiveFilename
+		decTarPath := configPath + decArchiveFilename
 
-		tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+		tarConfigCmd := exec.Command(
+			"/usr/bin/tar", "-C", configPath, "-czf", decTarPath,
+			"--exclude=" + encTarPath, "--exclude=" + decTarPath,
+			"."
+		)
 		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 		// tar is only fatal when exit status is 2 -
 		//    exit status 1 just means that some files have changed while tarring,
@@ -469,7 +478,20 @@ func saveUserConfig(fractalID string) {
 			logger.Infof("Tar config directory output: %s", tarConfigOutput)
 		}
 
-		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
+		//openssl aes-256-cbc -e -in userConfigs/fractal-app-config-test.tar.lz4 -out testaes.enc -pass file:aes-test-password.txt -pbkdf2
+		// At this point, config archive must exist: decrypt app config
+		encryptConfigCmd := exec.Command(
+			"/usr/bin/openssl", "aes-256-cbc", "-e",
+			"-in", decTarPath,
+			"-out", encTarPath,
+			"-pass", "pass:" + userEncryptionKey, "-pbkdf2"
+		)
+		encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
+		if err != nil {
+			return logger.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+		}
+
+		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
 		saveConfigOutput, err := saveConfigCmd.CombinedOutput()
 		if err != nil {
 			logger.Errorf("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
@@ -493,6 +515,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// Get needed vars and create path for config
 	userID := req.UserID
 	containerID := containerIDs[(uint16)(req.HostPort)]
+	userEncryptionKey := req.UserEncryptionKey
 	fractalID := fractalIDs[containerID]
 	appName := containerAppNames[fractalID]
 	configPath := fractalDir + fractalID + "/" + userConfigs
@@ -511,17 +534,43 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
-		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName + "/fractal-app-config.tar.gz"
+		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName + "/" + encArchiveFilename
 		// Retrieve app config from S3
 		getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configPath)
 		getConfigOutput, err := getConfigCmd.CombinedOutput()
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
 		//    this means that it's the user's first run and they don't have any settings
 		//    stored for this application yet.
-		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
-			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+		if err != nil {
+			if !strings.Contains(string(getConfigOutput), "does not exist") {
+				logger.Infof("No config retrieved from \"aws s3 cp\", but no fatal error: %s", getConfigOutput)
+				return nil
+			} else {
+				return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+			}
 		}
 		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
+
+		encTarPath := configPath + encArchiveFilename
+		decTarPath := configPath + decArchiveFilename
+
+		// At this point, config archive must exist: decrypt app config
+		decryptConfigCmd := exec.Command(
+			"/usr/bin/openssl", "aes-256-cbc", "-d",
+			"-in", encTarPath,
+			"-out", decTarPath,
+			"-pass", "pass:" + userEncryptionKey, "-pbkdf2"
+		)
+		decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
+		if err != nil {
+			return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
+		}
+
+		// Delete original encrypted config
+		err = os.Remove(encTarPath)
+		if err != nil {
+			logger.Errorf("getUserConfig(): Failed to delete user config encrypted archive %s", encTarPath)
+		}
 	}
 	return nil
 }
