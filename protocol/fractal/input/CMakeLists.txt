@@ -9,8 +9,6 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         target_sources(fractalInput PRIVATE
                 xtest_input_driver.c
                 xtest_input_driver.h
-                uinput_input_driver.c
-                uinput_input_driver.h
                 socket_input_driver.c
                 socket_input_driver.h)
     elseif(${WIN32})
