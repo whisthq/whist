@@ -1,7 +1,4 @@
 import React, { ChangeEvent, KeyboardEvent } from "react"
-//import { FormControl } from "react-bootstrap"
-
-import styles from "styles/shared.module.css"
 
 const Input = (props: {
     onChange?: (evt: ChangeEvent<HTMLInputElement>) => void
@@ -59,7 +56,7 @@ const Input = (props: {
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 placeholder={props.placeholder}
-                className={styles.inputForm}
+                className="w-full bg-white border-gray-100 px-4 py-3 outline-none rounded-none text-black"
                 onChange={props.onChange}
                 onKeyPress={props.onKeyPress}
                 value={props.value}
