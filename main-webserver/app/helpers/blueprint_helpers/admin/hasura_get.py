@@ -31,7 +31,7 @@ def auth_token_helper(auth_token):
             fractal_log(function="hasura_auth", label=None, logs=json.dumps(decoded_key))
 
             if decoded_key:
-                current_user = decoded_key["identity"]
+                current_user = decoded_key["sub"]
                 user = None if not current_user else User.query.get(current_user)
                 if user and current_user:
                     hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
