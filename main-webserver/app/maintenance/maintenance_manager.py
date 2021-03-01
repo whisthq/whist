@@ -226,7 +226,7 @@ def try_end_update(region_name: str) -> bool:
     if not got_lock:
         return False, "Did not get lock"
 
-    #  now we freely operate on the keys. first make sure we are not already in update mode
+    # now we freely operate on the keys. first make sure we are not already in update mode
     # then, we need to make sure no tasks are going
     update_exists = _REDIS_CONN.exists(update_key)
     if not update_exists:
