@@ -1,28 +1,6 @@
 import logging
 
 
-class _MessageHandler(logging.StreamHandler):
-    """
-    Makes sure logged messages conform to fractal's preferred punctuation.
-    """
-
-    def __init__(self):
-        super().__init__()
-
-    def emit(self, record: logging.LogRecord):
-        """
-        This is called prior to any logging. We do the following checks:
-            - make sure the log ends in a ".", "!", or "?"
-
-        Args:
-            record: provided by logging library, contains info for a specific logging instance
-        """
-        log = record.msg
-        if not log.endswith(".") and not log.endswith("!") and not log.endswith("?"):
-            log = f"{log}."  # add period
-            record.msg = log
-
-
 class _ExtraHandler(logging.StreamHandler):
     """
     Handles the "extra" parameter that can be passed to logging invocations.
@@ -60,10 +38,6 @@ def _create_fractal_logger():
     logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
     logger = logging.getLogger(__name__)
     logger.setLevel(logging.DEBUG)
-
-    # add message handler
-    message_handler = _MessageHandler()
-    logger.addHandler(message_handler)
 
     # add extra handler
     extra_handler = _ExtraHandler()
