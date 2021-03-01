@@ -1,4 +1,5 @@
-import json, logging
+import json
+import logging
 
 from flask import current_app
 from jose import jwt
@@ -38,8 +39,6 @@ def auth_token_helper(auth_token):
             fractal_log(
                 function="hasura_auth", label=None, logs=f"Error: {str(e)}", level=logging.ERROR
             )
-
-            pass
 
     return hasura_role
 
