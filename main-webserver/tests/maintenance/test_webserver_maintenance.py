@@ -104,7 +104,7 @@ def try_end_maintenance(client, region_name: str = None):
     return resp
 
 
-def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoint_type: str):
+def try_problematic_endpoint(client, authorized, region_name: str, endpoint_type: str):
     assert endpoint_type in ["te_cc", "te_ac", "a_c"]
 
     resp = None
@@ -116,7 +116,7 @@ def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoi
             region_name=region_name,
             max_size=1,
             min_size=0,
-            username=admin.user_id,
+            username=authorized.user_id,
         )
         resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
@@ -130,7 +130,7 @@ def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoi
 
         # test_endpoint assign_container
         assign_container_body = dict(
-            username=admin.user_id,
+            username=authorized.user_id,
             cluster_name="maintenance-test",
             region_name=region_name,
             region=region_name,
@@ -156,12 +156,10 @@ def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoi
     return resp
 
 
-@pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_maintenance_mode_single_region(
     client,
-    admin,
     make_authorized_user,
     set_valid_subscription,
     mock_endpoints,
@@ -200,7 +198,7 @@ def test_maintenance_mode_single_region(
     # -- Start the test -- #
 
     # start a task
-    resp_start = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_start = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
@@ -221,7 +219,7 @@ def test_maintenance_mode_single_region(
     assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_fail = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
@@ -238,15 +236,15 @@ def test_maintenance_mode_single_region(
     assert resp.json["success"] is True
 
     # new requests should still fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_ac")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_ac")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # test that tasks in other regions should proceed just fine
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-2", "te_ac")
+    resp = try_problematic_endpoint(client, authorized, "us-east-2", "te_ac")
     assert resp.status_code == ACCEPTED
 
     # now end maintenance
@@ -258,7 +256,7 @@ def test_maintenance_mode_single_region(
     assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
-    resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp_final = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
     assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
@@ -277,12 +275,10 @@ def test_maintenance_mode_single_region(
     delattr(_assign_container, "num_calls")
 
 
-@pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_maintenance_mode_all_regions(
     client,
-    admin,
     make_authorized_user,
     set_valid_subscription,
     mock_endpoints,
@@ -309,7 +305,7 @@ def test_maintenance_mode_all_regions(
     # -- Start the test -- #
 
     # start a task
-    resp_start = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_start = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
@@ -330,7 +326,7 @@ def test_maintenance_mode_all_regions(
     assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_fail = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
@@ -347,14 +343,14 @@ def test_maintenance_mode_all_regions(
     assert resp.json["success"] is True
 
     # new requests should still fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_ac")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_ac")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
     assert resp.status_code == WEBSERVER_MAINTENANCE
     # test that tasks in other regions should also fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-2", "te_ac")
+    resp = try_problematic_endpoint(client, authorized, "us-east-2", "te_ac")
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # now end maintenance
@@ -366,7 +362,7 @@ def test_maintenance_mode_all_regions(
     assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
-    resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp_final = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
     assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
