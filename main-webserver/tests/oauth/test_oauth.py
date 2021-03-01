@@ -33,7 +33,7 @@ def test_create_credential(make_token, provider, user):
 def test_overwrite_credential(make_credential, make_token, provider, user):
     """Replace an existing credential with a new one."""
 
-    credential = make_credential(provider, cleanup=False)
+    credential = make_credential(user.user_id, provider, cleanup=False)
 
     assert len(user.credentials) == 1
     assert credential.user == user
@@ -53,7 +53,7 @@ def test_update_credential(make_credential, make_token, provider, user):
     """Update an existing credential with a new one."""
 
     token = make_token(refresh=False)
-    credential = make_credential(provider)
+    credential = make_credential(user.user_id, provider)
     refresh_token = credential.refresh_token
 
     db.session.expire(credential)
@@ -105,11 +105,10 @@ def test_list_no_connected_apps(client):
     assert response.json == {"app_names": []}
 
 
-@pytest.mark.usefixtures("authorized")
-def test_list_connected_apps(client, make_credential, provider):
+def test_list_connected_apps(authorized, client, make_credential, provider):
     """Return a list of connected applications."""
 
-    make_credential(provider)
+    make_credential(authorized.user_id, provider)
 
     response = client.get("/connected_apps")
     app_name = _provider_id_to_app_name(provider)
@@ -117,11 +116,10 @@ def test_list_connected_apps(client, make_credential, provider):
     assert response.json == {"app_names": [app_name]}
 
 
-@pytest.mark.usefixtures("authorized")
-def test_disconnect_app(client, make_credential, monkeypatch, provider):
+def test_disconnect_app(authorized, client, make_credential, monkeypatch, provider):
     """Disconnect an external application from the test user's Fractal account."""
 
-    credential = make_credential(provider)
+    credential = make_credential(authorized.user_id, provider)
 
     monkeypatch.setattr(credential, "revoke", function())
 

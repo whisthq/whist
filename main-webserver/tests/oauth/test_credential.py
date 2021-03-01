@@ -16,7 +16,7 @@ from ..patches import function, Object
 
 
 @pytest.fixture
-def dropbox_oauth_refresh(make_credential, monkeypatch):
+def dropbox_oauth_refresh(make_credential, monkeypatch, user):
     """Mock the parts of the dropbox API used by the Credential.refresh method.
 
     The goal is to construct a dummy instance of the Dropbox class.
@@ -25,7 +25,7 @@ def dropbox_oauth_refresh(make_credential, monkeypatch):
         An instance of the Credential class.
     """
 
-    credential = make_credential("dropbox")
+    credential = make_credential(user.user_id, "dropbox")
     dropbox = Object()
 
     monkeypatch.setattr(Dropbox, "__new__", function(returns=dropbox))
@@ -52,7 +52,7 @@ def dropbox_oauth_revoke(monkeypatch):
 
 
 @pytest.fixture
-def google_oauth_refresh(make_credential, monkeypatch):
+def google_oauth_refresh(make_credential, monkeypatch, user):
     """Mock the parts of the google-auth-oauthlib API used by the Credential.refresh method.
 
     The goal is to construct a dummy instance of the google-auth-oauthlib Flow class. This is a
@@ -73,7 +73,7 @@ def google_oauth_refresh(make_credential, monkeypatch):
     flow = Object()  # Mocks the flow instance itself.
     session = Object()  # Mocks the underlying OAuth2Session instance.
 
-    credential = make_credential("google")
+    credential = make_credential(user.user_id, "google")
 
     monkeypatch.setattr(Flow, "from_client_config", function(returns=flow))
 
@@ -127,7 +127,7 @@ def test_refresh(provider, request):
     assert credential.expiry > expiry
 
 
-def test_refresh_expired(make_credential, monkeypatch):
+def test_refresh_expired(make_credential, monkeypatch, user):
     """Verify that the refresh method raises InvalidGrantError for expired Google OAuth tokens.
 
     Currently, there is only a Google version of this test.
@@ -137,7 +137,7 @@ def test_refresh_expired(make_credential, monkeypatch):
     flow = Object()
     oauth2session = Object()
 
-    credential = make_credential("google")
+    credential = make_credential(user.user_id, "google")
 
     monkeypatch.setattr(flow, "client_config", client_config)
     monkeypatch.setattr(flow, "oauth2session", oauth2session)
@@ -148,31 +148,31 @@ def test_refresh_expired(make_credential, monkeypatch):
         credential.refresh(cleanup=False, force=True)
 
 
-def test_revoke(make_credential, provider, request):
+def test_revoke(make_credential, provider, request, user):
     """Simulate token revocation."""
 
-    credential = make_credential(provider)
+    credential = make_credential(user.user_id, provider)
 
     request.getfixturevalue(f"{provider}_oauth_revoke")
     credential.revoke(cleanup=False)
 
 
-def test_revoke_error(make_credential):
+def test_revoke_error(make_credential, user):
     """Handle an error response from the Google OAuth token revocation endpoint.
 
     Currently, there is only a Google version of this test.
     """
 
-    credential = make_credential("google")
+    credential = make_credential(user.user_id, "google")
 
     credential.revoke(cleanup=False)
 
 
-def test_serialize(make_credential, provider):
+def test_serialize(make_credential, provider, user):
     """Make sure the CredentialSchema serializer serializes provider_id correctly."""
 
     schema = CredentialSchema()
-    credential = make_credential(provider)
+    credential = make_credential(user.user_id, provider)
     obj = schema.dump(credential)
 
     assert obj == {

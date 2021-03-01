@@ -9,8 +9,14 @@ from app.blueprints.oauth import Token
 
 
 @pytest.fixture
-def make_credential(make_token, user):
-    """Expose a function that allows test code to create test credentials.
+def make_credential(make_token):
+    """Create a test row in the oauth.credentials table in the database.
+
+    Args:
+        username: The user ID of the Fractal user with whose account to associate the credential.
+        provider: The provider ID of the OAuth provider for which to generate the fake credential.
+        cleanup: Optional. A boolean indicating whether or not to delete the fake credential at the
+            end of this test fixture's lifecycle.
 
     Returns:
         A function that adds test data to the configuration database.
@@ -18,17 +24,7 @@ def make_credential(make_token, user):
 
     credentials = []
 
-    def _credential(provider, cleanup=True):
-        """Create a test row in the oauth.credentials table in the database.
-
-        Keyword arguments:
-            cleanup: Indicates whether or not to delete the credential at the end of this fixture's
-                lifecycle.
-
-        Returns:
-            An instance of the Credential model.
-        """
-
+    def _credential(username, provider, cleanup=True):
         token = make_token()
         credential = Credential(
             access_token=token.access_token,
@@ -36,7 +32,7 @@ def make_credential(make_token, user):
             provider_id=provider,
             refresh_token=token.refresh_token,
             token_type=token.token_type,
-            user_id=user.user_id,
+            user_id=username,
         )
 
         db.session.add(credential)

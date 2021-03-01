@@ -32,7 +32,7 @@ def test_oauth_not_configured(container, make_credential, provider, user, monkey
     # We'll know that the request containing the OAuth token was never sent to the host service
     # the call to _mount_cloud_storage doesn't raise an error.
     monkeypatch.setattr(requests, "post", function(raises=Exception))
-    make_credential(provider)
+    make_credential(user.user_id, provider)
 
     with container() as c:
         _mount_cloud_storage(user, c)
@@ -47,7 +47,7 @@ def test_handle_status(app, container, make_credential, provider, user, monkeypa
     monkeypatch.setattr(requests, "post", function(returns=response))
     monkeypatch.setattr(response, "ok", ok)
     monkeypatch.setattr(response, "text", "response text")
-    make_credential(provider)
+    make_credential(user.user_id, provider)
 
     with container() as c:
         _mount_cloud_storage(user, c)
@@ -57,7 +57,7 @@ def test_handle_exception(app, container, make_credential, provider, user, monke
     """Handle failed connections to the host service."""
 
     monkeypatch.setattr(requests, "post", function(raises=requests.ConnectionError))
-    make_credential(provider)
+    make_credential(user.user_id, provider)
 
     with container() as c:
         _mount_cloud_storage(user, c)
