@@ -22,21 +22,12 @@ def auth_token_helper(auth_token):
         auth_token = auth_token.replace("Bearer ", "")
         current_user = ""
 
-        fractal_log(
-            function="hasura_auth",
-            label=None,
-            logs=f"The auth token is {auth_token}"
-        )
+        fractal_log(function="hasura_auth", label=None, logs=f"The auth token is {auth_token}")
 
         try:
             decoded_key = jwt.decode(auth_token, current_app.config["JWT_SECRET_KEY"])
 
-
-            fractal_log(
-                function="hasura_auth",
-                label=None,
-                logs=json.dumps(decoded_key)
-            )
+            fractal_log(function="hasura_auth", label=None, logs=json.dumps(decoded_key))
 
             if decoded_key:
                 current_user = decoded_key["identity"]
@@ -45,10 +36,7 @@ def auth_token_helper(auth_token):
                     hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
         except Exception as e:
             fractal_log(
-                function="hasura_auth",
-                label=None,
-                logs=f"Error: {str(e)}",
-                level=logging.ERROR
+                function="hasura_auth", label=None, logs=f"Error: {str(e)}", level=logging.ERROR
             )
 
             pass
