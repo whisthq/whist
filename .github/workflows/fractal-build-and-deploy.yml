@@ -977,6 +977,8 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ecs-task-definitions-notify-slack,
                 ami-publish-ec2,
+                client-applications-publish-build-s3,	
+                client-applications-notify-slack,
             ]
         if: >
             !failure()
