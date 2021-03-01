@@ -1,4 +1,5 @@
 import logging
+import os
 
 
 def fractal_log(function, label, logs, level=logging.INFO):
@@ -25,3 +26,7 @@ def fractal_log(function, label, logs, level=logging.INFO):
         logger.info(output)
     else:
         logger.debug(output)
+
+
+def newLine():
+    print("\n")
