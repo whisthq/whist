@@ -1,16 +1,14 @@
 import React from "react"
 import { connect } from "react-redux"
-
 import { HashLink } from "react-router-hash-link"
 
-import sharedStyles from "styles/shared.module.css"
 
 export const SignupButton = () => {
     return (
         <div>
             <HashLink to="/auth/bypass/#top">
                 <button
-                    className={sharedStyles.whiteButton}
+                    className="px-4 text-lg outline-none tracking-wide bg-black text-black border-1 border-gray-100"
                     style={{ textTransform: "uppercase" }}
                 >
                     GET STARTED

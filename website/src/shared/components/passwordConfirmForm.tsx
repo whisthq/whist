@@ -1,10 +1,6 @@
 import React, { ChangeEvent, KeyboardEvent } from "react"
-
 import Input from "shared/components/input"
-
 import { checkPassword } from "pages/auth/constants/authHelpers"
-
-import "styles/auth.module.css"
 import PLACEHOLDER from "shared/constants/form"
 import { E2E_AUTH_IDS } from "testing/utils/testIDs"
 
