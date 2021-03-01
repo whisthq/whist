@@ -150,7 +150,7 @@ int multithreaded_render_audio(void* opaque) {
     UNUSED(opaque);
 
     while (true) {
-        int ret = SDL_SemWait(render_semaphore);
+        SDL_SemWait(render_semaphore);
 
         if (audio_frequency > MAX_FREQ) {
             LOG_ERROR("Frequency received was too large: %d, silencing audio now.",

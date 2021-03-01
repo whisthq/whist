@@ -302,6 +302,10 @@ void print_memory_info() {
 }
 // End Print Memory Info
 
+#ifdef _WIN32
+// Get __cpuid compiler intrinsic
+#include <intrin.h>
+#endif
 void cpu_id(unsigned i, unsigned regs[4]) {
 #ifdef _WIN32
     __cpuid((int*)regs, (int)i);
