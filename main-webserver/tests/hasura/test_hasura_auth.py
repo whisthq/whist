@@ -5,6 +5,7 @@ import datetime
 from datetime import datetime as dt
 from http import HTTPStatus
 from jose import jwt
+from flask_jwt_extended import create_access_token
 
 from ..patches import function
 
@@ -29,7 +30,7 @@ def test_login_header(client):
     }
 
 
-def test_auth_header(client, monkeypatch, make_authorized_user):
+def test_auth_header(app, client, monkeypatch, make_authorized_user):
     response = client.get("/hasura/auth", headers={"Authorization": "Bearer auth_token"})
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
@@ -41,9 +42,12 @@ def test_auth_header(client, monkeypatch, make_authorized_user):
     authorized = make_authorized_user(
         created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
     )
-    monkeypatch.setattr(jwt, "decode", function(returns={"sub": authorized.user_id}))
+    access_token = create_access_token(authorized.user_id)
+    #monkeypatch.setattr(jwt, "decode", function(returns={"identity": authorized.user_id}))
 
-    response = client.get("/hasura/auth", headers={"Authorization": "Bearer auth_token"})
+    response = client.get("/hasura/auth", headers={
+        'Authorization': 'Bearer {}'.format(access_token)
+    })
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
         "X-Hasura-Role": "user",
