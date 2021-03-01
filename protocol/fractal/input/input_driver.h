@@ -26,8 +26,6 @@ Includes
 #include "winapi_input_driver.h"
 #elif INPUT_DRIVER == XTEST_INPUT_DRIVER
 #include "xtest_input_driver.h"
-#elif INPUT_DRIVER == UINPUT_INPUT_DRIVER
-#include "uinput_input_driver.h"
 #elif INPUT_DRIVER == SOCKET_INPUT_DRIVER
 #include "socket_input_driver.h"
 #else
