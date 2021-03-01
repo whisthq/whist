@@ -15,6 +15,7 @@ ID_JSON=$(printf '%s\n' "${{IDS[@]}}" | jq -R . | jq -s -c .)
 echo "{{\"DriverVersion\":\"${{DRIVER_VERSION}}\",\"GPUIDs\":${{ID_JSON}}}}" > /var/lib/ecs/gpu/nvidia-gpu-info.json
 
 #Create ECS config
+sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
 cat << EOF > /etc/ecs/ecs.config
 ECS_CLUSTER={}
 ECS_DATADIR=/var/lib/ecs/data
