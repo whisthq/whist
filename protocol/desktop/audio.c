@@ -93,6 +93,7 @@ void destroy_audio_device() {
 }
 
 void reinit_audio_device() {
+    LOG_INFO("Reinitializing audio device");
     destroy_audio_device();
 
     // cast socket and SDL variables back to their data type for usage
@@ -124,6 +125,7 @@ void init_audio() {
     /*
         Initialize the audio device
     */
+    LOG_INFO("Initializing audio system");
     if (!render_semaphore) {
         render_semaphore = SDL_CreateSemaphore(0);
     }
@@ -139,6 +141,7 @@ void init_audio() {
 }
 
 void destroy_audio() {
+    LOG_INFO("Destroying audio system");
     destroy_audio_device();
     SDL_DestroySemaphore(render_semaphore);
 }
@@ -344,7 +347,8 @@ void update_audio() {
                     // &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
                     // sizeof(AudioPacket));
                     memcpy((AudioPacket*)&render_context.audio_data[i],
-                           &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE], sizeof(AudioPacket));
+                           &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
+                           sizeof(AudioPacket));
                     // Reset packet in receiving audio buffer
                     AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
                     packet->id = -1;
