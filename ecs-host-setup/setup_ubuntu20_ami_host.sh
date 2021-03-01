@@ -40,20 +40,6 @@ sudo iptables -t nat -A PREROUTING -p tcp -d 169.254.170.2 --dport 80 -j DNAT --
 sudo iptables -t nat -A OUTPUT -d 169.254.170.2 -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
 sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 
-# Create ECS agent config file
-sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
-cat << EOF | sudo tee /etc/ecs/ecs.config
-ECS_CLUSTER=default
-ECS_DATADIR=/data
-ECS_ENABLE_TASK_IAM_ROLE=true
-ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST=true
-ECS_LOGFILE=/log/ecs-agent.log
-ECS_AVAILABLE_LOGGING_DRIVERS=["syslog", "json-file", "journald", "awslogs"]
-ECS_LOGLEVEL=info
-ECS_ENABLE_GPU_SUPPORT=true
-ECS_NVIDIA_RUNTIME=nvidia
-EOF
-
 # Remove extra unnecessary files
 sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
