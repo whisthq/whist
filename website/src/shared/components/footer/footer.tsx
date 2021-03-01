@@ -1,258 +1,106 @@
-import React, { useContext } from "react"
-import { Row, Col } from "react-bootstrap"
+import React from "react"
 import { HashLink } from "react-router-hash-link"
-import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM } from "react-icons/fa"
+import {
+    MediumIcon,
+    LinkedinIcon,
+    InstagramIcon,
+    TwitterIcon
+} from "shared/components/icons"
+import {
+    AboutLink,
+    SupportLink,
+    CareersLink,
+    SalesLink,
+    BlogLink,
+    DiscordLink,
+} from "shared/components/links"
 
-import styles from "styles/shared.module.css"
+const FooterLinkList = ({
+    title,
+    children,
+}: {
+    title: string
+    children: any
+}) => (
+    <div className="text-left md:text-right">
+        {title ? <div className="font-bold mb-2 text-base">{title}</div> : null}
+        {children({
+            className:
+                "hover:text-green-400 hover:outline-none text-sm block border-none no-underline hover:no-underline",
+        })}
+    </div>
+)
 
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
-// import PressCoverage from "shared/components/footer/components/pressCoverage/pressCoverage"
+const FooterIconList = ({ children }: { children: any }) => (
+    <div className="flex text-left space-x-4">
+        {children({
+            className: "p-2.5 rounded-sm border hover:text-green-400",
+            target: "_blank",
+            rel: "noopener noreferrer",
+        })}
+    </div>
+)
+
 
 const Footer = () => {
-    const { width } = useContext(MainContext)
     return (
-        <div
-            style={{ background: "#060217", color: "white", paddingBottom: 40 }}
-        >
-            <div
-                className={styles.footer}
-                style={{
-                    maxWidth: 1600,
-                    margin: "auto",
-                    paddingLeft: 50,
-                    paddingRight: 50,
-                }}
-            >
-                {/* <div
-                    style={{
-                        marginBottom: 50,
-                        textAlign: "right",
-                        width: "100%",
-                    }}
-                >
-                    <PressCoverage />
-                </div> */}
-                <div
-                    style={{
-                        display: width >= ScreenSize.MEDIUM ? "flex" : "block",
-                        justifyContent: "space-between",
-                    }}
-                >
-                    <Row>
-                        <Col xs={12} style={{ maxWidth: 350 }}>
-                            <div className={styles.title}>Fractal</div>
-                            <div className={styles.text}>
-                                Fractal supercharges your applications by
-                                streaming them from the cloud.
-                            </div>
-                            <div
-                                style={{
-                                    display: "flex",
-                                    marginTop: 20,
-                                    textAlign: "left",
-                                }}
-                            >
-                                <a
-                                    id="twitter"
-                                    href="https://twitter.com/tryfractal"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        textDecoration: "none",
-                                    }}
-                                >
-                                    <div className={styles.iconBox}>
-                                        <FaTwitter className={styles.icon} />
-                                    </div>
-                                </a>
-                                <a
-                                    id="medium"
-                                    href="https://medium.com/@fractal"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        textDecoration: "none",
-                                    }}
-                                >
-                                    <div className={styles.iconBox}>
-                                        <FaMediumM className={styles.icon} />
-                                    </div>
-                                </a>
-                                <a
-                                    id="linkedin"
-                                    href="https://www.linkedin.com/company/fractal"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        textDecoration: "none",
-                                    }}
-                                >
-                                    <div className={styles.iconBox}>
-                                        <FaLinkedinIn className={styles.icon} />
-                                    </div>
-                                </a>
-                                <a
-                                    id="instagram"
-                                    href="https://www.instagram.com/tryfractal"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{
-                                        textDecoration: "none",
-                                    }}
-                                >
-                                    <div className={styles.iconBox}>
-                                        <FaInstagram className={styles.icon} />
-                                    </div>
-                                </a>
-                            </div>
-                        </Col>
-                    </Row>
-                    <Row
-                        style={{
-                            width: width >= ScreenSize.MEDIUM ? 300 : "100%",
-                            textAlign: "left",
-                            paddingTop: width >= ScreenSize.MEDIUM ? 0 : 40,
-                        }}
-                    >
-                        <Col
-                            xs={6}
-                            style={{
-                                paddingTop: 15,
-                                paddingBottom: 20,
-                                textAlign:
-                                    width >= ScreenSize.MEDIUM
-                                        ? "right"
-                                        : "left",
-                            }}
-                        >
-                            <div className={styles.sectionName}>RESOURCES</div>
-                            <div style={{ fontSize: 13, outline: "none" }}>
-                                <div>
-                                    <HashLink
-                                        to="/about#top"
-                                        className={styles.pageLink}
-                                        style={{ outline: "none" }}
-                                    >
-                                        About
-                                    </HashLink>
-                                </div>
-                            </div>
-                            <div style={{ fontSize: 13, outline: "none" }}>
-                                <div>
-                                    <a
-                                        href="https://medium.com/@fractal"
-                                        className={styles.pageLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Blog
-                                    </a>
-                                </div>
-                            </div>
-                            <div style={{ fontSize: 13 }}>
-                                <div>
-                                    <a
-                                        href="https://discord.gg/HjPpDGvEeA"
-                                        className={styles.pageLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Join our Discord
-                                    </a>
-                                </div>
-                            </div>
-                        </Col>
-                        <Col
-                            xs={6}
-                            style={{
-                                paddingTop: 15,
-                                paddingBottom: 20,
-                                textAlign:
-                                    width >= ScreenSize.MEDIUM
-                                        ? "right"
-                                        : "left",
-                            }}
-                        >
-                            <div className={styles.sectionName}>CONTACT</div>
-                            <div>
-                                <a
-                                    href="mailto: sales@fractal.co"
-                                    className={styles.pageLink}
-                                >
-                                    Sales
-                                </a>
-                            </div>
-                            <div>
-                                <a
-                                    href="mailto: support@fractal.co"
-                                    className={styles.pageLink}
-                                >
-                                    Support
-                                </a>
-                            </div>
-                            <div>
-                                <a
-                                    href="mailto: careers@fractal.co"
-                                    className={styles.pageLink}
-                                >
-                                    Careers
-                                </a>
-                            </div>
-                        </Col>
-                    </Row>
-                </div>
-                <div
-                    style={{
-                        maxWidth: 1920,
-                    }}
-                >
+        <div className="mx-14 my-4 dark:bg-blue-darkest space-y-8 text-gray-700 dark:text-white">
+            <div className="flex flex-col md:flex-row w-full space-y-12 max-w-screen-2xl justify-between">
+                <div className="flex-col max-w-sm space-y-6">
                     <div
-                        style={{
-                            fontSize: 13,
-                            marginTop: 20,
-                            width: "100%",
-                            display: "flex",
-                            justifyContent: "space-between",
-                        }}
+                        className="font-bold text-left text-2xl"
+                        style={{ letterSpacing: "0.25em" }}
                     >
-                        <div
-                            style={{
-                                margin: 0,
-                                color: "#cccccc",
-                                overflow: "hidden",
-                                fontSize: width >= ScreenSize.MEDIUM ? 14 : 12,
-                            }}
-                        >
-                            &copy; 2021 Fractal Computers, Inc. All Rights
-                            Reserved.
-                        </div>
-                        {width >= ScreenSize.MEDIUM && (
-                            <div
-                                style={{
-                                    margin: 0,
-                                    color: "#cccccc",
-                                    overflow: "hidden",
-                                }}
-                            >
-                                <HashLink
-                                    id="tosPage"
-                                    to="/termsofservice#top"
-                                    style={{ color: "#cccccc" }}
-                                >
-                                    Terms of Service
-                                </HashLink>{" "}
-                                &amp;{" "}
-                                <HashLink
-                                    id="privacyPage"
-                                    to="/privacy#top"
-                                    style={{ color: "#cccccc" }}
-                                >
-                                    Privacy Policy
-                                </HashLink>
-                            </div>
-                        )}
+                        Fractal
                     </div>
+                    <div className="text-sm font-light leading-relaxed tracking-widest">
+                        Fractal supercharges your applications by streaming them
+                        from the cloud.
+                    </div>
+                    <FooterIconList>
+                        {(props: any) => (
+                            <>
+                                <TwitterIcon {...props} />
+                                <MediumIcon {...props} />
+                                <LinkedinIcon {...props} />
+                                <InstagramIcon {...props} />
+                            </>
+                        )}
+                    </FooterIconList>
+                </div>
+                <div className="flex space-x-32 text-left pt-0 md:pt-3">
+                    <FooterLinkList title="RESOURCES">
+                        {(props: any) => (
+                            <>
+                                <AboutLink {...props} />
+                                <BlogLink {...props} />
+                                <DiscordLink {...props} />
+                            </>
+                        )}
+                    </FooterLinkList>
+                    <FooterLinkList title="CONTACT">
+                        {(props: any) => (
+                            <>
+                                <SalesLink {...props} />
+                                <SupportLink {...props} />
+                                <CareersLink {...props} />
+                            </>
+                        )}
+                    </FooterLinkList>
+                </div>
+            </div>
+            <div className=" max-w-screen-2xl flex justify-between w-full text-sm mt-1.5">
+                <div className="m-0 text-gray-400 overflow-hidden text-xs md:text-sm">
+                    &copy; 2021 Fractal Computers, Inc. All Rights Reserved.
+                </div>
+                <div className="hidden md:block text-gray-400">
+                    <HashLink id="tosPage" to="/termsofservice#top">
+                        Terms of Service
+                    </HashLink>{" "}
+                    &amp;{" "}
+                    <HashLink id="privacyPage" to="/privacy#top">
+                        Privacy Policy
+                    </HashLink>
                 </div>
             </div>
         </div>
