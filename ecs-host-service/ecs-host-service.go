@@ -202,6 +202,43 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
 }
 
+// Handles the set config encryption token request from the client app by setting the
+// container's corresponding config encryption token in the map.
+// Takes the request to the `set_config_encryption_token` endpoint as an argument
+// and returns nil if no errors, and error object if error.
+func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
+	logAndReturnError := func(fmt string, v ...interface{}) {
+		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
+		logger.Error(err)
+		req.ReturnResult("", err)
+	}
+
+	// Verify that the requested host port is valid
+	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
+		logAndReturnError("Invalid HostPort for start values request: %v", req.HostPort)
+		return
+	}
+	hostPort := uint16(req.HostPort)
+
+	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
+	// Save config encryption token in container struct
+	fc.SetConfigEncryptionToken(fractalcontainer.ConfigEncryptionToken(req.ConfigEncryptionToken))
+
+	// If CompleteContainerSetup doesn't verify the client app access token, configs are not retrieved or saved.
+	err = fc.CompleteContainerSetup(fractalcontainer.UserID(req.UserID), fractalcontainer.ClientAppAccessToken(req.ClientAppAccessToken), "handleSetConfigEncryptionTokenRequest")
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
+	req.ReturnResult("", nil)
+}
+
 // Creates a file containing the DPI assigned to a specific container, and make
 // it accessible to that container. Also take the received User ID and retrieve
 // the user's app configs if the User ID is set. We make this function send
@@ -227,22 +264,13 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 		return
 	}
 
-	fc.AssignToUser(fractalcontainer.UserID(req.UserID))
-
 	err = fc.WriteStartValues(req.DPI, req.ContainerARN)
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
 	}
 
-	// Populate the user config folder for the container's app
-	err = fc.PopulateUserConfigs()
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	err = fc.MarkReady()
+	err = fc.CompleteContainerSetup(fractalcontainer.UserID(req.UserID), fractalcontainer.ClientAppAccessToken(req.ClientAppAccessToken), fractalcontainer.SetupEndpoint("handleStartValuesRequest"))
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
@@ -550,6 +578,9 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				switch serverevent.(type) {
 				case *httpserver.SetContainerStartValuesRequest:
 					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
+
+				case *httpserver.SetConfigEncryptionTokenRequest:
+					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
 
 				case *httpserver.MountCloudStorageRequest:
 					go handleCloudStorageRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.MountCloudStorageRequest))

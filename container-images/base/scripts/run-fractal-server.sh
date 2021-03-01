@@ -79,7 +79,7 @@ find $USER_CONFIGS_DIR -xtype l -delete
 #     tar is really pleb: it won't exclude the file unless it exists when it starts tarring, so
 #     since we're tarring within the directory, tar gets confused about the new tar archive and
 #     doesn't exclude it from its archive process. Hence the dummy file!
-tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
+tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.lz4
 if [ ! -f "$tarFile" ]; then
     touch $tarFile
 fi

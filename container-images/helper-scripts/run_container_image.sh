@@ -21,7 +21,7 @@ app_name=$(echo "$image" | sed 's/.*fractal\/\(.*\):.*/\1/')
 
 # Define the folder to mount the Fractal protocol server into the container
 if [[ "$2" == mount ]]; then
-    mount_protocol="--mount type=bind,source=$(cd ../protocol/build-docker/server/build64; pwd),destination=/usr/share/fractal/bin"
+    mount_protocol="--mount type=bind,source=$(cd ../protocol/docker-build/server/build64; pwd),destination=/usr/share/fractal/bin"
 else
     mount_protocol=""
 fi
@@ -34,6 +34,13 @@ dpi=${FRACTAL_DPI:-96}
 # (https://github.com/fractal/fractal/issues/1136)
 user_id=${FRACTAL_USER_ID:-''}
 
+# User config encryption token. This would normally be passed in by the client app,
+# but we'll use a fake key here.
+config_encryption_token="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd"
+
+# User access token. This would normally be passed in by the webserver and client app,
+# but we'll use a fake token here.
+user_access_token="xTt/D6bqW7wfRTCcA6dVKqROl0iadS5k"
 
 # Helper function to kill a locally running Docker container
 # Args: container_id
@@ -61,7 +68,7 @@ check_if_host_service_running() {
 # to send it manually until our development pipeline is fully built
 # Args: container_id, DPI, user_id
 send_start_values_request() {
-    echo "Sending DPI/container-ready request to container $1!"
+    echo "Sending container start values request to container $1!"
     # Send the DPI/container-ready request
     response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_start_values' \
             --header 'Content-Type: application/json' \
@@ -69,10 +76,35 @@ send_start_values_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
-      "user_id": "'"${3:-}"'"
+      "user_id": "'"$3"'",
+      "client_app_auth_secret": "'"$4"'"
     }') \
-        || (print_error_and_kill_container "$1" "DPI/container-ready request to the host service failed!")
-    echo "Response to DPI/container-ready request from host service: $response"
+        || (print_error_and_kill_container $1 "container start values request to the host service failed!")
+
+    echo "Sent container start values request to container $1!"
+    echo "Response to container start values request from host service: $response"
+}
+
+# Send a set config encryption token request to the Fractal ECS host service HTTP server running on localhost
+# This is also necessary for the Fractal server protocol to think that it is ready to start. In production,
+# the client app would send this request to the Fractal host service, but for local development we need
+# to send it manually until our development pipeline is fully built
+# Args: container_id, user_id, config_encryption_token
+send_set_config_encryption_token_request() {
+    # Send the config encryption token
+    response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_config_encryption_token' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+      "auth_secret": "testwebserverauthsecretdev",
+      "host_port": 32262,
+      "user_id": "'"$2"'",
+      "config_encryption_token": "'"$3"'",
+      "client_app_auth_secret": "'"$4"'"
+    }') \
+        || (print_error_and_kill_container $1 "set config encryption token request to the host service failed!")
+
+    echo "Sent set config encryption token request to container $1!"
+    echo "Response to set config encryption token request from host service: $response"
 }
 
 # Send a spin_up_container request to the host service (which must be running with `make run`).
@@ -99,7 +131,8 @@ send_spin_up_container_request() {
 container_id=""
 check_if_host_service_running
 send_spin_up_container_request "$app_name" "$image" "$mount_protocol"
-send_start_values_request "$container_id" "$dpi" "$user_id"
+send_start_values_request "$container_id" "$dpi" "$user_id" "$user_access_token"
+send_set_config_encryption_token_request "$container_id" "$user_id" "$config_encryption_token" "$user_access_token"
 
 # Run bash inside the Docker container
 docker exec -it "$container_id" /bin/bash || true

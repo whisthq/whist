@@ -117,7 +117,7 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata MountCloudStorageRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -131,11 +131,12 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
 type SetContainerStartValuesRequest struct {
-	HostPort     int                `json:"host_port"`     // Port on the host to whose container the start values correspond
-	DPI          int                `json:"dpi"`           // DPI to set for the container
-	UserID       string             `json:"user_id"`       // User ID of the container user
-	ContainerARN string             `json:"container_ARN"` // AWS ID of the container
-	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
+	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
+	DPI                  int                `json:"dpi"`                    // DPI to set for the container
+	UserID               string             `json:"user_id"`                // User ID of the container user
+	ClientAppAccessToken string             `json:"client_app_auth_secret"` // User access token for client app verification
+	ContainerARN         string             `json:"container_ARN"`          // AWS ID of the container
+	resultChan           chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -161,7 +162,51 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SetContainerStartValuesRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
+// SetConfigEncryptionTokenRequest defines the (unauthenticated) set config encryption token endpoint
+type SetConfigEncryptionTokenRequest struct {
+	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
+	UserID                string             `json:"user_id"`                 // User to whom token belongs
+	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
+	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
+	resultChan            chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler
+func (s *SetConfigEncryptionTokenRequest) ReturnResult(result string, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass config encryption token setting request
+// result back to the HTTP request handler via ReturnResult
+func (s *SetConfigEncryptionTokenRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
+func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is an PUT request
+	if verifyRequestType(w, r, http.MethodPut) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata SetConfigEncryptionTokenRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata, false); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -208,7 +253,7 @@ func processSpinUpContainerRequest(w http.ResponseWriter, r *http.Request, queue
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpContainerRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
@@ -250,7 +295,7 @@ func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) er
 // 3. If we get a bad, unauthenticated request we can minimize the amount of
 // processsing power we devote to it. This is useful for being resistant to
 // Denial-of-Service attacks.
-func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest) (err error) {
+func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s ServerRequest, authenticate bool) (err error) {
 	// Get body of request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -266,30 +311,33 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 		http.Error(w, "Malformed body", http.StatusBadRequest)
 		return logger.MakeError("Error raw-unmarshalling JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
 	}
-	var requestAuthSecret string
-	err = func() error {
-		if value, ok := rawmap["auth_secret"]; ok {
-			return json.Unmarshal(*value, &requestAuthSecret)
-		}
-		return logger.MakeError("Request body had no \"auth_secret\" field.")
-	}()
-	if err != nil {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return logger.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
-	}
 
-	// Actually verify authentication. Note that we check the length of the token
-	// that is sent before comparing the strings. This leaks the length of the
-	// correct key (which does not help the attacker too much), but provides us
-	// the benefit of preventing a super-long request from clogging up our host
-	// service with huge memory allocations.
-	if len(webserverAuthSecret) != len(requestAuthSecret) ||
-		subtle.ConstantTimeCompare(
-			[]byte(webserverAuthSecret),
-			[]byte(requestAuthSecret),
-		) == 0 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return logger.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
+	if authenticate {
+		var requestAuthSecret string
+		err = func() error {
+			if value, ok := rawmap["auth_secret"]; ok {
+				return json.Unmarshal(*value, &requestAuthSecret)
+			}
+			return logger.MakeError("Request body had no \"auth_secret\" field.")
+		}()
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return logger.MakeError("Error getting auth_secret from JSON body sent from %s to URL %s: %s", r.Host, r.URL, err)
+		}
+
+		// Actually verify authentication. Note that we check the length of the token
+		// that is sent before comparing the strings. This leaks the length of the
+		// correct key (which does not help the attacker too much), but provides us
+		// the benefit of preventing a super-long request from clogging up our host
+		// service with huge memory allocations.
+		if len(webserverAuthSecret) != len(requestAuthSecret) ||
+			subtle.ConstantTimeCompare(
+				[]byte(webserverAuthSecret),
+				[]byte(requestAuthSecret),
+			) == 0 {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return logger.MakeError("Received a bad auth_secret from %s to URL %s", r.Host, r.URL)
+		}
 	}
 
 	// Now, actually do the unmarshalling into the right object type
@@ -341,6 +389,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
+	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
 	if logger.GetAppEnvironment() == logger.EnvLocalDev {
 		mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
 	}
