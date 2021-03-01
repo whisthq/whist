@@ -13,48 +13,59 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import set_stun
 from ..patches import function
 
 
-def test_no_container_id(client, authorized):
-    response = client.post("/container/stun", json=dict(username=authorized.user_id, stun=True))
+def test_no_container_id(client, user):
+    client.login(user.user_id)
+
+    response = client.post("/container/stun", json=dict(username=user.user_id, stun=True))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_stun(client, authorized):
+def test_no_stun(client, user):
+    client.login(user.user_id)
+
     response = client.post(
-        "/container/stun", json=dict(username=authorized.user_id, container_id="mycontainerid123")
+        "/container/stun", json=dict(username=user.user_id, container_id="mycontainerid123")
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_username(client, authorized):
-    response = client.post("/container/stun", json=dict(container_id="mycontainerid123", stun=True))
+def test_no_username(client, user):
+    client.login(user.user_id)
+
+    response = client.post(
+        "/container/stun",
+        json=dict(container_id="mycontainerid123", stun=True),
+    )
 
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_not_found(client, authorized, monkeypatch):
+def test_not_found(client, monkeypatch, user):
     code = HTTPStatus.NOT_FOUND
 
+    client.login(user.user_id)
     monkeypatch.setattr(aws_container_post, "set_stun", function(returns=code))
 
     response = client.post(
         "/container/stun",
-        json=dict(username=authorized.user_id, container_id="mycontainerid123", stun=True),
+        json=dict(username=user.user_id, container_id="mycontainerid123", stun=True),
     )
 
     assert response.status_code == code
 
 
-def test_successful(client, authorized, monkeypatch):
+def test_successful(client, monkeypatch, user):
     code = HTTPStatus.OK
 
+    client.login(user.user_id)
     monkeypatch.setattr(aws_container_post, "set_stun", function(returns=code))
     importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
         "/container/stun",
-        json=dict(username=authorized.user_id, container_id="mycontainerid123", stun=True),
+        json=dict(username=user.user_id, container_id="mycontainerid123", stun=True),
     )
 
     assert response.status_code == code

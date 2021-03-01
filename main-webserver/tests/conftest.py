@@ -75,27 +75,6 @@ def app():
     return _app
 
 
-@pytest.fixture
-def authorized(client, user, monkeypatch):
-    """Bypass authorization decorators.
-
-    Inject the JWT bearer token of an authorized user into the HTTP Authorization header that is
-    sent along with every request made by the Flask test client.
-
-    Returns:
-        An instance of the User model representing the authorized user.
-    """
-
-    access_token = create_access_token(identity=user.user_id)
-
-    # environ_base contains base data that is used to construct every request that the client
-    # sends. Here, we are injecting a value into the field that contains the base HTTP
-    # Authorization header data.
-    monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
-
-    return user
-
-
 @pytest.fixture(scope="session")
 def celery_config():
     """Set celery configuration variables.

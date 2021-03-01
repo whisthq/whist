@@ -37,39 +37,39 @@ def set_valid_subscription(monkeypatch):
 
 
 # the following repeated monkeypatches (for userschema, stripeclient) are temporary, will need to replace with properly authenticated users later
-def test_bad_app(client, authorized, monkeypatch, set_valid_subscription):
+def test_bad_app(client, monkeypatch, set_valid_subscription, user):
+    client.login(user.user_id)
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     set_valid_subscription(True)
 
-    response = client.post(
-        "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
-    )
+    response = client.post("/container/assign", json=dict(username=user.user_id, app="Bad App"))
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_username(client, authorized, set_valid_subscription):
+def test_no_username(client, set_valid_subscription, user):
+    client.login(user.user_id)
     set_valid_subscription(True)
 
     response = client.post("/container/assign", json=dict(app="VSCode"))
     assert response.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_no_app(client, authorized, monkeypatch, set_valid_subscription):
+def test_no_app(client, monkeypatch, set_valid_subscription, user):
+    client.login(user.user_id)
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     set_valid_subscription(True)
 
-    response = client.post("/container/assign", json=dict(username=authorized.user_id))
+    response = client.post("/container/assign", json=dict(username=user.user_id))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
+def test_no_region(client, monkeypatch, set_valid_subscription, user):
+    client.login(user.user_id)
     monkeypatch.setattr(UserSchema, "dump", function(returns={"stripe_customer_id": "random1234"}))
     set_valid_subscription(True)
 
-    response = client.post(
-        "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
-    )
+    response = client.post("/container/assign", json=dict(username=user.user_id, app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 

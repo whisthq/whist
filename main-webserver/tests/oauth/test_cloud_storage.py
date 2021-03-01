@@ -16,7 +16,7 @@ def test_dont_mount_cloud_storage(container, user):
 
 
 @pytest.mark.usefixtures("oauth_client_disabled")
-def test_oauth_not_configured(container, make_credential, provider, user, monkeypatch):
+def test_oauth_not_configured(container, make_credential, provider, monkeypatch, user):
     """Don't send cloud storage credentials if the Flask app isn't configured as an OAuth client.
 
     For the Flask app to be configured as an OAuth client for a particular provider, the OAuth
@@ -39,7 +39,7 @@ def test_oauth_not_configured(container, make_credential, provider, user, monkey
 
 
 @pytest.mark.parametrize("ok", (True, False))
-def test_handle_status(app, container, make_credential, provider, user, monkeypatch, ok):
+def test_handle_status(app, container, make_credential, provider, monkeypatch, ok, user):
     """Handle both successful and unsuccessful responses from the host service."""
 
     response = Object()
@@ -53,7 +53,7 @@ def test_handle_status(app, container, make_credential, provider, user, monkeypa
         _mount_cloud_storage(user, c)
 
 
-def test_handle_exception(app, container, make_credential, provider, user, monkeypatch):
+def test_handle_exception(app, container, make_credential, provider, monkeypatch, user):
     """Handle failed connections to the host service."""
 
     monkeypatch.setattr(requests, "post", function(raises=requests.ConnectionError))

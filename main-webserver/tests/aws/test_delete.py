@@ -25,9 +25,10 @@ def test_no_key(client):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_successful(client, authorized, monkeypatch):
+def test_successful(client, monkeypatch, user):
     obj = Object()
 
+    client.login(user.user_id)
     monkeypatch.setattr(delete_container, "apply_async", function(returns=obj))
     monkeypatch.setattr(obj, "id", str(uuid.uuid4()))
 

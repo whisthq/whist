@@ -92,23 +92,25 @@ def test_multiple_credentials(make_token, user):
     db.session.commit()
 
 
-@pytest.mark.usefixtures("authorized")
-def test_list_no_connected_apps(client):
+def test_list_no_connected_apps(client, user):
     """Return an empty list of connected external applications.
 
     Arguments:
         client: An instance of the Flask test client.
     """
 
+    client.login(user.user_id)
+
     response = client.get("/connected_apps")
 
     assert response.json == {"app_names": []}
 
 
-def test_list_connected_apps(authorized, client, make_credential, provider):
+def test_list_connected_apps(client, make_credential, provider, user):
     """Return a list of connected applications."""
 
-    make_credential(authorized.user_id, provider)
+    client.login(user.user_id)
+    make_credential(user.user_id, provider)
 
     response = client.get("/connected_apps")
     app_name = _provider_id_to_app_name(provider)
@@ -116,11 +118,12 @@ def test_list_connected_apps(authorized, client, make_credential, provider):
     assert response.json == {"app_names": [app_name]}
 
 
-def test_disconnect_app(authorized, client, make_credential, monkeypatch, provider):
+def test_disconnect_app(client, make_credential, monkeypatch, provider, user):
     """Disconnect an external application from the test user's Fractal account."""
 
-    credential = make_credential(authorized.user_id, provider)
+    credential = make_credential(user.user_id, provider)
 
+    client.login(user.user_id)
     monkeypatch.setattr(credential, "revoke", function())
 
     app_name = _provider_id_to_app_name(provider)
@@ -130,11 +133,13 @@ def test_disconnect_app(authorized, client, make_credential, monkeypatch, provid
     assert response.json == {}
 
 
-@pytest.mark.usefixtures("authorized")
-def test_disconnect_bad_app(client, provider):
+def test_disconnect_bad_app(client, provider, user):
     """Attempt to disconnect an external application that is already disconnected."""
 
     app_name = _provider_id_to_app_name(provider)
+
+    client.login(user.user_id)
+
     response = client.delete(f"/connected_apps/{app_name}")
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
