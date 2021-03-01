@@ -615,6 +615,45 @@ int read_piped_arguments_thread_function(void* keep_piping) {
 }
 
 int main(int argc, char* argv[]) {
+    // If argc = 1 (no args passed), then check if client app path exists and try to launch
+    //     This should be done first because `execl` won't cleanup any allocated resources
+    if (argc == 1) {
+#ifdef _WIN32
+#elif __APPLE__
+        // hopefully the app path is not more than 1024 chars long
+        int max_protocol_path_len = 1024;
+        char protocol_path[max_protocol_path_len];
+        memset(protocol_path, 0, max_protocol_path_len);
+        const char* relative_client_app_path = "/../../MacOS/Fractal";
+        if (_NSGetExecutablePath(protocol_path, &max_protocol_path_len) == 0) {
+            // Get directory from executable path
+            char* last_dir_slash_ptr = strrchr(protocol_path, '/');
+            if (last_dir_slash_ptr) {
+                *last_dir_slash_ptr = '\0';
+            }
+            int protocol_path_len = strlen(protocol_path);
+            LOG_INFO("protocol_path %d %s", protocol_path_len, protocol_path);
+            int relative_client_app_path_len = strlen(relative_client_app_path);
+            char client_app_path[protocol_path_len + relative_client_app_path_len + 1];
+            if (safe_strncpy(client_app_path, protocol_path, protocol_path_len + 1)) {
+                if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path, relative_client_app_path_len + 1)) {
+                    // const char* client_app_path = "../../MacOS/Fractal"; // packaged app path
+                    // If `execl` fails, then the program proceeds, else defers to client app
+                    if (execl(client_app_path, "Fractal", NULL) < 0) {
+                        LOG_INFO("errno: %d errstr: %s", errno, strerror(errno));
+                    }
+                } else {
+                    LOG_INFO("CONCAT2 NOT WORK %s", client_app_path);
+                }
+            } else {
+                LOG_INFO("CONCAT1 NOT WORK %s", client_app_path);
+            }
+        } else {
+            LOG_INFO("GETCWD NOT WORK");
+        }
+#endif
+    }
+
     init_default_port_mappings();
 
     srand(rand() * (unsigned int)time(NULL) + rand());
