@@ -146,14 +146,19 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     if tasks is None or not tasks:
         # no tasks, we can start the update
         success = True
-        _REDIS_CONN.set(update_key, 1)
-
-        fractal_log(
-            "try_start_update",
-            None,
-            f"putting webserver into maintenance mode in region {region_name}",
-        )
-        return_msg = f"Put webserver into maintenance mode in region {region_name}."
+        # use an atomic setnx operation to start the update. The return is True iff this thread
+        # created the update key. This reduces log cluttering as only the thread that
+        # starts the update ends up printing.
+        update_started = _REDIS_CONN.setnx(update_key, 1)
+        if update_started:
+            fractal_log(
+                "try_start_update",
+                None,
+                f"putting webserver into maintenance mode in region {region_name}",
+            )
+            return_msg = f"Put webserver into maintenance mode in region {region_name}."
+        else:
+            return_msg = f"Webserver is already in maintenance mode in region {region_name}."
 
     else:
         # no tasks, we cannot start the update. However, we set update_key so no new tasks start.
@@ -162,7 +167,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
 
         log = (
             "cannot start update, but stopping new tasks from running."
-            f" Waiting on {len(tasks)} task to finish. Task IDs:\n{tasks}."
+            f" Waiting on {len(tasks)} task to finish. Task IDs: {tasks}."
         )
         fractal_log(
             "try_start_update",
@@ -226,21 +231,20 @@ def try_end_update(region_name: str) -> bool:
     if not got_lock:
         return False, "Did not get lock"
 
-    #  now we freely operate on the keys. first make sure we are not already in update mode
-    # then, we need to make sure no tasks are going
-    update_exists = _REDIS_CONN.exists(update_key)
-    if not update_exists:
+    # now we freely operate on the keys. we simply delete the update key. the return is False if the
+    # key did not exist, and True if the key did exist and was deleted.
+    ended_update = _REDIS_CONN.delete(update_key)
+    if not ended_update:
         # release lock
         _REDIS_CONN.delete(_REDIS_LOCK_KEY)
-        # even if no update exists, we return True because try_update_all does not cache
-        # which regions have stopped updating. A second request to it will try to end updates
-        # in all regions, including ones the first request stopped.
+        # even if no update exists, we return True so that try_end_update_all cleanly knows
+        # this function succeeded.
         return True, f"No update in {region_name}"
 
     fractal_log(
         "try_end_update",
         None,
-        f"ending webserver maintenance mode on region {region_name}",
+        f"ended webserver maintenance mode in region {region_name}",
     )
 
     _REDIS_CONN.delete(update_key)
@@ -393,11 +397,11 @@ def maintenance_track_task(func: Callable):
         # pre-function logic: register the task
         if not try_register_task(region_name=region_name, task_id=self_obj.request.id):
             msg = (
-                "Could not register a tracked task. Debug info:\n"
-                f"Celery Task ID: {self_obj.request.id}\n"
-                f"Function: {func.__name__}\n"
-                f"Args: {args}\n"
-                f"Kwargs: {kwargs}\n"
+                "Could not register a tracked task. "
+                f"Celery Task ID: {self_obj.request.id}. "
+                f"Function: {func.__name__}. "
+                f"Args: {args}. "
+                f"Kwargs: {kwargs}."
             )
             fractal_log(
                 "maintenance_track_task",
@@ -405,6 +409,10 @@ def maintenance_track_task(func: Callable):
                 msg,
             )
             raise ValueError("MAINTENANCE ERROR. Failed to register task.")
+
+        fractal_log(
+            "maintenance_track_task", None, f"Registered tracked task: {self_obj.request.id}."
+        )
 
         exception = None
         try:
@@ -418,12 +426,11 @@ def maintenance_track_task(func: Callable):
             task_id=self_obj.request.id,
         ):
             msg = (
-                f"CRITICAL! Could not deregister a tracked task.\n"
-                "Debug info:\n"
-                f"Celery Task ID: {self_obj.request.id}\n"
-                f"Function: {func.__name__}\n"
-                f"Args: {args}\n"
-                f"Kwargs: {kwargs}\n"
+                f"CRITICAL! Could not deregister a tracked task. "
+                f"Celery Task ID: {self_obj.request.id}. "
+                f"Function: {func.__name__}. "
+                f"Args: {args}. "
+                f"Kwargs: {kwargs}."
             )
             fractal_log(
                 "maintenance_track_task",
@@ -433,6 +440,10 @@ def maintenance_track_task(func: Callable):
             )
             # exception can be None here
             raise ValueError("MAINTENANCE ERROR. Failed to deregister task.") from exception
+
+        fractal_log(
+            "maintenance_track_task", None, f"Deregistered tracked task: {self_obj.request.id}."
+        )
 
         # raise any exception to caller
         if exception is not None:
