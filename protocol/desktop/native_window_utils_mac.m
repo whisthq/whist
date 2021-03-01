@@ -21,7 +21,7 @@ Includes
 
 #include "native_window_utils.h"
 #include <Cocoa/Cocoa.h>
-#include "SDL_syswm.h"
+#include "SDL2/SDL_syswm.h"
 
 /*
 ============================
