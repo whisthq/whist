@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { FaMoon, FaSun } from "react-icons/fa"
+import classNames from "classnames"
 
 import Header from "shared/components/header"
 import Footer from "shared/components/footer/footer"
@@ -9,7 +10,20 @@ import Pricing from "pages/homepage/products/chrome/components/pricing/pricing"
 import Features from "pages/homepage/products/chrome/components/features/features"
 import ActionPrompt from "pages/homepage/products/chrome/components/actionPrompt/actionPrompt"
 
-import sharedStyles from "styles/shared.module.css"
+const DarkModeIcon = (props: {dark: boolean, onClick: () => void }) => (
+                <div className="absolute">
+                    <div
+                        onClick={props.onClick}
+                        className={classNames("fixed top-16 md:top-24 right-2 md:right-12 dark:bg-transparent",
+                                              "border border-transparent dark:border-gray-400 bg-blue-lightest",
+                                              "text-gray dark:text-gray-300 p-2 rounded cursor-pointer")}
+                    >
+                        <div>
+                           {props.dark ? <FaSun /> : <FaMoon/>}
+                        </div>
+                    </div>
+                </div>
+)
 
 export const Chrome = () => {
     /*
@@ -21,27 +35,11 @@ export const Chrome = () => {
 
     return (
         <div
-            className={`overflow-x-hidden ${
-                dark ? "bg-blue-darkest" : "bg-white"
-            } ${dark ? "dark" : ""}`}
+            className={classNames("overflow-x-hidden",
+                       dark ? "dark bg-blue-darkest" : "bg-white")}
         >
-            <div className={sharedStyles.fractalContainer}>
-                <div className="absolute z-50">
-                    <div
-                        onClick={() => setDark(!dark)}
-                        className="fixed top-16 md:top-24 right-2 md:right-12 dark:bg-transparent border border-transparent dark:border-gray-400 bg-blue-lightest text-gray dark:text-gray-300 p-2 rounded cursor-pointer"
-                    >
-                        {dark ? (
-                            <div>
-                                <FaSun />
-                            </div>
-                        ) : (
-                            <div>
-                                <FaMoon />
-                            </div>
-                        )}
-                    </div>
-                </div>
+            <div className="pb-20 px-12 max-w-screen-2xl overflow-x-hidden" >
+                <DarkModeIcon dark={dark} onClick={() => setDark(!dark)} />
                 <Header dark={dark} />
                 <Top />
                 <Middle />

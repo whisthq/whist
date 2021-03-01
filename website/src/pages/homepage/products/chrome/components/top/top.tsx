@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react"
 import { Link } from "react-router-dom"
 import FadeIn from "react-fade-in"
 import { TypeWriter } from "shared/components/typewriter"
+import classNames from "classnames"
 
 import MainContext from "shared/context/mainContext"
 import { ScreenSize } from "shared/constants/screenSizes"
@@ -13,7 +14,36 @@ import RedditLogo from "assets/icons/redditLogo.svg"
 import FigmaLogo from "assets/icons/figmaLogo.svg"
 import GmailLogo from "assets/icons/gmailLogo.svg"
 
-import sharedStyles from "styles/shared.module.css"
+const SymmetricGeometric = (props: any) => (
+    <FadeIn>
+        <div
+            className={props.className}
+            style={{
+                top: 400,
+                left: 425,
+            }}
+        >
+            <Geometric
+                className="relative pointer-events-none"
+                scale={3}
+                flip={false}
+            />
+        </div>
+        <div
+            className={props.className}
+            style={{
+                top: 400,
+                right: -840,
+            }}
+        >
+            <Geometric
+                className="relative pointer-events-none"
+                scale={3}
+                flip={true}
+            />
+        </div>
+    </FadeIn>
+)
 
 export const Top = () => {
     /*
@@ -29,34 +59,7 @@ export const Top = () => {
     return (
         <div>
             {width > ScreenSize.MEDIUM && (
-                <>
-                    <FadeIn>
-                        <div className="relative pointer-events-none">
-                            <div
-                                className="absolute"
-                                style={{
-                                    top: 400,
-                                    left: 425,
-                                }}
-                            >
-                                <Geometric scale={3} flip={false} />
-                            </div>
-                        </div>
-                    </FadeIn>
-                    <FadeIn>
-                        <div className="relative pointer-events-none">
-                            <div
-                                className="absolute"
-                                style={{
-                                    top: 400,
-                                    right: -840,
-                                }}
-                            >
-                                <Geometric scale={3} flip={true} />
-                            </div>
-                        </div>
-                    </FadeIn>
-                </>
+                <SymmetricGeometric className="absolute" />
             )}
             <div className="mt-16 text-center">
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1500 : 0}>
@@ -84,7 +87,10 @@ export const Top = () => {
                         </p>
                         <Link to="/auth">
                             <button
-                                className="rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8 text-white w-full md:w-48 hover:bg-mint hover:text-black duration-500 mt-12 tracking-wide"
+                                className={classNames(
+                                    "rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8",
+                                    "text-white w-full md:w-48 hover:bg-mint hover:text-black duration-500 mt-12 tracking-wide"
+                                )}
                                 style={{ opacity: 1.0 }}
                                 onMouseEnter={() => setHovering(true)}
                                 onMouseLeave={() => setHovering(false)}
@@ -105,7 +111,7 @@ export const Top = () => {
                                 width: width > ScreenSize.MEDIUM ? 70 : 50,
                                 opacity: hovering ? 0.15 : 0.25,
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="youtube"
                         />
                         <img
@@ -118,7 +124,7 @@ export const Top = () => {
                                 opacity: hovering ? 0.15 : 0.25,
                                 animationDelay: "0.9s",
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="figma"
                         />
                         <img
@@ -131,7 +137,7 @@ export const Top = () => {
                                 opacity: hovering ? 0.15 : 0.25,
                                 animationDelay: "0.5s",
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="instagram"
                         />
                         <img
@@ -144,7 +150,7 @@ export const Top = () => {
                                 opacity: hovering ? 0.15 : 0.25,
                                 animationDelay: "0.2s",
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="facebook"
                         />
                         <img
@@ -157,7 +163,7 @@ export const Top = () => {
                                 opacity: hovering ? 0.15 : 0.25,
                                 animationDelay: "0.7s",
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="gmail"
                         />
                         <img
@@ -170,7 +176,7 @@ export const Top = () => {
                                 opacity: hovering ? 0.15 : 0.2,
                                 animationDelay: "0.1s",
                             }}
-                            className={sharedStyles.bounce}
+                            className="animate-bounce"
                             alt="reddit"
                         />
                     </div>
