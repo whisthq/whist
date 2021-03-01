@@ -36,7 +36,7 @@ services:
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
-      POSTGRES_URI: ${POSTGRES_LOCAL_URI}
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: rediss://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
@@ -47,7 +47,7 @@ services:
     <<: *base-app
     command: celery
     environment:
-      POSTGRES_URI: ${POSTGRES_LOCAL_URI}
+      DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: rediss://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 50
