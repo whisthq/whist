@@ -224,7 +224,8 @@ const int x11_keysyms[NUM_KEYCODES] = {
     0,                        // 208 -> no SDL keycode at index 208
     0,                        // 209 -> no SDL keycode at index 209
     0,                        // 210 -> no SDL keycode at index 210
-    0,                        // 211 -> no SDL keycode at index 212
+    0,                        // 211 -> no SDL keycode at index 211
+    0,                        // 212 -> no SDL keycode at index 212
     0,                        // 213 -> no SDL keycode at index 213
     0,                        // 214 -> no SDL keycode at index 214
     0,                        // 215 -> no SDL keycode at index 215
@@ -236,47 +237,46 @@ const int x11_keysyms[NUM_KEYCODES] = {
     0,                        // 221 -> no SDL keycode at index 221
     0,                        // 222 -> no SDL keycode at index 222
     0,                        // 223 -> no SDL keycode at index 223
-    0,
-    XK_Control_L,       // 224 -> Left Ctrl
-    XK_Shift_L,         // 225 -> Left Shift
-    XK_Alt_L,           // 226 -> Left Alt
-    XK_Super_L,         // 227 -> Left GUI (Windows Key)
-    XK_Control_R,       // 228 -> Right Ctrl
-    XK_Shift_R,         // 229 -> Right Shift
-    XK_Alt_R,           // 230 -> Right Alt
-    XK_Super_R,         // 231 -> Right GUI (Windows Key)
-    0,                  // 232 -> no SDL keycode at index 232
-    0,                  // 233 -> no SDL keycode at index 233
-    0,                  // 234 -> no SDL keycode at index 234
-    0,                  // 235 -> no SDL keycode at index 235
-    0,                  // 236 -> no SDL keycode at index 236
-    0,                  // 237 -> no SDL keycode at index 237
-    0,                  // 238 -> no SDL keycode at index 238
-    0,                  // 239 -> no SDL keycode at index 239
-    0,                  // 240 -> no SDL keycode at index 240
-    0,                  // 241 -> no SDL keycode at index 241
-    0,                  // 242 -> no SDL keycode at index 242
-    0,                  // 243 -> no SDL keycode at index 243
-    0,                  // 244 -> no SDL keycode at index 244
-    0,                  // 245 -> no SDL keycode at index 245
-    0,                  // 246 -> no SDL keycode at index 246
-    0,                  // 247 -> no SDL keycode at index 247
-    0,                  // 248 -> no SDL keycode at index 248
-    0,                  // 249 -> no SDL keycode at index 249
-    0,                  // 250 -> no SDL keycode at index 250
-    0,                  // 251 -> no SDL keycode at index 251
-    0,                  // 252 -> no SDL keycode at index 252
-    0,                  // 253 -> no SDL keycode at index 253
-    0,                  // 254 -> no SDL keycode at index 254
-    0,                  // 255 -> no SDL keycode at index 255
-    0,                  // 256 -> no SDL keycode at index 256
-    XK_Mode_switch,     // 257 -> ModeSwitch
-    XF86XK_AudioNext,   // 258 -> Audio/Media Next
-    XF86XK_AudioPrev,   // 259 -> Audio/Media Prev
-    XF86XK_AudioStop,   // 260 -> Audio/Media Stop
-    XF86XK_AudioPause,  // 261 -> Audio/Media Play
-    XF86XK_AudioMute,   // 262 -> Audio/Media Mute
-    XF86XK_AudioMedia   // 263 -> Media Select
+    XK_Control_L,             // 224 -> Left Ctrl
+    XK_Shift_L,               // 225 -> Left Shift
+    XK_Alt_L,                 // 226 -> Left Alt
+    XK_Super_L,               // 227 -> Left GUI (Windows Key)
+    XK_Control_R,             // 228 -> Right Ctrl
+    XK_Shift_R,               // 229 -> Right Shift
+    XK_Alt_R,                 // 230 -> Right Alt
+    XK_Super_R,               // 231 -> Right GUI (Windows Key)
+    0,                        // 232 -> no SDL keycode at index 232
+    0,                        // 233 -> no SDL keycode at index 233
+    0,                        // 234 -> no SDL keycode at index 234
+    0,                        // 235 -> no SDL keycode at index 235
+    0,                        // 236 -> no SDL keycode at index 236
+    0,                        // 237 -> no SDL keycode at index 237
+    0,                        // 238 -> no SDL keycode at index 238
+    0,                        // 239 -> no SDL keycode at index 239
+    0,                        // 240 -> no SDL keycode at index 240
+    0,                        // 241 -> no SDL keycode at index 241
+    0,                        // 242 -> no SDL keycode at index 242
+    0,                        // 243 -> no SDL keycode at index 243
+    0,                        // 244 -> no SDL keycode at index 244
+    0,                        // 245 -> no SDL keycode at index 245
+    0,                        // 246 -> no SDL keycode at index 246
+    0,                        // 247 -> no SDL keycode at index 247
+    0,                        // 248 -> no SDL keycode at index 248
+    0,                        // 249 -> no SDL keycode at index 249
+    0,                        // 250 -> no SDL keycode at index 250
+    0,                        // 251 -> no SDL keycode at index 251
+    0,                        // 252 -> no SDL keycode at index 252
+    0,                        // 253 -> no SDL keycode at index 253
+    0,                        // 254 -> no SDL keycode at index 254
+    0,                        // 255 -> no SDL keycode at index 255
+    0,                        // 256 -> no SDL keycode at index 256
+    XK_Mode_switch,           // 257 -> ModeSwitch
+    XF86XK_AudioNext,         // 258 -> Audio/Media Next
+    XF86XK_AudioPrev,         // 259 -> Audio/Media Prev
+    XF86XK_AudioStop,         // 260 -> Audio/Media Stop
+    XF86XK_AudioPause,        // 261 -> Audio/Media Play
+    XF86XK_AudioMute,         // 262 -> Audio/Media Mute
+    XF86XK_AudioMedia         // 263 -> Media Select
 };
 
 InputDevice* create_input_device() {
