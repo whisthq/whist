@@ -6,6 +6,7 @@ from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from app.helpers.utils.general.logs import fractal_log
 from app.models import EmailTemplates
+from app.exceptions import TemplateNotFound, SendGridException
 
 # Welcome to the mail client. The mail client uses the Sendgrid API to
 # send emails to users.
@@ -17,14 +18,6 @@ from app.models import EmailTemplates
 # 2. Add the email template to the sales.email_templates table in the SQL database.
 # 3. get_available_templates() will pull all the email templates from the
 #    SQL table, and MailClient.send_email will send any email template.
-
-
-class TemplateNotFound(Exception):
-    """This exception is raised when an email template ID is requested that does not exist"""
-
-
-class SendGridException(Exception):
-    """This exception is raised when SendGrid email sending API throws an exception"""
 
 
 class MailClient:
@@ -61,13 +54,13 @@ class MailClient:
             NonexistentEmail: If any of from_email or to_emails does not exist
         """
         if not html_file and not email_id:
-            raise TemplateNotFound
+            raise TemplateNotFound(email_id)
 
         if email_id:
             templates = get_available_templates()
 
             if not email_id in templates.keys():
-                raise TemplateNotFound
+                raise TemplateNotFound(email_id)
 
             html_file = str(templates[email_id]["url"])
             subject = str(templates[email_id]["title"])
