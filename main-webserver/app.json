@@ -8,7 +8,7 @@
         },
         {
           "plan": "heroku-postgresql:standard-0",
-          "as": "HEROKU_POSTGRES",
+          "as": "POSTGRES_EPHEMERAL_DB",
           "options": {
             "version": "12"
           }
@@ -40,7 +40,7 @@
         },
         {
           "plan": "heroku-postgresql:standard-0",
-          "as": "HEROKU_POSTGRES",
+          "as": "POSTGRES_EPHEMERAL_DB",
           "options": {
             "version": "12"
           }
