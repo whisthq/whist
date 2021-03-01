@@ -39,7 +39,7 @@ GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
+def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
     fractal_log(
         function="test_create_cluster",
@@ -55,7 +55,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
             region_name="us-east-1",
             max_size=1,
             min_size=0,
-            username=admin.user_id,
+            username=authorized.user_id,
         ),
     )
 
@@ -85,7 +85,7 @@ def test_create_cluster(client, admin, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_assign_container(client, admin, monkeypatch):
+def test_assign_container(client, authorized, monkeypatch):
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
 
     # TODO: make this a standardized var in tests
@@ -103,7 +103,7 @@ def test_assign_container(client, admin, monkeypatch):
     resp = client.post(
         "/aws_container/assign_container",
         json=dict(
-            username=admin.user_id,
+            username=authorized.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
@@ -328,10 +328,11 @@ def test_delete_container(client, monkeypatch):
 
 
 @pytest.mark.container_serial
+@pytest.mark.usefixtures("authorized")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_update_region(client, admin, monkeypatch):
+def test_update_region(client, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
     def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
@@ -454,7 +455,7 @@ def test_update_region(client, admin, monkeypatch):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
-@pytest.mark.usefixtures("admin")
+@pytest.mark.usefixtures("authorized")
 def test_delete_cluster(client, cluster=pytest.cluster_name):
     cluster = cluster or pytest.cluster_name
     fractal_log(
