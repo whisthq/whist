@@ -88,8 +88,8 @@ export const Top = () => {
                         <Link to="/auth">
                             <button
                                 className={classNames(
-                                    "rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8",
-                                    "text-white w-full md:w-48 hover:bg-mint hover:text-black duration-500 mt-12 tracking-wide"
+                                    "rounded bg-blue dark:bg-mint text-gray-100 dark:text-black px-8 py-3 mt-8",
+                                    "w-full md:w-48 hover:bg-mint hover:text-black duration-500 mt-12 tracking-wide"
                                 )}
                                 style={{ opacity: 1.0 }}
                                 onMouseEnter={() => setHovering(true)}
