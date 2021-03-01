@@ -233,16 +233,6 @@ class LocalConfig(DeploymentConfig):
 
     config_table = "dev"
 
-    # When deploying the web server locally, a developer may want to connect to a local Postgres
-    # instance. The following lines allow developers to specify individual parts of the connection
-    # URI and to fill in the remaining values with reasonable defaults rather than requiring them
-    # to specify the whole thing.
-    db_host = property(getter("POSTGRES_HOST", default="localhost", fetch=False))
-    db_name = property(getter("POSTGRES_DB", default="postgres", fetch=False))
-    db_password = property(getter("POSTGRES_PASSWORD", fetch=False))
-    db_port = property(getter("POSTGRES_PORT", default=5432, fetch=False))
-    db_user = property(getter("POSTGRES_USER", default="postgres", fetch=False))
-
     # When deploying locally, allow developers to tune individual Redis connection parameters.
     redis_db = property(getter("REDIS_DB", default=0, fetch=False))
     redis_host = property(getter("REDIS_HOST", default="localhost", fetch=False))
@@ -292,27 +282,6 @@ class LocalConfig(DeploymentConfig):
             ),
         )
 
-    @property
-    def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
-        """Generate the PostgreSQL connection URI.
-
-        This property's implementation allows developers to specify individual components of the
-        connection URI in environment variables rather than requiring that they specify the entire
-        connection URI themselves. However, the value of the POSTGRES_URI environment variable will
-        be used if that variable is present, overriding any generated value.
-
-        Returns:
-            A PostgreSQL connection URI as a string.
-        """
-
-        return os.environ.get(
-            "POSTGRES_URI",
-            (
-                f"postgresql://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/"
-                f"{self.db_name}"
-            ),
-        )
-
 
 def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
     """Generate a test configuration class that is a subclass of a base configuration class.
@@ -332,13 +301,6 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         DROPBOX_APP_KEY = "dropbox-client-id"
         DROPBOX_APP_SECRET = "dropbox-client-secret"
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
-
-        # This logic is a bit convoluted. Here's what's happening:
-        # TestConfig is used in two cases, local testing or CI. It modifies LocalConfig
-        # and DeploymentConfig respectively. In local testing, LocalConfig already defines
-        # SQLALCHEMY_DATABASE_URI. In CI, we use the POSTGRES_URI env var.
-        if BaseConfig == DeploymentConfig:
-            SQLALCHEMY_DATABASE_URI = property(getter("POSTGRES_URI", fetch=False))
 
         TESTING = True
 
