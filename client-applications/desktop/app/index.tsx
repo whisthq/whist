@@ -30,7 +30,6 @@ if (process.env.NODE_ENV === "production") {
 const store = configureStore()
 
 const AppContainer = process.env.PLAIN_HMR ? Fragment : ReactHotAppContainer
-
 document.addEventListener("DOMContentLoaded", () =>
     render(
         <AppContainer>

@@ -1,4 +1,4 @@
-import { FractalNodeEnvironment } from "shared/types/config"
+import { FractalNodeEnvironment } from "../types/config"
 
 const homeDir = require("os").homedir()
 const path = require("path")

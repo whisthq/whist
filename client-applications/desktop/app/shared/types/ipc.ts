@@ -12,4 +12,8 @@ export enum FractalIPC {
     PERCENT_TRANSFERRED = "transferred",
     DOWNLOADED = "downloaded",
     KILL_RENDER_THREAD = "killRenderThread",
+    TEST_LOG = "testLog",
+    SET_USERID = "setUserID",
+    LAUNCH_PROTOCL = "launchProtocol",
+    SEND_CONTAINER = "sendContainer",
 }

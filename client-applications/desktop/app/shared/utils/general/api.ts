@@ -1,11 +1,11 @@
-import { config, webservers } from "shared/constants/config"
-import { debugLog } from "shared/utils/general/logging"
+import { config, webservers } from "../../constants/config"
+import { debugLog } from "../../utils/general/logging"
 import {
     FractalHTTPRequest,
     FractalHTTPContent,
     FractalHTTPCode,
-} from "shared/types/api"
-import { fractalBackoff } from "shared/utils/general/helpers"
+} from "../../types/api"
+import { fractalBackoff } from "../../utils/general/helpers"
 
 const fetch = require("node-fetch")
 

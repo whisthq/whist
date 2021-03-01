@@ -34,6 +34,7 @@ export const Loading = (props: {
             accessToken: Access token
             failures: Number of login failures
     */
+    console.log("LOADING")
 
     const { failures, userID, accessToken, dispatch } = props
 
@@ -44,9 +45,8 @@ export const Loading = (props: {
 
     const Store = require("electron-store")
     const storage = new Store()
-
+    console.log("IPC RENDERER")
     const ipc = require("electron").ipcRenderer
-
     const logger = new FractalLogger()
 
     useEffect(() => {
@@ -58,12 +58,15 @@ export const Loading = (props: {
         if (!listenerCreated) {
             setListenerCreated(true)
             ipc.on(FractalIPC.UPDATE, (_: any, update: boolean) => {
+                console.log("UPDATEING: =======", update)
+                console.log(userID)
                 logger.logInfo(
                     `IPC update received, needs update is ${false}`,
                     userID
                 )
                 setNeedsUpdate(update)
                 setUpdateReceived(true)
+                _.returnValue = update
             })
         }
     }, [listenerCreated])
@@ -99,6 +102,7 @@ export const Loading = (props: {
             logger.logInfo(`Authenticated, redirecting to launcher`, userID)
             dispatch(updateTimer({ appDoneLoading: Date.now() }))
             dispatch(updateTask({ shouldLaunchProtocol: true }))
+
             history.push(FractalRoute.LAUNCHER)
             return
         }

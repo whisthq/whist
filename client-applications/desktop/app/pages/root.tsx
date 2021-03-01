@@ -67,7 +67,6 @@ const Root = (props: { loginToken: string }) => {
     }
 
     const apolloClient = createApolloClient(loginToken)
-
     return (
         <ApolloProvider client={apolloClient}>
             <div>

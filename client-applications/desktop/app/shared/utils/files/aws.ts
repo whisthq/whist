@@ -1,10 +1,10 @@
 import ping from "ping"
 
-import { graphQLPost } from "shared/utils/general/api"
-import { allowedRegions, AWSRegion } from "shared/types/aws"
-import { QUERY_REGION_TO_AMI } from "shared/constants/graphql"
-import { config } from "shared/constants/config"
-import { FractalLogger } from "shared/utils/general/logging"
+import { graphQLPost } from "../general/api"
+import { allowedRegions, AWSRegion } from "../../types/aws"
+import { QUERY_REGION_TO_AMI } from "../../constants/graphql"
+import { config } from "../../constants/config"
+import { FractalLogger } from "../general/logging"
 
 const logger = new FractalLogger()
 

@@ -131,6 +131,7 @@ export const Login = (props: {
     useEffect(() => {
         if (userID && accessToken) {
             dispatch(updateTask({ shouldLaunchProtocol: true }))
+            ipc.sendSync(FractalIPC.SET_USERID, userID)
             history.push(FractalRoute.LAUNCHER)
         }
     }, [accessToken, userID])
