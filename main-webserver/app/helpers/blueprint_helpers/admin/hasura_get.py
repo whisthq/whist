@@ -23,8 +23,6 @@ def auth_token_helper(auth_token):
         auth_token = auth_token.replace("Bearer ", "")
         current_user = ""
 
-        fractal_log(function="hasura_auth", label=None, logs=f"The auth token is {auth_token}")
-
         try:
             decoded_key = jwt.decode(auth_token, current_app.config["JWT_SECRET_KEY"])
 
