@@ -12,6 +12,7 @@ BINARY_NAME  = ecs-host-service
 
 # Git parameters
 GIT_COMMIT := $(shell git rev-list -1 HEAD)
+GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 
 # Continuous Integration parameters
 CI ?= false
@@ -62,6 +63,9 @@ build: checkCI
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
+
+upload: build
+	aws s3api put-object --bucket fractal-ecs-host-service --key $(GIT_BRANCH) --body build/ecs-host-service
 
 format:
 	(cd ~ && $(GOGET) -u golang.org/x/tools/cmd/goimports)
