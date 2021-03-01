@@ -1,5 +1,5 @@
 module.exports = {
-    important: true,
+    // important: true,
     purge: ["./src/**/*.{js,jsx,ts,tsx}", "./public/index.html"],
     experimental: {
         darkModeVariant: true,
@@ -78,8 +78,8 @@ module.exports = {
             },
         },
     },
-    variants: {
-        extend: {},
-    },
+    // variants: {
+    //     extend: {},
+    // },
     plugins: [],
 }
