@@ -84,6 +84,9 @@ def app():
     """
 
     _app = create_app(testing=True)
+    from app.helpers.utils.general.logs import fractal_logger
+
+    fractal_logger.info(f"REDIS URL: {_app.config['REDIS_URL']}")
     maintenance_init_redis_conn(_app.config["REDIS_URL"])
 
     return _app

@@ -232,15 +232,6 @@ class LocalConfig(DeploymentConfig):
         super().__init__()
 
     config_table = "dev"
-
-    # When deploying locally, allow developers to tune individual Redis connection parameters.
-    redis_db = property(getter("REDIS_DB", default=0, fetch=False))
-    redis_host = property(getter("REDIS_HOST", default="localhost", fetch=False))
-    redis_password = property(getter("REDIS_PASSWORD", default="", fetch=False))
-    redis_port = property(getter("REDIS_PORT", default=6379, fetch=False))
-    redis_scheme = property(getter("REDIS_SCHEME", default="rediss", fetch=False))
-    redis_user = property(getter("REDIS_USER", default="", fetch=False))
-
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
 
@@ -260,27 +251,6 @@ class LocalConfig(DeploymentConfig):
             secret = {}
 
         return secret
-
-    @property
-    def REDIS_URL(self):  # pylint: disable=invalid-name
-        """Generate the Redis connection URI.
-
-        This property's implementation allows developers to specify individual components of the
-        connection URI in environment variables ratherthan requiring that they specify the entire
-        connection URI themselves. However, the value of the REDIS_URL environment variable will
-        be used if that variable is present, overriding any generated value.
-
-        Returns:
-            A Redis connection URI as a string.
-        """
-
-        return os.environ.get(
-            "REDIS_URL",
-            (
-                f"{self.redis_scheme}://{self.redis_user}:{self.redis_password}@{self.redis_host}:"
-                f"{self.redis_port}/{self.redis_db}"
-            ),
-        )
 
 
 def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
