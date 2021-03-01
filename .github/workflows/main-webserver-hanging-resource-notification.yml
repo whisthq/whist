@@ -44,7 +44,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Resources and Notify in Slack if they Exist
+            - name: Check for Hanging Resources
               working-directory: .github/workflows/helpers/aws
               run: |
                   hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
@@ -56,7 +56,8 @@ jobs:
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
                   echo "hanging_resource=$hanging_resource" >> $GITHUB_ENV
 
-            - name: Check for Resources and Notify in Slack if they Exist
+            # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
+            - name: Notify in Slack if Hanging Resources Exist
               working-directory: .github/workflows/helpers/aws
               run: |
                   # notify slack if there are hanging resources
