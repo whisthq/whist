@@ -4,9 +4,7 @@
 # deploys our webserver stack locally using Docker containers 
 # optional args:
 # --down (tear down local deployment)
-# --use-dev-db (use the dev db instead of a local ephemeral db. Only do this if you absolutely need the dev db. Generally
-#               speaking, you should be able to recreate any resource on dev dbs in your ephemeral db. If you do this,
-#               please explain in #webserver why the ephemeral db did not meet your needs so we can improve it.)
+# --use-dev-db (use the dev db instead of a local ephemeral db. See README about using this flag.)
 
 # exit on error
 set -Eeuo pipefail
