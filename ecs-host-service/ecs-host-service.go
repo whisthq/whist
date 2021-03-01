@@ -106,6 +106,9 @@ var containerAppNames map[string]string = make(map[string]string)
 // keep track of the mapping from FractalID to UserID
 var containerUserIDs map[string]string = make(map[string]string)
 
+// keep track of the mapping from FractalID to user encryption key
+var userEncryptionKeys map[string]string = make(map[string]string)
+
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
@@ -454,6 +457,12 @@ func saveUserConfig(fractalID string) {
 		return
 	}
 
+	userEncryptionKey, ok := userEncryptionKeys[fractalID]
+	if !ok {
+		logger.Infof("No user encryption key found for FractalID %v", fractalID)
+		return
+	}
+
 	// Save app config back to s3 - first tar, then upload
 	configPath := fractalDir + fractalID + "/" + userConfigs
 	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
@@ -466,8 +475,7 @@ func saveUserConfig(fractalID string) {
 		tarConfigCmd := exec.Command(
 			"/usr/bin/tar", "-C", configPath, "-czf", decTarPath,
 			"--exclude=" + encTarPath, "--exclude=" + decTarPath,
-			"."
-		)
+			".")
 		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 		// tar is only fatal when exit status is 2 -
 		//    exit status 1 just means that some files have changed while tarring,
@@ -485,11 +493,12 @@ func saveUserConfig(fractalID string) {
 			"/usr/bin/openssl", "aes-256-cbc", "-e",
 			"-in", decTarPath,
 			"-out", encTarPath,
-			"-pass", "pass:" + userEncryptionKey, "-pbkdf2"
-		)
+			"-pass", "pass:" + userEncryptionKey, "-pbkdf2")
 		encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 		if err != nil {
-			return logger.MakeError("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+			// If the config could not be encrypted, don't upload
+			logger.Errorf("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
+			return
 		}
 
 		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
@@ -501,8 +510,9 @@ func saveUserConfig(fractalID string) {
 		}
 	}
 
-	// remove app name mapping for container on fractalID
+	// remove app name and encryption key mapping for container on fractalID
 	delete(containerAppNames, fractalID)
+	delete(userEncryptionKeys, fractalID)
 
 	// clear contents of config directory
 	os.RemoveAll(configPath)
@@ -516,9 +526,9 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	// Get needed vars and create path for config
 	userID := req.UserID
 	containerID := containerIDs[(uint16)(req.HostPort)]
-	userEncryptionKey := req.UserEncryptionKey
 	fractalID := fractalIDs[containerID]
 	appName := containerAppNames[fractalID]
+	userEncryptionKey := userEncryptionKeys[fractalID]
 	configPath := fractalDir + fractalID + "/" + userConfigs
 
 	// Make directory to move configs to
@@ -532,6 +542,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Store app name and user ID in maps
 	containerUserIDs[fractalID] = string(userID)
+	userEncryptionKeys[fractalID] = string(req.UserEncryptionKey)
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
@@ -559,8 +570,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 			"/usr/bin/openssl", "aes-256-cbc", "-d",
 			"-in", encTarPath,
 			"-out", decTarPath,
-			"-pass", "pass:" + userEncryptionKey, "-pbkdf2"
-		)
+			"-pass", "pass:" + userEncryptionKey, "-pbkdf2")
 		decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 		if err != nil {
 			return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
