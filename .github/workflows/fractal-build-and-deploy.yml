@@ -640,8 +640,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
+                fractal-publish-build-config
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
@@ -978,9 +977,6 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ecs-task-definitions-notify-slack,
                 ami-publish-ec2,
-                main-webserver-deploy-heroku,
-                client-applications-publish-build-s3,
-                client-applications-notify-slack,
             ]
         if: >
             !failure()
