@@ -143,7 +143,6 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     success = False
     return_msg = None
     tasks = _REDIS_CONN.lrange(tasks_key, 0, -1)
-
     if tasks is None or not tasks:
         # no tasks, we can start the update
         success = True
@@ -168,7 +167,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
 
         log = (
             "cannot start update, but stopping new tasks from running."
-            f" Waiting on {len(tasks)} task to finish. Task IDs:{tasks}."
+            f" Waiting on {len(tasks)} task to finish. Task IDs: {tasks}."
         )
         fractal_log(
             "try_start_update",
