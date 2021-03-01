@@ -83,43 +83,6 @@ def fractal_auth(func):
     return wrapper
 
 
-def admin_required(func):
-    """A decorator that will return unauthorized if the
-    invoker is no the admin user (i.e. "DASHBOARD_USERNAME" user). This user can
-    be found in the config db. To log in as this user you will have to use the admin
-    login endpoint (which is different from the reguar login endpoint).
-
-    Args:
-        func (function): A function that will be wrapped by
-        this decorator and only run if an admin is invoking it.
-
-    Returns:
-        function: A wrapper that will return unauthorized if the
-        jwt identity provided is not an admin and otherwise run the wrapped function.
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        current_user = get_jwt_identity()
-
-        if current_app.config["DASHBOARD_USERNAME"] not in current_user:
-            return (
-                jsonify(
-                    {
-                        "error": (
-                            "Authorization failed. Provided username does not match"
-                            "the username associated with the provided Bearer token."
-                        ),
-                    }
-                ),
-                UNAUTHORIZED,
-            )
-
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
 def check_developer() -> bool:
     """Determine whether or not the sender of the current request is a Fractal developer.
 
@@ -142,18 +105,18 @@ def check_developer() -> bool:
 
 
 def developer_required(func):
-    """Similar decorator to admin_required, but it allows @fractal.co
-    users as well. It is meant for developer endpoints such as the test_endpoint where we,
-    for ease of testing, prefer to let any of the fractal members connect. It will return
-    unauthorized for non-developers.
+    """Block unauthorized access to an endpoint.
+
+    Endpoints that are decorated with @developer_required only respond to requests sent by users
+    with @fractal.co accounts and to requests sent by the admin user.
 
     Args:
-        func (function): The function that is being decorated.
+        func (function): The view function that is being decorated.
 
     Returns:
-        function: A wrapper that runs some preprocessing/decoration code and
-        then calls the func in certain cases (or returns something else). Check the
-        docs on python decorators for more context.
+        The wrapped view function. The wrapped view function will always respond with a 401
+        Unauthorized response to unauthorized requests. It will execute as normally in response
+        to properly authorized requests.
     """
 
     @wraps(func)
