@@ -15,6 +15,8 @@ from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 
+from .client import FractalClient
+
 
 @pytest.fixture
 def _retrieve_user():
@@ -66,6 +68,8 @@ def app():
     """
 
     _app = create_app(testing=True)
+    _app.test_client_class = FractalClient
+
     maintenance_init_redis_conn(_app.config["REDIS_URL"])
 
     return _app
