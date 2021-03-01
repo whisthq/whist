@@ -22,8 +22,8 @@ Includes
 ============================
 */
 
-#include "SDL.h"
-#include "utils/color.h"
+#include "SDL2/SDL.h"
+#include "../fractal/utils/color.h"
 
 /*
 ============================
