@@ -41,7 +41,7 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Resources and Notify in Slack if they Exist
+            - name: Check for Hanging Resources
               working-directory: .github/workflows/helpers/aws
               run: |
                   hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
@@ -50,14 +50,17 @@ jobs:
                                           ${{ env.db_url_prod}} \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}' \
-                                      | sed 's/[][]//g')
-                  echo $hanging_resource
+                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
+                  echo "hanging_resource=$hanging_resource" >> $GITHUB_ENV
 
+            # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
+            - name: Notify in Slack if Hanging Resources Exist
+              working-directory: .github/workflows/helpers/aws
+              run: |
                   # notify slack if there are hanging resources
-                  if [ ! -z "$hanging_resource" ]; then
+                  if [ ! -z "${{ env.hanging_resource }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${resource}* in _${region}_: \`${hanging_resource}\`\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
