@@ -2,6 +2,7 @@ import json
 
 from flask import current_app
 from jose import jwt
+from flask_jwt_extended import get_jwt_identity
 
 from app.models import User
 from app.helpers.utils.general.logs import fractal_logger
@@ -22,20 +23,19 @@ def auth_token_helper(auth_token):
         auth_token = auth_token.replace("Bearer ", "")
         current_user = ""
 
-        fractal_logger.info(f"The auth token is {auth_token}")
-
-        try:
-            decoded_key = jwt.decode(auth_token, current_app.config["JWT_SECRET_KEY"])
-
-            fractal_logger.info(json.dumps(decoded_key))
-
-            if decoded_key:
-                current_user = decoded_key["sub"]
-                user = None if not current_user else User.query.get(current_user)
-                if user and current_user:
-                    hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
-        except Exception:
-            fractal_logger.error("", exc_info=True)
+        username = get_jwt_identity()
+        if username:
+            hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
+        # original code:
+        # try:
+        #     decoded_key = jwt.decode(auth_token, current_app.config["JWT_SECRET_KEY"])
+        #     if decoded_key:
+        #         current_user = decoded_key["identity"]
+        #         user = None if not current_user else User.query.get(current_user)
+        #         if user and current_user:
+        #             hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
+        # except Exception:
+        #     pass
 
     return hasura_role
 
