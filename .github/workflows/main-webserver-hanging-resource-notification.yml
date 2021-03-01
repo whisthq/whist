@@ -86,10 +86,6 @@ jobs:
             - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
               working-directory: main-webserver
               run: |
-                  # curl -X POST \
-                  #     --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Test notification: \n- \`auto_scaling_group_gpfuxozafa\`\n- \`auto_scaling_group_lnkzzeqedq\`\", \"icon_emoji\": \":fractal:\"}" \
-                  #     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
                   pip install aws-hashicorp-packer-reaper
                   packer_instances=$(aws-hashicorp-packer-reaper list)
                   while IFS= read -r line 
