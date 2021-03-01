@@ -46,7 +46,7 @@ Includes
 #include <SDL2/SDL_syswm.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-#include "utils/color.h"
+#include "../fractal/utils/color.h"
 #include "native_window_utils.h"
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
