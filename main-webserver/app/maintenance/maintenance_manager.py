@@ -232,21 +232,20 @@ def try_end_update(region_name: str) -> bool:
     if not got_lock:
         return False, "Did not get lock"
 
-    # now we freely operate on the keys. first make sure we are not already in update mode
-    # then, we need to make sure no tasks are going
-    update_exists = _REDIS_CONN.exists(update_key)
-    if not update_exists:
+    # now we freely operate on the keys. we simply delete the update key. the return is False if the
+    # key did not exist, and True if the key did exist and was deleted.
+    ended_update = _REDIS_CONN.delete(update_key)
+    if not ended_update:
         # release lock
         _REDIS_CONN.delete(_REDIS_LOCK_KEY)
-        # even if no update exists, we return True because try_update_all does not cache
-        # which regions have stopped updating. A second request to it will try to end updates
-        # in all regions, including ones the first request stopped.
+        # even if no update exists, we return True so that try_end_update_all cleanly knows
+        # this function succeeded.
         return True, f"No update in {region_name}"
 
     fractal_log(
         "try_end_update",
         None,
-        f"ending webserver maintenance mode on region {region_name}",
+        f"ended webserver maintenance mode in region {region_name}",
     )
 
     _REDIS_CONN.delete(update_key)
