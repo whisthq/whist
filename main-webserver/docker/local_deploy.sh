@@ -46,7 +46,7 @@ export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
 export POSTGRES_REMOTE_DB=$POSTGRES_DB
 
 if [ $USE_DEV_DB == "true" ]; then
-    export POSTGRES_LOCAL_URI=postgres://${POSTGRES_REMOTE_USER}:${POSTGRES_REMOTE_PASSWORD}@${POSTGRES_REMOTE_HOST}/${POSTGRES_REMOTE_DB}
+    export DATABASE_URL=postgres://${POSTGRES_REMOTE_USER}:${POSTGRES_REMOTE_PASSWORD}@${POSTGRES_REMOTE_HOST}/${POSTGRES_REMOTE_DB}
 
     # launch all images but dev db
     docker-compose up --build -d redis web celery # don't spin up postgres_db
@@ -70,7 +70,7 @@ else
     export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
     export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
 
-    export POSTGRES_LOCAL_URI=postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+    export DATABASE_URL=postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
 
     # launch images with ephemeral db
     docker-compose up -d --build
