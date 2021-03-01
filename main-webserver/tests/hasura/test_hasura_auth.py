@@ -41,7 +41,7 @@ def test_auth_header(client, monkeypatch, make_authorized_user):
     authorized = make_authorized_user(
         created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
     )
-    monkeypatch.setattr(jwt, "decode", function(returns={"identity": authorized.user_id}))
+    monkeypatch.setattr(jwt, "decode", function(returns={"sub": authorized.user_id}))
 
     response = client.get("/hasura/auth", headers={"Authorization": "Bearer auth_token"})
     assert response.status_code == HTTPStatus.OK
