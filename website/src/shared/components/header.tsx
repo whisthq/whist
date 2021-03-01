@@ -1,22 +1,119 @@
-import React, { Dispatch, useContext, useState } from "react"
+import React, { Dispatch, useState, ReactNode } from "react"
 import { connect } from "react-redux"
-import { Link } from "react-router-dom"
-import { FaBars } from "react-icons/fa"
-
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
 import * as PureAuthAction from "store/actions/auth/pure"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { deepCopy } from "shared/utils/reducerHelpers"
+import { withClass } from "shared/utils/withClass"
 import history from "shared/utils/history"
-import LogoBlack from "assets/icons/logoBlack.svg"
-import LogoWhite from "assets/icons/logoWhite.svg"
+import classNames from "classnames"
+import {
+    AboutLink,
+    SupportLink,
+    CareersLink,
+    MyAccountLink,
+    LogoLink,
+    WordmarkLink,
+    SignInLink,
+    SignOutLink,
+    HomeLink,
+    SettingsLink,
+} from "shared/components/links"
+import { BarsIcon } from "shared/components/icons"
+import {
+    JustifyStartEndRow,
+    JustifyStartEndCol,
+    ScreenFull,
+} from "shared/components/layouts"
 
 import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
 import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
 import { User, AuthFlow } from "shared/types/reducers"
 
-import styles from "styles/shared.module.css"
+const mobileHidden = "hidden md:inline"
+
+const handleSignOut = (dispatch: Dispatch<any>) => {
+    dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
+    dispatch(
+        PaymentPureAction.updateStripeInfo(
+            deepCopy(DASHBOARD_DEFAULT.stripeInfo)
+        )
+    )
+    dispatch(
+        PaymentPureAction.updatePaymentFlow(
+            deepCopy(DASHBOARD_DEFAULT.paymentFlow)
+        )
+    )
+    history.push("/auth")
+}
+const Logo = (props: { className?: string; dark?: boolean }) => (
+    <div
+        className={classNames(
+            "flex items-center space-x-3 mr-10",
+            props.className
+        )}
+    >
+        <LogoLink className="w-6" dark={props.dark} />
+        <WordmarkLink
+            className={classNames(
+                "text-xl font-medium text-gray dark:text-gray-100",
+                "transition duration-500",
+                mobileHidden
+            )}
+        />
+    </div>
+)
+
+const startButtonClasses = classNames(
+    "text-gray dark:text-gray-300 hover:text-blue dark:hover:text-mint",
+    "duration-500 tracking-widest hover:no-underline whitespace-nowrap"
+)
+
+const authButtonClasses = classNames(
+    "text-white dark:text-black bg-blue dark:bg-mint text-right",
+    "px-10 py-2 rounded transition duration-500 whitespace-nowrap"
+)
+
+const authTextClasses = classNames("font-bold dark:text-white tracking-tight")
+
+const AboutLinkStyled = withClass(AboutLink, startButtonClasses)
+const SupportLinkStyled = withClass(SupportLink, startButtonClasses)
+const CareersLinkStyled = withClass(CareersLink, startButtonClasses)
+const HomeLinkStyled = withClass(HomeLink, startButtonClasses)
+const SettingsLinkStyled = withClass(SettingsLink, startButtonClasses)
+const MyAccountLinkStyled = withClass(MyAccountLink, startButtonClasses)
+const MyAccountLinkBold = withClass(
+    MyAccountLink,
+    startButtonClasses,
+    authTextClasses
+)
+const SignInLinkButton = withClass(SignInLink, authButtonClasses)
+const SignInLinkBold = withClass(
+    SignInLink,
+    startButtonClasses,
+    authTextClasses
+)
+const SignOutLinkButton = withClass(SignOutLink, authButtonClasses)
+
+const StartHeaderRow = (props: { children?: ReactNode[] }) => (
+    <div className="flex items-center space-x-6">{props.children}</div>
+)
+
+const StartHeaderCol = (props: {
+    className?: string
+    children?: ReactNode[] | ReactNode
+}) => (
+    <div className={classNames("flex flex-col items-center space-y-2")}>
+        {props.children}
+    </div>
+)
+
+const EndHeaderRow = (props?: any) => (
+    <div className="flex items-center">{props.children}</div>
+)
+
+const EndHeaderCol = (props?: any) => (
+    <div className="flex flex-col items-center space-y-4">{props.children}</div>
+)
 
 const Header = (props: {
     dispatch: Dispatch<any>
@@ -24,233 +121,95 @@ const Header = (props: {
     dark?: boolean
     account?: boolean
 }) => {
-    const { width } = useContext(MainContext)
+    let [expanded, setExpanded] = useState(false)
 
-    const { dispatch, user, account, dark } = props
+    history.listen(() => setExpanded(false))
+    const isSignedIn = props.user.userID
+    const onAccountPage = props.account
+    const handleSignOutClick = () => handleSignOut(props.dispatch)
 
-    const [expanded, setExpanded] = useState(false)
-
-    const handleSignOut = () => {
-        dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
-        dispatch(
-            PaymentPureAction.updateStripeInfo(
-                deepCopy(DASHBOARD_DEFAULT.stripeInfo)
-            )
-        )
-        dispatch(
-            PaymentPureAction.updatePaymentFlow(
-                deepCopy(DASHBOARD_DEFAULT.paymentFlow)
-            )
-        )
-        history.push("/auth")
-    }
-
-    // Only render navigation links for desktops and tablets
-    if (width >= ScreenSize.MEDIUM) {
-        return (
-            <div className="flex justify-between w-full pt-8 bg-none">
-                <div className="flex">
-                    <Link
-                        to="/"
-                        className="outline-none no-underline mr-16 flex"
-                    >
-                        <img
-                            src={dark ? LogoWhite : LogoBlack}
-                            className="w-6 h-6 mr-3 mt-1"
-                            alt="Logo"
-                        />
-                        <div className="text-xl text-gray dark:text-gray-100 font-medium mt-0.5 tracking-widest">
-                            FRACTAL
-                        </div>
-                    </Link>
-                    {!account && (
-                        <div className="flex mt-1">
-                            <Link
-                                to="/about"
-                                id="about"
-                                className="text-gray dark:text-gray-300 no-underline mr-5 hover:text-blue dark:hover:text-mint duration-500 tracking-widest"
-                            >
-                                About
-                            </Link>
-                            <a
-                                href="mailto: support@fractal.co"
-                                className="text-gray dark:text-gray-300 no-underline mr-5 hover:text-blue dark:hover:text-mint duration-500 tracking-widest"
-                            >
-                                Support
-                            </a>
-                            <a
-                                href="mailto: careers@fractal.co"
-                                className="text-gray dark:text-gray-300 no-underline mr-5 hover:text-blue dark:hover:text-mint duration-500 tracking-widest"
-                            >
-                                Careers
-                            </a>
-                        </div>
-                    )}
-                </div>
-                <div>
-                    {user.userID ? (
-                        !account ? (
-                            <>
-                                <Link
-                                    to="/dashboard"
-                                    className="text-gray dark:text-gray-100 tracking-wider font-medium text-lg no-underline dark:text-white dark:hover:text-mint duration-500"
-                                >
-                                    My Account
-                                </Link>
-                            </>
-                        ) : (
-                            <></>
-                        )
-                    ) : (
-                        <Link
-                            id="signin"
-                            to="/auth"
-                            className={
-                                dark
-                                    ? styles.headerLinkLight
-                                    : styles.headerLink
-                            }
-                            style={{
-                                fontWeight: "bold",
-                                marginRight: 0,
-                            }}
-                        >
-                            Sign In
-                        </Link>
-                    )}
-                </div>
+    return (
+        <div className="relative w-full">
+            <div className="flex w-full mt-4 md:h-12 items-center">
+                <JustifyStartEndRow
+                    start={
+                        <StartHeaderRow>
+                            <Logo dark={props.dark} />
+                            {!onAccountPage && (
+                                <>
+                                    <AboutLinkStyled className={mobileHidden} />
+                                    <SupportLinkStyled
+                                        className={mobileHidden}
+                                    />
+                                    <CareersLinkStyled
+                                        className={mobileHidden}
+                                    />
+                                </>
+                            )}
+                        </StartHeaderRow>
+                    }
+                    end={
+                        <EndHeaderRow>
+                            {isSignedIn ? (
+                                !onAccountPage && (
+                                    <MyAccountLinkBold
+                                        className={mobileHidden}
+                                    />
+                                )
+                            ) : (
+                                <SignInLinkBold className={mobileHidden} />
+                            )}
+                            <BarsIcon
+                                className="inline md:hidden text-black dark:text-gray-100"
+                                onClick={() => setExpanded(!expanded)}
+                            />
+                        </EndHeaderRow>
+                    }
+                />
             </div>
-        )
-    } else {
-        return (
-            <div>
-                <div className="flex justify-between w-full pt-4 bg-white dark:bg-blue-darkest">
-                    <Link to="/" className="outline-none no-underline flex">
-                        <img
-                            src={dark ? LogoWhite : LogoBlack}
-                            className="w-6 h-6 mr-3 mt-1"
-                            alt="Logo"
-                        />
-                    </Link>
-                    <div>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setExpanded(!expanded)
-                            }}
-                            className="bg-none outline-none relative top-1 text-right dark:text-gray-100"
-                        >
-                            <FaBars className="text-black dark:text-gray-100" />
-                        </button>
-                    </div>
-                </div>
-                <div
-                    className="text-center w-full h-screen duration-500 relative"
-                    style={{ display: expanded ? "block" : "none" }}
-                >
-                    {account ? (
-                        <div className="absolute top-1/3 left-1/2 transform -translate-y-1/2 -translate-x-1/2">
-                            <div
-                                className="mb-2 tracking-wider"
-                                onClick={() => setExpanded(false)}
-                            >
-                                <Link
-                                    to="/dashboard"
-                                    className="text-gray dark:text-gray-300"
-                                >
-                                    Home
-                                </Link>
-                            </div>
-                            <div
-                                className="mb-2 tracking-wider"
-                                onClick={() => setExpanded(false)}
-                            >
-                                <Link
-                                    to="/dashboard/settings"
-                                    className="text-gray dark:text-gray-300"
-                                >
-                                    Settings
-                                </Link>
-                            </div>
-                            <div
-                                className="mt-10 b-2 tracking-wider"
-                                onClick={() => setExpanded(false)}
-                            >
-                                <button
-                                    className="text-white dark:text-black bg-blue dark:bg-mint text-right px-10 py-2 rounded"
-                                    onClick={handleSignOut}
-                                >
-                                    Sign Out
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="absolute top-1/3 left-1/2 transform -translate-y-1/2 -translate-x-1/2">
-                            <div className="mb-2 tracking-wider">
-                                <Link
-                                    to="/about"
-                                    className="text-gray dark:text-gray-300"
-                                >
-                                    About
-                                </Link>
-                            </div>
-                            <div className="mb-2 tracking-wider">
-                                <a
-                                    href="mailto: support@fractal.co"
-                                    className="text-gray dark:text-gray-300"
-                                >
-                                    Support
-                                </a>
-                            </div>
-                            <div className="mb-2 tracking-wider">
-                                <a
-                                    href="mailto: careers@fractal.co"
-                                    className="text-gray dark:text-gray-300"
-                                >
-                                    Careers
-                                </a>
-                            </div>
-                            <>
-                                {user.userID ? (
-                                    <div className="mt-10">
-                                        <div className="mb-2 tracking-wider">
-                                            <Link
-                                                to="/dashboard"
-                                                className="text-gray dark:text-gray-300"
-                                            >
-                                                My Account
-                                            </Link>
-                                        </div>
-                                        <div className="pt-2 mb-2 tracking-wider">
-                                            <button
-                                                className="text-white dark:text-black bg-blue dark:bg-mint text-right px-10 py-2 rounded"
-                                                onClick={handleSignOut}
-                                            >
-                                                Sign Out
-                                            </button>
-                                        </div>
-                                    </div>
+            <ScreenFull
+                className={classNames(
+                    "md:hidden",
+                    props.dark ? "bg-blue-darkest" : "bg-white",
+                    !expanded && "hidden"
+                )}
+            >
+                <div className="flex w-full mt-36">
+                    <JustifyStartEndCol
+                        start={
+                            <StartHeaderCol>
+                                {isSignedIn && onAccountPage ? (
+                                    <>
+                                        <HomeLinkStyled />
+                                        <SettingsLinkStyled />
+                                    </>
                                 ) : (
-                                    <div
-                                        className="mt-10 pt-2 mb-2 tracking-wider"
-                                        onClick={() => setExpanded(false)}
-                                    >
-                                        <Link
-                                            id="signin"
-                                            to="/auth"
-                                            className="text-white dark:text-black bg-blue dark:bg-mint text-right px-10 py-2 rounded"
-                                        >
-                                            Sign In
-                                        </Link>
-                                    </div>
+                                    <>
+                                        <AboutLinkStyled />
+                                        <SupportLinkStyled />
+                                        <CareersLinkStyled />
+                                    </>
                                 )}
-                            </>
-                        </div>
-                    )}
+                            </StartHeaderCol>
+                        }
+                        middle={<div className="h-8"></div>}
+                        end={
+                            <EndHeaderCol>
+                                {isSignedIn && <MyAccountLinkStyled />}
+                                {isSignedIn ? (
+                                    <SignOutLinkButton
+                                        onClick={handleSignOutClick}
+                                    />
+                                ) : (
+                                    <SignInLinkButton />
+                                )}
+                            </EndHeaderCol>
+                        }
+                    />
                 </div>
-            </div>
-        )
-    }
+            </ScreenFull>
+        </div>
+    )
 }
 
 const mapStateToProps = (state: {
