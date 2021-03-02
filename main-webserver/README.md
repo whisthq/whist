@@ -123,7 +123,7 @@ Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment
 
 ### Manual Testing
 
-Sometimes, it is helpful to manual test changes that don't neatly fit into the current unit testing / integration testing framework. For example, let's say you want to make sure you properly wrote a database filtering command using the SQLAlchemy ORM. THis section briefly describes different kinds of manual testing and how to do them.
+Sometimes, it is helpful to manual test changes that don't neatly fit into the current unit testing / integration testing framework. For example, let's say you want to make sure you properly wrote a database filtering command using the SQLAlchemy ORM. This section briefly describes different kinds of manual testing and how to do them.
 
 _Manual Testing - Database_
 
@@ -153,7 +153,7 @@ with app.app_context():
     print(base_container)
 ```
 
-You might need to fill in fake test data into the db - TablePlus is a good UI tool for this. Fun fact - this is exactly the code we use to get existing prewarmed containers. This kind of manual testing provides a neat way to test the database logic in isolation.
+If you need to populate some fake data into the ephemeral db, use TablePlus. Fun fact - this is exactly the code we use to get existing prewarmed containers. This kind of manual testing provides a neat way to quickly test and debug the database logic in isolation.
 
 _Manual Testing - Deployments_
 
