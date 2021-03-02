@@ -3,6 +3,7 @@ export type User = {
     name?: string
     accessToken?: string
     refreshToken?: string
+    encryptionToken?: string
 }
 
 export type AuthFlow = {
@@ -22,6 +23,7 @@ export const DEFAULT: AuthDefault = {
         name: "",
         accessToken: "",
         refreshToken: "",
+        encryptionToken: "",
     },
     authFlow: {
         failures: 0,
