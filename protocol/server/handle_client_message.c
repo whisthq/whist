@@ -208,7 +208,7 @@ static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
 static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
     if (!is_controlling) return 0;
-    // mprintf("Audio NACK requested for: ID %d Index %d\n",
+    // LOG_INFO("Audio NACK requested for: ID %d Index %d",
     // fmsg->nack_data.id, fmsg->nack_data.index);
     FractalPacket *audio_packet =
         &audio_buffer[fmsg->nack_data.id % AUDIO_BUFFER_SIZE][fmsg->nack_data.index];
@@ -235,7 +235,7 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
     if (!is_controlling) return 0;
     // Video nack received, relay the packet
 
-    // mprintf("Video NACK requested for: ID %d Index %d\n",
+    // LOG_INFO("Video NACK requested for: ID %d Index %d",
     // fmsg->nack_data.id, fmsg->nack_data.index);
     FractalPacket *video_packet =
         &video_buffer[fmsg->nack_data.id % VIDEO_BUFFER_SIZE][fmsg->nack_data.index];

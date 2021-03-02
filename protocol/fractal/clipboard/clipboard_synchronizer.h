@@ -17,7 +17,7 @@ ClipboardData server_clipboard;
 ClipboardSynchronizerSetClipboard(&server_clipboard);
 
 // Will likely return true because it's waiting on server_clipboard to be set
-mprintf("Is Synchronizing? %d\n", isClipboardSynchronizing());
+LOG_INFO("Is Synchronizing? %d", isClipboardSynchronizing());
 
 // Wait for clipboard to be done synchronizing
 while(isClipboardSynchronizing());

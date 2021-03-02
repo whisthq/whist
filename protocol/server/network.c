@@ -89,10 +89,10 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
         get_timer( last_timer );
         if( get_timer( last_timer ) > 5.0 )
         {
-            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
+            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
     last_timer ) / 1024 ); ddata = 0;
         }
-        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
+        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
     }
     */
 
@@ -152,7 +152,7 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
                 safe_SDL_UnlockMutex(clients[j].UDP_context.mutex);
                 if (sent_size < 0) {
                     int error = get_last_network_error();
-                    mprintf("Unexpected Packet Error: %d\n", error);
+                    LOG_INFO("Unexpected Packet Error: %d", error);
                     LOG_WARNING("Failed to send UDP packet to client id: %d", j);
                 }
             }

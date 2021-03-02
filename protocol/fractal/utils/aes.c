@@ -110,14 +110,14 @@ int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacke
 
     int cipher_packet_len = cipher_len + CRYPTO_HEADER_LEN;
 
-    // mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
+    // LOG_INFO( "HMAC: %d", Hash( encrypted_packet->hash, 16 ) );
     char hash[32];
     // Sign the packet with 32 bytes
     hmac(hash, (char*)encrypted_packet + sizeof(encrypted_packet->hash),
          cipher_packet_len - sizeof(encrypted_packet->hash), (char*)private_key);
     // Only use 16 bytes bc we don't need that long of a signature
     memcpy(encrypted_packet->hash, hash, 16);
-    // mprintf( "HMAC: %d\n", Hash( encrypted_packet->hash, 16 ) );
+    // LOG_INFO( "HMAC: %d", Hash( encrypted_packet->hash, 16 ) );
     // encrypted_packet->hash = Hash( (char*)encrypted_packet + sizeof(
     // encrypted_packet->hash ), cipher_packet_len - sizeof(
     // encrypted_packet->hash ) );
@@ -161,7 +161,7 @@ int decrypt_packet_n(FractalPacket* encrypted_packet, int packet_len,
 
     int expected_len = PACKET_HEADER_SIZE + plaintext_packet->payload_size;
     if (expected_len != decrypt_len) {
-        mprintf(
+        LOG_WARNING(
             "Packet length is incorrect! Expected %d with payload %d, but got "
             "%d\n",
             expected_len, plaintext_packet->payload_size, decrypt_len);
