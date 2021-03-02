@@ -19,6 +19,8 @@ if [ $IN_CI == true ]; then
     bash setup/setup_tests.sh
     # override DATABASE_URL to the ephemeral db
     export DATABASE_URL=$POSTGRES_LOCAL_URI
+
+    # REDIS_URL is set by heroku
 else
     echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
@@ -32,6 +34,9 @@ else
     # we use the remote user and remote db to make ephemeral db look as close to dev as possible
     # but of course, host and port are local
     export DATABASE_URL=postgres://${POSTGRES_USER}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+
+    # provide the redis URL
+    export REDIS_URL="redis://localhost:6379/0"
 fi
 
 # pass args to pytest
