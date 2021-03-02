@@ -39,7 +39,7 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = false
+let showMainWindow = true
 
 const logger = new FractalLogger()
 
@@ -166,7 +166,7 @@ const createWindow = async () => {
                 app.dock.show()
             }
         } else if (!showMainWindow && mainWindow) {
-            mainWindow.hide()
+            // mainWindow.hide()
             if (app && app.dock) {
                 app.dock.hide()
             }

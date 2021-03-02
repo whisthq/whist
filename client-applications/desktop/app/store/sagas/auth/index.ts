@@ -22,6 +22,7 @@ function* validateAccessToken(action: { accessToken: string }) {
         FractalAPI.TOKEN.VALIDATE,
         action.accessToken
     )
+    console.log("Access token:", action.accessToken)
 
     if (success && json.user) {
         const Store = require("electron-store")

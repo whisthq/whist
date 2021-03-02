@@ -63,6 +63,7 @@ export const Login = (props: {
             variables: { loginToken: loginToken },
         }
     )
+    console.log("Data: ", data, loading, error)
     const [deleteTokens] = useMutation(DELETE_USER_TOKENS, {
         context: {
             headers: {
@@ -81,6 +82,7 @@ export const Login = (props: {
 
     useEffect(() => {
         if (tokenGenerated) {
+            console.log(loginToken)
             addLogin({
                 variables: {
                     object: {
@@ -88,6 +90,8 @@ export const Login = (props: {
                         access_token: null /* eslint-disable-line @typescript-eslint/camelcase */,
                     },
                 },
+            }).catch((e) => {
+                console.log(e)
             })
             setTokenGenerated(false)
         }
