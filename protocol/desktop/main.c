@@ -135,6 +135,9 @@ volatile int try_amount;
 char filename[300];
 char username[50];
 
+// Defines
+#define MAX_APP_PATH_LEN 1024
+
 /*
 ============================
 Custom Types
@@ -618,29 +621,27 @@ int main(int argc, char* argv[]) {
     // If argc == 1 (no args passed), then check if client app path exists and try to launch
     //     This should be done first because `execl` won't cleanup any allocated resources
     if (argc == 1) {
-        const char* relative_client_app_path = "/../../";
-        int relative_client_app_path_len = strlen(relative_client_app_path);
         // hopefully the app path is not more than 1024 chars long
-        int max_protocol_path_len = 1024;
-        char protocol_path[max_protocol_path_len];
-        memset(protocol_path, 0, max_protocol_path_len);
+        char client_app_path[MAX_APP_PATH_LEN];
+        memset(client_app_path, 0, MAX_APP_PATH_LEN);
 #ifdef _WIN32
-        int path_read_size = GetModuleFileNameA(NULL, protocol_path, max_protocol_path_len)
+        const char* relative_client_app_path = "/../../Fractal.exe";
+        int relative_client_app_path_len = (int) strlen(relative_client_app_path);
+        int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+        int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
         if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
             // Get directory from executable path
-            char* last_dir_slash_ptr = strrchr(protocol_path, '/');
+            char* last_dir_slash_ptr = strrchr(client_app_path, '\\');
             if (last_dir_slash_ptr) {
                 *last_dir_slash_ptr = '\0';
             }
-            int protocol_path_len = strlen(protocol_path);
-            char client_app_path[protocol_path_len + relative_client_app_path_len + 1];
-            if (safe_strncpy(client_app_path, protocol_path, protocol_path_len + 1) &&
-                safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path, relative_client_app_path_len + 1)) {
-                    // const char* client_app_path = "../../MacOS/Fractal"; // packaged app path
-                    // If `execl` fails, then the program proceeds, else defers to client app
-                    if (_execl(client_app_path, "Fractal.exe", NULL) < 0) {
-                        LOG_INFO("errno: %d errstr: %s", errno, strerror(errno));
-                    }
+            size_t protocol_path_len = strlen(client_app_path);
+            if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path, relative_client_app_path_len + 1)) {
+                // const char* client_app_path = "../../MacOS/Fractal"; // packaged app path
+                // If `execl` fails, then the program proceeds, else defers to client app
+                LOG_INFO("client_app_path: %s", client_app_path);
+                if (_execl(client_app_path, "Fractal.exe", NULL) < 0) {
+                    LOG_INFO("errno: %d errstr: %s", errno, strerror(errno));
                 }
             } else {
                 LOG_INFO("CONCAT FAILED");
@@ -649,6 +650,8 @@ int main(int argc, char* argv[]) {
             LOG_INFO("GET PATHNAME FAILED");
         }
 #elif __APPLE__
+        const char* relative_client_app_path = "/../../MacOS/Fractal";
+        int relative_client_app_path_len = strlen(relative_client_app_path);
         if (_NSGetExecutablePath(protocol_path, &max_protocol_path_len) == 0) {
             // Get directory from executable path
             char* last_dir_slash_ptr = strrchr(protocol_path, '/');
