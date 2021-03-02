@@ -72,38 +72,6 @@ def mock_endpoints(monkeypatch):
     monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
 
-def try_start_maintenance(client, region_name: str = None):
-    resp = None
-    if region_name is None:
-        resp = client.post(
-            "/aws_container/start_update",
-        )
-    else:
-        resp = client.post(
-            "/aws_container/start_update",
-            json=dict(
-                region_name=region_name,
-            ),
-        )
-    return resp
-
-
-def try_end_maintenance(client, region_name: str = None):
-    resp = None
-    if region_name is None:
-        resp = client.post(
-            "/aws_container/end_update",
-        )
-    else:
-        resp = client.post(
-            "/aws_container/end_update",
-            json=dict(
-                region_name=region_name,
-            ),
-        )
-    return resp
-
-
 def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoint_type: str):
     assert endpoint_type in ["te_cc", "te_ac", "a_c"]
 
@@ -213,7 +181,7 @@ def test_maintenance_mode_single_region(
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
-    resp = try_start_maintenance(client, "us-east-1")
+    resp = client.post("/aws_container/start_update", json={"region_name": "us-east-1"})
 
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
@@ -233,7 +201,7 @@ def test_maintenance_mode_single_region(
     assert getattr(_create_new_cluster, "num_calls") == 1
 
     # now maintenance request should succeed
-    resp = try_start_maintenance(client, "us-east-1")
+    resp = client.post("/aws_container/start_update", json={"region_name": "us-east-1"})
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -250,7 +218,7 @@ def test_maintenance_mode_single_region(
     assert resp.status_code == ACCEPTED
 
     # now end maintenance
-    resp = try_end_maintenance(client, "us-east-1")
+    resp = client.post("/aws_container/end_update", json={"region_name": "us-east-1"})
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -322,7 +290,7 @@ def test_maintenance_mode_all_regions(
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
-    resp = try_start_maintenance(client)
+    resp = client.post("/aws_container/start_update")
 
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
@@ -342,7 +310,7 @@ def test_maintenance_mode_all_regions(
     assert getattr(_create_new_cluster, "num_calls") == 1
 
     # now maintenance request should succeed
-    resp = try_start_maintenance(client)
+    resp = client.post("/aws_container/start_update")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -358,7 +326,7 @@ def test_maintenance_mode_all_regions(
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # now end maintenance
-    resp = try_end_maintenance(client)
+    resp = client.post("/aws_container/end_update")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
