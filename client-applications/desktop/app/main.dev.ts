@@ -15,6 +15,11 @@ import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
+import { launchProtocol, writeStream } from "./shared/utils/files/exec"
+import { uploadToS3 } from "./shared/utils/files/aws"
+import { ChildProcess } from "child_process"
+import { FractalLogger } from "./shared/utils/general/logging"
+import { FractalDirectory } from "./shared/types/client"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -35,6 +40,8 @@ let updating = false
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
 let showMainWindow = false
+
+const logger = new FractalLogger()
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -213,6 +220,61 @@ const createWindow = async () => {
     } else {
         autoUpdater.checkForUpdates()
     }
+}
+
+const createProtocol = () => {
+    const electron = require("electron")
+    const ipc = electron.ipcMain
+    let protocol: ChildProcess
+    let userID: string
+    const protocolOnStart = () => {
+        logger.logInfo("Protocol started, callback fired", userID)
+    }
+
+    const protocolOnExit = () => {
+        console.log("EXITING")
+        // For S3 protocol client log upload
+        const logPath = require("path").join(
+            FractalDirectory.getRootDirectory(),
+            "protocol-build/desktop/log.txt"
+        )
+
+        const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`
+        logger.logInfo(
+            `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
+            userID
+        )
+
+        // Upload client logs to S3 and shut down Electron
+        uploadToS3(logPath, s3FileName, (s3Error: string) => {
+            if (s3Error) {
+                logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
+            }
+        })
+
+        app.exit(0)
+        app.quit()
+    }
+
+    ipc.on(FractalIPC.LAUNCH_PROTOCL, (event, argv) => {
+        const launchThread = async () => {
+            protocol = await launchProtocol(protocolOnStart, protocolOnExit)
+        }
+
+        launchThread()
+        event.returnValue = argv
+    })
+
+    ipc.on(FractalIPC.SEND_CONTAINER, (event, argv) => {
+        let container = argv
+        const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
+        writeStream(protocol, `ports?${portInfo}`)
+        writeStream(protocol, `private-key?${container.secretKey}`)
+        writeStream(protocol, `ip?${container.publicIP}`)
+        writeStream(protocol, `finished?0`)
+        // mainWindow?.destroy()
+        event.returnValue = argv
+    })
 }
 
 // Calls the create window above, conditional on the app not already running (single instance lock)

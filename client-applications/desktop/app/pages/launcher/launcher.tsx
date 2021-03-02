@@ -79,7 +79,7 @@ export const Launcher = (props: {
     } = props
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
-    const [protocol, setProtocol] = useState<ChildProcess>()
+    const [protocol, setProtocol] = useState(false)
     const [protocolLock, setProtocolLock] = useState(false)
     const [disconnected, setDisconnected] = useState(false)
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
@@ -230,10 +230,10 @@ export const Launcher = (props: {
                 userID
             )
             if (protocol) {
-                writeStream(protocol, "kill?0")
-                protocol.kill("SIGINT")
+                // writeStream(protocol, "kill?0")
+                // protocol.kill("SIGINT")
                 setProtocolLock(false)
-                setProtocol(undefined)
+                setProtocol(false)
             }
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
             setKillSignalsReceived(protocolKillSignal)
@@ -262,17 +262,19 @@ export const Launcher = (props: {
             )
 
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            ipc.sendSync(FractalIPC.LAUNCH_PROTOCL, true)
+            setShouldForceQuit(true)
+            setProtocol(true)
+            // const launchProtocolAsync = async () => {
+            //     const childProcess = await launchProtocol(
+            //         protocolOnStart,
+            //         protocolOnExit
+            //     )
+            //     setProtocol(childProcess)
+            //     setShouldForceQuit(true)
+            // }
 
-            const launchProtocolAsync = async () => {
-                const childProcess = await launchProtocol(
-                    protocolOnStart,
-                    protocolOnExit
-                )
-                setProtocol(childProcess)
-                setShouldForceQuit(true)
-            }
-
-            launchProtocolAsync()
+            // launchProtocolAsync()
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
@@ -308,10 +310,10 @@ export const Launcher = (props: {
                 setTaskState(currentState)
                 switch (currentState) {
                     case FractalAppState.PENDING:
-                        writeStream(
-                            protocol,
-                            `loading?${LoadingMessage.PENDING}`
-                        )
+                        // writeStream(
+                        //     protocol,
+                        //     `loading?${LoadingMessage.PENDING}`
+                        // )
                         break
                     case FractalAppState.SPINNING_UP_NEW:
                         setLoadingMessage(LoadingMessage.PENDING)
@@ -341,11 +343,12 @@ export const Launcher = (props: {
                 `Received container IP ${container.publicIP}, piping to protocol`,
                 userID
             )
-            const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
-            writeStream(protocol, `ports?${portInfo}`)
-            writeStream(protocol, `private-key?${container.secretKey}`)
-            writeStream(protocol, `ip?${container.publicIP}`)
-            writeStream(protocol, `finished?0`)
+            ipc.sendSync(FractalIPC.SEND_CONTAINER, container)
+            // const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
+            // writeStream(protocol, `ports?${portInfo}`)
+            // writeStream(protocol, `private-key?${container.secretKey}`)
+            // writeStream(protocol, `ip?${container.publicIP}`)
+            // writeStream(protocol, `finished?0`)
         }
     }, [container, protocol])
 

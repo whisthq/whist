@@ -1,4 +1,4 @@
-import { OperatingSystem, FractalDirectory } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "../../types/client"
 import { ChildProcess } from "child_process"
 
 export const execPromise = (

@@ -3,7 +3,7 @@ import {
     FractalConfig,
     FractalNodeEnvironment,
     FractalCIEnvironment,
-} from "shared/types/config"
+} from "../types/config"
 
 /*
     Webserver URLs
