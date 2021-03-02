@@ -838,6 +838,8 @@ class ECSClient:
 
         Args:
             offset: task index in self.tasks
+            time_delay: seconds to sleep between AWS poll requests
+            max_polls: maximum number of times to poll AWS
 
         Return:
             True iff a networking binding was returned by AWS.
