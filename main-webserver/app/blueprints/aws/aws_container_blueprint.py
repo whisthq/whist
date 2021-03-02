@@ -359,7 +359,7 @@ def aws_container_assign(**kwargs):
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
-        token = body.pop("token")
+        token = body.get("token", "")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
