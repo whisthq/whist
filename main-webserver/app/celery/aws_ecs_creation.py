@@ -112,7 +112,7 @@ def _mount_cloud_storage(user, container):
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
+def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, token):
     """
     Send the instance start values to the host service.
 
@@ -122,6 +122,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
         port: The port on the instance to which port 32262 within the container has been mapped.
         dpi: The DPI of the client display.
         user_id: The container's assigned user's user ID
+        token: the encryption token for the user's config
     """
 
     try:
@@ -132,6 +133,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
                 "container_ARN": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
+                "token": token,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -289,6 +291,7 @@ def assign_container(
     self,
     username,
     task_definition_arn,
+    token,
     region_name="us-east-1",
     cluster_name=None,
     dpi=96,
@@ -300,6 +303,7 @@ def assign_container(
     :param self: the celery instance running the task
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
+    :param token: the encryption token for a user's app config
     :param region_name: which region the user needs a container for
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
@@ -310,7 +314,7 @@ def assign_container(
     does not exist for functions with celery decorators like this one.
     """
     return _assign_container(
-        self, username, task_definition_arn, region_name, cluster_name, dpi, webserver_url
+        self, username, task_definition_arn, token, region_name, cluster_name, dpi, webserver_url
     )
 
 
@@ -318,6 +322,7 @@ def _assign_container(
     self,
     username,
     task_definition_arn,
+    token,
     region_name="us-east-1",
     cluster_name=None,
     dpi=96,
@@ -526,6 +531,7 @@ def _assign_container(
         base_container.port_32262,
         base_container.dpi,
         user.user_id,
+        token,
     )
     time.sleep(1)
 
