@@ -6,12 +6,13 @@ from http import HTTPStatus
 from flask import current_app
 
 from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound, SendGridException
+from tests.constants.api_keys import MAILSLURP_API_KEY
 
 
 @pytest.fixture(scope="session")
 def get_mailslurp_key():
     """Gets the mail client api key"""
-    return "ade68d47a8ba39c57a8e8358e5e86d6d99a04cf8aeebf9c11c08f851f2fa438f"
+    return MAILSLURP_API_KEY
 
 
 @pytest.fixture(scope="session")
@@ -26,6 +27,11 @@ def mail_client(app):
 
 @pytest.fixture(scope="session")
 def mailslurp(get_mailslurp_key):
+    """Create a MailSlurp client with the MailSlurp api key
+
+    Returns:
+        A MailSlurp client with which to mock email sending
+    """
     configuration = mailslurp_client.Configuration()
     configuration.api_key["x-api-key"] = get_mailslurp_key
 
@@ -34,15 +40,18 @@ def mailslurp(get_mailslurp_key):
     return api_client
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def email():
-    """Makes an example email
-
-    Returns:
-        (str): Sender email
-    """
+    """Generates an inner function that takes in email details and formats them into a dictionary."""
 
     def _email(from_email, subject, email_id):
+        """Creates a dictionary with the given email details
+
+        Args:
+            from_email (str): email from which the email should be sent
+            subject (str): subject line of the email
+            email_id (str): id of the email template being sent out
+        """
         return {"from_email": from_email, "subject": subject, "email_id": email_id}
 
     return _email

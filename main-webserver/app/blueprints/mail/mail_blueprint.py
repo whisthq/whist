@@ -11,13 +11,19 @@ mail_bp = Blueprint("mail_bp", __name__)
 @fractal_pre_process
 def mail(**kwargs):
     """
-    Handles all /mail routes
+    Handles all /mail routes. Needs:
+    - email_id (str): email_id of the mail template to be used
+    - from_email (str): email to send from (by default, "noreply@fractal.co")
+    - to_email (str): email to send to
+    - email_args (dict): dictionary containing arguments to fill into the email templates
+        (i.e. personalized name, link to rest password, etc.)
 
     Paramters:
         **kwargs (obj): request data
 
     Returns:
-        json: Response from API
+        json: A dictionary object with the keys "status" and "verified", representing
+        the HTTP response to the mail request.
     """
 
     body = kwargs.pop("body")

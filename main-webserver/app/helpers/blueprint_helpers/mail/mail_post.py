@@ -18,8 +18,8 @@ def mail_helper(email_id, from_email, to_email, email_args):
         email_args (dict): dict of Jinja arguments to pass into render_template()
 
     Returns:
-        A dictionary object with the single key "status", representing the HTTP response to the
-        request.
+        A dictionary object with the keys "status" and "verified", representing the HTTP
+        response to the request.
     """
 
     try:
@@ -28,7 +28,5 @@ def mail_helper(email_id, from_email, to_email, email_args):
             from_email=from_email, to_email=to_email, email_id=email_id, jinja_args=email_args
         )
         return {"verified": True, "status": SUCCESS}
-    except SendGridException:
-        return {"verified": False, "status": BAD_REQUEST}
-    except TemplateNotFound:
+    except (SendGridException, TemplateNotFound):
         return {"verified": False, "status": BAD_REQUEST}
