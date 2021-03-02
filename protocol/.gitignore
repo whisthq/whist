@@ -48,6 +48,7 @@ desktop/external_utils/Windows/ssh.exe
 *.v
 ._share
 connection_id.txt
+.libcache
 
 # Cmake
 *.cmake
