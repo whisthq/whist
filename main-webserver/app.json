@@ -35,7 +35,7 @@
     "test": {
       "addons": [
         {
-          "plan": "redisgreen:minidev",
+          "plan": "heroku-redis:in-dyno",
           "as": "REDIS"
         },
         {
