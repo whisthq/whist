@@ -2,11 +2,15 @@ from ._meta import db
 
 
 class EmailTemplates(db.Model):
-    """Stores all email templates that could be sent out to users. Use for the MailClient
-    in app/helpers/utils/mail.py.
+    """Stores all email templates that could be sent out to users.
 
-    Args:
-        db (SQLAlchemy db): Implements db methods to communicate with the physical infra.
+    Used in the MailClient in app/helpers/utils/mail.py.
+
+    Attributes:
+        id (str): string used to identify email templates and
+                  differentiation from each other
+        url (str): url to the website template living in the AWS S3 bucket
+        title (str): subject of the email
     """
 
     __tablename__ = "email_templates"
