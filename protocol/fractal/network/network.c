@@ -379,10 +379,10 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
         get_timer( last_timer );
         if( get_timer( last_timer ) > 5.0 )
         {
-            mprintf( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
+            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
     last_timer ) / 1024 ); ddata = 0;
         }
-        // mprintf("Video ID %d (Packets: %d)\n", id, num_indices);
+        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
     }
     */
 
@@ -441,7 +441,7 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
 
         if (sent_size < 0) {
             int error = get_last_network_error();
-            mprintf("Unexpected Packet Error: %d", error);
+            LOG_WARNING("Unexpected Packet Error: %d", error);
             return -1;
         }
 
@@ -740,10 +740,10 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
             int err = get_last_network_error();
             if (err == FRACTAL_ETIMEDOUT || err == FRACTAL_EAGAIN) {
             } else {
-                // mprintf( "Error %d\n", err );
+                LOG_WARNING("Network Error %d", err);
             }
         } else if (len > 0) {
-            // mprintf( "READ LEN: %d\n", len );
+            // LOG_INFO( "READ LEN: %d", len );
             reading_packet_len += len;
         }
 

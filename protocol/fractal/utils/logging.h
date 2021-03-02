@@ -64,7 +64,7 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-#define PRINTFUNCTION(format, ...) mprintf(format, __VA_ARGS__)
+#define PRINTFUNCTION(format, ...) internal_logging_printf(format, __VA_ARGS__)
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
@@ -146,10 +146,12 @@ void init_logger(char* log_directory);
 
 /**
  * @brief                          Log the given format string
+ *                                 This is an internal function that shouldn't be used,
+ *                                 please use LOG_INFO, LOG_WARNING, etc
  *
  * @param fmt_str                  The directory to store the log files in
  */
-void mprintf(const char* fmt_str, ...);
+void internal_logging_printf(const char* fmt_str, ...);
 
 /**
  * @brief                          Destroy the logger object
