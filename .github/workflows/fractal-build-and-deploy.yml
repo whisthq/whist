@@ -241,6 +241,8 @@ jobs:
         name: "Put webserver into maintenance mode"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
+        if: >
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|fractal-start-webserver-maintenance-mode|')
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -707,7 +709,6 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
@@ -974,10 +975,9 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ecs-task-definitions-notify-slack,
                 ami-publish-ec2,
-                client-applications-publish-build-s3,
-                client-applications-notify-slack,
             ]
         if: >
+            contains(needs.fractal-publish-build-config.outputs.jobs, '|fractal-end-webserver-maintenance-mode|') &&
             !failure()
         steps:
             - name: Checkout Git Repository
