@@ -192,7 +192,11 @@ def select_cluster(region_name):
 
     """
 
-    all_clusters = list(SortedClusters.query.filter_by(location=region_name).all())
+    all_clusters = list(
+        SortedClusters.query.filter_by(location=region_name)
+        .filter(UserContainer.cluster.notlike("%test%"))
+        .all()
+    )
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
     base_len = 2
     regen_fraction = 1.0
@@ -363,6 +367,7 @@ def _assign_container(
                 UserContainer.query.filter_by(
                     is_assigned=False, task_definition=task_definition_arn, location=region_name
                 )
+                .filter(UserContainer.cluster.notlike("%test%"))
                 .with_for_update()
                 .limit(1)
                 .first()
