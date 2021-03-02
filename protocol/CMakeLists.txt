@@ -120,6 +120,7 @@ if (DOWNLOAD_BINARIES)
         # Look for gitbash based on git's path
         # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
         find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
+        # Call download-binaries.sh from gitbash
         execute_process(COMMAND ${BASH} "download-binaries.sh"
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_res)
