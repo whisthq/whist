@@ -76,14 +76,17 @@ def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
 
 @pytest.fixture
 def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscription):
-    """Generates a function to get the response of the /container/assign endpoint given a valid user's payment information"""
+    """Generates a function to get the response of the /container/assign endpoint
+    given a valid user's payment information"""
 
     task = Object()
 
     def _test_payment(onFreeTrial, isStripeValid):
-        """Gets the response of the /container/assign endpoint given whether the user is on a free trial or has valid Stripe information
+        """Gets the response of the /container/assign endpoint given whether
+        the user is on a free trial or has valid Stripe information
 
-        Creates a user with the correct timestamp information and patches functions appropriately, then POSTs to get a response from the /container/assign endpoint
+        Creates a user with the correct timestamp information and patches
+        functions appropriately, then POSTs to get a response from the /container/assign endpoint
         """
         if onFreeTrial:
             # create a user with a time stamp less than 7 days ago
@@ -117,6 +120,52 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
     return _test_payment
 
 
+@pytest.fixture
+def test_payment_dev(client, make_authorized_user, monkeypatch, set_valid_subscription):
+    """Generates a function to get the response of the /container/assign
+    endpoint given a valid user's payment information"""
+
+    task = Object()
+
+    def _test_payment(onFreeTrial, isStripeValid):
+        """Gets the response of the /container/assign endpoint given whether
+        the user is on a free trial or has valid Stripe information
+
+        Creates a user with the correct timestamp information and patches
+        functions appropriately, then POSTs to get a response from the /container/assign endpoint
+        """
+        if onFreeTrial:
+            # create a user with a time stamp less than 7 days ago
+            authorized = make_authorized_user(
+                stripe_customer_id="random1234",
+                created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
+                domain="fractal.co",
+            )
+        else:
+            # create a user with a timestamp of more than 7 days ago
+            authorized = make_authorized_user(
+                stripe_customer_id="random1234",
+                created_timestamp=dt.now(datetime.timezone.utc).timestamp()
+                - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
+                domain="fractal.co",
+            )
+
+        task = Object()
+
+        set_valid_subscription(isStripeValid)
+        monkeypatch.setattr(assign_container, "apply_async", function(returns=task))
+        monkeypatch.setattr(task, "id", "garbage-task-uuid")
+
+        response = client.post(
+            "/container/assign",
+            json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
+        )
+
+        return response
+
+    return _test_payment
+
+
 @pytest.mark.parametrize(
     "has_trial, has_subscription, expected",
     [
@@ -129,6 +178,25 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
 def test_payment_all(test_payment, has_trial, has_subscription, expected):
     """Tests all four cases of a user's possible payment information for expected behavior
 
-    Tests the @payment_required decorator with whether a user has/does not have a free Fractal trial and has/does not have a subscription
+    Tests the @payment_required decorator with whether a user
+    has/does not have a free Fractal trial and has/does not have a subscription
     """
     assert test_payment(has_trial, has_subscription).status_code == expected
+
+
+@pytest.mark.parametrize(
+    "has_trial, has_subscription, expected",
+    [
+        (True, True, HTTPStatus.ACCEPTED),
+        (True, False, HTTPStatus.ACCEPTED),
+        (False, True, HTTPStatus.ACCEPTED),
+        (False, False, HTTPStatus.ACCEPTED),
+    ],
+)
+def test_payment_dev_all(test_payment_dev, has_trial, has_subscription, expected):
+    """Tests all four cases of a user's possible payment information for expected behavior
+
+    Tests the @payment_required decorator with whether a user
+    has/does not have a free Fractal trial and has/does not have a subscription
+    """
+    assert test_payment_dev(has_trial, has_subscription).status_code == expected
