@@ -47,10 +47,7 @@ const Home = (props: {
         ) {
             return (
                 <div
-                    className="m-auto pt-24 max-w-screen-sm text-center"
-                    style={{
-                        width: "28rem",
-                    }}
+                    className="m-auto pt-24 max-w-md text-center"
                 >
                     <div className="text-4xl tracking-wide leading-snug">
                         The first cloud-powered browser.

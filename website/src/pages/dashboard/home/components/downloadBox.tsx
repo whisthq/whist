@@ -58,7 +58,7 @@ export const DownloadBox = (props: {
     const largeIcon = withOS(windowsIcon, macIcon)
     const smallIcon = againstOS(windowsIcon, macIcon)
     const supportedOS = ["Windows", "macOS"]
-
+    
     if (!supportedOS.includes(osName)) {
         return (
             <div data-testid={DASHBOARD_DOWNLOAD_BOX_IDS.OS_WARN}>
@@ -106,7 +106,7 @@ export const DownloadBox = (props: {
                             }
                         }}
                         disabled={!canBig}
-                        className="rounded bg-blue text-white border-none px-10 py-3 mt-8 flex justify-center"
+                        className="rounded bg-blue text-white border-none px-4 md:px-20 py-3 mt-8 flex justify-center"
                     >
                         {largeIcon}
                         <div>
@@ -127,7 +127,6 @@ export const DownloadBox = (props: {
                 >
                     <button
                         style={{
-                            marginTop: 10,
                             width: "100%",
                             backgroundColor: "#3930b8",
                             opacity: canSmall ? 0.7 : 0.2,
@@ -142,7 +141,7 @@ export const DownloadBox = (props: {
                             }
                         }}
                         disabled={!canSmall}
-                        className="rounded bg-blue text-white border-none px-20 py-3 mt-8 flex justify-center"
+                        className="rounded bg-blue text-white border-none px-4 md:px-20 py-3 mt-3 flex justify-center"
                     >
                         {smallIcon}
                         <div>

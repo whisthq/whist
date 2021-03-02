@@ -8,6 +8,7 @@ const environment: FractalEnvironment = {
             FRONTEND_URL: "http://localhost:3000",
             GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
+            TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -30,6 +31,7 @@ const environment: FractalEnvironment = {
             FRONTEND_URL: "https://dev.fractal.co",
             GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
             GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
+            TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -52,6 +54,7 @@ const environment: FractalEnvironment = {
             FRONTEND_URL: "https://staging.fractal.co",
             GRAPHQL_HTTP_URL: "https://staging-database.fractal.co/v1/graphql",
             GRAPHQL_WS_URL: "wss://staging-database.fractal.co/v1/graphql",
+            TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
@@ -74,6 +77,7 @@ const environment: FractalEnvironment = {
             FRONTEND_URL: "https://fractal.co",
             GRAPHQL_HTTP_URL: "https://prod-database.fractal.co/v1/graphql",
             GRAPHQL_WS_URL: "wss://prod-database.fractal.co/v1/graphql",
+            TYPEFORM_URL: "https://tryfractal.typeform.com/to/RsOsBSSu",
         },
         keys: {
             STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,

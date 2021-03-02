@@ -16,7 +16,7 @@ import {
     launchURL,
     insertUserDB,
     deleteUserDB,
-    loadHasuraToken
+    loadHasuraToken,
 } from "testing/utils/testHelpers"
 
 const mailslurp = new MailSlurp({

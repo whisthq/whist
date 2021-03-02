@@ -7,6 +7,8 @@ export type TestUser = {
     feedback: string
     stripeCustomerID: string
     verified: boolean
+    accessGranted?: boolean
+    typeformSubmitted?: boolean
 }
 
 export const payingUser: TestUser = {
@@ -16,6 +18,8 @@ export const payingUser: TestUser = {
     feedback: "Test feedback",
     stripeCustomerID: "cus_IjbkVL7Ce50J5E",
     verified: true,
+    accessGranted: true,
+    typeformSubmitted: true,
 }
 
 export const verifiedUser: TestUser = {
@@ -25,6 +29,8 @@ export const verifiedUser: TestUser = {
     feedback: "Test feedback",
     stripeCustomerID: "",
     verified: true,
+    accessGranted: true,
+    typeformSubmitted: true,
 }
 
 export const unverifiedUser: TestUser = {
@@ -34,6 +40,8 @@ export const unverifiedUser: TestUser = {
     feedback: "Test feedback",
     stripeCustomerID: "",
     verified: false,
+    accessGranted: false,
+    typeformSubmitted: false,
 }
 
 export const validFractalUser = {

@@ -8,7 +8,12 @@ import { msWait } from "testing/utils/utils"
 import { TestUser } from "testing/utils/testState"
 import { signupEmail, deleteAccount } from "shared/api/index"
 import { graphQLPost } from "shared/api/index"
-import { UPDATE_USER, DELETE_USER } from "testing/constants/graphql"
+import {
+    UPDATE_USER,
+    DELETE_USER,
+    INSERT_INVITE,
+    DELETE_INVITE,
+} from "testing/constants/graphql"
 import * as dotenv from "dotenv"
 
 export const rootState: { [key: string]: Object } = {
@@ -101,13 +106,17 @@ export const type = async (page: puppeteer.Page, id: string, content: string) =>
 
 export const launchURL = async () => {
     let headless = true
-    if(process.env.HEADLESS) {
-        headless = false
+    if (process.env.HEADLESS) {
+        headless = process.env.HEADLESS === "true"
     }
 
     const browser = await puppeteer.launch({
         headless: headless,
-        args: ["incognito", "--disable-web-security", "--disable-features=IsolateOrigins,site-per-process"]
+        args: [
+            "incognito",
+            "--disable-web-security",
+            "--disable-features=IsolateOrigins,site-per-process",
+        ],
     })
     const context = await browser.createIncognitoBrowserContext()
 
@@ -131,9 +140,7 @@ export const loadHasuraToken = () => {
         string: Hasura token
 */
     const env = dotenv.config()
-    let hasuraToken = env.parsed
-        ? (env.parsed.HASURA_ADMIN_KEY as string)
-        : ""
+    let hasuraToken = env.parsed ? (env.parsed.HASURA_ADMIN_KEY as string) : ""
     if (!hasuraToken) {
         hasuraToken = process.env.HASURA_ADMIN_KEY
             ? process.env.HASURA_ADMIN_KEY
@@ -142,7 +149,7 @@ export const loadHasuraToken = () => {
     return hasuraToken
 }
 
-export const insertUserDB = async (user: TestUser, hasuraToken: string) => {    
+export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
 /*
     Description:
         Insert a test user into the database
@@ -151,16 +158,11 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
         user (TestUser): TestUser object
         hasuraToken (string): Hasura admin token
 */
-    if(!hasuraToken) {
+    if (!hasuraToken) {
         hasuraToken = loadHasuraToken()
     }
 
-    const { json } = await signupEmail(
-        user.userID,
-        user.password,
-        user.name,
-        user.feedback
-    )
+    await signupEmail(user.userID, user.password, user.name, user.feedback)
 
     await graphQLPost(
         UPDATE_USER,
@@ -184,7 +186,7 @@ export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
         user (TestUser): TestUser object
         hasuraToken (string): Hasura admin token
 */
-    if(!hasuraToken) {
+    if (!hasuraToken) {
         hasuraToken = loadHasuraToken()
     }
 
@@ -192,7 +194,57 @@ export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
         DELETE_USER,
         "DeleteUser",
         {
-            userID: user.userID
+            userID: user.userID,
+        },
+        hasuraToken,
+        true
+    )
+}
+
+export const insertUserInvite = async (user: TestUser, hasuraToken: string) => {
+/*
+    Description:
+        Creates an invite for a user so they can access the dashboard
+
+    Arguments:
+        user (TestUser): TestUser object
+        hasuraToken (string): Hasura admin token
+*/
+    if (!hasuraToken) {
+        hasuraToken = loadHasuraToken()
+    }
+
+    const output = await graphQLPost(
+        INSERT_INVITE,
+        "InsertInvite",
+        {
+            userID: user.userID,
+            typeformSubmitted: user.typeformSubmitted,
+            accessGranted: user.accessGranted,
+        },
+        hasuraToken,
+        true
+    )
+}
+
+export const deleteUserInvite = async (user: TestUser, hasuraToken: string) => {
+/*
+    Description:
+        Deletes a test user's invite
+
+    Arguments:
+        user (TestUser): TestUser object
+        hasuraToken (string): Hasura admin token
+*/
+    if (!hasuraToken) {
+        hasuraToken = loadHasuraToken()
+    }
+
+    await graphQLPost(
+        DELETE_INVITE,
+        "DeleteInvite",
+        {
+            userID: user.userID,
         },
         hasuraToken,
         true
