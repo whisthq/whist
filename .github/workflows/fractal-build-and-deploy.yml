@@ -706,10 +706,7 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
-        needs:
-            [
-                fractal-publish-build-config,
-            ]
+        needs: [fractal-publish-build-config]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
