@@ -57,7 +57,9 @@ def create_app(testing=False):
     from .models import db
     from .helpers.utils.general.limiter import limiter
 
-    limiter.init_app(app)
+    # we don't want rate limits in test apps
+    if not testing:
+        limiter.init_app(app)
     db.init_app(app)
     jwtManager.init_app(app)
     ma.init_app(app)
