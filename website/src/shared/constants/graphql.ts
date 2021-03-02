@@ -20,3 +20,34 @@ export const UPDATE_ACCESS_TOKEN = gql`
         }
     }
 `
+export const INSERT_INVITE = gql`
+    mutation InsertInvite($userID: String!) {
+        insert_invites(
+            objects: { typeform_submitted: true, user_id: $userID }
+        ) {
+            affected_rows
+        }
+    }
+`
+
+export const UPDATE_INVITE = gql`
+    mutation UpdateInvite($userID: String!, $typeformSubmitted: Boolean!) {
+        update_invites(
+            where: { user_id: { _eq: $userID } }
+            _set: { typeform_submitted: $typeformSubmitted }
+        ) {
+            affected_rows
+        }
+    }
+`
+
+export const SUBSCRIBE_INVITE = gql`
+    subscription SubscribeInvite($userID: String!) {
+        invites(where: { user_id: { _eq: $userID } }) {
+            access_granted
+            invites_remaining
+            typeform_submitted
+            user_id
+        }
+    }
+`

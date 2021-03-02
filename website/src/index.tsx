@@ -12,15 +12,6 @@ import ReduxPromise from "redux-promise"
 import storage from "redux-persist/lib/storage"
 import rootSaga from "store/sagas/root"
 import * as Sentry from "@sentry/react"
-import {
-    ApolloProvider,
-    ApolloClient,
-    InMemoryCache,
-    HttpLink,
-    split,
-} from "@apollo/client"
-import { getMainDefinition } from "@apollo/client/utilities"
-import { WebSocketLink } from "@apollo/client/link/ws"
 import { loadStripe } from "@stripe/stripe-js"
 import { Elements } from "@stripe/react-stripe-js"
 
@@ -36,7 +27,7 @@ import "styles/shared.module.css"
 import "styles/tailwind.css"
 import "bootstrap/dist/css/bootstrap.min.css"
 
-import RootApp from "rootApp"
+import RootApp from "pages/root"
 
 if (process.env.REACT_APP_ENVIRONMENT === "production") {
     // the netlify build command is
@@ -75,36 +66,6 @@ const persistor = persistStore(store)
 
 sagaMiddleware.run(rootSaga)
 
-// Set up Apollo GraphQL provider for https and wss (websocket)
-
-const httpLink = new HttpLink({
-    uri: config.url.GRAPHQL_HTTP_URL,
-})
-
-const wsLink = new WebSocketLink({
-    uri: config.url.GRAPHQL_WS_URL,
-    options: {
-        reconnect: true,
-    },
-})
-
-const splitLink = split(
-    ({ query }) => {
-        const definition = getMainDefinition(query)
-        return (
-            definition.kind === "OperationDefinition" &&
-            definition.operation === "subscription"
-        )
-    },
-    wsLink,
-    httpLink
-)
-
-const apolloClient = new ApolloClient({
-    link: splitLink,
-    cache: new InMemoryCache(),
-})
-
 let STRIPE_PUBLIC_KEY: string = ""
 if (config.keys.STRIPE_PUBLIC_KEY == null) {
     debugLog("Error: environment variable STRIPE_PUBLIC_KEY not set")
@@ -120,16 +81,14 @@ const RootComponent = () => {
                 <Router history={history}>
                     <Provider store={store}>
                         <PersistGate loading={null} persistor={persistor}>
-                            <ApolloProvider client={apolloClient}>
-                                <Elements
-                                    stripe={stripePromise}
-                                    options={STRIPE_OPTIONS}
-                                >
-                                    <MainProvider>
-                                        <RootApp />
-                                    </MainProvider>
-                                </Elements>
-                            </ApolloProvider>
+                            <Elements
+                                stripe={stripePromise}
+                                options={STRIPE_OPTIONS}
+                            >
+                                <MainProvider>
+                                    <RootApp />
+                                </MainProvider>
+                            </Elements>
                         </PersistGate>
                     </Provider>
                 </Router>

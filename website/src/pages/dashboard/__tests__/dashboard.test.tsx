@@ -78,34 +78,6 @@ describe("<Dashboard />", () => {
             expect(getPuffAnimation).toThrow()
         })
 
-        test("when the user is valid but cannot login", async () => {
-            await act(async () => {
-                removeNondeterminism(
-                    render(
-                        <Dashboard
-                            user={{
-                                ...invalidUser,
-                                userID: "steveli@college.harvard.edu",
-                            }}
-                        />,
-                        {
-                            ...invalidUser,
-                            userID: "steveli@college.harvard.edu",
-                        }
-                    )
-                )
-                await zeroMsWait()
-
-                // expect(tree).toMatchSnapshot()
-            })
-            await zeroMsWait()
-
-            getHeader()
-
-            expect(getPuffAnimation).toThrow()
-            cleanup()
-        })
-
         test("when the user is invalid", async () => {
             await act(async () => {
                 removeNondeterminism(

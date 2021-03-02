@@ -4,6 +4,7 @@ export type FractalConfig = {
         FRONTEND_URL: string
         GRAPHQL_HTTP_URL: string
         GRAPHQL_WS_URL: string
+        TYPEFORM_URL: string
     }
     keys: {
         STRIPE_PUBLIC_KEY: string | undefined

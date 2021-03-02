@@ -14,7 +14,7 @@ import {
     type,
     launchURL,
     deleteUserDB,
-    loadHasuraToken
+    loadHasuraToken,
 } from "testing/utils/testHelpers"
 import { MailSlurp } from "mailslurp-client"
 

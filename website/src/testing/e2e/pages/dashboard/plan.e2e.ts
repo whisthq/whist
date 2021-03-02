@@ -6,7 +6,6 @@ import {
     E2E_DASHBOARD_IDS,
     E2E_HOMGEPAGE_IDS,
     LOCAL_URL,
-    PAYMENT_IDS,
 } from "testing/utils/testIDs"
 import { verifiedUser } from "testing/utils/testState"
 import {
@@ -14,6 +13,8 @@ import {
     launchURL,
     insertUserDB,
     deleteUserDB,
+    insertUserInvite,
+    deleteUserInvite,
     loadHasuraToken,
 } from "testing/utils/testHelpers"
 
@@ -24,9 +25,11 @@ let hasuraToken: string
 beforeAll(async () => {
     hasuraToken = loadHasuraToken()
     await insertUserDB(verifiedUser, hasuraToken)
+    await insertUserInvite(verifiedUser, hasuraToken)
 })
 
 afterAll(async () => {
+    await deleteUserInvite(verifiedUser, hasuraToken)
     await deleteUserDB(verifiedUser, hasuraToken)
 })
 

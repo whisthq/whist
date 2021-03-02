@@ -15,7 +15,9 @@ import {
     launchURL,
     insertUserDB,
     deleteUserDB,
-    loadHasuraToken
+    insertUserInvite,
+    deleteUserInvite,
+    loadHasuraToken,
 } from "testing/utils/testHelpers"
 
 let browser: puppeteer.Browser
@@ -26,9 +28,13 @@ beforeAll(async () => {
     hasuraToken = loadHasuraToken()
     await insertUserDB(verifiedUser, hasuraToken)
     await insertUserDB(payingUser, hasuraToken)
+    await insertUserInvite(verifiedUser, hasuraToken)
+    await insertUserInvite(payingUser, hasuraToken)
 })
 
 afterAll(async () => {
+    await deleteUserInvite(verifiedUser, hasuraToken)
+    await deleteUserInvite(payingUser, hasuraToken)
     await deleteUserDB(verifiedUser, hasuraToken)
     await deleteUserDB(payingUser, hasuraToken)
 })

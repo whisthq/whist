@@ -1,8 +1,16 @@
 import React, { useEffect, Dispatch } from "react"
 import { connect } from "react-redux"
 import { Route, Switch } from "react-router-dom"
+import {
+    ApolloProvider,
+    ApolloClient,
+    InMemoryCache,
+    HttpLink,
+    split,
+} from "@apollo/client"
+import { getMainDefinition } from "@apollo/client/utilities"
+import { WebSocketLink } from "@apollo/client/link/ws"
 
-// import Landing from "pages/homepage/landing/landing"
 import About from "pages/homepage/about/about"
 import TermsOfService from "pages/legal/tos"
 import Cookies from "pages/legal/cookies"
@@ -16,28 +24,77 @@ import Products from "pages/homepage/products/products"
 
 import routes from "shared/constants/routes"
 import withTracker from "shared/utils/withTracker"
+import { config } from "shared/constants/config"
+import { User } from "shared/types/reducers"
 
 import * as SharedAction from "store/actions/shared"
 
-const RootApp = (props: { dispatch: Dispatch<any> }) => {
-    const { dispatch } = props
+const RootApp = (props: {
+    accessToken: string | null | undefined
+    dispatch: Dispatch<any>
+}) => {
+    /*
+        Highest-level React component, contains router and ApolloClient
+
+        Arguments:
+            accessToken(string): Access token, if any
+    */
+
+    const { accessToken, dispatch } = props
+
     const refreshState = () => {
-        // this will do a smart merge that will basically
-        // keep them logged in if they existed and update the other state variables
-        // if they were updated (without nulling out stuff that is necessary)
-        // and will otherwise reset to DEFAULT
         dispatch(SharedAction.refreshState())
     }
 
-    // will refresh the state on component mount in case of
-    // dev updates or other shenanigans
+    const createApolloClient = (token: string | undefined | null) => {
+        if (!token) {
+            token = ""
+        }
+
+        const httpLink = new HttpLink({
+            uri: config.url.GRAPHQL_HTTP_URL,
+        })
+
+        const wsLink = new WebSocketLink({
+            uri: config.url.GRAPHQL_WS_URL,
+            options: {
+                reconnect: true,
+                connectionParams: {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                },
+            },
+        })
+
+        const splitLink = split(
+            ({ query }) => {
+                const definition = getMainDefinition(query)
+                return (
+                    definition.kind === "OperationDefinition" &&
+                    definition.operation === "subscription"
+                )
+            },
+            wsLink,
+            httpLink
+        )
+
+        return new ApolloClient({
+            link: splitLink,
+            cache: new InMemoryCache(),
+        })
+    }
+
+    const apolloClient = createApolloClient(accessToken)
+
+    // Will refresh the Redux state on component mount in case of Redux changes
     useEffect(() => {
         refreshState()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     return (
-        <div>
+        <ApolloProvider client={apolloClient}>
             <Switch>
                 <Route
                     exact
@@ -79,23 +136,24 @@ const RootApp = (props: { dispatch: Dispatch<any> }) => {
                     path={routes.DASHBOARD}
                     component={withTracker(Dashboard)}
                 />
-                {/* <Route
-                    exact
-                    path={routes.PRODUCTS}
-                    component={withTracker(Products)}
-                /> */}
                 <Route
                     exact
                     path={routes.LANDING}
                     component={withTracker(Products)}
                 />
             </Switch>
-        </div>
+        </ApolloProvider>
     )
 }
 
-const mapStateToProps = () => {
-    return {}
+const mapStateToProps = (state: {
+    AuthReducer: {
+        user: User
+    }
+}) => {
+    return {
+        accessToken: state.AuthReducer.user.accessToken,
+    }
 }
 
 export default connect(mapStateToProps)(RootApp)
