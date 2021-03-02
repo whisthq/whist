@@ -25,7 +25,7 @@ export const TwitterIcon = (props: any) => (
 )
 
 export const MediumIcon = (props: any) => (
-    <LogoIcon {...props} id="medium" href="https://medium.com/@fractal">
+    <LogoIcon {...props} id="medium" href="fractal.medium.com">
         <FaMediumM />
     </LogoIcon>
 )
