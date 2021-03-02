@@ -68,8 +68,8 @@ if has_updated "$LIB"; then
 
     # Copy Windows files
     if [[ "$OS" =~ "Windows" ]]; then
-        mv shared-libs/share/64/Windows/* desktop/build64/Windows/
-        mv shared-libs/share/64/Windows/* server/build64
+        cp shared-libs/share/64/Windows/* desktop/build64/Windows/
+        cp shared-libs/share/64/Windows/* server/build64
     fi
 
     rm -r shared-libs
