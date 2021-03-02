@@ -107,7 +107,7 @@ export const BlogLink = (props: any) => (
     /* eslint-disable react/jsx-no-target-blank */
     <a
         {...props}
-        href="https://medium.com/@fractal"
+        href="fractal.medium.com"
         target="_blank"
         rel="noopener noreferror"
     >
@@ -121,7 +121,7 @@ export const DiscordLink = (props: any) => (
     /* eslint-disable react/jsx-no-target-blank */
     <a
         {...props}
-        href="https://medium.com/@fractal"
+        href="https://discord.gg/HjPpDGvEeA"
         target="_blank"
         rel="noopener noreferror"
     >
