@@ -21,6 +21,19 @@ from app.exceptions import TemplateNotFound, SendGridException
 
 
 class MailClient:
+    """A helper class that uses the Sendgrid API to send emails to users.
+
+    To use the MailClient class, follow these steps:
+    1. Create an email template as a .html file and upload it to the fractal-email-templates
+        bucket in S3. You can use Jinja formatting for variables. Make sure it's set to public.
+    2. Add the email template to the sales.email_templates table in the SQL database.
+    3. get_available_templates() will pull all the email templates from the
+        SQL table, and MailClient.send_email will send any email template.
+
+    Attributes:
+        api_key (str): Sendgrid api key that the MailClient uses to create the SendGridAPIClient
+    """
+
     def __init__(self, api_key):
         """Initialize a reusable MailClient object.
 
@@ -32,7 +45,7 @@ class MailClient:
     def send_email(
         self,
         to_email,
-        from_email="support@fractal.co",
+        from_email="noreply@fractal.co",
         subject="",
         html_file=None,
         email_id=None,
@@ -44,10 +57,10 @@ class MailClient:
             from_email (str): Email address where the email is coming from
             to_emails (list): List of email addresses to send to
             subject (str): Email title
-            html_file (str): File of HTML content e.g. example.html
+            html_file (str): file of HTML content e.g. example.html
             email_id (str): Email ID that maps to html_file, found in database.
-                NOTE: Either email_id or html_file
-                must be provided. If both are provided, email_id is used.
+                NOTE: Either email_id or html_file must be provided. If both are provided,
+                    email_id is used.
             jinja_args (dict): Dict of Jinja arguments to pass into render_template()
 
         Raises:
@@ -62,19 +75,39 @@ class MailClient:
             if not email_id in templates.keys():
                 raise TemplateNotFound(email_id)
 
-            html_file = str(templates[email_id]["url"])
+            html_file_url = str(templates[email_id]["url"])
             subject = str(templates[email_id]["title"])
 
-        try:
             fractal_log(
-                logs=f"Sending {html_file} with subject {subject}",
+                logs=f"Sending {html_file_url} with subject {subject}",
                 label=from_email,
                 function="send_email",
             )
-
-            html_as_string = requests.get(html_file)
+            try:
+                html_as_string = requests.get(html_file_url)
+            except Exception as e:
+                fractal_log(
+                    logs=f"An exception occured: {str(e)}",
+                    label=from_email,
+                    function="send_email",
+                    level=logging.ERROR,
+                )
+                raise Exception from e
             jinja_template = Template(html_as_string.text)
 
+        elif html_file:
+            try:
+                jinja_template = Template(open(html_file).read())
+            except Exception as e:
+                fractal_log(
+                    logs=f"An exception occured: {str(e)}",
+                    label=from_email,
+                    function="send_email",
+                    level=logging.ERROR,
+                )
+                raise IOError from e
+
+        try:
             message = Mail(
                 from_email=from_email,
                 to_emails=to_email,
