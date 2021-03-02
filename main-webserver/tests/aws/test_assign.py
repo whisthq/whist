@@ -113,8 +113,6 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             "/container/assign",
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
-        # avoid tripping rate limiters
-        time.sleep(10)
 
         return response
 
@@ -161,8 +159,6 @@ def test_payment_dev(client, make_authorized_user, monkeypatch, set_valid_subscr
             "/container/assign",
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
-        # avoid tripping rate limiters
-        time.sleep(10)
 
         return response
 
