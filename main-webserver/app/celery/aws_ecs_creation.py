@@ -191,12 +191,13 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(container: UserContainer) -> None:
+def _pass_start_values_to_instance(container: UserContainer, token: str) -> None:
     """
     Send the instance start values to the host service.
 
     Arguments:
         container: An instance of the UserContainer model.
+        token: the encryption token for the user's config
 
     Returns:
         None
@@ -217,6 +218,7 @@ def _pass_start_values_to_instance(container: UserContainer) -> None:
                 "container_ARN": container.container_id,
                 "dpi": container.dpi,
                 "user_id": container.user_id,
+                "token": token,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -479,6 +481,7 @@ def assign_container(
     username: str,
     task_definition_arn: str,
     task_version: Optional[int] = None,
+    token: str,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
@@ -492,6 +495,7 @@ def assign_container(
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
     :param task_version: the version of the taskdef to use. If None, uses latest in db.
+    :param token: the encryption token for a user's app config
     :param region_name: which region the user needs a container for
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
@@ -506,6 +510,7 @@ def assign_container(
         self,
         username,
         task_definition_arn,
+        token,
         task_version,
         region_name,
         cluster_name,
@@ -520,6 +525,7 @@ def _assign_container(
     username: str,
     task_definition_arn: str,
     task_version: Optional[int] = None,
+    token: str,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
@@ -725,7 +731,7 @@ def _assign_container(
 
     try:
         _mount_cloud_storage(user, base_container)
-        _pass_start_values_to_instance(base_container)
+        _pass_start_values_to_instance(base_container, token)
     except StartValueException:
         num_tries += 1
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
