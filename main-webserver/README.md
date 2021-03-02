@@ -121,6 +121,44 @@ First, we need to setup a local Redis and Postgres instance. Navigate to `tests/
 
 Now, navigate to `tests` and run `bash run_tests.sh`. This loads the environment variables in `docker/.env` and uses `pytest` to run the tests. If something goes wrong during testing and you kill it early, clean up clusters using the AWS console. Note that since the db is local and ephemeral, any db changes can be safely done.
 
+### Manual Testing
+
+Sometimes, it is helpful to manual test changes that don't neatly fit into the current unit testing / integration testing framework. For example, let's say you want to make sure you properly wrote a database filtering command using the SQLAlchemy ORM. THis section briefly describes different kinds of manual testing and how to do them.
+
+_Manual Testing - Database_
+
+To test database specific things, you can make a file `db_manual_test.py` in main-webserver root with the following contents:
+
+```python
+# export the URL of the database as DATABASE_URL
+# if local eph db (launched with docker/local_deploy.sh):
+# export DATABASE_URL=postgres://<USER>@localhost:9999/<DB>
+# You can find USER and DB in docker/.env after retrieving the config
+from app.factory import create_app
+from app.models import UserContainer
+
+app = create_app()
+
+with app.app_context():
+    base_container = (
+        UserContainer.query.filter_by(
+            is_assigned=False, task_definition="fractal-dev-browsers-chrome", location="us-east-1"
+        )
+        .filter(UserContainer.cluster.notlike("%test%"))
+        .with_for_update()
+        .limit(1)
+        .first()
+    )
+
+    print(base_container)
+```
+
+You might need to fill in fake test data into the db - TablePlus is a good UI tool for this. Fun fact - this is exactly the code we use to get existing prewarmed containers. This kind of manual testing provides a neat way to test the database logic in isolation.
+
+_Manual Testing - Deployments_
+
+TODO: explain review apps here, link notion.
+
 ## How To Contribute
 
 Before making a pull request, ensure that the following steps are taken:
