@@ -207,6 +207,30 @@ def container(cluster, user):
     return _container
 
 
+@pytest.fixture(scope="session")
+def deployment_stage():
+    """Select the environment in which we should run our tests.
+
+    Tests for production code are run against "prod" AWS resources. Tests for staging code are run
+    against "staging" AWS resources. Tests for "dev" code and local code are run against "dev" AWS
+    resources.
+
+    Returns:
+        Either "dev", "staging", or "prod".
+    """
+
+    app_name = os.environ.get("HEROKU_APP_NAME")
+
+    if app_name == "fractal-prod-server":
+        stage = "prod"
+    elif app_name == "fractal-staging-server":
+        stage = "staging"
+    else:
+        stage = "dev"
+
+    return stage
+
+
 @pytest.fixture
 def user(request):
     """Create a test user.

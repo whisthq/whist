@@ -19,6 +19,105 @@ from tests.helpers.general.progress import queryStatus
 from tests.aws.test_assign import set_valid_subscription
 
 
+def admin_assign_container(self, username, region, stage):
+    """Call the /aws_container/assign_container endpoint.
+
+    This function is just a wrapper that is intended to augment the functionality of the Flask test
+    client. It should be monkeypatched onto an instance of the test client.
+
+    Usage:
+
+        def test_me(client, monkeypatch):
+            monkeypatch.setattr(
+                client, "admin_assign_container", admin_assign_container, raising=False
+            )
+
+            client.admin_assign_container("me", "us-east-1")
+
+    Args:
+        username: The username of the user on behalf of whom the request is authenticated as a
+            string.
+        region: The region in which to create the cluster as a string (e.g. "us-east-1").
+        stage: Either "prod", "staging", or "dev".
+
+    Returns:
+        An HTTP response object.
+    """
+
+    return self.post(
+        "/aws_container/assign_container",
+        json={
+            "username": username,
+            "cluster_name": "maintenance-test",
+            "region_name": region,
+            "task_definition_arn": f"fractal-{stage}-browsers-chrome",
+        },
+    )
+
+
+def admin_create_cluster(self, username, region):
+    """Call the /aws_container/create_cluster endpoint.
+
+    This function is just a wrapper that is intended to augment the functionality of the Flask test
+    client. It should be monkeypatched onto an instance of the test client.
+
+    Usage:
+
+        def test_me(client, monkeypatch):
+            monkeypatch.setattr(
+                client, "admin_create_cluster", admin_create_cluster, raising=False
+            )
+
+            client.admin_create_cluster("me", "us-east-1")
+
+    Args:
+        username: The username of the user on behalf of whom the request is authenticated as a
+            string.
+        region: The region in which to create the cluster as a string (e.g. "us-east-1").
+
+    Returns:
+        An HTTP response object.
+    """
+    return self.post(
+        "/aws_container/create_cluster",
+        json={
+            "cluster_name": "maintenance-test",
+            "instance_type": "g3s.xlarge",
+            "region_name": region,
+            "max_size": 1,
+            "min_size": 0,
+            "username": username,
+        },
+    )
+
+
+def assign_container(self, username, region):
+    """Call the /container/assign endpoint.
+
+    This function is just a wrapper that is intended to augment the functionality of the Flask test
+    client. It should be monkeypatched onto an instance of the test client.
+
+    Usage:
+
+        def test_me(client, monkeypatch):
+            monkeypatch.setattr(client, "assign_container", assign_container, raising=False)
+
+            client.assign_container("me", "us-east-1")
+
+    Args:
+        username: The username of the user on behalf of whom the request is authenticated as a
+            string.
+        region: The region in which to create the cluster as a string (e.g. "us-east-1").
+
+    Returns:
+        An HTTP response object.
+    """
+
+    return self.post(
+        "/container/assign", json={"username": username, "app": "Google Chrome", "region": region}
+    )
+
+
 def mock_create_cluster(*args, **kwargs):
     # need to import this here because this is no guarantee that the file
     # where this is executed has imported this
@@ -54,7 +153,7 @@ def mock_assign_container(*args, **kwargs):
 
 
 @pytest.fixture
-def mock_endpoints(monkeypatch):
+def mock_endpoints(client, monkeypatch):
     """
     Mock _create_new_cluster and _assign_container. MUST be done before celery threads start.
     """
@@ -63,63 +162,23 @@ def mock_endpoints(monkeypatch):
     monkeypatch.setattr(_create_new_cluster, "__code__", mock_create_cluster.__code__)
     monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
-
-def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoint_type: str):
-    assert endpoint_type in ["te_cc", "te_ac", "a_c"]
-
-    resp = None
-    if endpoint_type == "te_cc":
-        # test_endpoint create_cluster
-        create_cluster_body = dict(
-            cluster_name="maintenance-test",
-            instance_type="g3s.xlarge",
-            region_name=region_name,
-            max_size=1,
-            min_size=0,
-            username=admin.user_id,
-        )
-        resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
-
-    elif endpoint_type == "te_ac":
-        # TODO: make this a standardized var in tests
-        deploy_env = "dev"
-        if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
-            deploy_env = "prod"
-        elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
-            deploy_env = "staging"
-
-        # test_endpoint assign_container
-        assign_container_body = dict(
-            username=admin.user_id,
-            cluster_name="maintenance-test",
-            region_name=region_name,
-            region=region_name,
-            task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
-        )
-        resp = client.post("/aws_container/assign_container", json=assign_container_body)
-
-    elif endpoint_type == "a_c":
-        # aws_container_assign endpoint used by client app
-        assign_container_body = dict(
-            username=authorized.user_id,
-            app="Blender",
-            region=region_name,
-        )
-        resp = client.post(
-            "/container/assign",
-            json=assign_container_body,
-        )
-
-    else:
-        raise ValueError(f"Unrecognized endpoint_type {endpoint_type}")
-
-    return resp
+    # While we're at it, add some wrappers around the problematic endpoints to the test client so
+    # we can easily call them.
+    monkeypatch.setattr(
+        client.__class__, "admin_assign_container", admin_assign_container, raising=False
+    )
+    monkeypatch.setattr(
+        client.__class__, "admin_create_cluster", admin_create_cluster, raising=False
+    )
+    monkeypatch.setattr(client.__class__, "assign_container", assign_container, raising=False)
 
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("mock_endpoints")
-def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_subscription):
+def test_maintenance_mode_single_region(
+    client, deployment_stage, make_authorized_user, set_valid_subscription
+):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:
@@ -151,7 +210,7 @@ def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_
     # -- Start the test -- #
 
     # start a task
-    resp_start = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_start = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
@@ -165,14 +224,13 @@ def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_
 
     # start maintenance while existing task is running
     resp = client.post("/aws_container/start_update", json={"region_name": "us-east-1"})
-
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
     assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_fail = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
@@ -189,15 +247,15 @@ def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_
     assert resp.json["success"] is True
 
     # new requests should still fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_ac")
+    resp = client.admin_assign_container(user.user_id, "us-east-1", deployment_stage)
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp = client.assign_container(user.user_id, "us-east-1")
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # test that tasks in other regions should proceed just fine
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-2", "te_ac")
+    resp = client.admin_assign_container(user.user_id, "us-east-2", deployment_stage)
     assert resp.status_code == ACCEPTED
 
     # now end maintenance
@@ -209,7 +267,7 @@ def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_
     assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
-    resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp_final = client.assign_container(user.user_id, "us-east-1")
     assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
@@ -231,7 +289,9 @@ def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("mock_endpoints")
-def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_subscription):
+def test_maintenance_mode_all_regions(
+    client, deployment_stage, make_authorized_user, set_valid_subscription
+):
     """
     See test_maintenance_mode_single_region. Only difference is that we try maintenance
     in all regions. This means the request in us-east-2 should also fail.
@@ -251,7 +311,7 @@ def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_su
     # -- Start the test -- #
 
     # start a task
-    resp_start = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_start = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
@@ -272,7 +332,7 @@ def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_su
     assert _REDIS_CONN.exists(update_key)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    resp_fail = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp_fail = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
@@ -289,14 +349,14 @@ def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_su
     assert resp.json["success"] is True
 
     # new requests should still fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_cc")
+    resp = client.admin_create_cluster(user.user_id, "us-east-1")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "te_ac")
+    resp = client.admin_assign_container(user.user_id, "us-east-1", deployment_stage)
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp = client.assign_container(user.user_id, "us-east-1")
     assert resp.status_code == WEBSERVER_MAINTENANCE
     # test that tasks in other regions should also fail out
-    resp = try_problematic_endpoint(client, authorized, admin, "us-east-2", "te_ac")
+    resp = client.admin_assign_container(user.user_id, "us-east-2", deployment_stage)
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # now end maintenance
@@ -308,7 +368,7 @@ def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_su
     assert not _REDIS_CONN.exists(update_key)
 
     # tasks should work again
-    resp_final = try_problematic_endpoint(client, authorized, admin, "us-east-1", "a_c")
+    resp_final = client.assign_container(user.user_id, "us-east-1")
     assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
