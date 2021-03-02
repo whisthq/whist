@@ -59,7 +59,7 @@ def create_app(testing=False):
 
     # we don't want rate limits in test apps
     if testing:
-        import helpers.utils.general.limiter as lim
+        from .helpers.utils.general import limiter as lim
 
         lim.RATE_LIMIT_PER_MINUTE = "20 per minute"
 
