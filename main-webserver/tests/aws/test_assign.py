@@ -6,12 +6,11 @@ from datetime import timedelta, datetime as dt
 from http import HTTPStatus
 
 import pytest
+import time
 
-from flask import current_app
 
 from app.celery.aws_ecs_creation import assign_container
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
-from app.helpers.blueprint_helpers.aws import aws_container_post
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
 
@@ -114,6 +113,7 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             "/container/assign",
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
+        time.sleep(10)
 
         return response
 
@@ -160,6 +160,8 @@ def test_payment_dev(client, make_authorized_user, monkeypatch, set_valid_subscr
             "/container/assign",
             json=dict(username=authorized.user_id, app="Blender", region="us-east-1"),
         )
+
+        time.sleep(10)
 
         return response
 
