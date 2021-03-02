@@ -344,6 +344,7 @@ def aws_container_assign(**kwargs):
     """
     Assigns aws container. Needs:
     - username (str): username
+    - token (str): the encryption token for app config
     - app (str): name of app that user is trying to use
     - region (str): region in which to host in AWS
     - dpi (int): dots per inch
@@ -354,6 +355,7 @@ def aws_container_assign(**kwargs):
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
+        token = body.pop("token")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
@@ -378,6 +380,7 @@ def aws_container_assign(**kwargs):
             task = assign_container.delay(
                 user,
                 task_arn,
+                token,
                 region_name=region,
                 webserver_url=kwargs["webserver_url"],
                 dpi=dpi,
