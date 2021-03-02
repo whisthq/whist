@@ -255,7 +255,9 @@ def make_user():
     users = []
 
     def _user(
-        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
+        stripe_customer_id=None,
+        created_timestamp=datetime.now(timezone.utc).timestamp(),
+        domain="fractal.co",
     ):
         user = User(
             user_id=f"test-user+{uuid.uuid4()}@{domain}",
@@ -294,7 +296,9 @@ def make_authorized_user(client, make_user, monkeypatch):
     """
 
     def _authorized_user(
-        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
+        stripe_customer_id=None,
+        created_timestamp=datetime.now(timezone.utc).timestamp(),
+        domain="fractal.co",
     ):
         user = make_user(
             stripe_customer_id=stripe_customer_id,

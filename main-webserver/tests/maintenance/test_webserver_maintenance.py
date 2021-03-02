@@ -1,7 +1,4 @@
 import time
-import datetime
-from datetime import timedelta, datetime as dt
-import os
 
 import pytest
 
@@ -17,11 +14,6 @@ from app.constants.http_codes import (
     ACCEPTED,
     SUCCESS,
     WEBSERVER_MAINTENANCE,
-)
-from app.constants.time import (
-    SECONDS_IN_MINUTE,
-    MINUTES_IN_HOUR,
-    HOURS_IN_DAY,
 )
 from tests.helpers.general.progress import queryStatus
 from tests.aws.test_assign import set_valid_subscription
@@ -124,16 +116,10 @@ def try_problematic_endpoint(client, authorized, admin, region_name: str, endpoi
     return resp
 
 
-@pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode_single_region(
-    client,
-    admin,
-    make_authorized_user,
-    set_valid_subscription,
-    mock_endpoints,
-):
+@pytest.mark.usefixtures("mock_endpoints")
+def test_maintenance_mode_single_region(client, make_authorized_user, set_valid_subscription):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
     Test this maintenance mode access pattern:
@@ -153,10 +139,7 @@ def test_maintenance_mode_single_region(
     from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
-    authorized = make_authorized_user(
-        stripe_customer_id="random1234",
-        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
-    )
+    user = make_authorized_user(stripe_customer_id="random1234")
     set_valid_subscription(True)
 
     update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
@@ -245,16 +228,10 @@ def test_maintenance_mode_single_region(
     delattr(_assign_container, "num_calls")
 
 
-@pytest.mark.usefixtures("admin")
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode_all_regions(
-    client,
-    admin,
-    make_authorized_user,
-    set_valid_subscription,
-    mock_endpoints,
-):
+@pytest.mark.usefixtures("mock_endpoints")
+def test_maintenance_mode_all_regions(client, make_authorized_user, set_valid_subscription):
     """
     See test_maintenance_mode_single_region. Only difference is that we try maintenance
     in all regions. This means the request in us-east-2 should also fail.
@@ -262,10 +239,7 @@ def test_maintenance_mode_all_regions(
     from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
-    authorized = make_authorized_user(
-        stripe_customer_id="random1234",
-        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
-    )
+    user = make_authorized_user(stripe_customer_id="random1234")
     set_valid_subscription(True)
 
     update_key = _REDIS_UPDATE_KEY.format(region_name="us-east-1")
