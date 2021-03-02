@@ -596,6 +596,8 @@ def prewarm_new_container(
     cluster_name=None,
     region_name="us-east-1",
     webserver_url=None,
+    dpi=96,
+    token="",
 ):
     """Prewarm a new ECS container running a particular task.
 
@@ -606,6 +608,7 @@ def prewarm_new_container(
             run the container.
         cluster_name: The name of the cluster on which to run the container.
         webserver_url: The URL of the web server to ping and with which to authenticate.
+        token: what token to use to decrypt app config
     """
     task_start_time = time.time()
 
@@ -703,6 +706,48 @@ def prewarm_new_container(
             f"Added task {str(task_id)} to cluster {cluster_name} and updated cluster info",
             extra={"label": "prewarm"},
         )
+        if username != "Unassigned":
+            user = User.query.get(username)
+
+            assert user
+
+            _mount_cloud_storage(user, container)
+            _pass_start_values_to_instance(
+                container.ip,
+                container.container_id,
+                container.port_32262,
+                container.dpi,
+                user.user_id,
+                token,
+            )
+
+            if not _poll(container.container_id):
+
+                set_container_state(
+                    keyuser=username,
+                    keytask=self.request.id,
+                    task_id=self.request.id,
+                    state=FAILURE,
+                )
+                fractal_log(
+                    function="create_new_container",
+                    label=str(task_id),
+                    logs="container failed to ping",
+                )
+                self.update_state(
+                    state="FAILURE",
+                    meta={"msg": "Container {} failed to ping.".format(task_id)},
+                )
+
+                raise Ignore
+
+            # pylint: disable=line-too-long
+            fractal_log(
+                function="create_new_container",
+                label=str(task_id),
+                logs=f"""container pinged!  To connect, run: desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}""",
+            )
+            # pylint: enable=line-too-long
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
