@@ -78,7 +78,7 @@ static volatile int logger_global_id = 0;
 SDL_Thread *mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int multi_threaded_printf(void *opaque);
-void real_mprintf(bool log, const char *fmt_str, va_list args);
+void mprintf(bool log, const char *fmt_str, va_list args);
 clock mprintf_timer;
 FILE *mprintf_log_file = NULL;
 FILE *mprintf_log_connection_file = NULL;
@@ -427,15 +427,18 @@ char *escape_string(char *old_string, bool escape_all) {
     return new_string;
 }
 
-void mprintf(const char *fmt_str, ...) {
+// Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
+void internal_logging_printf(const char *fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
-    real_mprintf(WRITE_MPRINTF_TO_LOG, fmt_str, args);
+    // Map to mprintf
+    mprintf(WRITE_MPRINTF_TO_LOG, fmt_str, args);
     va_end(args);
 }
 
-void real_mprintf(bool log, const char *fmt_str, va_list args) {
+// Core multithreaded printf function, that accepts va_list and log boolean
+void mprintf(bool log, const char *fmt_str, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called! Printing below...\n");
         vprintf(fmt_str, args);

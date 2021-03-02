@@ -12,13 +12,13 @@
 #include <linux/uinput.h>
 #include <dirent.h>
 
-#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                          \
-    if (ioctl(FD, PARAMS) == -1) {                                                 \
-        char buf[1024];                                                            \
-        /* strerror_r should not fail here since ioctl returned -1 */              \
-        strerror_r(errno, buf, 1024);                                              \
-        mprintf("Failure at setting " #PARAMS " on fd " #FD ". Error: %s\n", buf); \
-        goto failure;                                                              \
+#define _FRACTAL_IOCTL_TRY(FD, PARAMS...)                                         \
+    if (ioctl(FD, PARAMS) == -1) {                                                \
+        char buf[1024];                                                           \
+        /* strerror_r should not fail here since ioctl returned -1 */             \
+        strerror_r(errno, buf, 1024);                                             \
+        LOG_INFO("Failure at setting " #PARAMS " on fd " #FD ". Error: %s", buf); \
+        goto failure;                                                             \
     }
 
 // we control this to specify the normalization to uinput during device creation; we run into

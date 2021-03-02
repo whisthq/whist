@@ -17,6 +17,7 @@ else() # GCC and Clang base flags
     "-Wno-missing-field-initializers"
     "-Wno-implicit-fallthrough" # We use switch/case fallthrough intentionally a lot, it should be allowed
     "-fno-common" # Error when two global variables have the same name, which would overlap them
+    "$<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,C>:-Werror=implicit-function-declaration>" # Error on implicit function declaration with C
     "$<$<BOOL:${CI}>:-Werror>"
     "$<$<CONFIG:DEBUG>:-Og;-g;-O0>"
     "$<$<CONFIG:RELEASE>:-O3>")

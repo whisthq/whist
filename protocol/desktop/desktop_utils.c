@@ -664,7 +664,7 @@ int init_socket_library(void) {
 #ifdef _WIN32
     WSADATA wsa;
     if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0) {
-        mprintf("Failed to initialize Winsock with error code: %d.\n", WSAGetLastError());
+        LOG_INFO("Failed to initialize Winsock with error code: %d.", WSAGetLastError());
         return -1;
     }
 #endif
