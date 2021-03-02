@@ -1,9 +1,10 @@
 import json
-import logging
 
 from functools import wraps
 
 from flask import current_app, request
+
+from app.helpers.utils.general.logs import fractal_logger
 
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
@@ -50,11 +51,6 @@ def fractal_pre_process(func):
                 break
 
         if not silence:
-            format = "%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"
-
-            logging.basicConfig(format=format, datefmt="%b %d %H:%M:%S")
-            logger = logging.getLogger(__name__)
-            logger.setLevel(logging.DEBUG)
             safe_body = ""
 
             if body and request.method == "POST":
@@ -63,9 +59,9 @@ def fractal_pre_process(func):
                     {k: v for k, v in body.items() if "password" not in k and "key" not in k}
                 )
 
-            logger.info(
-                "{}\n{}\r\n".format(
-                    request.method + " " + request.url,
+            fractal_logger.info(
+                "{}. Body: {}".format(
+                    request.method + " request at " + request.url,
                     safe_body,
                 )
             )
