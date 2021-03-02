@@ -96,8 +96,20 @@ def build_image_path(image_path):
       proc.start()
       procs.append(proc)
   # Wait for them all to finished executing before returning
-  for proc in procs:
-    proc.join()
+  still_waiting = True
+  while still_waiting:
+    still_waiting = False
+    # Wait for a second, to prevent this loop from being tight
+    sleep(1)
+    # Loop over all the processes
+    for proc in procs:
+      # If a process hasn't terminated yet,
+      # remember that we're still waiting for those processes
+      if proc.exitcode == None:
+        still_waiting = True
+      # Fail if any child failed, just sysexit prematurely
+      elif proc.exitcode != 0:
+        sys.exit(1)
 
 # Get all image_path's with no dependencies
 root_level_images = []
