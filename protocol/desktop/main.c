@@ -844,14 +844,8 @@ int main(int argc, char* argv[]) {
             int events = SDL_PollEvent(&sdl_msg);
             double poll_event_time = get_timer(poll_event_timer);
 
-            if (poll_event_time * 1000.0 > 1.0) {
-                LOG_ERROR("**************************");
-                LOG_ERROR("**************************");
-                LOG_ERROR("**************************");
-                LOG_ERROR("BAD TIME: %f", poll_event_time);
-                LOG_ERROR("**************************");
-                LOG_ERROR("**************************");
-                LOG_ERROR("**************************");
+            if (poll_event_time * 1000.0 > 5.0) {
+                LOG_WARNING("SDL_PollEvent took too long! %f", poll_event_time);
             }
 
             if (events && handle_sdl_event(&sdl_msg) != 0) {
