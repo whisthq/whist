@@ -376,7 +376,7 @@ int32_t send_video(void* opaque) {
         int accumulated_frames = 0;
         if (get_timer(last_frame_capture) > 1.0 / FPS) {
             accumulated_frames = capture_screen(device);
-            // mprintf( "CaptureScreen: %d\n", accumulated_frames );
+            // LOG_INFO( "CaptureScreen: %d", accumulated_frames );
         }
 
         // If capture screen failed, we should try again
@@ -465,7 +465,7 @@ int32_t send_video(void* opaque) {
 
             video_encoder_unset_iframe(encoder);
 
-            // mprintf("Encode Time: %f (%d) (%d)\n", get_timer(t),
+            // LOG_INFO("Encode Time: %f (%d) (%d)", get_timer(t),
             //        frames_since_first_iframe % gop_size,
             //        encoder->encoded_frame_size);
 
@@ -495,8 +495,8 @@ int32_t send_video(void* opaque) {
                     delay = transmit_time - frame_time;
                     delay = min(delay, 0.004);
 
-                    // mprintf("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
-                    // %f, Transmit Time: %f, Delay: %f\n",
+                    // LOG_INFO("Size: %d, MBPS: %f, VS MAX MBPS: %f, Time:
+                    // %f, Transmit Time: %f, Delay: %f",
                     // previous_frame_size, mbps, max_mbps, frame_time,
                     // transmit_time, delay);
 
@@ -538,7 +538,7 @@ int32_t send_video(void* opaque) {
                     frame->is_iframe = encoder->is_iframe;
                     video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
 
-                    // mprintf("Sent video packet %d (Size: %d) %s\n", id,
+                    // LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
@@ -575,8 +575,8 @@ int32_t send_video(void* opaque) {
 
                     previous_frame_size = encoder->encoded_frame_size;
                     // double server_frame_time =
-                    // get_timer(server_frame_timer); mprintf("Server Frame
-                    // Time for ID %d: %f\n", id, server_frame_time);
+                    // get_timer(server_frame_timer); LOG_INFO("Server Frame
+                    // Time for ID %d: %f", id, server_frame_time);
                 }
             }
         }
@@ -650,7 +650,7 @@ int32_t send_audio(void* opaque) {
                         break;
                     }
 
-                    // mprintf("we got a packet of size %d\n",
+                    // LOG_INFO("we got a packet of size %d",
                     //         audio_encoder->encoded_frame_size);
 
                     // Send packet
@@ -663,7 +663,7 @@ int32_t send_audio(void* opaque) {
                         LOG_WARNING("Could not send audio frame");
                     }
                     read_unlock(&is_active_rwlock);
-                    // mprintf("sent audio frame %d\n", id);
+                    // LOG_INFO("sent audio frame %d", id);
                     id++;
 
                     // Free encoder packet

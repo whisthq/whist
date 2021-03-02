@@ -101,7 +101,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     for (i = 0; i < num_outputs; i++) {
         hardware->output = outputs[i];
         hr = hardware->output->lpVtbl->GetDesc(hardware->output, &output_desc);
-        // mprintf("Monitor %d: %s\n", i, output_desc.DeviceName);
+        // LOG_INFO("Monitor %d: %s", i, output_desc.DeviceName);
     }
 
     // Set used output

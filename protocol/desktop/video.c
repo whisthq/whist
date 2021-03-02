@@ -309,9 +309,9 @@ int32_t render_screen(SDL_Renderer* renderer) {
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
-        mprintf("Rendering ID %d (Age %f) (Packets %d) %s\n", renderContext.id,
-                get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
-                frame->is_iframe ? "(I-Frame)" : "");
+        LOG_INFO("Rendering ID %d (Age %f) (Packets %d) %s", renderContext.id,
+                 get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
+                 frame->is_iframe ? "(I-Frame)" : "");
 #endif
 
         if (get_timer(render_context.frame_creation_timer) > 25.0 / 1000.0) {
@@ -323,10 +323,10 @@ int32_t render_screen(SDL_Renderer* renderer) {
         if ((int)(sizeof(Frame) + frame->size +
                   sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) !=
             render_context.frame_size) {
-            mprintf("Incorrect Frame Size! %d instead of %d\n",
-                    sizeof(Frame) + frame->size +
-                        sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs,
-                    render_context.frame_size);
+            LOG_INFO("Incorrect Frame Size! %d instead of %d",
+                     sizeof(Frame) + frame->size +
+                         sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs,
+                     render_context.frame_size);
         }
 
         if (frame->width != server_width || frame->height != server_height ||
@@ -460,7 +460,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
             cursor_state = frame->cursor.cursor_state;
         }
 
-        // mprintf("Client Frame Time for ID %d: %f\n", renderContext.id,
+        // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
         // get_timer(renderContext.client_frame_timer));
 
         if (!skip_render && can_render) {
@@ -917,7 +917,7 @@ void update_video() {
 
         // Print statistics
 
-        // mprintf("FPS: %f\nmbps: %f\ndropped: %f%%\n\n", fps, mbps, 100.0 *
+        // LOG_INFO("FPS: %f\nmbps: %f\ndropped: %f%%\n", fps, mbps, 100.0 *
         // dropped_rate);
 
         LOG_INFO("MBPS: %f %f", video_data.target_mbps, nack_per_second);
@@ -1005,9 +1005,9 @@ void update_video() {
         // packet for that frame, we set rendering=true
         if (ctx->id == next_render_id) {
             if (ctx->packets_received == ctx->num_packets) {
-                // mprintf( "Packets: %d %s\n", ctx->num_packets,
+                // LOG_INFO( "Packets: %d %s", ctx->num_packets,
                 // ((Frame*)ctx->frame_buffer)->is_iframe ? "(I-frame)" : "" );
-                // mprintf("Rendering %d (Age %f)\n", ctx->id,
+                // LOG_INFO("Rendering %d (Age %f)", ctx->id,
                 // get_timer(ctx->frame_creation_timer));
 
                 render_context = *ctx;
@@ -1034,8 +1034,8 @@ void update_video() {
                         ctx->last_nacked_index = -1;
                     }
                     int num_nacked = 0;
-                    // mprintf("************NACKING PACKET %d, alive for %f
-                    // MS\n", ctx->id, get_timer(ctx->frame_creation_timer));
+                    // LOG_INFO("************NACKING PACKET %d, alive for %f
+                    // MS", ctx->id, get_timer(ctx->frame_creation_timer));
                     for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
                          i++) {
                         if (!ctx->received_indicies[i]) {
@@ -1106,7 +1106,7 @@ int32_t receive_video(FractalPacket* packet) {
             (int32_t): -1 if failed to receive packet into video frame, else 0
     */
 
-    // mprintf("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)\n",
+    // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
     // Find frame in linked list that matches the id
@@ -1139,9 +1139,9 @@ int32_t receive_video(FractalPacket* packet) {
         memset(ctx->nacked_indicies, 0, sizeof(ctx->nacked_indicies));
         start_timer(&ctx->last_nacked_timer);
         start_timer(&ctx->frame_creation_timer);
-        // mprintf("Initialized packet %d!\n", ctx->id);
+        // LOG_INFO("Initialized packet %d!", ctx->id);
     } else {
-        // mprintf("Already Started: %d/%d - %f\n", ctx->packets_received + 1,
+        // LOG_INFO("Already Started: %d/%d - %f", ctx->packets_received + 1,
         // ctx->num_packets, get_timer(ctx->client_frame_timer));
     }
 
@@ -1167,9 +1167,9 @@ int32_t receive_video(FractalPacket* packet) {
     // Already received
     if (ctx->received_indicies[packet->index]) {
 #if LOG_VIDEO
-        mprintf(
+        LOG_DEBUG(
             "Skipping duplicate Video ID %d Index %d at time since creation %f "
-            "%s\n",
+            "%s",
             packet->id, packet->index, get_timer(ctx->frame_creation_timer),
             packet->is_a_nack ? "(nack)" : "");
 #endif
@@ -1177,7 +1177,7 @@ int32_t receive_video(FractalPacket* packet) {
     }
 
 #if LOG_VIDEO
-    // mprintf("Received Video ID %d Index %d at time since creation %f %s\n",
+    // LOG_INFO("Received Video ID %d Index %d at time since creation %f %s",
     // packet->id, packet->index, get_timer(ctx->frame_creation_timer),
     // packet->is_a_nack ? "(nack)" : "");
 #endif
@@ -1216,8 +1216,8 @@ int32_t receive_video(FractalPacket* packet) {
         video_data.frames_received++;
 
 #if LOG_VIDEO
-        mprintf("Received Video Frame ID %d (Packets: %d) (Size: %d) %s\n", ctx->id,
-                ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
+        LOG_INFO("Received Video Frame ID %d (Packets: %d) (Size: %d) %s", ctx->id,
+                 ctx->num_packets, ctx->frame_size, is_iframe ? "(i-frame)" : "");
 #endif
 
         // If it's an I-frame, then just skip right to it, if the id is ahead of

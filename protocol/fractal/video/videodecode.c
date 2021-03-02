@@ -20,7 +20,7 @@ void destroy_video_decoder_members(VideoDecoder* decoder);
 void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
     t;
     t2;
-    mprintf("Error found\n");
+    LOG_INFO("Error found");
     vprintf(fmt, vargs);
 }
 #endif
