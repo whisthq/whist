@@ -8,4 +8,4 @@ import (
 // higher-level packages of the host service to avoid having to import
 // ecs-agent packages into the main package (for modularity).
 type UinputDeviceMapping ecsengine.FractalUinputDeviceMapping
-type PortBindings ecsengine.FractalPortBinding
+type PortBinding ecsengine.FractalPortBinding

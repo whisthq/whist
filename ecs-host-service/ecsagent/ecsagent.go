@@ -17,13 +17,9 @@ import (
 	ecslogger "github.com/fractal/ecs-agent/agent/logger"
 
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	fractaltypes "github.com/fractal/fractal/ecs-host-service/fractaltypes"
 	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 )
-
-// UinputDeviceMapping is the type we manipulate in the main package of the
-// host service to avoid having to import ecs-agent packages into the main
-// package (for modularity).
-type UinputDeviceMapping ecsengine.FractalUinputDeviceMapping
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -44,14 +40,16 @@ func init() {
 		fractallogger.Panicf("Could not make directory /etc/ecs: Error: %s", err)
 	}
 
-	// Give the ecs-agent a method to pass along mappings between Docker
-	// container IDs and FractalIDs.
+	// Create an HTTP client for the following functions
 	httpClient := http.Client{
 		Timeout: 10 * time.Second,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
+
+	// Give the ecs-agent a method to pass along mappings between Docker
+	// container IDs and FractalIDs.
 	ecsengine.SetFractalHostServiceMappingSender(
 		func(dockerID, fractalID, appName string) error {
 			body, err := fractalhttpserver.CreateRegisterDockerContainerIDRequestBody(
@@ -68,7 +66,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/register_docker_container_id"
+			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/register_docker_container_id"
 
 			_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			return err
@@ -89,7 +87,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
+			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/create_uinput_devices"
 
 			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			respbody, bodyerr := ioutil.ReadAll(response.Body)
@@ -114,7 +112,7 @@ func init() {
 				return nil, fractallogger.MakeError("Error unmarshalling response from /create_uinput_devices endpoint. Error: %s, fractalID: %s, response: %s", err, fractalID, respbody)
 			}
 
-			var devices []UinputDeviceMapping
+			var devices []fractaltypes.UinputDeviceMapping
 			err = json.Unmarshal([]byte(respstruct.Result), &devices)
 			if err != nil {
 				return nil, fractallogger.MakeError("Error unmarshalling devices from /create_uinput_devices endpoint. Error: %s, fractalID: %s, device list: %s", err, fractalID, respstruct.Result)
@@ -127,6 +125,72 @@ func init() {
 			}
 
 			return result, nil
+		},
+	)
+
+	// Give the ecs-agent a method to ask for port bindings for a container.
+	ecsengine.SetFractalPortBindingRequester(
+		func(fractalID string, desiredPorts []ecsengine.FractalPortBinding) ([]ecsengine.FractalPortBinding, error) {
+			convertBindingSlicetoFractalType := func(x []ecsengine.FractalPortBinding) []fractaltypes.PortBinding {
+				result := make([]fractaltypes.PortBinding, len(x))
+				for i, v := range x {
+					result[i] = fractaltypes.PortBinding(v)
+				}
+				return result
+			}
+
+			convertBindingSliceToECSType := func(x []fractaltypes.PortBinding) []ecsengine.FractalPortBinding {
+				result := make([]ecsengine.FractalPortBinding, len(x))
+				for i, v := range x {
+					result[i] = ecsengine.FractalPortBinding(v)
+				}
+				return result
+			}
+
+			body, err := fractalhttpserver.CreateRequestPortBindingsRequestBody(
+				fractalhttpserver.RequestPortBindingsRequest{
+					FractalID: fractalID,
+					Bindings:  convertBindingSlicetoFractalType(desiredPorts),
+				},
+			)
+			if err != nil {
+				err := fractallogger.MakeError("Error creating RequestPortBindingsRequest: %s", err)
+				return nil, err
+			}
+
+			// We have the request body, now just need to actually make the request
+			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/request_port_bindings"
+
+			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			respbody, bodyerr := ioutil.ReadAll(response.Body)
+			response.Body.Close()
+			switch {
+			case resperr != nil && bodyerr == nil:
+				return nil, fractallogger.MakeError("Error returned from /request_port_bindings endpoint: %s. Response body: %s", resperr, respbody)
+			case resperr == nil && bodyerr != nil:
+				return nil, fractallogger.MakeError("Error reading response from /request_port_bindings endpoint: %s", bodyerr)
+			case resperr != nil && bodyerr != nil:
+				return nil, fractallogger.MakeError("Post request to /request_port_bindings endpoint returned error: %s. Also, could not read response body because of error: %s", resperr, bodyerr)
+			}
+
+			fractallogger.Infof("Reponse body: %s", respbody)
+
+			var respstruct struct {
+				Result string `json:"result"`
+				Error  string `json:"error"`
+			}
+			err = json.Unmarshal(respbody, &respstruct)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error unmarshalling response from /request_port_bindings endpoint. Error: %s, fractalID: %s, response: %s", err, fractalID, respbody)
+			}
+
+			var bindings []fractaltypes.PortBinding
+			err = json.Unmarshal([]byte(respstruct.Result), &bindings)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error unmarshalling bindings from /request_port_bindings endpoint. Error: %s, fractalID: %s, bindings: %s", err, fractalID, respstruct.Result)
+			}
+
+			return convertBindingSliceToECSType(bindings), nil
 		},
 	)
 

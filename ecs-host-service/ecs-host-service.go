@@ -27,11 +27,11 @@ import (
 	// functionality in this impoted package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	webserver "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
-
-	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
-
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
+	fractaltypes "github.com/fractal/fractal/ecs-host-service/fractaltypes"
+	webserver "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
+	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
+	resourcetrackers "github.com/fractal/fractal/ecs-host-service/resourcetrackers"
 
 	uinput "github.com/fractal/uinput-go"
 
@@ -123,6 +123,9 @@ type uinputDevices struct {
 // keep track of mapping from FractalID to uinput devices
 var devices map[string]uinputDevices = make(map[string]uinputDevices)
 
+// we keep track of mapping from FractalIDs to host ports in `resourcetrackers.PortBindings`
+// TODO(djsavvy): move other tracked resources to the `resourcetrackers` package.
+
 // Updates the fractalIDs mapping with a request from the ecs-agent
 func addFractalIDMappings(req *httpserver.RegisterDockerContainerIDRequest) error {
 	if req.DockerID == "" || req.FractalID == "" || req.AppName == "" {
@@ -180,7 +183,8 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 	return "", logger.MakeError("did not find file in %s with prefix 'event'", syspath)
 }
 
-func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.UinputDeviceMapping, error) {
+// Create uinput devices and pass them back to the ecs-agent
+func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]fractaltypes.UinputDeviceMapping, error) {
 	FractalID := r.FractalID
 	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
 
@@ -252,7 +256,7 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 		logger.Infof("Sent uinput file descriptors to %s", FractalID)
 	}()
 
-	return []ecsagent.UinputDeviceMapping{
+	return []fractaltypes.UinputDeviceMapping{
 		{
 			PathOnHost:        absmousePath,
 			PathInContainer:   absmousePath,
@@ -269,6 +273,11 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]ecsagent.U
 			CgroupPermissions: "rwm", // read, write, mknod (the default)
 		},
 	}, nil
+}
+
+// Allocate the necessary host ports and pass them back to the ecs-agent
+func allocateHostPorts(r *httpserver.RequestPortBindingsRequest) ([]fractaltypes.PortBinding, error) {
+	return resourcetrackers.AllocatePortBindings(r.FractalID, r.Bindings)
 }
 
 // Unmounts a cloud storage directory mounted on hostPort
@@ -732,6 +741,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	// Delete user config and resave to S3
 	saveUserConfig(fractalID)
 
+	resourcetrackers.FreePortBindings(fractalID)
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
@@ -1028,6 +1038,20 @@ eventLoop:
 
 			case *httpserver.CreateUinputDevicesRequest:
 				list, err := createUinputDevices(serverevent.(*httpserver.CreateUinputDevicesRequest))
+				if err != nil {
+					logger.Error(err)
+					serverevent.ReturnResult("", err)
+				} else {
+					if result, err := json.Marshal(list); err != nil {
+						logger.Error(err)
+						serverevent.ReturnResult("", err)
+					} else {
+						serverevent.ReturnResult(string(result), nil)
+					}
+				}
+
+			case *httpserver.RequestPortBindingsRequest:
+				list, err := allocateHostPorts(serverevent.(*httpserver.RequestPortBindingsRequest))
 				if err != nil {
 					logger.Error(err)
 					serverevent.ReturnResult("", err)
