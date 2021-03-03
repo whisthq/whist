@@ -89,19 +89,17 @@ func init() {
 			// We have the request body, now just need to actually make the request
 			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/create_uinput_devices"
 
-			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
-			respbody, bodyerr := ioutil.ReadAll(response.Body)
-			response.Body.Close()
-			switch {
-			case resperr != nil && bodyerr == nil:
-				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s. Response body: %s", resperr, respbody)
-			case resperr == nil && bodyerr != nil:
-				return nil, fractallogger.MakeError("Error reading response from /create_uinput_devices endpoint: %s", bodyerr)
-			case resperr != nil && bodyerr != nil:
-				return nil, fractallogger.MakeError("Post request to /create_uinput_devices endpoint returned error: %s. Also, could not read response body because of error: %s", resperr, bodyerr)
+			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			if err != nil {
+				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s", err)
 			}
+			respbody, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error reading response.Body from /create_uinput_devices endpoint: %s", err)
+			}
+			response.Body.Close()
 
-			fractallogger.Infof("Reponse body: %s", respbody)
+			fractallogger.Infof("Reponse body from /create_uinput_devices endpoint: %s", respbody)
 
 			var respstruct struct {
 				Result string `json:"result"`
@@ -161,19 +159,17 @@ func init() {
 			// We have the request body, now just need to actually make the request
 			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/request_port_bindings"
 
-			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
-			respbody, bodyerr := ioutil.ReadAll(response.Body)
-			response.Body.Close()
-			switch {
-			case resperr != nil && bodyerr == nil:
-				return nil, fractallogger.MakeError("Error returned from /request_port_bindings endpoint: %s. Response body: %s", resperr, respbody)
-			case resperr == nil && bodyerr != nil:
-				return nil, fractallogger.MakeError("Error reading response from /request_port_bindings endpoint: %s", bodyerr)
-			case resperr != nil && bodyerr != nil:
-				return nil, fractallogger.MakeError("Post request to /request_port_bindings endpoint returned error: %s. Also, could not read response body because of error: %s", resperr, bodyerr)
+			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			if err != nil {
+				return nil, fractallogger.MakeError("Error returned from /request_port_bindings endpoint: %s", err)
 			}
+			respbody, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				return nil, fractallogger.MakeError("Error reading response.Body from /request_port_bindings endpoint: %s", err)
+			}
+			response.Body.Close()
 
-			fractallogger.Infof("Reponse body: %s", respbody)
+			fractallogger.Infof("Reponse body from /request_port_bindings endpoint: %s", respbody)
 
 			var respstruct struct {
 				Result string `json:"result"`
