@@ -133,7 +133,7 @@ def exclamation(text):
     return surround_sm(":exclamation:", text)
 
 
-def code(text, lang=""):
+def code_block(text, lang=""):
     if not text:
         return text
     return join_newline("```" + lang, text, "```")
@@ -141,13 +141,13 @@ def code(text, lang=""):
 
 @collapsed
 def code_collapsed(*args, **kwargs):
-    return code(*args, **kwargs)
+    return code_block(*args, **kwargs)
 
 
 def code_overflow_collapsed(text, *args, **kwargs):
     if _should_collapse(text):
         return code_collapsed(text, *args, **kwargs)
-    return code(text, *args, **kwargs)
+    return code_block(text, *args, **kwargs)
 
 
 def identity(x):
@@ -215,4 +215,4 @@ def default_message_slack(body, title=None, code=None, lang=None):
     # It also doesn't support the language argument, so we'll just omit it.
     return join_newline("*" + title + "*",
                         body,
-                        code(code))
+                        code_block(code))
