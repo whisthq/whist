@@ -1104,21 +1104,6 @@ CREATE TABLE logs.monitor_logs (
 
 
 --
--- Name: protocol_logs; Type: TABLE; Schema: logs; Owner: -
---
-
-CREATE TABLE logs.protocol_logs (
-    user_id character varying(250),
-    server_logs character varying(250),
-    connection_id character varying(250) NOT NULL,
-    bookmarked boolean NOT NULL,
-    "timestamp" bigint,
-    version character varying(250),
-    client_logs character varying(250)
-);
-
-
---
 -- Name: credentials; Type: TABLE; Schema: oauth; Owner: -
 --
 
@@ -1702,13 +1687,6 @@ CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (
 
 
 --
--- Name: fkIdx_61; Type: INDEX; Schema: logs; Owner: -
---
-
-CREATE INDEX "fkIdx_61" ON logs.protocol_logs USING btree (user_id);
-
-
---
 -- Name: fkIdx_91; Type: INDEX; Schema: sales; Owner: -
 --
 
@@ -1839,14 +1817,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 
 ALTER TABLE ONLY logs.login_history
     ADD CONSTRAINT login_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: protocol_logs protocol_logs_user_id_fkey; Type: FK CONSTRAINT; Schema: logs; Owner: -
---
-
-ALTER TABLE ONLY logs.protocol_logs
-    ADD CONSTRAINT protocol_logs_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
 --
