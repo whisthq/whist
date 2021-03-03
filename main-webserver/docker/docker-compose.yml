@@ -46,7 +46,7 @@ services:
     command: celery
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      REDIS_URL: rediss://redis
+      REDIS_URL: redis://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 50
     volumes:
