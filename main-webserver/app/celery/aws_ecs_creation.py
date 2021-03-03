@@ -586,24 +586,19 @@ def _assign_container(
 @maintenance_track_task
 def prewarm_new_container(
     self,
-    username,
     task_definition_arn,
     cluster_name=None,
     region_name="us-east-1",
     webserver_url=None,
 ):
-    """Create a new ECS container running a particular task.
+    """Prewarm a new ECS container running a particular task.
 
     Arguments:
-        username: The username of the user who owns the container.
+        self: The instance running the celery task
         task_definition_arn: The task definition to use identified by its ARN.
         region_name: The name of the region containing the cluster on which to
             run the container.
         cluster_name: The name of the cluster on which to run the container.
-        use_launch_type: A boolean indicating whether or not to use the
-            ECSClient's launch type or the cluster's default launch type.
-        network_configuration: The network configuration to use for the
-            clusters using awsvpc networking.
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
     task_start_time = time.time()
@@ -630,9 +625,6 @@ def prewarm_new_container(
         cluster_info = ClusterInfo.query.filter_by(cluster=cluster_name).first()
 
     if cluster_info.status == "DEPROVISIONING":
-        set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
-        )
         fractal_logger.error(
             f"Cluster status is {cluster_info.status}", extra={"label": cluster_name}
         )
@@ -650,13 +642,7 @@ def prewarm_new_container(
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
-
-        set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
-        )
-        fractal_logger.error(
-            "Error generating task with running IP", extra={"label": str(username)}
-        )
+        fractal_logger.error("Error generating task with running IP", extra={"label": "prewarmed"})
         self.update_state(state="FAILURE", meta={"msg": "Error generating task with running IP"})
         raise Ignore
 
@@ -665,6 +651,8 @@ def prewarm_new_container(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     ecs_client.set_cluster(cluster_name)
+
+    # we need DPI here as a placeholder
 
     container = UserContainer(
         container_id=task_id,
@@ -707,18 +695,15 @@ def prewarm_new_container(
     if cluster_sql:
         fractal_logger.info(
             f"Added task {str(task_id)} to cluster {cluster_name} and updated cluster info",
-            extra={"label": username},
+            extra={"label": "prewarm"},
         )
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
             datadogEvent_containerCreate(
-                container.container_id, cluster_name, username=username, time_taken=task_time_taken
+                container.container_id, cluster_name, username="prewarm", time_taken=task_time_taken
             )
 
-        # set_container_state(
-        #     keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
-        # )
         return user_container_schema.dump(container)
     else:
         fractal_logger.info("SQL insertion unsuccessful", extra={"label": str(task_id)})
