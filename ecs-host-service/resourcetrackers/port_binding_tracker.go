@@ -24,7 +24,7 @@ var tcpPorts protocolSpecificMap = make(map[uint16]string)
 var udpPorts protocolSpecificMap = make(map[uint16]string)
 
 // PortBindings is an exported map from containers' FractalIDs to their PortBindings
-var PortBindings map[string][]fractaltypes.PortBinding
+var PortBindings map[string][]fractaltypes.PortBinding = make(map[string][]fractaltypes.PortBinding)
 
 func init() {
 	// Mark certain ports as "reserved" so they don't get allocated for containers
