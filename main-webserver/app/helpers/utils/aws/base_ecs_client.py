@@ -11,6 +11,8 @@ import boto3
 import botocore.exceptions
 from flask import current_app
 
+from app.helpers.utils.general.logs import fractal_logger
+
 
 class FractalECSClusterNotFoundException(Exception):
     """
@@ -766,10 +768,14 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
+        fractal_logger.info(
+            f"AWS task {self.tasks[offset]} has following status: {resp['lastStatus']}"
+        )
+
         # if the container is stopped, it's broken -- raise an exception
         if resp["lastStatus"] == "STOPPED":
             raise ContainerBrokenException(saferepr(response))
-        if resp["lastStatus"] == "RUNNING":
+        elif resp["lastStatus"] == "RUNNING":
             try:
                 container_instance = resp["containerInstanceArn"]
             except KeyError:
@@ -823,9 +829,28 @@ class ECSClient:
             return True
         return False
 
-    def spin_til_running(self, offset=0, time_delay=5):
-        while not self.get_task_ip_ports(offset=offset):
+    def spin_til_running(
+        self,
+        offset: int = 0,
+        time_delay: int = 5,
+        max_polls: int = 100,
+    ) -> bool:
+        """
+        Spins until AWS gives us the network binding associated with a task.
+
+        Args:
+            offset: task index in self.tasks
+            time_delay: seconds to sleep between AWS poll requests
+            max_polls: maximum number of times to poll AWS
+
+        Return:
+            True iff a networking binding was returned by AWS.
+        """
+        for _ in range(max_polls):
+            if self.get_task_ip_ports(offset=offset):
+                return True
             time.sleep(time_delay)
+        return False
 
     def spin_til_containers_up(self, cluster_name, time_delay=5):
         """
@@ -876,10 +901,6 @@ class ECSClient:
         """
         for i in range(self.offset + 1):
             self.spin_til_done(offset=i, time_delay=time_delay)
-
-    def run_all(self, time_delay=5):
-        for i in range(self.offset + 1):
-            self.spin_til_running(offset=i, time_delay=time_delay)
 
     def create_auto_scaling_cluster(
         self,
