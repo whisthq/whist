@@ -59,10 +59,6 @@ else
         bash ../db_setup/fetch_db.sh
     fi
 
-    # Make sure we have dummy SSL certificates. Note that we don't care if we
-    # overwrite existing ones.
-    ../dummy_certs/create_dummy_certs.sh
-
     # eph db configurations
     export POSTGRES_LOCAL_HOST="localhost"
     export POSTGRES_LOCAL_PORT="9999"
