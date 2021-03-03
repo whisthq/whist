@@ -5,7 +5,7 @@ from app.constants.http_codes import SUCCESS
 
 from app.helpers.blueprint_helpers.admin.hasura_get import auth_token_helper, login_token_helper
 
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 
 hasura_bp = Blueprint("hasura_bp", __name__)
 
@@ -31,6 +31,6 @@ def hasura_auth_get(**kwargs):  # pylint: disable=unused-argument
     output = dict(auth_output)
     output.update(login_output)
 
-    fractal_log("", "", str(output))
+    fractal_logger.info(str(output))
 
     return jsonify(output), SUCCESS
