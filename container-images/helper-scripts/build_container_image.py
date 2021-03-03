@@ -7,7 +7,6 @@ import re
 import threading
 import subprocess
 import sys
-import time
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -92,7 +91,6 @@ def build_image_path(image_path):
 
   # Build all of those next-layer image_paths asynchronously
   procs = []
-  mapping = {}
   for next_image_path in next_layer:
     proc = threading.Thread(name="Builder of " + next_image_path, target=build_image_path, args=[next_image_path])
     proc.start()
