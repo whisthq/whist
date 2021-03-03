@@ -14,10 +14,10 @@ import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
+import { ChildProcess } from "child_process"
 import { FractalIPC } from "./shared/types/ipc"
 import { launchProtocol, writeStream } from "./shared/utils/files/exec"
 import { uploadToS3 } from "./shared/utils/files/aws"
-import { ChildProcess } from "child_process"
 import { FractalLogger } from "./shared/utils/general/logging"
 import { FractalDirectory } from "./shared/types/client"
 import LoadingMessage from "./pages/launcher/constants/loadingMessages"
@@ -231,9 +231,9 @@ const createProtocol = () => {
     const ipc = electron.ipcMain
     let protocol: ChildProcess
     let userID: string
-    let protocolLaunched: Number
-    let protocolClosed: Number
-    let createContainerRequestSent: Number
+    let protocolLaunched: number
+    let protocolClosed: number
+    let createContainerRequestSent: number
 
     const protocolOnStart = () => {
         protocolLaunched = Date.now()
@@ -285,7 +285,7 @@ const createProtocol = () => {
     })
 
     ipc.on(FractalIPC.SEND_CONTAINER, (event, argv) => {
-        let container = argv
+        const container = argv
         const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
         writeStream(protocol, `ports?${portInfo}`)
         writeStream(protocol, `private-key?${container.secretKey}`)
