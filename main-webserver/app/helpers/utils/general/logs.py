@@ -1,5 +1,7 @@
 import logging
 
+from celery._state import get_current_task
+
 
 class _ExtraHandler(logging.StreamHandler):
     """
@@ -28,6 +30,31 @@ class _ExtraHandler(logging.StreamHandler):
         record.msg = full_msg
 
 
+class _CeleryHandler(logging.StreamHandler):
+    def __init__(self):
+        super().__init__()
+        self.message_format = "{task_id} | {task_name} | {message}"
+
+    def emit(self, record: logging.LogRecord):
+        """
+        This is called prior to any logging. We try to parse the task_id and task_name
+        using celery constructs.
+        """
+        task = get_current_task()
+        task_id = None
+        task_name = None
+        if task and task.request:
+            task_id = task.request.id
+            task_name = task.name
+
+        # only reformat the message if these are provided
+        if task_id is not None and task_name is not None:
+            full_msg = self.message_format.format(
+                task_id=task_id, task_name=task_name, message=record.msg
+            )
+            record.msg = full_msg
+
+
 def _create_fractal_logger():
     """
     Create and configure a logger for fractal's purposes.
@@ -40,6 +67,10 @@ def _create_fractal_logger():
     # add extra handler
     extra_handler = _ExtraHandler()
     logger.addHandler(extra_handler)
+
+    # add celery handler
+    celery_handler = _CeleryHandler()
+    logger.addHandler(celery_handler)
     return logger
 
 
@@ -60,6 +91,8 @@ fractal_logger.error("oh no")
 fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
+
+celery_logger = get_task_logger(__name__)
 
 
 def fractal_log(function, label, logs, level=logging.INFO):
