@@ -13,4 +13,4 @@ from .hardware import (
 from .logs import LoginHistory
 from .oauth import Credential
 from .public import User
-from .sales import MainNewsletter, StripeProduct
+from .sales import StripeProduct
