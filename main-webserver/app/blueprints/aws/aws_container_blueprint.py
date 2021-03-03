@@ -344,7 +344,7 @@ def aws_container_assign(**kwargs):
     """
     Assigns aws container. Needs:
     - username (str): username
-    - token (str): the encryption token for app config
+    - config_encryption_token (str): the encryption token for app config
     - app (str): name of app that user is trying to use
     - region (str): region in which to host in AWS
     - dpi (int): dots per inch
