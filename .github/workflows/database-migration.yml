@@ -301,6 +301,12 @@ jobs:
                   sys.path.append(os.environ["PATH_HELPERS"])
                   from notifications import slack_debug
 
+                  # No notifications if the migration diff
+                  # is empty, so exit early
+                  with open(os.environ["PATH_DIFF"]) as f:
+                      if not f.read():
+                          sys.exit(0)
+
                   github_issue = os.environ["GITHUB_ISSUE"]
                   github_branch = os.environ["GITHUB_BRANCH"]
 
