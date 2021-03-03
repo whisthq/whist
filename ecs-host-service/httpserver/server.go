@@ -8,6 +8,7 @@ import (
 	"os/exec"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	types "github.com/fractal/fractal/ecs-host-service/fractaltypes"
 )
 
 // Variables for the auth_secret used to communicate between the webserver and
@@ -19,7 +20,7 @@ var webserverAuthSecret string
 // Constants for use in setting up the HTTPS server
 const (
 	// We listen on the port "HOST" converted to a telephone number
-	PortToListen       = ":4678"
+	PortToListen       = 4678
 	FractalPrivatePath = "/fractalprivate/"
 	certPath           = FractalPrivatePath + "cert.pem"
 	privatekeyPath     = FractalPrivatePath + "key.pem"
@@ -301,6 +302,74 @@ func CreateCreateUinputDevicesRequestBody(r CreateUinputDevicesRequest) ([]byte,
 	return body, nil
 }
 
+// RequestPortBindings defines the (unauthenticated) `request_port_bindings`
+// endpoint, which is used by the ecs-agent (built into the host service, in
+// package `ecsagent`) to request port bindings on the host for containers. We
+// allocate the host ports to be bound and return them, so the docker runtime
+// can actually bind them into the container.
+type RequestPortBindingsRequest struct {
+	FractalID  string              `json:"fractal_id"` // FractalID corresponding to the relevant container
+	Bindings   []types.PortBinding `json:"bindings"`   // Desired port bindings, with "0" as the hostPort indicating that we should allocate a port there.
+	resultChan chan requestResult  // Channel to pass result between goroutines
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *RequestPortBindingsRequest) ReturnResult(result string, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass request result
+// back to the HTTP request handler via ReturnResult.
+func (s *RequestPortBindingsRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+func processRequestPortBindingsRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is a POST
+	if verifyRequestType(w, r, http.MethodPost) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata RequestPortBindingsRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+		logger.Infof(err.Error())
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
+// CreateRequestPortBindingsRequestBody creates the necessary body for a RequestPortBindingsRequest, including authentication
+func CreateRequestPortBindingsRequestBody(r RequestPortBindingsRequest) ([]byte, error) {
+	body, err := json.Marshal(
+		struct {
+			AuthSecret string              `json:"auth_secret"`
+			FractalID  string              `json:"fractal_id"`
+			Bindings   []types.PortBinding `json:"bindings"`
+		}{
+			AuthSecret: webserverAuthSecret,
+			FractalID:  r.FractalID,
+			Bindings:   r.Bindings,
+		},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return body, nil
+}
+
+// Helper functions
+
 // Function to verify the type (method) of a request
 func verifyRequestType(w http.ResponseWriter, r *http.Request, method string) error {
 	if r.Method != method {
@@ -421,9 +490,10 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	http.HandleFunc("/register_docker_container_id", createHandler(processRegisterDockerContainerIDRequest))
 	http.HandleFunc("/create_uinput_devices", createHandler(processCreateUinputDevicesRequest))
 	http.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
+	http.HandleFunc("/request_port_bindings", createHandler(processRequestPortBindingsRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
-		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0"+PortToListen, certPath, privatekeyPath, nil))
+		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0:"+logger.Sprintf("%v", PortToListen), certPath, privatekeyPath, nil))
 	}()
 
 	return events, nil
