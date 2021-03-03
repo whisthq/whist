@@ -7,6 +7,7 @@ import re
 import multiprocessing
 import subprocess
 import sys
+import time
 
 # Argument parser
 parser = argparse.ArgumentParser(description='Process some integers.')
@@ -100,7 +101,7 @@ def build_image_path(image_path):
   while still_waiting:
     still_waiting = False
     # Wait for a second, to prevent this loop from being tight
-    sleep(1)
+    time.sleep(1)
     # Loop over all the processes
     for proc in procs:
       # If a process hasn't terminated yet,
