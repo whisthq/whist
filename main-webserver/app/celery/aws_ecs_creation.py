@@ -565,8 +565,7 @@ def _assign_container(
 
     if not current_app.testing:
         for _ in range(num_extra):
-            create_new_container.delay(
-                "Unassigned",
+            prewarm_new_container.delay(
                 task_definition_arn,
                 region_name=region_name,
                 webserver_url=webserver_url,
@@ -580,14 +579,13 @@ def _assign_container(
 
 @shared_task(bind=True)
 @maintenance_track_task
-def create_new_container(
+def prewarm_new_container(
     self,
     username,
     task_definition_arn,
     cluster_name=None,
     region_name="us-east-1",
     webserver_url=None,
-    dpi=96,
 ):
     """Create a new ECS container running a particular task.
 
@@ -605,14 +603,6 @@ def create_new_container(
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
     task_start_time = time.time()
-
-    set_container_state(
-        keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
-        state=PENDING,
-        force=True,  # necessary since check will fail otherwise
-    )
 
     message = (
         f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
@@ -652,7 +642,7 @@ def create_new_container(
     )
     fractal_logger.info(message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
-        webserver_url, region_name, cluster_name, task_definition_arn, dpi
+        webserver_url, region_name, cluster_name, task_definition_arn, 96
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
@@ -674,7 +664,8 @@ def create_new_container(
 
     container = UserContainer(
         container_id=task_id,
-        user_id=username,
+        user_id="Unassigned",
+        is_assigned=False,
         cluster=cluster_name,
         ip=curr_ip,
         port_32262=curr_network_binding[32262],
@@ -686,7 +677,7 @@ def create_new_container(
         lock=False,
         secret_key=aeskey,
         task_definition=task_definition_arn,
-        dpi=dpi,
+        dpi=96,
     )
     container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
     if container_sql:
@@ -718,42 +709,6 @@ def create_new_container(
             f"Added task {str(task_id)} to cluster {cluster_name} and updated cluster info",
             extra={"label": username},
         )
-        if username != "Unassigned":
-            user = User.query.get(username)
-
-            assert user
-
-            _mount_cloud_storage(user, container)
-            _pass_start_values_to_instance(
-                container.ip,
-                container.container_id,
-                container.port_32262,
-                container.dpi,
-                user.user_id,
-            )
-
-            if not _poll(container.container_id):
-
-                set_container_state(
-                    keyuser=username,
-                    keytask=self.request.id,
-                    task_id=self.request.id,
-                    state=FAILURE,
-                )
-                fractal_logger.info("container failed to ping", extra={"label": str(task_id)})
-                self.update_state(
-                    state="FAILURE",
-                    meta={"msg": "Container {} failed to ping.".format(task_id)},
-                )
-
-                raise Ignore
-
-            # pylint: disable=line-too-long
-            fractal_logger.info(
-                f"""container pinged!  To connect, run: desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}""",
-                extra={"label": str(task_id)},
-            )
-            # pylint: enable=line-too-long
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
