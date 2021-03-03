@@ -143,44 +143,6 @@ export const Launcher = (props: {
         }, 1000)
     }
 
-    // Callback function meant to be fired before protocol starts
-    const protocolOnStart = () => {
-        // IPC sends boolean to the main thread to hide the Electron browser Window
-        logger.logInfo("Protocol started, callback fired", userID)
-        dispatch(updateTimer({ protocolLaunched: Date.now() }))
-    }
-
-    // Callback function meant to be fired when protocol exits
-    const protocolOnExit = () => {
-        // Log timer analytics data
-        dispatch(updateTimer({ protocolClosed: Date.now() }))
-
-        // For S3 protocol client log upload
-        const logPath = require("path").join(
-            FractalDirectory.getRootDirectory(),
-            "protocol-build/desktop/log.txt"
-        )
-
-        const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`
-
-        logger.logInfo(
-            `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
-            userID
-        )
-        // Clear the Redux state just in case
-        resetReduxforLaunch()
-
-        logger.logInfo(`Should force quit is ${shouldForceQuit}`, userID)
-
-        // Upload client logs to S3 and shut down Electron
-        uploadToS3(logPath, s3FileName, (s3Error: string) => {
-            if (s3Error) {
-                logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
-            }
-            setDisconnected(true)
-        })
-    }
-
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)
