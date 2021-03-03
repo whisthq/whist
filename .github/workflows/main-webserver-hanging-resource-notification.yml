@@ -5,9 +5,6 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    push:
-        branches:
-            - mia/hotfix/add-instance-count
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
 
