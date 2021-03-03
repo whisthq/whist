@@ -2,7 +2,6 @@ from app import ma
 from app.models import (
     Banners,
     ClusterInfo,
-    InstallCommand,
     RegionToAmi,
     SupportedAppImages,
     UserContainer,
@@ -20,11 +19,6 @@ class ClusterInfoSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = ClusterInfo
         include_fk = True
-
-
-class InstallCommandSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = InstallCommand
 
 
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
