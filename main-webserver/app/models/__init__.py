@@ -1,7 +1,6 @@
 """All database models."""
 
 from ._meta import db
-from .devops import ReleaseGroup
 from .hardware import (
     AppsToInstall,
     Banners,
