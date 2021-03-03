@@ -31,6 +31,28 @@ def get_all_aws_clusters(region):
     return all_cluster_arns
 
 
+# Takes a Cluster name and returns the number of Container Instances
+def get_num_instances(cluster, region):
+    instances, _ = subprocess.Popen(
+        [
+            "aws",
+            "ecs",
+            "describe-clusters",
+            "--no-paginate",
+            "--region",
+            region,
+            "--clusters",
+            cluster,
+        ],
+        stdout=subprocess.PIPE,
+    ).communicate()
+    if "registeredContainerInstancesCount" in instances:
+        instance_count = json.loads(instances)["registeredContainerInstancesCount"]
+    else:
+        instance_count = 0
+    return instance_count
+
+
 # Takes a Cluster ARN and maps it to its Auto Scaling Group(s) via its associated Capacity Provider(s)
 def cluster_to_asgs(cluster_arn, region):
     capacity_providers, _ = subprocess.Popen(
@@ -141,9 +163,17 @@ def main():
         if len(asgs) > 0:
             print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
     elif component == "Clusters":
+        output = []
         clusters = get_hanging_clusters(urls, secrets, region)
+        for cluster in clusters:
+            output.append((str(cluster), get_num_instances(cluster, region)))
         if len(clusters) > 0:
-            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in clusters]) + "\\`")
+            print(
+                "\\n- "
+                + "\\n- ".join(
+                    ["\\`" + c + "\\`" + "(" + n + " instances)" for c, n in output]
+                )
+            )
 
 
 if __name__ == "__main__":
