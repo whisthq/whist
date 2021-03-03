@@ -7,10 +7,3 @@ class StripeProduct(db.Model):
 
     stripe_product_id = db.Column(db.String(250), primary_key=True)
     product_name = db.Column(db.String(250), nullable=False)
-
-
-class MainNewsletter(db.Model):
-    __tablename__ = "main_newsletter"
-    __table_args__ = {"schema": "sales", "extend_existing": True}
-
-    user_id = db.Column(db.ForeignKey("users.user_id"), primary_key=True)
