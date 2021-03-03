@@ -1136,16 +1136,6 @@ CREATE TABLE sales.email_templates (
 
 
 --
--- Name: stripe_products; Type: TABLE; Schema: sales; Owner: -
---
-
-CREATE TABLE sales.stripe_products (
-    stripe_product_id character varying(250) NOT NULL,
-    product_name character varying(250) NOT NULL
-);
-
-
---
 -- Name: remote_schemas id; Type: DEFAULT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1469,14 +1459,6 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.waitlist
     ADD CONSTRAINT waitlist_pkey PRIMARY KEY (user_id);
-
-
---
--- Name: stripe_products PK_stripe_products; Type: CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.stripe_products
-    ADD CONSTRAINT "PK_stripe_products" PRIMARY KEY (stripe_product_id);
 
 
 --
