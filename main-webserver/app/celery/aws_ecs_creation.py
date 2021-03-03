@@ -112,7 +112,9 @@ def _mount_cloud_storage(user, container):
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, config_encryption_token):
+def _pass_start_values_to_instance(
+    ip, container_id, port, dpi, user_id, config_encryption_token=""
+):
     """
     Send the instance start values to the host service.
 
@@ -604,7 +606,6 @@ def prewarm_new_container(
     region_name="us-east-1",
     webserver_url=None,
     dpi=96,
-    token="",
 ):
     """Prewarm a new ECS container running a particular task.
 
@@ -615,7 +616,6 @@ def prewarm_new_container(
             run the container.
         cluster_name: The name of the cluster on which to run the container.
         webserver_url: The URL of the web server to ping and with which to authenticate.
-        token: what token to use to decrypt app config
     """
     task_start_time = time.time()
 
@@ -725,7 +725,6 @@ def prewarm_new_container(
                 container.port_32262,
                 container.dpi,
                 user.user_id,
-                token,
             )
 
             if not _poll(container.container_id):
