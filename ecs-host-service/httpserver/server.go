@@ -302,11 +302,11 @@ func CreateCreateUinputDevicesRequestBody(r CreateUinputDevicesRequest) ([]byte,
 	return body, nil
 }
 
-// RequestPortBindings defines the (unauthenticated) `request_port_bindings`
-// endpoint, which is used by the ecs-agent (built into the host service, in
-// package `ecsagent`) to request port bindings on the host for containers. We
-// allocate the host ports to be bound and return them, so the docker runtime
-// can actually bind them into the container.
+// RequestPortBindingsRequest defines the (unauthenticated)
+// `request_port_bindings` endpoint, which is used by the ecs-agent (built into
+// the host service, in package `ecsagent`) to request port bindings on the
+// host for containers. We allocate the host ports to be bound and return them,
+// so the docker runtime can actually bind them into the container.
 type RequestPortBindingsRequest struct {
 	FractalID  string              `json:"fractal_id"` // FractalID corresponding to the relevant container
 	Bindings   []types.PortBinding `json:"bindings"`   // Desired port bindings, with "0" as the hostPort indicating that we should allocate a port there.
