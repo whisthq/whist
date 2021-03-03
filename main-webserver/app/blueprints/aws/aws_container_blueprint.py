@@ -225,8 +225,8 @@ def test_endpoint(action, **kwargs):
         task = assign_container.delay(
             username,
             task_definition_arn,
-            region_name,
-            cluster_name,
+            region_name=region_name,
+            cluster_name=cluster_name,
             webserver_url=kwargs["webserver_url"],
         )
 
