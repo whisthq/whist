@@ -481,7 +481,7 @@ def assign_container(
     username: str,
     task_definition_arn: str,
     task_version: Optional[int] = None,
-    token: str,
+    token: str = "",
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
