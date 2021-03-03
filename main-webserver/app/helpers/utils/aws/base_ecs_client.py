@@ -833,7 +833,7 @@ class ECSClient:
         self,
         offset: int = 0,
         time_delay: int = 5,
-        max_polls: int = 100,
+        max_polls: int = 120,
     ) -> bool:
         """
         Spins until AWS gives us the network binding associated with a task.
