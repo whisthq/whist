@@ -1082,28 +1082,6 @@ CREATE TABLE logs.login_history (
 
 
 --
--- Name: monitor_logs; Type: TABLE; Schema: logs; Owner: -
---
-
-CREATE TABLE logs.monitor_logs (
-    logons integer NOT NULL,
-    logoffs integer NOT NULL,
-    users_online integer NOT NULL,
-    eastus_available integer NOT NULL,
-    southcentralus_available integer NOT NULL,
-    northcentralus_available integer NOT NULL,
-    eastus_unavailable integer NOT NULL,
-    southcentralus_unavailable integer NOT NULL,
-    northcentralus_unavailable integer NOT NULL,
-    eastus_deallocated integer NOT NULL,
-    southcentralus_deallocated integer NOT NULL,
-    northcentralus_deallocated integer NOT NULL,
-    total_vms_deallocated integer NOT NULL,
-    "timestamp" integer
-);
-
-
---
 -- Name: credentials; Type: TABLE; Schema: oauth; Owner: -
 --
 
