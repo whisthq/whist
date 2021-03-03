@@ -36,6 +36,8 @@ from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
 
+from app.celery.aws_celery_exceptions import ContainerNotAvailableError
+
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -258,7 +260,11 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     ecs_client.set_task_definition_arn(task_definition_arn)
     ecs_client.run_task(False, **{k: v for k, v in kwargs.items() if v is not None})
 
-    ecs_client.spin_til_running(time_delay=2)
+    # 2 * 180 = 360 secs = 6 minutes max, but with AWS API latencies more like 8-10
+    if not ecs_client.spin_til_running(time_delay=2, max_polls=180):
+        aws_task_arn = ecs_client.tasks[0]
+        raise ContainerNotAvailableError(aws_task_arn, 180)
+
     curr_ip = ecs_client.task_ips.get(0, -1)
     curr_network_binding = ecs_client.task_ports.get(0, -1)
     task_id = ecs_client.tasks[0]
