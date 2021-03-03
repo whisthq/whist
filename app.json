@@ -30,6 +30,10 @@
           "description": "Don't raise an exception if the requested and granted scopes differ.",
           "value": "1"
         },
+        "LOAD_TEST": {
+          "description": "yo.",
+          "value": "10"
+        },
         "DEV_DATABASE_URL": {
           "description": "Dev database URL.",
           "value": "$DATABASE_URL"
