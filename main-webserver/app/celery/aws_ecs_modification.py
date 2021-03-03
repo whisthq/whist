@@ -10,7 +10,7 @@ from app.helpers.utils.aws.aws_resource_locks import (
     lock_container_and_update,
     spin_lock,
 )
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.models import db, ClusterInfo, RegionToAmi, UserContainer
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 
@@ -36,10 +36,8 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
             "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
         },
     )
-    fractal_log(
-        function="update_cluster",
-        label="None",
-        logs=f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}",
+    fractal_logger.info(
+        f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"
     )
 
     # We must delete every unassigned container in the cluster.
@@ -52,21 +50,14 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
         # Lock the container in the database for a short amount of time.
         # This is to make sure that the container is not assigned while we are trying to delete it.
         if spin_lock(container_name) < 0:
-            fractal_log(
-                function="update_cluster",
-                label=container_name,
-                logs="spin_lock took too long.",
-                level=logging.ERROR,
-            )
-
+            fractal_logger.error("spin_lock took too long.", extra={"label": container_name})
             raise Exception("Failed to acquire resource lock.")
 
-        fractal_log(
-            function="update_cluster",
-            label=str(container_name),
-            logs="Beginning to delete unassigned container {container_name}. Goodbye!".format(
+        fractal_logger.info(
+            "Beginning to delete unassigned container {container_name}. Goodbye!".format(
                 container_name=container_name
             ),
+            extra={"label": str(container_name)},
         )
 
         # Set the container state to "DELETING".
@@ -159,9 +150,7 @@ def update_region(self, region_name="us-east-1", ami=None):
         # # update db with new AMI
         region_to_ami.ami_id = ami
         fractal_sql_commit(db)
-        fractal_log(
-            "update_region",
-            None,
+        fractal_logger.info(
             f"updated AMI in {region_name} to {ami}",
         )
 
@@ -176,11 +165,8 @@ def update_region(self, region_name="us-east-1", ami=None):
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
 
     if len(all_clusters) == 0:
-        fractal_log(
-            function="update_region",
-            label=None,
-            logs=f"No clusters found in region {region_name}",
-            level=logging.WARNING,
+        fractal_logger.warning(
+            f"No clusters found in region {region_name}",
         )
         self.update_state(
             state="SUCCESS",
@@ -188,21 +174,15 @@ def update_region(self, region_name="us-east-1", ami=None):
         )
         return
 
-    fractal_log(
-        function="update_region",
-        label=None,
-        logs=f"Updating clusters: {all_clusters}",
-    )
+    fractal_logger.info(f"Updating clusters: {all_clusters}")
     tasks = []
     for cluster in all_clusters:
         task = update_cluster.delay(region_name, cluster.cluster, ami)
         tasks.append(task.id)
 
-    fractal_log(
-        function="update_region",
-        label=None,
-        logs="update_region is returning with success. It spun up the "
-        f"following update_cluster tasks: {tasks}",
+    fractal_logger.info(
+        "update_region is returning with success. It spun up the "
+        f"following update_cluster tasks: {tasks}"
     )
 
     # format tasks as space separated strings (used by AMI creation workflow to poll for success)
@@ -289,12 +269,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
             " is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally"
             " distributed tasks onto instances."
         )
-        fractal_log(
-            "manual_scale_cluster",
-            None,
-            msg,
-            level=logging.INFO,
-        )
+        fractal_logger.info(msg)
 
         self.update_state(
             state="SUCCESS",
