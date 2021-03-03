@@ -123,7 +123,9 @@ def _mount_cloud_storage(user, container):
         )
 
 
-def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, config_encryption_token):
+def _pass_start_values_to_instance(
+    ip, container_id, port, dpi, user_id, config_encryption_token=""
+):
     """
     Send the instance start values to the host service.
 
@@ -648,7 +650,6 @@ def create_new_container(
     region_name="us-east-1",
     webserver_url=None,
     dpi=96,
-    token="",
 ):
     """Create a new ECS container running a particular task.
 
@@ -664,7 +665,6 @@ def create_new_container(
             clusters using awsvpc networking.
         dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
-        token: what token to use to decrypt app config
     """
     task_start_time = time.time()
 
@@ -806,7 +806,6 @@ def create_new_container(
                 container.port_32262,
                 container.dpi,
                 user.user_id,
-                token,
             )
 
             if not _poll(container.container_id):
