@@ -191,7 +191,7 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(container: UserContainer, config_encryption_token: str) -> None:
+def _pass_start_values_to_instance(container: UserContainer, config_encryption_token: str = "") -> None:
     """
     Send the instance start values to the host service.
 
@@ -807,7 +807,6 @@ def prewarm_new_container(
     region_name: str = "us-east-1",
     webserver_url: str = "fractal-dev-server.herokuapp.com",
     dpi: int = 96,
-    token: str = "",
 ) -> Dict[str, Any]:
     """Prewarm a new ECS container running a particular task.
 
@@ -819,7 +818,6 @@ def prewarm_new_container(
             run the container.
         cluster_name: The name of the cluster on which to run the container.
         webserver_url: The URL of the web server to ping and with which to authenticate.
-        token: what token to use to decrypt app config
     """
     task_start_time = time.time()
 
@@ -928,7 +926,6 @@ def prewarm_new_container(
                 container.port_32262,
                 container.dpi,
                 user.user_id,
-                token,
             )
 
             if not _poll(container.container_id):
