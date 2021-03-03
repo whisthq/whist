@@ -20,6 +20,7 @@ import { uploadToS3 } from "./shared/utils/files/aws"
 import { ChildProcess } from "child_process"
 import { FractalLogger } from "./shared/utils/general/logging"
 import { FractalDirectory } from "./shared/types/client"
+import LoadingMessage from "./pages/launcher/constants/loadingMessages"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -39,7 +40,7 @@ let updating = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = true
+let showMainWindow = false
 
 const logger = new FractalLogger()
 
@@ -79,7 +80,7 @@ const createWindow = async () => {
         })
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
-            show: false,
+            show: true,
             titleBarStyle: "hidden",
             center: true,
             resizable: true,
@@ -222,17 +223,35 @@ const createWindow = async () => {
     }
 }
 
+/**
+ * Function that creates the protocol
+ */
 const createProtocol = () => {
     const electron = require("electron")
     const ipc = electron.ipcMain
     let protocol: ChildProcess
     let userID: string
+    let protocolLaunched: Number
+    let protocolClosed: Number
+    let createContainerRequestSent: Number
+
     const protocolOnStart = () => {
+        protocolLaunched = Date.now()
         logger.logInfo("Protocol started, callback fired", userID)
     }
 
     const protocolOnExit = () => {
+        protocolClosed = Date.now()
+        const timer = {
+            protocolLaunched,
+            protocolClosed,
+            createContainerRequestSent,
+        }
         console.log("EXITING")
+        logger.logInfo(
+            `Protocol exited! Timer logs are ${JSON.stringify(timer)}`,
+            userID
+        )
         // For S3 protocol client log upload
         const logPath = require("path").join(
             FractalDirectory.getRootDirectory(),
@@ -252,11 +271,11 @@ const createProtocol = () => {
             }
         })
 
-        app.exit(0)
-        app.quit()
+        // app.exit(0)
+        // app.quit()
     }
 
-    ipc.on(FractalIPC.LAUNCH_PROTOCL, (event, argv) => {
+    ipc.on(FractalIPC.LAUNCH_PROTOCOL, (event, argv) => {
         const launchThread = async () => {
             protocol = await launchProtocol(protocolOnStart, protocolOnExit)
         }
@@ -272,7 +291,19 @@ const createProtocol = () => {
         writeStream(protocol, `private-key?${container.secretKey}`)
         writeStream(protocol, `ip?${container.publicIP}`)
         writeStream(protocol, `finished?0`)
+        createContainerRequestSent = Date.now()
         // mainWindow?.destroy()
+        event.returnValue = argv
+    })
+
+    ipc.on(FractalIPC.PENDING_PROTOCOL, (event, argv) => {
+        writeStream(protocol, `loading?${LoadingMessage.PENDING}`)
+        event.returnValue = argv
+    })
+
+    ipc.on(FractalIPC.KILL_PROTOCOL, (event, argv) => {
+        // writeStream(protocol, "kill?0")
+        // protocol.kill("SIGINT")
         event.returnValue = argv
     })
 }
@@ -298,7 +329,10 @@ if (!gotTheLock) {
 
     app.allowRendererProcessReuse = true
 
-    app.on("ready", createWindow)
+    app.on("ready", () => {
+        createWindow()
+        createProtocol()
+    })
 
     app.on("activate", () => {
         // On macOS it's common to re-create a window in the app when the
@@ -308,12 +342,6 @@ if (!gotTheLock) {
 }
 
 // Additional listeners for app launch, close, etc.
-
-app.on("window-all-closed", () => {
-    // Respect the OSX convention of having the application in memory even
-    // after all windows have been closed
-    app.quit()
-})
 
 app.setAsDefaultProtocolClient("fractal")
 

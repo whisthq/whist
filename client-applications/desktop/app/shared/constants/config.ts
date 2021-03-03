@@ -126,7 +126,7 @@ const getDevelopmentEnv = () => {
         case FractalCIEnvironment.LOCAL:
             return environment.LOCAL
         default:
-            return environment.LOCAL
+            return environment.DEVELOPMENT
     }
 }
 

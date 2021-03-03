@@ -30,13 +30,11 @@ import { AWSRegion } from "shared/types/aws"
 import { FractalDirectory } from "shared/types/client"
 import { uploadToS3 } from "shared/utils/files/aws"
 
-import { launchProtocol, writeStream } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/launcher/launcher.css"
-import { ChildProcess } from "child_process"
 
 /*
     Amount of time passed before giving up on container/assign
@@ -230,8 +228,7 @@ export const Launcher = (props: {
                 userID
             )
             if (protocol) {
-                // writeStream(protocol, "kill?0")
-                // protocol.kill("SIGINT")
+                ipc.sendSync(FractalIPC.KILL_PROTOCOL, true)
                 setProtocolLock(false)
                 setProtocol(false)
             }
@@ -262,19 +259,9 @@ export const Launcher = (props: {
             )
 
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
-            ipc.sendSync(FractalIPC.LAUNCH_PROTOCL, true)
+            ipc.sendSync(FractalIPC.LAUNCH_PROTOCOL, true)
             setShouldForceQuit(true)
             setProtocol(true)
-            // const launchProtocolAsync = async () => {
-            //     const childProcess = await launchProtocol(
-            //         protocolOnStart,
-            //         protocolOnExit
-            //     )
-            //     setProtocol(childProcess)
-            //     setShouldForceQuit(true)
-            // }
-
-            // launchProtocolAsync()
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
@@ -310,10 +297,7 @@ export const Launcher = (props: {
                 setTaskState(currentState)
                 switch (currentState) {
                     case FractalAppState.PENDING:
-                        // writeStream(
-                        //     protocol,
-                        //     `loading?${LoadingMessage.PENDING}`
-                        // )
+                        ipc.sendSync(FractalIPC.PENDING_PROTOCOL, true)
                         break
                     case FractalAppState.SPINNING_UP_NEW:
                         setLoadingMessage(LoadingMessage.PENDING)
@@ -344,11 +328,6 @@ export const Launcher = (props: {
                 userID
             )
             ipc.sendSync(FractalIPC.SEND_CONTAINER, container)
-            // const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
-            // writeStream(protocol, `ports?${portInfo}`)
-            // writeStream(protocol, `private-key?${container.secretKey}`)
-            // writeStream(protocol, `ip?${container.publicIP}`)
-            // writeStream(protocol, `finished?0`)
         }
     }, [container, protocol])
 
