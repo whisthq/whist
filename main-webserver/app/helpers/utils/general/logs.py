@@ -33,25 +33,20 @@ class _ExtraHandler(logging.StreamHandler):
 class _CeleryHandler(logging.StreamHandler):
     def __init__(self):
         super().__init__()
-        self.message_format = "{task_id} | {task_name} | {message}"
+        self.message_format = "{task_id} | {message}"
 
     def emit(self, record: logging.LogRecord):
         """
-        This is called prior to any logging. We try to parse the task_id and task_name
-        using celery constructs.
+        This is called prior to any logging. We try to parse the task_id using celery built-ins.
         """
         task = get_current_task()
         task_id = None
-        task_name = None
         if task and task.request:
             task_id = task.request.id
-            task_name = task.name
 
         # only reformat the message if these are provided
-        if task_id is not None and task_name is not None:
-            full_msg = self.message_format.format(
-                task_id=task_id, task_name=task_name, message=record.msg
-            )
+        if task_id is not None:
+            full_msg = self.message_format.format(task_id=task_id, message=record.msg)
             record.msg = full_msg
 
 
