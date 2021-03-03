@@ -17,13 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 --
--- Name: devops; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA devops;
-
-
---
 -- Name: hardware; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -223,16 +216,6 @@ $$;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
-
---
--- Name: release_groups; Type: TABLE; Schema: devops; Owner: -
---
-
-CREATE TABLE devops.release_groups (
-    release_stage character varying(250) NOT NULL,
-    branch character varying(250) NOT NULL
-);
-
 
 --
 -- Name: apps_to_install; Type: TABLE; Schema: hardware; Owner: -
