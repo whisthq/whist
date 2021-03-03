@@ -2,9 +2,6 @@ import React from "react"
 import { connect } from "react-redux"
 import { Redirect, useLocation } from "react-router"
 
-import sharedStyles from "styles/shared.module.css"
-
-import Header from "shared/components/header"
 import VerifyView from "pages/auth/verify/components/verifyView"
 import { User, AuthFlow } from "shared/types/reducers"
 

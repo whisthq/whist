@@ -1,19 +1,19 @@
 import React, { useEffect, useState, Dispatch } from "react"
 import { connect } from "react-redux"
-import { Redirect } from "react-router"
 import { useMutation } from "@apollo/client"
+import { Switch, Route } from "react-router-dom"
 
-import Header from "shared/components/header"
 import Login from "pages/auth/login/login"
 import Signup from "pages/auth/signup/signup"
 import Forgot from "pages/auth/forgot/forgot"
-
-import sharedStyles from "styles/shared.module.css"
+import Verify from "pages/auth/verify/verify"
+import Callback from "pages/auth/callback/callback"
+import ScrollToTop from "shared/components/scrollToTop"
 
 import { User, AuthFlow } from "shared/types/reducers"
 import { updateAuthFlow } from "store/actions/auth/pure"
-import { HEADER, AUTH_IDS, NEVER } from "testing/utils/testIDs"
 import { UPDATE_ACCESS_TOKEN } from "shared/constants/graphql"
+import { routeMap, fractalRoute } from "shared/constants/routes"
 
 const Auth = (props: {
     /*
@@ -39,10 +39,8 @@ const Auth = (props: {
         pathname: string
     }
     testLocation?: any
-    testSignup?: boolean
-    emailToken?: string
 }) => {
-    const { user, authFlow, testSignup, emailToken, dispatch } = props
+    const { user, authFlow, dispatch } = props
 
     const [redirectToCallback, setRedirectToCallback] = useState(false)
     const [callback, setCallback] = useState("")
@@ -123,68 +121,18 @@ const Auth = (props: {
         callbackChecked,
     ])
 
-    useEffect(() => {
-        console.log(authFlow)
-        console.log(authFlow.mode)
-    }, [authFlow.mode])
-
-    if (redirectToCallback) {
-        return <Redirect to="/callback" />
-    }
-    
-    if (user.userID && user.userID !== "") {
-        if (user.emailVerified && callback === "" && callbackChecked) {
-            return <Redirect to="/dashboard" />
-        } else if (!user.emailVerified && callback === "" && callbackChecked) {
-            // testing email verification token just to get values to check user flow
-            if (testSignup === true || testSignup === false) {
-                return (
-                    <div>
-                        <p data-testid={AUTH_IDS.EMAILTOKEN}>
-                            {user.emailVerificationToken}
-                        </p>
-                        <p data-testid={AUTH_IDS.USERID}>{user.userID}</p>
-                        <p data-testid={AUTH_IDS.REFRESHTOKEN}>
-                            {user.refreshToken}
-                        </p>
-                        <p data-testid={AUTH_IDS.ACCESSTOKEN}>
-                            {user.accessToken}
-                        </p>
-                    </div>
-                )
-            }
-            return <Redirect to="/verify" />
-        }
-    } 
-    
-    if (authFlow.mode === "Log in") {
-        return (
-            <div className={sharedStyles.fractalContainer}>
-                <div data-testid={AUTH_IDS.LOGIN}>
-                    <Login />
-                </div>
-            </div>
-        )
-    } else if (authFlow.mode === "Sign up") {
-        return (
-            <div className={sharedStyles.fractalContainer}>
-                <div data-testid={AUTH_IDS.SIGNUP}>
-                    <Signup />
-                </div>
-            </div>
-        )
-    } else if (authFlow.mode === "Forgot") {
-        return (
-            <div className={sharedStyles.fractalContainer}>
-                <div data-testid={AUTH_IDS.FORGOT}>
-                    <Forgot emailToken={emailToken} />
-                </div>
-            </div>
-        )
-    } else {
-        // should never happen
-        return <div data-testid={NEVER} />
-    }
+    return(
+        <div>
+            <ScrollToTop/>
+            <Switch>
+                <Route exact path={fractalRoute(routeMap.AUTH)} component={Login}/>
+                <Route path={fractalRoute(routeMap.AUTH.SIGNUP)} component={Signup}/>
+                <Route path={fractalRoute(routeMap.AUTH.FORGOT)} component={Forgot}/>
+                <Route path={fractalRoute(routeMap.AUTH.VERIFY)} component={Verify}/>
+                <Route path={fractalRoute(routeMap.AUTH.CALLBACK)} component={Callback}/>
+            </Switch>
+        </div>
+    )
 }
 
 const mapStateToProps = (state: {

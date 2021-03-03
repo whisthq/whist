@@ -17,11 +17,6 @@ const Reset = (props: { dispatch: Dispatch<any>; testSearch: string }) => {
     const validToken = token && token.length >= 1
 
     if (!validToken) {
-        dispatch(
-            updateAuthFlow({
-                mode: "Forgot",
-            })
-        )
         return <Redirect to="/auth" />
     } else {
         return (

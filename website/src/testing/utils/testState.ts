@@ -100,9 +100,8 @@ export const invalidStripeInfo = {
  * sign up, or query for a forgotten password).
  * @param mode the mode to start in.
  */
-export const startingAuthFlow = (mode: string) => {
+export const startingAuthFlow = () => {
     return {
-        mode: mode,
         loginWarning: null,
         signupWarning: null,
         signupSuccess: false,

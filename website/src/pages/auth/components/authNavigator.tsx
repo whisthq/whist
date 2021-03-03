@@ -3,22 +3,26 @@ import React, { useContext } from "react"
 import { ScreenSize } from "shared/constants/screenSizes"
 import MainContext from "shared/context/mainContext"
 
-import styles from "styles/shared.module.css"
+import history from "shared/utils/history"
 
 export const AuthNavigator = (props: {
     link: string
-    question?: string
-    closer?: string
-    onClick: () => void
+    redirect: string
+    beforeLink?: string
+    afterLink?: string
     id?: string
 }) => {
     const { width } = useContext(MainContext)
 
-    const { question, link, closer, id, onClick } = props
+    const { link, redirect, beforeLink, afterLink, id } = props
+
+    const onClick = () => {
+        history.push(redirect)
+    }
 
     return (
         <div className="text-center">
-            {question && (`${question} `)}
+            {beforeLink && (`${beforeLink} `)}
             {width < ScreenSize.SMALL && <br />}
             <span
                 className="text-blue font-medium cursor-pointer"
@@ -27,7 +31,7 @@ export const AuthNavigator = (props: {
             >
                 {link}
             </span>
-            {closer && closer}
+            {afterLink && afterLink}
         </div>
     )
 }

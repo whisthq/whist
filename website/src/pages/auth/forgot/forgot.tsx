@@ -13,8 +13,6 @@ import { AuthFlow } from "shared/types/reducers"
 
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
 import * as AuthPureAction from "store/actions/auth/pure"
-import { deepCopy } from "shared/utils/reducerHelpers"
-import { DEFAULT } from "store/reducers/auth/default"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
 import AuthNavigator from "pages/auth/components/authNavigator"
@@ -22,8 +20,9 @@ import { PuffAnimation } from "shared/components/loadingAnimations"
 import { AUTH_IDS, E2E_AUTH_IDS } from "testing/utils/testIDs"
 import PLACEHOLDER from "shared/constants/form"
 import AuthContainer from "pages/auth/components/authContainer"
-
-import styles from "styles/auth.module.css"
+import AuthButton from "pages/auth/components/authButton"
+import {routeMap, fractalRoute} from "shared/constants/routes"
+import history from "shared/utils/history"
 
 const Forgot = (props: {
     dispatch: Dispatch<any>
@@ -43,6 +42,10 @@ const Forgot = (props: {
     const [email, setEmail] = useState("")
     const [processing, setProcessing] = useState(false)
     const [gotResponse, setGotResponse] = useState(false)
+
+    const backToLogin = () => {
+        history.push(fractalRoute(routeMap.AUTH))
+    }
 
     const forgot = () => {
         if (checkEmail(email)) {
@@ -65,12 +68,6 @@ const Forgot = (props: {
         if (evt.key === FractalKey.ENTER) {
             forgot() // note check happens inside forgot
         }
-    }
-
-    const backToLogin = () => {
-        const defaultAuthFlow = deepCopy(DEFAULT.authFlow)
-        defaultAuthFlow.mode = "Log in"
-        dispatch(AuthPureAction.updateAuthFlow(defaultAuthFlow))
     }
 
     useEffect(() => {
@@ -113,12 +110,7 @@ const Forgot = (props: {
                     </span>
                     .
                 </div>
-                <button
-                    className="rounded bg-blue dark:bg-mint px-8 py-3 mt-7 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
-                    onClick={() => dispatch(AuthPureAction.updateAuthFlow({mode: "Log in"}))}
-                >
-                    Back to login
-                </button>
+                <AuthButton text="Back to Login" onClick={backToLogin} />
             </AuthContainer>
         )
     } else {
@@ -153,10 +145,10 @@ const Forgot = (props: {
                     <div data-testid={AUTH_IDS.SWITCH}>
                         <div className="mt-7">
                             <AuthNavigator
-                                question="Remember your password?"
+                                beforeLink="Remember your password?"
                                 link="Log in"
-                                closer=" instead."
-                                onClick={backToLogin}
+                                afterLink=" instead."
+                                redirect={fractalRoute(routeMap.AUTH)}
                             />
                         </div>
                     </div>

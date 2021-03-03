@@ -250,7 +250,7 @@ export function* forgotPassword(action: any) {
         } else {
             yield put(
                 updateAuthFlow({
-                    forgotStatus: "Not verified",
+                    forgotStatus: "Error: Your email is not verified",
                     forgotEmailsSent: emailsSent + 1,
                 })
             )
@@ -258,7 +258,7 @@ export function* forgotPassword(action: any) {
     } else {
         yield put(
             updateAuthFlow({
-                forgotStatus: "No response",
+                forgotStatus: "Error: Server is unresponsive",
                 forgotEmailsSent: emailsSent + 1,
             })
         )

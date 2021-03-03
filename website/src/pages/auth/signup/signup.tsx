@@ -26,6 +26,7 @@ import {
     signupEnabled,
     checkEmail,
 } from "pages/auth/constants/authHelpers"
+import {routeMap, fractalRoute} from "shared/constants/routes"
 
 // Type + constant imports
 import FractalKey from "shared/types/input"
@@ -208,16 +209,10 @@ const Signup = (props: {
                         <div className="mt-7">
                             <AuthNavigator
                                 id={E2E_AUTH_IDS.LOGINSWITCH}
-                                question="Already have an account?"
+                                beforeLink="Already have an account?"
                                 link={PLACEHOLDER.LOGINSWITCH}
-                                closer="."
-                                onClick={() =>
-                                    dispatch(
-                                        updateAuthFlow({
-                                            mode: "Log in",
-                                        })
-                                    )
-                                }
+                                afterLink="."
+                                redirect={fractalRoute(routeMap.AUTH)}
                             />
                         </div>
                     </div>

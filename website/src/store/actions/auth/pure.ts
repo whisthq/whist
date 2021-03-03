@@ -14,8 +14,6 @@ export const updateUser = (body: User) => {
 }
 
 export const updateAuthFlow = (body: AuthFlow) => {
-    console.log("updating auth flow action")
-    console.log(body)
     return {
         type: UPDATE_AUTH_FLOW,
         body,

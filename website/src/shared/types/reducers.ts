@@ -13,7 +13,6 @@ export type User = {
 }
 
 export type AuthFlow = {
-    mode?: string // what auth is doing right now (todo in the future make it an enum)
     // error message
     loginWarning?: string | null // text to tell the user if they messed up logging in (primarily used as warning)
     signupWarning?: string | null // text to tell the user if they messed up signing up (primarily used as warning)

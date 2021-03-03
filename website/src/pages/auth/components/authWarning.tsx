@@ -1,6 +1,6 @@
 import React from "react"
 
-import { AUTH_IDS, E2E_AUTH_IDS } from "testing/utils/testIDs"
+import { AUTH_IDS } from "testing/utils/testIDs"
 
 const AuthWarning = (props: {
     warning: string | null | undefined,

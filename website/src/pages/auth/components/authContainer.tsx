@@ -1,4 +1,4 @@
-import React, { FC } from "react"
+import React from "react"
 
 import LogoPurple from "assets/icons/logoPurple.png"
 import history from "shared/utils/history"
@@ -15,7 +15,7 @@ const AuthContainer = (props: {
 
     return(
         <div className="w-96 m-auto relative top-32 min-h-screen">
-            <img src={LogoPurple} className="w-12 h-12 m-auto cursor-pointer" onClick={goHome}/>
+            <img src={LogoPurple} className="w-12 h-12 m-auto cursor-pointer" onClick={goHome} alt=""/>
             {title && (
                  <div className="text-3xl font-medium text-center mt-12">{title}</div>
             )}

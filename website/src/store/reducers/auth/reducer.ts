@@ -14,7 +14,6 @@ const AuthReducer = (state = DEFAULT, action: any) => {
                 user: Object.assign(stateCopy.user, action.body),
             }
         case PureAction.UPDATE_AUTH_FLOW:
-            console.log("auth flow reducer")
             return {
                 ...stateCopy,
                 authFlow: Object.assign(stateCopy.authFlow, action.body),

@@ -24,6 +24,7 @@ import {
     checkEmail,
     checkPassword,
 } from "pages/auth/constants/authHelpers"
+import {routeMap, fractalRoute} from "shared/constants/routes"
 
 // Type + constant imports
 import FractalKey from "shared/types/input"
@@ -139,13 +140,7 @@ const Login = (props: {
                             <AuthNavigator
                                 id={E2E_AUTH_IDS.FORGOTSWITCH}
                                 link={PLACEHOLDER.FORGOTSWITCH}
-                                onClick={() =>
-                                    dispatch(
-                                        updateAuthFlow({
-                                            mode: "Forgot",
-                                        })
-                                    )
-                                }
+                                redirect={fractalRoute(routeMap.AUTH.FORGOT)}
                             />
                         }
                         type="password"
@@ -159,16 +154,10 @@ const Login = (props: {
                 <AuthButton text="Log in" onClick={login} dataTestId={AUTH_IDS.BUTTON}/>
                 <div className="mt-7" data-testid={AUTH_IDS.SWITCH}>
                     <AuthNavigator
-                        question="No account?"
+                        beforeLink="No account?"
                         link={PLACEHOLDER.SIGNUPSWITCH}
-                        closer="."
-                        onClick={() =>
-                            dispatch(
-                                updateAuthFlow({
-                                    mode: "Sign up",
-                                })
-                            )
-                        }
+                        afterLink="."
+                        redirect={fractalRoute(routeMap.AUTH.SIGNUP)}
                     />
                 </div>
             </AuthContainer>

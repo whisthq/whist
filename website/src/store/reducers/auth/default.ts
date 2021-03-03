@@ -14,7 +14,6 @@ export const DEFAULT = {
         usingGoogleLogin: false, // if the user signed in using Google
     },
     authFlow: {
-        mode: "Log in", // what auth is doing right now (todo in the future make it an enum)
         // error message
         loginWarning: null, // text to tell the user if they messed up logging in (primarily used as warning)
         signupWarning: null, // text to tell the user if they messed up signing up (primarily used as warning)

@@ -13,7 +13,7 @@ const ScrollToTop: React.SFC<ChildComponentProps> = ({ history }) => {
     return () => {
       unlisten();
     }
-  }, []);
+  }, [history]);
 
   return (null);
 }
