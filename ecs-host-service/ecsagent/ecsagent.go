@@ -92,15 +92,13 @@ func init() {
 			requestURL := "https://127.0.0.1" + fractalhttpserver.PortToListen + "/create_uinput_devices"
 
 			response, resperr := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
+			if resperr != nil {
+				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s.", resperr)
+			}
 			respbody, bodyerr := ioutil.ReadAll(response.Body)
 			response.Body.Close()
-			switch {
-			case resperr != nil && bodyerr == nil:
-				return nil, fractallogger.MakeError("Error returned from /create_uinput_devices endpoint: %s. Response body: %s", resperr, respbody)
-			case resperr == nil && bodyerr != nil:
+			if bodyerr != nil {
 				return nil, fractallogger.MakeError("Error reading response from /create_uinput_devices endpoint: %s", bodyerr)
-			case resperr != nil && bodyerr != nil:
-				return nil, fractallogger.MakeError("Post request to /create_uinput_devices endpoint returned error: %s. Also, could not read response body because of error: %s", resperr, bodyerr)
 			}
 
 			fractallogger.Infof("Reponse body: %s", respbody)
