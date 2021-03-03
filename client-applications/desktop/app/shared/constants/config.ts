@@ -10,12 +10,12 @@ import {
 */
 export const webservers: { [key: string]: string } = {
     local: "http://127.0.0.1:7730",
-    dev: "http://dev-server.fractal.co/",
+    dev: "http://dev-server.fractal.co",
     staging: "https://staging-server.fractal.co",
     production: "https://prod-server.fractal.co",
 }
 
-/* 
+/*
     All environment variables. All secret keys have permission restrictions.
 */
 const environment: FractalEnvironment = {
