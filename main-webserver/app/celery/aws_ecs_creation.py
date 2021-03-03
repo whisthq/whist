@@ -696,10 +696,6 @@ def prewarm_new_container(
             extra={"label": str(task_id)},
         )
     else:
-
-        set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
-        )
         fractal_logger.info("SQL insertion unsuccessful", extra={"label": str(task_id)})
         self.update_state(
             state="FAILURE",
@@ -727,10 +723,6 @@ def prewarm_new_container(
         # )
         return user_container_schema.dump(container)
     else:
-
-        set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=READY
-        )
         fractal_logger.info("SQL insertion unsuccessful", extra={"label": str(task_id)})
         self.update_state(
             state="FAILURE",
