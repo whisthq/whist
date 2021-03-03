@@ -30,7 +30,6 @@ const Root = (props: { loginToken: string }) => {
     */
 
     const { loginToken } = props
-    console.log(loginToken)
     // Set up Apollo GraphQL provider for https and wss (websocket)
     const createApolloClient = (tempLoginToken: string) => {
         const httpLink = new HttpLink({

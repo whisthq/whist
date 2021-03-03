@@ -63,7 +63,6 @@ export const Login = (props: {
             variables: { loginToken: loginToken },
         }
     )
-    console.log("Data: ", data, loading, error)
     const [deleteTokens] = useMutation(DELETE_USER_TOKENS, {
         context: {
             headers: {
@@ -82,7 +81,6 @@ export const Login = (props: {
 
     useEffect(() => {
         if (tokenGenerated) {
-            console.log(loginToken)
             addLogin({
                 variables: {
                     object: {
