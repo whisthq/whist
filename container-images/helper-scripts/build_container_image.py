@@ -4,7 +4,7 @@
 
 import argparse
 import re
-import multiprocessing
+import threading
 import subprocess
 import sys
 import time
@@ -92,25 +92,14 @@ def build_image_path(image_path):
 
   # Build all of those next-layer image_paths asynchronously
   procs = []
+  mapping = {}
   for next_image_path in next_layer:
-      proc = multiprocessing.Process(target=build_image_path, args=[next_image_path])
-      proc.start()
-      procs.append(proc)
-  # Wait for them all to finished executing before returning
-  still_waiting = True
-  while still_waiting:
-    still_waiting = False
-    # Wait for a second, to prevent this loop from being tight
-    time.sleep(1)
-    # Loop over all the processes
-    for proc in procs:
-      # If a process hasn't terminated yet,
-      # remember that we're still waiting for those processes
-      if proc.exitcode == None:
-        still_waiting = True
-      # Fail if any child failed, just sysexit prematurely
-      elif proc.exitcode != 0:
-        sys.exit(1)
+    proc = threading.Thread(name="Builder of " + next_image_path, target=build_image_path, args=[next_image_path])
+    proc.start()
+    procs.append(proc)
+  # Wait for all the threads to finish executing before returning
+  for proc in procs:
+    proc.join()
 
 # Get all image_path's with no dependencies
 root_level_images = []
@@ -120,6 +109,7 @@ for image_path in dependencies:
 
 # Build all root_level_images
 for image_path in root_level_images:
-  build_image_path(image_path)
+  if build_image_path(image_path) != 0:
+    sys.exit(1)
 
 print("All images have been built successfully!")
