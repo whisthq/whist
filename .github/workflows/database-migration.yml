@@ -286,13 +286,13 @@ jobs:
             # Perform the database migration if this pull request is being
             # merged.
             - name: Perform database migration
-              if: success() && ${{ github.event_name }} == "push"
+              if: success() && github.event.pull_request.merged == true
               run: |
                   psql --single-transaction --file ${PATH_DIFF} \
                   ${{ steps.db-url.outputs.url }}
 
             - name: Notify Slack
-              if: ${{ github.event_name }} == "push"
+              if: success() && github.event.pull_request.merged == true
               shell: python3 {0}
               run: |
                   import os
