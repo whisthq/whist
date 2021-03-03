@@ -109,7 +109,6 @@ for image_path in dependencies:
 
 # Build all root_level_images
 for image_path in root_level_images:
-  if build_image_path(image_path) != 0:
-    sys.exit(1)
+  build_image_path(image_path)
 
 print("All images have been built successfully!")
