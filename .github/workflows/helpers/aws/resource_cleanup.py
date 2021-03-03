@@ -172,7 +172,10 @@ def main():
             print(
                 "\\n- "
                 + "\\n- ".join(
-                    ["\\`" + c + "\\`" + "(" + n + " instances)" for c, n in output]
+                    [
+                        "\\`" + c + "\\`" + "(" + str(n) + " instances)"
+                        for c, n in output
+                    ]
                 )
             )
 
