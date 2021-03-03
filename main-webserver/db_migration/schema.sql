@@ -1136,15 +1136,6 @@ CREATE TABLE sales.email_templates (
 
 
 --
--- Name: main_newsletter; Type: TABLE; Schema: sales; Owner: -
---
-
-CREATE TABLE sales.main_newsletter (
-    user_id character varying(250) NOT NULL
-);
-
-
---
 -- Name: stripe_products; Type: TABLE; Schema: sales; Owner: -
 --
 
@@ -1497,14 +1488,6 @@ ALTER TABLE ONLY sales.email_templates
 
 
 --
--- Name: main_newsletter unique_user_id; Type: CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.main_newsletter
-    ADD CONSTRAINT unique_user_id UNIQUE (user_id);
-
-
---
 -- Name: fki_app_id_fk; Type: INDEX; Schema: hardware; Owner: -
 --
 
@@ -1586,13 +1569,6 @@ CREATE UNIQUE INDEX hdb_schema_update_event_one_row ON hdb_catalog.hdb_schema_up
 --
 
 CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (((version IS NOT NULL)));
-
-
---
--- Name: fkIdx_91; Type: INDEX; Schema: sales; Owner: -
---
-
-CREATE INDEX "fkIdx_91" ON sales.main_newsletter USING btree (user_id);
 
 
 --
@@ -1719,14 +1695,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
 
 ALTER TABLE ONLY logs.login_history
     ADD CONSTRAINT login_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
-
-
---
--- Name: main_newsletter fk_user_id; Type: FK CONSTRAINT; Schema: sales; Owner: -
---
-
-ALTER TABLE ONLY sales.main_newsletter
-    ADD CONSTRAINT fk_user_id FOREIGN KEY (user_id) REFERENCES public.users(user_id);
 
 
 --
