@@ -652,7 +652,7 @@ def prewarm_new_container(
 
     ecs_client.set_cluster(cluster_name)
 
-    # we need DPI here as a placeholder
+    # we need DPI here as a placeholder--since the DPI column is nonnullable
 
     container = UserContainer(
         container_id=task_id,
