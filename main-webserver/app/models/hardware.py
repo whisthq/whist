@@ -70,16 +70,6 @@ class SortedClusters(db.Model):
     status = db.Column(db.String(250), nullable=False)
 
 
-class InstallCommand(db.Model):
-    __tablename__ = "install_commands"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-
-    install_command_id = db.Column(db.Integer, nullable=False, primary_key=True)
-    windows_install_command = db.Column(db.String(250))
-    linux_install_command = db.Column(db.String(250))
-    app_name = db.Column(db.String(250))
-
-
 class RegionToAmi(db.Model):
     """
     This class represents the region_to_ami table in hardware

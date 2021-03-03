@@ -4,7 +4,6 @@ from ._meta import db
 from .hardware import (
     Banners,
     ClusterInfo,
-    InstallCommand,
     UserContainer,
     RegionToAmi,
     SortedClusters,
