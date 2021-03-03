@@ -615,6 +615,12 @@ def prewarm_new_container(
         region_name: The name of the region containing the cluster on which to
             run the container.
         cluster_name: The name of the cluster on which to run the container.
+        use_launch_type: A boolean indicating whether or not to use the
+            ECSClient's launch type or the cluster's default launch type.
+        network_configuration: The network configuration to use for the
+            clusters using awsvpc networking.
+        dpi: what DPI to use on the server -- just to load into a db column
+             as a placeholder
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
     task_start_time = time.time()
