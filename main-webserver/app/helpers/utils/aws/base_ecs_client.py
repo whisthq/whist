@@ -768,7 +768,9 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
-        fractal_logger.info(f"AWS task {self.tasks[offset]} has following status: {resp['lastStatus']}")
+        fractal_logger.info(
+            f"AWS task {self.tasks[offset]} has following status: {resp['lastStatus']}"
+        )
 
         # if the container is stopped, it's broken -- raise an exception
         if resp["lastStatus"] == "STOPPED":
@@ -828,11 +830,11 @@ class ECSClient:
         return False
 
     def spin_til_running(
-            self,
-            offset: int = 0,
-            time_delay: int = 5,
-            max_polls: int = 100,
-        ) -> bool:
+        self,
+        offset: int = 0,
+        time_delay: int = 5,
+        max_polls: int = 100,
+    ) -> bool:
         """
         Spins until AWS gives us the network binding associated with a task.
 
