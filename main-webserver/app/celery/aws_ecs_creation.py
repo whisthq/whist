@@ -664,7 +664,7 @@ def create_new_container(
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
         dpi: what DPI to use on the server -- just to load into a db column
-            as a placeholder
+            as a placeholder since the column is nonnullable
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
     task_start_time = time.time()
