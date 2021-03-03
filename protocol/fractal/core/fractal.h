@@ -152,8 +152,8 @@ Defines
 
 // Note: Must be larger than FRACTAL_ENVIRONMENT_MAXLEN in order to read email from environment
 // variable
-#define USER_EMAIL_MAXLEN 200
-#define FRACTAL_ENVIRONMENT_MAXLEN 100
+#define USER_EMAIL_MAXLEN 300
+#define FRACTAL_ENVIRONMENT_MAXLEN 256
 #define FRACTAL_IDENTIFIER_MAXLEN 31
 #define MAX_WEBSERVER_URL_LEN 63
 #define ICON_PNG_FILENAME_MAXLEN 256
