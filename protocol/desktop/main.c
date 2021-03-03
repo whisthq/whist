@@ -651,22 +651,21 @@ int main(int argc, char* argv[]) {
         }
 #elif __APPLE__
         const char* relative_client_app_path = "/../../MacOS/Fractal";
-        int relative_client_app_path_len = strlen(relative_client_app_path);
-        if (_NSGetExecutablePath(protocol_path, &max_protocol_path_len) == 0) {
+        int relative_client_app_path_len = (int) strlen(relative_client_app_path);
+        int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+        if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
             // Get directory from executable path
-            char* last_dir_slash_ptr = strrchr(protocol_path, '/');
+            char* last_dir_slash_ptr = strrchr(client_app_path, '/');
             if (last_dir_slash_ptr) {
                 *last_dir_slash_ptr = '\0';
             }
-            int protocol_path_len = strlen(protocol_path);
-            char client_app_path[protocol_path_len + relative_client_app_path_len + 1];
-            if (safe_strncpy(client_app_path, protocol_path, protocol_path_len + 1) &&
-                safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path, relative_client_app_path_len + 1)) {
-                    // const char* client_app_path = "../../MacOS/Fractal"; // packaged app path
-                    // If `execl` fails, then the program proceeds, else defers to client app
-                    if (execl(client_app_path, "Fractal", NULL) < 0) {
-                        LOG_INFO("errno: %d errstr: %s", errno, strerror(errno));
-                    }
+            int protocol_path_len = strlen(client_app_path);
+            if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path, relative_client_app_path_len + 1)) {
+                // const char* client_app_path = "../../MacOS/Fractal"; // packaged app path
+                // If `execl` fails, then the program proceeds, else defers to client app
+                LOG_INFO("client_app_path: %s", client_app_path);
+                if (execl(client_app_path, "Fractal", NULL) < 0) {
+                    LOG_INFO("errno: %d errstr: %s", errno, strerror(errno));
                 }
             }
         }
