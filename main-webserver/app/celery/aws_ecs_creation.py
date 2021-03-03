@@ -259,10 +259,10 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     ecs_client.set_task_definition_arn(task_definition_arn)
     ecs_client.run_task(False, **{k: v for k, v in kwargs.items() if v is not None})
 
-    # 2 * 180 = 360 secs = 6 minutes max, but with AWS API latencies more like 8-10
-    if not ecs_client.spin_til_running(time_delay=2, max_polls=180):
+    # 2 * 300 = 600 secs = 10 minutes max, but with AWS API latencies more like 11-12
+    if not ecs_client.spin_til_running(time_delay=2, max_polls=300):
         aws_task_arn = ecs_client.tasks[0]
-        raise ContainerNotAvailableError(aws_task_arn, 180)
+        raise ContainerNotAvailableError(aws_task_arn, 300)
 
     curr_ip = ecs_client.task_ips.get(0, -1)
     curr_network_binding = ecs_client.task_ports.get(0, -1)
