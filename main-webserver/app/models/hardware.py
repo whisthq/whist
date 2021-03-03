@@ -1,4 +1,3 @@
-from sqlalchemy import Index
 from sqlalchemy.orm import relationship
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
 
@@ -79,18 +78,6 @@ class InstallCommand(db.Model):
     windows_install_command = db.Column(db.String(250))
     linux_install_command = db.Column(db.String(250))
     app_name = db.Column(db.String(250))
-
-
-class AppsToInstall(db.Model):
-    __tablename__ = "apps_to_install"
-    __table_args__ = (
-        Index("fkIdx_115", "disk_id", "user_id"),
-        {"schema": "hardware", "extend_existing": True},
-    )
-
-    disk_id = db.Column(db.String(250), primary_key=True, nullable=False)
-    user_id = db.Column(db.String(250), primary_key=True, nullable=False)
-    app_id = db.Column(db.String(250), nullable=False, index=True)
 
 
 class RegionToAmi(db.Model):

@@ -218,17 +218,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: apps_to_install; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.apps_to_install (
-    disk_id character varying(250) NOT NULL,
-    user_id character varying(250) NOT NULL,
-    app_id character varying(250) NOT NULL
-);
-
-
---
 -- Name: banners; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -1206,14 +1195,6 @@ ALTER TABLE ONLY oauth.credentials ALTER COLUMN id SET DEFAULT nextval('oauth.cr
 
 
 --
--- Name: apps_to_install PK_apps_to_install; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.apps_to_install
-    ADD CONSTRAINT "PK_apps_to_install" PRIMARY KEY (disk_id, user_id);
-
-
---
 -- Name: banners banners_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1547,20 +1528,6 @@ ALTER TABLE ONLY sales.email_templates
 
 ALTER TABLE ONLY sales.main_newsletter
     ADD CONSTRAINT unique_user_id UNIQUE (user_id);
-
-
---
--- Name: fkIdx_115; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX "fkIdx_115" ON hardware.apps_to_install USING btree (disk_id, user_id);
-
-
---
--- Name: fkIdx_29; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX "fkIdx_29" ON hardware.apps_to_install USING btree (app_id);
 
 
 --
