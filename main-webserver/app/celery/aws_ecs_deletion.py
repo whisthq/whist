@@ -13,7 +13,7 @@ from app.helpers.utils.aws.aws_resource_locks import (
 )
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
     fractal_sql_update,
@@ -45,21 +45,19 @@ def delete_container(self, container_name, aes_key):
 
     try:
         if spin_lock(container_name) < 0:
-            fractal_log(
-                function="delete_container",
-                label=container_name,
-                logs="spin_lock took too long.",
-                level=logging.ERROR,
+            fractal_logger.error(
+                "spin_lock took too long.",
+                extra={
+                    "label": container_name,
+                },
             )
 
             raise Exception("Failed to acquire resource lock.")
     except ContainerNotFoundException as no_container_exc:
         if "test" in container_name and not current_app.testing:
-            fractal_log(
-                function="upload_logs_to_s3",
-                label=container_name,
-                logs="Test container attempted to communicate with nontest server",
-                level=logging.ERROR,
+            fractal_logger.error(
+                "Test container attempted to communicate with nontest server",
+                extra={"label": container_name},
             )
             return
         raise no_container_exc
@@ -68,11 +66,11 @@ def delete_container(self, container_name, aes_key):
         container = ensure_container_exists(UserContainer.query.get(container_name))
     except Exception as error:
         message = f"Container {container_name} was not in the database."
-        fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs=message,
-            level=logging.ERROR,
+        fractal_logger.error(
+            message,
+            extra={
+                "label": container_name,
+            },
         )
         raise Exception("The requested container does not exist in the database.") from error
     if not container:
@@ -80,22 +78,14 @@ def delete_container(self, container_name, aes_key):
 
     if container.secret_key.lower() != aes_key.lower():
         message = f"Expected secret key {container.secret_key}. Got {aes_key}."
-
-        fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs=message,
-            level=logging.ERROR,
-        )
-
+        fractal_logger.error(message, extra={"label": container_name})
         raise Exception("The requested container does not exist.")
 
-    fractal_log(
-        function="delete_container",
-        label=str(container_name),
-        logs="Beginning to delete container {container_name}. Goodbye!".format(
+    fractal_logger.info(
+        "Beginning to delete container {container_name}. Goodbye!".format(
             container_name=container_name
         ),
+        extra={"label": str(container_name)},
     )
 
     lock_container_and_update(
@@ -133,18 +123,12 @@ def delete_container(self, container_name, aes_key):
     cluster_usage = ecs_client.get_clusters_usage(clusters=[container_cluster])[container_cluster]
     cluster_sql = fractal_sql_commit(db, fractal_sql_update, cluster_info, cluster_usage)
     if cluster_sql:
-        fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs=f"Removed task from cluster {container_cluster} and updated cluster info",
+        fractal_logger.info(
+            f"Removed task from cluster {container_cluster} and updated cluster info",
+            extra={"label": container_name},
         )
     else:
-        fractal_log(
-            function="delete_container",
-            label=container_name,
-            logs="Failed to update cluster resources.",
-        )
-
+        fractal_logger.info("Failed to update cluster resources.", extra={"label": container_name})
         raise Exception("SQL update failed.")
 
     # trigger celery task to see if manual scaling should be done
@@ -170,26 +154,23 @@ def delete_cluster(self, cluster, region_name):
             "taskArns"
         ]
         if running_tasks:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs=(
+            fractal_logger.error(
+                (
                     f"Cannot delete cluster {cluster} with running tasks {running_tasks}. Please "
                     "delete the tasks first."
                 ),
-                level=logging.ERROR,
+                extra={"label": cluster},
             )
             self.update_state(
                 state="FAILURE",
                 meta={"msg": "Cannot delete clusters with running tasks"},
             )
         else:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs="Deleting cluster {} in region {} and all associated instances".format(
+            fractal_logger.info(
+                "Deleting cluster {} in region {} and all associated instances".format(
                     cluster, region_name
                 ),
+                extra={"label": cluster},
             )
             ecs_client.terminate_containers_in_cluster(cluster)
             self.update_state(
@@ -229,11 +210,10 @@ def delete_cluster(self, cluster, region_name):
         # The cluster does not exist! We must simply purge from database if it exists
         bad_entry = ClusterInfo.query.get(cluster)
         if bad_entry is not None:
-            fractal_log(
-                function="delete_cluster",
-                label=cluster,
-                logs=f"Cluster did not exist in ${region_name} ECS! "
+            fractal_logger.info(
+                f"Cluster did not exist in ${region_name} ECS! "
                 "Removing erroneous entry from our database.",
+                extra={"label": cluster},
             )
             fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
             self.update_state(
@@ -253,12 +233,8 @@ def delete_cluster(self, cluster, region_name):
             )
     except Exception as error:
         traceback_str = "".join(traceback.format_tb(error.__traceback__))
-        print(traceback_str)
-        fractal_log(
-            function="delete_cluster",
-            label="None",
-            logs=f"Encountered error: {error}, Traceback: {traceback_str}",
-            level=logging.ERROR,
+        fractal_logger.error(
+            f"Encountered error: {error}, Traceback: {traceback_str}",
         )
         self.update_state(
             state="FAILURE",
