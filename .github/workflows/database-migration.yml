@@ -310,14 +310,14 @@ jobs:
                                                   number)
 
 
-                  slack_redirect = (f"You can take a look at PR number {github_issue} "
+                  slack_redirect = (f"You can take a look at PR #{github_issue} "
                                      + f"here:\n{issue_url(github_issue)}")
 
 
                   title = "Database migration performed"
-                  body = (f"PR number {github_issue} was merged and triggered "
+                  body = (f"PR #{github_issue} was merged and triggered "
                           + "an automatic schema migration on branch: "
-                          + "`{github_branch}`.\n\n"
+                          + f"`{github_branch}`.\n\n"
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
