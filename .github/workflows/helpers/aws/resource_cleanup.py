@@ -46,11 +46,7 @@ def get_num_instances(cluster, region):
         ],
         stdout=subprocess.PIPE,
     ).communicate()
-    instances = json.loads(instances)
-    if "registeredContainerInstancesCount" in instances:
-        instance_count = instances["registeredContainerInstancesCount"]
-    else:
-        instance_count = 0
+    instance_count = json.loads(instances)["registeredContainerInstancesCount"]
     return instance_count
 
 
