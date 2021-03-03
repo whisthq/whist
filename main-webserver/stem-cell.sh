@@ -36,7 +36,8 @@ case "$1" in
 	      (pip install watchdog[watchmedo] >&2
 	       echo "watchmedo auto-restart -R -d . --")) \
 		   celery --app entry.celery worker --pool gevent \
-		   --concurrency $NUM_WORKERS --loglevel INFO;;
+		   --concurrency $NUM_WORKERS \
+		   --loglevel INFO;;
     *) echo "Specify either 'web' or 'celery' to determine what this" \
 	    "instance will manifest as." ;;
 esac
