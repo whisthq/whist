@@ -221,7 +221,7 @@ def select_cluster(region_name):
     return cluster_name
 
 
-def start_container(webserver_url, region_name, cluster_name, task_definition_arn, dpi):
+def start_container(webserver_url, region_name, cluster_name, task_definition_arn):
     """
     This helper function configures and starts a container running
 
@@ -241,7 +241,6 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
                 "name": "fractal-container",
                 "environment": [
                     {"name": "FRACTAL_AES_KEY", "value": aeskey},
-                    {"name": "FRACTAL_DPI", "value": str(dpi)},
                     {
                         "name": "WEBSERVER_URL",
                         "value": (webserver_url if webserver_url is not None else ""),
@@ -433,7 +432,7 @@ def _assign_container(
         )
         fractal_logger.info(message, extra={"label": username})
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
-            webserver_url, region_name, cluster_name, task_definition_arn, dpi
+            webserver_url, region_name, cluster_name, task_definition_arn
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
@@ -599,7 +598,6 @@ def prewarm_new_container(
             ECSClient's launch type or the cluster's default launch type.
         network_configuration: The network configuration to use for the
             clusters using awsvpc networking.
-        dpi: what DPI to use on the server
         webserver_url: The URL of the web server to ping and with which to authenticate.
     """
     task_start_time = time.time()
@@ -642,7 +640,7 @@ def prewarm_new_container(
     )
     fractal_logger.info(message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
-        webserver_url, region_name, cluster_name, task_definition_arn, 96
+        webserver_url, region_name, cluster_name, task_definition_arn
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
