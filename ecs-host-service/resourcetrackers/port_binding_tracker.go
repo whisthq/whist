@@ -11,10 +11,10 @@ import (
 
 const (
 	// Obtained from reading though Docker daemon source code
-	MIN_ALLOWED_PORT = 1025  // inclusive
-	MAX_ALLOWED_PORT = 49151 // exclusive
+	minAllowedPort = 1025  // inclusive
+	maxAllowedPort = 49151 // exclusive
 
-	RESERVED = "reserved"
+	reserved = "reserved"
 )
 
 // Unexported maps to keep track of free vs allocated host ports
@@ -28,7 +28,7 @@ var PortBindings map[string][]fractaltypes.PortBinding = make(map[string][]fract
 
 func init() {
 	// Mark certain ports as "reserved" so they don't get allocated for containers
-	tcpPorts[httpserver.PortToListen] = RESERVED // For the host service itself
+	tcpPorts[httpserver.PortToListen] = reserved // For the host service itself
 
 	// Initialize random number generator
 	rand.Seed(time.Now().UnixNano())
@@ -83,7 +83,7 @@ func allocateSinglePort(fractalID string, bind fractaltypes.PortBinding) error {
 		randomPort := randomPortInAllowedRange()
 		numTries := 0
 		for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
-			numTries += 1
+			numTries++
 			if numTries >= 1000 {
 				return logger.MakeError("Tried %v times to allocate a random host port for container port %v/%v for FractalID %v. Breaking out to avoid spinning for too long.", numTries, bind.HostPort, bind.Protocol, fractalID)
 			}
@@ -125,7 +125,7 @@ func FreePortBindings(fractalID string) {
 
 // Helper function to generate random port values in the allowed range
 func randomPortInAllowedRange() uint16 {
-	return uint16(MIN_ALLOWED_PORT + rand.Intn(MAX_ALLOWED_PORT-MIN_ALLOWED_PORT))
+	return uint16(minAllowedPort + rand.Intn(maxAllowedPort-minAllowedPort))
 }
 
 // Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
