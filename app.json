@@ -29,6 +29,14 @@
         "OAUTHLIB_RELAX_TOKEN_SCOPE": {
           "description": "Don't raise an exception if the requested and granted scopes differ.",
           "value": "1"
+        },
+        "DEV_DATABASE_URL": {
+          "description": "Dev database URL.",
+          "value": "$DATABASE_URL"
+        },
+        "DATABASE_URL": {
+          "description": "Review app database URL.",
+          "value": "$POSTGRES_EPHEMERAL_DB"
         }
       }
     },
