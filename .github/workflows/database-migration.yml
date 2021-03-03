@@ -18,7 +18,12 @@ on:
             - "main-webserver/**"
             - "!main-webserver/README.md"
             - ".github/workflows/database-migration.yml"
+    # pull_request event is triggered by default on three different
+    # "types" of activites: opened, synchronize, and reopened.
+    # We need ours to also run on "closed", so we explicity add
+    # that type.
     pull_request:
+        types: [closed, opened, synchronize, reopened]
         branches:
             - master
             - staging
