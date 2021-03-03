@@ -173,7 +173,7 @@ def main():
                 "\\n- "
                 + "\\n- ".join(
                     [
-                        "\\`" + c + "\\`" + "(" + str(n) + " instances)"
+                        "\\`" + c + "\\`" + " (" + str(n) + " instances)"
                         for c, n in output
                     ]
                 )
