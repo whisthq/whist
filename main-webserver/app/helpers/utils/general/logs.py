@@ -92,8 +92,6 @@ fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
 
-celery_logger = get_task_logger(__name__)
-
 
 def fractal_log(function, label, logs, level=logging.INFO):
     fractal_logger.warning(f"fractal_log is deprecated. Called by function {function}.")
