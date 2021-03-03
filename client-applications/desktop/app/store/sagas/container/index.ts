@@ -36,7 +36,7 @@ function* createContainer() {
         region: region,
         app: "Google Chrome",
         dpi: dpi,
-        token: encryptionToken,
+        encryption_token: encryptionToken,
     }
 
     // Send container assign request
