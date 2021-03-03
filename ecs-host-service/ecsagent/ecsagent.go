@@ -66,7 +66,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/register_docker_container_id"
+			requestURL := "https://127.0.0.1:" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/register_docker_container_id"
 
 			_, err = httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			return err
@@ -87,7 +87,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/create_uinput_devices"
+			requestURL := "https://127.0.0.1:" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/create_uinput_devices"
 
 			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			if err != nil {
@@ -157,7 +157,7 @@ func init() {
 			}
 
 			// We have the request body, now just need to actually make the request
-			requestURL := "https://127.0.0.1" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/request_port_bindings"
+			requestURL := "https://127.0.0.1:" + fractallogger.Sprintf("%v", fractalhttpserver.PortToListen) + "/request_port_bindings"
 
 			response, err := httpClient.Post(requestURL, "application/json", bytes.NewReader(body))
 			if err != nil {
