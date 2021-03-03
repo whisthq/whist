@@ -1,5 +1,3 @@
-import logging
-
 from flask import Blueprint, jsonify
 
 from app import fractal_pre_process
