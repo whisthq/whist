@@ -1,10 +1,5 @@
 from app import ma
-from app.models import LoginHistory, MonitorLog
-
-
-class MonitorLogSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = MonitorLog
+from app.models import LoginHistory
 
 
 # similarly another foreign key so we need to be explicit
