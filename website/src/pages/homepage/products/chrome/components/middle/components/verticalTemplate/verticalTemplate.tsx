@@ -1,7 +1,7 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import Geometric from "pages/homepage/products/chrome/components/top/components/geometric/geometric"
+import Geometric from "shared/components/geometric/geometric"
 import MainContext from "shared/context/mainContext"
 import { ScreenSize } from "shared/constants/screenSizes"
 

@@ -8,8 +8,6 @@ import Header from "shared/components/header"
 import ResetView from "pages/auth/reset/components/resetView"
 import { HEADER } from "testing/utils/testIDs"
 
-import sharedStyles from "styles/shared.module.css"
-
 const Reset = (props: { dispatch: Dispatch<any>; testSearch: string }) => {
     const { dispatch } = props
     // other thing is for testing
@@ -27,12 +25,9 @@ const Reset = (props: { dispatch: Dispatch<any>; testSearch: string }) => {
         return <Redirect to="/auth" />
     } else {
         return (
-            <div className={sharedStyles.fractalContainer}>
-                <div data-testid={HEADER}>
-                    <Header dark={false} />
-                </div>
+            <>
                 <ResetView token={token} validToken={validToken} />
-            </div>
+            </>
         )
     }
 }

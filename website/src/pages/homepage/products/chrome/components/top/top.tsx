@@ -5,7 +5,7 @@ import TypeWriterEffect from "react-typewriter-effect"
 
 import MainContext from "shared/context/mainContext"
 import { ScreenSize } from "shared/constants/screenSizes"
-import Geometric from "pages/homepage/products/chrome/components/top/components/geometric/geometric"
+import Geometric from "shared/components/geometric/geometric"
 import YoutubeLogo from "assets/icons/youtubeLogo.svg"
 import InstagramLogo from "assets/icons/instagramLogo.svg"
 import FacebookLogo from "assets/icons/facebookLogo.svg"

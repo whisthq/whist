@@ -30,6 +30,8 @@ import { RESET_IDS } from "testing/utils/testIDs"
 import styles from "styles/auth.module.css"
 import sharedStyles from "styles/shared.module.css"
 
+import AuthContainer from "pages/auth/components/authContainer"
+
 const ResetView = (props: {
     dispatch: Dispatch<any>
     user: User
@@ -166,23 +168,23 @@ const ResetView = (props: {
         // assume it worked
         // TODO (adriano) when the server actually responds do something about it (say your thing was reset for example)
         return (
-            <div data-testid={RESET_IDS.SUCCESS}>
-                <PuffAnimation />
-            </div>
+            <AuthContainer title="Your password was reset successfully">
+                <div data-testid={RESET_IDS.SUCCESS}>
+                    <PuffAnimation />
+                </div>
+            </AuthContainer>
         )
     } else if (processing) {
         return (
-            <div data-testid={RESET_IDS.LOAD}>
-                <PuffAnimation />
-            </div>
+            <AuthContainer title="Please wait, resetting your password">
+                <div data-testid={RESET_IDS.LOAD}>
+                    <PuffAnimation />
+                </div>
+            </AuthContainer>
         )
     } else if (authFlow.resetTokenStatus === "verified") {
         return (
-            <div>
-                <div className={styles.authContainer}>
-                    <div className={styles.authTitle}>
-                        Please enter your new password.
-                    </div>
+           <AuthContainer title="Please enter a new password">
                     <div data-testid={RESET_IDS.FORM}>
                         <PasswordConfirmForm
                             changePassword={changePassword}
@@ -197,7 +199,7 @@ const ResetView = (props: {
                     </div>
                     <div data-testid={RESET_IDS.BUTTON}>
                         <button
-                            className={styles.purpleButton}
+                            className="rounded bg-blue dark:bg-mint px-8 py-3 mt-4 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
                             style={{
                                 opacity: validPassword ? 1.0 : 0.6,
                             }}
@@ -207,19 +209,13 @@ const ResetView = (props: {
                             Reset
                         </button>
                     </div>
-                </div>
-            </div>
+            </AuthContainer>
         )
     } else {
         return (
-            <div>
-                <div className={styles.authContainer}>
-                    <div data-testid={RESET_IDS.FAIL}>
-                        <div className={styles.authTitle}>
-                            Failed to verify token.
-                        </div>
+            <AuthContainer title="Your password reset was unsuccessful">
                         <button
-                            className={sharedStyles.whiteButton}
+                            className="rounded bg-blue dark:bg-mint px-8 py-3 mt-4 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
                             style={{
                                 width: "100%",
                                 fontSize: 16,
@@ -228,9 +224,7 @@ const ResetView = (props: {
                         >
                             Back to Login
                         </button>
-                    </div>
-                </div>
-            </div>
+            </AuthContainer>
         )
     }
 }

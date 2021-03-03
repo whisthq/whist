@@ -21,6 +21,7 @@ import Reset from "pages/auth/reset/reset"
 import Dashboard from "pages/dashboard/dashboard"
 import AuthCallback from "pages/auth/callback/callback"
 import Products from "pages/homepage/products/products"
+import ScrollToTop from "shared/components/scrollToTop"
 
 import routes from "shared/constants/routes"
 import withTracker from "shared/utils/withTracker"
@@ -95,6 +96,7 @@ const RootApp = (props: {
 
     return (
         <ApolloProvider client={apolloClient}>
+            <ScrollToTop />
             <Switch>
                 <Route
                     exact

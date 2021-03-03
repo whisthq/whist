@@ -28,13 +28,12 @@ const Verify = (props: { user: User }) => {
 
     // return visuals
     if (!validUser) {
-        return <Redirect to="/" />
+        return <Redirect to="/auth" />
     } else if (user.emailVerified) {
         return <Redirect to="/dashboard" />
     } else {
         return (
-            <div className={sharedStyles.fractalContainer}>
-                <Header dark={false} />
+            <div>
                 <VerifyView token={token} validToken={validToken} />
             </div>
         )

@@ -17,10 +17,11 @@ import { deepCopy } from "shared/utils/reducerHelpers"
 import { DEFAULT } from "store/reducers/auth/default"
 
 import { checkEmail } from "pages/auth/constants/authHelpers"
-import SwitchMode from "pages/auth/components/switchMode"
+import AuthNavigator from "pages/auth/components/authNavigator"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import { AUTH_IDS, E2E_AUTH_IDS } from "testing/utils/testIDs"
 import PLACEHOLDER from "shared/constants/form"
+import AuthContainer from "pages/auth/components/authContainer"
 
 import styles from "styles/auth.module.css"
 
@@ -100,52 +101,29 @@ const Forgot = (props: {
             )
         }
         return (
-            <div>
-                <div className={styles.authContainer}>
-                    <div className={styles.authTitle}>
-                        {authFlow.forgotStatus ? authFlow.forgotStatus : ""}.
-                    </div>
-                    <div
-                        style={{
-                            color: "#333333",
-                            textAlign: "center",
-                            marginTop: 20,
-                        }}
+            <AuthContainer title={authFlow.forgotStatus ? authFlow.forgotStatus : ""}>
+                <div className="mt-8 text-center">
+                    Didn't receive an email? Please check your spam folder.
+                    To receive another email, click{" "}
+                    <span
+                        onClick={() => setGotResponse(false)}
+                        className="text-blue font-medium cursor-pointer"
                     >
-                        Didn't receive an email? Please check your spam folder.
-                        To receive another email, click{" "}
-                        <span
-                            onClick={() => setGotResponse(false)}
-                            style={{ color: "#3930b8", cursor: "pointer" }}
-                        >
-                            here
-                        </span>
-                        .
-                    </div>
-                    <div data-testid={AUTH_IDS.SWITCH}>
-                        <div style={{ marginTop: 20 }}>
-                            <SwitchMode
-                                question="You can return to the login page"
-                                link="here"
-                                closer="."
-                                onClick={() =>
-                                    dispatch(
-                                        AuthPureAction.updateAuthFlow({
-                                            mode: "Log in",
-                                        })
-                                    )
-                                }
-                            />
-                        </div>
-                    </div>
+                        here
+                    </span>
+                    .
                 </div>
-            </div>
+                <button
+                    className="rounded bg-blue dark:bg-mint px-8 py-3 mt-7 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
+                    onClick={() => dispatch(AuthPureAction.updateAuthFlow({mode: "Log in"}))}
+                >
+                    Back to login
+                </button>
+            </AuthContainer>
         )
     } else {
         return (
-            <div>
-                <div className={styles.authContainer}>
-                    <div className={styles.authTitle}>Enter your email.</div>
+            <AuthContainer title="Please enter your email">
                     <div data-testid={AUTH_IDS.FORM}>
                         <div style={{ marginTop: 40 }}>
                             <Input
@@ -162,7 +140,7 @@ const Forgot = (props: {
                     </div>
                     <div data-testid={AUTH_IDS.BUTTON}>
                         <button
-                            className={styles.purpleButton}
+                            className="rounded bg-blue dark:bg-mint px-8 py-3 mt-4 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
                             style={{
                                 opacity: checkEmail(email) ? 1.0 : 0.6,
                             }}
@@ -172,19 +150,17 @@ const Forgot = (props: {
                             Reset
                         </button>
                     </div>
-                    <div className={styles.line} />
                     <div data-testid={AUTH_IDS.SWITCH}>
-                        <div style={{ marginTop: 20 }}>
-                            <SwitchMode
+                        <div className="mt-7">
+                            <AuthNavigator
                                 question="Remember your password?"
-                                link="Log in "
-                                closer="here."
+                                link="Log in"
+                                closer=" instead."
                                 onClick={backToLogin}
                             />
                         </div>
                     </div>
-                </div>
-            </div>
+            </AuthContainer>
         )
     }
 }

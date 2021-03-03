@@ -9,12 +9,11 @@ import {
 } from "store/actions/auth/sideEffects"
 import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
-import { Title } from "pages/auth/components/authUtils"
 import { VERIFY_IDS } from "testing/utils/testIDs"
 
-import styles from "styles/auth.module.css"
-import sharedStyles from "styles/shared.module.css"
+import AuthContainer from "pages/auth/components/authContainer"
 import { User, AuthFlow } from "shared/types/reducers"
+
 
 export const RetryButton = (props: {
     text: string
@@ -32,10 +31,14 @@ export const RetryButton = (props: {
     */
 
     <button
-        className={styles.purpleButton}
+        className="rounded bg-blue dark:bg-mint px-8 py-3 mt-8 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
         style={{
+<<<<<<< HEAD
             marginTop: 40,
             opacity: props.canClick ? 1.0 : 0.6,
+=======
+            opacity: props.checkEmail ? 1.0 : 0.6,
+>>>>>>> cd0c3f2 (refactored all ui and some of logic)
         }}
         onClick={props.onClick}
         disabled={!props.canClick}
@@ -160,61 +163,57 @@ const VerifyView = (props: {
 
     if (!validToken) {
         return (
-            <div className={styles.authContainer}>
-                <div data-testid={VERIFY_IDS.INVALID}>
-                    <Title
-                        title="Check your inbox to verify your email"
-                        subtitle="(and/or spam)"
-                    />
-                    <RetryButton
-                        text={retryMessage}
-                        canClick={validUser && canRetry}
-                        onClick={sendWithDelay}
-                    />
-                    <button
-                        className={sharedStyles.whiteButton}
-                        style={{ width: "100%", marginTop: 20, fontSize: 16 }}
-                        onClick={reset}
-                    >
-                        Back to Login
-                    </button>
-                </div>
-            </div>
+            <AuthContainer title="Check your email for a verification email">
+                <RetryButton
+                    text={retryMessage}
+                    checkEmail={validUser && canRetry}
+                    onClick={sendWithDelay}
+                />
+                <button
+                    className="w-full mt-6 text-small duration-500 text-gray"
+                    onClick={reset}
+                >
+                    Back to Login
+                </button>
+            </AuthContainer>
         )
     } else {
         if (processing) {
             // Conditionally render the loading screen as we wait for signup API call to return
             return (
-                <div data-testid={VERIFY_IDS.LOAD}>
-                    <PuffAnimation />
-                </div>
+                <AuthContainer title="Please wait, verifying your email">
+                    <div data-testid={VERIFY_IDS.LOAD}>
+                        <PuffAnimation />
+                    </div>
+                </AuthContainer>
             )
         } else {
             // this state is reached after processing has finished and failed
             return (
-                <div className={styles.authContainer}>
-                    {authFlow.verificationStatus === "success" && (
-                        <div data-testid={VERIFY_IDS.SUCCESS}>
-                            <Title
-                                title="Successfully verified email!"
-                                subtitle="Redirecting you to your dashboard"
-                            />
-                            <PuffAnimation />
-                        </div>
-                    )}
-                    {authFlow.verificationStatus === "failed" && (
-                        <div data-testid={VERIFY_IDS.FAIL}>
-                            <Title title="Failed to verify" />
-                            <div data-testid={VERIFY_IDS.RETRY}>
-                                <RetryButton
-                                    text={retryMessage}
-                                    canClick={validUser && canRetry}
-                                    onClick={sendWithDelay}
-                                />
+                <AuthContainer>
+                    <>
+                        {authFlow.verificationStatus === "success" && (
+                            <div data-testid={VERIFY_IDS.SUCCESS}>
+                                <div className="text-3xl font-medium text-center mt-12">Success! Redirecting you.</div>
+                                <PuffAnimation />
                             </div>
-                        </div>
-                    )}
-                </div>
+                        )}
+                    </>
+                    <>
+                        {authFlow.verificationStatus === "failed" && (
+                            <div data-testid={VERIFY_IDS.FAIL}>
+                                <div className="text-3xl font-medium text-center mt-12">An error occured verifying your email.</div>
+                                <div data-testid={VERIFY_IDS.RETRY}>
+                                    <RetryButton
+                                        text={retryMessage}
+                                        checkEmail={validUser && canRetry}
+                                        onClick={sendWithDelay}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </>
+                </AuthContainer>
             )
         }
     }

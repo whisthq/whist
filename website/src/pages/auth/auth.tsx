@@ -34,7 +34,6 @@ const Auth = (props: {
     */
     dispatch: Dispatch<any>
     user: User
-    mode: string
     authFlow: AuthFlow
     location: {
         pathname: string
@@ -43,7 +42,7 @@ const Auth = (props: {
     testSignup?: boolean
     emailToken?: string
 }) => {
-    const { user, mode, authFlow, testSignup, emailToken, dispatch } = props
+    const { user, authFlow, testSignup, emailToken, dispatch } = props
 
     const [redirectToCallback, setRedirectToCallback] = useState(false)
     const [callback, setCallback] = useState("")
@@ -124,10 +123,15 @@ const Auth = (props: {
         callbackChecked,
     ])
 
+    useEffect(() => {
+        console.log(authFlow)
+        console.log(authFlow.mode)
+    }, [authFlow.mode])
+
     if (redirectToCallback) {
         return <Redirect to="/callback" />
     }
-
+    
     if (user.userID && user.userID !== "") {
         if (user.emailVerified && callback === "" && callbackChecked) {
             return <Redirect to="/dashboard" />
@@ -151,36 +155,27 @@ const Auth = (props: {
             }
             return <Redirect to="/verify" />
         }
-    }
-
-    if (mode === "Log in") {
+    } 
+    
+    if (authFlow.mode === "Log in") {
         return (
             <div className={sharedStyles.fractalContainer}>
-                <div data-testid={HEADER}>
-                    <Header dark={false} />
-                </div>
                 <div data-testid={AUTH_IDS.LOGIN}>
                     <Login />
                 </div>
             </div>
         )
-    } else if (mode === "Sign up") {
+    } else if (authFlow.mode === "Sign up") {
         return (
             <div className={sharedStyles.fractalContainer}>
-                <div data-testid={HEADER}>
-                    <Header dark={false} />
-                </div>
                 <div data-testid={AUTH_IDS.SIGNUP}>
                     <Signup />
                 </div>
             </div>
         )
-    } else if (mode === "Forgot") {
+    } else if (authFlow.mode === "Forgot") {
         return (
             <div className={sharedStyles.fractalContainer}>
-                <div data-testid={HEADER}>
-                    <Header dark={false} />
-                </div>
                 <div data-testid={AUTH_IDS.FORGOT}>
                     <Forgot emailToken={emailToken} />
                 </div>
@@ -196,10 +191,6 @@ const mapStateToProps = (state: {
     AuthReducer: { authFlow: AuthFlow; user: User }
 }) => {
     return {
-        mode:
-            state.AuthReducer.authFlow && state.AuthReducer.authFlow.mode
-                ? state.AuthReducer.authFlow.mode
-                : "Sign up",
         user: state.AuthReducer.user,
         authFlow: state.AuthReducer.authFlow,
     }

@@ -1,6 +1,6 @@
 import React from "react"
 
-import "pages/homepage/products/chrome/components/top/components/geometric/geometric.css"
+import "shared/components/geometric/geometric.css"
 
 export const Geometric = (props: { scale: number; flip: boolean }) => {
     /*

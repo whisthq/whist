@@ -5,10 +5,10 @@ import MainContext from "shared/context/mainContext"
 
 import styles from "styles/shared.module.css"
 
-export const SwitchMode = (props: {
-    question: string
+export const AuthNavigator = (props: {
     link: string
-    closer: string
+    question?: string
+    closer?: string
     onClick: () => void
     id?: string
 }) => {
@@ -17,20 +17,19 @@ export const SwitchMode = (props: {
     const { question, link, closer, id, onClick } = props
 
     return (
-        <div style={{ textAlign: "center" }}>
-            {question + " "}
+        <div className="text-center">
+            {question && (`${question} `)}
             {width < ScreenSize.SMALL && <br />}
             <span
-                style={{ color: "#3930b8" }}
-                className={styles.hover}
+                className="text-blue font-medium cursor-pointer"
                 onClick={onClick}
                 id={id}
             >
                 {link}
             </span>
-            {closer}
+            {closer && closer}
         </div>
     )
 }
 
-export default SwitchMode
+export default AuthNavigator
