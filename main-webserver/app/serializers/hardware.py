@@ -1,6 +1,5 @@
 from app import ma
 from app.models import (
-    AppsToInstall,
     Banners,
     ClusterInfo,
     InstallCommand,
@@ -26,11 +25,6 @@ class ClusterInfoSchema(ma.SQLAlchemyAutoSchema):
 class InstallCommandSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = InstallCommand
-
-
-class AppsToInstallSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = AppsToInstall
 
 
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):

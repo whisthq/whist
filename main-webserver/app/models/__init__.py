@@ -2,7 +2,6 @@
 
 from ._meta import db
 from .hardware import (
-    AppsToInstall,
     Banners,
     ClusterInfo,
     InstallCommand,
