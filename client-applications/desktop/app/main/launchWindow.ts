@@ -107,54 +107,6 @@ export const createWindow = async (
 
     // Listener to detect if the protocol was launched to hide the
     // app from the task tray
-    const electron = require("electron")
-    const ipc = electron.ipcMain
-
-    ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
-        showMainWindow = argv
-        if (showMainWindow && mainWindow) {
-            mainWindow.maximize()
-            mainWindow.show()
-            mainWindow.focus()
-            mainWindow.restore()
-            if (app && app.dock) {
-                app.dock.show()
-            }
-        } else if (!showMainWindow && mainWindow) {
-            // mainWindow.hide()
-            if (app && app.dock) {
-                app.dock.hide()
-            }
-        }
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
-        const url = argv
-        const win = new BrowserWindow({ width: 800, height: 600 })
-        win.on("close", () => {
-            if (win) {
-                event.preventDefault()
-            }
-        })
-        win.loadURL(url)
-        win.show()
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event, argv) => {
-        BrowserWindow.getAllWindows().forEach((win) => {
-            if (win.id !== 1) {
-                win.close()
-            }
-        })
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.FORCE_QUIT, () => {
-        app.exit(0)
-        app.quit()
-    })
 
     mainWindow.on("close", (event) => {
         if (!showMainWindow) {

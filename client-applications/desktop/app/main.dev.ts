@@ -14,9 +14,9 @@ import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
-
+import { initiateFractalIPCListeners } from "./main/initiateFractalIPCListeners"
 import { createWindow } from "./main/launchWindow"
-import { createProtocol } from "./main/launchProtocol"
+import { initiateAutoUpdateListeners } from "./main/initiateAutoUpdateListeners"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -85,7 +85,8 @@ if (!gotTheLock) {
             updating,
             showMainWindow
         )
-        createProtocol(mainWindow)
+        initiateFractalIPCListeners(mainWindow, showMainWindow)
+        // createProtocol(mainWindow)
     })
 
     app.on("activate", async () => {
@@ -119,58 +120,4 @@ app.on("open-url", (event, data) => {
     }
 })
 
-// Autoupdater listeners, will fire if S3 app version is greater than current version
-
-autoUpdater.autoDownload = false
-
-autoUpdater.on("update-available", () => {
-    updating = true
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-    }
-    autoUpdater.downloadUpdate()
-})
-
-autoUpdater.on("update-not-available", () => {
-    updating = false
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-    }
-})
-
-// autoUpdater.on("error", (_ev, err) => {
-//     updating = false
-//     if(mainWindow) {
-//         mainWindow.webContents.send("error", err)
-//     }
-
-// })
-
-autoUpdater.on("download-progress", (progressObj) => {
-    if (mainWindow) {
-        mainWindow.webContents.send(
-            FractalIPC.DOWNLOAD_SPEED,
-            progressObj.bytesPerSecond
-        )
-        mainWindow.webContents.send(
-            FractalIPC.PERCENT_DOWNLOADED,
-            progressObj.percent
-        )
-        mainWindow.webContents.send(
-            FractalIPC.PERCENT_TRANSFERRED,
-            progressObj.transferred
-        )
-        mainWindow.webContents.send(
-            FractalIPC.TOTAL_DOWNLOADED,
-            progressObj.total
-        )
-    }
-})
-
-autoUpdater.on("update-downloaded", () => {
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
-    }
-    autoUpdater.quitAndInstall()
-    updating = false
-})
+updating = initiateAutoUpdateListeners(mainWindow, updating)

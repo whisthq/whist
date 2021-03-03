@@ -61,8 +61,15 @@ const getExecutableName = (): string => {
 }
 
 export const launchProtocol = async (
-    protocolOnStart: () => void,
-    protocolOnExit: () => void
+    protocolOnStart: (userID: string) => void,
+    protocolOnExit: (
+        protocolLaunched: number,
+        createContainerRequestSent: number,
+        userID: string
+    ) => void,
+    userID: string,
+    protocolLaunched: number,
+    createContainerRequestSent: number
 ) => {
     /*
     Description:
@@ -112,7 +119,7 @@ export const launchProtocol = async (
     ]
 
     // Starts the protocol
-    protocolOnStart()
+    protocolOnStart(userID)
     const protocol = spawn(executable, protocolArguments, {
         cwd: protocolPath,
         detached: false,
@@ -121,7 +128,7 @@ export const launchProtocol = async (
 
     // On protocol exit logic, fired only when protocol stops running
     protocol.on("close", () => {
-        protocolOnExit()
+        protocolOnExit(protocolLaunched, createContainerRequestSent, userID)
     })
 
     return protocol
