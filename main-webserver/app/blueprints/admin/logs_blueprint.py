@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify
 from app import fractal_pre_process
 from app.celery.aws_s3_modification import upload_logs_to_s3
 from app.constants.http_codes import ACCEPTED, BAD_REQUEST
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 
 logs_bp = Blueprint("logs_bp", __name__)
 
@@ -23,11 +23,8 @@ def logs_post(**kwargs):
             body.pop("logs"),
         )
     except KeyError as e:
-        fractal_log(
-            function="logs",
-            label=None,
-            logs=f"Error while reading body: {str(e)}",
-            level=logging.ERROR,
+        fractal_logger.error(
+            f"Error while reading body: {str(e)}",
         )
         return jsonify({"ID": None}), BAD_REQUEST
 

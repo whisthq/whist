@@ -49,7 +49,7 @@ cpu_start = time.process_time()
 time_end = time.time()
 cpu_end = time.process_time()
 
-fractal_log(
+fractal_logger(
     function="assign_container",
     label=None,
     logs=f"TOTAL TIME: {time_end - time_start}, TOTAL CPU TIME: {cpu_end - cpu_start}",
