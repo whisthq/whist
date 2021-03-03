@@ -1,5 +1,4 @@
 import math
-import logging
 
 from celery import shared_task
 from flask import current_app

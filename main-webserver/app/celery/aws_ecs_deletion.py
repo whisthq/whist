@@ -1,4 +1,3 @@
-import logging
 import traceback
 import time
 
@@ -232,10 +231,7 @@ def delete_cluster(self, cluster, region_name):
                 },
             )
     except Exception as error:
-        traceback_str = "".join(traceback.format_tb(error.__traceback__))
-        fractal_logger.error(
-            f"Encountered error: {error}, Traceback: {traceback_str}",
-        )
+        fractal_logger.error(f"Encountered error: {error}", exc_info=True)
         self.update_state(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
