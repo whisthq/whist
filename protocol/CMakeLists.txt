@@ -108,6 +108,9 @@ else()
     set(arch 32)
 endif()
 
+# Windows option to add icon (used primarily for client app compilation pipeline)
+option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
+
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
