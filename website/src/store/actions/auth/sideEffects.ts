@@ -97,10 +97,15 @@ export const resetPassword = (
     }
 }
 
-export const sendVerificationEmail = (email?: string, token?: string) => {
+export const sendVerificationEmail = (
+    email?: string,
+    name?: string,
+    token?: string
+) => {
     return {
         type: SEND_VERIFICATION_EMAIL,
         email,
+        name,
         token,
     }
 }

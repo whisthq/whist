@@ -18,17 +18,27 @@ import { User, AuthFlow } from "shared/types/reducers"
 
 export const RetryButton = (props: {
     text: string
-    checkEmail: boolean
+    canClick: boolean
     onClick: (evt: any) => any
 }) => (
+    /*
+        Component button for retrying the email send.
+
+        Arguments:
+            text (string): text that the button should display
+            canClick (boolean): boolean that represents whether the button
+                should be clicked or not.
+            onClick (method): function to be called when the button is clicked
+    */
+
     <button
         className={styles.purpleButton}
         style={{
             marginTop: 40,
-            opacity: props.checkEmail ? 1.0 : 0.6,
+            opacity: props.canClick ? 1.0 : 0.6,
         }}
         onClick={props.onClick}
-        disabled={!props.checkEmail}
+        disabled={!props.canClick}
     >
         {props.text}
     </button>
@@ -41,6 +51,20 @@ const VerifyView = (props: {
     token: string
     validToken: boolean
 }) => {
+    /*
+        Component for verifying user emails
+
+        The user will be redirected here from a link in the verification email
+        that we send. Sends a verification email on render, and also contains a
+        button to send more if the user doesn't receive the first.
+
+        Arguments:
+            dispatch (Dispatch<any>): Action dispatcher
+            user (User): User from Redux state
+            authFlow (AuthFlow): AuthFlow from Redux state
+            token (string): the token passed into the url (i.e. fractal.co/verify?{token})
+            validToken (boolean): whether the token exists or not
+    */
     const { dispatch, user, authFlow, token, validToken } = props
 
     // visual state constants
@@ -90,6 +114,13 @@ const VerifyView = (props: {
             userID = user.userID as string
         }
 
+        let name: string | undefined
+        if (user.name == null) {
+            console.error("Error: no name")
+        } else {
+            name = user.name as string
+        }
+
         let emailVerificationToken: string | undefined
         if (user.emailVerificationToken == null) {
             console.error("Error: no emailVerificationToken")
@@ -97,7 +128,7 @@ const VerifyView = (props: {
             emailVerificationToken = user.emailVerificationToken as string
         }
 
-        dispatch(sendVerificationEmail(userID, emailVerificationToken))
+        dispatch(sendVerificationEmail(userID, name, emailVerificationToken))
         setTimeout(() => {
             // first show them that it's been sent
             setSentRetry(true)
@@ -137,7 +168,7 @@ const VerifyView = (props: {
                     />
                     <RetryButton
                         text={retryMessage}
-                        checkEmail={validUser && canRetry}
+                        canClick={validUser && canRetry}
                         onClick={sendWithDelay}
                     />
                     <button
@@ -177,7 +208,7 @@ const VerifyView = (props: {
                             <div data-testid={VERIFY_IDS.RETRY}>
                                 <RetryButton
                                     text={retryMessage}
-                                    checkEmail={validUser && canRetry}
+                                    canClick={validUser && canRetry}
                                     onClick={sendWithDelay}
                                 />
                             </div>

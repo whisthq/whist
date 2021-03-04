@@ -47,16 +47,52 @@ export const signupEmail = async (
     name: string,
     feedback: string
 ) =>
+    /*
+        API call to the /account/register endpoint to register a new email
+
+        Arguments:
+            username (string): email of the new user
+            password (string): password of the new user
+            name (string): name of the new user
+            feedback (string): feedback from the new user (deprecated - currently 
+                sending an empty string)
+        Returns:
+            { json, success } (JSON) : Returned JSON of POST request and success True/False
+    */
     post({
         endpoint: "/account/register",
         body: { username, password, name, feedback },
     })
 
-export const emailVerification = async (username: string, token: string) =>
-    post({
-        endpoint: "/mail/verification",
-        body: { username, token },
+export const emailVerification = async (
+    username: string,
+    name: string,
+    token: string
+) => {
+    /*
+        API call to the /mail endpoint to send a verification email
+
+        Arguments:
+            username (string): email of the user
+            name (string): name of the user
+            token (string): email verification token of the user
+        
+        Returns:
+            { json, success } (JSON) : Returned JSON of POST request and success True/False
+    */
+    const body = {
+        email_id: "EMAIL_VERIFICATION",
+        to_email: username,
+        email_args: {
+            name: name,
+            link: config.url.FRONTEND_URL + "/verify?" + token,
+        },
+    }
+    return post({
+        endpoint: "/mail",
+        body,
     })
+}
 
 export const validateVerification = async (
     accessToken: string,
@@ -79,11 +115,31 @@ export const deleteAccount = async (username: string, accessToken: string) => {
     })
 }
 
-export const passwordForgot = async (username: string, emailToken: string) =>
-    post({
-        endpoint: "/mail/forgot",
-        body: { username, emailToken },
+export const passwordForgot = async (username: string, emailToken: string) => {
+    /*
+        API call to the /mail endpoint to send a password forgot email
+
+        Arguments:
+            username (string): email of the user
+            token (string): email verification token of the user
+        
+        Returns:
+            { json, success } (JSON) : Returned JSON of POST request and success True/False
+    */
+
+    //TODO: is this emailToken different from i.e. token in emailVerification?
+    const body = {
+        email_id: "PASSWORD_RESET",
+        to_email: username,
+        email_args: {
+            link: config.url.FRONTEND_URL + "/reset?" + emailToken,
+        },
+    }
+    return post({
+        endpoint: "/mail",
+        body,
     })
+}
 
 export const validatePasswordReset = async (token: string) =>
     get({ endpoint: "/token/validate", accessToken: token })
@@ -156,11 +212,31 @@ export const addSubscription = async (
         refreshToken,
     })
 
-export const cancelMail = async (username: string, feedback: string) =>
-    post({
-        endpoint: "/mail/cancel",
-        body: { username, feedback },
+export const cancelMail = async (username: string, feedback: string) => {
+    /*
+        API call to the /mail endpoint to send an email notifying us that a user 
+        has canceled their plan
+
+        Arguments:
+            username (string): email of the user
+            feedback (string): feedback from the user about why they canceled
+        
+        Returns:
+            { json, success } (JSON) : Returned JSON of POST request and success True/False
+    */
+    const body = {
+        email_id: "FEEDBACK",
+        to_email: "support@fractal.co",
+        email_args: {
+            user: username,
+            feedback: feedback,
+        },
+    }
+    return post({
+        endpoint: "/mail",
+        body,
     })
+}
 
 export const deleteSubscription = async (
     accessToken: string,

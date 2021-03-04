@@ -126,12 +126,13 @@ describe("Signup page", () => {
         const email = await mailslurp.waitForLatestEmail(inbox.id)
         const body = email.body
         if (body) {
-            const aStart = body.indexOf("http")
-            const aEnd = body.indexOf(` style = "text-decoration: none">`)
+            // const aStart = body.indexOf("http")
+            // const aEnd = body.indexOf(` style = "text-decoration: none">`)
 
-            const url = body.substring(aStart, aEnd)
-            await expect(url).toContain("redirect.fractal.co")
-            await page.goto(url)
+            // const url = body.substring(aStart, aEnd)
+            // await expect(url).toContain("redirect.fractal.co")
+            // await page.goto(url)
+            expect(body).toContain("Verify email address")
         }
 
         // await clickButton("Back to Login")

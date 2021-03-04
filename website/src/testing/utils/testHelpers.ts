@@ -129,7 +129,7 @@ export const launchURL = async () => {
 }
 
 export const loadHasuraToken = () => {
-/*
+    /*
     Description:
         Fetch the admin Hasura from environment (for CI)
 
@@ -150,7 +150,7 @@ export const loadHasuraToken = () => {
 }
 
 export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
-/*
+    /*
     Description:
         Insert a test user into the database
 
@@ -178,7 +178,7 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
 }
 
 export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
-/*
+    /*
     Description:
         Delete a test user from the database
 
@@ -202,7 +202,7 @@ export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
 }
 
 export const insertUserInvite = async (user: TestUser, hasuraToken: string) => {
-/*
+    /*
     Description:
         Creates an invite for a user so they can access the dashboard
 
@@ -228,7 +228,7 @@ export const insertUserInvite = async (user: TestUser, hasuraToken: string) => {
 }
 
 export const deleteUserInvite = async (user: TestUser, hasuraToken: string) => {
-/*
+    /*
     Description:
         Deletes a test user's invite
 

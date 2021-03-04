@@ -6,6 +6,7 @@ import { rootState } from "testing/utils/testHelpers"
 import Reset from "pages/auth/reset/reset"
 import { screen, fireEvent, cleanup } from "@testing-library/react"
 import { waitFor } from "@testing-library/dom"
+import { setupServer } from "msw/node"
 import { msWait } from "testing/utils/utils"
 import {
     invalidUser,
@@ -14,10 +15,21 @@ import {
     validFractalUser,
 } from "testing/utils/testState"
 import { chainAssign, generateUser } from "testing/utils/testHelpers"
+import { handlers } from "testing/utils/testServer"
 import Auth from "pages/auth/auth"
 import ResetView from "pages/auth/reset/components/resetView"
 import { HEADER, AUTH_IDS, RESET_IDS } from "testing/utils/testIDs"
 import PLACEHOLDER from "shared/constants/form"
+
+// declare which API requests to mock
+const server = setupServer(...handlers)
+
+beforeAll(() => server.listen())
+// reset any request handlers that are declared as a part of our tests
+// (i.e. for testing one-time error scenarios)
+afterEach(() => server.resetHandlers())
+// clean up once the tests are done
+afterAll(() => server.close())
 
 const resetUser = {
     passwordResetEmail: "test@test.co",
