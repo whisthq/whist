@@ -42,29 +42,6 @@ class MailClient:
         """
         self.sendgrid_client = SendGridAPIClient(api_key)
 
-    @staticmethod
-    def sanitize_jinja_args(self, to_email, jinja_args):
-        """Do custom server-side replacement of certain Jinja args,
-        for example retrieving email verification tokens from the database
-
-        Args:
-            to_email (str): Email address to send to
-            jinja_args (dict): Dict of arguments to pass to Jinja
-        """
-
-        if jinja_args:
-            jinja_keys = jinja_args.keys()
-            if "link" in jinja_keys:
-                if "reset?" in jinja_args["link"]:
-                    user = User.query.get(to_email)
-                    if user:
-                        jinja_args["link"] = "{base_url}{email_verification_token}".format(
-                            base_url=jinja_args["link"].split("reset?")[0],
-                            email_verification_token=user.token,
-                        )
-
-        return jinja_args
-
     def send_email(
         self,
         to_email,
@@ -93,7 +70,7 @@ class MailClient:
             raise TemplateNotFound(email_id)
 
         if email_id:
-            templates = get_available_templates()
+            templates = MailUtils.get_available_templates()
 
             if not email_id in templates.keys():
                 raise TemplateNotFound(email_id)
@@ -131,7 +108,7 @@ class MailClient:
                 raise IOError from e
 
         try:
-            jinja_args = self.sanitize_jinja_args(to_email, jinja_args)
+            jinja_args = MailUtils.sanitize_jinja_args(to_email, jinja_args)
             message = Mail(
                 from_email=from_email,
                 to_emails=to_email,
@@ -149,15 +126,42 @@ class MailClient:
             raise SendGridException from e
 
 
-def get_available_templates():
-    """Retrieves all available HTML email templates stored in S3
+class MailUtils:
+    @staticmethod
+    def get_available_templates():
+        """Retrieves all available HTML email templates stored in S3
 
-    Args:
-        none
+        Args:
+            none
 
-    Returns:
-        dict: Dictionary mapping email template ID (string) to HTML url (string)
-    """
+        Returns:
+            dict: Dictionary mapping email template ID (string) to HTML url (string)
+        """
 
-    templates = EmailTemplates.query.all()
-    return {template.id: {"url": template.url, "title": template.title} for template in templates}
+        templates = EmailTemplates.query.all()
+        return {
+            template.id: {"url": template.url, "title": template.title} for template in templates
+        }
+
+    @staticmethod
+    def sanitize_jinja_args(to_email, jinja_args):
+        """Do custom server-side replacement of certain Jinja args,
+        for example retrieving email verification tokens from the database
+
+        Args:
+            to_email (str): Email address to send to
+            jinja_args (dict): Dict of arguments to pass to Jinja
+        """
+
+        if jinja_args:
+            jinja_keys = jinja_args.keys()
+            if "link" in jinja_keys:
+                if "reset?" in jinja_args["link"]:
+                    user = User.query.get(to_email)
+                    if user:
+                        jinja_args["link"] = "{base_url}{email_verification_token}".format(
+                            base_url=jinja_args["link"].split("reset?")[0],
+                            email_verification_token=user.token,
+                        )
+
+        return jinja_args
