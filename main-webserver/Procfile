@@ -1,2 +1,4 @@
 web: waitress-serve --url-scheme=https --port=$PORT entry:app
-celery: celery --app entry.celery worker --pool gevent --concurrency $NUM_WORKERS
+# launch a celery worker dyno with loglevel INFO. This gives us some extra info on when a celery
+# task is processed, its runtime, and its return values.
+celery: celery --app entry.celery worker --pool gevent --concurrency $NUM_WORKERS --loglevel INFO
