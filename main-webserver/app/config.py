@@ -174,6 +174,7 @@ class DeploymentConfig:
     SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
+    STRIPE_WEBHOOK_SECRET = property(getter("STRIPE_WEBHOOK_SECRET", fetch=False, raising=False))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
