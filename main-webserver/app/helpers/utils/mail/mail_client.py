@@ -5,7 +5,7 @@ from jinja2 import Template
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from app.helpers.utils.general.logs import fractal_log
-from app.models import EmailTemplates
+from app.models import User, EmailTemplates
 from app.exceptions import TemplateNotFound, SendGridException
 
 # Welcome to the mail client. The mail client uses the Sendgrid API to
@@ -55,7 +55,7 @@ class MailClient:
 
         Args:
             from_email (str): Email address where the email is coming from
-            to_emails (list): List of email addresses to send to
+            to_email (str): Email address to send to
             subject (str): Email title
             html_file (str): file of HTML content e.g. example.html
             email_id (str): Email ID that maps to html_file, found in database.
@@ -70,7 +70,7 @@ class MailClient:
             raise TemplateNotFound(email_id)
 
         if email_id:
-            templates = get_available_templates()
+            templates = MailUtils.get_available_templates()
 
             if not email_id in templates.keys():
                 raise TemplateNotFound(email_id)
@@ -108,6 +108,7 @@ class MailClient:
                 raise IOError from e
 
         try:
+            jinja_args = MailUtils.sanitize_jinja_args(to_email, jinja_args)
             message = Mail(
                 from_email=from_email,
                 to_emails=to_email,
@@ -125,15 +126,46 @@ class MailClient:
             raise SendGridException from e
 
 
-def get_available_templates():
-    """Retrieves all available HTML email templates stored in S3
-
-    Args:
-        none
-
-    Returns:
-        dict: Dictionary mapping email template ID (string) to HTML url (string)
+class MailUtils:
+    """
+    Contains all static methods for MailClient (above)
     """
 
-    templates = EmailTemplates.query.all()
-    return {template.id: {"url": template.url, "title": template.title} for template in templates}
+    @staticmethod
+    def get_available_templates():
+        """Retrieves all available HTML email templates stored in S3
+
+        Args:
+            none
+
+        Returns:
+            dict: Dictionary mapping email template ID (string) to HTML url (string)
+        """
+
+        templates = EmailTemplates.query.all()
+        return {
+            template.id: {"url": template.url, "title": template.title} for template in templates
+        }
+
+    @staticmethod
+    def sanitize_jinja_args(to_email, jinja_args):
+        """Do custom server-side replacement of certain Jinja args,
+        for example retrieving email verification tokens from the database
+
+        Args:
+            to_email (str): Email address to send to
+            jinja_args (dict): Dict of arguments to pass to Jinja
+        """
+
+        if jinja_args:
+            jinja_keys = jinja_args.keys()
+            if "link" in jinja_keys:
+                if "reset?" in jinja_args["link"]:
+                    user = User.query.get(to_email)
+                    if user:
+                        jinja_args["link"] = "{base_url}{email_verification_token}".format(
+                            base_url=jinja_args["link"].split("reset?")[0],
+                            email_verification_token=user.token,
+                        )
+
+        return jinja_args
