@@ -42,7 +42,7 @@ class MailClient:
         """
         self.sendgrid_client = SendGridAPIClient(api_key)
 
-    def sanitize_jinja_args(to_email, jinja_args):
+    def sanitize_jinja_args(self, to_email, jinja_args):
         """Do custom server-side replacement of certain Jinja args,
         for example retrieving email verification tokens from the database
 
@@ -55,7 +55,7 @@ class MailClient:
             jinja_keys = jinja_args.keys()
             if "link" in jinja_keys:
                 if "reset?" in jinja_args["link"]:
-                    user = user.Query.get(to_email)
+                    user = User.query.get(to_email)
                     if user:
                         jinja_args["link"] = "{base_url}{email_verification_token}".format(
                             base_url=jinja_args["link"].split("reset?")[0],
