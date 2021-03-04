@@ -250,7 +250,6 @@ jobs:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
-                  exit 1
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -278,13 +277,13 @@ jobs:
             - name: Notify Slack on Failure
               if: ${{ failure() }}
               run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
                     "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  
-                  exit 1
 
 
     # Container Images: Build & Publish to GitHub Container Registry
