@@ -10,12 +10,7 @@ import PuffLoader from "react-spinners/PuffLoader"
  */
 export const PuffAnimation = () => (
     <div
-        style={{
-            position: "relative",
-            width: "100%",
-            height: "100%",
-            marginTop: "30%",
-        }}
+        className="relative w-screen h-screen"
     >
         <PuffLoader
             css={

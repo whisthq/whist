@@ -5,7 +5,7 @@ import { Redirect, useLocation } from "react-router-dom"
 import { updateAuthFlow } from "store/actions/auth/pure"
 
 import Header from "shared/components/header"
-import ResetView from "pages/auth/reset/components/resetView"
+import ResetView from "pages/auth/pages/reset/components/resetView"
 import { HEADER } from "testing/utils/testIDs"
 
 const Reset = (props: { dispatch: Dispatch<any>; testSearch: string }) => {

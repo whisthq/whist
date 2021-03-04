@@ -9,7 +9,7 @@ import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 import { User, AuthFlow } from "shared/types/reducers"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { updatePassword } from "store/actions/auth/sideEffects"
-import { checkPasswordVerbose } from "pages/auth/constants/authHelpers"
+import { checkPasswordVerbose } from "pages/auth/shared/helpers/authHelpers"
 
 import { E2E_DASHBOARD_IDS, PROFILE_IDS } from "testing/utils/testIDs"
 

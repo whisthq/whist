@@ -11,7 +11,7 @@ import { updateAuthFlow, resetUser } from "store/actions/auth/pure"
 import history from "shared/utils/history"
 import { VERIFY_IDS } from "testing/utils/testIDs"
 
-import AuthContainer from "pages/auth/components/authContainer"
+import AuthContainer from "pages/auth/shared/components/authContainer"
 import { User, AuthFlow } from "shared/types/reducers"
 
 
@@ -32,14 +32,6 @@ export const RetryButton = (props: {
 
     <button
         className="rounded bg-blue dark:bg-mint px-8 py-3 mt-8 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
-        style={{
-<<<<<<< HEAD
-            marginTop: 40,
-            opacity: props.canClick ? 1.0 : 0.6,
-=======
-            opacity: props.checkEmail ? 1.0 : 0.6,
->>>>>>> cd0c3f2 (refactored all ui and some of logic)
-        }}
         onClick={props.onClick}
         disabled={!props.canClick}
     >
@@ -166,7 +158,7 @@ const VerifyView = (props: {
             <AuthContainer title="Check your email for a verification email">
                 <RetryButton
                     text={retryMessage}
-                    checkEmail={validUser && canRetry}
+                    canClick={validUser && canRetry}
                     onClick={sendWithDelay}
                 />
                 <button
@@ -206,7 +198,7 @@ const VerifyView = (props: {
                                 <div data-testid={VERIFY_IDS.RETRY}>
                                     <RetryButton
                                         text={retryMessage}
-                                        checkEmail={validUser && canRetry}
+                                        canClick={validUser && canRetry}
                                         onClick={sendWithDelay}
                                     />
                                 </div>

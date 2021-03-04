@@ -9,10 +9,10 @@ import React, {
 import { connect } from "react-redux"
 
 // Component imports
-import AuthContainer from "pages/auth/components/authContainer"
-import AuthWarning from "pages/auth/components/authWarning"
-import AuthButton from "pages/auth/components/authButton"
-import AuthNavigator from "pages/auth/components/authNavigator"
+import AuthContainer from "pages/auth/shared/components/authContainer"
+import AuthWarning from "pages/auth/shared/components/authWarning"
+import AuthButton from "pages/auth/shared/components/authButton"
+import AuthNavigator from "pages/auth/shared/components/authNavigator"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import Input from "shared/components/input"
 import PasswordConfirmForm from "shared/components/passwordConfirmForm"
@@ -25,7 +25,7 @@ import {
     checkEmailVerbose,
     signupEnabled,
     checkEmail,
-} from "pages/auth/constants/authHelpers"
+} from "pages/auth/shared/helpers/authHelpers"
 import {routeMap, fractalRoute} from "shared/constants/routes"
 
 // Type + constant imports

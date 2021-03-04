@@ -141,7 +141,7 @@ export const passwordForgot = async (username: string, emailToken: string) => {
     })
 }
 
-export const validatePasswordReset = async (token: string) =>
+export const validateAccessToken = async (token: string) =>
     get({ endpoint: "/token/validate", accessToken: token })
 
 export const passwordReset = async (

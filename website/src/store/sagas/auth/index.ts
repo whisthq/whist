@@ -267,7 +267,7 @@ export function* forgotPassword(action: any) {
 
 export function* validateResetToken(action: any) {
     yield select()
-    const { json } = yield call(api.validatePasswordReset, action.token)
+    const { json } = yield call(api.validateAccessToken, action.token)
 
     // at some later point in time we may find it helpful to change strings here to some sort of enum
     if (json && json.status === 200) {

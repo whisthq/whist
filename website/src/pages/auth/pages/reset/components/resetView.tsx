@@ -13,7 +13,7 @@ import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 import {
     checkPassword,
     checkPasswordVerbose,
-} from "pages/auth/constants/authHelpers"
+} from "pages/auth/shared/helpers/authHelpers"
 import history from "shared/utils/history"
 import FractalKey from "shared/types/input"
 import { User, AuthFlow } from "shared/types/reducers"
@@ -30,7 +30,7 @@ import { RESET_IDS } from "testing/utils/testIDs"
 import styles from "styles/auth.module.css"
 import sharedStyles from "styles/shared.module.css"
 
-import AuthContainer from "pages/auth/components/authContainer"
+import AuthContainer from "pages/auth/shared/components/authContainer"
 
 const ResetView = (props: {
     dispatch: Dispatch<any>
