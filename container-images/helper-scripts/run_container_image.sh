@@ -36,6 +36,10 @@ user_id=${FRACTAL_USER_ID:-''}
 # ecs-agent, but we need to simulate it here.
 fractal_id="abcdefabcdefabcdefabcdefabcdef"
 
+# User config encryption token. This would normally be passed in by the webserver,
+# but we'll use a fake key here.
+config_encryption_token="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd"
+
 # Devices to pas into the container
 devices_arg=""
 
@@ -113,7 +117,8 @@ send_start_values_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
-      "user_id": "'"${3:-}"'"
+      "user_id": "'"${3:-}"'",
+      "config_encryption_token": '"$4"'
     }') \
   || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
   echo "Sent DPI/container-ready request to container $1!"
@@ -171,7 +176,7 @@ container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id $app_name
 docker start $container_id
-send_start_values_request $container_id $dpi $user_id
+send_start_values_request $container_id $dpi $user_id $config_encryption_token
 
 # Run the Docker container
 docker exec -it $container_id /bin/bash || true
