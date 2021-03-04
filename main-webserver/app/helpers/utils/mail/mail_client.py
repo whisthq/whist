@@ -42,6 +42,7 @@ class MailClient:
         """
         self.sendgrid_client = SendGridAPIClient(api_key)
 
+    @staticmethod
     def sanitize_jinja_args(self, to_email, jinja_args):
         """Do custom server-side replacement of certain Jinja args,
         for example retrieving email verification tokens from the database
