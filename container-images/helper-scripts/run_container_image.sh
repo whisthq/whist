@@ -108,7 +108,7 @@ check_if_host_service_running() {
 # This is necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the webserver would send this request to the Fractal host service, but for local development we need
 # to send it manually until our development pipeline is fully built
-# Args: container_id, DPI, user_id
+# Args: container_id, DPI, user_id, config_encryption_token
 send_start_values_request() {
   # Send the DPI/container-ready request
   response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_start_values' \
@@ -117,8 +117,8 @@ send_start_values_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
-      "user_id": "'"${3:-}"'",
-      "config_encryption_token": '"$4"'
+      "user_id": "'"$3"'",
+      "config_encryption_token": "'"$4"'"
     }') \
   || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
   echo "Sent DPI/container-ready request to container $1!"
@@ -176,7 +176,7 @@ container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id $app_name
 docker start $container_id
-send_start_values_request $container_id $dpi $user_id $config_encryption_token
+send_start_values_request $container_id $dpi "$user_id" "$config_encryption_token" 
 
 # Run the Docker container
 docker exec -it $container_id /bin/bash || true

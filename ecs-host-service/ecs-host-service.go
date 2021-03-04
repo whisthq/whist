@@ -559,7 +559,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		//    this means that it's the user's first run and they don't have any settings
 		//    stored for this application yet.
 		if err != nil {
-			if !strings.Contains(string(getConfigOutput), "does not exist") {
+			if strings.Contains(string(getConfigOutput), "does not exist") {
 				logger.Infof("No config retrieved from \"aws s3 cp\", but no fatal error: %s", getConfigOutput)
 				return nil
 			} else {
