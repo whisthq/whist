@@ -29,23 +29,10 @@ from tests.maintenance.test_webserver_maintenance import (
     try_end_maintenance,
 )
 
-
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
-
-
-@pytest.mark.container_serial
-def check_test_database():
-    if os.getenv("HEROKU_APP_NAME") == "main-webserver":
-        fractal_log(
-            function="test_aws_container",
-            label=None,
-            logs="Not using staging database or resource group! Forcefully stopping tests.",
-            level=logging.WARNING,
-        )
-        assert False
 
 
 @pytest.mark.container_serial
