@@ -630,6 +630,8 @@ int main(int argc, char* argv[]) {
         const char* relative_client_app_path = "/../../Fractal.exe";
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+
+        // Get the path of the current executable
         int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
         if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
             // Get directory from executable path
@@ -637,6 +639,8 @@ int main(int argc, char* argv[]) {
             if (last_dir_slash_ptr) {
                 *last_dir_slash_ptr = '\0';
             }
+
+            // Get the relative path to the client app from the current executable location
             size_t protocol_path_len = strlen(client_app_path);
             if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
                              relative_client_app_path_len + 1)) {
@@ -652,14 +656,19 @@ int main(int argc, char* argv[]) {
         //    Fractal.app/Contents/protocol-build/Fractal.app/Contents/MacOS/Fractal
         // We want to reference client app at Fractal.app/Contents/MacOS/Fractal
         const char* relative_client_app_path = "/../../../../MacOS/Fractal";
-        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
-        int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+        int relative_client_app_path_len = (int) strlen(relative_client_app_path);
+        // Because of this cast, make SURE that relative_client_app_path_len <= MAX_APP_PATH_LEN
+        uint32_t max_protocol_path_len = (uint32_t) (MAX_APP_PATH_LEN - relative_client_app_path_len - 1);
+
+        // Get the path of the current executable
         if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
             // Get directory from executable path
             char* last_dir_slash_ptr = strrchr(client_app_path, '/');
             if (last_dir_slash_ptr) {
                 *last_dir_slash_ptr = '\0';
             }
+
+            // Get the relative path to the client app from the current executable location
             int protocol_path_len = strlen(client_app_path);
             if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
                              relative_client_app_path_len + 1)) {
