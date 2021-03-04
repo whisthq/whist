@@ -82,7 +82,7 @@ jobs:
                   if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
                       echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
                   else
-                      echo "GITHUB_BRANCH=${github.base_ref}" >> $GITHUB_ENV
+                      echo "GITHUB_BRANCH=${{github.base_ref}}" >> $GITHUB_ENV
                   fi
 
             - name: Log GitHub context
