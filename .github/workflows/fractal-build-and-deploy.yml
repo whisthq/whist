@@ -251,7 +251,7 @@ jobs:
               working-directory: main-webserver
               run: |
                   exit 1
-                  
+
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -266,7 +266,7 @@ jobs:
                   # we only get here if previous step has exit code 0
                   echo "Put webserver at $WEBSERVER_URL into maintenance mode"
 
-            - name: Notify Slack on Success
+            - name: Notify Slack success
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
                   BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
@@ -276,7 +276,7 @@ jobs:
                     "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
-            - name: Notify Slack on Failure
+            - name: Notify Slack on failure
               if: ${{ failure() }}
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
@@ -284,9 +284,8 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
@@ -1002,11 +1001,11 @@ jobs:
 
                   # use a bash script to start update and poll for success
                   bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
-                  
+
                   # we only get here if previous step has exit code 0
                   echo "Webserver at $WEBSERVER_URL exited maintenance mode"
 
-            - name: Notify Slack
+            - name: Notify Slack on success
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
@@ -1014,7 +1013,7 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
-            - name: Notify Slack on Failure
+            - name: Notify Slack on failure
               if: ${{ failure() }}
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
@@ -1022,5 +1021,5 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
