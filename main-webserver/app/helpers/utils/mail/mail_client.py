@@ -47,6 +47,7 @@ class MailClient:
         for example retrieving email verification tokens from the database
 
         Args:
+            to_email (str): Email address to send to
             jinja_args (dict): Dict of arguments to pass to Jinja
         """
 
@@ -76,7 +77,7 @@ class MailClient:
 
         Args:
             from_email (str): Email address where the email is coming from
-            to_emails (list): List of email addresses to send to
+            to_email (str): Email address to send to
             subject (str): Email title
             html_file (str): file of HTML content e.g. example.html
             email_id (str): Email ID that maps to html_file, found in database.
