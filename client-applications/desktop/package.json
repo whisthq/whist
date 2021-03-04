@@ -12,7 +12,7 @@
         "artifactName": "Fractal.${ext}",
         "asar": true,
         "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
-        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
+        "copyright": "Copyright � Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -358,7 +358,7 @@
         "set-prod-env-staging": "node ./generateEnv.ts staging",
         "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
         "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
-        "start-renderer-dev": "cross-env NODE_ENV=development webpack-dev-server --config configs/webpack.config.renderer.dev.babel.js",
+        "start-renderer-dev": "cross-env NODE_ENV=development webpack serve --config configs/webpack.config.renderer.dev.babel.js",
         "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
         "test-watch": "yarn test --watch",
         "ts": "tsc"
