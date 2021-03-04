@@ -649,7 +649,7 @@ int main(int argc, char* argv[]) {
 #elif __APPLE__
         // This executable is located at
         //    Fractal.app/Contents/protocol-build/Fractal.app/Contents/MacOS/Fractal
-        // We want the to reference client app at Fractal.app/Contents/MacOS/Fractal
+        // We want to reference client app at Fractal.app/Contents/MacOS/Fractal
         const char* relative_client_app_path = "/../../../../MacOS/Fractal";
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
