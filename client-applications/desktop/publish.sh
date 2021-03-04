@@ -46,6 +46,7 @@ else
     notarize=$publish
     python3 setVersion.gyp $bucket $version $notarize
 
+    # Make FractalClient and create its app bundle
     cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
     make FractalClient
@@ -59,38 +60,29 @@ else
     cp -r ../../protocol/desktop/build64/Darwin/. protocol-build/Fractal.app/Contents/MacOS
     mv protocol-build/Fractal.app/Contents/MacOS/FractalClient protocol-build/Fractal.app/Contents/MacOS/Fractal
 
-    # Note: we no longer add the logo to the executable because the logo gets set
-    # in the protocol directly via SDL
+    # Copy over the FFmpeg dylibs
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/Fractal.app/Contents/MacOS
+    cp ../../protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/Fractal.app/Contents/MacOS
 
-    if [[ "$OSTYPE" == "linux-gnu" ]]; then
-        # Linux Ubuntu
-        sudo chmod +x protocol-build/desktop/Fractal
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        # Mac OSX
-        # copy over the FFmpeg dylibs
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/Fractal.app/Contents/MacOS
-        cp ../../protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/Fractal.app/Contents/MacOS
+    # Copy FractalClient Info.plist
+    cp ../../protocol/desktop/executable_assets/MacAppInfo.plist protocol-build/Fractal.app/Contents/Info.plist
 
-        # Copy FractalClient Info.plist
-        cp ../../protocol/desktop/executable_assets/MacAppInfo.plist protocol-build/Fractal.app/Contents/Info.plist
-
-        # Sign each FractalClient binary
-        for filename in protocol-build/Fractal.app/Contents/MacOS/*.dylib; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
-        for filename in protocol-build/Fractal.app/Contents/MacOS/loading/*; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/Fractal.app/Contents/MacOS/crashpad_handler
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/Fractal.app/Contents/MacOS/Fractal
-    fi
+    # Sign each FractalClient binary
+    for filename in protocol-build/Fractal.app/Contents/MacOS/*.dylib; do
+        codesign -f -v -s "Fractal Computers, Inc." $filename
+    done
+    for filename in protocol-build/Fractal.app/Contents/MacOS/loading/*; do
+        codesign -f -v -s "Fractal Computers, Inc." $filename
+    done
+    codesign -f -v -s "Fractal Computers, Inc." protocol-build/Fractal.app/Contents/MacOS/crashpad_handler
+    codesign -f -v -s "Fractal Computers, Inc." protocol-build/Fractal.app/Contents/MacOS/Fractal
 
     # Initialize yarn first
     yarn -i
