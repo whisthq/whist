@@ -9,10 +9,14 @@ import LoadingMessage from "../pages/launcher/constants/loadingMessages"
  * Initializes ipc listeners upon window creation
  * @param mainWindow browser window
  * @param showMainWindow determines whether to display the window or not
+ * @param loginWindow the window object in which the login window is displayed
+ * @param paymentWindow the window object in which the payment window will be displayed
  */
 export const initiateFractalIPCListeners = (
     mainWindow: BrowserWindow | null = null,
-    showMainWindow: boolean
+    showMainWindow: boolean,
+    loginWindow: BrowserWindow | null = null,
+    paymentWindow: BrowserWindow | null = null
 ) => {
     const electron = require("electron")
     const ipc = electron.ipcMain
@@ -42,8 +46,14 @@ export const initiateFractalIPCListeners = (
     })
 
     ipc.on(FractalIPC.LOAD_BROWSER, (event: IpcMainEvent, argv: any) => {
-        const url = argv
-        const win = new BrowserWindow({ width: 800, height: 600 })
+	/*
+	    Arguments:
+	        argv[0]: url to launch the browser window with
+		argv[1]: name of the window in which this url should open
+	*/
+        const url = argv[0]
+	const name = argv[1]
+        let win = new BrowserWindow({ width: 800, height: 600 })
         win.on("close", () => {
             if (win) {
                 event.preventDefault()
@@ -51,15 +61,41 @@ export const initiateFractalIPCListeners = (
         })
         win.loadURL(url)
         win.show()
+
+	if (name === "login") {
+	    loginWindow = win
+	} else if (name === "payment") {
+	    paymentWindow = win
+	}
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event: IpcMainEvent, argv: any) => {
-        BrowserWindow.getAllWindows().forEach((win) => {
-            if (win.id !== 1) {
-                win.close()
-            }
-        })
+    ipc.on(FractalIPC.CLOSE_BROWSER, (event, argv) => {
+        /*
+            Arguments:
+                argv[0]: name of the browser window to close
+        */
+        const name = argv[0]
+        if (name === "login") {
+            loginWindow?.close()
+        } else if (name === "payment") {
+            paymentWindow?.close()
+        }
+        event.returnValue = argv
+    })
+
+    ipc.on(FractalIPC.GET_ENCRYPTION_KEY, (event, argv) => {
+        //console.log("get encryption key plz")
+        if (loginWindow !== null) {
+            console.log("get encryption key plz")
+
+            loginWindow.webContents
+                .executeJavaScript(
+                    'document.getElementById("encryptionKey").textContent',
+                    true
+                )
+                .then((result) => console.log(result))
+        }
         event.returnValue = argv
     })
 

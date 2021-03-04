@@ -141,7 +141,8 @@ export const Launcher = (props: {
 
     useEffect(() => {
         if (!loginClosed) {
-            ipc.sendSync(FractalIPC.CLOSE_OTHER_WINDOWS)
+            ipc.sendSync(FractalIPC.GET_ENCRYPTION_KEY)
+            ipc.sendSync(FractalIPC.CLOSE_BROWSER, ["login"])
             setLoginClosed(true)
         }
     }, [loginClosed])
