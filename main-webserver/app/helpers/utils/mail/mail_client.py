@@ -127,6 +127,10 @@ class MailClient:
 
 
 class MailUtils:
+    """
+    Contains all static methods for MailClient (above)
+    """
+
     @staticmethod
     def get_available_templates():
         """Retrieves all available HTML email templates stored in S3
