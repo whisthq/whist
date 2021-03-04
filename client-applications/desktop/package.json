@@ -306,6 +306,9 @@
         "setupFiles": [
             "./internals/scripts/CheckBuildsExist.js"
         ],
+        "setupFilesAfterEnv": [
+            "./internals/tests/set-test-timeout.js"
+        ],
         "testURL": "http://localhost/"
     },
     "keywords": [
