@@ -5,6 +5,11 @@ import { launchProtocol, writeStream } from "../shared/utils/files/exec"
 import { protocolOnStart, protocolOnExit } from "./launchProtocol"
 import LoadingMessage from "../pages/launcher/constants/loadingMessages"
 
+/**
+ * Initializes ipc listeners upon window creation
+ * @param mainWindow browser window
+ * @param showMainWindow determines whether to display the window or not
+ */
 export const initiateFractalIPCListeners = (
     mainWindow: BrowserWindow | null = null,
     showMainWindow: boolean
@@ -81,6 +86,7 @@ export const initiateFractalIPCListeners = (
 
     ipc.on(FractalIPC.SEND_CONTAINER, (event, argv) => {
         const container = argv
+        console.log("SENDING TO PROTOCOL", container)
         const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
         writeStream(protocol, `ports?${portInfo}`)
         writeStream(protocol, `private-key?${container.secretKey}`)
