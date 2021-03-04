@@ -136,6 +136,6 @@ describe("Login Page", () => {
         const body = email.body
 
         // checks if email body contains token
-        expect(body).toContain("Need to Reset?")
+        expect(body).toContain("Forgot your password?")
     })
 })

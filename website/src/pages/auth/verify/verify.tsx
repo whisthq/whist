@@ -9,6 +9,14 @@ import VerifyView from "pages/auth/verify/components/verifyView"
 import { User, AuthFlow } from "shared/types/reducers"
 
 const Verify = (props: { user: User }) => {
+    /*
+        A wrapper component for the VerifyView component.
+
+        Contains the logic to decide whether to display the /verify page of the website
+    
+        Arguments:
+            user (User): User from Redux state
+    */
     const { user } = props
 
     const search = useLocation().search

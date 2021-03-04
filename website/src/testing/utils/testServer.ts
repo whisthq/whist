@@ -45,21 +45,29 @@ export const handlers = [
             })
         )
     }),
-    // mock verification email sent
-    rest.post(
-        config.url.WEBSERVER_URL + "/mail/verification",
-        (req, res, ctx) => {
-            return res(
-                ctx.json({
-                    status: 200,
-                })
-            )
-        }
-    ),
+    // mock email sent
+    rest.post(config.url.WEBSERVER_URL + "/mail", (req, res, ctx) => {
+        return res(
+            ctx.json({
+                verified: true,
+                status: 200,
+            })
+        )
+    }),
     rest.post(config.url.WEBSERVER_URL + "/account/update", (req, res, ctx) => {
         return res(
             ctx.json({
                 verified: true,
+            })
+        )
+    }),
+    rest.get(config.url.WEBSERVER_URL + "/token/validate", (req, res, ctx) => {
+        return res(
+            ctx.json({
+                status: 200,
+                user: {
+                    user_id: "test@test.co",
+                },
             })
         )
     }),

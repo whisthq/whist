@@ -43,6 +43,7 @@ function* emailLogin(action: {
         if (!json.verified) {
             yield call(sendVerificationEmail, {
                 email: action.email,
+                name: json.name,
                 token: json.verification_token,
             })
 
@@ -141,6 +142,7 @@ function* emailSignup(action: {
 
         yield call(sendVerificationEmail, {
             email: action.email,
+            name: action.name,
             token: json.verification_token,
         })
 
@@ -164,10 +166,11 @@ function* emailSignup(action: {
 
 export function* sendVerificationEmail(action: any) {
     const state = yield select()
-    if (action.email !== "" && action.token !== "") {
+    if (action.email !== "" && action.name !== "" && action.token !== "") {
         const { json, response } = yield call(
             api.emailVerification,
             action.email,
+            action.name,
             action.token
         )
 
