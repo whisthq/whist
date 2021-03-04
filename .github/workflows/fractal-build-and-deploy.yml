@@ -250,6 +250,8 @@ jobs:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
+                  exit 1
+                  
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -987,6 +989,7 @@ jobs:
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
+                  exit 1
                   # this only runs if there are no failures in the workflow so far
                   # if there are, the webserver stays in maintenance mode
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
@@ -999,17 +1002,10 @@ jobs:
 
                   # use a bash script to start update and poll for success
                   bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
-                  if [[ $? =~ 1 ]]; then
-                    echo "Failed to end maintenance"
+                  
+                  # we only get here if previous step has exit code 0
+                  echo "Webserver at $WEBSERVER_URL exited maintenance mode"
 
-                    # Notify slack of failure
-                    curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-                    exit 1
-
-                  fi
             - name: Notify Slack
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
@@ -1017,3 +1013,14 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack on Failure
+              if: ${{ failure() }}
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
