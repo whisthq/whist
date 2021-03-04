@@ -1,10 +1,8 @@
-from flask import Blueprint, jsonify  # , request
+from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
-
-# from app.constants.config import ENDPOINT_SECRET
-from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
+from app.constants.http_codes import FORBIDDEN
 
 from app.helpers.blueprint_helpers.payment.stripe_post import (
     addSubscriptionHelper,
@@ -86,31 +84,3 @@ def payment(action, **kwargs):
     elif action == "retrieve":
         return retrieveHelper(body["email"])
     return jsonify({"status": FORBIDDEN}), FORBIDDEN
-
-
-## TODO
-# in the future we may want to re-add endpoints to let them add products
-# basically, there are products which they can buy multiple units of
-# right now, not really so it's not implemented
-# there should be some scaffolding you can use in the client to make it happen
-
-## TODO not sure what this is used by exactly
-# @stripe_bp.route("/stripe/hooks", methods=["POST"])
-# def hooks(**kwargs):
-#     body = request.get_data()
-
-#     # Endpoint for stripe webhooks
-#     sigHeader = request.headers["Stripe-Signature"]
-#     endpointSecret = ENDPOINT_SECRET
-#     event = None
-
-#     try:
-#         event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
-#     except ValueError:
-#         # Invalid payload
-#         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
-#     except stripe.error.SignatureVerificationError:
-#         # Invalid signature
-#         return jsonify({"status": "Invalid signature"}), FORBIDDEN
-
-#     return webhookHelper(event)
