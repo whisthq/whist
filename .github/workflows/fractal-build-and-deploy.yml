@@ -250,6 +250,7 @@ jobs:
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
+                  exit 1
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
@@ -261,18 +262,10 @@ jobs:
                   # use a bash script to start update and poll for success
                   bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN start
 
-                  if [[ $? =~ 1 ]]; then
-                    echo "Failed to start maintenance"
+                  # we only get here if previous step has exit code 0
+                  echo "Put webserver at $WEBSERVER_URL into maintenance mode"
 
-                    # Notify slack of failure
-                    curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                    
-                    exit 1
-
-                  fi
-            - name: Notify Slack
+            - name: Notify Slack on Success
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
                   BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
@@ -281,6 +274,18 @@ jobs:
                   --data-urlencode \
                     "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack on Failure
+              if: ${{ failure() }}
+              run: |
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"@channel Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  
+                  exit 1
+
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository

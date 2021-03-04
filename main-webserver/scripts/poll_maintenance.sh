@@ -15,7 +15,9 @@ if [ $TYPE != "start" ] && [ $TYPE != "end" ]; then
     exit 1
 fi
 
-for try in {0..100}
+# 450 iterations * 2 sec sleep = 900 sec = 15 minutes (not counting CURL time)
+# that should be enough time for tasks to stop
+for try in {0..450}
 do
     echo "Try $try: $TYPE maintenance..."
     resp=$(curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST "$WEBSERVER_URL/aws_container/${TYPE}_update")
@@ -27,5 +29,5 @@ do
     fi
 done
 
-exit 1
+exit 0
 
