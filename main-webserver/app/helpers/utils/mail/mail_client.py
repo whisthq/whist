@@ -7,6 +7,7 @@ from sendgrid.helpers.mail import Mail
 from app.helpers.utils.general.logs import fractal_log
 from app.models import User, EmailTemplates
 from app.exceptions import TemplateNotFound, SendGridException
+from app.helpers.utils.general.tokens import get_access_tokens
 
 # Welcome to the mail client. The mail client uses the Sendgrid API to
 # send emails to users.
@@ -162,10 +163,12 @@ class MailUtils:
             if "link" in jinja_keys:
                 if "reset?" in jinja_args["link"]:
                     user = User.query.get(to_email)
+                    access_token, _ = get_access_tokens(user.user_id)
+
                     if user:
                         jinja_args["link"] = "{base_url}{email_verification_token}".format(
-                            base_url=jinja_args["link"].split("reset?")[0],
-                            email_verification_token=user.token,
+                            base_url=jinja_args["link"].split("reset?")[0] + "reset?",
+                            email_verification_token=access_token,
                         )
 
         return jinja_args
