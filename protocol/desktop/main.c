@@ -656,26 +656,31 @@ int main(int argc, char* argv[]) {
         //    Fractal.app/Contents/protocol-build/Fractal.app/Contents/MacOS/Fractal
         // We want to reference client app at Fractal.app/Contents/MacOS/Fractal
         const char* relative_client_app_path = "/../../../../MacOS/Fractal";
-        int relative_client_app_path_len = (int) strlen(relative_client_app_path);
-        // Because of this cast, make SURE that relative_client_app_path_len <= MAX_APP_PATH_LEN
-        uint32_t max_protocol_path_len = (uint32_t) (MAX_APP_PATH_LEN - relative_client_app_path_len - 1);
+        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
 
-        // Get the path of the current executable
-        if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
-            // Get directory from executable path
-            char* last_dir_slash_ptr = strrchr(client_app_path, '/');
-            if (last_dir_slash_ptr) {
-                *last_dir_slash_ptr = '\0';
-            }
+        // The cast from signed int to unsigned uint32_t requires us to check that
+        //     relative_client_app_path_len < MAX_APP_PATH_LEN before proceeding.
+        if (relative_client_app_path_len < MAX_APP_PATH_LEN) {
+            uint32_t max_protocol_path_len =
+                (uint32_t)(MAX_APP_PATH_LEN - relative_client_app_path_len - 1);
 
-            // Get the relative path to the client app from the current executable location
-            int protocol_path_len = strlen(client_app_path);
-            if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
-                             relative_client_app_path_len + 1)) {
-                // If `execl` fails, then the program proceeds, else defers to client app
-                LOG_INFO("Client app path: %s", client_app_path);
-                if (execl(client_app_path, "Fractal", NULL) < 0) {
-                    LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
+            // Get the path of the current executable
+            if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
+                // Get directory from executable path
+                char* last_dir_slash_ptr = strrchr(client_app_path, '/');
+                if (last_dir_slash_ptr) {
+                    *last_dir_slash_ptr = '\0';
+                }
+
+                // Get the relative path to the client app from the current executable location
+                int protocol_path_len = strlen(client_app_path);
+                if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
+                                 relative_client_app_path_len + 1)) {
+                    // If `execl` fails, then the program proceeds, else defers to client app
+                    LOG_INFO("Client app path: %s", client_app_path);
+                    if (execl(client_app_path, "Fractal", NULL) < 0) {
+                        LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
+                    }
                 }
             }
         }
