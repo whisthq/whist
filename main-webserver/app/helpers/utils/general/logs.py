@@ -22,7 +22,7 @@ class _ExtraHandler(logging.StreamHandler):
             - "label" (default: None)
 
         Args:
-            record: provided by logging library, contains info for a specific logging instance
+            record: provided by logging library, contains info for a specific logging invocation
         """
         func = record.__dict__["function"] if "function" in record.__dict__ else record.funcName
         label = record.__dict__["label"] if "label" in record.__dict__ else None
@@ -38,6 +38,9 @@ class _CeleryHandler(logging.StreamHandler):
     def emit(self, record: logging.LogRecord):
         """
         This is called prior to any logging. We try to parse the task_id using celery built-ins.
+
+        Args:
+            record: provided by logging library, contains info for a specific logging invocation
         """
         task = get_current_task()
         task_id = None
