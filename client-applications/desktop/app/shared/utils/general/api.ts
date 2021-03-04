@@ -6,8 +6,7 @@ import {
     FractalHTTPCode,
 } from "shared/types/api"
 import { fractalBackoff } from "shared/utils/general/helpers"
-
-const fetch = require("node-fetch")
+import fetch from "node-fetch"
 
 const checkResponse = (response: { status: number }): boolean => {
     /*
@@ -73,7 +72,6 @@ export const apiPost = async (
             const response = await fractalBackoff(() =>
                 fetch(fullUrl, {
                     method: FractalHTTPRequest.POST,
-                    mode: "cors",
                     headers: {
                         "Content-Type": FractalHTTPContent.JSON,
                         Authorization: `Bearer ${token}`,
@@ -119,7 +117,6 @@ export const apiGet = async (
             const response = await fractalBackoff(() =>
                 fetch(fullUrl, {
                     method: FractalHTTPRequest.GET,
-                    mode: "cors",
                     headers: {
                         "Content-Type": FractalHTTPContent.JSON,
                         Authorization: `Bearer ${token}`,
@@ -164,7 +161,6 @@ export const apiDelete = async (
             const response = await fractalBackoff(() =>
                 fetch(fullUrl, {
                     method: FractalHTTPRequest.DELETE,
-                    mode: "cors",
                     headers: {
                         "Content-Type": FractalHTTPContent.JSON,
                         Authorization: `Bearer ${token}`,
@@ -211,7 +207,6 @@ export const graphQLPost = async (
         const response = await fractalBackoff(() =>
             fetch(config.url.GRAPHQL_HTTP_URL, {
                 method: "POST",
-                mode: "cors",
                 headers: {
                     Authorization: accessToken
                         ? `Bearer ${accessToken}`
