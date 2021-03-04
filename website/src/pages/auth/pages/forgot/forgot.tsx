@@ -77,9 +77,9 @@ const Forgot = (props: {
         }
     }, [authFlow.forgotStatus, authFlow.forgotEmailsSent])
 
-    // useEffect(() => {
-    //     setGotResponse(false)
-    // }, [])
+    useEffect(() => {
+        setGotResponse(false)
+    }, [])
 
     if (processing) {
         return (
@@ -88,19 +88,10 @@ const Forgot = (props: {
             </div>
         )
     } else if (gotResponse) {
-        // for testing purposes, only to get the reset password token to navigate
-        if (emailToken && emailToken?.length > 0) {
-            return (
-                <div>
-                    <p data-testid={AUTH_IDS.RESETTOKEN}>{authFlow.token}</p>
-                    <p data-testid={AUTH_IDS.RESETURL}>{authFlow.url}</p>
-                </div>
-            )
-        }
         return (
             <AuthContainer title={authFlow.forgotStatus ? authFlow.forgotStatus : ""}>
                 <div className="mt-8 text-center">
-                    Didn't receive an email? Please check your spam folder.
+                    If you don't see an email, please check your spam folder.
                     To receive another email, click{" "}
                     <span
                         onClick={() => setGotResponse(false)}

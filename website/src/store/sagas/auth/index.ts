@@ -243,7 +243,7 @@ export function* forgotPassword(action: any) {
         if (json.verified) {
             yield put(
                 updateAuthFlow({
-                    forgotStatus: "Email sent",
+                    forgotStatus: "We've sent you a password reset email",
                     forgotEmailsSent: emailsSent + 1,
                 })
             )

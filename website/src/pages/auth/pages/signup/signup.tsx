@@ -70,7 +70,7 @@ const Signup = (props: {
             setProcessing(true)
             dispatch(emailSignup(email, name, password))
         } else {
-            dispatch(updateAuthFlow({signupWarning: "Please fill out all fields"}))
+            dispatch(updateAuthFlow({signupWarning: "Please fill out all the fields."}))
         }
     }
 

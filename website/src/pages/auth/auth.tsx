@@ -20,14 +20,14 @@ const Auth = (props: {
         Wrapper component for all authentication components (sign in,
         client-app redirect)
  
-        Quick summary of the authentication flow here: https://www.notion.so/tryfractal/How-does-our-auth-flow-work-94ae6ae18742491795bb2f565fedc827
+        Quick summary of the authentication flow here: 
+            https://www.notion.so/tryfractal/How-does-our-auth-flow-work-94ae6ae18742491795bb2f565fedc827
 
         Arguments:
             dispatch (Dispatch<any>): Action dispatcher
             user (User): User from Redux state
             authFlow (AuthFlow): AuthFlow from Redux state
             location: a Location object from react router
-            testLocation: a test Location object for testing this component
             testSignup: a test boolean to determine whether to test signup or not
             emailToken (String): email verification token
 
@@ -38,9 +38,8 @@ const Auth = (props: {
     location: {
         pathname: string
     }
-    testLocation?: any
 }) => {
-    const { user, authFlow, dispatch } = props
+    const { user, authFlow, location, dispatch } = props
 
     const [redirectToCallback, setRedirectToCallback] = useState(false)
     const [callback, setCallback] = useState("")
@@ -56,8 +55,6 @@ const Auth = (props: {
     })
 
     useEffect(() => {
-        let location = props.testLocation ? props.testLocation : props.location
-
         // Clear any previous callback URL
         dispatch(
             updateAuthFlow({
@@ -77,14 +74,14 @@ const Auth = (props: {
         }
 
         setCallbackChecked(true)
-    }, [dispatch, props.location.pathname, props.testLocation, props.location])
+    }, [dispatch, props.location.pathname, props.location])
 
     // If a callback was provided, save it to Redux
     useEffect(() => {
         if (callback && callback !== "") {
             dispatch(updateAuthFlow({ callback: callback }))
         }
-    }, [callback, dispatch, authFlow.callback, user.accessToken])
+    }, [callback, dispatch])
 
     // If Redux callback found and we have not redirected to the callback yet, then redirect
     useEffect(() => {
@@ -105,13 +102,11 @@ const Auth = (props: {
                 throw error
             })
 
-            if (!props.testLocation) window.location.replace(authFlow.callback)
-
+            window.location.replace(authFlow.callback)
             setRedirectToCallback(true)
         }
     }, [
         authFlow.callback,
-        props.testLocation,
         redirectToCallback,
         user,
         user.accessToken,
