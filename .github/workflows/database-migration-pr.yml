@@ -1,20 +1,14 @@
-# workflows/database-migration.yml
+# workflows/database-migration-pr.yml
 #
-# Main Webserver: Migrate Database
+# Main Webserver: Migrate Database Pull Request
 # Compare the schema of the live database with
 # main-webserver/db-migration/schema.sql
-# If schema changes are detected, perform the migration
-# on PR merge
+# If schema changes are detected, notify PR
 
-name: "Database Migration"
+name: "Database Migration Pull Request"
 
 on:
-    # pull_request event is triggered by default on three different
-    # "types" of activites: opened, synchronize, and reopened.
-    # We need ours to also run on "closed", so we explicity add
-    # that type.
     pull_request:
-        types: [closed, opened, synchronize, reopened]
         branches:
             - master
             - staging
@@ -31,8 +25,6 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
-            SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-            SLACK_CHANNEL: "alerts"
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GITHUB_ISSUE: ${{ github.event.number }}
             GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
@@ -278,51 +270,3 @@ jobs:
                                       code=sql_diff,
                                       lang="python")
                     raise Exception(os.environ["TITLE_ERROR"])
-
-            # Perform the database migration if this pull request is being
-            # merged.
-            - name: Perform database migration
-              if: success() && github.event.pull_request.merged == true
-              run: |
-                  psql --single-transaction --file ${PATH_DIFF} \
-                  ${{ steps.db-url.outputs.url }}
-
-            - name: Notify Slack
-              if: success() && github.event.pull_request.merged == true
-              shell: python3 {0}
-              run: |
-                  import os
-                  import sys
-                  import urllib.parse
-                  sys.path.append(os.environ["PATH_HELPERS"])
-                  from notifications import slack_debug
-
-                  # No notifications if the migration diff
-                  # is empty, so exit early
-                  with open(os.environ["PATH_DIFF"]) as f:
-                      if not f.read():
-                          sys.exit(0)
-
-                  github_issue = os.environ["GITHUB_ISSUE"]
-                  github_branch = os.environ["GITHUB_BRANCH"]
-
-
-                  def issue_url(number):
-                      return urllib.parse.urljoin(os.environ["GITHUB_PR_URL"],
-                                                  number)
-
-
-                  slack_redirect = (f"You can take a look at PR #{github_issue} "
-                                     + f"here:\n{issue_url(github_issue)}")
-
-
-                  title = "Database migration performed"
-                  body = (f"PR #{github_issue} was merged and triggered "
-                          + "an automatic schema migration on branch: "
-                          + f"`{github_branch}`.\n\n"
-                          + "Check the GitHub Actions logs for details. "
-                          + slack_redirect)
-
-                  slack_debug(os.environ["SLACK_CHANNEL"],
-                              body,
-                              title=title)
