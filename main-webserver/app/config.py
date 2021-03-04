@@ -185,16 +185,35 @@ class DeploymentConfig:
             Either "dev", "production", or "staging".
         """
 
+        config_tables = {
+            "production": "production",
+            "staging": "staging",
+            "development": "dev",
+        }
+
+        return config_tables[self.DEPLOYMENT_STAGE]
+
+    @property
+    def DEPLOYMENT_STAGE(self):  # pylint: disable=invalid-name
+        """Determine whether we are running our code in dev mode, staging mode or production mode.
+
+        We need to know what deployment stage our code is in so we can choose the correct family
+        of task definitions to deploy to our clusters.
+
+        Returns:
+            Either "production", "staging", "development".
+        """
+
         app_name = os.environ.get("HEROKU_APP_NAME")
 
         if app_name == "fractal-prod-server":
-            table = "production"
+            stage = "production"
         elif app_name == "fractal-staging-server":
-            table = "staging"
+            stage = "staging"
         else:
-            table = "dev"
+            stage = "development"
 
-        return table
+        return stage
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
