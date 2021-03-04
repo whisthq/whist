@@ -44,6 +44,15 @@ let customURL: string | null = null
 // Toggles whether to show the Electron main window
 const showMainWindow = false
 
+// TODO: make some sort of way to manage windows
+// NB: The two variables below should be declared with the let keyword because
+// although they are never modified in this file, they are modified in
+// app/main/initiateFractalIPCListeners.ts.
+// This is the window where the login window will be displayed
+let loginWindow: BrowserWindow | null = null /* eslint-disable-line prefer-const */
+// This is the window where the payment window will be displayed
+let paymentWindow: BrowserWindow | null = null /* eslint-disable-line prefer-const */
+
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
 if (process.env.NODE_ENV === "production") {
@@ -80,7 +89,12 @@ const launchWindow = async () => {
     // mainWindow.webContents.openDevTools()
     initiateAutoUpdateListeners(mainWindow)
     initiateWindowListeners(mainWindow, customURL, showMainWindow)
-    initiateFractalIPCListeners(mainWindow, showMainWindow)
+    initiateFractalIPCListeners(
+        mainWindow,
+        showMainWindow,
+        loginWindow,
+        paymentWindow
+    )
 }
 
 // Calls the create window above, conditional on the app not already running (single instance lock)
