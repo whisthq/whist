@@ -29,5 +29,5 @@ do
     fi
 done
 
-exit 0
+exit 1
 
