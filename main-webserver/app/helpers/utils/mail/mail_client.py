@@ -48,7 +48,7 @@ class MailClient:
 
         Args:
             jinja_args (dict): Dict of arguments to pass to Jinja
-        """ 
+        """
 
         if jinja_args:
             jinja_keys = jinja_args.keys()
@@ -58,7 +58,7 @@ class MailClient:
                     if user:
                         jinja_args["link"] = "{base_url}{email_verification_token}".format(
                             base_url=jinja_args["link"].split("reset?")[0],
-                            email_verification_token=user.token
+                            email_verification_token=user.token,
                         )
 
         return jinja_args
