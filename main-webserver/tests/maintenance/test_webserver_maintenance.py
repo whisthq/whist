@@ -72,8 +72,35 @@ def mock_endpoints(monkeypatch):
     monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
 
-def try_problematic_endpoint(client, authorized, region_name: str, endpoint_type: str):
+def try_problematic_endpoint(request, authorized, region_name: str, endpoint_type: str):
+    """Send an HTTP request to an endpoint that conflicts with maintenance mode.
+
+    The endpoints that conflict with maintenance mode are /aws_container/assign_container,
+    /aws_container/create_cluster, and /container/assign. This function may be used to send a
+    request to any of those endpoints.
+
+    Args:
+        request: An instance of the pytest FixtureRequest class. In practice, this should just be
+            the value of the built-in request fixture. We use request.getfixturevalue() to retrieve
+            the values of other test fixtures so we don't have to pass them as arguments.
+        authorized: An instance of the User data model representing the user as whom the requests
+            web requests sent by the test client are sent. In practice, this user should be created
+            by the make_authorized_user test fixture.
+        region_name: The value to associate with the "region_name" key in the request that should
+            be sent (e.g. "us-east-1").
+        endpoint_type: A code name for the endpoint to which the request should be sent. A value of
+            "te_ac" indicates that the request should be sent to the
+            /aws_container/assign_container endpoint, "te_cc" indicates that the request should be
+            sent to /aws_container/create_cluster, and "a_c" indicates that it should be sent to
+            /container/assign.
+
+    Returns:
+        An instance of the Flask HTTP Response wrapper representing the test server's response.
+    """
+
     assert endpoint_type in ["te_cc", "te_ac", "a_c"]
+
+    client = request.getfixturevalue("client")
 
     resp = None
     if endpoint_type == "te_cc":
@@ -89,12 +116,7 @@ def try_problematic_endpoint(client, authorized, region_name: str, endpoint_type
         resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
     elif endpoint_type == "te_ac":
-        # TODO: make this a standardized var in tests
-        deploy_env = "dev"
-        if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
-            deploy_env = "prod"
-        elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
-            deploy_env = "staging"
+        deploy_env = request.getfixturevalue("deployment_stage")
 
         # test_endpoint assign_container
         assign_container_body = dict(
@@ -131,6 +153,7 @@ def test_maintenance_mode(
     make_authorized_user,
     set_valid_subscription,
     mock_endpoints,
+    request,
 ):
     """
     problematic task: create cluster or assign container, from /aws_container or /container/assign
@@ -164,7 +187,7 @@ def test_maintenance_mode(
     # -- Start the test -- #
 
     # start a task
-    resp_start = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
+    resp_start = try_problematic_endpoint(request, authorized, "us-east-1", "te_cc")
     assert resp_start.status_code == ACCEPTED
 
     # let celery actually start handling the task but not finish
@@ -185,7 +208,7 @@ def test_maintenance_mode(
     assert _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
-    resp_fail = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
+    resp_fail = try_problematic_endpoint(request, authorized, "us-east-1", "te_cc")
     assert resp_fail.status_code == WEBSERVER_MAINTENANCE
 
     # poll original celery task finish
@@ -202,14 +225,14 @@ def test_maintenance_mode(
     assert resp.json["success"] is True
 
     # new requests should still fail out
-    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
+    resp = try_problematic_endpoint(request, authorized, "us-east-1", "te_cc")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, "us-east-1", "te_ac")
+    resp = try_problematic_endpoint(request, authorized, "us-east-1", "te_ac")
     assert resp.status_code == WEBSERVER_MAINTENANCE
-    resp = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
+    resp = try_problematic_endpoint(request, authorized, "us-east-1", "a_c")
     assert resp.status_code == WEBSERVER_MAINTENANCE
     # test that tasks in other regions should also fail out
-    resp = try_problematic_endpoint(client, authorized, "us-east-2", "te_ac")
+    resp = try_problematic_endpoint(request, authorized, "us-east-2", "te_ac")
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # now end maintenance
@@ -221,7 +244,7 @@ def test_maintenance_mode(
     assert not _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
 
     # tasks should work again
-    resp_final = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")
+    resp_final = try_problematic_endpoint(request, authorized, "us-east-1", "a_c")
     assert resp_final.status_code == ACCEPTED
 
     task = queryStatus(client, resp_final, timeout=0.5)  # 0.1 minutes = 6 seconds
