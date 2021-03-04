@@ -284,7 +284,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
@@ -1021,5 +1021,5 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow `${{ github.run_id }}`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
