@@ -66,7 +66,7 @@ check_if_host_service_running() {
 # This is necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the webserver would send this request to the Fractal host service, but for local development we need
 # to send it manually until our development pipeline is fully built
-# Args: container_id, DPI, user_id
+# Args: container_id, DPI, user_id, config_encryption_token
 send_start_values_request() {
     echo "Sending container start values request to container $1!"
     # Send the DPI/container-ready request
