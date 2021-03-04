@@ -52,8 +52,8 @@ jobs:
             # substring that is the name of the branch.
             - name: Set GITHUB_BRANCH environment variable
               run: |
-                  if [ "${{ github.event_name }}" = "pull_request" ]; then
-                      echo "GITHUB_BRANCH=${{ github.base_ref }}" >> $GITHUB_ENV
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
                   else
                       ref="${{ github.event.ref }}"
                       echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
