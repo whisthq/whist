@@ -106,8 +106,8 @@ var containerAppNames map[string]string = make(map[string]string)
 // keep track of the mapping from FractalID to UserID
 var containerUserIDs map[string]string = make(map[string]string)
 
-// keep track of the mapping from FractalID to user encryption key
-var userEncryptionKeys map[string]string = make(map[string]string)
+// keep track of the mapping from FractalID to user config encryption token
+var configEncryptionTokens map[string]string = make(map[string]string)
 
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
@@ -457,7 +457,7 @@ func saveUserConfig(fractalID string) {
 		return
 	}
 
-	userEncryptionKey, ok := userEncryptionKeys[fractalID]
+	configEncryptionToken, ok := configEncryptionTokens[fractalID]
 	if !ok {
 		logger.Infof("No user encryption key found for FractalID %v", fractalID)
 		return
@@ -493,7 +493,7 @@ func saveUserConfig(fractalID string) {
 			"/usr/bin/openssl", "aes-256-cbc", "-e",
 			"-in", decTarPath,
 			"-out", encTarPath,
-			"-pass", "pass:" + userEncryptionKey, "-pbkdf2")
+			"-pass", "pass:" + configEncryptionToken, "-pbkdf2")
 		encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 		if err != nil {
 			// If the config could not be encrypted, don't upload
@@ -512,7 +512,7 @@ func saveUserConfig(fractalID string) {
 
 	// remove app name and encryption key mapping for container on fractalID
 	delete(containerAppNames, fractalID)
-	delete(userEncryptionKeys, fractalID)
+	delete(configEncryptionTokens, fractalID)
 
 	// clear contents of config directory
 	os.RemoveAll(configPath)
@@ -528,7 +528,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	containerID := containerIDs[(uint16)(req.HostPort)]
 	fractalID := fractalIDs[containerID]
 	appName := containerAppNames[fractalID]
-	userEncryptionKey := userEncryptionKeys[fractalID]
+	configEncryptionToken := configEncryptionTokens[fractalID]
 	configPath := fractalDir + fractalID + "/" + userConfigs
 
 	// Make directory to move configs to
@@ -542,7 +542,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Store app name and user ID in maps
 	containerUserIDs[fractalID] = string(userID)
-	userEncryptionKeys[fractalID] = string(req.UserEncryptionKey)
+	configEncryptionTokens[fractalID] = string(req.ConfigEncryptionToken)
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
@@ -570,7 +570,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 			"/usr/bin/openssl", "aes-256-cbc", "-d",
 			"-in", encTarPath,
 			"-out", decTarPath,
-			"-pass", "pass:" + userEncryptionKey, "-pbkdf2")
+			"-pass", "pass:" + configEncryptionToken, "-pbkdf2")
 		decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 		if err != nil {
 			return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
