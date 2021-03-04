@@ -25,6 +25,7 @@ def create_app(testing=False):
     Returns:
         A Flask application instance.
     """
+
     app = Flask(__name__.split(".")[0])
 
     # We want to look up CONFIG_MATRIX.location.action
@@ -34,16 +35,9 @@ def create_app(testing=False):
 
     app.config.from_object(config())
 
-    # Set up Sentry - only log errors on prod (main) and staging webservers
-    env = None
-    if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
-        env = "production"
-    elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
-        env = "staging"
-    if env is not None:
-        sentry_dsn = app.config["SENTRY_DSN"]
-        # errors out on failure
-        init_and_ensure_sentry_connection(env, sentry_dsn)
+    # Only set up a connection to a Sentry event ingestion endpoint in production and staging.
+    if app.config["DEPLOYMENT_STAGE"] in ("production", "staging"):
+        init_and_ensure_sentry_connection(app.config["DEPLOYMENT_STAGE"], app.config["SENTRY_DSN"])
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
