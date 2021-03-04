@@ -41,6 +41,48 @@ jobs:
               working-directory: client-applications/desktop
               run: yarn lint-check
 
+    # Testing
+    # Runs the Client Application test suite.
+    client-application-integration-tests:
+        name: Integration Testing
+        # As of 2021-05-04, tests hang forever when run on Ubuntu. This is fine since tests should ideally
+        # be run on our supported environments, which are macOS and Windows.
+        #
+        # Though we do not use "jest-electron", the need to use macOS (or engage in more extensive configuration
+        # for Linux) is supported by their README: https://github.com/hustcc/jest-electron/blob/b58874/README.md#ci
+        runs-on: macos-10.15
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js 14
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 14
+
+            - name: Run `yarn -i` in /desktop
+              working-directory: client-applications/desktop
+              run: yarn -i
+
+            - name: Run `yarn test` in /desktop
+              working-directory: client-applications/desktop
+              run: |
+                  cat <<MSG
+                  ==============================
+                  Jest may report:
+
+                    > The following files share their name; please adjust your hasteImpl:
+                    >   * <rootDir>/app/package.json
+                    >   * <rootDir>/package.json"
+
+                  This warning can likely be ignored based on:
+                    1. The test suites execute fine with it.
+                    2. This GitHub issue stating it's a no-op outside of Facebook https://github.com/facebook/jest/issues/8114
+                  ==============================
+                  MSG
+                  yarn test-ci
+
     # Building
     # Check that the Client Applications build.
     client-applications-check-pr-building:
