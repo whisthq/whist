@@ -11,7 +11,7 @@ ADMIN_TOKEN=${2}
 TYPE=${3}
 
 if [ $TYPE != "start" ] && [ $TYPE != "end" ]; then
-    echo "Second argument was $TYPE. Must be 'start' or 'end'"
+    echo "Third argument was $TYPE. Must be 'start' or 'end'"
     exit 1
 fi
 
