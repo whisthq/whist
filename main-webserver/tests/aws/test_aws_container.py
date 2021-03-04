@@ -66,24 +66,17 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_assign_container(client, authorized, monkeypatch):
+def test_assign_container(client, deployment_stage, authorized, monkeypatch):
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
-
-    # TODO: make this a standardized var in tests
-    deploy_env = "dev"
-    if os.getenv("HEROKU_APP_NAME") == "fractal-prod-server":
-        deploy_env = "prod"
-    elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
-        deploy_env = "staging"
-
     fractal_logger.info("Starting to assign container in cluster {}".format(pytest.cluster_name))
+
     resp = client.post(
         "/aws_container/assign_container",
         json=dict(
             username=authorized.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
-            task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
+            task_definition_arn="fractal-{}-browsers-chrome".format(deployment_stage),
         ),
     )
 

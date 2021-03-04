@@ -188,6 +188,27 @@ def container(cluster, user):
     return _container
 
 
+@pytest.fixture(scope="session")
+def deployment_stage(app):
+    """Select the environment in which we should run our tests.
+
+    Tests for production code are run against "prod" AWS resources. Tests for staging code are run
+    against "staging" AWS resources. Tests for "dev" code and local code are run against "dev" AWS
+    resources.
+
+    Returns:
+        Either "dev", "staging", or "prod".
+    """
+
+    deployment_stages = {
+        "production": "prod",
+        "staging": "staging",
+        "development": "dev",
+    }
+
+    return deployment_stages[app.config["DEPLOYMENT_STAGE"]]
+
+
 @pytest.fixture
 def user(request):
     """Create a test user.
