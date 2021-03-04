@@ -363,6 +363,7 @@
         "start-renderer-dev": "cross-env NODE_ENV=development webpack serve --config configs/webpack.config.renderer.dev.babel.js",
         "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
         "test-watch": "yarn test --watch",
+        "test-ci": "yarn test --ci --logHeapUsage --verbose",
         "ts": "tsc"
     },
     "version": "1.0.0"
