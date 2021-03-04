@@ -53,7 +53,7 @@ elif [ $ARG == "setup-db" ]; then
     if [ -f db_schema.sql ]; then
         echo "Found existing schema and data sql scripts. Skipping fetching db."
     else
-        export POSTGRES_REMOTE_URI=$POSTGRES_FROM_URL
+        export POSTGRES_FROM_URI=$POSTGRES_FROM_URL
         bash fetch_db.sh
     fi
 
