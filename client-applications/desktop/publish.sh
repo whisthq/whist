@@ -79,7 +79,7 @@ else
         cp ../../protocol/desktop/build64/Darwin/libsentry.dylib protocol-build/Fractal.app/Contents/MacOS
 
         # Copy FractalClient Info.plist
-        cp MacAppInfo.plist protocol-build/Fractal.app/Contents/Info.plist
+        cp ../../protocol/desktop/executable_assets/MacAppInfo.plist protocol-build/Fractal.app/Contents/Info.plist
 
         # Sign each FractalClient binary
         for filename in protocol-build/Fractal.app/Contents/MacOS/*.dylib; do

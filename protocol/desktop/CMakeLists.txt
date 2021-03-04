@@ -27,6 +27,13 @@ add_executable(FractalClient
         video.c
         )
 
+# On Windows during client app packaging, FractalClient should have icon set
+if(USE_CLIENT_APP_ICON AND ${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    target_sources(FractalClient
+    PUBLIC executable_assets/WindowsAppIcon.rc
+    )
+endif()
+
 # copy the sentry shared library to the build folder after the build
 add_custom_command(
         TARGET FractalClient POST_BUILD
