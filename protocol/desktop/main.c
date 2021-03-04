@@ -51,6 +51,7 @@ Includes
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 #ifdef __APPLE__
+#include <mach-o/dyld.h>
 #include "../fractal/utils/mac_utils.h"
 #endif  // __APPLE__
 
