@@ -100,10 +100,10 @@ export const fractalBackoff = <T>(fn: () => Promise<T>) => {
 
 export const generateToken = async () => {
     /*
-            Generate a unique one-time use login token
+        Generate a unique one-time use login token
  
-            Arguments:
-                none     
+        Arguments:
+            none     
     */
     const crypto = require("crypto")
 
