@@ -50,7 +50,8 @@ export const Login = (props: {
         onCompleted: () => {
             ipc.sendSync(
                 FractalIPC.LOAD_BROWSER,
-                `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`
+                [`${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`,
+                "login"]
             )
         },
         onError: (err) => {
