@@ -160,7 +160,9 @@ export const Launcher = (props: {
         // For S3 protocol client log upload
         const logPath = require("path").join(
             FractalDirectory.getRootDirectory(),
-            require("os").platform() === "darwin" ? "protocol-build/Fractal.app/Contents/MacOS/log.txt" : "protocol-build/desktop/log.txt"
+            require("os").platform() === "darwin"
+                ? "protocol-build/Fractal.app/Contents/MacOS/log.txt"
+                : "protocol-build/desktop/log.txt"
         )
 
         const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`
