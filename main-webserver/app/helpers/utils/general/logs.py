@@ -1,5 +1,7 @@
 import logging
 
+from celery._state import get_current_task
+
 
 class _ExtraHandler(logging.StreamHandler):
     """
@@ -20,12 +22,35 @@ class _ExtraHandler(logging.StreamHandler):
             - "label" (default: None)
 
         Args:
-            record: provided by logging library, contains info for a specific logging instance
+            record: provided by logging library, contains info for a specific logging invocation
         """
         func = record.__dict__["function"] if "function" in record.__dict__ else record.funcName
         label = record.__dict__["label"] if "label" in record.__dict__ else None
         full_msg = self.message_format.format(function=func, label=label, message=record.msg)
         record.msg = full_msg
+
+
+class _CeleryHandler(logging.StreamHandler):
+    def __init__(self):
+        super().__init__()
+        self.message_format = "{task_id} | {message}"
+
+    def emit(self, record: logging.LogRecord):
+        """
+        This is called prior to any logging. We try to parse the task_id using celery built-ins.
+
+        Args:
+            record: provided by logging library, contains info for a specific logging invocation
+        """
+        task = get_current_task()
+        task_id = None
+        if task and task.request:
+            task_id = task.request.id
+
+        # only reformat the message if these are provided
+        if task_id is not None:
+            full_msg = self.message_format.format(task_id=task_id, message=record.msg)
+            record.msg = full_msg
 
 
 def _create_fractal_logger():
@@ -40,6 +65,10 @@ def _create_fractal_logger():
     # add extra handler
     extra_handler = _ExtraHandler()
     logger.addHandler(extra_handler)
+
+    # add celery handler
+    celery_handler = _CeleryHandler()
+    logger.addHandler(celery_handler)
     return logger
 
 
