@@ -5,7 +5,7 @@ from jinja2 import Template
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from app.helpers.utils.general.logs import fractal_log
-from app.models import EmailTemplates
+from app.models import User, EmailTemplates
 from app.exceptions import TemplateNotFound, SendGridException
 
 # Welcome to the mail client. The mail client uses the Sendgrid API to
@@ -41,6 +41,27 @@ class MailClient:
             api_key (str): SendGrid private API key
         """
         self.sendgrid_client = SendGridAPIClient(api_key)
+
+    def sanitize_jinja_args(to_email, jinja_args):
+        """Do custom server-side replacement of certain Jinja args,
+        for example retrieving email verification tokens from the database
+
+        Args:
+            jinja_args (dict): Dict of arguments to pass to Jinja
+        """ 
+
+        if jinja_args:
+            jinja_keys = jinja_args.keys()
+            if "link" in jinja_keys:
+                if "reset?" in jinja_args["link"]:
+                    user = user.Query.get(to_email)
+                    if user:
+                        jinja_args["link"] = "{base_url}{email_verification_token}".format(
+                            base_url=jinja_args["link"].split("reset?")[0],
+                            email_verification_token=user.token
+                        )
+
+        return jinja_args
 
     def send_email(
         self,
@@ -108,6 +129,7 @@ class MailClient:
                 raise IOError from e
 
         try:
+            jinja_args = self.sanitize_jinja_args(to_email, jinja_args)
             message = Mail(
                 from_email=from_email,
                 to_emails=to_email,
