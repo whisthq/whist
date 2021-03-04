@@ -56,6 +56,8 @@ CELERY_CONFIG = {
         },
     },
     "task_track_started": True,
+    # this stops celery from overriding our logger
+    "worker_hijack_root_logger": False,
 }
 
 
