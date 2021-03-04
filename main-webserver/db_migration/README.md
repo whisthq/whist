@@ -21,7 +21,7 @@ This means that standard `git` discipline applies to how we manage our database 
 
 1. Create a branch off `origin/dev` to work on your feature.
 2. Run and test your branch with a local copy of the `dev` database. Change the schema of your local database until fits your needs.
-3. Run `pg_dump` on your local database, using the output to overwrite`schema.sql` in your branch. This new version of `schema.sql` is the "source of truth" for your branch.
+3. Run `pg_dump` on your local database, using the output to overwrite `schema.sql` in your branch. This new version of `schema.sql` is the "source of truth" for your branch.
 4. Commit `schema.sql` and open a PR. A GitHub Action (`database-migration.yml`) will "diff" your `schema.sql` with `origin/dev/main-webserver/db-migration/schema.sql`, placing the "diff" in the PR conversation for convenience. This "diff" represents the changes that are necessary to migrate the `dev` database to conform to your branch's schema changes.
 5. The "diff" is reviewed and discussed by the team. If the schema changes are approved, your PR is accepted and merged.
 6. Upon merging your PR to `origin/dev`, GitHub Actions automatically executes the "diff" SQL commands on the "live" `dev` database, e.g. `fractal-dev-server`. The database migration is now complete!
@@ -43,7 +43,7 @@ This means that you can't rely on a regular `git diff` on the `.sql` schema dump
 When the GitHub Actions migration workflow is triggered by a pull request, a container is spun up from a PostgreSQL image. The steps taken in the container are roughly as follows:
 
 1. Dump the schema from the live database, determined by the `HEROKU_APP_NAME` environment variable.
-2. Load the live database ("current") schema (e.g. `fractal-dev-server`) into a fresh PostgreSQL database (**DB_A**).
+2. Load the live database ("current") schema (on dev branch this would be `fractal-dev-server`) into a fresh PostgreSQL database (**DB_A**).
 3. Read the schema from `schema.sql` in the ("merging") PR branch. Load the `schema.sql` schema into a fresh PostgreSQL database (**DB_B**).
 4. Run `migra` diff tool on **DB_A** ("current") and **DB_B** ("merging"), produce a **DIFF** `.sql` file. **DIFF** contains the SQL commands necessary to perform the migration.
 5. Run the SQL commands in **DIFF** on **DB_A**. If **DB_A** matches **DB_B**, the **DIFF** SQL commands are valid.
