@@ -36,7 +36,8 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
     const upgrade = () => {
         ipc.sendSync(
             FractalIPC.LOAD_BROWSER,
-            `${config.url.FRONTEND_URL}/dashboard/settings/payment`
+            [`${config.url.FRONTEND_URL}/dashboard/settings/payment`,
+            "payment"]
         )
     }
 
