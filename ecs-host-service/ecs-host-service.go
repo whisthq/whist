@@ -487,7 +487,6 @@ func saveUserConfig(fractalID string) {
 			logger.Infof("Tar config directory output: %s", tarConfigOutput)
 		}
 
-		//openssl aes-256-cbc -e -in userConfigs/fractal-app-config-test.tar.lz4 -out testaes.enc -pass file:aes-test-password.txt -pbkdf2
 		// At this point, config archive must exist: decrypt app config
 		encryptConfigCmd := exec.Command(
 			"/usr/bin/openssl", "aes-256-cbc", "-e",
@@ -499,6 +498,8 @@ func saveUserConfig(fractalID string) {
 			// If the config could not be encrypted, don't upload
 			logger.Errorf("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
 			return
+		} else {
+			logger.Infof("Encrypted config to %s", encTarPath)
 		}
 
 		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
@@ -528,7 +529,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 	containerID := containerIDs[(uint16)(req.HostPort)]
 	fractalID := fractalIDs[containerID]
 	appName := containerAppNames[fractalID]
-	configEncryptionToken := configEncryptionTokens[fractalID]
+	configEncryptionToken := req.ConfigEncryptionToken
 	configPath := fractalDir + fractalID + "/" + userConfigs
 
 	// Make directory to move configs to
@@ -542,7 +543,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 
 	// Store app name and user ID in maps
 	containerUserIDs[fractalID] = string(userID)
-	configEncryptionTokens[fractalID] = string(req.ConfigEncryptionToken)
+	configEncryptionTokens[fractalID] = string(configEncryptionToken)
 
 	// If userID is not set, we don't want to try to retrieve configs from S3
 	if userID != "" {
@@ -574,6 +575,8 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 		if err != nil {
 			return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
+		} else {
+			logger.Infof("Decrypted config to %s", decTarPath)
 		}
 
 		// Delete original encrypted config
