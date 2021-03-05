@@ -14,8 +14,6 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#include "../utils/string_utils.h"
-
 // we control this to specify the normalization to uinput during device creation; we run into
 // annoying overflow issues if this is on the order of magnitude 0xffff
 #define UINPUT_MOUSE_COORDINATE_RANGE 0xfff
@@ -305,7 +303,7 @@ const int linux_mouse_buttons[6] = {
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
 int recv_fds(int sock, int* fds, unsigned n_fds) {
     int buffer_size = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
-    void* buffer = malloc(buffer_size);
+    void* buffer = safe_malloc(buffer_size);
 
     struct msghdr msghdr;
     char nothing;
@@ -375,11 +373,14 @@ InputDevice* create_input_device() {
     LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
              fds[2]);
 
-    InputDevice* input_device = malloc(sizeof(InputDevice));
-    memset(input_device, 0, sizeof(InputDevice));
+    InputDevice* input_device = safe_malloc(sizeof(InputDevice));
     input_device->fd_absmouse = fds[0];
     input_device->fd_relmouse = fds[1];
     input_device->fd_keyboard = fds[2];
+    memset(input_device->keyboard_state, 0, sizeof(input_device->keyboard_state));
+    input_device->caps_lock = false;
+    input_device->num_lock = false;
+    input_device->mouse_has_moved = false;
 
     return input_device;
 }
@@ -449,8 +450,6 @@ int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pr
     return 0;
 }
 
-bool mouse_has_moved = false;
-
 int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
     if (relative) {
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_X, x);
@@ -465,7 +464,7 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
             (int)(y * (int32_t)UINPUT_MOUSE_COORDINATE_RANGE / (int32_t)MOUSE_SCALING_FACTOR));
         emit_input_event(input_device->fd_absmouse, EV_KEY, BTN_TOOL_PEN, 1);
         emit_input_event(input_device->fd_absmouse, EV_SYN, SYN_REPORT, 0);
-        mouse_has_moved = true;
+        input_device->mouse_has_moved = true;
     }
     return 0;
 }
@@ -491,11 +490,11 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     // mouse movement so it actually gets registered. This may cause issues for other apps like
     // Blender, but I am not proficient enough at Blender to tell.
     // See https://bbs.archlinux.org/viewtopic.php?id=223470.
-    if (mouse_has_moved) {
+    if (input_device->mouse_has_moved) {
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
         emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
-        mouse_has_moved = false;
+        input_device->mouse_has_moved = false;
     }
     return 0;
 }

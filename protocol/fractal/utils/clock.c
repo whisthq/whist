@@ -18,7 +18,6 @@ relate different events across server and client.
 #include <string.h>
 
 #include "logging.h"
-#include "string_utils.h"
 #include "../core/fractal.h"
 #include "clock.h"
 
@@ -26,19 +25,10 @@ relate different events across server and client.
 int get_utc_offset();
 #endif
 
-#if defined(_WIN32)
-LARGE_INTEGER frequency;
-bool set_frequency = false;
-#endif
-
 #define US_IN_MS 1000.0
 
 void start_timer(clock* timer) {
 #if defined(_WIN32)
-    if (!set_frequency) {
-        QueryPerformanceFrequency(&frequency);
-        set_frequency = true;
-    }
     QueryPerformanceCounter(timer);
 #else
     // start timer
@@ -49,6 +39,8 @@ void start_timer(clock* timer) {
 double get_timer(clock timer) {
 #if defined(_WIN32)
     LARGE_INTEGER end;
+    LARGE_INTEGER frequency;
+    QueryPerformanceFrequency(&frequency);
     QueryPerformanceCounter(&end);
     double ret = (double)(end.QuadPart - timer.QuadPart) / frequency.QuadPart;
 #else
@@ -212,10 +204,13 @@ void set_timezone_from_utc(int utc, int dst_flag) {
 #ifndef _WIN32
     // TODO come back to this when we have sudo password on linux server
     //    char cmd[5000];
-    //    // Negative one because UNIX UTC values are flipped from usual. West
-    //    is positive and east is negative. sprintf(cmd,"echo {INSERT PASSWORD
-    //    HERE WHEN WE CAN} | sudo -S timedatectl set-timezoneEtc/GMT%d\0",
-    //    -1*utc);
+    //    // Negative one because UNIX UTC values are flipped from usual.
+    //    West is positive and east is negative.
+    //    sprintf(cmd,
+    //    "echo {INSERT PASSWORD HERE WHEN WE CAN} |
+    //     sudo -S timedatectl set-timezoneEtc/GMT%d\0",
+    //     -1*utc);
+    LOG_ERROR("UNIMPLEMENTED: Tried to call set_timezone_from_utc from Windows");
     return;
 #else
     if (dst_flag > 0) {

@@ -43,7 +43,6 @@ format strings.
 #include <signal.h>
 #endif
 
-#include "string_utils.h"
 #include "../core/fractal.h"
 #include "../network/network.h"
 #include "logging.h"

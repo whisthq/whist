@@ -12,6 +12,7 @@
 
 // @brief Linux keycodes for replaying SDL user inputs on server
 // @details index is SDL keycode, value is Linux keycode
+#define GetX11KeySym(sdl_keycode) x11_keysyms[sdl_keycode]
 const int x11_keysyms[NUM_KEYCODES] = {
     0,                        // SDL keycodes start at index 4
     0,                        // SDL keycodes start at index 4
@@ -307,8 +308,6 @@ void destroy_input_device(InputDevice* input_device) {
     free(input_device);
     return;
 }
-
-#define GetX11KeySym(sdl_keycode) x11_keysyms[sdl_keycode]
 
 int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
     switch (sdl_keycode) {
