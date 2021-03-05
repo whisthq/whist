@@ -175,6 +175,7 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
+    SENTRY_DSN = property(getter("AWS_TASKS_PER_INSTANCE"))
 
     @property
     def config_table(self):
