@@ -24,11 +24,6 @@ from ..patches import function
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
-from tests.maintenance.test_webserver_maintenance import (
-    try_start_maintenance,
-    try_end_maintenance,
-)
-
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
@@ -406,7 +401,7 @@ def test_update_region(client, monkeypatch):
     assert resp.status_code == BAD_REQUEST
 
     # then, we put server into maintenance mode
-    resp = try_start_maintenance(client, "us-east-1")
+    resp = client.post("/aws_container/start_update", json={"region_name": "us-east-1"})
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -430,7 +425,7 @@ def test_update_region(client, monkeypatch):
         assert False
 
     # finally, we end maintenance mode
-    resp = try_end_maintenance(client, "us-east-1")
+    resp = client.post("/aws_container/end_update", json={"region_name": "us-east-1"})
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
     # -- webserver requests end -- #
