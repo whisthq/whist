@@ -33,7 +33,7 @@ typedef struct Client {
     bool is_host;         // protected by state lock
 
     /* USER INFO */
-    int username;  // not lock protected
+    int user_id;  // not lock protected
 
     /* NETWORK */
     SocketContext UDP_context;  // protected by global is_active_rwlock
@@ -162,7 +162,7 @@ int reap_timed_out_clients(double timeout);
 
 /**
  * @brief                          Finds the client ID of the active client
- *                                 object associated with a username, if there is
+ *                                 object associated with a user ID, if there is
  *                                 one.
  *
  * @param user_id                  User ID to be searched for.
@@ -177,7 +177,7 @@ int reap_timed_out_clients(double timeout);
  *                                 finding an associated ID does not mean
  *                                 failure.
  */
-int try_find_client_id_by_username(int username, bool *found, int *id);
+int try_find_client_id_by_user_id(int user_id, bool *found, int *id);
 
 /**
  * @brief                          Finds an available client ID.

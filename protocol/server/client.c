@@ -195,7 +195,7 @@ int reap_timed_out_clients(double timeout) {
     return ret;
 }
 
-int try_find_client_id_by_username(int user_id, bool *found, int *id) {
+int try_find_client_id_by_user_id(int user_id, bool *found, int *id) {
     /*
         Finds the client ID of the active client object associated with
         a user_id, if there is one.

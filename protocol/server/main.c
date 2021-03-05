@@ -710,16 +710,16 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     }
 
     FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
-    int username = fcmsg->discoveryRequest.user_id;
+    int user_id = fcmsg->discoveryRequest.user_id;
 
     read_lock(&is_active_rwlock);
     bool found;
     int ret;
-    if ((ret = try_find_client_id_by_username(username, &found, client_id)) != 0) {
+    if ((ret = try_find_client_id_by_user_id(user_id, &found, client_id)) != 0) {
         LOG_ERROR(
-            "Failed to try to find client ID by username. "
-            " (Username: %s)",
-            username);
+            "Failed to try to find client ID by user ID. "
+            " (User ID: %s)",
+            user_id);
     }
     if (ret == 0 && found) {
         read_unlock(&is_active_rwlock);
@@ -739,7 +739,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
         if (ret != 0) return -1;
     }
 
-    clients[*client_id].username = username;
+    clients[*client_id].user_id = user_id;
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
     // TODO: Should check for is_controlling, but happens after this function call
