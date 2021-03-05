@@ -29,6 +29,7 @@ dpi=${FRACTAL_DPI:-96}
 
 # User ID to use for user config retrieval
 # TODO: This flow will have to change when we actually encrypt the configs.
+# (https://github.com/fractal/fractal/issues/1136)
 user_id=${FRACTAL_USER_ID:-''}
 
 
