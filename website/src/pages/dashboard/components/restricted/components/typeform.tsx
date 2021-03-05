@@ -1,7 +1,7 @@
 import React from "react"
 import { connect } from "react-redux"
 import Modal from "react-modal"
-import {FaTimes} from "react-icons/fa"
+import { FaTimes } from "react-icons/fa"
 import { useMutation } from "@apollo/client"
 import { ReactTypeformEmbed } from "react-typeform-embed"
 
@@ -39,9 +39,9 @@ const Typeform = (props: {
     const [updateInvite] = useMutation(UPDATE_INVITE, {
         context: {
             headers: {
-                Authorization: `Bearer ${user.accessToken}`
-            }
-        }
+                Authorization: `Bearer ${user.accessToken}`,
+            },
+        },
     })
 
     const onSubmit = () => {
@@ -53,8 +53,8 @@ const Typeform = (props: {
             updateInvite({
                 variables: {
                     userID: user.userID,
-                    typeformSubmitted: true
-                }
+                    typeformSubmitted: true,
+                },
             }).catch((err) => {
                 debugLog(err)
             })
@@ -63,11 +63,17 @@ const Typeform = (props: {
 
     return (
         <div className="text-center">
-            <Modal isOpen={show} onRequestClose={handleClose} style ={{content: {
-                maxWidth: 900,
-                maxHeight: 600,
-                margin: "auto"
-            }}}>
+            <Modal
+                isOpen={show}
+                onRequestClose={handleClose}
+                style={{
+                    content: {
+                        maxWidth: 900,
+                        maxHeight: 600,
+                        margin: "auto",
+                    },
+                }}
+            >
                 <div>
                     <ReactTypeformEmbed
                         url={config.url.TYPEFORM_URL}
@@ -75,11 +81,14 @@ const Typeform = (props: {
                         onSubmit={onSubmit}
                         style={{
                             maxWidth: 900,
-                            maxHeight: 600
+                            maxHeight: 600,
                         }}
                     />
-                    <div className="absolute right-4 top-2 w-8 h-8 z-50 cursor-pointer" onClick={handleClose}>
-                        <FaTimes className="relative top-2 left-2 hover:text-blue duration-500 text-2xl"/>
+                    <div
+                        className="absolute right-4 top-2 w-8 h-8 z-50 cursor-pointer"
+                        onClick={handleClose}
+                    >
+                        <FaTimes className="relative top-2 left-2 hover:text-blue duration-500 text-2xl" />
                     </div>
                 </div>
             </Modal>
