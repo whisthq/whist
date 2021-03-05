@@ -311,27 +311,6 @@ def test_cancel_no_stripe_throws(client, not_customer):
         client.cancel_subscription(email)
 
 
-"""Here we test application of the discount in a valid case and an invalid case."""
-
-
-def test_discount(client):
-    # ming is going to have a hell of a lot of credits
-    dummy = User.query.get(dummy_referrer)
-    original_credits = dummy.credits_outstanding
-
-    client.discount(dummy)
-    dummy = User.query.get(dummy_referrer)
-    new_credits = dummy.credits_outstanding
-
-    assert new_credits == 1 or not original_credits is None and new_credits == original_credits + 1
-
-    client.discount(None)
-    dummy = User.query.get(dummy_referrer)
-    newest_credits = dummy.credits_outstanding
-
-    assert newest_credits == new_credits
-
-
 """Here we test functionality of adding a card and deleting a card for valid users and users without
 stripe customer ids.
 """

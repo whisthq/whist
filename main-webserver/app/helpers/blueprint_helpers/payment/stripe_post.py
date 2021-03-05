@@ -128,7 +128,6 @@ def retrieveHelper(email):
                 {
                     "subscription": None,
                     "source": None,
-                    "creditsOutstanding": 0,
                     "account_locked": False,
                     "customer": None,
                 }
