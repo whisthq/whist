@@ -11,11 +11,13 @@ ADMIN_TOKEN=${2}
 TYPE=${3}
 
 if [ $TYPE != "start" ] && [ $TYPE != "end" ]; then
-    echo "Second argument was $TYPE. Must be 'start' or 'end'"
+    echo "Third argument was $TYPE. Must be 'start' or 'end'"
     exit 1
 fi
 
-for try in {0..100}
+# 450 iterations * 2 sec sleep = 900 sec = 15 minutes (not counting CURL time)
+# that should be enough time for tasks to stop
+for try in {0..450}
 do
     echo "Try $try: $TYPE maintenance..."
     resp=$(curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST "$WEBSERVER_URL/aws_container/${TYPE}_update")
