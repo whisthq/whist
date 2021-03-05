@@ -17,8 +17,8 @@ on:
     workflow_dispatch:
 
 jobs:
-    shell-scripts-linting-beautysh:
-        name: Lint Shell Scripts with Beautysh
+    shell-scripts-linting-main:
+        name: Lint Shell Scripts
         runs-on: ubuntu-20.04
 
         steps:
@@ -29,3 +29,9 @@ jobs:
               uses: illvart/beautysh-action@latest
               with:
                   args: "**/*.sh --indent-size 4 --check"
+
+            - name: Check that All Bash Scripts Start with "#!/bin/bash"
+              run: .github/workflows/helpers/shell-scripts/check-shebang.sh
+
+            - name: Check that All Bash Scripts Contain "set -Eeuo pipefail"
+              run: .github/workflows/helpers/shell-scripts/check-pipefail.sh

@@ -3,6 +3,9 @@
 # This script defines a general-purpose function to install any Brave Browser extension
 # by passing in the extension ID and name
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # Brave Browser extension installer
 install_brave_extension () {
     # Extensions folder and format

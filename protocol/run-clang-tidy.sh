@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # This script runs clang-tidy to check for C coding standards and linting, and propose
 # edits if it finds areas for improvements.
 
@@ -50,7 +53,7 @@ echo "Running clang-tidy into ${yamlFolder}/${fixesFilename}"
 filesToFix="client/main.c server/main.c"
 for folder in "${includeFolders[@]}"
 do
-    for cFilePath in $(find $folder -type f -regex ".*\.\c")
+    for cFilePath in $(find "$folder" -type f -regex ".*\.\c")
     do
         if [[ "$cFilePath" != *"client/main.c"* && "$cFilePath" != *"server/main.c"* ]]
         then
@@ -62,7 +65,7 @@ done
 # header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
 headerFilter="client/|fractal/|server/"
 
-clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix
+clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
 
 # ---- clean up yaml file before running replacements ----
 
@@ -97,7 +100,7 @@ else
     echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
     echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
 
-    read -n 1 -p "'c' to replace, ano other key to quit without replacing: " k
+    read -r -n 1 -p "'c' to replace, any other key to quit without replacing: " k
     if [[ $k == c ]]
     then
         echo
