@@ -65,11 +65,15 @@ export const createWindow = async (mainWindow: BrowserWindow | null = null) => {
  * @param mainWindow
  * @param customURL
  * @param showMainWindow
+ * @param loginWindow
+ * @param paymentWindow
  */
 export const initiateWindowListeners = (
     mainWindow: BrowserWindow,
     customURL: string | null = null,
-    showMainWindow: boolean
+    showMainWindow: boolean,
+    loginWindow: BrowserWindow | null,
+    paymentWindow: BrowserWindow | null
 ) => {
     const os = require("os")
 
@@ -122,6 +126,15 @@ export const initiateWindowListeners = (
     mainWindow.on("maximize", () => {})
 
     mainWindow.on("minimize", () => {})
+
+    loginWindow?.on("closed", () => {
+        loginWindow = null
+    })
+
+    paymentWindow?.on("closed", () => {
+        paymentWindow = null
+    })
+
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
     } else {
