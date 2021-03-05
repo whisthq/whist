@@ -97,6 +97,8 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
     /*
         Handle message from the client.
 
+        NOTE: Needs read is_active_rwlock
+
         Arguments:
             fmsg (FractalClientMessage*): message package from client
             client_id (int): which client sent the message
@@ -156,8 +158,6 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
     /*
         Handle a user input message.
-
-        NOTE: Is called with is active read locked
 
         Arguments:
             fmsg (FractalClientMessage*): message package from client

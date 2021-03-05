@@ -43,7 +43,7 @@ int init_clients(void) {
         Initializes all clients objects in the client buffer.
         Must be called before the client buffer can be used.
 
-        NOTE: Locks shouldn't matter. they are getting created.
+        NOTE: Locks shouldn't matter. They are getting created.
 
         Returns:
             (int): -1 on failure, 0 on success
@@ -85,7 +85,7 @@ int quit_client(int id) {
         clients. May only be called on an active client. The associated client
         object is not destroyed and may be made active in the future.
 
-        NOTE: Needs write is_active_rwlock and (write) state lock
+        NOTE: Needs write lock is_active_rwlock and (write) state_lock
 
         Arguments:
             id (int): Client ID of active client to deactivate
@@ -111,7 +111,7 @@ int quit_clients(void) {
         of active clients. The associated client objects are not destroyed
         and may be made active in the future.
 
-        NOTE: Needs write is_active_rwlock and (write) state lock
+        NOTE: Needs write is_active_rwlock and (write) state_lock
 
         Returns:
             (int): -1 on failure, 0 on success
@@ -168,7 +168,7 @@ int reap_timed_out_clients(double timeout) {
     /*
         Quits all timed out clients.
 
-        NOTE: Needs write is_active_rwlock and (write) state lock
+        NOTE: Needs write is_active_rwlock and (write) state_lock
 
         Arguments:
             timeout (double): Duration (in seconds) after which a
@@ -259,7 +259,7 @@ int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs) {
         Fills buffer with status info for every active client. Status
         info includes mouse position, interaction mode, and more.
 
-        NOTE: Needs read-is active lock and (read) mouse/is_controlling lock
+        NOTE: Needs read is_active_rwlock and (read) state_lock
 
         Arguments:
             msgs (PeerUpdateMessage*): Buffer to be filled with peer
