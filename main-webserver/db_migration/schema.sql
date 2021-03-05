@@ -1097,8 +1097,7 @@ CREATE TABLE public.users (
     created_timestamp integer,
     reason_for_signup text,
     using_google_login boolean DEFAULT false,
-    verified boolean DEFAULT false,
-    using_facebook_login boolean
+    verified boolean DEFAULT false
 );
 
 
