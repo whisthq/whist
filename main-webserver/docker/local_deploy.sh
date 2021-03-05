@@ -39,12 +39,6 @@ fi
 # add env vars to current env. these tell us the host, db, role, pwd
 export $(cat .env | xargs)
 
-# rename for clarity, as we have a remote host and a local host
-export POSTGRES_REMOTE_HOST=$POSTGRES_HOST
-export POSTGRES_REMOTE_USER=$POSTGRES_USER
-export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
-export POSTGRES_REMOTE_DB=$POSTGRES_DB
-
 if [ $USE_DEV_DB == true ]; then
     export DATABASE_URL=postgres://${POSTGRES_REMOTE_USER}:${POSTGRES_REMOTE_PASSWORD}@${POSTGRES_REMOTE_HOST}/${POSTGRES_REMOTE_DB}
 
@@ -52,21 +46,14 @@ if [ $USE_DEV_DB == true ]; then
     docker-compose up --build -d redis web celery # don't spin up postgres_db
 
 else
-    # first fetch the current dev db schema
-    if [ -f ../db_setup/db_schema.sql ]; then
-        echo "Found existing schema and data sql scripts. Skipping fetching db."
-    else
-        bash ../db_setup/fetch_db.sh
-    fi
+    bash ../ephemeral_db_setup/fetch_db.sh
 
     # eph db configurations
-    export POSTGRES_LOCAL_HOST="localhost"
-    export POSTGRES_LOCAL_PORT="9999"
-    # we don't need a pwd because local db trusts all incoming connections
-    export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
-    export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
-
-    export DATABASE_URL=postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+    export POSTGRES_HOST="localhost"
+    export POSTGRES_PORT="9999"
+    
+    # POSTGRES_USER and POSTGRES_DB will be created in the db a few steps down with ../ephemeral_db_setup/db_setup.sh
+    export DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
 
     # launch images with ephemeral db
     docker-compose up -d --build
@@ -74,14 +61,14 @@ else
     # let ephemeral db prepare. Check connections using psql.
     echo "Trying to connect to local db..."
     cmds="\q"
-    while ! (psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
+    while ! (psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
     do
         echo "Connection failed. Retrying in 2 seconds..."
         sleep 2
     done
     
     # set up the ephemeral  db
-    bash ../db_setup/db_setup.sh
+    bash ../ephemeral_db_setup/db_setup.sh
 fi
 
 echo "Success! Teardown when you are done with: docker/local_deploy.sh --down"
