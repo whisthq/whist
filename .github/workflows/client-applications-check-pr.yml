@@ -48,9 +48,10 @@ jobs:
         # As of 2021-05-04, tests hang forever when run on Ubuntu. This is fine since tests should ideally
         # be run on our supported environments, which are macOS and Windows.
         #
-        # Though we do not use "jest-electron", the need to use macOS (or engage in more extensive configuration
-        # for Linux) is supported by their README: https://github.com/hustcc/jest-electron/blob/b58874/README.md#ci
-        runs-on: macos-10.15
+        # Though we do not use "jest-electron", the recommend using macOS (or engage in more extensive configuration
+        # for Linux) in their README: https://github.com/hustcc/jest-electron/blob/b58874/README.md#ci. We've elected
+        # to use Windows since macOS bills at 10x / min on GitHub actions while Windows is 2x / min.
+        runs-on: windows-latest
 
         steps:
             - name: Checkout Git Repository
@@ -68,7 +69,7 @@ jobs:
             - name: Run `yarn test` in /desktop
               working-directory: client-applications/desktop
               run: |
-                  cat <<MSG
+                  echo @'
                   ==============================
                   Jest may report:
 
@@ -80,7 +81,7 @@ jobs:
                     1. The test suites execute fine with it.
                     2. This GitHub issue stating it's a no-op outside of Facebook https://github.com/facebook/jest/issues/8114
                   ==============================
-                  MSG
+                  '@
                   yarn test-ci
 
     # Building
