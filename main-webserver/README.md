@@ -35,6 +35,14 @@ The following environment variables must also be set in `docker/.env` (neither t
 
 All of local deployment, local testing, and CI use ephemeral DBs that are mostly empty copies of the dev database. The copying script (see `db_setup/`) looks at the database specified by those environment variables.
 
+If you'd like to retrieve more information from the dev db (to put in the ephemeral DBs) than the tables we currently have, open up `db_setup/fetch_db.sh` and find the _two_ lines with:
+
+```
+(pg_dump -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB --data-only --column-inserts ... ) > db_data.sql
+```
+
+For each table you'd like to fetch from dev, add `-t schema_name.table_name` to `...`. Remember to delete the existing `.sql` scripts and rerun any scripts afterwards.
+
 **1. Set environment variables**
 
 Luckily, there is an easy way to set all of the necessary environment variables using the script `docker/retrieve_config.sh`. To set all of the required environment variables, first make sure you have [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and configured. Then, run
