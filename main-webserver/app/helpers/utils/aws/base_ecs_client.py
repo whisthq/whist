@@ -13,7 +13,7 @@ from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_logger
 
-from . import ecs
+from . import ecs_deletion
 from . import autoscaling
 
 
@@ -1000,11 +1000,11 @@ class ECSClient:
             None
         """
 
-        ecs.deregister_container_instances(cluster_name, region)
+        ecs_deletion.deregister_container_instances(cluster_name, region)
 
-        capacity_providers = ecs.delete_cluster(cluster_name, region)
+        capacity_providers = ecs_deletion.delete_cluster(cluster_name, region)
         autoscaling_groups = [
-            ecs.delete_capacity_provider(capacity_provider, region)
+            ecs_deletion.delete_capacity_provider(capacity_provider, region)
             for capacity_provider in capacity_providers
         ]
 
