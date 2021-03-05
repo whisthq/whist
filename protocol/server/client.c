@@ -8,6 +8,12 @@ https://www.notion.so/tryfractal/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d
 for the specification for multi-client code
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "../fractal/utils/mouse.h"
 #include "../fractal/utils/rwlock.h"
 #include "client.h"
@@ -26,8 +32,23 @@ volatile bool client_exited_nongracefully =
     false;  // set to true after a nongraceful exit (only exit logic can set to false)
 volatile clock last_nongraceful_exit;  // start this after every nongraceful exit
 
-// locks shouldn't matter. they are getting created.
+/*
+============================
+Public Functions
+============================
+*/
+
 int init_clients(void) {
+    /*
+        Initializes all clients objects in the client buffer.
+        Must be called before the client buffer can be used.
+
+        NOTE: Locks shouldn't matter. They are getting created.
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     state_lock = safe_SDL_CreateMutex();
     init_rw_lock(&is_active_rwlock);
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
@@ -41,15 +62,38 @@ int init_clients(void) {
     return 0;
 }
 
-// locks shouldn't matter. they are getting trashed.
 int destroy_clients(void) {
+    /*
+        De-initializes all clients objects in the client buffer.
+        Should be called after initClients() and before program exit.
+        Does not disconnect any connected clients.
+
+        NOTE: Locks shouldn't matter. They are getting trashed.
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     SDL_DestroyMutex(state_lock);
     destroy_rw_lock(&is_active_rwlock);
     return 0;
 }
 
-// Needs write is_active_rwlock and (write) state lock
 int quit_client(int id) {
+    /*
+        Deactivates active client. Disconnects client. Updates count of active
+        clients. May only be called on an active client. The associated client
+        object is not destroyed and may be made active in the future.
+
+        NOTE: Needs write lock is_active_rwlock and (write) state_lock
+
+        Arguments:
+            id (int): Client ID of active client to deactivate
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     clients[id].is_active = false;
     clients[id].mouse.is_active = false;
     num_active_clients--;
@@ -61,8 +105,18 @@ int quit_client(int id) {
     return 0;
 }
 
-// Needs write is_active_rwlock and (write) state lock
 int quit_clients(void) {
+    /*
+        Deactivates all active clients. Disconnects client. Updates count
+        of active clients. The associated client objects are not destroyed
+        and may be made active in the future.
+
+        NOTE: Needs write is_active_rwlock and (write) state_lock
+
+        Returns:
+            (int): -1 on failure, 0 on success
+    */
+
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
@@ -75,8 +129,29 @@ int quit_clients(void) {
     return ret;
 }
 
-// needs read is_active_rwlock
 int exists_timed_out_client(double timeout, bool *exists) {
+    /*
+        Determines if any active client has timed out. Checks the time
+        of the last received ping for each active client. If the time
+        since the server has received a ping from a client equals or
+        exceeds the timeout threshold, the client is considered to have
+        timed out.
+
+        NOTE: Needs read is_active_rwlock
+
+        Arguments:
+            timeout (double): Duration (in seconds) after which an active
+                client is deemed timed out if the server has not received
+                a ping from the client.
+            exists (bool*): The field pointed to by exists is set to true
+                if one or more clients are timed out client and false
+                otherwise.
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success. Whether or not
+                there exists a timed out client does not mean failure.
+    */
+
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active) {
             if (get_timer(clients[id].last_ping) > timeout) {
@@ -89,8 +164,21 @@ int exists_timed_out_client(double timeout, bool *exists) {
     return 0;
 }
 
-// Needs write is_active_rwlock and (write) state lock
 int reap_timed_out_clients(double timeout) {
+    /*
+        Quits all timed out clients.
+
+        NOTE: Needs write is_active_rwlock and (write) state_lock
+
+        Arguments:
+            timeout (double): Duration (in seconds) after which a
+                client is deemed timed out if the server has not received
+                a ping from the client.
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success.
+    */
+
     int ret = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active && get_timer(clients[id].last_ping) > timeout) {
@@ -107,13 +195,29 @@ int reap_timed_out_clients(double timeout) {
     return ret;
 }
 
-// Needs read is_active_rwlock
-// You should quit this guy soon after
-// Only searches currently active clients
-int try_find_client_id_by_username(int username, bool *found, int *id) {
+int try_find_client_id_by_user_id(int user_id, bool *found, int *id) {
+    /*
+        Finds the client ID of the active client object associated with
+        a user_id, if there is one.
+
+        NOTES: Needs read is_active_rwlock
+               You should quit this guy soon after
+               Only searches currently active clients
+
+        Arguments:
+            user_id (int): User ID to be searched for.
+            found (bool*): Populated with true if an associated client
+                ID is found, false otherwise.
+            id (int*): Populated with found client ID, if one is found.
+
+        Retrurns:
+            (int): Returns -1 on failure, 0 on success. Not finding an
+                associated ID does not mean failure.
+    */
+
     *found = false;
     for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
-        if (clients[i].is_active && clients[i].username == username) {
+        if (clients[i].is_active && clients[i].user_id == user_id) {
             *id = i;
             *found = true;
             return 0;
@@ -122,9 +226,24 @@ int try_find_client_id_by_username(int username, bool *found, int *id) {
     return 0;
 }
 
-// Needs read is_active_rwlock
-// Does not set up the client or make it active
 int get_available_client_id(int *id) {
+    /*
+        Finds an available client ID. If a client object is inactive,
+        that object and the associated client ID are available for
+        re-use. Function fails if no client ID is available.
+
+        NOTES: Needs read is_active_rwlock
+               Does not set up the client or make it active
+
+        Arguments:
+            id (int*): Points to field which function populates
+                with available client ID.
+
+        Returns:
+            (int): Returns -1 on failure (including no client IDs
+                are available), 0 on success.
+    */
+
     for (int i = 0; i < MAX_NUM_CLIENTS; i++) {
         if (!clients[i].is_active) {
             *id = i;
@@ -135,8 +254,24 @@ int get_available_client_id(int *id) {
     return -1;
 }
 
-// needs read-is active lock and (read) mouse/is_controlling lock
 int fill_peer_update_messages(PeerUpdateMessage *msgs, size_t *num_msgs) {
+    /*
+        Fills buffer with status info for every active client. Status
+        info includes mouse position, interaction mode, and more.
+
+        NOTE: Needs read is_active_rwlock and (read) state_lock
+
+        Arguments:
+            msgs (PeerUpdateMessage*): Buffer to be filled with peer
+                update info. Must be at least as large as the number
+                of presently active clients times the size of
+                each PeerUpdateMessage.
+            num_msgs (size_t*): Number of messages filled by function.
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success.
+    */
+
     *num_msgs = 0;
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         if (clients[id].is_active && clients[id].mouse.is_active) {
