@@ -198,11 +198,9 @@ int reap_timed_out_clients(double timeout) {
 int try_find_client_id_by_user_id(int user_id, bool *found, int *id) {
     /*
         Finds the client ID of the active client object associated with
-        a user_id, if there is one.
+        a user_id, if there is one. Only searches currently active clients.
 
         NOTES: Needs read is_active_rwlock
-               You should quit this guy soon after
-               Only searches currently active clients
 
         Arguments:
             user_id (int): User ID to be searched for.
