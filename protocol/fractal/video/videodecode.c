@@ -18,8 +18,8 @@ void destroy_video_decoder_members(VideoDecoder* decoder);
 
 #if SHOW_DECODER_LOGS
 void swap_decoder(void* t, int t2, const char* fmt, va_list vargs) {
-    t;
-    t2;
+    UNUSED(t);
+    UNUSED(t2);
     LOG_INFO("Error found");
     vprintf(fmt, vargs);
 }
@@ -287,7 +287,8 @@ DecodeType decoder_precedence[] = {DECODE_TYPE_QSV, DECODE_TYPE_SOFTWARE};
 
 #define NUM_DECODER_TYPES (sizeof(decoder_precedence) / sizeof(decoder_precedence[0]))
 
-bool try_next_decoder(VideoDecoder* decoder) {
+// Returns false if there are no more decoders that work
+static bool try_next_decoder(VideoDecoder* decoder) {
     if (decoder->can_use_hardware) {
         unsigned int i = 0;
         if (decoder->type != DECODE_TYPE_NONE) {
@@ -423,6 +424,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         // decode the frame
         while (avcodec_send_packet(decoder->context, &packets[i]) < 0) {
             LOG_WARNING("Failed to avcodec_send_packet!");
+            // Try next decoder
             if (!try_next_decoder(decoder)) {
                 destroy_video_decoder(decoder);
                 for (int j = 0; j < num_packets; j++) {

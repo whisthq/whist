@@ -35,7 +35,6 @@ Includes
 #include "../fractal/utils/clock.h"
 #include "../fractal/utils/logging.h"
 #include "../fractal/utils/sdlscreeninfo.h"
-#include "../fractal/utils/string_utils.h"
 #include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"

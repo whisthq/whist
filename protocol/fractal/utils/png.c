@@ -19,43 +19,6 @@
 #pragma warning(disable : 4244)
 #endif
 
-void* xcalloc(size_t nmemb, size_t size) {
-    void* p;
-
-    if (!(p = calloc(nmemb, size))) {
-        LOG_ERROR("the memory could not be allocated");
-    }
-    return p;
-}
-
-char* read_file(const char* filename, size_t* char_nb) {
-    FILE* file;
-    char* code;
-    // We try to open the file with the given filename
-    if (!(file = fopen((const char*)filename, "rb"))) {
-        LOG_ERROR("the file %s could not be opened", filename);
-    }
-
-    /*
-     * We count the number of characters in the file
-     * to allocate the correct amount of memory for
-     * the char * that will contain the code
-     */
-
-    for ((*char_nb) = 0; fgetc(file) != EOF; ++(*char_nb))
-        ;
-    rewind(file);
-    code = xcalloc((*char_nb) + 1, sizeof(unsigned char));
-
-    // We copy the content of the file into the char *code
-    if (fread(code, 1, *char_nb, file) < *char_nb) {
-        LOG_ERROR("the file %s could not be read", filename);
-    }
-    fclose(file);
-
-    return code;
-}
-
 int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
     /*
         Converts a bmp array into a png image format, stored within pkt
@@ -76,7 +39,7 @@ int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt) {
 
     // Read BMP file header contents
     int w, h;
-    static const unsigned minheader = 54;
+    const unsigned minheader = 54;
     if (size < minheader) {
         LOG_ERROR("BMP size < MINHEADER");
         return -1;
@@ -309,9 +272,6 @@ int read_char_open(AVFormatContext** pctx, const char* data, int data_size) {
         NOTE: after a successful call, be sure to free (*pctx)->pb->buffer and then (*pctx->pb)
         before closing and freeing *pctx.
     */
-
-    static AVInputFormat* infmt = NULL;
-    if (!infmt) infmt = av_find_input_format("png");
 
     *pctx = avformat_alloc_context();
     if (*pctx == NULL) {

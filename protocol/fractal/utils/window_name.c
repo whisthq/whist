@@ -15,16 +15,23 @@ destroy_window_name_getter();
 */
 
 #if defined(_WIN32)
-// TODO(anton) implement functionality for windows servers
-void init_window_name_getter() {}
-int get_focused_window_name(char* name_return) { return -1; }
-void destroy_window_name_getter() {}
+
+// TODO: implement functionality for windows servers
+void init_window_name_getter() { LOG_ERROR("UNIMPLEMENTED: init_window_name_getter on Win32"); }
+int get_focused_window_name(char* name_return) {
+    LOG_ERROR("UNIMPLEMENTED: get_focused_window_name on Win32");
+    return -1;
+}
+void destroy_window_name_getter() {
+    LOG_ERROR("UNIMPLEMENTED: destroy_window_name_getter on Win32");
+}
+
 #elif __linux__
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <stdbool.h>
 
-#include "string_utils.h"
 #include "../core/fractal.h"
 #include "window_name.h"
 
