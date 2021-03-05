@@ -35,11 +35,11 @@ else
 
     # get named params
     while [ $# -gt 0 ]; do
-    if [[ $1 == *"--"* ]]; then
-        param="${1/--/}"
-        declare $param="$2"
-    fi
-    shift
+        if [[ $1 == *"--"* ]]; then
+            param="${1/--/}"
+            declare $param="$2"
+        fi
+        shift
     done
 
     # Only notarize, when publish=true
@@ -93,10 +93,10 @@ else
         if [[ "$env" == "dev" ]]
         then
             yarn set-prod-env-dev
-        elif [[ "$env" == "staging" ]]
+    elif [[ "$env" == "staging" ]]
         then
             yarn set-prod-env-staging
-        elif [[ "$env" == "prod" ]]
+    elif [[ "$env" == "prod" ]]
         then
             yarn set-prod-env-prod
         else
