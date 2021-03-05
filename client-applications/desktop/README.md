@@ -8,7 +8,7 @@ This folder contains the code for the Fractal desktop applications running on Wi
 
 2. `cd` into the `desktop` folder.
 
-3. Run `yarn upgrade && yarn` to pull the latest version of `yarn` and install all dependencies on your local machine. If this fails, try running `rm -rf node_modules/` and then `yarn` again.
+3. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
 
 4. To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. Note: `yarn dev` will start the Electron application, but will not fetch the Fractal protocol, which is necessary to stream apps. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
 
