@@ -27,8 +27,8 @@ shift $((OPTIND-1))
 isWindows=0
 unameOut="$(uname -s)"
 case "${unameOut}" in
-    CYGWIN*)    isWindows=1;;
-    MINGW*)     isWindows=1;;
+    CYGWIN*)    isWindows=1 ;;
+    MINGW*)     isWindows=1 ;;
 esac
 
 # array of all folders to be checked and modified

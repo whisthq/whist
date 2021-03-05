@@ -1,0 +1,31 @@
+# workflows/shell-scripts-linting.yml
+#
+# Shell Scripts: Linting
+# Lint and enforce good practices for shell scripts.
+
+name: "Shell Scripts: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+        paths:
+            - "**/*.sh"
+            - ".github/workflows/shell-scripts-linting.yml"
+    workflow_dispatch:
+
+jobs:
+    shell-scripts-linting-beautysh:
+        name: Lint Shell Scripts with Beautysh
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Run Beautysh to Check Scripts Formatting
+              uses: illvart/beautysh-action@latest
+              with:
+                  args: "**/*.sh --indent-size 4 --check"
