@@ -31,6 +31,8 @@ typedef struct InputDevice {
     int keyboard_state[NUM_KEYCODES];
     bool caps_lock;
     bool num_lock;
+    // Internal
+    bool mouse_has_moved;
 } InputDevice;
 
 #endif  // UINPUT_INPUT_DRIVER_H
