@@ -58,7 +58,7 @@ export const DownloadBox = (props: {
     const largeIcon = withOS(windowsIcon, macIcon)
     const smallIcon = againstOS(windowsIcon, macIcon)
     const supportedOS = ["Windows", "macOS"]
-    
+
     if (!supportedOS.includes(osName)) {
         return (
             <div data-testid={DASHBOARD_DOWNLOAD_BOX_IDS.OS_WARN}>

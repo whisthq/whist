@@ -7,7 +7,14 @@ import sharedStyles from "styles/shared.module.css"
 import Header from "shared/components/header"
 import { AuthFlow } from "shared/types/reducers"
 
-const AuthCallback = (props: { callback: string | undefined }) => {
+const AuthCallback = (props: {
+    callback: string | undefined
+    location: {
+        state: {
+            encryptionKey: string
+        }
+    }
+}) => {
     /*
         Callback page for the client-app.
 
@@ -17,7 +24,14 @@ const AuthCallback = (props: { callback: string | undefined }) => {
             callback (String): the URL to "call back" to (usually "fractal://")
 
     */
-    const { callback } = props
+    const { callback, location } = props
+
+    // useEffect(() => {
+    //     const script = document.createElement("script");
+    //     script.async = true;
+    //     script.src="script.js";
+    //     document.body.appendChild(script)
+    // }, [])
 
     return (
         <div className={sharedStyles.fractalContainer}>
@@ -31,7 +45,7 @@ const AuthCallback = (props: { callback: string | undefined }) => {
                     textAlign: "center",
                 }}
             >
-                <h2>You will be redirected.</h2>
+                <h2 id="redirect">You will be redirected.</h2>
                 <div style={{ marginTop: 25 }}>
                     Not redirected? Click{" "}
                     <a href={callback} style={{ fontWeight: "bold" }}>
@@ -40,6 +54,9 @@ const AuthCallback = (props: { callback: string | undefined }) => {
                     to try again, or click <Link to="/dashboard">here</Link> to
                     return home.
                 </div>
+                <p id="encryptionToken" hidden>
+                    {location.state.encryptionKey}
+                </p>
             </div>
         </div>
     )
