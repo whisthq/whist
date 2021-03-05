@@ -10,7 +10,7 @@ A blueprint is a collection of related API endpoints, and is the entry point for
 
 ##### Folder Structure
 
-The blueprint folder is divided into sub-folders, which are high-level groupings of our endpoints. For instance, we have an auth sub-folder and an admin sub-folder. Each sub-folder is made up blueprint files, which are more granular groupings of endpoints. For instance, the auth sub-folder contains account_blueprint.py and google_auth_blueprint.py.
+The blueprint folder is divided into sub-folders, which are high-level groupings of our endpoints. For instance, we have an auth sub-folder and an admin sub-folder. Each sub-folder is made up blueprint files, which are more granular groupings of endpoints. For instance, the auth sub-folder contains account_blueprint.py and token_blueprint.py.
 
 ##### File Structure
 

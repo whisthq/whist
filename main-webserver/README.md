@@ -257,7 +257,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   └── logs_blueprint.py --> endpoint we use to upload logs
 │   │   ├── auth
 │   │   │   ├── account_blueprint.py --> endpoints we use to log into accounts/verify accounts
-│   │   │   ├── google_auth_blueprint.py --> endpoints we use to log in via google
 │   │   │   └── token_blueprint.py --> endpoints we use to generate JWT tokens
 │   │   ├── aws
 │   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
@@ -299,7 +298,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   ├── auth
 │   │   │   │   ├── account_get.py --> helpers related to account get requests (e.g. user info retrieval)
 │   │   │   │   ├── account_post.py --> helpers related to account post reqs (e.g. login)
-│   │   │   │   ├── google_auth_post.py --> helpers related to google login
 │   │   │   │   └── token_post.py --> helpers related to JWT token generation/update
 │   │   │   ├── aws
 │   │   │   │   ├── aws_container_post.py --> helpers for AWS post reqs that _don't_ require celery tasks -- e.g protocol info
