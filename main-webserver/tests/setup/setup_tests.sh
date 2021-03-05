@@ -48,11 +48,7 @@ fi
 # load env vars, namely (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
 export $(cat ../../docker/.env | xargs)
 
-if [ -f ../../ephemeral_db_setup/db_data.sql ]; then
-    echo "Found existing data sql script. Skipping fetching db."
-else
-    bash ../../ephemeral_db_setup/fetch_db.sh
-fi
+bash ../../ephemeral_db_setup/fetch_db.sh
 
 docker-compose up -d --build
 
