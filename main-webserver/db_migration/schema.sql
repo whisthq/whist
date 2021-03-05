@@ -1100,8 +1100,7 @@ CREATE TABLE public.users (
     referral_code character varying(250),
     using_google_login boolean DEFAULT false,
     verified boolean DEFAULT false,
-    using_facebook_login boolean,
-    can_login boolean
+    using_facebook_login boolean
 );
 
 
