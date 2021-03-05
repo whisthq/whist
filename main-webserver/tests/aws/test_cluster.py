@@ -11,7 +11,7 @@ from sqlalchemy.orm.exc import NoResultFound
 
 from app.celery.aws_ecs_creation import create_new_cluster
 from app.celery.aws_ecs_deletion import delete_cluster
-from app.helpers.utils.aws import autoscaling, ecs
+from app.helpers.utils.aws import autoscaling, ecs_deletion
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.models import ClusterInfo, db
 
@@ -185,7 +185,7 @@ def test_delete_bad_capacity_provider():
     deleted doesn't exist.
     """
 
-    assert ecs.delete_capacity_provider("not-a-capacity-provider", "us-east-1") is None
+    assert ecs_deletion.delete_capacity_provider("not-a-capacity-provider", "us-east-1") is None
 
 
 def test_delete_bad_cluster():
@@ -195,10 +195,10 @@ def test_delete_bad_cluster():
     cluster to be deleted doesn't exist.
     """
 
-    assert ecs.delete_cluster("not-a-cluster", "us-east-1") == []
+    assert ecs_deletion.delete_cluster("not-a-cluster", "us-east-1") == []
 
 
 def test_deregister_container_instances_from_bad_cluster():
     """Don't freak out if the cluster doesn't exist."""
 
-    assert ecs.deregister_container_instances("not-a-cluster", "us-east-1") is None
+    assert ecs_deletion.deregister_container_instances("not-a-cluster", "us-east-1") is None
