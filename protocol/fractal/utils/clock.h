@@ -108,7 +108,7 @@ int get_dst();
 
 int get_time_data(FractalTimeData* time_data);
 
-void set_timezone_from_iana_name(char* linux_tz_name, char* password);
+void set_timezone_from_iana_name(char* linux_tz_name);
 
 void set_timezone_from_windows_name(char* win_tz_name);
 

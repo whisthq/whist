@@ -557,7 +557,7 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 #else
     if (time_data.use_linux_name) {
         LOG_INFO("Setting time from IANA time zone %s", time_data.win_tz_name);
-        set_timezone_from_iana_name(time_data.win_tz_name, get_vm_password());
+        set_timezone_from_iana_name(time_data.win_tz_name);
     } else {
         LOG_INFO("Setting time from UTC offset %d", time_data.win_tz_name);
         set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
