@@ -28,6 +28,7 @@ export const STRIPE_OPTIONS = {
 }
 
 // TODO: This should be stored in a database and pulled via GraphQL
+// https://github.com/fractal/website/issues/337
 export const PLANS: {
     [key: string]: {
         price: number

@@ -208,7 +208,6 @@ describe("<Auth />", () => {
             })
             await fireEvent.click(button.firstChild)
             await msWait(2000)
-            // TODO: get login information
 
             await waitFor(async () => {
                 expect(original.history.location.pathname).toBe("/dashboard")
@@ -261,7 +260,6 @@ describe("<Auth />", () => {
             await msWait(1000)
             screen.getByTestId(VERIFY_IDS.SUCCESS)
         })
-        // TODO
 
         test("switch modes", async () => {
             render("Log in")

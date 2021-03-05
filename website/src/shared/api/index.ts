@@ -23,6 +23,7 @@ import history from "shared/utils/history"
 /*
     TODO: Replace hard-coded endpoints with FractalAPI type
     TODO: Split this file into different files e.g. auth.ts, payment.ts, etc.
+    https://github.com/fractal/website/issues/338
 */
 
 const httpConfig = {
@@ -128,6 +129,7 @@ export const passwordForgot = async (username: string, emailToken: string) => {
     */
 
     //TODO: is this emailToken different from i.e. token in emailVerification?
+    // https://github.com/fractal/website/issues/338
     const body = {
         email_id: "PASSWORD_RESET",
         to_email: username,

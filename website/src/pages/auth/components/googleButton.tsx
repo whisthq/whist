@@ -18,11 +18,11 @@ const GoogleButton = (props: {
 
     const responseGoogleSuccess = (res: any) => {
         props.login(res.code)
-        //TODO might want to remove this and use the warnings in auth?
+        //TODO might want to remove this and use the warnings in auth? https://github.com/fractal/website/issues/340
     }
 
     const responseGoogleFailure = (res: any) => {
-        //TODO might want to remove this and use the warnings in auth?
+        //TODO might want to remove this and use the warnings in auth? https://github.com/fractal/website/issues/340
         // props.dispatch(
         //     updateAuthFlow({
         //         loginWarning: "Google response failure",

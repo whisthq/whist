@@ -23,6 +23,7 @@ export const rootState: { [key: string]: Object } = {
 
 // TODO (future implementers) change singleAssign to be more intelligent by looking at
 // shared/utils/reducerHelpers and taking those merge functions and using them here
+// https://github.com/fractal/website/issues/335
 
 /**
  * Given a base object basically merge objs into it. This is meant to be in conjunction with a known

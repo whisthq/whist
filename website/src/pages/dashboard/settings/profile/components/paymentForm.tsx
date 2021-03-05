@@ -47,7 +47,7 @@ const PaymentForm = (props: {
     }, [stripeInfo, editingCard])
 
     /** TODO: Add a "delete" icon next to the editing icon that opens a popup for users
-     *   to delete their credit card
+     *   to delete their credit card (https://github.com/fractal/website/issues/333)
      */
     return (
         <div data-testid={PROFILE_IDS.PAY}>

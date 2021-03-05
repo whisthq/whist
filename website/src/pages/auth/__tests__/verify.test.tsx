@@ -44,7 +44,7 @@ describe("<Verify />", () => {
 
         const checks = [
             ["invalid user", [], false, false],
-            ["valid user that is already verified", [], true, true], // todo
+            ["valid user that is already verified", [], true, true],
             [
                 "valid user and an invalid token",
                 [
