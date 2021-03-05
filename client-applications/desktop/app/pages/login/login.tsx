@@ -12,6 +12,7 @@ import { updateTask } from "store/actions/container/pure"
 import { validateAccessToken } from "store/actions/auth/sideEffects"
 import { history } from "store/history"
 import { FractalIPC } from "shared/types/ipc"
+import { BROWSER_WINDOW_IDS } from "shared/types/browsers"
 import SplashScreenComponent from "pages/login/components/splashScreen/splashScreen"
 import RedirectComponent from "pages/login/components/redirect/redirect"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
@@ -51,7 +52,7 @@ export const Login = (props: {
             ipc.sendSync(
                 FractalIPC.LOAD_BROWSER,
                 [`${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`,
-                "login"]
+                BROWSER_WINDOW_IDS.LOGIN]
             )
         },
         onError: (err) => {
