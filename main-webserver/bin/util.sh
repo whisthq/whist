@@ -5,6 +5,9 @@
 # Helpful functions that are useful for preparing the fractal application for
 # deployment.
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # This code was copied from
 # https://devcenter.heroku.com/articles/buildpack-api#bin-compile-summary
 export_env_dir() {

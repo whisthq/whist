@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # Close all instances of Google Chrome (to simplify login redirection from the browser to Figma)
 if pgrep chrome; then
     pkill chrome

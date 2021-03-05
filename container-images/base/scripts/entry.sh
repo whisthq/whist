@@ -3,12 +3,11 @@
 # This script is the entrance for Fractal within the Fractal Docker containers. It retrieves
 # the relevant parameters for the container and starts the fractal systemd user
 
-# Amazon Linux doesn't have the need for a Fractal firewall rule
-# yes | ufw allow 5900;
+# Exit on subcommand errors
+set -Eeuo pipefail
 
 # Allow for SSH login
 rm /var/run/nologin
-# echo $SSH_PUBLIC_KEY_AWS > ~/.ssh/authorized_keys
 
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings

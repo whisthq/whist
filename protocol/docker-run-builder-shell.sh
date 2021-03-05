@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # This script runs the Docker container that builds the Fractal protocol server for Linux Ubuntu 20.04.
 
 # Parameters needed to build the Fractal protocol server in Docker
