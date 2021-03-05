@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 function printhelp {
     echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
     echo "Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu."

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # Build array of GPU IDs
 DRIVER_VERSION=$(modinfo nvidia --field version)
 IFS="\n"

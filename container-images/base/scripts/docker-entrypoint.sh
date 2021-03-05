@@ -5,6 +5,9 @@
 # the Fractal container to use. It then starts systemd, which starts all of the
 # Fractal system services (.service files), starting Fractal inside the container
 
+# Exit on subcommand errors
+set -Eeuo pipefail
+
 # If FRACTAL_AES_KEY is set, then create file
 if [ -n "${FRACTAL_AES_KEY+1}" ]
 then
