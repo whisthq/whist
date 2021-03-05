@@ -6,14 +6,19 @@ from ._meta import db
 
 
 class User(db.Model):
-    """public.users table in SQL
+    """Fractal user account data.
+
+    This SQLAlchemy model provides an interface to the public.users table of the database.
 
     Attributes:
         user_id (String): User ID, typically email
         name (String): Name of user (e.g. Mike)
-        token (String): Email verification token
+        token (String): The token that the user must use to initially . This token is generated
+            when a user creates an account. It is sent in an email to the email address associated
+            with the account. The email verification server endpoint compares the email
+            verification token it receives to this token.
         password (String): Hashed password
-        stripe_customer_id (String): Customer ID returned by Stripe API
+        stripe_customer_id (String): A pointer to a customer record on Fractal's Stripe account.
         reason_for_signup (String): How users heard about Fractal
         using_google_login (Boolean): True/false using Google auth
         verified (Boolean): True/false email verified
