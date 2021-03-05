@@ -13,7 +13,9 @@ command=${2:-'/bin/bash'} # The command to run to build the Fractal protocol ser
 
 if [ -z "$2" ]
 then
-    docker_run_flags=-it # Flag to open an interactive container instance
+    docker_run_flags="-it" # Flag to open an interactive container instance
+else
+    docker_run_flags=""
 fi
 
 # Run the protocol build command in the Docker container with the right parameters
