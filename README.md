@@ -12,8 +12,8 @@ This repository contains the end-to-end code for the Fractal Application Streami
     - [`dev` is for development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
   - [Git Best Practices](#git-best-practices)
-    - [On feature branches, use rebase instead of merge](#on-feature-branches-use-rebase-instead-of-merge)
-    - [When merging feature branches, _usually_ use merge instead of rebase](#when-merging-feature-branches-usually-use-merge-instead-of-rebase)
+    - [On feature branches, rebase onto dev instead of merging dev into your branch](#on-feature-branches-rebase-into-dev-instead-of-merging-dev-into-your-branch)
+    - [Options to mainline your PRs](#options-to-mainline-your-prs)
     - [On commit logs](#on-commit-logs)
   - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
 - [Publishing](#publishing)
@@ -21,8 +21,6 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Appendix](#appendix)
   - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
-
-# ===
 
 ## Introduction
 
@@ -34,9 +32,9 @@ At a high-level, Fractal works the following way:
 - The login and launch processes are REST API requests to the Fractal webserver.
 - When the webserver receives a launch request, it sends a task definition JSON to AWS ECS, to tell it to run a specific container.
 - The webserver will then provision a container associated with the specific streamed application/task definition requested.
-  - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the /ecs-host-setup scripts and has the /ecs-host-service preinstalled.
+  - If all existing EC2 instances are at maxed capacity of containers running on them, the webserver will spin up a new EC2 instance based off of a base operating system image (AMI) that was configured using the `/ecs-host-setup` scripts and has the `/ecs-host-service` preinstalled.
 - If there is available capacity on existing EC2 instances, or after a new EC2 instance has been spun up, the chosen task definition will cause AWS ECS to spin up a Docker container for the requested application on the chosen EC2 instance. The Fractal protocol server inside this container image will be started and will notify the webserver that it is ready to stream.
-  - The container images are based off of /container-images and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
+  - The container images are based off of `/container-images` and are pre-built and stored in GitHub Container Registry, where AWS ECS pulls the images from.
 - Once the webserver receives a confirmation that the container is ready to stream, it will notify the Fractal Electron application that it can launch the Fractal protocol client, which will happen and start the stream.
 
 ### Repository Structure
@@ -61,23 +59,25 @@ To get started with development, clone this repository and navigate to a specifi
 
 To avoid pushing code that does not follow our coding guidelines, we recommend you install pre-commit hooks by running `pip install pre-commit`, followed by `pre-commit install` in the top-level directory. This will install the linting rules specified in `.pre-commit-config.yaml` and prevent you from pushing if your code is not linted.
 
+**NOTE**: Also, once you clone the repo run `git config pull.ff only` inside the repo. This will help prevent pushing unnecessary merge commits (see below).
+
 ### Branch Conventions
 
 #### `master` is for Releases only; `staging` is "almost `master`"
 
-At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag (TODO).
+At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
 
-We also maintain a `staging` branch that serves the same purpose as "release branches" under the [Gitflow workflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). Therefore, `staging` will usually be identical to `master`, except as we approach a release date.
+We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `master`, except after a production release, when they will be even.
 
 When we approach a release milestone, we:
 
-1. Fork `staging` off `master`.
-2. Merge `dev` into `staging`. This signifies a feature freeze for that release, and we only perform bug fixes.
-3. Perform extensive, end-to-end testing.
-   - We fix small (i.e. single-commit) bugs by forking a branch off `staging` and then fast-forward merging it into `staging` (having the same effect as committing directly to `staging`, but with a PR for review and CI).
-   - For larger bugs, we still fork a branch off `staging`, but merge it back into `staging` with an explicit merge commit.
-4. To release, we merge `staging` back into `master`, creates a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
-5. If changes were made to `staging` before release, we merge `staging` into `dev` as well.
+1. Fast-forward `staging` to match `dev`. This signifies a feature freeze for that release, and we only perform critical bug fixes.
+2. Perform extensive, end-to-end testing (in practice, this is accomplished by us dogfooding our own product).
+3. We hotfix bugs by forking a branch off `staging` and then fast-forward merging it into `staging` (having the same effect as committing directly to `staging`, but with a PR for review and CI).
+4. To release, we fast-forward `master` to match `staging` and create a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
+5. If changes were made to `staging` before release, we merge `staging` into `dev` as well (one of the rare instances that calls for a merge commit, to prevent rewriting history on `dev`).
+
+Note that we always try to maintain the invariant that `master` can be fast-forwarded to match `staging`, and `staging` can be fast-forwarded to match `dev`. The only exception is when we have to make hotfixes to `staging` or `prod`, and we always merge these changes back.
 
 ### `dev` is for development
 
@@ -98,7 +98,7 @@ However, in the less common case where multiple people are working on a single f
 
 ### Git Best Practices
 
-#### On feature branches, use rebase insetead of merge
+#### On feature branches, rebase onto dev instead of merging dev into your branch
 
 When making a PR for a feature branch into `dev`, you'll usually find that there's been changes to `dev` since you last branched off. Both the frequency and scope of this situation are magnified by the complexity of a monorepo.
 
@@ -119,19 +119,19 @@ git rebase dev
 
 Most of the time, that rebase will work silently, since most changes to dev should not affect the feature branch. If there are any conflicts, that means that someone else is working on the same files as you, and you'll have to manually resolve the conflicts, just as with a merge. If you're having problems rebasing, try `git rebase -r dev` (which handles merge commits differently), then come ask an org admin for help.
 
-#### When merging feature branches, _usually_ merge instead of rebasing
+#### Options to mainline your PRs
 
-PRs with really small changes can just be fast-forwarded onto dev, which gives the illusion later of having committed directly onto dev, simplifying the commit log. This can be done on the Github PR page:
+PRs should mostly be fast-forwarded onto dev, which gives the illusion later of having committed directly onto dev, simplifying the commit log. This can be done on the Github PR page by selecting the "Rebase and merge" option:
 
 ![Picture of "Rebase and merge" option](https://ntsim.uk/static/77d197658c4f050ba0a4080747505d8e/3346a/github-rebase-and-merge.png)
 
-In all other cases, select the first option ("Create a merge commit"). **Never** make a squash commit. If you want cleaner git history, rewrite and force-push your own branch (with carefully-applied `git rebase`), then merge it into dev.
+**Never** make a merge commit. If you want cleaner git history, rewrite and force-push your own branch (with carefully-applied `git rebase`), then merge it into dev, or use the "Squash and Merge" option. This is the recommended option if you have too many commits on a given branch, or some "oops" commits that don't need to make it onto the permanent history in `dev`.
 
 ### On commit logs
 
-Clear commit logs are _far_ more important in a monorepo than when spread over several multirepos. There's so many more moving parts, so it's increasingly important to be able to filter a list of commits to what's actually relevant. Tooling can help with this (e.g. `git log -- <subdirectory>`), but in the end we are still limited by the quality of our own commit logs.
+Clear commit logs are _far_ more important in a monorepo than when spread over several multirepos. There's so many more moving parts, so it's increasingly important to be able to filter a list of commits to what's actually relevant. Tooling can help with this (e.g. `git log -- <subdirectory or file>`), but in the end we are still limited by the quality of our own commit logs.
 
-Like branch names, commit messages should be descriptive and contain enough context that they make sense _on their own_. Commit messages like "fix" or "works" can be annoyingly unhelpful. Even something as innocuous-sounding as "staging merge" can be confusing --- are we merging into `staging`, or merging `staging` into another branch? What other branch(es) are involved?
+Like branch names, commit messages should be descriptive and contain enough context that they make sense _on their own_. Commit messages like "fix", "works", or "oops" can be annoyingly unhelpful. Even something as innocuous-sounding as "staging merge" can be confusing --- are we merging into `staging`, or merging `staging` into another branch? What other branch(es) are involved?
 
 Some good rules of thumb:
 
@@ -152,27 +152,23 @@ Here's the workflow:
 3. Get as many eyeballs on the PR as possible, and approve it if it looks good.
 4. Wait for all CI checks and tests to pass. This is important --- we will **not** skip CI and force a hotfix PR through to master. The CI is our last line of defense, and the time saved by "skipping it" is not worth the increased chance of pushing another bad commit to production.
 5. Merge the hotfix into `master`.
-6. Once the fix is confirmed to work, fast-forward `staging` to match `master`.
-7. Merge the hotfix into `dev` as well.
-8. Write a regression test to make sure the same issue never occurs again, and add it to CI.
+6. Once the fix is confirmed to work, merge `master` back into `staging`, and `staging` back into `dev`.
+7. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
 ## Publishing
 
-We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
-
-As of writing, these YAML workflows only deploy our `master` branch, which is our production code. We are working on integrating continuous deployment for `staging` and `dev` branches, so that we can have a true continuous deployment pipeline. To understand how these branches interact together when it comes to releases, check our [Release Schedule](https://www.notion.so/tryfractal/Release-Schedule-c29cbe11c5f94cedb9c01aaa6d0d1ca4).
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`, `dev`, and `staging`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
 
 ## Styling
 
 Each subfolder in this monorepository is its own project with its dedicated style, which you must follow. All work done on this monorepository must follow the [Documentation & Code Standards](https://www.notion.so/tryfractal/Documentation-Code-Standards-54f2d68a37824742b8feb6303359a597) and the [Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
-
-# ===
 
 ## Appendix
 
 ### Useful Monorepo git Tricks
 
 - Viewing a log of only the commits affecting a given file or subdirectory: `git log -- <path>`
+- Making sure you don't accidentally introduce merge commits from a `git pull`: `git config pull.ff only`
 
 ### Example of Bad Commit History
 
