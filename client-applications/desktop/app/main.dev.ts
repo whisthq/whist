@@ -14,7 +14,9 @@ import { app, BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
+
 import { FractalIPC } from "./shared/types/ipc"
+import { BROWSER_WINDOW_IDS } from "./shared/types/browsers"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -175,13 +177,14 @@ const createWindow = async () => {
 
     ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
         /* 
+            Listener to load in a browser url. Assigned to either paymentWindow or loginWindow (the only two windows we currently need)
             Arguments:
                 argv[0]: url to launch the browser window with
                 argv[1]: name of the window that this url should launch in
          */
         const url = argv[0]
         const name = argv[1]
-        let win = new BrowserWindow({ width: 800, height: 600 })
+        const win = new BrowserWindow({ width: 800, height: 600 })
         win.on("close", () => {
             if (win) {
                 event.preventDefault()
@@ -190,9 +193,9 @@ const createWindow = async () => {
         win.loadURL(url)
         win.show()
 
-        if (name === "login") {
+        if (name === BROWSER_WINDOW_IDS.LOGIN) {
             loginWindow = win
-        } else if (name === "payment") {
+        } else if (name === BROWSER_WINDOW_IDS.PAYMENT) {
             paymentWindow = win
         }
         event.returnValue = argv
@@ -200,31 +203,65 @@ const createWindow = async () => {
 
     ipc.on(FractalIPC.CLOSE_BROWSER, (event, argv) => {
         /*
+            Listener to close a specified window displaying a browser url
+
             Arguments:
                 argv[0]: name of the browser window to close
         */
         const name = argv[0]
-        if (name === "login") {
+        if (name === BROWSER_WINDOW_IDS.LOGIN) {
             loginWindow?.close()
-        } else if (name === "payment") {
+        } else if (name === BROWSER_WINDOW_IDS.PAYMENT) {
             paymentWindow?.close()
         }
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.GET_ENCRYPTION_KEY, (event, argv) => {
-        //console.log("get encryption key plz")
-        if (loginWindow !== null) {
-            console.log("get encryption key plz")
+    ipc.on(FractalIPC.CHECK_BROWSER, (event, argv) => {
+        /*
+            Listener to check whether a browser window is open
 
+            Arguments:
+                argv[0]: name of the browser window to check
+
+            Returns: whether the browser window is open (true) or not (false)
+        */
+        const name = argv[0]
+        let windowExists = false
+        if (name === BROWSER_WINDOW_IDS.LOGIN) {
+            if (loginWindow) {
+                windowExists = true
+            }
+        } else if (name === BROWSER_WINDOW_IDS.PAYMENT) {
+            if (loginWindow) {
+                windowExists = true
+            }
+        }
+        event.returnValue = windowExists
+    })
+
+    ipc.on(FractalIPC.GET_ENCRYPTION_KEY, (event, argv) => {
+        /*
+            Listener to retrieve the encryption key from the login window
+
+            Returns: null, or the value of the retrieved encryptionToken
+         */
+        if (loginWindow !== null) {
             loginWindow.webContents
                 .executeJavaScript(
-                    'document.getElementById("encryptionKey").textContent',
+                    'document.getElementById("encryptionToken").textContent',
                     true
                 )
-                .then((result) => console.log(result))
+                .then((encryptionToken) => {
+                    event.returnValue = encryptionToken
+                    return null
+                })
+                .catch((err) => {
+                    throw err
+                })
+        } else {
+            event.returnValue = argv
         }
-        event.returnValue = argv
     })
 
     ipc.on(FractalIPC.FORCE_QUIT, () => {
@@ -245,6 +282,14 @@ const createWindow = async () => {
     mainWindow.on("maximize", () => {})
 
     mainWindow.on("minimize", () => {})
+
+    loginWindow?.on("closed", () => {
+        loginWindow = null
+    })
+
+    paymentWindow?.on("closed", () => {
+        paymentWindow = null
+    })
 
     if (process.env.NODE_ENV === "development") {
         // Skip autoupdate check
