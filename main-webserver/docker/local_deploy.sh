@@ -40,7 +40,7 @@ fi
 export $(cat .env | xargs)
 
 if [ $USE_DEV_DB == true ]; then
-    export DATABASE_URL=postgres://${POSTGRES_REMOTE_USER}:${POSTGRES_REMOTE_PASSWORD}@${POSTGRES_REMOTE_HOST}/${POSTGRES_REMOTE_DB}
+    export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
 
     # launch all images but dev db
     docker-compose up --build -d redis web celery # don't spin up postgres_db
