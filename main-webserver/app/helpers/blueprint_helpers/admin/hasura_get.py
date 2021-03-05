@@ -34,7 +34,7 @@ def auth_token_helper(auth_token):
                 user = None if not current_user else User.query.get(current_user)
                 if user and current_user:
                     hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
-        except Exception as e:
+        except Exception:
             fractal_logger.error("", exc_info=True)
 
     return hasura_role

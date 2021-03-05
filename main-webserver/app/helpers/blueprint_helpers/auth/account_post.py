@@ -123,7 +123,7 @@ def register_helper(username, password, name, reason_for_signup):
     try:
         db.session.add(new_user)
         db.session.commit()
-    except Exception as e:
+    except Exception:
         fractal_logger.error("Registration failed.", extra={"label": username}, exc_info=True)
         status = BAD_REQUEST
         access_token = refresh_token = None
