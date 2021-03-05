@@ -7,7 +7,7 @@ from app.constants.http_codes import (
     UNAUTHORIZED,
 )
 from app.helpers.utils.aws.aws_resource_locks import lock_container_and_update
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
     fractal_sql_update,
@@ -69,10 +69,9 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
 
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
-        fractal_log(
-            function="ping_helper",
-            label=str(username),
-            logs="{username} just disconnected from Fractal".format(username=username),
+        fractal_logger.info(
+            "{username} just disconnected from Fractal".format(username=username),
+            extra={"label": str(username)},
         )
 
     # Detect and handle logon event
@@ -86,10 +85,9 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
 
         fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
 
-        fractal_log(
-            function="ping_helper",
-            label=str(username),
-            logs="{username} just connected to Fractal".format(username=username),
+        fractal_logger.info(
+            "{username} just connected to Fractal".format(username=username),
+            extra={"label": str(username)},
         )
 
     # Change Container states accordingly
