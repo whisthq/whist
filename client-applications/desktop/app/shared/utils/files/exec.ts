@@ -60,6 +60,16 @@ const getExecutableName = (): string => {
     return ""
 }
 
+/**
+ * Launches the protocol
+ * @param protocolOnStart function called right before protocol starts
+ * @param protocolOnExit function called right after protocl exits
+ * @param userID userID for logging
+ * @param protocolLaunched protoclLaunched timestamp for logging
+ * @param createContainerRequestSent container request timestamp for logging
+ *
+ * Returns: child process object created by spawn
+ */
 export const launchProtocol = async (
     protocolOnStart: (userID: string) => void,
     protocolOnExit: (
@@ -71,19 +81,6 @@ export const launchProtocol = async (
     protocolLaunched: number,
     createContainerRequestSent: number
 ) => {
-    /*
-    Description:
-        Function to launch the protocol
-
-    Arguments:
-        container: Container from Redux store
-        protocolOnStart (function): Callback function fired right before protocol starts
-        protocolOnExit (function): Callback function fired right after protocol exits
-
-    Returns:
-        Child process object created by spawn()
-    */
-
     // spawn launches an executable in a separate thread
     console.log("STARTING THREAD")
     const spawn = require("child_process").spawn

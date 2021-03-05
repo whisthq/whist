@@ -95,7 +95,7 @@ export const initiateFractalIPCListeners = (
         writeStream(protocol, `finished?0`)
         createContainerRequestSent = Date.now()
         console.log("DESTROYING BROWSER WINDOW")
-        // mainWindow?.destroy()
+        mainWindow?.destroy()
         console.log("DESTROYED BROWSER WINDOW")
         event.returnValue = argv
     })

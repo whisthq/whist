@@ -1,34 +1,24 @@
-import { app, BrowserWindow } from "electron"
-
-import { ChildProcess } from "child_process"
-import { FractalIPC } from "../shared/types/ipc"
-import { launchProtocol, writeStream } from "../shared/utils/files/exec"
+import { app } from "electron"
 import { uploadToS3 } from "../shared/utils/files/aws"
 import { FractalLogger } from "../shared/utils/general/logging"
 import { FractalDirectory } from "../shared/types/client"
-import LoadingMessage from "../pages/launcher/constants/loadingMessages"
-
-/**
- * Function that launches the protocl from the main thread
- * @param mainWindow browser window of the client app, only referenced to kill the renderer thread
- */
 
 const logger = new FractalLogger()
 
-// export const createProtocol = (mainWindow: BrowserWindow | null = null) => {
-//     const electron = require("electron")
-//     const ipc = electron.ipcMain
-//     let protocol: ChildProcess
-//     let userID: string
-//     let protocolLaunched: number
-//     let protocolClosed: number
-//     let createContainerRequestSent: number
-// }
-
+/**
+ * Callback function called right before protocol starts
+ * @param userID userID for logging purposes
+ */
 export const protocolOnStart = (userID: string) => {
     logger.logInfo("Protocol started, callback fired", userID)
 }
 
+/**
+ * Callback function called right after protocol exits
+ * @param protocolLaunched protocol launched timestamp for logging
+ * @param createContainerRequestSent create container request timestamp for logging
+ * @param userID userID for logging
+ */
 export const protocolOnExit = (
     protocolLaunched: number,
     createContainerRequestSent: number,
@@ -63,7 +53,11 @@ export const protocolOnExit = (
             logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
         }
     })
-
     // app.exit(0)
     // app.quit()
 }
+
+// export const exitApp = () => {
+//     app.exit(0)
+//     app.quit()
+// }
