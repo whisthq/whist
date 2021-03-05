@@ -46,9 +46,7 @@ const Home = (props: {
             Date.now() / 1000 - createdDate < FREE_TRIAL_PERIOD
         ) {
             return (
-                <div
-                    className="m-auto pt-24 max-w-md text-center"
-                >
+                <div className="m-auto pt-24 max-w-md text-center">
                     <div className="text-4xl tracking-wide leading-snug">
                         The first cloud-powered browser.
                     </div>
