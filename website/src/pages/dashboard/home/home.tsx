@@ -8,8 +8,8 @@ import moment from "moment"
 import DownloadBox from "pages/dashboard/home/components/downloadBox"
 
 import { DASHBOARD_IDS } from "testing/utils/testIDs"
-import { User } from "shared/types/reducers"
-import { StripeInfo } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
+import { StripeInfo } from "store/reducers/dashboard/default"
 //import { CopyToClipboard } from "react-copy-to-clipboard"
 // use copy to clipboard functionality when we add back in linux
 

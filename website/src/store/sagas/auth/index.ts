@@ -10,7 +10,6 @@ import * as api from "shared/api"
 function* emailLogin(action: {
     email: string
     password: string
-    rememberMe?: boolean
     type: string
 }) {
     const { json } = yield call(api.loginEmail, action.email, action.password)
@@ -111,7 +110,6 @@ export function* googleLogin(action: any) {
 function* emailSignup(action: {
     email: string
     password: string
-    rememberMe?: boolean
     type: string
     name: string
 }) {
@@ -222,9 +220,8 @@ export function* validateVerificationToken(action: any) {
 export function* forgotPassword(action: any) {
     const state = yield select()
     const { json } = yield call(
-        api.passwordForgot,
-        action.username,
-        action.token
+        api.forgotPassword,
+        action.username
     )
 
     const emailsSent = state.AuthReducer.authFlow.forgotEmailsSent
@@ -266,15 +263,21 @@ export function* forgotPassword(action: any) {
 }
 
 export function* validateResetToken(action: any) {
-    yield select()
-    const { json } = yield call(api.validateAccessToken, action.token)
+    const state = yield select()
+    console.log(state)
+    const { json } = yield call(
+        api.validateVerification, 
+        state.AuthReducer.user.accessToken,
+        state.AuthReducer.user.refreshToken,
+        state.AuthReducer.authFlow.passwordResetEmail,
+        action.token
+    )
 
     // at some later point in time we may find it helpful to change strings here to some sort of enum
     if (json && json.status === 200) {
         yield put(
             updateAuthFlow({
                 resetTokenStatus: "verified",
-                passwordResetEmail: json.user.user_id, // changed from userID
                 passwordResetToken: action.token,
             })
         )
@@ -288,16 +291,19 @@ export function* validateResetToken(action: any) {
     }
 }
 
-export function* resetPassword(action: any) {
+export function* resetPassword(action: any) {   
+    const state = yield select()
+
     const { response } = yield call(
-        api.passwordReset,
-        action.token,
-        action.username,
+        api.resetPassword,
+        state.AuthReducer.authFlow.passwordResetToken,
+        state.AuthReducer.authFlow.passwordResetEmail,
         action.password
     )
 
     // TODO do something with the response
     if (response && response.status === 200) {
+        // TODO: Remove the resetDone state
         yield put(
             updateAuthFlow({
                 resetDone: true,

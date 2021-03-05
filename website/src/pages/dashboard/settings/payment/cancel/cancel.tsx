@@ -3,7 +3,8 @@ import { connect } from "react-redux"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import { Redirect } from "react-router"
-import { User, StripeInfo } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
+import { User } from "store/reducers/auth/default"
 
 import history from "shared/utils/history"
 

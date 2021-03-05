@@ -5,7 +5,7 @@ import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 
 import { CARDS } from "shared/constants/stripe"
 import CardField from "shared/components/cardField"
-import { StripeInfo } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
 
 import {
     PROFILE_IDS,

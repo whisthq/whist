@@ -3,9 +3,8 @@ import { connect } from "react-redux"
 
 import { CARDS } from "shared/constants/stripe"
 import CardField from "shared/components/cardField"
-// import { PriceBox } from "pages/dashboard/settings/payment/plan/components/priceBox"
 
-import { PaymentFlow, StripeInfo } from "shared/types/reducers"
+import { StripeInfo, PaymentFlow } from "store/reducers/dashboard/default"
 
 const PaymentMethod = (props: {
     dispatch: Dispatch<any>

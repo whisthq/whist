@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 
 import history from "shared/utils/history"
 import { PLANS } from "shared/constants/stripe"
-import { StripeInfo } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
 
 import styles from "styles/profile.module.css"
 import { E2E_DASHBOARD_IDS, PLAN_IDS } from "testing/utils/testIDs"

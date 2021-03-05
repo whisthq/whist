@@ -1,4 +1,6 @@
 /* eslint-disable no-console */
+
+// npm imports
 import React, {
     useState,
     useEffect,
@@ -7,6 +9,7 @@ import React, {
     Dispatch,
 } from "react"
 import { connect } from "react-redux"
+import { useLocation } from "react-router-dom"
 
 import { PuffAnimation } from "shared/components/loadingAnimations"
 import PasswordConfirmForm from "shared/components/passwordConfirmForm"
@@ -16,7 +19,7 @@ import {
 } from "pages/auth/shared/helpers/authHelpers"
 import history from "shared/utils/history"
 import FractalKey from "shared/types/input"
-import { User, AuthFlow } from "shared/types/reducers"
+import { AuthFlow } from "store/reducers/auth/default"
 
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import {
@@ -32,51 +35,30 @@ import sharedStyles from "styles/shared.module.css"
 
 import AuthContainer from "pages/auth/shared/components/authContainer"
 
-const ResetView = (props: {
+const Reset = (props: {
     dispatch: Dispatch<any>
-    user: User
     authFlow: AuthFlow
-    token?: string
-    validToken?: boolean
 }) => {
-    const { dispatch, authFlow, token, validToken } = props
+    const { dispatch, authFlow } = props
 
     const [password, setPassword] = useState("")
-    const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
+    const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPasswordWarning, setConfirmPasswordWarning] = useState("")
-    const [finished, setFinished] = useState(false)
-
-    // visual state constants
     const [processing, setProcessing] = useState(false)
 
+    const accessToken = useLocation().search.substring(1, useLocation().search.length)
+
     // the actual logic
-    const validPassword =
-        password.length > 0 &&
-        confirmPassword === password &&
-        checkPassword(password)
+    const checkPasswords = () => {
+        return checkPassword(password) && confirmPassword === password
+    }
 
     const reset = () => {
-        if (validPassword) {
-            let passwordResetEmail: string | undefined
-            if (authFlow.passwordResetEmail == null) {
-                console.error("Error: no passwordResetEmail")
-            } else {
-                passwordResetEmail = authFlow.passwordResetEmail as string
-            }
-
-            let passwordResetToken: string | undefined
-            if (authFlow.passwordResetToken == null) {
-                console.error("Error: no passwordResetToken")
-            } else {
-                passwordResetToken = authFlow.passwordResetToken as string
-            }
-
-            // TODO (might also want to add a email redux state for that which was forgotten)
+        if (checkPasswords()) {
             dispatch(
-                resetPassword(password, passwordResetToken, passwordResetEmail)
+                resetPassword(password)
             )
-            setFinished(true) // unfortunately this is all the sagas give us
         }
     }
 
@@ -110,13 +92,13 @@ const ResetView = (props: {
 
     // first ask for a validation and start loading
     useEffect(() => {
-        if (validToken && !processing && token != null) {
+        if (!processing && accessToken != null) {
             dispatch(
                 updateAuthFlow({
                     resetTokenStatus: null,
                 })
             )
-            dispatch(validateResetToken(token))
+            dispatch(validateResetToken(accessToken))
             setProcessing(true)
         }
         // want onComponentMount basically (thus [] ~ no deps ~ called only at the very beginning)
@@ -151,32 +133,9 @@ const ResetView = (props: {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
 
-    // finally once they click send dispatch a reset as in the beginning and finished -> true
-    useEffect(() => {
-        if (finished) {
-            // delay for 3 seconds then push to /
-            // not sure how this compares to redirect or whatever
-            setTimeout(() => {
-                logout()
-                history.push("/auth")
-            }, 5000) // turn this into a helper?
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [finished])
-
-    if (finished) {
-        // assume it worked
-        // TODO (adriano) when the server actually responds do something about it (say your thing was reset for example)
+    if (processing) {
         return (
-            <AuthContainer title="Your password was reset successfully">
-                <div data-testid={RESET_IDS.SUCCESS}>
-                    <PuffAnimation />
-                </div>
-            </AuthContainer>
-        )
-    } else if (processing) {
-        return (
-            <AuthContainer title="Please wait, resetting your password">
+            <AuthContainer title="Please wait while we authenticate you">
                 <div data-testid={RESET_IDS.LOAD}>
                     <PuffAnimation />
                 </div>
@@ -200,11 +159,7 @@ const ResetView = (props: {
                     <div data-testid={RESET_IDS.BUTTON}>
                         <button
                             className="rounded bg-blue dark:bg-mint px-8 py-3 mt-4 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
-                            style={{
-                                opacity: validPassword ? 1.0 : 0.6,
-                            }}
                             onClick={reset}
-                            disabled={!validPassword}
                         >
                             Reset
                         </button>
@@ -214,16 +169,19 @@ const ResetView = (props: {
     } else {
         return (
             <AuthContainer title="Your password reset was unsuccessful">
-                        <button
-                            className="rounded bg-blue dark:bg-mint px-8 py-3 mt-4 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
-                            style={{
-                                width: "100%",
-                                fontSize: 16,
-                            }}
-                            onClick={backToLogin}
-                        >
-                            Back to Login
-                        </button>
+                <div className="text-gray mt-4 text-center">
+                    We apologize to the inconvenience!. Please contact support@fractal.co and we'll assist you in resetting your password.
+                </div>
+                <button
+                    className="rounded bg-blue dark:bg-mint px-8 py-3 mt-6 text-white dark:text-black w-full hover:bg-mint hover:text-black duration-500 font-medium"
+                    style={{
+                        width: "100%",
+                        fontSize: 16,
+                    }}
+                    onClick={backToLogin}
+                >
+                    Back to Login
+                </button>
             </AuthContainer>
         )
     }
@@ -231,14 +189,12 @@ const ResetView = (props: {
 
 const mapStateToProps = (state: {
     AuthReducer: {
-        user: User
         authFlow: AuthFlow
     }
 }) => {
     return {
-        user: state.AuthReducer.user ? state.AuthReducer.user : {},
-        authFlow: state.AuthReducer.authFlow ? state.AuthReducer.authFlow : {},
+        authFlow: state.AuthReducer.authFlow,
     }
 }
 
-export default connect(mapStateToProps)(ResetView)
+export default connect(mapStateToProps)(Reset)

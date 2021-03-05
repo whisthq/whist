@@ -8,7 +8,8 @@ import history from "shared/utils/history"
 import PaymentMethod from "pages/dashboard/settings/payment/billing/components/paymentMethod"
 import Checkout from "pages/dashboard/settings/payment/billing/components/checkout"
 import { PAYMENT_IDS } from "testing/utils/testIDs"
-import { User, StripeInfo } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
+import { User } from "store/reducers/auth/default"
 
 const Billing = (props: {
     dispatch: Dispatch<any>

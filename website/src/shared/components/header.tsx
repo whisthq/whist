@@ -14,7 +14,7 @@ import LogoWhite from "assets/icons/logoWhite.svg"
 
 import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
 import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 import styles from "styles/shared.module.css"
 

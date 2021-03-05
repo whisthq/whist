@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Redirect } from "react-router"
 
 import history from "shared/utils/history"
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 import { CANCELED_IDS } from "testing/utils/testIDs"
 
 const Canceled = (props: { user: User }) => {

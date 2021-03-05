@@ -11,7 +11,7 @@ import { validateAccessToken } from "shared/api/index"
 import { routeMap, fractalRoute } from "shared/constants/routes"
 
 // Type + constant imports
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 
 // Asset imports
 import LogoPurple from "assets/icons/logoPurple.png"
@@ -47,7 +47,7 @@ const AuthContainer = (props: {
     if(processing) {
         return(
             <div>
-                <PuffAnimation />
+                <PuffAnimation fullScreen/>
             </div>
         )
     } else {

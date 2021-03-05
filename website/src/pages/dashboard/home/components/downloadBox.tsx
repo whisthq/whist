@@ -2,7 +2,7 @@ import React, { useState, CSSProperties, Dispatch } from "react"
 import { connect } from "react-redux"
 import { FaApple, FaWindows } from "react-icons/fa"
 import { config } from "shared/constants/config"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 import { DASHBOARD_DOWNLOAD_BOX_IDS } from "testing/utils/testIDs"
 

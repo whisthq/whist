@@ -8,15 +8,18 @@ import PuffLoader from "react-spinners/PuffLoader"
  * A puff loader that takes over the middle of the page.
  * @param props unused
  */
-export const PuffAnimation = () => (
-    <div
-        className="relative w-screen h-screen"
-    >
-        <PuffLoader
-            css={
-                "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"
-            }
-            size={75}
-        />
-    </div>
-)
+export const PuffAnimation = (props: {
+    fullScreen?: boolean
+}) => {
+    const {fullScreen} = props
+
+    const animationStyle = fullScreen ? "w-screen h-screen flex items-center justify-center" : "w-48 h-48 flex items-center justify-center m-auto"
+
+    return(
+        <div className={animationStyle}>
+            <PuffLoader
+            />
+        </div>
+    )
+}
+

@@ -12,7 +12,7 @@ import history from "shared/utils/history"
 import { VERIFY_IDS } from "testing/utils/testIDs"
 
 import AuthContainer from "pages/auth/shared/components/authContainer"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 
 export const RetryButton = (props: {

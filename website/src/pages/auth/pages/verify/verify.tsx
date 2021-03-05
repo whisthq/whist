@@ -3,7 +3,7 @@ import { connect } from "react-redux"
 import { Redirect, useLocation } from "react-router"
 
 import VerifyView from "pages/auth/pages/verify/components/verifyView"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 const Verify = (props: { user: User }) => {
     /*

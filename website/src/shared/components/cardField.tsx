@@ -7,8 +7,8 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import * as PaymentSideEffect from "store/actions/dashboard/payment/sideEffects"
 
-import { StripeInfo } from "shared/types/reducers"
-import { User } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
+import { User } from "store/reducers/auth/default"
 import { PAYMENT_IDS } from "testing/utils/testIDs"
 
 const CardField = (props: {

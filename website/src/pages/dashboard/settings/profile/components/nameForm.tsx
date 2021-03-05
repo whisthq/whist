@@ -6,7 +6,7 @@ import { FaPencilAlt } from "react-icons/fa"
 import Input from "shared/components/input"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { UPDATE_NAME } from "shared/constants/graphql"
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 
 import { E2E_DASHBOARD_IDS, PROFILE_IDS } from "testing/utils/testIDs"
 

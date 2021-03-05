@@ -5,7 +5,8 @@ import { Redirect } from "react-router"
 
 import history from "shared/utils/history"
 import { config } from "shared/constants/config"
-import { StripeInfo, User } from "shared/types/reducers"
+import { StripeInfo } from "store/reducers/dashboard/default"
+import { User } from "store/reducers/auth/default"
 import { CONFIRMATION_IDS } from "testing/utils/testIDs"
 
 const Confirmation = (props: { user: User; stripeInfo: StripeInfo }) => {

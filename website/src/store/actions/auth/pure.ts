@@ -1,5 +1,5 @@
 import * as SharedAction from "store/actions/shared"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 export const UPDATE_USER = "UPDATE_USER"
 export const UPDATE_AUTH_FLOW = "UPDATE_AUTH_FLOW"

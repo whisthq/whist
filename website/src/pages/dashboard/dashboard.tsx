@@ -22,7 +22,7 @@ import { SUBSCRIBE_INVITE } from "shared/constants/graphql"
 
 import sharedStyles from "styles/shared.module.css"
 
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 
 const Dashboard = (props: { user: User; location: { pathname: string } }) => {
     const { user, location } = props
@@ -52,15 +52,12 @@ const Dashboard = (props: { user: User; location: { pathname: string } }) => {
         return <Redirect to="/auth" />
     } else if (loading) {
         return (
-            <div className={sharedStyles.fractalContainer}>
-                <div data-testid={HEADER}>
-                    <Header account />
-                </div>
+            <div>
                 <div className="hidden md:inline relative top-36">
                     <SignoutButton id={E2E_DASHBOARD_IDS.SIGNOUT} />
                 </div>
                 <div data-testid={DASHBOARD_IDS.RIGHT}>
-                    <PuffAnimation />
+                    <PuffAnimation fullScreen/>
                 </div>
             </div>
         )

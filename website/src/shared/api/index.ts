@@ -99,13 +99,14 @@ export const validateVerification = async (
     refreshToken: string,
     username: string,
     token: string
-) =>
-    post({
+) => {
+    return post({
         endpoint: "/account/verify",
-        body: { username, token },
+        body: { username: username, token: token },
         accessToken,
         refreshToken,
     })
+}
 
 export const deleteAccount = async (username: string, accessToken: string) => {
     post({
@@ -115,7 +116,7 @@ export const deleteAccount = async (username: string, accessToken: string) => {
     })
 }
 
-export const passwordForgot = async (username: string, emailToken: string) => {
+export const forgotPassword = async (username: string) => {
     /*
         API call to the /mail endpoint to send a password forgot email
 
@@ -132,7 +133,7 @@ export const passwordForgot = async (username: string, emailToken: string) => {
         email_id: "PASSWORD_RESET",
         to_email: username,
         email_args: {
-            link: config.url.FRONTEND_URL + "/reset?" + emailToken,
+            link: `${config.url.FRONTEND_URL}/reset?`,
         },
     }
     return post({
@@ -144,16 +145,17 @@ export const passwordForgot = async (username: string, emailToken: string) => {
 export const validateAccessToken = async (token: string) =>
     get({ endpoint: "/token/validate", accessToken: token })
 
-export const passwordReset = async (
+export const resetPassword = async (
     token: string,
     username: string,
     password: string
-) =>
-    post({
+) => {
+    return post({
         endpoint: "/account/update",
         body: { username, password },
         accessToken: token,
     })
+}
 
 export const passwordUpdate = async (
     accessToken: string,

@@ -28,7 +28,7 @@ import {routeMap, fractalRoute} from "shared/constants/routes"
 
 // Type + constant imports
 import FractalKey from "shared/types/input"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 import PLACEHOLDER from "shared/constants/form"
 import { AUTH_IDS, E2E_AUTH_IDS } from "testing/utils/testIDs"
 
@@ -113,7 +113,7 @@ const Login = (props: {
     if (processing) {
         return (
             <div data-testid={AUTH_IDS.LOADING}>
-                <PuffAnimation />
+                <PuffAnimation fullScreen/>
             </div>
         )
     } else {

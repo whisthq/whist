@@ -23,7 +23,7 @@ import ScrollToTop from "shared/components/scrollToTop"
 import { routes } from "shared/constants/routes"
 import withTracker from "shared/utils/withTracker"
 import { config } from "shared/constants/config"
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 
 import * as SharedAction from "store/actions/shared"
 

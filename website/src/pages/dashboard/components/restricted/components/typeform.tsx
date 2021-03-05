@@ -8,7 +8,7 @@ import { ReactTypeformEmbed } from "react-typeform-embed"
 import "reactjs-popup/dist/index.css"
 
 import { debugLog } from "shared/utils/logging"
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 import { INSERT_INVITE, UPDATE_INVITE } from "shared/constants/graphql"
 import { config } from "shared/constants/config"
 

@@ -1,3 +1,18 @@
+export type StripeInfo = {
+    cardBrand: string | null // name of the card brand
+    cardLastFour: string | null // last four digits of the user's cart
+    postalCode: string | null // postal code used to calculate taxes
+    plan: string | null
+    stripeRequestReceived: boolean // TODO: potentially remove stripeRequestReceived and just keep stripeStatus
+    stripeStatus: string | null // null | "success" | "failure"
+    checkoutStatus: string | null // null | "success" | "failure"
+    createdTimestamp: number | null // when the account was created
+}
+
+export type PaymentFlow = {
+    plan: string
+}
+
 export const DEFAULT = {
     stripeInfo: {
         cardBrand: null, // name of the card brand

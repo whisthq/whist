@@ -85,15 +85,11 @@ export const forgotPassword = (username: string, token?: string) => {
 }
 
 export const resetPassword = (
-    password: string,
-    token?: string,
-    username?: string
+    password: string
 ) => {
     return {
         type: RESET_PASSWORD,
-        username,
-        password,
-        token,
+        password
     }
 }
 

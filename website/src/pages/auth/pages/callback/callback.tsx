@@ -5,7 +5,7 @@ import { Link } from "react-router-dom"
 import sharedStyles from "styles/shared.module.css"
 
 import Header from "shared/components/header"
-import { AuthFlow } from "shared/types/reducers"
+import { AuthFlow } from "store/reducers/auth/default"
 
 const AuthCallback = (props: { callback: string | undefined }) => {
     /*

@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 import { connect } from "react-redux"
 
-import { User } from "shared/types/reducers"
+import { User } from "store/reducers/auth/default"
 import Typeform from "pages/dashboard/components/restricted/components/typeform"
 
 const Restricted = (props: { user: User; formFilledOut: boolean }) => {

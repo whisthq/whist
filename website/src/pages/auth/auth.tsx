@@ -10,7 +10,7 @@ import Verify from "pages/auth/pages/verify/verify"
 import Callback from "pages/auth/pages/callback/callback"
 import ScrollToTop from "shared/components/scrollToTop"
 
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 import { updateAuthFlow } from "store/actions/auth/pure"
 import { UPDATE_ACCESS_TOKEN } from "shared/constants/graphql"
 import { routeMap, fractalRoute } from "shared/constants/routes"

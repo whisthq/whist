@@ -10,7 +10,8 @@ import { PriceBox } from "pages/dashboard/settings/payment/plan/components/price
 import { PLANS } from "shared/constants/stripe"
 import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { FractalPlan } from "shared/types/payment"
-import { User, PaymentFlow } from "shared/types/reducers"
+import { PaymentFlow } from "store/reducers/dashboard/default"
+import { User } from "store/reducers/auth/default"
 import { PLAN_IDS } from "testing/utils/testIDs"
 
 const Plan = (props: {

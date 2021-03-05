@@ -1,17 +1,38 @@
+export type User = {
+    userID?: string | null
+    name?: string | null 
+    accessToken?: string | null
+    refreshToken?: string | null 
+    emailVerificationToken?: string | null
+    emailVerified?: boolean
+    usingGoogleLogin?: boolean
+}
+
+export type AuthFlow = {
+    loginWarning?: string | null 
+    signupWarning?: string | null 
+    signupSuccess?: boolean
+    verificationStatus?: string | null
+    forgotStatus?: string | null
+    verificationEmailsSent?: number
+    forgotEmailsSent?: number
+    resetTokenStatus?: string | null 
+    passwordResetEmail?: string | null 
+    passwordResetToken?: string | null
+    passwordVerified?: string | null 
+    callback?: string | undefined
+    token?: string | null
+    url?: string | null
+}
+
 export const DEFAULT = {
     user: {
-        // identifiers
-        userID: null, // email
-        name: null, // name
-        // session auth tokens
-        accessToken: null, // access token that lets you talk to the server when logged in
-        refreshToken: null, // refresh token to refresh your access token when it is used up
-        // email tokens
-        emailVerificationToken: null, // the token that shows up in /verify?token needed to verify email
-        resetToken: null, // the token that shows up in /reset?token needed to validate a reset
-        // verification status for this specific user
-        emailVerified: false, // keeps track of whether this user is verified so we can display the proper info
-        usingGoogleLogin: false, // if the user signed in using Google
+        userID: null,
+        name: null,
+        accessToken: null, 
+        refreshToken: null,
+        emailVerificationToken: null,
+        emailVerified: false
     },
     authFlow: {
         // error message
@@ -25,7 +46,6 @@ export const DEFAULT = {
         // reset password
         forgotEmailsSent: 0,
         resetTokenStatus: null, // null | "verified" | "invalid", may want to handle expired tokens in the future
-        resetDone: false, // whether we are done resetting our password (i.e. server says "I've done it")
         passwordResetEmail: null, // forgot password email
         passwordResetToken: null,
         passwordVerified: null, // null | "success" | "failed"

@@ -9,16 +9,6 @@ import styles from "styles/profile.module.css"
 const Profile = (props: any) => {
     const { user } = props
 
-    // Clear redux values on page load that will be set when editing password
-    // useEffect(() => {
-    //     dispatch(
-    //         PureAuthAction.updateAuthFlow({
-    //             resetDone: false,
-    //             passwordVerified: null,
-    //         })
-    //     )
-    // }, [dispatch])
-
     return (
         <div className="w-full mt-12 md:m-auto md:max-w-screen-sm md:mt-16">
             <div className={styles.sectionTitle}>Email</div>

@@ -6,7 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import history from "shared/utils/history"
-import { StripeInfo, PaymentFlow } from "shared/types/reducers"
+import { StripeInfo, PaymentFlow } from "store/reducers/dashboard/default"
 
 import { getZipState } from "shared/utils/stripe"
 import { TAX_RATES, PLANS } from "shared/constants/stripe"

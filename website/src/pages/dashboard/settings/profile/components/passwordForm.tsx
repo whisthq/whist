@@ -6,7 +6,7 @@ import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
 import Input from "shared/components/input"
 import PasswordConfirmForm from "shared/components/passwordConfirmForm"
-import { User, AuthFlow } from "shared/types/reducers"
+import { User, AuthFlow } from "store/reducers/auth/default"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { updatePassword } from "store/actions/auth/sideEffects"
 import { checkPasswordVerbose } from "pages/auth/shared/helpers/authHelpers"
