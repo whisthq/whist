@@ -12,6 +12,7 @@
 import { app, BrowserWindow } from "electron"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
+
 import { FractalIPC } from "./shared/types/ipc"
 import { createWindow, initiateWindowListeners } from "./main/launchWindow"
 import { initiateFractalIPCListeners } from "./main/initiateFractalIPCListeners"
@@ -88,7 +89,13 @@ const launchWindow = async () => {
 
     // mainWindow.webContents.openDevTools()
     initiateAutoUpdateListeners(mainWindow)
-    initiateWindowListeners(mainWindow, customURL, showMainWindow)
+    initiateWindowListeners(
+        mainWindow,
+        customURL,
+        showMainWindow,
+        loginWindow,
+        paymentWindow
+    )
     initiateFractalIPCListeners(
         mainWindow,
         showMainWindow,

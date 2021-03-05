@@ -19,6 +19,7 @@ import {
     DEFAULT as ContainerDefault,
 } from "store/reducers/container/default"
 
+import { updateUser } from "store/actions/auth/pure"
 import { updateContainer, updateTask } from "store/actions/container/pure"
 import { updateTimer } from "store/actions/client/pure"
 import {
@@ -26,7 +27,9 @@ import {
     createContainer,
 } from "store/actions/container/sideEffects"
 import { FractalIPC } from "shared/types/ipc"
+import { BROWSER_WINDOW_IDS } from "shared/types/browsers"
 import { AWSRegion } from "shared/types/aws"
+import { FractalAuthCache } from "shared/types/cache"
 
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
@@ -51,6 +54,7 @@ export const Launcher = (props: {
     timer: Timer
     region: AWSRegion | undefined
     dispatch: Dispatch
+    encryptionToken: string
 }) => {
     /*
         Protocol launcher with animated loading screen. User will be redirected to this page
@@ -72,7 +76,13 @@ export const Launcher = (props: {
         timer,
         region,
         dispatch,
+        encryptionToken
     } = props
+
+    const ipc = require("electron").ipcRenderer
+    const logger = new FractalLogger()
+    const Store = require("electron-store")
+    const storage = new Store()
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
     const [protocol, setProtocol] = useState(false)
@@ -82,13 +92,11 @@ export const Launcher = (props: {
     const [loadingMessage, setLoadingMessage] = useState("")
 
     const [loginClosed, setLoginClosed] = useState(false)
+    const [encryptionTokenRetrieved, setEncryptionTokenRetrieved] = useState(false)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
     })
-
-    const ipc = require("electron").ipcRenderer
-    const logger = new FractalLogger()
 
     // Restores Redux state to before a container was created
     const resetReduxforLaunch = () => {
@@ -140,12 +148,27 @@ export const Launcher = (props: {
     }, [])
 
     useEffect(() => {
-        if (!loginClosed) {
-            ipc.sendSync(FractalIPC.GET_ENCRYPTION_KEY)
-            ipc.sendSync(FractalIPC.CLOSE_BROWSER, ["login"])
+        if (!encryptionTokenRetrieved){
+            if (ipc.sendSync(FractalIPC.CHECK_BROWSER, [BROWSER_WINDOW_IDS.LOGIN])) {
+                const encryptionToken = ipc.sendSync(FractalIPC.GET_ENCRYPTION_KEY)
+                dispatch(updateUser({encryptionToken: encryptionToken}))
+                storage.set(FractalAuthCache.ENCRYPTION_TOKEN, encryptionToken)
+            }
+                setEncryptionTokenRetrieved(true)
+        } else {
+            if (!encryptionToken || encryptionToken === "") {
+                setTaskState(FractalAppState.FAILURE)
+                logger.logError("User missing encryption key", userID)
+            }
+        }
+    }, [encryptionTokenRetrieved])
+
+    useEffect(() => {
+        if (!loginClosed && encryptionTokenRetrieved) {
+            ipc.sendSync(FractalIPC.CLOSE_BROWSER, [BROWSER_WINDOW_IDS.LOGIN])
             setLoginClosed(true)
         }
-    }, [loginClosed])
+    }, [loginClosed, encryptionTokenRetrieved])
 
     useEffect(() => {
         if (userID) {
@@ -220,11 +243,11 @@ export const Launcher = (props: {
     }, [dispatch, protocol, shouldLaunchProtocol, protocolLock])
 
     useEffect(() => {
-        if (protocol && taskState === FractalAppState.NO_TASK && region) {
+        if (protocol && taskState === FractalAppState.NO_TASK && region && encryptionTokenRetrieved) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, region, taskState])
+    }, [protocol, region, taskState, encryptionTokenRetrieved])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -319,6 +342,7 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
+        encryptionToken: state.AuthReducer.user.encryptionToken,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
