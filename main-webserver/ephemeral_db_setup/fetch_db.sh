@@ -15,6 +15,12 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Make sure we are always running this script with working directory `main-webserver/db_setup`
 cd "$DIR"
 
+# first fetch the current dev db schema
+if [ -f db_data.sql ]; then
+    echo "Found existing data sql scripts. Skipping fetching db."
+    exit 0
+fi
+
 POSTGRES_URI=${POSTGRES_URI:=""}
 
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
