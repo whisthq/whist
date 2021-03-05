@@ -242,6 +242,7 @@ class LocalConfig(DeploymentConfig):
             fetch=False,
         )
     )
+    SENTRY_DSN = property(getter("SENTRY_DSN", default="", fetch=False))
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
