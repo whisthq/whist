@@ -20,7 +20,6 @@ class User(db.Model):
         password (String): Hashed password
         stripe_customer_id (String): A pointer to a customer record on Fractal's Stripe account.
         reason_for_signup (String): How users heard about Fractal
-        using_google_login (Boolean): True/false using Google auth
         verified (Boolean): True/false email verified
     """
 
@@ -33,7 +32,6 @@ class User(db.Model):
     stripe_customer_id = db.Column(db.String(250))
     created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)
-    using_google_login = db.Column(db.Boolean, default=text("false"))
     verified = db.Column(db.Boolean, default=text("false"))
 
     # Setting passive_deletes causes SQLAlchemy to defer to the database to
