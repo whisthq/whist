@@ -5,7 +5,7 @@ DRIVER_VERSION=$(modinfo nvidia --field version)
 IFS="\n"
 IDS=()
 for x in `nvidia-smi -L`; do
-  IDS+=$(echo "$x" | cut -f6 -d " " | cut -c 1-40)
+    IDS+=$(echo "$x" | cut -f6 -d " " | cut -c 1-40)
 done
 
 # Convert GPU IDs to JSON Array

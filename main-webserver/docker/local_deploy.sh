@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # usage: ./local_deploy
-# deploys our webserver stack locally using Docker containers 
+# deploys our webserver stack locally using Docker containers
 # optional args:
 # --down (tear down local deployment)
 # --use-dev-db (use the dev db instead of a local ephemeral db. See README about using this flag.)
@@ -18,16 +18,16 @@ cd "$DIR"
 # Allow passing `--down` to spin down the docker-compose stack, instead of
 # having to cd into this directory and manually run the command.
 if [[ $* =~ [:space:]*--down[:space:]* ]]; then
-  echo "Running \"docker-compose down\". Ignore any warnings about unset variables."
-  docker-compose down
-  exit 0
+    echo "Running \"docker-compose down\". Ignore any warnings about unset variables."
+    docker-compose down
+    exit 0
 fi
 
 USE_DEV_DB=false
 # Allow passing `--use-dev-db` to use the dev database
 if [[ $* =~ [:space:]*--use-dev-db[:space:]* ]]; then
-  echo "WARNING: Using the dev db."
-  USE_DEV_DB=true
+    echo "WARNING: Using the dev db."
+    USE_DEV_DB=true
 fi
 
 # Make sure .env file exists
@@ -51,7 +51,7 @@ else
     # eph db configurations
     export POSTGRES_HOST="localhost"
     export POSTGRES_PORT="9999"
-    
+
     # POSTGRES_USER and POSTGRES_DB will be created in the db a few steps down with ../ephemeral_db_setup/db_setup.sh
     # since this is run in a docker container, the @postgres_db allows our web/celery containers
     # to talk to the postgres_db container. Our docker-compose sets up this container networking.
@@ -68,7 +68,7 @@ else
         echo "Connection failed. Retrying in 2 seconds..."
         sleep 2
     done
-    
+
     # set up the ephemeral  db
     bash ../ephemeral_db_setup/db_setup.sh
 fi

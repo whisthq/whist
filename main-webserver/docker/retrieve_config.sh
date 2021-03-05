@@ -22,10 +22,10 @@ function fetch {
     # to the development web application Heroku deployment, local deployments
     # should use the same secret key as that development deployment.
     heroku config:get CONFIG_DB_URL SECRET_KEY --shell \
-	   --app=fractal-dev-server \
-	| tr -d \'
+        --app=fractal-dev-server \
+        | tr -d \'
     heroku config:get DATABASE_URL --app=fractal-dev-server \
-	| python3 "$DIR"/pgparse.py
+        | python3 "$DIR"/pgparse.py
 
     echo "HOT_RELOAD="
 }
