@@ -165,10 +165,10 @@ int reap_timed_out_clients(double timeout);
  *                                 object associated with a username, if there is
  *                                 one.
  *
- * @param username                 Username to be searched for.
+ * @param user_id                  User ID to be searched for.
  *
  * @param found                    Populated with true if an associated client ID
- *                                 is found, false otherise.
+ *                                 is found, false otherwise.
  *
  * @param id                       Populated with found client ID, if one is
  *                                 found.
