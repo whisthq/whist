@@ -15,14 +15,6 @@ void update_webserver_parameters();
 bool get_using_stun();
 
 /**
- * @brief                          Queries the webserver for the VM password
- *                                 status
- *
- * @returns                        The password for the VM
- */
-char* get_vm_password();
-
-/**
  * @brief                          Retrieves the container ID that this program is
  *                                 running in by asking the webserver
  *
