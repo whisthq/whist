@@ -1,4 +1,3 @@
-import logging
 import boto3
 from celery import shared_task
 

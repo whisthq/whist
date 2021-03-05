@@ -1,5 +1,3 @@
-import logging
-
 from flask import current_app, jsonify
 
 from functools import reduce

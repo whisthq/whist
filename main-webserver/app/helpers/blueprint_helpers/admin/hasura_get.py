@@ -1,5 +1,4 @@
 import json
-import logging
 
 from flask import current_app
 from jose import jwt
@@ -36,7 +35,7 @@ def auth_token_helper(auth_token):
                 if user and current_user:
                     hasura_role = {"X-Hasura-Role": "user", "X-Hasura-User-Id": current_user}
         except Exception as e:
-            fractal_logger.error(f"Error: {str(e)}")
+            fractal_logger.error("", exc_info=True)
 
     return hasura_role
 
