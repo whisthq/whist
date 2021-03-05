@@ -242,7 +242,7 @@ class LocalConfig(DeploymentConfig):
             fetch=False,
         )
     )
-    SENTRY_DSN = property(getter("SENTRY_DSN", default="", fetch=False))
+    SENTRY_DSN = ""
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
@@ -280,6 +280,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
         DROPBOX_APP_KEY = "dropbox-client-id"
         DROPBOX_APP_SECRET = "dropbox-client-secret"
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
+        SENTRY_DSN = ""
 
         TESTING = True
 
