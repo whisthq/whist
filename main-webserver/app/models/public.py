@@ -13,7 +13,6 @@ class User(db.Model):
         name (String): Name of user (e.g. Mike)
         token (String): Email verification token
         password (String): Hashed password
-        release_stage (Int): 0-100 release stage, used in future for alpha releases
         stripe_customer_id (String): Customer ID returned by Stripe API
         reason_for_signup (String): How users heard about Fractal
         using_google_login (Boolean): True/false using Google auth
@@ -27,7 +26,6 @@ class User(db.Model):
     name = db.Column(db.String(250))
     token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
-    release_stage = db.Column(db.Integer, nullable=False, default=text("50"))
     stripe_customer_id = db.Column(db.String(250))
     created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)

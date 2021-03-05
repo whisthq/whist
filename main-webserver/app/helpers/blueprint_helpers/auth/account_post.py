@@ -109,7 +109,6 @@ def register_helper(username, password, name, reason_for_signup):
         token=token,
         name=name,
         reason_for_signup=reason_for_signup,
-        release_stage=50,
         created_timestamp=created_timestamp,
     )
 
