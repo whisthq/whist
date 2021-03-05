@@ -28,10 +28,10 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 def payment(action, **kwargs):
     """Covers payment endpoints for stripe. Right now has seven endpoints:
 
-        addSubscription - (token, email, plan, code?) -> Will add or modify a subscription
+        addSubscription - (email, plan) -> Will add or modify a subscription
             depending on whether a user exists.
 
-        modifySubscription - (token, email) -> Carbon copy of addSubscription. Meant to make
+        modifySubscription - (email, plan) -> Carbon copy of addSubscription. Meant to make
             naming easier when the user already has a subscription and you want to modify it.
 
         deleteSubscription - (email) -> Delete a subscription, but does not delete a customer.
@@ -52,7 +52,7 @@ def payment(action, **kwargs):
         "token" : "this is a token string",
         "email" : "this is an email string"
         ...
-    } where the keyword 'token' or 'email' or 'code' etc are the string keys and the string body
+    } where the keyword 'token' or 'email' etc are the string keys and the string body
     is the payload expected. Types are as such:
 
         token: stripe token id string (has format tok_andabunchofchars)
@@ -61,10 +61,6 @@ def payment(action, **kwargs):
 
         plan: string for the plan we want, should match the name (not the id) of the plan in stripe
             the format is = "Fractal Monthly" | "Fractal Unlimited" | "Fractal Hourly"
-
-        code: a code that someone has for referrals, check the config db for the format (it's a
-            constant length of random chars I think.)
-
 
     Return values vary based on the helpers. Check in  app/helpers/blueprint_helpers/payment_stripe_post
     for details on how the returns function. Generally speaking, 500 will mean something went wrong,

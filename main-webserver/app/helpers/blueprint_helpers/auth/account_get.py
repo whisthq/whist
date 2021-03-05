@@ -6,31 +6,6 @@ from app.helpers.utils.general.tokens import get_access_tokens
 user_schema = UserSchema()
 
 
-def code_helper(username):
-    """Fetches a user's promo code
-
-    Parameters:
-    username (str): The username
-
-    Returns:
-    json: The user's promo code
-    """
-
-    # Query database for user
-
-    user = User.query.get(username)
-
-    # Return user's promo code
-
-    if user:
-        code = user.referral_code
-
-        return {"code": code, "status": SUCCESS}
-
-    else:
-        return {"code": None, "status": BAD_REQUEST}
-
-
 def fetch_user_helper(username):
     """Returns the user's entire info
 
