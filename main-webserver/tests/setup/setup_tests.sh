@@ -17,13 +17,27 @@ if [[ $* =~ [:space:]*--down[:space:]* ]]; then
   exit 0
 fi
 
-# check if in CI; if so just run fetch and setup scripts then exit
-IN_CI=${CI:=false} # default: false
-if [ $IN_CI == "true" ]; then
-    bash ../../db_setup/fetch_db.sh
-    bash ../../db_setup/db_setup.sh
+# check if db has already been created. this happens in CI and review app contexts.
+# in this case, we simply need to apply the schema and data to the ephemeral db.
+DB_EXISTS=${DB_EXISTS:=false} # default: false
+if [ $DB_EXISTS == true ]; then
+    # use source db (dev, staging, master) db to fetch data
+    export POSTGRES_URI=POSTGRES_SOURCE_URI
+    bash ../../ephemeral_db_setup/fetch_db.sh
+
+    # setup ephemeral db
+    export POSTGRES_URI=POSTGRES_DEST_URI
+    # db itself was already created by Heroku; we just need to apply schema and insert data
+    export DB_EXISTS=true
+    bash ../../ephemeral_db_setup/db_setup.sh
     exit 0
 fi
+
+# we are running locally. We have a bit of extra work to do, namely:
+# 1. load environment variables telling us about the location of the dev db
+# 2. fetching db data using env variables
+# 3. spinning up test docker containers
+# 4. applying schema and inserting data into docker db
 
 # Make sure .env file exists
 if [ ! -f ../../docker/.env ]; then
@@ -31,38 +45,29 @@ if [ ! -f ../../docker/.env ]; then
     exit 1
 fi
 
-# add env vars to current env. these tell us the host, db, role, pwd
+# load env vars, namely (POSTGRES_HOST, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB)
 export $(cat ../../docker/.env | xargs)
 
-# rename for clarity, as we have a remote host and a local host
-export POSTGRES_REMOTE_HOST=$POSTGRES_HOST
-export POSTGRES_REMOTE_USER=$POSTGRES_USER
-export POSTGRES_REMOTE_PASSWORD=$POSTGRES_PASSWORD
-export POSTGRES_REMOTE_DB=$POSTGRES_DB
-
-
-if [ -f ../../db_setup/db_schema.sql ]; then
-    echo "Found existing schema and data sql scripts. Skipping fetching db."
+if [ -f ../../ephemeral_db_setup/db_data.sql ]; then
+    echo "Found existing data sql script. Skipping fetching db."
 else
-    bash ../../db_setup/fetch_db.sh
+    bash ../../ephemeral_db_setup/fetch_db.sh
 fi
 
 docker-compose up -d --build
 
-# local testing uses localhost db
-export POSTGRES_LOCAL_HOST="localhost"
-export POSTGRES_LOCAL_PORT="9999"
-# we don't need a pwd because local db trusts all incoming connections
-export POSTGRES_LOCAL_USER=$POSTGRES_REMOTE_USER
-export POSTGRES_LOCAL_DB=$POSTGRES_REMOTE_DB
+# local testing uses localhost db. override POSTGRES_HOST and set POSTGRES_PORT.
+export POSTGRES_HOST="localhost"
+export POSTGRES_PORT="9999"
+
 # let db prepare. Check connections using psql.
 echo "Trying to connect to local db..."
 cmds="\q"
-while ! (psql -h $POSTGRES_LOCAL_HOST -p $POSTGRES_LOCAL_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
+while ! (psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -d postgres <<< $cmds) &> /dev/null
 do
     echo "Connection failed. Retrying in 2 seconds..."
     sleep 2
 done
 
-bash ../../db_setup/db_setup.sh
+bash ../../ephemeral_db_setup/db_setup.sh
 echo "Success! Teardown when you are done with: tests/setup/setup_tests.sh --down"
