@@ -16,7 +16,6 @@ class User(db.Model):
         release_stage (Int): 0-100 release stage, used in future for alpha releases
         stripe_customer_id (String): Customer ID returned by Stripe API
         reason_for_signup (String): How users heard about Fractal
-        referral_code (String): (Deprecated) Referral code
         using_google_login (Boolean): True/false using Google auth
         verified (Boolean): True/false email verified
         using_facebook_login (Boolean): True/false using Facebook auth
@@ -32,7 +31,6 @@ class User(db.Model):
     stripe_customer_id = db.Column(db.String(250))
     created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)
-    referral_code = db.Column(db.String(250))
     using_google_login = db.Column(db.Boolean, default=text("false"))
     verified = db.Column(db.Boolean, default=text("false"))
     using_facebook_login = db.Column(db.Boolean, default=text("false"))

@@ -12,7 +12,6 @@ from app.helpers.utils.general.sql_commands import (
 )
 from app.helpers.utils.general.tokens import (
     generate_token,
-    generate_unique_promo_code,
     get_access_tokens,
 )
 from app.models import db, User
@@ -76,17 +75,21 @@ def login_helper(email, password):
 
 
 def register_helper(username, password, name, reason_for_signup):
-    """Stores username and password in the database and generates user metadata, like their
-    user ID and promo code
+    """Store username and password in the database.
 
-    Parameters:
-    username (str): The username
-    password (str): The password
-    name (str): The person's name
-    reason_for_signup (str): The person's reason for signing up
+    Args:
+        username (str): The username
+        password (str): The password
+        name (str): The person's name
+        reason_for_signup (str): The person's reason for signing up
 
     Returns:
-    json: Metadata about the user
+        A JSON object containing five keys: "access_token", "refresh_token", "status",
+        "verification_token", and "created_timestamp". "access_token" and "refresh_token" contain
+        the user's Fractal API access and refresh tokens respectively. "status" contains an integer
+        that is the same as the HTTP response's status code. "verification_token" contains the
+        token that the user can use to verify their email address. "created_timestamp" contains the
+        UNIX timestamp representing the time at which the new user's account was created.
     """
 
     # First, generate a user ID
@@ -97,10 +100,6 @@ def register_helper(username, password, name, reason_for_signup):
 
     pwd_token = hash_value(password)
 
-    # Third, generate a promo code for the user
-
-    promo_code = generate_unique_promo_code()
-
     # Add the user to the database
     created_timestamp = round(dt.now(datetime.timezone.utc).timestamp())
 
@@ -108,7 +107,6 @@ def register_helper(username, password, name, reason_for_signup):
         user_id=username,
         password=pwd_token,
         token=token,
-        referral_code=promo_code,
         name=name,
         reason_for_signup=reason_for_signup,
         release_stage=50,
@@ -130,7 +128,7 @@ def register_helper(username, password, name, reason_for_signup):
 
     return {
         "status": status,
-        "verification_token": new_user.token if status == SUCCESS else None,
+        "verification_token": new_user.token if status == SUCCESS else None,  # TODO: Issue 519
         "access_token": access_token,
         "refresh_token": refresh_token,
         "created_timestamp": created_timestamp if status == SUCCESS else None,

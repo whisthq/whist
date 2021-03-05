@@ -300,7 +300,7 @@ class StripeClient:
         else:
             return None
 
-    def create_subscription(self, email, price, code=None):
+    def create_subscription(self, email, price):
         """This will create a new subscription for a client with the given email
         and a code if it exists. This is similar to what was previously stripe_post's "chargeHelper."
         It will return true on a succes run.
@@ -308,10 +308,6 @@ class StripeClient:
         Args:
             email (str): The user's email.
             price (str): Stripe price id corresponding to the plan
-            code (str, optional): A promo/referall code if they were referred. None by default indicates
-                not referrer and will not give them any referall advantages. A referred individual gets
-                their first month free, while a regular user only gets one week (due to the stripe
-                mechanisms at play which start charging after a week and then execute daily).
 
         Raises:
             NonexistentUser: If this is not a user i.e. does not have an account. Users who don't have
