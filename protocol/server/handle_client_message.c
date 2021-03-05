@@ -1,3 +1,21 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file client_message_handler.c
+ * @brief This file contains all the code for server-side processing of messages
+ *        received from a client
+============================
+Usage
+============================
+
+handle_client_message() must be called on any received message from a client.
+*/
+
+/*
+============================
+Includes
+============================
+*/
+
 #include "../fractal/core/fractal.h"
 
 #include "../fractal/clipboard/clipboard.h"
@@ -41,6 +59,12 @@ extern int host_id;
 
 extern bool using_sentry;
 
+/*
+============================
+Private Functions
+============================
+*/
+
 static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling);
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
@@ -63,7 +87,25 @@ static int handle_init_message(FractalClientMessage *fmsg, int client_id, bool i
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling);
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Handle message from the client.
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     switch (fmsg->type) {
         case MESSAGE_KEYBOARD:
         case MESSAGE_MOUSE_BUTTON:
@@ -104,9 +146,28 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
     }
 }
 
-// is called with is active read locked
+/*
+============================
+Private Function Implementations
+============================
+*/
+
 static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
+    /*
+        Handle a user input message.
+
+        NOTE: Is called with is active read locked
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     // Replay user input (keyboard or mouse presses)
     if (is_controlling && input_device) {
         if (!replay_user_input(input_device, fmsg)) {
@@ -130,18 +191,42 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
 }
 
 // TODO: Unix version missing
-// Synchronize client and server keyboard state
 static int handle_keyboard_state_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
+    /*
+        Handle a user keyboard state change message. Synchronize client and
+        server keyboard state
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     if (!is_controlling) return 0;
     update_keyboard_state(input_device, fmsg);
     return 0;
 }
 
-// Update mbps
-// idk how to handle this
 static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Handle a user bitrate change message and update MBPS.
+
+        NOTE: idk how to handle this
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     if (!is_controlling) return 0;
     LOG_INFO("MSG RECEIVED FOR MBPS: %f", fmsg->mbps);
@@ -151,6 +236,20 @@ static int handle_bitrate_message(FractalClientMessage *fmsg, int client_id, boo
 }
 
 static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Handle a user bitrate change message and update MBPS.
+
+        NOTE: idk how to handle this
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(is_controlling);
     LOG_INFO("Ping Received - Client ID: %d, Ping ID %d", client_id, fmsg->ping_id);
 
@@ -174,6 +273,18 @@ static int handle_ping_message(FractalClientMessage *fmsg, int client_id, bool i
 
 static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
+    /*
+        Handle a user dimensions change message.
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     if (!is_controlling) return 0;
     // Update knowledge of client monitor dimensions
@@ -193,6 +304,18 @@ static int handle_dimensions_message(FractalClientMessage *fmsg, int client_id,
 
 static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
                                     bool is_controlling) {
+    /*
+        Handle a clipboard copy message.
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     if (!is_controlling) return 0;
     // Update clipboard with message
@@ -204,9 +327,20 @@ static int handle_clipboard_message(FractalClientMessage *fmsg, int client_id,
     return 0;
 }
 
-// Audio nack received, relay the packet
 static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
+    /*
+        Handle a audio nack message and relay the packet
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     if (!is_controlling) return 0;
     // LOG_INFO("Audio NACK requested for: ID %d Index %d",
     // fmsg->nack_data.id, fmsg->nack_data.index);
@@ -232,6 +366,18 @@ static int handle_audio_nack_message(FractalClientMessage *fmsg, int client_id,
 }
 static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
                                      bool is_controlling) {
+    /*
+        Handle a video nack message and relay the packet
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     if (!is_controlling) return 0;
     // Video nack received, relay the packet
 
@@ -261,6 +407,18 @@ static int handle_video_nack_message(FractalClientMessage *fmsg, int client_id,
 
 static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
+    /*
+        Handle an IFrame request message
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     UNUSED(is_controlling);
     LOG_INFO("Request for i-frame found: Creating iframe");
@@ -278,6 +436,18 @@ static int handle_iframe_request_message(FractalClientMessage *fmsg, int client_
 
 static int handle_interaction_mode_message(FractalClientMessage *fmsg, int client_id,
                                            bool is_controlling) {
+    /*
+        Handle an interaction mode message
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(is_controlling);
 
     /*
@@ -324,6 +494,18 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
 }
 
 static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool is_controlling) {
+    /*
+        Handle a user quit message
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(is_controlling);
     UNUSED(fmsg);
     int ret = 0;
@@ -344,6 +526,18 @@ static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool i
 }
 
 static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool is_controlling) {
+    /*
+        Handle a user init message
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(client_id);
     UNUSED(is_controlling);
     LOG_INFO("Receiving a message time packet");
@@ -387,6 +581,18 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 
 static int handle_mouse_inactive_message(FractalClientMessage *fmsg, int client_id,
                                          bool is_controlling) {
+    /*
+        Handle a user mouse change to inactive message
+
+        Arguments:
+            fmsg (FractalClientMessage*): message package from client
+            client_id (int): which client sent the message
+            is_controlling (bool): whether the client is controlling, not spectating
+
+        Returns:
+            (int): Returns -1 on failure, 0 on success
+    */
+
     UNUSED(fmsg);
     UNUSED(is_controlling);
     clients[client_id].mouse.is_active = false;
