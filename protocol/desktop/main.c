@@ -599,6 +599,16 @@ int sync_keyboard_state(void) {
 volatile bool continue_pumping = false;
 
 int read_piped_arguments_thread_function(void* keep_piping) {
+    /*
+        Thread function to read piped arguments from stdin
+
+        Arguments:
+            keep_piping (void*): whether to keep piping from stdin
+
+        Returns:
+            (int) 0 on success, -1 on failure
+    */
+
     int ret = read_piped_arguments((bool*)keep_piping);
     continue_pumping = false;
     return ret;
