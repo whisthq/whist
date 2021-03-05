@@ -458,7 +458,6 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
 	// Select the correct environment (dev, staging, prod)
-	// TODO: account for localdev here
 	switch logger.GetAppEnvironment() {
 	case logger.EnvLocalDev:
 		fallthrough
@@ -493,6 +492,7 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 	http.HandleFunc("/request_port_bindings", createHandler(processRequestPortBindingsRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
+		// https://github.com/fractal/fractal/issues/1128
 		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0:"+logger.Sprintf("%v", PortToListen), certPath, privatekeyPath, nil))
 	}()
 
