@@ -13,14 +13,15 @@ cd "$DIR"
 IN_CI=${CI:=false} # default: false
 if [ $IN_CI == true ]; then
     # these are needed to migrate schema/data
-    export POSTGRES_REMOTE_URI=$DATABASE_URL # set in config vars on Heroku
-    export POSTGRES_LOCAL_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
+    export POSTGRES_SOURCE_URI=$DATABASE_URL # set in config vars on Heroku
+    export POSTGRES_DEST_URI=$POSTGRES_EPHEMERAL_DB_URL # set in app.json, _URL appended by Heroku
+    export DB_EXISTS=true # Heroku has created the db
     # this sets up the local db to look like the remote db
     bash setup/setup_tests.sh
     # override DATABASE_URL to the ephemeral db
-    export DATABASE_URL=$POSTGRES_LOCAL_URI
+    export DATABASE_URL=$POSTGRES_DEST_URI
 
-    # REDIS_URL is set by heroku
+    # REDIS_URL is set by heroku. we don't need to do anything more.
 else
     echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
 
