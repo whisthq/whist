@@ -17,7 +17,6 @@ class User(db.Model):
         reason_for_signup (String): How users heard about Fractal
         using_google_login (Boolean): True/false using Google auth
         verified (Boolean): True/false email verified
-        using_facebook_login (Boolean): True/false using Facebook auth
     """
 
     __tablename__ = "users"
@@ -31,7 +30,6 @@ class User(db.Model):
     reason_for_signup = db.Column(Text)
     using_google_login = db.Column(db.Boolean, default=text("false"))
     verified = db.Column(db.Boolean, default=text("false"))
-    using_facebook_login = db.Column(db.Boolean, default=text("false"))
 
     # Setting passive_deletes causes SQLAlchemy to defer to the database to
     # handle, e.g., cascade deletes. Setting the value to "all" may work as
