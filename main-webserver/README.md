@@ -366,41 +366,40 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── fetch_db.sh --> script that fetches the current dev DB
 │   └── modify_ci_db_schema.py --> scripts that eliminate extraneous info (db users) from the schema
 ├── docker --> scripts for running a local config of the webserver
-│   ├── Dockerfile
-│   ├── docker-compose.yml
-│   ├── hasura_run.sh
-│   ├── local_deploy.sh
-│   ├── pgparse.py
-│   └── retrieve_config.sh
-├── entry.py
-├── pylintrc
-├── pyproject.toml
-├── pytest.ini
-├── requirements-test.txt
-├── requirements.txt
-├── runtime.txt
+│   ├── Dockerfile --> docker container for local webserver
+│   ├── docker-compose.yml --> container instructions for local webserver
+│   ├── hasura_run.sh --> script to enable hasura console on local server
+│   ├── local_deploy.sh --> script to run to turn on local server
+│   ├── pgparse.py --> util for pulling down config info for local server
+│   └── retrieve_config.sh --> script to pull down config info for local server
+├── entry.py --> Heroku app entrypoint, starts up web workers
+├── pylintrc --> pylint config
+├── pyproject.toml --> Black config
+├── pytest.ini --> pytest config
+├── requirements-test.txt --> test package requirements
+├── requirements.txt --> packages you need to run the webserver
+├── runtime.txt --> desired python version
 ├── scripts
-│   └── poll_maintenance.sh
-├── stem-cell.sh
-└── tests
+│   └── poll_maintenance.sh --> script to check on webserver maintenance status
+├── stem-cell.sh --> the generator of our web and celery workers
+└── tests --> tests for our assorted endpoints.  All files without docs
+    should be assumed to unit test the endpoints/bps they name.
     ├── admin
     │   └── test_logs.py
     ├── aws
     │   ├── config.py
     │   ├── test_assign.py
-    │   ├── test_aws_container.py
-    │   ├── test_cluster.py
+    │   ├── test_aws_container.py --> tests for end-to-end AWS task generation functionality
+    │   ├── test_cluster.py --> tests for cluster deletion
     │   ├── test_delete.py
     │   ├── test_info.py
     │   ├── test_ping.py
-    │   ├── test_serialize.py
+    │   ├── test_serialize.py --> tests for serialization of container objects from DB
     │   └── test_stun.py
-    ├── conftest.py
-    ├── constants
-    │   ├── api_keys.py
-    │   └── settings.py
+    ├── constants --> useful constants for testing
+    │   ├── api_keys.py --> demo API for mailslurp mail testing
+    │   └── settings.py --> pytest settings
     ├── hasura
-    │   ├── __init__.py
     │   └── test_hasura_auth.py
     ├── helpers
     │   └── general
@@ -408,21 +407,19 @@ Note that all conftest files contain test fixtures for their respective director
     ├── mail
     │   └── test_mail.py
     ├── maintenance
-    │   └── test_webserver_maintenance.py
+    │   └── test_webserver_maintenance.py --> integration tests for webserver maintenance mode
     ├── misc
-    │   ├── __init__.py
     │   └── test_rate_limiter.py
     ├── oauth
-    │   ├── conftest.py
     │   ├── test_cloud_storage.py
     │   ├── test_credential.py
     │   └── test_oauth.py
-    ├── patches.py
+    ├── patches.py --> useful monkeypatches for all our tests
     ├── payment
     │   └── test_stripe_client.py
-    ├── run_tests.sh
+    ├── run_tests.sh --> shell script that runs our tests with all desired setup/settings/teardown
     ├── setup
-    │   ├── docker-compose.yml
-    │   └── setup_tests.sh
-    └── test_misc.py
+    │   ├── docker-compose.yml --> stands up all docker containers you need for local testing
+    │   └── setup_tests.sh --> script that prepares local db/services for testing
+    └── test_misc.py --> tests some of our utility scripts
 ```
