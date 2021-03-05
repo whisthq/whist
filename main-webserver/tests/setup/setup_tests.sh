@@ -21,12 +21,13 @@ fi
 # in this case, we simply need to apply the schema and data to the ephemeral db.
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
+    echo "HERE"
     # use source db (dev, staging, master) db to fetch data
-    export POSTGRES_URI=POSTGRES_SOURCE_URI
+    export POSTGRES_URI=$POSTGRES_SOURCE_URI
     bash ../../ephemeral_db_setup/fetch_db.sh
 
     # setup ephemeral db
-    export POSTGRES_URI=POSTGRES_DEST_URI
+    export POSTGRES_URI=$POSTGRES_DEST_URI
     # db itself was already created by Heroku; we just need to apply schema and insert data
     export DB_EXISTS=true
     bash ../../ephemeral_db_setup/db_setup.sh
