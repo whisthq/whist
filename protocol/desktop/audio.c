@@ -12,6 +12,12 @@ updateAudio() gets called immediately after to update the client to the server's
 audio format.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "audio.h"
 #include "network.h"
 
@@ -40,11 +46,25 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
+/*
+============================
+Custom Types
+============================
+*/
+
 typedef struct AudioContext {
     SDL_AudioDeviceID dev;
     AudioDecoder* audio_decoder;
     int decoder_frequency;
 } AudioContext;
+
+// Audio Rendering
+typedef struct RenderContext {
+    // Whether or not the audio is encoded
+    bool encoded;
+    // Raw audio packets
+    AudioPacket audio_data[MAX_NUM_AUDIO_INDICES];
+} RenderContext;
 
 AudioContext volatile audio_context;
 
@@ -66,17 +86,15 @@ bool audio_refresh = false;
 clock test_timer;
 double test_time;
 
-// Audio Rendering
-typedef struct RenderContext {
-    // Whether or not the audio is encoded
-    bool encoded;
-    // Raw audio packets
-    AudioPacket audio_data[MAX_NUM_AUDIO_INDICES];
-} RenderContext;
-
 static RenderContext volatile render_context;
 SDL_sem* render_semaphore = NULL;
 static bool volatile rendering = false;
+
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 void destroy_audio_device() {
     /*
@@ -118,6 +136,12 @@ void reinit_audio_device() {
         SDL_PauseAudioDevice(audio_context.dev, 0);
     }
 }
+
+/*
+============================
+Public Function Implementations
+============================
+*/
 
 int multithreaded_render_audio(void* opaque);
 
