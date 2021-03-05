@@ -52,6 +52,7 @@ const containerResourceMappings = "containerResourceMappings/"
 const userConfigs = "userConfigs/"
 
 // TODO: get rid of this security nemesis
+// (https://github.com/fractal/fractal/issues/643)
 // Opens all permissions on /fractal directory
 func makeFractalDirectoriesFreeForAll() {
 	cmd := exec.Command("chown", "-R", "ubuntu", fractalDir)
@@ -125,6 +126,7 @@ var devices map[string]uinputDevices = make(map[string]uinputDevices)
 
 // we keep track of mapping from FractalIDs to host ports in `resourcetrackers.PortBindings`
 // TODO(djsavvy): move other tracked resources to the `resourcetrackers` package.
+// (https://github.com/fractal/fractal/issues/1130)
 
 // Updates the fractalIDs mapping with a request from the ecs-agent
 func addFractalIDMappings(req *httpserver.RegisterDockerContainerIDRequest) error {
@@ -221,6 +223,7 @@ func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]fractaltyp
 	go func() {
 		// TODO: handle errors better
 		// TODO: exit goroutine if container dies
+		// (https://github.com/fractal/fractal/issues/1131)
 		dirname := fractalTempDir + FractalID + "/sockets/"
 		filename := dirname + "uinput.sock"
 		os.MkdirAll(dirname, 0777)
