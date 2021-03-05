@@ -439,7 +439,7 @@ typedef struct FractalMouseMotionMessage {
 } FractalMouseMotionMessage;
 
 typedef struct FractalDiscoveryRequestMessage {
-    int username;
+    int user_id;
     FractalTimeData time_data;
     char user_email[USER_EMAIL_MAXLEN];
 } FractalDiscoveryRequestMessage;

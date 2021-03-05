@@ -78,7 +78,7 @@ int discover_ports(bool *using_stun) {
     // Create and send discovery request packet
     FractalClientMessage fcmsg = {0};
     fcmsg.type = MESSAGE_DISCOVERY_REQUEST;
-    fcmsg.discoveryRequest.username = uid;
+    fcmsg.discoveryRequest.user_id = uid;
 
     prepare_init_to_server(&fcmsg.discoveryRequest, user_email);
 
