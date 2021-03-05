@@ -14,12 +14,4 @@ void update_webserver_parameters();
  */
 bool get_using_stun();
 
-/**
- * @brief                          Retrieves the container ID that this program is
- *                                 running in by asking the webserver
- *
- * @returns                        The string of the container ID
- */
-char* get_container_id();
-
 #endif  // WEBSERVER_H
