@@ -710,7 +710,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     }
 
     FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
-    int username = fcmsg->discoveryRequest.username;
+    int username = fcmsg->discoveryRequest.user_id;
 
     read_lock(&is_active_rwlock);
     bool found;
