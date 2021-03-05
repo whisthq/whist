@@ -1,4 +1,3 @@
-import logging
 import time
 import boto3
 
@@ -6,7 +5,7 @@ from celery import shared_task
 from flask import current_app
 from app.constants.http_codes import SUCCESS
 
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.models import UserContainer
 from app.exceptions import ContainerNotFoundException
 
@@ -41,13 +40,7 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
 
     # Perform input validation on the sender argument.
     if source not in ("CLIENT", "SERVER"):
-        fractal_log(
-            function="upload_logs_to_s3",
-            label=None,
-            logs=f"Unrecognized sender {sender}",
-            level=logging.ERROR,
-        )
-
+        fractal_logger.error(f"Unrecognized sender {sender}")
         raise BadSenderError(sender)
 
     container = UserContainer.query.get(container_id)
@@ -60,19 +53,12 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
         else:
             message = f"Container {container} does not exist."
 
-        fractal_log(
-            function="upload_logs_to_s3",
-            label=container,
-            logs=message,
-            level=logging.ERROR,
-        )
+        fractal_logger.error(message, extra={"label": container})
 
         if "test" in container_id and not current_app.testing:
-            fractal_log(
-                function="upload_logs_to_s3",
-                label=container_id,
-                logs="Test container attempted to communicate with nontest server",
-                level=logging.ERROR,
+            fractal_logger.error(
+                "Test container attempted to communicate with nontest server",
+                extra={"label": container_id},
             )
             return {"status": SUCCESS}
 
@@ -88,11 +74,8 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
     try:
         s3_object.put(ACL="private", Body=message, ContentType="text/plain")
     except Exception as e:  # TODO: Handle specfic exceptions.
-        fractal_log(
-            function="upload_logs_to_s3",
-            label=username,
-            logs=f"Error uploading {sender.lower()} logs to S3: {e}",
-            level=logging.ERROR,
+        fractal_logger.error(
+            f"Error uploading {sender.lower()} logs to S3: {e}", extra={"label": username}
         )
 
         raise e
@@ -101,10 +84,6 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
     # pointer to the S3 object.
     url = f"https://{BUCKET_NAME}.s3.amazonaws.com/{filename}"
 
-    fractal_log(
-        function="upload_logs_to_s3",
-        label=username,
-        logs=f"Protocol server logs: {url}",
-    )
+    fractal_logger.info(f"Protocol server logs: {url}", extra={"label": username})
 
     return {"status": SUCCESS}
