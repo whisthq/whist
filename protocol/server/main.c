@@ -1105,7 +1105,7 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef _WIN32
-    if (!init_desktop(input_device, get_vm_password())) {
+    if (!init_desktop(input_device, "winlogonpassword")) {
         LOG_FATAL("Could not winlogon!");
     }
 #endif

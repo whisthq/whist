@@ -170,10 +170,15 @@ int get_time_data(FractalTimeData* time_data) {
 #endif
 }
 
-void set_timezone_from_iana_name(char* linux_tz_name, char* password) {
+void set_timezone_from_iana_name(char* linux_tz_name) {
     // Two spaces to hide from bash history
-    char cmd[2000] = "  echo %s | sudo -S timedatectl set-timezone %s";
-    snprintf(cmd, sizeof(cmd), password, linux_tz_name);
+    char cmd[512];
+    int length_used = snprintf(cmd, sizeof(cmd), "timedatctl set-timezone %s", linux_tz_name);
+
+    if (length_used >= (int)sizeof(cmd)) {
+        LOG_ERROR("Error: Timezone given is too long! %s", linux_tz_name);
+        return;
+    }
 
     runcmd(cmd, NULL);
 

@@ -90,6 +90,4 @@ void update_webserver_parameters() {
 
 bool get_using_stun() { return is_using_stun; }
 
-char* get_vm_password() { return "password1234567."; }
-
 char* get_container_id() { return container_id; }
