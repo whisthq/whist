@@ -89,6 +89,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
 |   |   ├── input_driver.h -> The following three c files share this h file
 │   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
+│   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press/touchpad code
 │   │   └── xtest_input_driver.c <- Linux X11 keyoard/mouse-press code
 │   ├── network
 │   │   └── network.c <- send udp/tcp/http packets.
