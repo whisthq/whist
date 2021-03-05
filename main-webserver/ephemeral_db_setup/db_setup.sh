@@ -2,7 +2,7 @@
 
 # set up a db to look like the real ones.
 # If the db is already initialized with a user (this happens in CI and review apps)
-# we just apply the schema and data to $POSTGRES_URI. This must be explicitly 
+# we just apply the schema and data to $POSTGRES_URI. This must be explicitly
 # indicated by setting DB_EXISTS=true in the environment. Default is false.
 # Otherwise, we create a user and db before applying the schema and data.
 # The environment variables (POSTGRES_HOST, POSTGRES_PORT, POSTGRES_USER, POSTGRES_DB)
@@ -21,14 +21,14 @@ cd "$DIR"
 # if so, POSTGRES_URI should be provided
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
-  # copy schema
-  psql -d $POSTGRES_URI -f ../db_migration/schema.sql
+    # copy schema
+    psql -d $POSTGRES_URI -f ../db_migration/schema.sql
 
-  # copy specifically chosen data
-  echo "===             Putting data into db             ==="
-  psql -d $POSTGRES_URI -f db_data.sql
+    # copy specifically chosen data
+    echo "===             Putting data into db             ==="
+    psql -d $POSTGRES_URI -f db_data.sql
 
-  exit 0
+    exit 0
 fi
 
 # here, we just have a fresh postgres instance with a user called postgres
