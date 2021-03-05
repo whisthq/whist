@@ -6,7 +6,7 @@
 
 #include "input_driver.h"
 
-#if INPUT_DRIVER == SOCKET_INPUT_DRIVER
+#if INPUT_DRIVER == UINPUT_INPUT_DRIVER
 
 #include <fcntl.h>
 #include <linux/uinput.h>
@@ -330,7 +330,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     if (recvmsg(sock, &msghdr, 0) < 0) {
         char buf[1024];
         strerror_r(errno, buf, 1024);
-        LOG_ERROR("Socket input driver failed to receive file descriptors: recvmsg error %s", buf);
+        LOG_ERROR("Uinput input driver failed to receive file descriptors: recvmsg error %s", buf);
         free(buffer);
         return -1;
     }
@@ -342,12 +342,12 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
 }
 
 InputDevice* create_input_device() {
-    LOG_INFO("creating socket input driver");
+    LOG_INFO("creating uinput input driver");
 
     struct sockaddr_un addr;
     int fd_socket = socket(AF_UNIX, SOCK_STREAM, 0);
     if (fd_socket == -1) {
-        LOG_ERROR("Failed to initialize unix socket");
+        LOG_ERROR("Failed to initialize unix socket for uinput input driver.");
         return NULL;
     }
 
@@ -367,12 +367,12 @@ InputDevice* create_input_device() {
     int n = recv_fds(fd_socket, fds, 3);
     if (n != 3) {
         LOG_ERROR(
-            "Socket input driver received incorrect number of file descriptors, expected 3, "
+            "Uinput input driver received incorrect number of file descriptors, expected 3, "
             "got %d",
             n);
         return NULL;
     }
-    LOG_INFO("Socket input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
+    LOG_INFO("Uinput input driver received %d file descriptors: %d, %d, %d", n, fds[0], fds[1],
              fds[2]);
 
     InputDevice* input_device = malloc(sizeof(InputDevice));
@@ -500,4 +500,4 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     return 0;
 }
 
-#endif  // INPUT_DRIVER == SOCKET_INPUT_DRIVER
+#endif  // INPUT_DRIVER == UINPUT_INPUT_DRIVER
