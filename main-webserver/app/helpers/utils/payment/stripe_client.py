@@ -259,7 +259,6 @@ class StripeClient:
         {
             "subscription": a subscription object per the stripe api (json format),
             "cards": cards object per stripe api (also json format),
-            "creditsOutstanding": what it says,
             "account_locked": whether your account is account_locked,
             "customer": customer as a json - the schema dump,
         } or None if the customer does not exist
@@ -276,8 +275,6 @@ class StripeClient:
             raise NonexistentUser
 
         customer = self.user_schema.dump(user)
-        credits_outstanding = customer["credits_outstanding"]
-
         stripe_customer_id = customer["stripe_customer_id"]
 
         # return a valid object if they exist else None
@@ -297,7 +294,6 @@ class StripeClient:
             return {
                 "subscription": subscription,
                 "source": source,
-                "creditsOutstanding": credits_outstanding,
                 "account_locked": account_locked,
                 "customer": customer,
             }
@@ -506,38 +502,6 @@ class StripeClient:
 
         for card in remove_ids:
             stripe.Customer.delete_source(user.stripe_customer_id, card)
-
-    def discount(self, referrer):
-        """Apply a discount to a referrer if they have referred. As you may notice,
-        this isn't, strictly speaking, stripe code. The reason we keep it in the client
-        is to abstract away this functionality from elsewhere, since it may at some point
-        actually become stripe code.
-
-        Args:
-            referrer (app.models.User): The referrer who referred someone else such that we now want
-                to discount them.
-
-        Returns:
-            (bool): False if there was an error discounting (i.e. there is no referrer) else True.
-        """
-        if not referrer:
-            return False
-        else:
-            credits_outstanding = referrer.credits_outstanding
-            if not credits_outstanding:
-                credits_outstanding = 0
-            email = referrer.user_id
-
-            referrer.credits_outstanding = credits_outstanding + 1
-            db.session.commit()
-
-            fractal_log(
-                function="StripeClient.discount",
-                label=email,
-                logs="Applied discount and updated credits outstanding",
-            )
-
-            return True
 
     def charge_hourly(self, email):
         """Deprecated.
