@@ -12,6 +12,7 @@ import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { FractalAuthCache } from "shared/types/cache"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { FractalIPC } from "shared/types/ipc"
+import { BROWSER_WINDOW_IDS } from "shared/types/browsers"
 import { updateTask } from "store/actions/container/pure"
 
 import styles from "pages/payment/payment.css"
@@ -37,12 +38,13 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
         ipc.sendSync(
             FractalIPC.LOAD_BROWSER,
             [`${config.url.FRONTEND_URL}/dashboard/settings/payment`,
-            "payment"]
+            BROWSER_WINDOW_IDS.PAYMENT]
         )
     }
 
     const refresh = () => {
         dispatch(updateTask({ shouldLaunchProtocol: true }))
+        ipc.sendSync(FractalIPC.CLOSE_BROWSER, [BROWSER_WINDOW_IDS.PAYMENT])
         history.push(FractalRoute.LAUNCHER)
     }
 
@@ -50,6 +52,7 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
         dispatch(updateUser(deepCopyObject(AuthDefault.user)))
         dispatch(updateAuthFlow(deepCopyObject(AuthDefault.authFlow)))
         storage.set(FractalAuthCache.ACCESS_TOKEN, null)
+        storage.set(FractalAuthCache.ENCRYPTION_TOKEN, null)
         history.push(FractalRoute.LOGIN)
     }
 
