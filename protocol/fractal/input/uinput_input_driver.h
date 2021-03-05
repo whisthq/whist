@@ -1,9 +1,9 @@
-#ifndef SOCKET_INPUT_DRIVER_H
-#define SOCKET_INPUT_DRIVER_H
+#ifndef UINPUT_INPUT_DRIVER_H
+#define UINPUT_INPUT_DRIVER_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file socket_input_driver_h.h
- * @brief This file defines the socket input device type.
+ * @file uinput_input_driver_h.h
+ * @brief This file defines the uinput input device type.
 ============================
 Usage
 ============================
@@ -33,4 +33,4 @@ typedef struct InputDevice {
     bool num_lock;
 } InputDevice;
 
-#endif  // SOCKET_INPUT_DRIVER_H
+#endif  // UINPUT_INPUT_DRIVER_H
