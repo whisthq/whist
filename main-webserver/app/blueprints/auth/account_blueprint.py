@@ -3,10 +3,7 @@ from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
-from app.helpers.blueprint_helpers.auth.account_get import (
-    code_helper,
-    verified_helper,
-)
+from app.helpers.blueprint_helpers.auth.account_get import verified_helper
 from app.helpers.blueprint_helpers.auth.account_post import (
     delete_helper,
     login_helper,
@@ -117,14 +114,5 @@ def account_get_no_auth(action, **kwargs):  # pylint: disable=unused-argument
         username = request.args.get("username")
 
         output = verified_helper(username)
-
-        return jsonify(output), output["status"]
-
-    # TODO: Delete later
-    elif action == "code":
-        # Get the user's promo code
-        username = request.args.get("username")
-
-        output = code_helper(username)
 
         return jsonify(output), output["status"]

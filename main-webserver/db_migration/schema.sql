@@ -1097,7 +1097,6 @@ CREATE TABLE public.users (
     stripe_customer_id character varying(250),
     created_timestamp integer,
     reason_for_signup text,
-    referral_code character varying(250),
     using_google_login boolean DEFAULT false,
     verified boolean DEFAULT false,
     using_facebook_login boolean

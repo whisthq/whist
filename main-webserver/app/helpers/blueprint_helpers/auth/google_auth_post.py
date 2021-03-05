@@ -10,7 +10,6 @@ from app.constants.bad_words_hashed import BAD_WORDS_HASHED
 from app.constants.http_codes import BAD_REQUEST, FORBIDDEN, SUCCESS
 from app.helpers.utils.general.tokens import (
     generate_token,
-    generate_unique_promo_code,
     get_access_tokens,
     get_google_tokens,
 )
@@ -35,7 +34,7 @@ def register_google_user(
     Returns:
         int: 200 on success, 400 on fail
     """
-    promo_code = generate_unique_promo_code()
+
     username_encoding = username.lower().encode("utf-8")
     if hashlib.md5(
         username_encoding
@@ -45,7 +44,6 @@ def register_google_user(
     new_user = User(
         user_id=username,
         password="",
-        referral_code=promo_code,
         name=name,
         reason_for_signup=reason_for_signup,
         using_google_login=True,
