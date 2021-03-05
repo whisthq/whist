@@ -42,10 +42,7 @@ const Restricted = (props: { user: User; formFilledOut: boolean }) => {
                         className="h-96"
                         style={{ display: showForm ? "block" : "none" }}
                     >
-                        <Typeform
-                            show={showForm}
-                            handleClose={handleClose}
-                        />
+                        <Typeform show={showForm} handleClose={handleClose} />
                     </div>
                 </div>
             </div>
