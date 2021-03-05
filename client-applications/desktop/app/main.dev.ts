@@ -10,7 +10,6 @@
  */
 
 import { app, BrowserWindow } from "electron"
-import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
@@ -59,9 +58,11 @@ process.on("uncaughtException", (err) => {
 // Calls the create window above, conditional on the app not already running (single instance lock)
 
 const gotTheLock = app.requestSingleInstanceLock()
+console.log("GOT THE LOCK: ", gotTheLock)
 let mainWindow: BrowserWindow | null = null
 
 if (!gotTheLock) {
+    console.log("QUITTING IN MAIN")
     app.quit()
 } else {
     app.on("second-instance", (_, argv) => {

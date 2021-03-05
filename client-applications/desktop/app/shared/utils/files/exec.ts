@@ -85,6 +85,7 @@ export const launchProtocol = async (
     */
 
     // spawn launches an executable in a separate thread
+    console.log("STARTING THREAD")
     const spawn = require("child_process").spawn
     // Get the path and name of the protocol in the packaged app
     const protocolPath = require("path").join(

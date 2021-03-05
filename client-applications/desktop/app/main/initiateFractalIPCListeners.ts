@@ -64,8 +64,9 @@ export const initiateFractalIPCListeners = (
     })
 
     ipc.on(FractalIPC.FORCE_QUIT, () => {
-        app.exit(0)
-        app.quit()
+        console.log("QUITTING IN LISTENERS")
+        // app.exit(0)
+        // app.quit()
     })
 
     ipc.on(FractalIPC.LAUNCH_PROTOCOL, (event, argv) => {
@@ -93,7 +94,9 @@ export const initiateFractalIPCListeners = (
         writeStream(protocol, `ip?${container.publicIP}`)
         writeStream(protocol, `finished?0`)
         createContainerRequestSent = Date.now()
-        mainWindow?.destroy()
+        console.log("DESTROYING BROWSER WINDOW")
+        // mainWindow?.destroy()
+        console.log("DESTROYED BROWSER WINDOW")
         event.returnValue = argv
     })
 
@@ -103,6 +106,7 @@ export const initiateFractalIPCListeners = (
     })
 
     ipc.on(FractalIPC.KILL_PROTOCOL, (event, argv) => {
+        console.log("KILLING PROTOCOL")
         writeStream(protocol, "kill?0")
         protocol.kill("SIGINT")
         event.returnValue = argv

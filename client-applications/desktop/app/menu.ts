@@ -76,6 +76,7 @@ export default class MenuBuilder {
                     label: "Quit",
                     accelerator: "Command+Q",
                     click: () => {
+                        console.log("QUITTING IN MENU")
                         app.quit()
                     },
                 },
