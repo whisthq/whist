@@ -1,7 +1,7 @@
 from app.models import db, UserContainerState
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.container_state_values import CANCELLED, PENDING
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 
 
 def container_state_obj(**kwargs):
@@ -69,7 +69,7 @@ def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None
         force (bool, optional): Whether to update with a check for validity or not.
         Defaults to False.
     """
-    fractal_log(function="set_container_state", label=keyuser, logs=f"Container state is {state}")
+    fractal_logger.info(f"Container state is {state}", extra={"label": keyuser})
 
     obj = container_state_obj(user_id=keyuser)
 

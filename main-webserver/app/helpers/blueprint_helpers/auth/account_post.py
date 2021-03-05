@@ -6,7 +6,7 @@ from flask import current_app, jsonify
 
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
 from app.helpers.utils.general.crypto import check_value, hash_value
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
     fractal_sql_update,
@@ -125,12 +125,7 @@ def register_helper(username, password, name, reason_for_signup):
         db.session.add(new_user)
         db.session.commit()
     except Exception as e:
-        fractal_log(
-            function="register_helper",
-            label=username,
-            logs="Registration failed: " + str(e),
-            level=logging.ERROR,
-        )
+        fractal_logger.error("Registration failed.", extra={"label": username}, exc_info=True)
         status = BAD_REQUEST
         access_token = refresh_token = None
 
@@ -165,22 +160,16 @@ def verify_helper(username, provided_user_id):
         # Check to see if the provided user ID matches the selected user ID
 
         if provided_user_id == user.token:
-            fractal_log(
-                function="verify_helper",
-                label=user_id,
-                logs="Verification token is valid, verifying.",
-            )
+            fractal_logger.info("Verification token is valid, verifying.", extra={"label": user_id})
             fractal_sql_commit(db, fractal_sql_update, user, {"verified": True})
 
             return {"status": SUCCESS, "verified": True}
         else:
-            fractal_log(
-                function="verify_helper",
-                label=user_id,
-                logs="Verification token {token} is invalid, cannot validate.".format(
+            fractal_logger.warning(
+                "Verification token {token} is invalid, cannot validate.".format(
                     token=provided_user_id
                 ),
-                level=logging.WARNING,
+                extra={"label": user_id},
             )
             return {"status": UNAUTHORIZED, "verified": False}
     else:
