@@ -28,6 +28,14 @@ def create_app(testing=False):
     Returns:
         A Flask application instance.
     """
+    app = Flask(__name__.split(".")[0])
+
+    # We want to look up CONFIG_MATRIX.location.action
+    action = "test" if testing else "serve"
+    location = "deployment" if "DYNO" in os.environ else "local"
+    config = getattr(getattr(CONFIG_MATRIX, location), action)
+
+    app.config.from_object(config())
 
     # Set up Sentry - only log errors on prod (main) and staging webservers
     env = None
@@ -37,20 +45,11 @@ def create_app(testing=False):
         env = "staging"
     if env is not None:
         sentry_sdk.init(
-            dsn="https://9b796075e3f44ebca47c2a59c12251ca@o400459.ingest.sentry.io/5394545",
+            dsn=app.config["SENTRY_DSN"],
             integrations=[FlaskIntegration(), CeleryIntegration()],
             environment=env,
             release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
         )
-
-    app = Flask(__name__.split(".")[0])
-
-    # We want to look up CONFIG_MATRIX.location.action
-    action = "test" if testing else "serve"
-    location = "deployment" if "DYNO" in os.environ else "local"
-    config = getattr(getattr(CONFIG_MATRIX, location), action)
-
-    app.config.from_object(config())
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
