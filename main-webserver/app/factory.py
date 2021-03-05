@@ -43,9 +43,7 @@ def create_app(testing=False):
             release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
         )
 
-    template_dir = os.path.dirname(os.path.realpath(__file__))
-    template_dir = os.path.join(template_dir, "templates")
-    app = Flask(__name__.split(".")[0], template_folder=template_dir)
+    app = Flask(__name__.split(".")[0])
 
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
