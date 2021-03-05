@@ -4,6 +4,7 @@
 # be run before the X Server starts.
 
 # TODO: set -Eeou pipefail and make sure everything works
+# (https://github.com/fractal/fractal/issues/644)
 set -e
 
 # Retrieve the Fractal NVIDIA display config

@@ -39,6 +39,7 @@ fi
 
 # Wait for app configs to be ready
 # TODO: perhaps use inotifytools to block instead of poll
+# (https://github.com/fractal/fractal/issues/1132)
 until [ -f $USER_CONFIGS_DIR/.configready ]
 do
     sleep 0.1
