@@ -15,7 +15,6 @@ import { customRender } from "testing/utils/customRender"
 import { singleAssign } from "testing/utils/testHelpers"
 import { removeNondeterminism, zeroMsWait } from "testing/utils/utils"
 
-// TODO MAKE SURE SNAPSHOTS ARE NOT UNDEFINED
 describe("<Dashboard />", () => {
     // a render that will be specifically userful for this test
     const render = (node: any, assign: Object) =>

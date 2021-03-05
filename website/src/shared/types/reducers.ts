@@ -13,7 +13,7 @@ export type User = {
 }
 
 export type AuthFlow = {
-    mode?: string // what auth is doing right now (todo in the future make it an enum)
+    mode?: string // what auth is doing right now (todo in the future make it an enum) https://github.com/fractal/website/issues/339
     // error message
     loginWarning?: string | null // text to tell the user if they messed up logging in (primarily used as warning)
     signupWarning?: string | null // text to tell the user if they messed up signing up (primarily used as warning)
@@ -39,7 +39,7 @@ export type StripeInfo = {
     cardLastFour: string | null // last four digits of the user's cart
     postalCode: string | null // postal code used to calculate taxes
     plan: string | null
-    stripeRequestReceived: boolean // TODO: potentially remove stripeRequestReceived and just keep stripeStatus
+    stripeRequestReceived: boolean // TODO: potentially remove stripeRequestReceived and just keep stripeStatus (https://github.com/fractal/website/issues/336)
     stripeStatus: string | null // null | "success" | "failure"
     checkoutStatus: string | null // null | "success" | "failure"
     createdTimestamp: number | null // when the account was created

@@ -165,6 +165,7 @@ const ResetView = (props: {
     if (finished) {
         // assume it worked
         // TODO (adriano) when the server actually responds do something about it (say your thing was reset for example)
+        // https://github.com/fractal/website/issues/334
         return (
             <div data-testid={RESET_IDS.SUCCESS}>
                 <PuffAnimation />

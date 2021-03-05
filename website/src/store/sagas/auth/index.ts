@@ -296,7 +296,7 @@ export function* resetPassword(action: any) {
         action.password
     )
 
-    // TODO do something with the response
+    // TODO do something with the response https://github.com/fractal/website/issues/334
     if (response && response.status === 200) {
         yield put(
             updateAuthFlow({
