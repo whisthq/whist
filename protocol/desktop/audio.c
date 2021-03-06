@@ -87,7 +87,6 @@ clock test_timer;
 double test_time;
 
 static RenderContext volatile render_context;
-SDL_sem* render_semaphore = NULL;
 static bool volatile rendering = false;
 
 /*
@@ -143,16 +142,11 @@ Public Function Implementations
 ============================
 */
 
-int multithreaded_render_audio(void* opaque);
-
 void init_audio() {
     /*
         Initialize the audio device
     */
     LOG_INFO("Initializing audio system");
-    if (!render_semaphore) {
-        render_semaphore = SDL_CreateSemaphore(0);
-    }
     start_timer(&nack_timer);
     for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
         receiving_audio[i].id = -1;
@@ -161,31 +155,25 @@ void init_audio() {
     }
     // Set audio to be reinit'ed
     audio_refresh = true;
-    SDL_CreateThread(multithreaded_render_audio, "render_audio", NULL);
 }
 
 void destroy_audio() {
     LOG_INFO("Destroying audio system");
     destroy_audio_device();
-    SDL_DestroySemaphore(render_semaphore);
 }
 
-int multithreaded_render_audio(void* opaque) {
-    UNUSED(opaque);
-
-    while (true) {
-        SDL_SemWait(render_semaphore);
-
+void render_audio() {
+    if (rendering) {
         if (audio_frequency > MAX_FREQ) {
             LOG_ERROR("Frequency received was too large: %d, silencing audio now.",
                       audio_frequency);
             audio_frequency = -1;
         }
 
-        // If no audio frequency has been received yet, don't render the audio
+        // If no audio frequency has been received yet, then don't render the audio
         if (audio_frequency < 0) {
             rendering = false;
-            continue;
+            return;
         }
 
         if (audio_context.decoder_frequency != audio_frequency) {
@@ -194,8 +182,8 @@ int multithreaded_render_audio(void* opaque) {
         }
 
         if (audio_refresh) {
-            // This gap between audio_refresh and audio_refresh=false creates a minor race
-            // condition with sdl_event_handler.c trying to refresh the audio when the audio
+            // This gap between if audio_refresh == true and audio_refresh=false creates a minor
+            // race condition with sdl_event_handler.c trying to refresh the audio when the audio
             // device has changed.
             audio_refresh = false;
             reinit_audio_device();
@@ -381,7 +369,6 @@ void update_audio() {
 
                 // Render audio on audio thread
                 rendering = true;
-                SDL_SemPost(render_semaphore);
             }
 
             last_played_id += MAX_NUM_AUDIO_INDICES;

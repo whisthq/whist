@@ -31,12 +31,6 @@ Public Functions
 */
 
 /**
- * @brief                          This will destroy and initialize audio again,
- *                                 locking to avoid race conditions with update
- */
-int multithreaded_reinit_audio(void* opaque);
-
-/**
  * @brief                          This will initialize the FFmpeg AAC audio
  *                                 decoder, and set the proper audio parameters
  *                                 for receiving from the server
@@ -61,6 +55,11 @@ int32_t receive_audio(FractalPacket* packet);
  *                                 and catch up if needed
  */
 void update_audio();
+
+/**
+ * @brief                          This will play any queued audio packets
+ */
+void render_audio();
 
 /**
  * @brief                          Close the SDL audio and the FFmpeg audio
