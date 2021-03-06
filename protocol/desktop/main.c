@@ -617,6 +617,38 @@ int read_piped_arguments_thread_function(void* keep_piping) {
     return ret;
 }
 
+void render_all() {
+    // Timer used in CI mode to exit after 1 min
+    static clock ci_timer;
+    start_timer(&ci_timer);
+
+    static clock ack_timer;
+    start_timer(&ack_timer);
+
+    if (get_timer(ack_timer) > 5) {
+        ack(&packet_send_context);
+        ack(&packet_tcp_context);
+        start_timer(&ack_timer);
+    }
+    // if we are running a CI test we run for time_to_run_ci seconds
+    // before exiting
+    if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
+        exiting = 1;
+        LOG_INFO("Exiting CI run");
+    }
+
+    // Render Audio
+    render_audio();
+}
+
+int event_filter(void* opaque, const SDL_Event* event) {
+    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
+        // Note: NULL rectangle is the entire window
+        render_all();
+    }
+    return 1;
+}
+
 int main(int argc, char* argv[]) {
     // If argc == 1 (no args passed), then check if client app path exists and try to launch.
     //     This should be done first because `execl` won't cleanup any allocated resources.
@@ -726,6 +758,7 @@ int main(int argc, char* argv[]) {
 
     // Initialize the SDL window
     window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
+    SDL_SetEventFilter((SDL_EventFilter)event_filter, NULL);
 
     if (!window) {
         destroy_socket_library();
@@ -847,29 +880,15 @@ int main(int argc, char* argv[]) {
         start_timer(&window_resize_timer);
         window_resize_mutex = safe_SDL_CreateMutex();
 
-        // Timer used in CI mode to exit after 1 min
-        clock ci_timer;
-        start_timer(&ci_timer);
-
-        clock ack_timer, keyboard_sync_timer, mouse_motion_timer;
-        start_timer(&ack_timer);
+        clock keyboard_sync_timer, mouse_motion_timer;
         start_timer(&keyboard_sync_timer);
         start_timer(&mouse_motion_timer);
 
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !exiting && !failed) {
-            if (get_timer(ack_timer) > 5) {
-                ack(&packet_send_context);
-                ack(&packet_tcp_context);
-                start_timer(&ack_timer);
-            }
-            // if we are running a CI test we run for time_to_run_ci seconds
-            // before exiting
-            if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
-                exiting = 1;
-                LOG_INFO("Exiting CI run");
-            }
+            // Render Everything
+            render_all();
 
             // Check if window title should be updated
             // SDL_SetWindowTitle must be called in the main thread for
@@ -894,7 +913,7 @@ int main(int argc, char* argv[]) {
             }
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
-            if (get_timer(keyboard_sync_timer) > 50.0 / MS_IN_SECOND) {
+            if (get_timer(keyboard_sync_timer) * MS_IN_SECOND > 50.0) {
                 if (sync_keyboard_state() != 0) {
                     failed = true;
                     break;
@@ -923,7 +942,7 @@ int main(int argc, char* argv[]) {
             int events = SDL_PollEvent(&sdl_msg);
             double poll_event_time = get_timer(poll_event_timer);
 
-            if (poll_event_time * 1000.0 > 5.0) {
+            if (poll_event_time * MS_IN_SECOND > 5.0) {
                 LOG_WARNING("SDL_PollEvent took too long! %f", poll_event_time);
             }
 
@@ -933,17 +952,12 @@ int main(int argc, char* argv[]) {
                 break;
             }
 
-            if (get_timer(mouse_motion_timer) > 0.5 / MS_IN_SECOND) {
+            if (get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
                 if (update_mouse_motion()) {
                     failed = true;
                     break;
                 }
                 start_timer(&mouse_motion_timer);
-            }
-
-            if (!events) {
-                // no events found
-                SDL_Delay(1);
             }
         }
 
