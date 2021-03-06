@@ -1,0 +1,39 @@
+# workflows/node.js.yml
+#
+# Website: Node.js Build and Test
+# Build website and run Node.js tests.
+
+name: "Website: Node.js Build and Test"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+
+jobs:
+    website-building-main:
+        name: Build and Test Website
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Check out Git Repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Install Node.js 12
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+  
+            - name: Run npm install
+              run: npm install
+        
+            - name: Run npm ci
+              run: npm ci
+                
+            - name: Run npm build
+              run: npm run build --if-present
