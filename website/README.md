@@ -4,13 +4,12 @@
 
 This repository contains the code for the Fractal website.
 
-
 ## Setting Up for Development
 
 Note: Steps 1, 2, and 3 only need to be done once.
 
 1. Download the AWS CLI and run `aws configure`. You'll be prompted to enter your AWS Access Key
-and Secret Key, which you received in an onboarding email titled "AWS Credentials."
+   and Secret Key, which you received in an onboarding email titled "AWS Credentials."
 
 2. `cd` into the `scripts` folder and run `python3 retrieve.py` to download the necessary environment variables. Depending on your compuer, you may need to replace `python3` with `py`, `py3`, `python`, etc.
 
@@ -32,20 +31,21 @@ Before making a pull request, ensure that the following steps are taken:
 
 5. Run all test files by running `npm run test` and `jest`. If this does not pass, your code will fail Github CI. If you've changed React code, your code will likely fail the corresponding snapshot test, so you'll need to update snapshots. NOTE: Any new functions or React components created must be accompanied by unit/snapshot tests, or code reviewers will request changes on your PR.
 
-6. Rebase against `dev` by pulling `dev` and running `git rebase dev`. 
+6. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
 
 Finally, you can open PR to `dev`.
 
 ## Running tests
+
 If you've created new React components, please write unit and/or integration tests as necessary. Tests are currently written in `Jest`, `react-testing-library`, and `jest-puppeteer`. Unit and integration test files can be found in each page under the `__tests__` folder in the format `<TESTNAME>.test.tsx`, while e2e tests can be found under `testing/e2e` in the format `<TESTNAME>.e2e.ts`. Running unit/integration tests can be done by calling `npm run test <FILENAME>` or just `npm run test` for the whole suite, while e2e tests are called by `jest <FILENAME>` or `jest`. To leanr more about writing tests, go to the engineering wiki for documentation: https://www.notion.so/tryfractal/Testing-Website-d95465a920784670838f130620cd5d87
 
 ## Publishing the Website
 
 The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/master), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
 
-- The branch `dev` deploys to https://dev.fractal.co.
-- The branch `staging` deploys to https://staging.fractal.co.
-- The branch `master` deploys to https://fractal.co.
+-   The branch `dev` deploys to https://dev.fractal.co.
+-   The branch `staging` deploys to https://staging.fractal.co.
+-   The branch `master` deploys to https://fractal.co.
 
 For `dev` and `staging`, the password is `><mc?@,>YF?v&p,e`.
 
