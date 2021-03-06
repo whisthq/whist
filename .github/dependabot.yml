@@ -25,7 +25,7 @@ updates:
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
-  
+
   - package-ecosystem: "npm"
     directory: "/client-applications/desktop/app" # looks for package.json and [package-lock/yarn].lock file in this directory
     schedule:
@@ -58,7 +58,7 @@ updates:
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
-    
+
   - package-ecosystem: "docker"
     directory: "/container-images/browsers/sidekick" # looks for Dockerfile in this directory
     schedule:
@@ -167,3 +167,12 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
+  ###################### Website ######################
+
+  - package-ecosystem: "npm"
+    directory: "/" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  ###################### Website ######################
