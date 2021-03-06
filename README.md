@@ -50,6 +50,7 @@ The Fractal monorepository contains 7 Fractal subrepositories:
 | ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
 | main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.      |
 | protocol             | The streaming technology API, both client and server, for streaming containerized applications to users. |
+| website              | The website hosted at `fractal.co`. |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
