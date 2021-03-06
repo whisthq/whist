@@ -1,4 +1,4 @@
-# workflows/node.js.yml
+# workflows/website-nodejs-tests.yml
 #
 # Website: Node.js Build and Test
 # Build website and run Node.js tests.
@@ -11,6 +11,11 @@ on:
             - master
             - staging
             - dev
+        paths:
+            - "website/**"
+            - "!website/README.md"
+            - ".github/workflows/website-nodejs-tests.yml"
+
 
 jobs:
     website-building-main:
@@ -41,6 +46,7 @@ jobs:
                   node-version: 14
 
             - name: Run npm install
+              working-directory: website
               run: |
                   npm config set '//npm.pkg.github.com/:_authToken' "${NPM_TOKEN}"
                   npm install
@@ -49,12 +55,15 @@ jobs:
               run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
 
             - name: Run retrieve.py to retrieve .env file
+              working-directory: website
               run: pip install boto3 && cd scripts && python retrieve.py
 
             - name: Run npm ci
+              working-directory: website
               run: npm ci
 
             - name: Run npm build
+              working-directory: website
               run: npm run build --if-present
 
             - name: Set GraphQL Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
@@ -68,6 +77,7 @@ jobs:
                   fi
 
             - name: Run npm test
+              working-directory: website
               run: npm run ci-test
               env:
                 HASURA_ADMIN_KEY: ${{ env.hasura_graphql_access_key }}
