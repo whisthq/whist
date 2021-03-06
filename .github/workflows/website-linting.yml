@@ -1,4 +1,4 @@
-# workflows/linting.yml
+# workflows/website-linting.yml
 #
 # Website: Linting
 # Lint website using eslint.
@@ -11,6 +11,10 @@ on:
             - master
             - staging
             - dev
+        paths:
+            - "website/**"
+            - "!website/README.md"
+            - ".github/workflows/website-linting.yml"
 
 jobs:
     website-linting-main:
@@ -34,9 +38,11 @@ jobs:
                   node-version: 14
 
             - name: Run npm install
+              working-directory: website
               run: |
                   npm config set '//npm.pkg.github.com/:_authToken' "${NPM_TOKEN}"
                   npm install
 
             - name: Check if code follows ESLint standards
+              working-directory: website
               run: npm run lint-check
