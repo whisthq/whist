@@ -1,0 +1,21 @@
+#ifndef FRACTAL_V
+#define FRACTAL_V
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file version.h.in
+ * @brief This file gets configured into fractal.version by CMake, and includes
+ * unique identifiers for commits and versions of the Fractal protocol.
+============================
+Usage
+============================
+*/
+
+/*
+============================
+Defines
+============================
+*/
+
+#define FRACTAL_GIT_REVISION "@REVISION@"
+
+#endif  // FRACTAL_V
