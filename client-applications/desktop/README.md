@@ -2,6 +2,148 @@
 
 This folder contains the code for the Fractal desktop applications running on Windows and MacOS (Linux currently not supported). The applications are built with cross-platform compatibility using ElectronJS.
 
+## High-Level Overview
+
+### Electron
+
+The client-app uses ElectronJS for cross-platform compatibility and for the building of desktop apps using the React framework. In particular, it differs from web development in its use of processes:
+
+Electron has two types of processes - Main and Renderer. The main process is the underlying process that controls everything, and it spins up renderer processes in `BrowserWindow` instances that display the UI. Each renderer process is only responsible for its own `BrowserWindow`, and communicates with the main process through IPC. Currently, we use 3 renderer processes maximum - mainWindow, loginWindow, and paymentWindow (each for their respective purposes).
+
+### React/Redux/Redux saga
+
+Our client-app is organized with a standard React/Redux/Redux saga structure with a sprinkling of React hooks -- React being the visual components and app logic, Redux saga being the middleware that listens and dispatches actions (both side effects and state changes), and Redux for managing the underlying application state.
+
+The "state" of the app is a collection of objects that store current global application data, e.g. the `User` object with `userID` and `name`, the `ComputerInfo` object with the AWS `region`). Note that redux architecture revolves around a strict unidirectional data flow. This means that all data in an application follows the same lifecycle pattern, making the logic more predictable and easier to understand.
+
+![Standard flow](https://miro.medium.com/max/1400/1*VxWA0VFZq4NZG1mI20PYDw.png)
+
+React is where our UI is built. See [here](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289) for how our React files are structured. React also dispatches actions to Redux to indicate state changes.
+
+Redux manages our application state synchronously with the stored state and reducers. Reducers are pure functions that take the previous state and an action, and return the next state. In a reducer, we should never mutate the arguments/change the object structure, perform side effects like API calls, etc.
+
+This is where Redux saga comes in. As a middleware, it intercepts any dispatched actions from React, completes any side effects, and dispatches necessary pure state changes to the Redux reducers.
+
+#### React hooks
+
+In addition to Redux saga for side effects, we also sometimes use React hooks, namely `useEffect`. We keep these separate because while there is a global application state, components can also have local states. We use React hooks to deal with state changes that specifically pertain to that component (e.g. `timedOut`, `shouldForceQuit`, `protocolLock` in `launcher.tsx`), while Redux saga is for the global application state (e.g. the `User`. which is referred to in many different components).
+
+## File Structure
+
+```
+cd app
+tree -I "node_modules|dist|*.d.ts|*.css|fonts|svgs"
+```
+
+```
+./desktop/app
+├── app.html <- wrapper html for the entire app
+├── assets <- fonts/svg files
+├── index.tsx <- wrapper for the React portion of the app
+├── main.dev.ts <- module in the main process to create/communicate with renderer processes
+├── main.prod.js <- main.dev.ts, compiled by webpack for performance wins
+├── main.prod.js.LICENSE.txt
+├── menu.ts <- file to build application menu
+├── package.json <- manages dependencies, scripts, versions, etc.
+├── pages
+│   ├── launcher
+│   │   ├── constants
+│   │   │   └── loadingMessages.ts <- messages that display as the protocol is launching
+│   │   └── launcher.tsx <- React component for the launching page
+│   ├── loading
+│   │   └── loading.tsx <- React component for the loading page
+│   ├── login
+│   │   ├── components <- React components for smaller pieces of the login page
+│   │   │   ├── geometric
+│   │   │   │   └── geometric.tsx
+│   │   │   ├── redirect
+│   │   │   │   └── redirect.tsx
+│   │   │   └── splashScreen
+│   │   │       └── splashScreen.tsx
+│   │   └── login.tsx <- Wrapper component for the login page
+│   ├── payment
+│   │   └── payment.tsx <- React component for the payment page
+│   ├── root.tsx <- highest level React component, contains router + title bar
+│   └── update
+│       └── update.tsx <- React component for the update page
+├── shared
+│   ├── components <- smaller components that are reused on multiple pages
+│   │   ├── chromeBackground
+│   │   │   └── chromeBackground.tsx
+│   │   ├── loadingAnimation
+│   │   │   └── loadingAnimation.tsx
+│   │   ├── titleBar.tsx
+│   │   └── version.tsx
+│   ├── constants
+│   │   ├── config.ts <- environment configurations
+│   │   └── graphql.ts <- GraphQL methods
+│   ├── types <- classes, types, and enums for typing safety
+│   │   ├── api.ts <- Fractal's API, HTTP codes, and request names
+│   │   ├── aws.ts <- AWS regions
+│   │   ├── cache.ts <- Electron store/cache variables
+│   │   ├── client.ts <- client user's computer information
+│   │   ├── config.ts <- configuration/environment types
+│   │   ├── containers.ts <- container/task states
+│   │   ├── input.ts <- input keys
+│   │   ├── ipc.ts <- ipc listener names
+│   │   ├── navigation.ts <- route names
+│   │   ├── redux.ts
+│   │   └── ui.ts <- UI component type
+│   └── utils
+│       ├── files <- helper functions that edit/are dependent on the user's files
+│       │   ├── __tests__
+│       │   │   └── images.test.ts
+│       │   ├── aws.ts
+│       │   ├── exec.ts
+│       │   ├── images.ts
+│       │   └── shortcuts.ts
+│       └── general
+│           ├── __tests__
+│           │   ├── api.test.ts
+│           │   ├── helpers.test.ts
+│           │   └── reducer.test.ts
+│           ├── api.ts <- HTTP calls
+│           ├── dpi.ts <- functions to find what DPI to use
+│           ├── helpers.ts <- otherwise homeless helper functions
+│           ├── logging.ts <- logging utils
+│           └── reducer.ts <- mostly unused, except for `deepCopyObject()`
+├── store
+│   ├── actions <- actions that can be dispatched
+│   │   ├── auth <- actions that change the auth state
+│   │   │   ├── pure.ts
+│   │   │   └── sideEffects.ts
+│   │   ├── client <- actions that change the client state
+│   │   │   ├── pure.ts
+│   │   │   └── sideEffects.ts
+│   │   └── container <- actions that change the container state
+│   │       ├── pure.ts
+│   │       └── sideEffects.ts
+│   ├── configureStore.dev.ts <- dev configuration of redux/redux saga
+│   ├── configureStore.prod.ts <- prod configuration of redux/redux saga
+│   ├── configureStore.ts <- wrapper that chooses the dev/prod store configure
+│   ├── history.ts <- gives us access to the history object
+│   ├── reducers <- reducers. no side effects happen here, just pure state changes
+│   │   ├── auth
+│   │   │   ├── default.ts <- default auth state
+│   │   │   └── reducer.ts
+│   │   ├── client
+│   │   │   ├── default.ts <- default client state
+│   │   │   └── reducer.ts
+│   │   ├── container
+│   │   │   ├── default.ts <- default container state
+│   │   │   └── reducer.ts
+│   │   └── root.ts <- wrapper for all reducers
+│   └── sagas <- sagas. side effects live here
+│       ├── auth
+│       │   └── index.ts
+│       ├── client
+│       │   └── index.ts
+│       ├── container
+│       │   └── index.ts
+│       └── root.ts <- wrapper for all sagas
+└── yarn.lock <- lock file for dependencies
+```
+
 ## Setting Up for Development
 
 1. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
