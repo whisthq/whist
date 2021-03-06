@@ -1,0 +1,9 @@
+[Unit]
+Description=Starts Fractal by starting Fractal systemd services, runs as root
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/fractal/entry.sh
+
+[Install]
+WantedBy=multi-user.target

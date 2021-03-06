@@ -1,0 +1,452 @@
+FROM ubuntu:20.04
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install systemd
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    systemd \
+    systemd-sysv \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Remove all sysinit.target systemd services except tmpfile cleaners (and
+# switch back workdir)
+WORKDIR /lib/systemd/system/sysinit.target.wants/
+# hadolint ignore=SC2010
+RUN ls | grep -v systemd-tmpfiles-setup | xargs rm -f
+WORKDIR /
+
+# Remove some more systemd services to minimize what's running on our images
+RUN rm -f /lib/systemd/system/multi-user.target.wants/* \
+    /etc/systemd/system/*.wants/* \
+    /lib/systemd/system/local-fs.target.wants/* \
+    /lib/systemd/system/sockets.target.wants/*udev* \
+    /lib/systemd/system/sockets.target.wants/*initctl* \
+    /lib/systemd/system/basic.target.wants/* \
+    /lib/systemd/system/anaconda.target.wants/* \
+    /lib/systemd/system/plymouth* \
+    /lib/systemd/system/systemd-update-utmp*
+
+# Install some useful utilities and their dependencies for debugging/testing
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    liblua5.2-0 \
+    libsmbclient \
+    libuchardet0 \
+    libevent-2.1-7 \
+    libutempter0 \
+    tmux \
+    sudo \
+    less \
+    vim \
+    git \
+    mesa-utils \
+    mpv \
+    psmisc \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install X Server and window manager dependencies and basic Ubuntu packages
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    lsb-release \
+    ufw \
+    keyboard-configuration \
+    libxtst-dev \
+    libxdamage-dev \
+    libasound2-data \
+    libasound2 \
+    libasound2-dev \
+    xclip \
+    x11-xserver-utils \
+    libx11-dev \
+    gtk-chtheme \
+    xserver-xorg-video-dummy \
+    xinput \
+    evtest \
+    dkms \
+    i3 \
+    awesome \
+    awesome-extra \
+    lxappearance \
+    xinit \
+    materia-gtk-theme \
+    yaru-theme-gtk \
+    gtk2-engines-murrine \
+    gtk2-engines-pixbuf \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Note: qt4-qtconfig has not been ported to Ubuntu 20, so we can't install it.
+
+# Install FFmpeg and Libav dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    libavcodec58 \
+    libavdevice58 \
+    libavfilter7 \
+    libavformat58 \
+    libavresample4 \
+    libavutil56 \
+    libpostproc55 \
+    libswresample3 \
+    libswscale5 \
+    libmp3lame0 \
+    libopus0 \
+    libsnappy1v5 \
+    libspeex1 \
+    libtheora0 \
+    libtwolame0 \
+    libwebp6 \
+    libwebpmux3 \
+    libavc1394-0 \
+    libcaca0 \
+    libcdio-cdda2 \
+    libcdio-paranoia2 \
+    libdc1394-22 \
+    libiec61883-0 \
+    libraw1394-11 \
+    libxv1 \
+    librubberband2 \
+    libtesseract4 \
+    libzmq5 \
+    libopenmpt0 \
+    libvdpau1 \
+    libvpx6 \
+    libwavpack1 \
+    libx265-179 \
+    libxcb-shape0 \
+    libxcb-xfixes0 \
+    ocl-icd-libopencl1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install Pulse Audio & XDummy dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    libunwind8 \
+    xserver-xorg-core-hwe-18.04 \
+    libgstreamer-plugins-base1.0-0 \
+    libgstreamer1.0-0 \
+    liborc-0.4-0 \
+    libpulse0 \
+    libsnapd-glib1 \
+    libsndfile1 \
+    libsoxr0 \
+    libspeexdsp1 \
+    libwebrtc-audio-processing1 \
+    libasound2-plugins \
+    pulseaudio-utils \
+    libltdl7 \
+    libtdb1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install Nvidia CUDA Drivers dependencies explicitly
+# These packages need to be installed before installing/updating Python
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    pkg-config \
+    screen-resolution-extra \
+    libgtk2.0-0 \
+    libjansson4 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install general Ubuntu packages
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    apt-utils \
+    x11vnc \
+    xvfb \
+    wmctrl \
+    ca-certificates \
+    wget \
+    gnupg2 \
+    libfido2-1 \
+    libgbm1 \
+    libxcb-dri3-0 \
+    libcurl4 \
+    curl \
+    jq \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install libinput driver for XServer input.
+# For some reason, this installation does not work if included with the previous
+# commands.
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    xserver-xorg-input-libinput \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install xterm dependencies explicitly
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    libc6 \
+    libfontconfig1 \
+    libfreetype6 \
+    libice6 \
+    libtinfo6 \
+    libutempter0 \
+    libx11-6 \
+    libxaw7 \
+    libxext6 \
+    libxft2 \
+    libxinerama1 \
+    libxmu6 \
+    libxpm4 \
+    libxt6 \
+    xbitmaps \
+    x11-utils \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install xterm
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --allow-downgrades --no-install-recommends -y \
+    xterm \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install time while avoiding interactive installation for tzdata - uses UTC
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+ENV LOCAL="yes"
+RUN apt-get install --no-install-recommends -y \
+    tzdata \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install fonts for full Unicode support (or as close as we can get)
+RUN apt-get install --no-install-recommends -y \
+    fonts-noto \
+    fonts-noto-core \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    fonts-noto-color-emoji \
+    fonts-noto-extra \
+    fonts-noto-mono \
+    fonts-noto-ui-core \
+    fonts-noto-ui-extra \
+    fonts-noto-unhinted \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
+RUN echo "Set disable_coredump false" >> /etc/sudo.conf
+
+# Create fractal user with dynamic, random password and do NOT add to sudo group
+RUN useradd --create-home fractal \
+    && password=$(tr -dc 'A-Za-z0-9!"#$%&\()*+,-./;<=>?@[\]^_`{|}~' </dev/urandom | head -c 32  ; echo) \
+    && echo fractal:"${password}" | chpasswd
+
+# Install Pulse Audio
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    pulseaudio \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Give access to Pulse Audio virtual sound card
+RUN adduser root pulse-access \
+    && adduser fractal pulse-access
+
+# Prevent Pulse Audio from running as user (breaking sound for non-root users)
+RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
+RUN systemctl mask pulseaudio
+RUN chmod -x /usr/bin/start-pulseaudio-x11
+COPY config/pulse-client.conf /etc/pulse/client.conf
+
+# Create fractal Directory and Subdirectories in /usr/share
+RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
+# Set /usr/share/fractal/to root-only
+RUN chgrp root -R /usr/share/fractal
+RUN chown root:root /usr/share/fractal/
+RUN chmod 600 -R /usr/share/fractal/
+
+
+# Install system FFmpeg
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    ffmpeg \
+    libavcodec-dev \
+    libavdevice-dev \
+    libx11-dev \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+
+# Install FractalServer scripts
+COPY scripts/entry.sh /usr/share/fractal
+RUN chmod +x /usr/share/fractal/entry.sh
+COPY config/fractal-display-config.env /usr/share/fractal
+
+# Install and enable OpenSSH
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    openssh-client \
+    openssh-sftp-server \
+    openssh-server \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+RUN systemctl enable ssh
+
+# Set appropriate user permissions
+RUN chown -vR fractal:fractal /home/fractal
+RUN chown root:root /run/user
+
+# Set up the entrypoint for the Docker container
+COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
+RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
+
+# Install NVIDIA GRID Drivers
+COPY build-temp/nvidia-driver/nvidia-driver-installer.run /root/nvidia-driver-installer.run
+RUN cd /root && \
+    chmod +x nvidia-driver-installer.run && \
+    sh nvidia-driver-installer.run -x && \
+    cd NVIDIA* && \
+    ./nvidia-installer --silent \
+                       --no-kernel-module \
+                       --install-compat32-libs \
+                       --no-nouveau-check \
+                       --no-nvidia-modprobe \
+                       --no-rpms \
+                       --no-backup \
+                       --no-check-for-alternate-installs \
+                       --no-libglx-indirect && \
+    cd .. && \
+    rm -rf NVIDIA* nvidia-driver-installer.run
+
+# Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID and device paths
+COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
+COPY services/fractal-update-xorg-conf.service /etc/systemd/system/
+COPY scripts/update-xorg-conf.sh /usr/share/fractal/
+RUN chmod +x /usr/share/fractal/update-xorg-conf.sh
+
+# Enable update script
+RUN systemctl enable fractal-update-xorg-conf
+
+# Set display environment variable to our Nvidia-powered display
+ENV DISPLAY :10
+
+# Install libraries for (limited) hardware acceleration
+# Note that all installations need to be prefixed by an `apt-get update` to
+# prevent certain errors.
+RUN apt-get install --no-install-recommends -y \
+    vainfo \
+    vdpauinfo \
+    mesa-vdpau-drivers \
+    libvdpau-va-gl1 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Set up window manager running on X server, with GTK/QT theming
+RUN git clone https://github.com/vinceliuice/WhiteSur-cursors.git && cd WhiteSur-cursors && /bin/bash install.sh && rm -rf /WhiteSur-cursors
+RUN git clone https://github.com/vinceliuice/WhiteSur-icon-theme.git && cd WhiteSur-icon-theme && /bin/bash install.sh && rm -rf /WhiteSur-icon-theme
+
+COPY config/gtk-3-settings.ini /etc/gtk-3.0/settings.ini
+COPY config/.gtkrc-2.0 /root/.gtkrc-2.0
+COPY --chown=fractal config/.gtkrc-2.0 /home/fractal/.gtkrc-2.0
+COPY config/qt4-settings.conf /root/.config/Trolltech.conf
+COPY --chown=fractal config/qt4-settings.conf /home/fractal/.config/Trolltech.conf
+COPY scripts/xinitrc /root/.xinitrc
+COPY config/awesome-rc.lua /home/fractal/.config/awesome/rc.lua
+
+# Install Fractal services
+COPY services/fractal-entrypoint.service /etc/systemd/system
+RUN systemctl enable fractal-entrypoint
+
+COPY services/fractal-display.service /etc/systemd/system
+RUN systemctl enable fractal-display
+
+COPY services/fractal-protocol.service /etc/systemd/system
+RUN systemctl enable fractal-protocol
+
+COPY services/fractal-audio.service /etc/systemd/system
+RUN systemctl enable fractal-audio
+
+COPY scripts/start-fractal-server.sh /usr/share/fractal/start-fractal-server.sh
+RUN chmod +x /usr/share/fractal/start-fractal-server.sh
+
+VOLUME [ "/sys/fs/cgroup" ]
+
+# As opposed to graphical.target, which is the default
+# RUN systemctl set-default multi-user.target
+ENV init /sbin/init
+
+# Disable some extra systemd services
+RUN systemctl mask plymouth
+RUN systemctl mask systemd-hostnamed
+RUN systemctl mask acpid
+RUN systemctl mask NetworkManager-wait-online
+RUN systemctl mask nvidia-persistenced
+
+# Ubuntu 20-specific systemd fix (pre-systemd 246)
+COPY config/systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
+
+# Set up Fractal Protocol symlink
+RUN mkdir /usr/share/fractal/bin
+RUN ln -sf /usr/share/fractal/bin/FractalServer /usr/share/fractal/FractalServer
+
+# Setup Fractal application symlink (xterm by default)
+RUN ln -sf "$(which xterm)" /usr/bin/fractal-application
+
+# Grab pre-compiled Fractal Protocol
+COPY build-temp/protocol/libsentry.so /usr/share/fractal/bin/libsentry.so
+COPY build-temp/protocol/crashpad_handler /usr/share/fractal/bin/crashpad_handler
+COPY build-temp/protocol/FractalServer /usr/share/fractal/bin/FractalServer
+
+# Copy config reference to container
+COPY config/app-config-map.json /usr/share/fractal/app-config-map.json
+
+# Enter the Docker container via the entrypoint script
+CMD ["/usr/share/fractal/docker-entrypoint.sh"]

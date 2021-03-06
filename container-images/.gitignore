@@ -1,0 +1,6 @@
+# Tags
+tags
+
+# Build
+.build_output
+base/build-temp/**

@@ -1,0 +1,71 @@
+version: "3.8"
+
+x-app: &base-app
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  depends_on:
+    - redis
+    - postgres_db
+  networks:
+    # docker networks make sure web/celery can find redis
+    - primary
+
+services:
+  redis:
+    # Matches version being used by staging as of 2020-07-08
+    image: madflojo/redis-tls
+    ports:
+      - "7810:6379" # Proxy redis on localhost:7810
+    networks:
+      - primary
+    volumes:
+      - ../dummy_certs:/certs
+
+  web:
+    <<: *base-app
+    command: web
+    ports:
+      - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
+    environment:
+      POSTGRES_URI: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+      REDIS_URL: rediss://redis
+      HOT_RELOAD: ${HOT_RELOAD}
+      PORT: 7730
+    volumes:
+      - ..:/app
+
+  celery:
+    <<: *base-app
+    command: celery
+    environment:
+      POSTGRES_URI: postgres://${POSTGRES_LOCAL_USER}@postgres_db/${POSTGRES_LOCAL_DB}
+      REDIS_URL: rediss://redis
+      AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
+      NUM_WORKERS: 50
+    volumes:
+      - ..:/app
+      - $HOME/.aws:/.aws
+
+  postgres_db:
+    image: postgres:12.5
+    ports:
+      - "9999:5432"
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    networks:
+      - primary
+
+# TODO use a local DB (as commented out below) instead of the staging/production DB
+#   db:
+#     image: postgres:9.4
+#     volumes:
+#       - db-data:/var/lib/postgresql/data
+#     networks:
+#       - primary
+#
+# volumes:
+#   db-data:
+
+networks:
+  primary:
