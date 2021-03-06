@@ -1,0 +1,36 @@
+# workflows/linting.yml
+#
+# Website: Linting
+# Lint website using eslint.
+
+name: "Website: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+
+jobs:
+    website-linting-main:
+        name: Lint Website
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Check out Git Repository
+              uses: actions/checkout@v2
+              with:
+                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
+                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
+
+            - name: Install Node.js 12
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12
+
+            - name: Run npm install
+              run: npm install
+
+            - name: Check if code follows ESLint standards
+              run: npm run lint-check

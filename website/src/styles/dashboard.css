@@ -1,0 +1,23 @@
+.dashboard-container {
+    width: 400px;
+    margin: auto;
+    margin-top: 70px;
+}
+
+@media only screen and (max-width: 500px) {
+    .dashboard-container {
+        width: 100%;
+        margin: auto;
+        margin-top: 40px;
+    }
+}
+
+.email-link {
+    outline: none !important;
+    text-decoration: none !important;
+    color: #3930b8;
+}
+
+.email-link:hover {
+    color: #3930b8 !important;
+}
