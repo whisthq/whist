@@ -12,7 +12,7 @@ This repository contains the end-to-end code for the Fractal Application Streami
     - [`dev` is for development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
   - [Git Best Practices](#git-best-practices)
-    - [On feature branches, rebase onto dev instead of merging dev into your branch](#on-feature-branches-rebase-into-dev-instead-of-merging-dev-into-your-branch)
+    - [On feature branches, rebase onto dev instead of merging dev into your branch](#on-feature-branches-rebase-onto-dev-instead-of-merging-dev-into-your-branch)
     - [Options to mainline your PRs](#options-to-mainline-your-prs)
     - [On commit logs](#on-commit-logs)
   - [Hotfixes (i.e. production is on fire)](#hotfixes-ie-prod-is-on-fire)
@@ -50,7 +50,7 @@ The Fractal monorepository contains 7 Fractal subrepositories:
 | ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
 | main-webserver       | The REST API for managing our AWS infrastructure, supporting our front-end, and connecting the two.      |
 | protocol             | The streaming technology API, both client and server, for streaming containerized applications to users. |
-| website              | The website hosted at `fractal.co`. |
+| website              | The website hosted at `fractal.co`.                                                                      |
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
