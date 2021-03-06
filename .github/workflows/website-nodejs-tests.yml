@@ -16,7 +16,6 @@ on:
             - "!website/README.md"
             - ".github/workflows/website-nodejs-tests.yml"
 
-
 jobs:
     website-building-main:
         name: Build and Test Website
@@ -80,4 +79,4 @@ jobs:
               working-directory: website
               run: npm run ci-test
               env:
-                HASURA_ADMIN_KEY: ${{ env.hasura_graphql_access_key }}
+                  HASURA_ADMIN_KEY: ${{ env.hasura_graphql_access_key }}
