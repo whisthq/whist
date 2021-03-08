@@ -10,7 +10,7 @@ from app.exceptions import SentryInitializationError
 def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     """
     Initialized sentry with Flask and Celery integrations as well as the default
-    integrations. Also makes sure initialization is correct. We do this by logging
+    integrations. Also makes sure initialization succeeds. We do this by logging
     a test message at the least serious level (debug). According to the docs and
     manual experimentation, the return is None iff something went wrong. Otherwise,
     the return is the ID of the message.
