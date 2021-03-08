@@ -133,7 +133,8 @@ core-util-is@1.0.2:
 
 create-desktop-shortcuts@fractal/create-desktop-shortcuts:
   version "1.2.0"
-  resolved "https://codeload.github.com/fractal/create-desktop-shortcuts/tar.gz/09c086c0de87ded61e587c746bc6144e9383aacd"
+  uid "94f7f9d3a8623156aef59a508483dee4030d76eb"
+  resolved "https://codeload.github.com/fractal/create-desktop-shortcuts/tar.gz/94f7f9d3a8623156aef59a508483dee4030d76eb"
 
 cryptiles@^4.1.2:
   version "4.1.3"
