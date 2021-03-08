@@ -626,65 +626,59 @@ int main(int argc, char* argv[]) {
         // hopefully the app path is not more than 1024 chars long
         char client_app_path[MAX_APP_PATH_LEN];
         memset(client_app_path, 0, MAX_APP_PATH_LEN);
+
 #ifdef _WIN32
         const char* relative_client_app_path = "/../../Fractal.exe";
-        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
-        int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+        char dir_split_char = '\\';
+        size_t protocol_path_len;
 
-        // Get the path of the current executable
-        int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
-        if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
-            // Get directory from executable path
-            char* last_dir_slash_ptr = strrchr(client_app_path, '\\');
-            if (last_dir_slash_ptr) {
-                *last_dir_slash_ptr = '\0';
-            }
-
-            // Get the relative path to the client app from the current executable location
-            size_t protocol_path_len = strlen(client_app_path);
-            if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
-                             relative_client_app_path_len + 1)) {
-                // If `_execl` fails, then the program proceeds, else defers to client app
-                LOG_INFO("Client app path: %s", client_app_path);
-                if (_execl(client_app_path, "Fractal.exe", NULL) < 0) {
-                    LOG_INFO("_execl errno: %d errstr: %s", errno, strerror(errno));
-                }
-            }
-        }
 #elif __APPLE__
         // This executable is located at
         //    Fractal.app/Contents/MacOS/FractalClient
-        // We want to reference client app at Fractal.app/Contents/MacOS/Fractal
+        // We want to reference client app at Fractal.app/Contents/MacOS/FractalLauncher
         const char* relative_client_app_path = "/FractalLauncher";
-        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
+        char dir_split_char = '/';
+        int protocol_path_len;
+#endif
 
-        // The cast from signed int to unsigned uint32_t requires us to check that
-        //     relative_client_app_path_len < MAX_APP_PATH_LEN before proceeding.
+        int relative_client_app_path_len = (int)strlen(relative_client_app_path);
         if (relative_client_app_path_len < MAX_APP_PATH_LEN) {
+#ifdef _WIN32
+            int max_protocol_path_len = MAX_APP_PATH_LEN - relative_client_app_path_len - 1;
+            // Get the path of the current executable
+            int path_read_size = GetModuleFileNameA(NULL, client_app_path, max_protocol_path_len);
+            if (path_read_size > 0 && path_read_size < max_protocol_path_len) {
+#elif __APPLE__
             uint32_t max_protocol_path_len =
                 (uint32_t)(MAX_APP_PATH_LEN - relative_client_app_path_len - 1);
-
             // Get the path of the current executable
             if (_NSGetExecutablePath(client_app_path, &max_protocol_path_len) == 0) {
+#endif
                 // Get directory from executable path
-                char* last_dir_slash_ptr = strrchr(client_app_path, '/');
+                char* last_dir_slash_ptr = strrchr(client_app_path, dir_split_char);
                 if (last_dir_slash_ptr) {
                     *last_dir_slash_ptr = '\0';
                 }
 
                 // Get the relative path to the client app from the current executable location
-                int protocol_path_len = strlen(client_app_path);
+                protocol_path_len = strlen(client_app_path);
                 if (safe_strncpy(client_app_path + protocol_path_len, relative_client_app_path,
                                  relative_client_app_path_len + 1)) {
-                    // If `execl` fails, then the program proceeds, else defers to client app
                     LOG_INFO("Client app path: %s", client_app_path);
+#ifdef _WIN32
+                    // If `_execl` fails, then the program proceeds, else defers to client app
+                    if (_execl(client_app_path, "Fractal.exe", NULL) < 0) {
+                        LOG_INFO("_execl errno: %d errstr: %s", errno, strerror(errno));
+                    }
+#elif __APPLE__
+                    // If `execl` fails, then the program proceeds, else defers to client app
                     if (execl(client_app_path, "Fractal", NULL) < 0) {
                         LOG_INFO("execl errno: %d errstr: %s", errno, strerror(errno));
                     }
+#endif
                 }
             }
         }
-#endif
     }
 
     init_default_port_mappings();
