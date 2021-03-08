@@ -19,7 +19,7 @@ psycopg2-binary==2.8.6
 python-dateutil==2.8.1
 python-dotenv==0.15.0
 python-jose==3.2.0
-pyzipcode==2.0.2
+pyzipcode==3.0.1
 redis==3.5.3
 requests==2.25.1
 sentry-sdk==0.20.3
