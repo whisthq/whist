@@ -100,3 +100,7 @@ class SendGridException(_FractalError):
 
     params = ()
     message = "Sendgrid sending API threw an exception"
+
+
+class SentryInitializationError(Exception):
+    pass
