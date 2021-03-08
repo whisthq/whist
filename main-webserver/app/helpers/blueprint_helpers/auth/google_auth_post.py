@@ -17,8 +17,8 @@ from app.helpers.utils.general.tokens import (
 from app.models import db, User
 
 
-from app.helpers.utils.datadog.events import (
-    datadogEvent_userLogon,
+from app.helpers.utils.event_logging.events import (
+    logged_event_for_logon,
 )
 
 
@@ -73,7 +73,7 @@ def login_helper(code, client_app):
     if user:
         if user.using_google_login:
             if not current_app.testing:
-                datadogEvent_userLogon(username)
+                logged_event_for_logon(username)
 
             return {
                 "new_user": False,
