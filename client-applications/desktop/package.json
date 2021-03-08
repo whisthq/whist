@@ -58,13 +58,13 @@
             "artifactName": "Fractal.${ext}",
             "category": "Productivity",
             "description": "Fractal Chromium Desktop Application. ",
+            "extraFiles": [
+                "protocol-build/"
+            ],
             "icon": "build/icon.png",
             "synopsis": "Fractal Chromium Desktop Application",
             "target": [
                 "AppImage"
-            ],
-            "extraFiles": [
-                "protocol-build/"
             ]
         },
         "mac": {
@@ -107,12 +107,12 @@
             "region": "us-east-1"
         },
         "win": {
+            "extraFiles": [
+                "protocol-build/"
+            ],
             "icon": "build/icon.ico",
             "target": [
                 "nsis"
-            ],
-            "extraFiles": [
-                "protocol-build/"
             ]
         }
     },
