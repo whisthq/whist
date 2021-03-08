@@ -619,9 +619,10 @@ int read_piped_arguments_thread_function(void* keep_piping) {
 }
 
 int main(int argc, char* argv[]) {
-    // If argc == 1 (no args passed), then check if client app path exists and try to launch
-    //     This should be done first because `execl` won't cleanup any allocated resources
-    // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable
+    // If argc == 1 (no args passed), then check if client app path exists and try to launch.
+    //     This should be done first because `execl` won't cleanup any allocated resources.
+    // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
+#ifdef _WIN32 || __APPLE__
     if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
         // hopefully the app path is not more than 1024 chars long
         char client_app_path[MAX_APP_PATH_LEN];
@@ -680,6 +681,9 @@ int main(int argc, char* argv[]) {
             }
         }
     }
+#endif
+
+    // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
 
     init_default_port_mappings();
 
