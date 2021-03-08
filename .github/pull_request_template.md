@@ -19,6 +19,7 @@ List all the possible scenarios/edge cases that you tested. For instance, if you
 
 ## Checklist
 
-- [ ] Appropriate Unit test coverage
+- [ ] Appropriate documentation coverage
+- [ ] Appropriate unit and integration test coverage
 - [ ] Manual testing has been performed
 - [ ] This PR is linted, tested and follows the best practices of the organization
