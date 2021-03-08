@@ -230,7 +230,7 @@ def main():
                 )
             )
     elif component == "Tasks":
-        tasks = get_hanging_tasks(region)
+        tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
             print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
 
