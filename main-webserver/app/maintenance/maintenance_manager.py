@@ -126,7 +126,9 @@ def try_start_update(region_name: str, has_lock: bool = False) -> Tuple[bool, st
 
     Args:
         region_name: name of region to start updating.
-        has_lock: True iff thread has the lock
+        has_lock: True iff thread has the lock. Useful when multiple lock-based operations are
+            happening and the caller prefers to acquire the lock once and invoke this function
+            with the lock context.
 
     Returns:
         (success, human_readable_msg)
@@ -234,7 +236,9 @@ def try_end_update(region_name: str, has_lock: bool = False) -> bool:
 
     Args:
         region_name: name of region to end updating
-        has_lock: True iff thread has the lock
+        has_lock: True iff thread has the lock. Useful when multiple lock-based operations are
+            happening and the caller prefers to acquire the lock once and invoke this function
+            with the lock context.
 
     Returns:
         True iff there is no update in the region. This can be because there
