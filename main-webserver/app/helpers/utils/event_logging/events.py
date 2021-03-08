@@ -1,8 +1,6 @@
-from app.helpers.utils.general.logs import fractal_logger
-
-
-import logging
 from time import time
+
+from app.helpers.utils.general.logs import fractal_logger
 
 # ones with F at the end must be formatted
 from app.helpers.utils.event_logging.event_tags import (
@@ -26,11 +24,6 @@ from app.helpers.utils.event_logging.event_tags import (
 from app.helpers.utils.event_logging.event_text import to_text
 
 
-# Logging programmatically will be advantageous over doing logs with filters exclusively in the event_logging console
-# since programmaticaly we can be more precise and it's easier to learn how to use it (i.e. I don't need to read
-# a ton of docs on event_logging filters/matches and other whatnot); it's also more flexible
-
-
 def basic_logging_event(title, tags, text=""):
     """Logs a event_logging event to keep it in
     our main body of logs. We require tags to now allow people to make events that are not
@@ -48,7 +41,8 @@ def basic_logging_event(title, tags, text=""):
         )
         raise Exception("Event tags were not valid.")
 
-    fmt_str = f"Logging event details:  Event {title} occurred with information {text} and metadata {tags}"
+    fmt_str = f"Logging event details:  Event {title}\
+    occurred with information {text} and metadata {tags}"
     fractal_logger.info(fmt_str)
 
 
@@ -214,7 +208,7 @@ def logged_event_cluster_deleted(cluster_name, lifecycle=False, time_taken="unkn
 
     Args:
         cluster_name (str): Name of the cluster deleted.
-        lifecycle (bool, optional): Whether to do lifecycle type instead of naive. Defaults to False.
+        lifecycle (bool, optional): Whether to do lifecycle type instead of naive.
         time_taken (int):  how long the operation took
     """
     if lifecycle:
@@ -238,14 +232,8 @@ def logged_event_container_lifecycle(
     and put it into the body along with this event. This is meant to be filtered and then used
     for log analysis elsewhere.
 
-    Note that as a @precondition, the container this is being invoked for must have been created
-    while these event_logging logs were in effect, AND it must be deleted now. In the case where it is
-    not being deleted then this will return false information (i.e. the container lived for more
-    than this will log) without an error. If the container's creation was not found, then this
-    will fractal_log an error with a corresponding message.
-
     Args:
-        container_name (str): The name of the container whose lifecycle we are observing the end for.
+        container_name (str): The name of the container whose lifecycle we are observing the end of.
     """
     deletion_date = time()
 
