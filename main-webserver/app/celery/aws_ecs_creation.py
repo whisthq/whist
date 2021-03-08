@@ -25,10 +25,10 @@ from app.models import (
     RegionToAmi,
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
-from app.helpers.utils.datadog.events import (
-    datadogEvent_containerAssign,
-    datadogEvent_containerCreate,
-    datadogEvent_clusterCreate,
+from app.helpers.utils.event_logging.events import (
+    logged_event_container_assigned,
+    logged_event_container_prewarmed,
+    logged_event_cluster_created,
 )
 
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
@@ -576,7 +576,7 @@ def _assign_container(
                 webserver_url=webserver_url,
             )
         task_time_taken = time.time() - task_start_time
-        datadogEvent_containerAssign(
+        logged_event_container_assigned(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
     return user_container_schema.dump(base_container)
@@ -700,7 +700,7 @@ def prewarm_new_container(
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
-            datadogEvent_containerCreate(
+            logged_event_container_prewarmed(
                 container.container_id, cluster_name, username="prewarm", time_taken=task_time_taken
             )
 
@@ -808,7 +808,7 @@ def _create_new_cluster(
 
             if not current_app.testing:
                 task_time_taken = time.time() - task_start_time
-                datadogEvent_clusterCreate(cluster_name, time_taken=task_time_taken)
+                logged_event_cluster_created(cluster_name, time_taken=task_time_taken)
 
             return cluster
         else:
