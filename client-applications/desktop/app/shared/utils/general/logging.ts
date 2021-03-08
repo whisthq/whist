@@ -42,7 +42,10 @@ export class FractalLogger {
 
     private createLogger = () => {
         // Where to send the logs
-        const developmentTransport = [new transports.Console(), new transports.File({ filename: 'combined.log' })]
+        const developmentTransport = [
+            new transports.Console(),
+            new transports.File({ filename: "combined.log" }),
+        ]
 
         const productionTransport = [new transports.Console()]
         const transport =

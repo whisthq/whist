@@ -136,7 +136,7 @@ export const Loading = (props: {
                 <div className={styles.loadingText}>Loading</div>
             </div>
             <div>
-                <Version/>
+                <Version />
             </div>
         </div>
     )

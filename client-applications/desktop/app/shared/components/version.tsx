@@ -13,11 +13,7 @@ const Version = () => {
         logger.logInfo(`The version is ${appVersion}`)
     }, [])
 
-    return (
-        <>
-            {version}
-        </>
-    )
+    return <>{version}</>
 }
 
 export default Version
