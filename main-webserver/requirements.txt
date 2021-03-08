@@ -26,5 +26,5 @@ sentry-sdk==0.20.3
 SQLAlchemy-Utils==0.36.8
 stripe==2.56.0
 waitress==1.4.4
-datadog==0.40.0
+datadog==0.40.1
 gevent==21.1.2
