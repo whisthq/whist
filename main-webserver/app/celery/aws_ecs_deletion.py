@@ -14,8 +14,8 @@ from app.helpers.utils.aws.aws_resource_locks import (
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.datadog.events import (
-    datadogEvent_containerDelete,
+from app.helpers.utils.event_logging.events import (
+    logged_event_container_deleted,
 )
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
@@ -88,6 +88,7 @@ def delete_container(self, container_name, aes_key):
     )
 
     container_cluster = container.cluster
+    container_user = container.user_id
     container_location = container.location
     ecs_client = ECSClient(
         base_cluster=container_cluster, region_name=container_location, grab_logs=False
@@ -132,8 +133,8 @@ def delete_container(self, container_name, aes_key):
     if not current_app.testing:
         task_time_taken = time.time() - task_start_time
         try:
-            datadogEvent_containerDelete(
-                container_name, container_cluster, lifecycle=True, time_taken=task_time_taken
+            logged_event_container_deleted(
+                container_name, container_user, container_cluster, time_taken=task_time_taken
             )
         except KeyError:
             pass
