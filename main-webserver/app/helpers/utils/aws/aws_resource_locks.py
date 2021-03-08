@@ -12,7 +12,7 @@ from app.models import db, UserContainer
 from app.exceptions import ContainerNotFoundException
 
 
-def lock_container_and_update(container_name, state, lock, temporary_lock):
+def lock_container_and_update(container_name, state, wait):  # , lock, temporary_lock):
     """Change the state, lock, and temporary lock of a Container
 
     Args:
@@ -28,26 +28,35 @@ def lock_container_and_update(container_name, state, lock, temporary_lock):
         int: 1 = container is unlocked, -1 = giving up
     """
 
-    new_params = {"state": state, "lock": lock}
+    new_params = {"state": state}  # , "lock": lock}
 
-    if not state:
-        new_params = {"lock": lock}
+    # if not state:
+    #     new_params = {"lock": lock}
 
-    if temporary_lock:
-        new_temporary_lock = shift_unix_by_minutes(date_to_unix(get_today()), temporary_lock)
+    # if temporary_lock:
+    #     new_temporary_lock = shift_unix_by_minutes(date_to_unix(get_today()), temporary_lock)
 
-        new_params["temporary_lock"] = new_temporary_lock
+    #     new_params["temporary_lock"] = new_temporary_lock
 
     fractal_logger.info(
         "State: {state}, Lock: {lock}, Temporary Lock: {temporary_lock}".format(
             state=state,
-            lock=str(lock),
-            temporary_lock=str(temporary_lock),
+            # lock=str(lock),
+            # temporary_lock=str(temporary_lock),
         ),
         extra={"label": get_container_user(container_name)},
     )
+    container = UserContainer.query.with_for_update().filter_by(
+        container_id=container_name
+    )  # lock using with_for_update()
+    db.session.refresh(container)
+    time.sleep(wait)
 
-    container = UserContainer.query.filter_by(container_id=container_name)
+    # with db.session.get_bind().connect() as con:
+    #     rs = con.execute("SELECT relation::regclass AS relname, * FROM pg_locks;")
+    #     for row in rs:
+    #         print(row)
+
     fractal_sql_commit(db, lambda _, x: x.update(new_params), container)
 
 

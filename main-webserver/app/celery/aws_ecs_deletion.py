@@ -8,10 +8,11 @@ from flask import current_app
 from app.celery.aws_ecs_modification import manual_scale_cluster
 from app.exceptions import ClusterNotIdle
 from app.exceptions import ContainerNotFoundException
-from app.helpers.utils.aws.aws_resource_locks import (
-    lock_container_and_update,
-    spin_lock,
-)
+
+# from app.helpers.utils.aws.aws_resource_locks import (
+#     lock_container_and_update,
+#     spin_lock,
+# )
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_logger
@@ -40,6 +41,7 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
     """
     task_start_time = time.time()
 
+<<<<<<< HEAD
     try:
         if spin_lock(container_name) < 0:
             fractal_logger.error(
@@ -58,9 +60,33 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
             )
             return
         raise no_container_exc
+=======
+    # try:
+    #     if spin_lock(container_name) < 0:
+    #         fractal_log(
+    #             function="delete_container",
+    #             label=container_name,
+    #             logs="spin_lock took too long.",
+    #             level=logging.ERROR,
+    #         )
+
+    #         raise Exception("Failed to acquire resource lock.")
+    # except ContainerNotFoundException as no_container_exc:
+    #     if "test" in container_name and not current_app.testing:
+    #         fractal_log(
+    #             function="upload_logs_to_s3",
+    #             label=container_name,
+    #             logs="Test container attempted to communicate with nontest server",
+    #             level=logging.ERROR,
+    #         )
+    #         return
+    #     raise no_container_exc
+>>>>>>> 37b06fcb0... locking bad don't know why
 
     try:
-        container = ensure_container_exists(UserContainer.query.get(container_name))
+        container = ensure_container_exists(
+            UserContainer.query.with_for_update().get(container_name)
+        )  # lock using with_for_update()
     except Exception as error:
         message = f"Container {container_name} was not in the database."
         fractal_logger.error(
@@ -85,9 +111,9 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         extra={"label": str(container_name)},
     )
 
-    lock_container_and_update(
-        container_name=container_name, state="DELETING", lock=True, temporary_lock=10
-    )
+    # lock_container_and_update(
+    #     container_name=container_name, state="DELETING", lock=True, temporary_lock=10
+    # )
 
     container_cluster = container.cluster
     container_user = container.user_id

@@ -65,11 +65,17 @@ def update_cluster(
     for container in unassigned_containers:
         container_name = container.container_id
 
-        # Lock the container in the database for a short amount of time.
-        # This is to make sure that the container is not assigned while we are trying to delete it.
-        if spin_lock(container_name) < 0:
-            fractal_logger.error("spin_lock took too long.", extra={"label": container_name})
-            raise Exception("Failed to acquire resource lock.")
+        # # Lock the container in the database for a short amount of time.
+        # # This is to make sure that the container is not assigned while we are trying to delete it.
+        # if spin_lock(container_name) < 0:
+        #     fractal_log(
+        #         function="update_cluster",
+        #         label=container_name,
+        #         logs="spin_lock took too long.",
+        #         level=logging.ERROR,
+        #     )
+
+        #     raise Exception("Failed to acquire resource lock.")
 
         fractal_logger.info(
             "Beginning to delete unassigned container {container_name}. Goodbye!".format(
@@ -78,11 +84,11 @@ def update_cluster(
             extra={"label": str(container_name)},
         )
 
-        # Set the container state to "DELETING".
-        # Lock it for 10 minutes (again, spin_lock is only a temporary lock.)
-        lock_container_and_update(
-            container_name=container_name, state="DELETING", lock=True, temporary_lock=10
-        )
+        # # Set the container state to "DELETING".
+        # # Lock it for 10 minutes (again, spin_lock is only a temporary lock.)
+        # lock_container_and_update(
+        #     container_name=container_name, state="DELETING", lock=True, temporary_lock=10
+        # )
 
         container = ensure_container_exists(container)
         if not container:
