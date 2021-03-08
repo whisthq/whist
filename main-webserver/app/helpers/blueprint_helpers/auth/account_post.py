@@ -16,8 +16,8 @@ from app.helpers.utils.general.tokens import (
     get_access_tokens,
 )
 from app.models import db, User
-from app.helpers.utils.datadog.events import (
-    datadogEvent_userLogon,
+from app.helpers.utils.event_logging.events import (
+    logged_event_for_logon,
 )
 from app.helpers.utils.mail.mail_client import MailClient
 
@@ -62,7 +62,7 @@ def login_helper(email, password):
     access_token, refresh_token = get_access_tokens(email)
 
     if not current_app.testing:
-        datadogEvent_userLogon(email)
+        logged_event_for_logon(email)
 
     return {
         "verified": user.verified,

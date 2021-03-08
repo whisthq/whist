@@ -1,5 +1,4 @@
-from app import *
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 
 
 import logging
@@ -33,8 +32,7 @@ from app.helpers.utils.event_logging.event_text import to_text
 
 
 def basic_logging_event(title, tags, text=""):
-    """Logs a event_logging event (not the same as a regular log, basically.. a noteworthy log)
-    to our account w/ the api and app keys as well as doing a fractal_log to keep it in
+    """Logs a event_logging event to keep it in
     our main body of logs. We require tags to now allow people to make events that are not
     easily categorizeable. We require 2 tags, one for the event-type and one for the status.
 
@@ -45,30 +43,20 @@ def basic_logging_event(title, tags, text=""):
     """
 
     if not valid_tags(tags):
-        fractal_log(
-            function="basic_logging_event",
-            label=None,
-            logs="Tried to log a event_logging event with invalid tags: {tags}".format(
-                tags=str(tags)
-            ),
-            level=logging.ERROR,
+        fractal_logger.error(
+            "Tried to log a event_logging event with invalid tags: {tags}".format(tags=str(tags))
         )
-        raise Exception("Datadog event tags were not valid.")
+        raise Exception("Event tags were not valid.")
 
     fmt_str = f"Logging event details:  Event {title} occurred with information {text} and metadata {tags}"
     fractal_logger.info(fmt_str)
 
 
-"""Below we have some commonly used events. We expect all events to have the following tags (and
-potentially more): one tag for the type of event and one tag for success/failure or some other status.
-Container creation and deletion events also have tags for their names so that they can be queried by
-lifecycle events.
-"""
+# below are some commonly used events
 
 
 def logged_event_for_logon(user_name):
-    """Logs whether a user logged on. This is used to help Leor (or whoever is maintaing
-    the webserver now) to see whether users are using our service after they initially sign up.
+    """Logs whether a user logged on.
 
     Args:
         user_name (str): Name of the user who just logged on.
@@ -83,15 +71,14 @@ def logged_event_for_logon(user_name):
 def logged_event_container_prewarmed(
     container_name, cluster_name, username="unknown", time_taken="unknown"
 ):
-    """Logs an event for container creation. This is necessary for lifecycle events to be
-    able to work so that they can find the time that the deleted container was created.
+    """Logs an event for container creation for future metric collection
 
     Args:
         container_name (str): The name of the container which was created.
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
         username (str, optional): The username of the user this is created for.
-        time_taken
+        time_taken (int):  how long the prewarm took
     """
 
     tags = [
@@ -118,15 +105,14 @@ def logged_event_container_prewarmed(
 def logged_event_container_assigned(
     container_name, cluster_name, username="unknown", time_taken="unknown"
 ):
-    """Logs an event for container creation. This is necessary for lifecycle events to be
-    able to work so that they can find the time that the deleted container was created.
+    """Logs an event for container assignment.
 
     Args:
         container_name (str): The name of the container which was created.
             This is used to search in lifecycle.
         cluster_name (str): The cluster it was created in.
         username (str, optional): The username of the user this is created for.
-        time_taken
+        time_taken (int):  how long the operation took
     """
 
     tags = [
@@ -157,6 +143,7 @@ def logged_event_cluster_created(cluster_name, time_taken="unknown"):
     Args:
         cluster_name (str): The name of the cluster which was created.
             This is used to search in lifecycle.
+        time_taken (int):  how long the operation took
     """
     basic_logging_event(
         title="Created new Cluster. Call took {time_taken} time.".format(time_taken=time_taken),
@@ -197,7 +184,8 @@ def logged_event_container_deleted(
         container_name (str): The name of the container that was deleted.
         cluster_name (str): The name of the cluster that the deleted container was in.
         lifecycle (bool, optional): Whether we want to measure time and return a lifecycle type
-            event or prefer just to log the deletion itself naively. Defaults to False.
+            event or prefer just to log the deletion itself naively. Defaults to False.'
+        time_taken (int):  how long the operation took
     """
     if lifecycle:
         logged_event_container_lifecycle(
@@ -227,6 +215,7 @@ def logged_event_cluster_deleted(cluster_name, lifecycle=False, time_taken="unkn
     Args:
         cluster_name (str): Name of the cluster deleted.
         lifecycle (bool, optional): Whether to do lifecycle type instead of naive. Defaults to False.
+        time_taken (int):  how long the operation took
     """
     if lifecycle:
         logged_event_cluster_lifecycle(cluster_name, time_taken=time_taken)
@@ -285,6 +274,7 @@ def logged_event_cluster_lifecycle(cluster_name, time_taken="unknown"):
 
     Args:
         cluster_name (str): Name of the string
+        time_taken (int):  how long the operation took
     """
     deletion_date = time()
     deletion_date = str(deletion_date)

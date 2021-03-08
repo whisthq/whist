@@ -1,4 +1,4 @@
-"""Datadog takes in string tags that let us categorize different events into categories depending
+"""Logz takes in string tags that let us categorize different events into categories depending
 on what they correspond to (which makes analysis way easier). Here are some basic tags that are commonly
 used by our event_logging loggers. Please use these constants to keep our code clean in a growing codebase.
 """
