@@ -7,10 +7,10 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
-from sentry_sdk.integrations.flask import FlaskIntegration
-from sentry_sdk.integrations.celery import CeleryIntegration
 
 from .config import CONFIG_MATRIX
+
+from app.sentry import init_and_ensure_sentry_connection
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -44,12 +44,9 @@ def create_app(testing=False):
     elif os.getenv("HEROKU_APP_NAME") == "fractal-staging-server":
         env = "staging"
     if env is not None:
-        sentry_sdk.init(
-            dsn=app.config["SENTRY_DSN"],
-            integrations=[FlaskIntegration(), CeleryIntegration()],
-            environment=env,
-            release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
-        )
+        sentry_dsn = app.config["SENTRY_DSN"]
+        # errors out on failure
+        init_and_ensure_sentry_connection(env, sentry_dsn)
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
