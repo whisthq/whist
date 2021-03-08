@@ -9,12 +9,10 @@ export const execPromise = (
     /*
     Description:
         Executes a shell command on target operating systems
-
     Arguments:
         command (string) : Shell command (e.g. echo "Hello world")
         path (string) : Absolute path for working directory in which to run shell command
         targetOS (OperatingSystem[]) : Operating systems on which to run this command
-
     Returns:
         promise : Promise
     */
@@ -42,12 +40,9 @@ const getExecutableName = (): string => {
     Description:
         Helper function for launchProtocol(). Gets the Fractal client protocol executable name
         depending on the user's operating system
-
     Arguments: none
-
     Returns:
         (string) name of executable to run
-
     */
     const currentOS = require("os").platform()
 
@@ -60,29 +55,22 @@ const getExecutableName = (): string => {
     return ""
 }
 
-/**
- * Launches the protocol
- * @param protocolOnStart function called right before protocol starts
- * @param protocolOnExit function called right after protocl exits
- * @param userID userID for logging
- * @param protocolLaunched protoclLaunched timestamp for logging
- * @param createContainerRequestSent container request timestamp for logging
- *
- * Returns: child process object created by spawn
- */
 export const launchProtocol = async (
-    protocolOnStart: (userID: string) => void,
-    protocolOnExit: (
-        protocolLaunched: number,
-        createContainerRequestSent: number,
-        userID: string
-    ) => void,
-    userID: string,
-    protocolLaunched: number,
-    createContainerRequestSent: number
+    protocolOnStart: () => void,
+    protocolOnExit: () => void
 ) => {
+    /*
+    Description:
+        Function to launch the protocol
+    Arguments:
+        container: Container from Redux store
+        protocolOnStart (function): Callback function fired right before protocol starts
+        protocolOnExit (function): Callback function fired right after protocol exits
+    Returns:
+        Child process object created by spawn()
+    */
+
     // spawn launches an executable in a separate thread
-    console.log("STARTING THREAD")
     const spawn = require("child_process").spawn
     // Get the path and name of the protocol in the packaged app
     const protocolPath = require("path").join(
@@ -117,7 +105,7 @@ export const launchProtocol = async (
     ]
 
     // Starts the protocol
-    protocolOnStart(userID)
+    protocolOnStart()
     const protocol = spawn(executable, protocolArguments, {
         cwd: protocolPath,
         detached: false,
@@ -126,7 +114,7 @@ export const launchProtocol = async (
 
     // On protocol exit logic, fired only when protocol stops running
     protocol.on("close", () => {
-        protocolOnExit(protocolLaunched, createContainerRequestSent, userID)
+        protocolOnExit()
     })
 
     return protocol
