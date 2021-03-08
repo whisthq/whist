@@ -580,6 +580,16 @@ class ECSClient:
         self.tasks_done.append(False)
         self.offset += 1
 
+    def describe_task(self) -> dict:
+        """
+        Get info on the task.
+
+        Returns a dict of task information. See
+        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_task_definition
+        for the response syntax.
+        """
+        return self.ecs_client.describe_task_definition(taskDefinition=self.task_definition_arn)
+
     def run_task(self, use_launch_type=True, **kwargs):
         """
         sets this client's task running.
@@ -591,7 +601,7 @@ class ECSClient:
         if use_launch_type:
             task_args["launchType"] = self.launch_type
         taskdict = self.ecs_client.run_task(**task_args, **kwargs)
-        print(taskdict)
+        fractal_logger.info(taskdict)
         task = taskdict["tasks"][0]
         running_task_arn = task["taskArn"]
         self.tasks.append(running_task_arn)

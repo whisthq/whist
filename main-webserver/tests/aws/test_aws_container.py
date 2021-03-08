@@ -11,7 +11,13 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.models import ClusterInfo, db, UserContainer, RegionToAmi
+from app.models import (
+    db,
+    ClusterInfo,
+    UserContainer,
+    RegionToAmi,
+    SupportedAppImages,
+)
 from app.constants.http_codes import (
     SUCCESS,
     ACCEPTED,
@@ -384,3 +390,36 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
         fractal_logger.error("Cluster was not deleted in database")
         assert False
     assert True
+
+
+# this test does not need AWS resources or any cluster/container setup
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_update_task_defs(client, authorized, monkeypatch):
+    # mock describe_task so we don't unnecesarily call AWS API
+    # this also stops races between someone running tests and task definition updates that
+    # are incompatible with the AMIs that the test suite started with.
+    fake_aws_response = {"taskDefinition": {"revision": -1}}
+    monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
+
+    # cache the current task defs
+    all_app_data = SupportedAppImages.query.all()
+    app_id_to_taskdef = {app_data.app_id: app_data.task_definition for app_data in all_app_data}
+
+    resp = client.post("/aws_container/update_taskdefs")
+    task = queryStatus(client, resp, timeout=50)
+    if task["status"] < 1:
+        fractal_logger.error(f"task timed out with output {task['output']}")
+        assert False
+
+    # refresh db objects
+    db.session.expire_all()
+    all_app_data = SupportedAppImages.query.all()
+    for app_data in all_app_data:
+        assert app_data.task_definition.split(":")[1] == -1
+
+    # restore db to old state
+    all_app_data = SupportedAppImages.query.all().with_for_update()
+    for app_data in all_app_data:
+        app_data.task_definition = app_id_to_taskdef[app_data.app_id]
+    db.session.commit()

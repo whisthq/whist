@@ -10,8 +10,15 @@ from app.helpers.utils.aws.aws_resource_locks import (
     spin_lock,
 )
 from app.helpers.utils.general.logs import fractal_logger
-from app.models import db, ClusterInfo, RegionToAmi, UserContainer
+from app.models import (
+    db,
+    ClusterInfo,
+    RegionToAmi,
+    UserContainer,
+    SupportedAppImages,
+)
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
+from app.celery.aws_celery_exceptions import InvalidTaskDefinition
 
 
 @shared_task(bind=True)
@@ -136,6 +143,11 @@ def update_region(self, region_name="us-east-1", ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
+    # update all task definitions to the latest version
+    all_app_data = SupportedAppImages.query.all()
+    for app_data in all_app_data:
+        update_task_definitions.delay(app_data.app_id)
+
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
     ).first()
@@ -192,6 +204,48 @@ def update_region(self, region_name="us-east-1", ami=None):
         state="SUCCESS",
         meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
     )
+
+
+@shared_task(bind=True)
+def update_task_definitions(self, app_id: str = None, task_definition_arn: str = None):
+    """
+    Updates task definitions for `app_id` to `task_definition_arn`.
+    If `app_id`=None, we update all app ids.
+    If `task_definition_arn`=None, we use the latest revision in ECS.
+    Parallelizing this function could help reduce task time, but the AWS API responds
+    in usually under a tenth of a second.
+
+    Args:
+        app_id: which app id to update. If None, we update all in SupportedAppImages. We ignore
+            the paramater `task_definition_arn` and just use the AWS API.
+        task_definition_arn: new task definition, of the form <task_def>:<revision>. If None, we
+            use the AWS API to get the latest version of the task definition that's stored
+            in SupportedAppImages.
+    """
+    if app_id is None:
+        all_app_data = SupportedAppImages.query.all()
+        for app_data in all_app_data:
+            update_task_definitions(self, app_id=app_data.app_id)
+        return
+
+    app_data = SupportedAppImages.query.get(app_id).with_for_update()
+    if task_definition_arn is None:
+        # this gets the task definition without the version number
+        current_task_def = app_data.task_definition.split(":")[0]
+        ecs_client = ECSClient()
+        ecs_client.set_task_definition_arn(current_task_def)
+        task_info = ecs_client.describe_task()
+        latest_revision = task_info["taskDefinition"]["revision"]
+        task_definition_arn = f"{current_task_def}:{latest_revision}"
+
+    # make sure the provided task definition has the form <task_def>:<revision>
+    if len(task_definition_arn.split(":")) != 2:
+        error_msg = f"Task def {task_definition_arn}. Must have a : to indicate revision."
+        fractal_logger.error(error_msg)
+        raise InvalidTaskDefinition(error_msg)
+
+    app_data.task_definition = task_definition_arn
+    db.session.commit()
 
 
 @shared_task(bind=True)

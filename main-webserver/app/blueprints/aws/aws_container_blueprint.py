@@ -15,7 +15,10 @@ from app.celery.aws_ecs_creation import (
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container
-from app.celery.aws_ecs_modification import update_region
+from app.celery.aws_ecs_modification import (
+    update_region,
+    update_task_definitions,
+)
 from app.constants.container_state_values import CANCELLED
 from app.constants.http_codes import (
     ACCEPTED,
@@ -139,7 +142,7 @@ def test_endpoint(action, **kwargs):
                 ),
                 WEBSERVER_MAINTENANCE,
             )
-    elif action in ["update_region"]:
+    elif action in ["update_region", "update_taskdefs"]:
         if not check_if_maintenance():
             # server must be in maintenance mode to do this
             return (
@@ -191,6 +194,17 @@ def test_endpoint(action, **kwargs):
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
 
+        return jsonify({"ID": task.id}), ACCEPTED
+
+    if action == "update_taskdefs":
+        # update the task definitions for our supported app images
+        app_id, task_definition_arn = (
+            kwargs["body"].get("app_id", None),
+            kwargs["body"].get("task_definition_arn", None),
+        )
+        task = update_task_definitions.delay(app_id=app_id, task_definition_arn=task_definition_arn)
+        if not task:
+            return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "assign_container":
