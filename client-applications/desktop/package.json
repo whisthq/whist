@@ -8,12 +8,12 @@
         "extends browserslist-config-erb"
     ],
     "build": {
-        "afterSign": "build/notarize.js",
+        "afterSign": "build/moveLoadingandRename.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
         "asar": true,
         "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
-        "copyright": "Copyright � Fractal Computers, Inc.",
+        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -39,7 +39,6 @@
             "sign": false
         },
         "extraFiles": [
-            "protocol-build/",
             "build/"
         ],
         "files": [
@@ -63,6 +62,9 @@
             "synopsis": "Fractal Chromium Desktop Application",
             "target": [
                 "AppImage"
+            ],
+            "extraFiles": [
+                "protocol-build/"
             ]
         },
         "mac": {
@@ -73,13 +75,19 @@
             "extendInfo": {
                 "NSHighResolutionCapable": true
             },
+            "extraFiles": [
+                {
+                    "from": "protocol-build/desktop/",
+                    "to": "MacOS/"
+                }
+            ],
             "gatekeeperAssess": false,
             "hardenedRuntime": true,
             "icon": "build/icon.png",
-            "signIgnore": [
-                "protocol-build/Fractal.app/*"
-            ],
             "minimumSystemVersion": "10.13.0",
+            "signIgnore": [
+                "MacOS/protocol-build*"
+            ],
             "target": [
                 "dmg",
                 "zip"
@@ -102,6 +110,9 @@
             "icon": "build/icon.ico",
             "target": [
                 "nsis"
+            ],
+            "extraFiles": [
+                "protocol-build/"
             ]
         }
     },
@@ -286,8 +297,8 @@
     },
     "engines": {
         "node": ">=14.x",
-        "yarn": ">=1.19.x",
-        "npm": "use-yarn"
+        "npm": "use-yarn",
+        "yarn": ">=1.19.x"
     },
     "homepage": "https://www.fractal.co",
     "jest": {
@@ -368,8 +379,8 @@
         "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
         "start-renderer-dev": "cross-env NODE_ENV=development webpack serve --config configs/webpack.config.renderer.dev.babel.js",
         "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
-        "test-watch": "yarn test --watch",
         "test-ci": "yarn test --ci --logHeapUsage --verbose",
+        "test-watch": "yarn test --watch",
         "ts": "tsc"
     },
     "version": "1.0.0"

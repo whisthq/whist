@@ -19,7 +19,9 @@ data["build"]["publish"]["bucket"] = bucket
 # publishing, so that users can properly install it on their
 # machines -- this is not needed if we're not publishing
 if notarize == "false":
-  del data["build"]["afterSign"]
+  data["build"]["afterSign"] = "build/moveLoadingandRename.js"
+else:
+  data["build"]["afterSign"] = "build/notarize.js"
 
 json_data = json.dumps(data)
 
