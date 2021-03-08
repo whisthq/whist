@@ -30,8 +30,14 @@ checkCI:
 ifeq ($(CI),true)
 	# We're building on GitHub Actions, so we need to require non-trivial secrets
 	$(info CI is true)
-ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
+ifeq ($(origin LOGZIO_SHIPPING_TOKEN),file)
 	# This means that a replacement secret was not passed in on the command-line or as an environment variable
+	$(error "LOGZIO_SHIPPING_TOKEN is not set, but CI is true")
+endif
+ifeq ($(LOGZIO_SHIPPING_TOKEN),)
+	$(error "LOGZIO_SHIPPING_TOKEN is empty, but CI is true")
+endif
+ifeq ($(origin WEBSERVER_AUTH_SECRET_DEV),file)
 	$(error "WEBSERVER_AUTH_SECRET_DEV is not set, but CI is true")
 endif
 ifeq ($(WEBSERVER_AUTH_SECRET_DEV),)
@@ -59,6 +65,7 @@ build: checkCI
 	go mod tidy
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
