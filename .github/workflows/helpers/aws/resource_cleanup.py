@@ -182,7 +182,6 @@ def get_hanging_tasks(urls, secrets, region):
         db_tasks |= set(get_db_tasks(url, secret, region))
 
     aws_tasks = set()
-    print(db_clusters)
     for cluster in db_clusters:
         # aws ecs list-tasks --cluster cluster --region region
         tasks, _ = subprocess.Popen(
@@ -232,8 +231,8 @@ def main():
             )
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
-        # if len(tasks) > 0:
-        # print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
+        if len(tasks) > 0:
+        print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
 
 
 if __name__ == "__main__":
