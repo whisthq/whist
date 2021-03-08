@@ -1,9 +1,7 @@
-"""Logz takes in string tags that let us categorize different events into categories depending
-on what they correspond to (which makes analysis way easier). Here are some basic tags that are commonly
-used by our event_logging loggers. Please use these constants to keep our code clean in a growing codebase.
+"""Logz takes in string tags that let us categorize different events
+more easily than plain string searches
 """
 
-"""Event type tags."""
 CONTAINER_CREATION = "container-creation"
 CONTAINER_ASSIGNMENT = "container-assignment"
 CONTAINER_DELETION = "container-deletion"
@@ -30,7 +28,6 @@ _type_tags = {
     LOGOFF,
 }
 
-"""Status tags"""
 SUCCESS = "success"
 FAILURE = "failure"
 
@@ -46,11 +43,12 @@ USER_NAME = "user-name:{user_name}"
 
 
 def valid_tags(tags):
-    """Check whether the given tags are valid in that they contain the minimum requirements to be
+    """Check whether the given tags are valid in that
+    they contain the minimum requirements to be
     logged to event_logging. There should not be more than one of these.
 
     Args:
-        tags (List[str]): some tags that someone wants to put in some event_logging event to be logged.
+        tags (List[str]): some tags that someone wants to put in some event_logging event
 
     Returns:
         boolean: [description]
