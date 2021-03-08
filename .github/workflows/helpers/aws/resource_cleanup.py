@@ -1,6 +1,7 @@
 import subprocess
 import json
 import sys
+import time
 
 # Uses AWS CLI to return all Auto Scaling Groups in AWS for a specified region
 def get_all_aws_asgs(region):
@@ -117,6 +118,29 @@ def get_db_clusters(url, secret, region):
     return [list(cluster.values())[0] for cluster in clusters]
 
 
+# Queries specified db for all tasks in a specified region
+def get_db_tasks(url, secret, region):
+    tasks, _ = subprocess.Popen(
+        [
+            "curl",
+            "-L",
+            "-X",
+            "POST",
+            url,
+            "-H",
+            "Content-Type: application/json",
+            "-H",
+            "x-hasura-admin-secret: %s" % (secret),
+            "--data-raw",
+            '{"query":"query get_tasks($_eq: String = \\"%s\\") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            % (region),
+        ],
+        stdout=subprocess.PIPE,
+    ).communicate()
+    tasks = json.loads(tasks)["data"]["hardware_user_containers"]
+    return [list(task.values())[0] for task in tasks]
+
+
 # Compares list of ASGs in AWS to list of ASGs associated with Clusters in AWS
 def get_hanging_asgs(region):
     cluster_asgs = [
@@ -150,6 +174,35 @@ def get_hanging_clusters(urls, secrets, region):
     return list(aws_clusters - db_clusters)
 
 
+def get_hanging_tasks(urls, secrets, region):
+    db_clusters = []
+    db_tasks = set()
+    for url, secret in zip(urls, secrets):
+        db_clusters.append(get_db_clusters(url, secret, region))
+        db_tasks |= set(get_db_tasks(url, secret, region))
+
+    aws_tasks = set()
+    for cluster in db_clusters:
+        # aws ecs list-tasks --cluster cluster --region region
+        tasks, _ = subprocess.Popen(
+            [
+                "aws",
+                "ecs",
+                "list-tasks",
+                "--no-paginate",
+                "--region",
+                region,
+                "--cluster",
+                cluster,
+            ],
+            stdout=subprocess.PIPE,
+        ).communicate()
+        tasks = json.loads(tasks)["taskArns"]
+        aws_tasks |= set(tasks)
+
+    return list(aws_tasks - db_tasks)
+
+
 def main():
     component = sys.argv[1]
     region = sys.argv[2]
@@ -157,25 +210,30 @@ def main():
     secrets = sys.argv[6:9]
 
     # format as bulleted list for Slack notification
-    if component == "ASGs":
-        asgs = get_hanging_asgs(region)
-        if len(asgs) > 0:
-            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
-    elif component == "Clusters":
-        output = []
-        clusters = get_hanging_clusters(urls, secrets, region)
-        for cluster in clusters:
-            output.append((str(cluster), get_num_instances(cluster, region)))
-        if len(clusters) > 0:
-            print(
-                "\\n- "
-                + "\\n- ".join(
-                    [
-                        "\\`" + c + "\\`" + " (" + str(n) + " instances)"
-                        for c, n in output
-                    ]
-                )
-            )
+    # if component == "ASGs":
+    #     asgs = get_hanging_asgs(region)
+    #     if len(asgs) > 0:
+    #         print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
+    # elif component == "Clusters":
+    #     output = []
+    #     clusters = get_hanging_clusters(urls, secrets, region)
+    #     for cluster in clusters:
+    #         output.append((str(cluster), get_num_instances(cluster, region)))
+    #     if len(clusters) > 0:
+    #         print(
+    #             "\\n- "
+    #             + "\\n- ".join(
+    #                 [
+    #                     "\\`" + c + "\\`" + " (" + str(n) + " instances)"
+    #                     for c, n in output
+    #                 ]
+    #             )
+    #         )
+    # el
+    if component == "Tasks":
+        tasks = get_hanging_tasks(region)
+        if len(tasks) > 0:
+            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
 
 
 if __name__ == "__main__":

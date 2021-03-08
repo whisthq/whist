@@ -25,6 +25,7 @@ jobs:
                 resource:
                     - ASGs
                     - Clusters
+                    - Tasks
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
             db_url_staging: "https://staging-database.fractal.co/v1/graphql"
