@@ -110,7 +110,7 @@ def _release_lock():
     _REDIS_CONN.delete(_REDIS_LOCK_KEY)
 
 
-def try_start_update(region_name: str) -> Tuple[bool, str]:
+def try_start_update(region_name: str, has_lock: bool = False) -> Tuple[bool, str]:
     """
     Try to start an update. Steps:
         1. Grab the lock
@@ -126,6 +126,7 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
 
     Args:
         region_name: name of region to start updating.
+        has_lock: True iff thread has the lock
 
     Returns:
         (success, human_readable_msg)
@@ -135,9 +136,11 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
     tasks_key = _REDIS_TASKS_KEY.format(region_name=region_name)
 
-    got_lock = _get_lock(10, should_sleep=False)  # only try 10 times since this runs synchronously
-    if not got_lock:
-        return False, "Did not get lock"
+    if not has_lock:
+        # only try 10 times since this runs synchronously
+        got_lock = _get_lock(10, should_sleep=False)
+        if not got_lock:
+            return False, "Did not get lock"
 
     # now we freely operate on the keys. we need to make sure no tasks are going
     success = False
@@ -180,7 +183,9 @@ def try_start_update(region_name: str) -> Tuple[bool, str]:
             " Please poll until these tasks finish."
         )
 
-    _release_lock()
+    if not has_lock:
+        # delete only if this function acquired the lock
+        _release_lock()
     return success, return_msg
 
 
@@ -196,10 +201,18 @@ def try_start_update_all() -> Tuple[bool, str]:
     region_to_ami = RegionToAmi.query.all()
     all_regions = [region.region_name for region in region_to_ami]
     pending_regions = []
+
+    # try 10 times without sleeping since this runs synchronously
+    # we grab the lock once so that each function doesn't try to
+    got_lock = _get_lock(10, should_sleep=False)
+    if not got_lock:
+        return False, "Did not get lock"
     for region in all_regions:
-        success, _ = try_start_update(region)
+        success, _ = try_start_update(region, has_lock=True)
         if not success:
             pending_regions.append(region)
+    _release_lock()
+
     if not pending_regions:
         fractal_log("try_start_update_all", None, "Started global update.")
         return True, "All regions put in maintenance mode"
@@ -212,7 +225,7 @@ def try_start_update_all() -> Tuple[bool, str]:
         return False, f"Waiting on the following regions: {pending_regions}"
 
 
-def try_end_update(region_name: str) -> bool:
+def try_end_update(region_name: str, has_lock: bool = False) -> bool:
     """
     Try to end an update. Steps:
         1. Grab the lock
@@ -221,15 +234,18 @@ def try_end_update(region_name: str) -> bool:
 
     Args:
         region_name: name of region to end updating
+        has_lock: True iff thread has the lock
 
     Returns:
         True iff there is no update in the region. This can be because there
         already was no update, or because the update was ended by this function.
     """
     update_key = _REDIS_UPDATE_KEY.format(region_name=region_name)
-    got_lock = _get_lock(10, should_sleep=False)  # only try 10 times since this runs synchronously
-    if not got_lock:
-        return False, "Did not get lock"
+    if not has_lock:
+        # only try 10 times since this runs synchronously
+        got_lock = _get_lock(10, should_sleep=False)
+        if not got_lock:
+            return False, "Did not get lock"
 
     # now we freely operate on the keys. we simply delete the update key. the return is False if the
     # key did not exist, and True if the key did exist and was deleted.
@@ -248,7 +264,9 @@ def try_end_update(region_name: str) -> bool:
     )
 
     _REDIS_CONN.delete(update_key)
-    _release_lock()
+    if not has_lock:
+        # delete only if this function acquired the lock
+        _release_lock()
 
     return True, f"Ended update in {region_name}"
 
@@ -265,10 +283,18 @@ def try_end_update_all() -> Tuple[bool, str]:
     region_to_ami = RegionToAmi.query.all()
     all_regions = [region.region_name for region in region_to_ami]
     pending_regions = []
+
+    # try 10 times without sleeping since this runs synchronously
+    # we grab the lock once so that each function doesn't try to
+    got_lock = _get_lock(10, should_sleep=False)
+    if not got_lock:
+        return False, "Did not get lock"
     for region in all_regions:
-        success, _ = try_end_update(region)
+        success, _ = try_end_update(region, has_lock=True)
         if not success:
             pending_regions.append(region)
+    _release_lock()
+
     if not pending_regions:
         fractal_log("try_end_update_all", None, "Global maintenance mode ended.")
         return True, "Global maintenance mode ended."
