@@ -19,6 +19,8 @@ import (
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 	fractaltypes "github.com/fractal/fractal/ecs-host-service/fractaltypes"
 	fractalhttpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
+
+	"github.com/cihub/seelog"
 )
 
 func init() {
@@ -230,9 +232,14 @@ func Main() {
 
 	fractallogger.Infof("Successfully set all env vars from %s", ecsConfigFilePath)
 
+	seelogBridge, err := seelog.LoggerFromCustomReceiver(&trivialSeeLogReceiver{})
+	if err != nil {
+		fractallogger.Panicf("Error initializing seelogBridge: %s", err)
+	}
+
 	// Below is the original main() body from the ECS agent itself. Note that we
 	// modify `ecsapp.Run()` to take no arguments instead of reading in
 	// `os.Args[1:]`.
-	ecslogger.InitSeelog()
+	ecslogger.InitSeelog(seelogBridge)
 	os.Exit(ecsapp.Run([]string{}))
 }
