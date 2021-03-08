@@ -7,11 +7,11 @@
 #
 # key1:val1\nkey2:val2:\n...
 #
-# it is easy to parse (split by \n, this is never going to be present in the timestamp/numerical values
+# it is easy to parse -- split by \n,
+# this is never going to be present in the timestamp/numerical values
 # or names we have, and then split by (:, 1) i.e. the very first colon since the key will not
 # have a colon, even if the value might)
 
-# may use at some point in the future (also good to know for the actual analyzer cron job stuff etc)
 RUNTIME = "lifetime"
 SPINUP_TIME = "spinup_time"
 SHUTDOWN_TIME = "shutdown_time"
@@ -27,9 +27,9 @@ FORMAT_VERSION = "format_version"
 CURRENT_FORMAT_VERSION = "1.0"
 
 
-def format_into_text(kv):
+def format_into_text(key_val_store):
     text = ""
-    for key, value in kv.items():
+    for key, value in key_val_store.items():
         text += str(key) + ":" + str(value) + "\n"
     text += FORMAT_VERSION + ":" + CURRENT_FORMAT_VERSION
     return text  # ignore the very last \n since we don't care about it
