@@ -183,6 +183,7 @@ def get_hanging_tasks(urls, secrets, region):
 
     aws_tasks = set()
     for cluster in db_clusters:
+        print(cluster)
         # aws ecs list-tasks --cluster cluster --region region
         tasks, _ = subprocess.Popen(
             [
