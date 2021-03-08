@@ -25,5 +25,5 @@ requests==2.25.1
 sentry-sdk==0.20.3
 SQLAlchemy-Utils==0.36.8
 stripe==2.56.0
-waitress==1.4.4
+waitress==2.0.0
 gevent==21.1.2
