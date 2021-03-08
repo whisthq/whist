@@ -622,7 +622,7 @@ int main(int argc, char* argv[]) {
     // If argc == 1 (no args passed), then check if client app path exists and try to launch.
     //     This should be done first because `execl` won't cleanup any allocated resources.
     // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
-#ifdef _WIN32 || __APPLE__
+#if defined(_WIN32) || defined(__APPLE__)
     if (argc == 1 || (argc == 2 && !strncmp(argv[1], "-psn_", 5))) {
         // hopefully the app path is not more than 1024 chars long
         char client_app_path[MAX_APP_PATH_LEN];
