@@ -1,6 +1,6 @@
 """Datadog takes in string tags that let us categorize different events into categories depending
 on what they correspond to (which makes analysis way easier). Here are some basic tags that are commonly
-used by our datadog loggers. Please use these constants to keep our code clean in a growing codebase.
+used by our event_logging loggers. Please use these constants to keep our code clean in a growing codebase.
 """
 
 """Event type tags."""
@@ -45,12 +45,12 @@ CONTAINER_USER = "container-user:{container_user}"
 USER_NAME = "user-name:{user_name}"
 
 
-def validTags(tags):
+def valid_tags(tags):
     """Check whether the given tags are valid in that they contain the minimum requirements to be
-    logged to datadog. There should not be more than one of these.
+    logged to event_logging. There should not be more than one of these.
 
     Args:
-        tags (List[str]): some tags that someone wants to put in some datadog event to be logged.
+        tags (List[str]): some tags that someone wants to put in some event_logging event to be logged.
 
     Returns:
         boolean: [description]
