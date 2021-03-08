@@ -5,8 +5,11 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    schedule:
-        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    # schedule:
+    #     - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    push:
+        branches:
+            - mia/webserver/hanging-task-notify-and-delete
 
 jobs:
     main-webserver-hanging-resource-notification:
@@ -23,8 +26,8 @@ jobs:
                     - eu-west-1
                     - eu-central-1
                 resource:
-                    - ASGs
-                    - Clusters
+                    # - ASGs
+                    # - Clusters
                     - Tasks
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"

@@ -210,27 +210,26 @@ def main():
     secrets = sys.argv[6:9]
 
     # format as bulleted list for Slack notification
-    # if component == "ASGs":
-    #     asgs = get_hanging_asgs(region)
-    #     if len(asgs) > 0:
-    #         print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
-    # elif component == "Clusters":
-    #     output = []
-    #     clusters = get_hanging_clusters(urls, secrets, region)
-    #     for cluster in clusters:
-    #         output.append((str(cluster), get_num_instances(cluster, region)))
-    #     if len(clusters) > 0:
-    #         print(
-    #             "\\n- "
-    #             + "\\n- ".join(
-    #                 [
-    #                     "\\`" + c + "\\`" + " (" + str(n) + " instances)"
-    #                     for c, n in output
-    #                 ]
-    #             )
-    #         )
-    # el
-    if component == "Tasks":
+    if component == "ASGs":
+        asgs = get_hanging_asgs(region)
+        if len(asgs) > 0:
+            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
+    elif component == "Clusters":
+        output = []
+        clusters = get_hanging_clusters(urls, secrets, region)
+        for cluster in clusters:
+            output.append((str(cluster), get_num_instances(cluster, region)))
+        if len(clusters) > 0:
+            print(
+                "\\n- "
+                + "\\n- ".join(
+                    [
+                        "\\`" + c + "\\`" + " (" + str(n) + " instances)"
+                        for c, n in output
+                    ]
+                )
+            )
+    elif component == "Tasks":
         tasks = get_hanging_tasks(region)
         if len(tasks) > 0:
             print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
