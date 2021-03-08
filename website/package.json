@@ -28,7 +28,7 @@
         "bootstrap": "^4.6.0",
         "connected-react-router": "^6.9.1",
         "graphql": "^15.5.0",
-        "history": "^4.10.1",
+        "history": "^5.0.0",
         "jest-environment-jsdom-sixteen": "^1.0.3",
         "jest-puppeteer": "^4.4.0",
         "lodash": "^4.17.21",
