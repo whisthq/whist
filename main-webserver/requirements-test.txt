@@ -2,7 +2,7 @@
 
 black==20.8b1
 flake8==3.8.4
-mailslurp-client==7.0.9
+mailslurp-client==11.4.25
 moto==2.0.0
 progressbar==2.5
 pylint==2.7.2
