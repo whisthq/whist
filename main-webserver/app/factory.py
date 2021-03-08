@@ -1,15 +1,12 @@
 import os
 
-import sentry_sdk
-
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
 
-from .config import CONFIG_MATRIX
-
+from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 
 jwtManager = JWTManager()
