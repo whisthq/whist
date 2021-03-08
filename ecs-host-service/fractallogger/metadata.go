@@ -32,19 +32,29 @@ const (
 	EnvProd     EnvironmentType = "PROD"
 )
 
+// We compute the environment type once, at program startup, and cache it in `cachedEnvironment`
+var cachedEnvironment EnvironmentType
+
+// Actually compute the environment type and cache it.
+func init() {
+	cachedEnvironment = func() EnvironmentType {
+		env := os.Getenv("APP_ENV")
+		switch env {
+		case "development", "dev", "DEVELOPMENT", "DEV":
+			return EnvDev
+		case "staging", "STAGING":
+			return EnvStaging
+		case "production", "prod", "PRODUCTION", "PROD":
+			return EnvProd
+		default:
+			return EnvLocalDev
+		}
+	}()
+}
+
 // GetAppEnvironment returns the EnvironmentType of the current instance
 func GetAppEnvironment() EnvironmentType {
-	env := os.Getenv("APP_ENV")
-	switch env {
-	case "development", "dev", "DEVELOPMENT", "DEV":
-		return EnvDev
-	case "staging", "STAGING":
-		return EnvStaging
-	case "production", "prod", "PRODUCTION", "PROD":
-		return EnvProd
-	default:
-		return EnvLocalDev
-	}
+	return cachedEnvironment
 }
 
 // The following functions are useful for getting system information that we
