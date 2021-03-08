@@ -161,7 +161,7 @@ export const Launcher = (props: {
         const logPath = require("path").join(
             FractalDirectory.getRootDirectory(),
             require("os").platform() === "darwin"
-                ? "protocol-build/Fractal.app/Contents/MacOS/log.txt"
+                ? "MacOS/log.txt"
                 : "protocol-build/desktop/log.txt"
         )
 

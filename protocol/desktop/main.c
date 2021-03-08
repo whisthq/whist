@@ -653,9 +653,9 @@ int main(int argc, char* argv[]) {
         }
 #elif __APPLE__
         // This executable is located at
-        //    Fractal.app/Contents/protocol-build/Fractal.app/Contents/MacOS/Fractal
+        //    Fractal.app/Contents/MacOS/FractalClient
         // We want to reference client app at Fractal.app/Contents/MacOS/Fractal
-        const char* relative_client_app_path = "/../../../../MacOS/Fractal";
+        const char* relative_client_app_path = "/FractalLauncher";
         int relative_client_app_path_len = (int)strlen(relative_client_app_path);
 
         // The cast from signed int to unsigned uint32_t requires us to check that
