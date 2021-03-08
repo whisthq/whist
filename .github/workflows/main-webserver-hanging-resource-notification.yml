@@ -101,18 +101,18 @@ jobs:
                     fi
                   done <<< "$packer_instances"
 
-    notify-if-hanging-resource-fails:
-        name: "Notify Slack if Hanging Resource Workflow Fails"
-        needs:
-            [
-                main-webserver-hanging-packer-instance-notification,
-                main-webserver-hanging-resource-notification,
-            ]
-        if: failure()
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Notify Slack if Hanging Resource Workflow Fails
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    # notify-if-hanging-resource-fails:
+    #     name: "Notify Slack if Hanging Resource Workflow Fails"
+    #     needs:
+    #         [
+    #             main-webserver-hanging-packer-instance-notification,
+    #             main-webserver-hanging-resource-notification,
+    #         ]
+    #     if: failure()
+    #     runs-on: ubuntu-20.04
+    #     steps:
+    #         - name: Notify Slack if Hanging Resource Workflow Fails
+    #           run: |
+    #               curl -X POST \
+    #               --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
+    #               ${{ secrets.SLACK_HOOKS_ENDPOINT }}
