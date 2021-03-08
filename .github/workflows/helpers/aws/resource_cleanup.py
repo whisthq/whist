@@ -185,23 +185,23 @@ def get_hanging_tasks(urls, secrets, region):
     for cluster in db_clusters:
         print(cluster)
         # aws ecs list-tasks --cluster cluster --region region
-        tasks, _ = subprocess.Popen(
-            [
-                "aws",
-                "ecs",
-                "list-tasks",
-                "--no-paginate",
-                "--region",
-                region,
-                "--cluster",
-                cluster,
-            ],
-            stdout=subprocess.PIPE,
-        ).communicate()
-        tasks = json.loads(tasks)["taskArns"]
-        aws_tasks |= set(tasks)
+        # tasks, _ = subprocess.Popen(
+        #     [
+        #         "aws",
+        #         "ecs",
+        #         "list-tasks",
+        #         "--no-paginate",
+        #         "--region",
+        #         region,
+        #         "--cluster",
+        #         cluster,
+        #     ],
+        #     stdout=subprocess.PIPE,
+        # ).communicate()
+        # tasks = json.loads(tasks)["taskArns"]
+        # aws_tasks |= set(tasks)
 
-    return list(aws_tasks - db_tasks)
+    # return list(aws_tasks - db_tasks)
 
 
 def main():
