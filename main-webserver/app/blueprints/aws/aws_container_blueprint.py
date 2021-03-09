@@ -6,10 +6,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import fractal_pre_process
 from app.maintenance.maintenance_manager import (
     check_if_maintenance,
-    try_start_update,
-    try_end_update,
-    try_start_update_all,
-    try_end_update_all,
+    try_start_maintenance,
+    try_end_maintenance,
 )
 from app.celery.aws_ecs_creation import (
     assign_container,
@@ -131,8 +129,7 @@ def test_endpoint(action, **kwargs):
     """
     # check for maintenance-related things
     if action in ["create_cluster", "assign_container"]:
-        region_name = kwargs["body"]["region_name"]
-        if check_if_maintenance(region_name):
+        if check_if_maintenance():
             # server cannot be in maintenance mode to do this
             return (
                 jsonify(
@@ -143,8 +140,7 @@ def test_endpoint(action, **kwargs):
                 WEBSERVER_MAINTENANCE,
             )
     elif action in ["update_region"]:
-        region_name = kwargs["body"]["region_name"]
-        if not check_if_maintenance(region_name):
+        if not check_if_maintenance():
             # server must be in maintenance mode to do this
             return (
                 jsonify(
@@ -156,7 +152,7 @@ def test_endpoint(action, **kwargs):
             )
 
     # handle the action. The general design pattern is to parse the arguments relevant to
-    # the action and then start a celery task to handle it. `start_update` and `end_update`
+    # the action and start a celery task to handle it. `start_maintenance` and `end_maintenance`
     # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
@@ -221,32 +217,20 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "start_update":
+    if action == "start_maintenance":
         # synchronously try to put the webserver into maintenance mode.
         # return is a dict {"success": <bool>, "msg": <str>}. success
         # is only True if webserver is in maintenance mode. msg is
         # human-readable and tells the client what happened.
-        region_name = kwargs["body"].get("region_name", None)
-        success, msg = None, None
-        if region_name is None:
-            success, msg = try_start_update_all()
-        else:
-            success, msg = try_start_update(region_name=region_name)
+        success, msg = try_start_maintenance()
         return jsonify({"success": success, "msg": msg}), SUCCESS
 
-    if action == "end_update":
+    if action == "end_maintenance":
         # synchronously try to end maintenance mode.
         # return is a dict {"success": <bool>, "msg": <str>}. success
         # is only True if webserver has ended maintenance mode. msg is
         # human-readable and tells the client what happened.
-        region_name = kwargs["body"].get("region_name", None)
-        success, msg = None, None
-        if region_name is None:
-            success, msg = try_end_update_all()
-        else:
-            success, msg = try_end_update(
-                region_name=region_name,
-            )
+        success, msg = try_end_maintenance()
         return jsonify({"success": success, "msg": msg}), SUCCESS
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
@@ -357,7 +341,7 @@ def aws_container_assign(**kwargs):
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
-        if check_if_maintenance(region):
+        if check_if_maintenance():
             return (
                 jsonify(
                     {

@@ -20,7 +20,7 @@ fi
 for try in {0..450}
 do
     echo "Try $try: $TYPE maintenance..."
-    resp=$(curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST "$WEBSERVER_URL/aws_container/${TYPE}_update")
+    resp=$(curl -H "Authorization: Bearer $ADMIN_TOKEN" -X POST "$WEBSERVER_URL/aws_container/${TYPE}_maintenance")
     success=$(echo $resp | jq -r ".success")
     if [ $success == "true" ]; then
         exit 0
