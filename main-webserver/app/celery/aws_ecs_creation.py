@@ -566,6 +566,15 @@ def _assign_container(
             )
             raise Ignore
 
+    set_container_state(
+        keyuser=username,
+        keytask=self.request.id,
+        task_id=self.request.id,
+        state=PENDING,
+        ip=base_container.ip,
+        force=True,  # necessary since check will fail otherwise
+    )
+
     _mount_cloud_storage(user, base_container)  # Not tested
     _pass_start_values_to_instance(
         base_container.ip,
