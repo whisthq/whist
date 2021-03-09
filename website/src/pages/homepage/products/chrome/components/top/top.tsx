@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react"
 import { Link } from "react-router-dom"
 import FadeIn from "react-fade-in"
-import TypeWriterEffect from "react-typewriter-effect"
+import { TypeWriter } from "shared/components/typewriter"
 
 import MainContext from "shared/context/mainContext"
 import { ScreenSize } from "shared/constants/screenSizes"
@@ -65,28 +65,12 @@ export const Top = () => {
                             Chrome,
                             <div className="flex justify-center relative top-2">
                                 <div className="mr-3">just</div>
-                                <div className="text-blue dark:text-mint relative bottom-1 md:bottom-2.5">
-                                    <TypeWriterEffect
-                                        textStyle={{
-                                            display: "inline-block",
-                                            fontWeight: "normal",
-                                            fontSize:
-                                                width > ScreenSize.MEDIUM
-                                                    ? 100
-                                                    : 50,
-                                            marginLeft:
-                                                width > ScreenSize.MEDIUM
-                                                    ? 12
-                                                    : 0,
-                                        }}
-                                        // onTextChange={handleTextChange}
-                                        startDelay={0}
-                                        cursorColor="#553DE9"
-                                        multiText={adjectives}
-                                        loop={true}
-                                        typeSpeed={200}
-                                    />
-                                </div>
+                                <TypeWriter
+                                    words={adjectives}
+                                    startAt={5}
+                                    classNameCursor="bg-blue-800"
+                                    classNameText="text-blue dark:text-mint relative"
+                                />
                             </div>
                         </div>
                     </div>

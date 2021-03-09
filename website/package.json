@@ -56,7 +56,6 @@
         "react-scripts": "^4.0.3",
         "react-spinners": "^0.10.6",
         "react-typeform-embed": "^0.2.1",
-        "react-typewriter-effect": "github:fractal/react-typewriter-effect",
         "react-visibility-sensor": "^5.1.1",
         "reactjs-popup": "^2.0.4",
         "redux": "^4.0.5",
