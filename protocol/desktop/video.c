@@ -51,6 +51,7 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
+extern volatile float latency;
 
 extern volatile int running_ci;
 
@@ -130,6 +131,10 @@ struct VideoData {
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
+
+    // Loading animation data
+    int loading_index;
+    clock last_loading_frame_timer;
 } video_data;
 
 typedef struct SDLVideoContext {
@@ -230,7 +235,7 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-int render_video(bool display_frame) {
+int render_video() {
     /*
         Render the video screen that the user sees
 
@@ -257,14 +262,10 @@ int render_video(bool display_frame) {
         return 0;
     }
 #endif
-    // Location in the loading animation
-    static int loading_index = 0;
-    static clock last_loading_frame;
-    start_timer(&last_loading_frame);
 
     if (rendering) {
         // Stop loading animation once rendering occurs
-        loading_index = -1;
+        video_data.loading_index = -1;
 
         safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
@@ -335,7 +336,9 @@ int render_video(bool display_frame) {
         safe_SDL_LockMutex(render_mutex);
         update_pixel_format();
 
-        if (!skip_render && can_render) {
+        bool render_this_frame = can_render && !skip_render;
+
+        if (render_this_frame) {
             clock sws_timer;
             start_timer(&sws_timer);
 
@@ -440,7 +443,7 @@ int render_video(bool display_frame) {
         // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
         // get_timer(renderContext.client_frame_timer));
 
-        if (!skip_render && can_render) {
+        if (render_this_frame) {
             // Subsection of texture that should be rendered to screen.
             SDL_Rect output_rect;
             output_rect.x = 0;
@@ -506,15 +509,15 @@ int render_video(bool display_frame) {
     } else {
         // If rendering == false,
         // Then we potentially render the loading screen
-        if (loading_index >= 0) {
+        if (video_data.loading_index >= 0) {
             const float loading_animation_fps = 20.0;
-            if (get_timer(last_loading_frame) > 1 / loading_animation_fps) {
+            if (get_timer(video_data.last_loading_frame_timer) > 1 / loading_animation_fps) {
                 // Present the loading screen
-                loading_sdl(renderer, loading_index);
+                loading_sdl(renderer, video_data.loading_index);
                 // Progress animation
-                loading_index++;
+                video_data.loading_index++;
                 // Reset timer
-                start_timer(&last_loading_frame);
+                start_timer(&video_data.last_loading_frame_timer);
             }
         }
     }
@@ -753,7 +756,6 @@ int init_video_renderer() {
     }
 
     can_render = true;
-    memset(video_context.data, 0, sizeof(video_context.data));
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
@@ -825,8 +827,14 @@ int init_video_renderer() {
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
+    // Init loading animation variables
+    video_data.loading_index = 0;
+    start_timer(&video_data.last_loading_frame_timer);
     // Present first frame of loading animation
-    loading_sdl(renderer, 0);
+    loading_sdl(renderer, video_data.loading_index);
+    video_data.loading_index++;
+
+    // Mark as initialized and return
     initialized_video_renderer = true;
     return 0;
 }
@@ -843,6 +851,7 @@ void init_video() {
         Initializes the video system
     */
     initialized_video_renderer = false;
+    memset(&video_context, 0, sizeof(video_context));
     render_mutex = safe_SDL_CreateMutex();
 }
 
@@ -988,9 +997,8 @@ void update_video() {
                     LOG_INFO("Skip this render");
                 }
             } else {
-                if ((get_timer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
-                    get_timer(ctx->last_nacked_timer) >
-                        (8.0 + 8.0 * ctx->num_times_nacked) / 1000.0) {
+                if ((get_timer(ctx->last_packet_timer) > latency) &&
+                    get_timer(ctx->last_nacked_timer) > latency + latency * ctx->num_times_nacked) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
                         ctx->last_nacked_index = -1;
@@ -1005,7 +1013,8 @@ void update_video() {
                             LOG_INFO(
                                 "************NACKING VIDEO PACKET %d %d (/%d), "
                                 "alive for %f MS",
-                                ctx->id, i, ctx->num_packets, get_timer(ctx->frame_creation_timer));
+                                ctx->id, i, ctx->num_packets,
+                                get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
                             ctx->nacked_indicies[i] = true;
                             nack(ctx->id, i);
                         }
