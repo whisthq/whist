@@ -31,7 +31,7 @@ const AuthCallback = (props: { authFlow: AuthFlow; user: User }) => {
                     textAlign: "center",
                 }}
             >
-                <h2 id="redirect">You will be redirected.</h2>
+                <h2>You will be redirected.</h2>
                 <div style={{ marginTop: 25 }}>
                     Not redirected? Click{" "}
                     <a href={authFlow.callback} style={{ fontWeight: "bold" }}>

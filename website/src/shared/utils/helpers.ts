@@ -9,7 +9,7 @@ export const generateEncryptionToken = (password: string) => {
     const crypto = require("crypto")
     const token = crypto.pbkdf2Sync(
         password,
-        "encryptionsecret",
+        process.env.SHA_SECRET_KEY,
         100000,
         32,
         "sha256"
