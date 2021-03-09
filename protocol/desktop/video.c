@@ -759,8 +759,6 @@ int init_video_renderer() {
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
     // configure renderer
     if (SDL_GetWindowFlags((SDL_Window*)window) & SDL_WINDOW_OPENGL) {
         // only opengl if windowed mode
