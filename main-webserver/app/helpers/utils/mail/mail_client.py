@@ -84,7 +84,7 @@ class MailClient:
             try:
                 html_as_string = requests.get(html_file_url)
             except Exception as e:
-                fractal_logger.error(f"An exception occured: {str(e)}", extra={"label": from_email})
+                fractal_logger.error("", exc_info=True, extra={"label": from_email})
                 raise Exception from e
             jinja_template = Template(html_as_string.text)
 
@@ -92,7 +92,7 @@ class MailClient:
             try:
                 jinja_template = Template(open(html_file).read())
             except Exception as e:
-                fractal_logger.error(f"An exception occured: {str(e)}", extra={"label": from_email})
+                fractal_logger.error("", exc_info=True, extra={"label": from_email})
                 raise IOError from e
 
         try:
@@ -105,7 +105,7 @@ class MailClient:
             )
             self.sendgrid_client.send(message)
         except Exception as e:
-            fractal_logger.error(f"An exception occured: {str(e)}", extra={"label": from_email})
+            fractal_logger.error("", exc_info=True, extra={"label": from_email})
             raise SendGridException from e
 
 
