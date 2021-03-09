@@ -4,12 +4,33 @@ import (
 	"fmt"
 	"log"
 	"runtime/debug"
-
-	"github.com/getsentry/sentry-go"
 )
 
 func init() {
 	init_metadata()
+
+	// We declare error separately to avoid shadowing logzioSender.
+	var err error
+	logzioTransport, err = initializeLogzIO()
+	if err != nil {
+		Errorf("Failed to initialize LogzIO! Error: %s", err)
+	}
+
+	// Note that according to the Sentry Go documentation, if we run
+	// sentry.CaptureMessage or sentry.CaptureError on separate goroutines, they
+	// can overwrite each other's tags. The thread-safe solution is to use
+	// goroutine-local hubs, but the way to do that would be to use contexts and
+	// add an additional argument to each logging method taking in the current
+	// context. This seems like a lot of work, so we just use a set of global
+	// tags instead, initializing them in InitializeSentry() and not touching
+	// them afterwards. Any container-specific information (which is what I
+	// imagine we would use local tags for) we just add in the text of the
+	// respective error message sent to Sentry. Alternatively, we might just be
+	// able to use sentry.WithScope(), but that is future work.
+	sentryTransport, err = initializeSentry()
+	if err != nil {
+		Errorf("Failed to initialize Sentry! Error: %s", err)
+	}
 }
 
 // MakeError creates an error from format string and args.
@@ -24,19 +45,27 @@ func Sprintf(format string, v ...interface{}) string {
 
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
-	log.Println(fmt.Sprintf("ERROR: %s", err))
-	if UsingProdLogging() {
-		sentry.CaptureException(err)
+	errstr := fmt.Sprintf("ERROR: %s", err)
+	log.Println(errstr)
+	if logzioTransport != nil {
+		logzioTransport.Send([]byte(errstr))
+	}
+	if sentryTransport != nil {
+		sentryTransport.send(err)
 	}
 }
 
-// Panic panics on an error. We do not send it to Sentry (to save on Sentry
-// logging costs), since we do that when we recover from the panic in
-// shutdownHostService(). Note that there are two types of panics that we are
-// unable to send to Sentry using our current approach: panics in a goroutine
-// that didn't `defer shutdownHostService()` as soon as it started, and panics
-// caused by incorrect initialization of Sentry in the first place.
+// Panic panics on an error and sends it to Sentry.
 func Panic(err error) {
+	errstr := fmt.Sprintf("PANIC: %s", err)
+	if logzioTransport != nil {
+		logzioTransport.Send([]byte(errstr))
+	}
+	if sentryTransport != nil {
+		sentryTransport.send(err)
+	}
+	fmt.Print("Stack Trace: ")
+	PrintStackTrace()
 	log.Panic(err)
 }
 
@@ -44,6 +73,9 @@ func Panic(err error) {
 func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	log.Print(str)
+	if logzioTransport != nil {
+		logzioTransport.Send([]byte(str))
+	}
 }
 
 // Errorf is like Error, but it respects printf syntax, i.e. takes in a format
