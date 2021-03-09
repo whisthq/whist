@@ -12,6 +12,7 @@ class User(db.Model):
         user_id (String): User ID, typically email
         name (String): Name of user (e.g. Mike)
         token (String): Email verification token
+        encrypted_config_token (String):  the user's app config token, stored encrypted
         password (String): Hashed password
         release_stage (Int): 0-100 release stage, used in future for alpha releases
         stripe_customer_id (String): Customer ID returned by Stripe API
@@ -28,6 +29,7 @@ class User(db.Model):
     user_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     name = db.Column(db.String(250))
     token = db.Column(db.String(250))
+    encrypted_config_token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
     release_stage = db.Column(db.Integer, nullable=False, default=text("50"))
     stripe_customer_id = db.Column(db.String(250))
