@@ -66,7 +66,7 @@ volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
 volatile bool pending_resize_render = false;
-volatile bool initting_video = false;
+volatile bool initialized_video_renderer = false;
 
 static enum AVPixelFormat sws_input_fmt;
 
@@ -124,11 +124,6 @@ struct VideoData {
 
     clock last_iframe_request_timer;
     bool is_waiting_for_iframe;
-
-    SDL_Thread* render_screen_thread;
-    bool run_render_screen_thread;
-
-    SDL_sem* renderscreen_semaphore;
 
     double target_mbps;
     int num_nacked;
@@ -235,7 +230,7 @@ void update_decoder_parameters(int width, int height, CodecType codec_type) {
     output_codec_type = codec_type;
 }
 
-int32_t render_screen(SDL_Renderer* renderer) {
+int render_video(bool display_frame) {
     /*
         Render the video screen that the user sees
 
@@ -243,10 +238,17 @@ int32_t render_screen(SDL_Renderer* renderer) {
             renderer (SDL_Renderer*): SDL renderer used to generate video
 
         Return:
-            (int32_t): 0 on success, -1 on failure
+            (int): 0 on success, -1 on failure
     */
 
-    LOG_INFO("RenderScreen running on Thread %d", SDL_GetThreadID(NULL));
+    if (!initialized_video_renderer) {
+        LOG_ERROR(
+            "Called render_video, but init_video_renderer not called yet! (Or has since been "
+            "destroyed");
+        return -1;
+    }
+
+    SDL_Renderer* renderer = video_context.renderer;
 
 //    Windows GHA VM cannot render, it just segfaults on creating the renderer
 // TODO test rendering in windows CI.
@@ -255,13 +257,15 @@ int32_t render_screen(SDL_Renderer* renderer) {
         return 0;
     }
 #endif
-    int loading_index = 0;
+    // Location in the loading animation
+    static int loading_index = 0;
+    static clock last_loading_frame;
+    start_timer(&last_loading_frame);
 
-    // present the loading screen
-    loading_sdl(renderer, loading_index);
+    if (rendering) {
+        // Stop loading animation once rendering occurs
+        loading_index = -1;
 
-    while (video_data.run_render_screen_thread) {
-        int ret = SDL_SemTryWait(video_data.renderscreen_semaphore);
         safe_SDL_LockMutex(render_mutex);
         if (pending_resize_render) {
             // User is in the middle of resizing the window
@@ -274,33 +278,6 @@ int32_t render_screen(SDL_Renderer* renderer) {
             SDL_RenderPresent(video_context.renderer);
         }
         safe_SDL_UnlockMutex(render_mutex);
-
-        if (ret == SDL_MUTEX_TIMEDOUT) {
-            // This runs if nothing post'ed to our semaphore
-            if (loading_index >= 0) {
-                // Delay by 50 milliseconds to control the speed of the animation,
-                // not delaying will cause it to go too fast
-                SDL_Delay(50);
-                loading_index++;
-                loading_sdl(renderer, loading_index);
-                continue;
-            }
-            // This SDL_Delay will wait 1ms before checking the semaphore again
-            // Not doing this will make this a tight loop that will make CPU usage far too high
-            SDL_Delay(1);
-            continue;
-        }
-
-        loading_index = -1;
-
-        if (ret < 0) {
-            LOG_FATAL("Semaphore Error");
-        }
-
-        if (!rendering) {
-            LOG_ERROR("Semaphore opened, but rendering is not true!");
-            continue;
-        }
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)render_context.frame_buffer;
@@ -350,7 +327,7 @@ int32_t render_screen(SDL_Renderer* renderer) {
         if (!video_decoder_decode(video_context.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             rendering = false;
-            continue;
+            return -1;
         }
 
         // LOG_INFO( "Decode Time: %f", get_timer( decode_timer ) );
@@ -408,10 +385,10 @@ int32_t render_screen(SDL_Renderer* renderer) {
             texture_rect.y = 0;
             texture_rect.w = video_context.decoder->width;
             texture_rect.h = video_context.decoder->height;
-            ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect, video_context.data[0],
-                                       video_context.linesize[0], video_context.data[1],
-                                       video_context.linesize[1], video_context.data[2],
-                                       video_context.linesize[2]);
+            int ret = SDL_UpdateYUVTexture(video_context.texture, &texture_rect,
+                                           video_context.data[0], video_context.linesize[0],
+                                           video_context.data[1], video_context.linesize[1],
+                                           video_context.data[2], video_context.linesize[2]);
             if (ret == -1) {
                 LOG_ERROR("SDL_UpdateYUVTexture failed: %s", SDL_GetError());
             }
@@ -504,13 +481,12 @@ int32_t render_screen(SDL_Renderer* renderer) {
                 output_rect.w = server_width;
                 output_rect.h = server_height;
             }
-            SDL_RenderCopy((SDL_Renderer*)renderer, video_context.texture, &output_rect, NULL);
+            SDL_RenderCopy(renderer, video_context.texture, &output_rect, NULL);
 
-            if (render_peers((SDL_Renderer*)renderer, peer_update_msgs, num_peer_update_msgs) !=
-                0) {
+            if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
                 LOG_ERROR("Failed to render peers.");
             }
-            SDL_RenderPresent((SDL_Renderer*)renderer);
+            SDL_RenderPresent(renderer);
         }
 
         safe_SDL_UnlockMutex(render_mutex);
@@ -525,15 +501,24 @@ int32_t render_screen(SDL_Renderer* renderer) {
         }
 
         video_data.last_rendered_id = render_context.id;
-        has_rendered_yet = true;
         rendering = false;
+        has_rendered_yet = true;
+    } else {
+        // If rendering == false,
+        // Then we potentially render the loading screen
+        if (loading_index >= 0) {
+            const float loading_animation_fps = 20.0;
+            if (get_timer(last_loading_frame) > 1 / loading_animation_fps) {
+                // Present the loading screen
+                loading_sdl(renderer, loading_index);
+                // Progress animation
+                loading_index++;
+                // Reset timer
+                start_timer(&last_loading_frame);
+            }
+        }
     }
 
-#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-    free((FractalRGBColor*)native_window_color);
-#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-
-    SDL_Delay(5);
     return 0;
 }
 
@@ -589,15 +574,6 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
 
     // texture may now be destroyed
     SDL_DestroyTexture(loading_screen_texture);
-
-    int remaining_ms = 30 - (int)get_timer(c);
-    if (remaining_ms > 0) {
-        SDL_Delay(remaining_ms);
-    }
-
-    if (gif_frame_index == 0) {
-        SDL_Delay(1000);
-    }
 
     gif_frame_index += 1;
     gif_frame_index %= NUMBER_LOADING_FRAMES;
@@ -764,18 +740,13 @@ void clear_sdl(SDL_Renderer* renderer) {
     SDL_RenderPresent(renderer);
 }
 
-int init_multithreaded_video(void* opaque) {
+int init_video_renderer() {
     /*
-        Initialized the video rendering thread. Used as a thread function.
-
-        Arguments:
-            opaque (void*): thread argument
+        Initialize the video renderer. Used as a thread function.
 
         Return:
             (int): 0 on success, -1 on failure
     */
-
-    UNUSED(opaque);
 
     if (init_peer_cursors() != 0) {
         LOG_ERROR("Failed to init peer cursors.");
@@ -783,8 +754,6 @@ int init_multithreaded_video(void* opaque) {
 
     can_render = true;
     memset(video_context.data, 0, sizeof(video_context.data));
-
-    render_mutex = safe_SDL_CreateMutex();
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
 
@@ -806,11 +775,11 @@ int init_multithreaded_video(void* opaque) {
 #endif
 
     // Show a black screen initially before anything else
-    SDL_SetRenderDrawColor((SDL_Renderer*)renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear((SDL_Renderer*)renderer);
-    SDL_RenderPresent((SDL_Renderer*)renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 
-    video_context.renderer = (SDL_Renderer*)renderer;
+    video_context.renderer = renderer;
     if (!renderer) {
         LOG_WARNING("SDL: could not create renderer - exiting: %s", SDL_GetError());
         return -1;
@@ -824,7 +793,7 @@ int init_multithreaded_video(void* opaque) {
     rendering = false;
     has_rendered_yet = false;
 
-    SDL_SetRenderDrawBlendMode((SDL_Renderer*)renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen.
     // Rather than allocating a new texture every time the dimensions change, we instead allocate
     // the texture once and render sub-rectangles of it.
@@ -853,16 +822,12 @@ int init_multithreaded_video(void* opaque) {
         receiving_frames[i].id = -1;
     }
 
-    video_data.renderscreen_semaphore = SDL_CreateSemaphore(0);
-    video_data.run_render_screen_thread = true;
-
     // Resize event handling
     SDL_AddEventWatch(resizing_event_watcher, (SDL_Window*)window);
 
-    initting_video = false;
-
-    render_screen((SDL_Renderer*)renderer);
-    SDL_DestroyRenderer((SDL_Renderer*)renderer);
+    // Present first frame of loading animation
+    loading_sdl(renderer, 0);
+    initialized_video_renderer = true;
     return 0;
 }
 // END VIDEO FUNCTIONS
@@ -875,12 +840,10 @@ Public Function Implementations
 
 void init_video() {
     /*
-        Creates renderer and video thread
+        Initializes the video system
     */
-    initting_video = true;
-
-    video_data.render_screen_thread =
-        SDL_CreateThread(init_multithreaded_video, "VideoThread", NULL);
+    initialized_video_renderer = false;
+    render_mutex = safe_SDL_CreateMutex();
 }
 
 int last_rendered_index = 0;
@@ -1024,7 +987,6 @@ void update_video() {
                     skip_render = true;
                     LOG_INFO("Skip this render");
                 }
-                SDL_SemPost(video_data.renderscreen_semaphore);
             } else {
                 if ((get_timer(ctx->last_packet_timer) > 6.0 / 1000.0) &&
                     get_timer(ctx->last_nacked_timer) >
@@ -1235,23 +1197,29 @@ void destroy_video() {
         Free the video thread and VideoContext data to exit
     */
 
-    while (initting_video)
-        ;
+    if (!initialized_video_renderer) {
+        LOG_ERROR("Destroying video, but never called init_video_renderer");
+    } else {
+        SDL_DestroyRenderer((SDL_Renderer*)video_context.renderer);
 
-    video_data.run_render_screen_thread = false;
-    SDL_WaitThread(video_data.render_screen_thread, NULL);
-    SDL_DestroySemaphore(video_data.renderscreen_semaphore);
+#if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+        if (native_window_color) {
+            free((FractalRGBColor*)native_window_color);
+        }
+#endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
+
+        // SDL_DestroyTexture(videoContext.texture); is not needed,
+        // the renderer destroys it
+        av_freep(&video_context.data[0]);
+        if (destroy_peer_cursors() != 0) {
+            LOG_ERROR("Failed to destroy peer cursors.");
+        }
+    }
+
     SDL_DestroyMutex(render_mutex);
-
-    //    SDL_DestroyTexture(videoContext.texture); not needed, the renderer
-    //    destroys it
-    av_freep(&video_context.data[0]);
+    render_mutex = NULL;
 
     has_rendered_yet = false;
-
-    if (destroy_peer_cursors() != 0) {
-        LOG_ERROR("Failed to destroy peer cursors.");
-    }
 }
 
 void set_video_active_resizing(bool is_resizing) {

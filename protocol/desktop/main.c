@@ -617,7 +617,7 @@ int read_piped_arguments_thread_function(void* keep_piping) {
     return ret;
 }
 
-void render_all() {
+void render_all(bool on_main_thread) {
     // Timer used in CI mode to exit after 1 min
     static clock ci_timer;
     start_timer(&ci_timer);
@@ -639,12 +639,14 @@ void render_all() {
 
     // Render Audio
     render_audio();
+    // Render video, but only display the frame if being called from the main thread
+    render_video(on_main_thread);
 }
 
 int event_filter(void* opaque, const SDL_Event* event) {
     if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
         // Note: NULL rectangle is the entire window
-        render_all();
+        render_all(false);
     }
     return 1;
 }
@@ -793,6 +795,9 @@ int main(int argc, char* argv[]) {
 #else
     init_video();
 #endif
+    if (init_video_renderer() != 0) {
+        LOG_FATAL("Failed to initialize video renderer!");
+    }
 
     print_system_info();
     LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
@@ -888,7 +893,7 @@ int main(int argc, char* argv[]) {
         // there are no events queued
         while (connected && !exiting && !failed) {
             // Render Everything
-            render_all();
+            render_all(true);
 
             // Check if window title should be updated
             // SDL_SetWindowTitle must be called in the main thread for
