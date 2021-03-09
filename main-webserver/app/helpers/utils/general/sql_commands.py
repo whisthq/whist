@@ -1,4 +1,3 @@
-import logging
 import time
 
 from sqlalchemy.exc import OperationalError

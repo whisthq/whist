@@ -1,7 +1,5 @@
 """Data models for securely Fractal's third-party app credentials."""
 
-import logging
-
 from datetime import datetime, timezone
 
 import requests

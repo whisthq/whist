@@ -1,4 +1,3 @@
-import logging
 import requests
 from jinja2 import Template
 

@@ -1,4 +1,3 @@
-import logging
 import time
 
 from app.helpers.utils.aws.aws_general import get_container_user
