@@ -43,17 +43,12 @@ func Sprintf(format string, v ...interface{}) string {
 	return fmt.Sprintf(format, v...)
 }
 
-const (
-	colorReset = "\033[0m"
-	colorRed   = "\033[31m"
-)
-
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
-	log.Printf("%s%s%s", colorRed, errstr, colorReset)
+	log.Printf(ColorRed(errstr))
 	if logzioTransport != nil {
-		logzioTransport.Send([]byte(errstr))
+		logzioTransport.Send(errstr)
 	}
 	if sentryTransport != nil {
 		sentryTransport.send(err)
@@ -64,7 +59,7 @@ func Error(err error) {
 func Panic(err error) {
 	errstr := fmt.Sprintf("PANIC: %s", err)
 	if logzioTransport != nil {
-		logzioTransport.Send([]byte(errstr))
+		logzioTransport.Send(errstr)
 	}
 	if sentryTransport != nil {
 		sentryTransport.send(err)
@@ -78,7 +73,7 @@ func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	log.Print(str)
 	if logzioTransport != nil {
-		logzioTransport.Send([]byte(str))
+		logzioTransport.Send(str)
 	}
 }
 
@@ -104,4 +99,15 @@ func Infof(format string, v ...interface{}) {
 func PrintStackTrace() {
 	Info("Printing stack trace: ")
 	debug.PrintStack()
+}
+
+// ColorRed returns the input string surrounded by the ANSI escape codes to
+// color the text red. Text color is reset at the end of the returned string.
+func ColorRed(s string) string {
+	const (
+		codeReset = "\033[0m"
+		codeRed   = "\033[31m"
+	)
+
+	return Sprintf("%s%s%s", codeRed, s, codeReset)
 }
