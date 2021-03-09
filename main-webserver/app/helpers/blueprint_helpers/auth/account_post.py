@@ -271,6 +271,7 @@ def auto_login_helper(email):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "verification_token": user.token,
+            "encrypted_config_token": user.encrypted_config_token,
             "name": user.name,
         }
     else:
@@ -279,6 +280,7 @@ def auto_login_helper(email):
             "access_token": None,
             "refresh_token": None,
             "verification_token": None,
+            "encrypted_config_token": "",
             "name": None,
         }
 
