@@ -17,16 +17,23 @@ var logzioShippingToken string
 var logzioTransport *logzioSender
 
 // We define a custom type to be able to override the Send() function with sane
-// error handling.
+// error handling and our custom marshalling logic.
 type logzioSender logzio.LogzioSender
 
-func (sender *logzioSender) Send(payload string) {
+type logzioMessageType string
+
+const (
+	logzioTypeInfo  logzioMessageType = "info"
+	logzioTypeError logzioMessageType = "error"
+)
+
+func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 	msg, err := json.Marshal(struct {
-		Message   string    `json:"message"`
-		Timestamp time.Time `json:"timestamp"`
+		Message string `json:"message"`
+		Type    string `json:"type"`
 	}{
-		Message:   payload,
-		Timestamp: time.Now(),
+		Message: payload,
+		Type:    string(msgType),
 	})
 
 	if err != nil {
@@ -56,7 +63,7 @@ func initializeLogzIO() (*logzioSender, error) {
 	sender, err := logzio.New(
 		logzioShippingToken,
 		logzio.SetUrl("https://listener.logz.io:8071"),
-		logzio.SetDrainDuration(time.Second*5),
+		logzio.SetDrainDuration(time.Second*3),
 		logzio.SetCheckDiskSpace(false),
 		logzio.SetDebug(os.Stderr),
 	)
