@@ -2,8 +2,6 @@ package fractallogger
 
 import (
 	"log"
-	"os"
-	"strings"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -11,14 +9,10 @@ import (
 
 // InitializeSentry initializes Sentry for use.
 func InitializeSentry() error {
-	strProd := os.Getenv("USE_PROD_SENTRY")
-	// We want to use the production Sentry config if we run with that
-	// environment variable, or if we are actually running in staging/production.
-	useSentry := (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging)
-	if useSentry {
-		log.Print("Using staging/production Sentry configuration.")
+	if UsingProdLogging() {
+		log.Print("Setting up Sentry.")
 	} else {
-		log.Print("Not staging or production - not setting up Sentry")
+		log.Print("Not setting up Sentry.")
 		return nil
 	}
 

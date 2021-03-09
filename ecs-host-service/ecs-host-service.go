@@ -969,14 +969,15 @@ func main() {
 	// be reopened after any error is sent over the error channel.
 	needToReinitializeEventStream := false
 	dockerevents, dockererrs := cli.Events(context.Background(), eventOptions)
-	logger.Info("Initialized event stream...")
+	logger.Info("Initialized docker event stream.")
+	logger.Info("Entering event loop...")
 
 eventLoop:
 	for {
 		if needToReinitializeEventStream {
 			dockerevents, dockererrs = cli.Events(context.Background(), eventOptions)
 			needToReinitializeEventStream = false
-			logger.Info("Re-initialized event stream...")
+			logger.Info("Re-initialized docker event stream.")
 		}
 
 		select {
