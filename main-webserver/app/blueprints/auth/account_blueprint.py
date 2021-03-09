@@ -70,7 +70,7 @@ def account_post(action, **kwargs):
         name = body["name"]
         reason_for_signup = body["feedback"]
 
-        output = register_helper(username, password, encrypted_token, name, reason_for_signup)
+        output = register_helper(username, password, token, name, reason_for_signup)
 
         return jsonify(output), output["status"]
 
