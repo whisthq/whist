@@ -19,7 +19,7 @@ func (*sentrySender) send(err error) {
 
 // InitializeSentry initializes Sentry for use.
 func initializeSentry() (*sentrySender, error) {
-	if UsingProdLogging() {
+	if usingProdLogging() {
 		log.Print("Setting up Sentry.")
 	} else {
 		log.Print("Not setting up Sentry.")

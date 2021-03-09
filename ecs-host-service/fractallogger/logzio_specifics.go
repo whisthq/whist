@@ -48,7 +48,7 @@ func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
 }
 
 func initializeLogzIO() (*logzioSender, error) {
-	if UsingProdLogging() {
+	if usingProdLogging() {
 		Info("Setting up logz.io integration.")
 	} else {
 		Info("Not setting up logz.io integration.")

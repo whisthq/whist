@@ -75,9 +75,9 @@ func GetAppEnvironment() EnvironmentType {
 	return cachedEnvironment
 }
 
-// UsingProdLogging implements the logic for us to decide whether to use
+// usingProdLogging implements the logic for us to decide whether to use
 // production-logging (i.e. with Sentry and logz.io configured).
-func UsingProdLogging() bool {
+func usingProdLogging() bool {
 	return cachedUseProdLogging
 }
 
