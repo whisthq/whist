@@ -1,6 +1,7 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
 import history from "shared/utils/history"
+import { generateEncryptionToken } from "shared/utils/helpers"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { updateStripeInfo } from "store/actions/dashboard/payment/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
@@ -16,12 +17,14 @@ function* emailLogin(action: {
     const { json } = yield call(api.loginEmail, action.email, action.password)
 
     if (json && json.access_token) {
+        const encryptionToken = generateEncryptionToken(action.password)
         yield put(
             updateUser({
                 userID: action.email,
                 name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
+                encryptionToken: encryptionToken,
                 emailVerified: json.verified,
                 emailVerificationToken: json.verification_token,
             })
@@ -124,12 +127,14 @@ function* emailSignup(action: {
     )
 
     if (json && response.status === 200) {
+        const encryptionToken = generateEncryptionToken(action.password)
         yield put(
             updateUser({
                 userID: action.email,
                 name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
+                encryptionToken: encryptionToken,
                 emailVerificationToken: json.verification_token,
             })
         )
@@ -298,6 +303,12 @@ export function* resetPassword(action: any) {
 
     // TODO do something with the response https://github.com/fractal/website/issues/334
     if (response && response.status === 200) {
+        const encryptionToken = generateEncryptionToken(action.password)
+        yield put(
+            updateUser({
+                encryptionToken: encryptionToken,
+            })
+        )
         yield put(
             updateAuthFlow({
                 resetDone: true,
