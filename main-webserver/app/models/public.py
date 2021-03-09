@@ -17,6 +17,7 @@ class User(db.Model):
             when a user creates an account. It is sent in an email to the email address associated
             with the account. The email verification server endpoint compares the email
             verification token it receives to this token.
+        encrypted_config_token (String):  the user's app config token, stored encrypted
         password (String): Hashed password
         stripe_customer_id (String): A pointer to a customer record on Fractal's Stripe account.
         reason_for_signup (String): How users heard about Fractal
@@ -29,6 +30,7 @@ class User(db.Model):
     user_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     name = db.Column(db.String(250))
     token = db.Column(db.String(250))
+    encrypted_config_token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
     stripe_customer_id = db.Column(db.String(250))
     created_timestamp = db.Column(db.Integer)
