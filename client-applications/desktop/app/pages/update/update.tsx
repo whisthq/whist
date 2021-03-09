@@ -22,7 +22,7 @@ const Update = () => {
     const ipc = require("electron").ipcRenderer
 
     useEffect(() => {
-        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW)
+        ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
     }, [])
 
     useEffect(() => {
@@ -86,7 +86,7 @@ const Update = () => {
                 </div>
                 {downloadError === "" ? (
                     <div className={styles.updateTextWrapper}>
-                        <div style={{ color: "white" }}>
+                        <div>
                             Downloading Update ({downloadSpeed.toString()} Mbps)
                         </div>
                         <div className={styles.updateSubtext}>
@@ -96,7 +96,7 @@ const Update = () => {
                     </div>
                 ) : (
                     <div className={styles.updateTextWrapper}>
-                        <div style={{ color: "white" }}>{downloadError}</div>
+                        <div>{downloadError}</div>
                     </div>
                 )}
             </div>

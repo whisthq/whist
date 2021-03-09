@@ -1,7 +1,7 @@
 @import '~app.global.css';
 
 .updateWrapper {
-    background: var(--background-color);
+    background: var(--text-background-color);
     position: relative;
     height: 100vh;
     width: 100vw;
@@ -25,19 +25,19 @@
 
 .loadingBar .remaining {
     height: 6px;
-    background: var(--background-color);
+    background: var(--accent-color);
 }
 
 .loadingBar .downloaded {
     height: 6px;
-    background: var(--accent-color);
+    background: #efefef;
 }
 
 .updateTextWrapper {
-    margin-top: 25px;
+    margin-top: 26px;
     font-size: 14px;
     text-align: center;
-    color: white;
+    color: var(--primary-text-color);
     font-weight: bold;
 }
 
@@ -45,5 +45,5 @@
     font-size: 10px;
     margin: auto;
     margin-top: 5px;
-    color: #cccccc;
+    color: var(--primary-text-color);
 }

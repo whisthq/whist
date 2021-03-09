@@ -16,6 +16,7 @@ import { FractalRoute } from "shared/types/navigation"
 import { FractalIPC } from "shared/types/ipc"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
+import Version from "shared/components/version"
 
 import styles from "pages/loading/loading.css"
 
@@ -133,6 +134,9 @@ export const Loading = (props: {
             <div className={styles.loadingCentered}>
                 <Animation />
                 <div className={styles.loadingText}>Loading</div>
+            </div>
+            <div>
+                <Version />
             </div>
         </div>
     )
