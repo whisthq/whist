@@ -131,7 +131,7 @@ const RootApp = (props: {
                     exact
                     path={routes.AUTH_CALLBACK}
                     component={withTracker(AuthCallback)}
-                    render={(props) => ({ ...props })}
+                    //render={(props) => ({ ...props })}
                 />
                 <Route
                     path={routes.DASHBOARD}
