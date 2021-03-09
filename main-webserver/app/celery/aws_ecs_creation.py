@@ -135,7 +135,6 @@ def _pass_start_values_to_instance(
                 "container_ARN": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
-                "config_encryption_token": config_encryption_token,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -293,7 +292,6 @@ def assign_container(
     self,
     username,
     task_definition_arn,
-    config_encryption_token="",
     region_name="us-east-1",
     cluster_name=None,
     dpi=96,
@@ -305,7 +303,6 @@ def assign_container(
     :param self: the celery instance running the task
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
-    :param config_encryption_token: the encryption token for a user's app config
     :param region_name: which region the user needs a container for
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
@@ -319,7 +316,6 @@ def assign_container(
         self,
         username,
         task_definition_arn,
-        config_encryption_token,
         region_name,
         cluster_name,
         dpi,
@@ -331,7 +327,6 @@ def _assign_container(
     self,
     username,
     task_definition_arn,
-    config_encryption_token,
     region_name="us-east-1",
     cluster_name=None,
     dpi=96,
@@ -549,7 +544,6 @@ def _assign_container(
         base_container.port_32262,
         base_container.dpi,
         user.user_id,
-        config_encryption_token,
     )
     time.sleep(1)
 
@@ -614,7 +608,6 @@ def prewarm_new_container(
     cluster_name=None,
     region_name="us-east-1",
     webserver_url=None,
-    dpi=96,
 ):
     """Prewarm a new ECS container running a particular task.
 
@@ -728,47 +721,6 @@ def prewarm_new_container(
             f"Added task {str(task_id)} to cluster {cluster_name} and updated cluster info",
             extra={"label": "prewarm"},
         )
-        if username != "Unassigned":
-            user = User.query.get(username)
-
-            assert user
-
-            _mount_cloud_storage(user, container)
-            _pass_start_values_to_instance(
-                container.ip,
-                container.container_id,
-                container.port_32262,
-                container.dpi,
-                user.user_id,
-            )
-
-            if not _poll(container.container_id):
-
-                set_container_state(
-                    keyuser=username,
-                    keytask=self.request.id,
-                    task_id=self.request.id,
-                    state=FAILURE,
-                )
-                fractal_log(
-                    function="create_new_container",
-                    label=str(task_id),
-                    logs="container failed to ping",
-                )
-                self.update_state(
-                    state="FAILURE",
-                    meta={"msg": "Container {} failed to ping.".format(task_id)},
-                )
-
-                raise Ignore
-
-            # pylint: disable=line-too-long
-            fractal_log(
-                function="create_new_container",
-                label=str(task_id),
-                logs=f"""container pinged!  To connect, run: desktop {container.ip} -p32262:{curr_network_binding[32262]}.32263:{curr_network_binding[32263]}.32273:{curr_network_binding[32273]} -k {aeskey}""",
-            )
-            # pylint: enable=line-too-long
 
         if not current_app.testing:
             task_time_taken = time.time() - task_start_time
