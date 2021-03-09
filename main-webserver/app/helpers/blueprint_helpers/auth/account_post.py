@@ -200,11 +200,12 @@ def reset_password_helper(username, password):
     user = User.query.get(username)
 
     if user:
+        old_config_token = user.encrypted_config_token
         pwd_token = hash_value(password)
 
         user.password = pwd_token
         db.session.commit()
-        return {"status": SUCCESS}
+        return {"status": SUCCESS, "old_token": old_config_token}
     else:
         return {"status": BAD_REQUEST}
 
@@ -242,8 +243,12 @@ def update_user_helper(body):
                 to_email=user.user_id, email_id="EMAIL_VERIFICATION", jinja_args={"url": url}
             )
         if "password" in body:
-            reset_password_helper(body["username"], body["password"])
-            return jsonify({"msg": "Password updated successfully"}), SUCCESS
+            result_dict = reset_password_helper(body["username"], body["password"])
+            if result_dict["status"] == SUCCESS:
+                result_dict["msg"] = "Password updated successfully"
+            else:
+                result_dict["msg"] = "We had an error updating your password"
+            return jsonify(result_dict), SUCCESS
         return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
     return jsonify({"msg": "User not found"}), NOT_FOUND
 
