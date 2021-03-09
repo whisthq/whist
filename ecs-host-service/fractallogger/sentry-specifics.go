@@ -7,13 +7,23 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+type sentrySender struct{}
+
+// We use a pointer of this type so we can check if it is nil in our logging
+// functions, and therefore always call them safely.
+var sentryTransport *sentrySender
+
+func (*sentrySender) send(err error) {
+	sentry.CaptureException(err)
+}
+
 // InitializeSentry initializes Sentry for use.
-func InitializeSentry() error {
+func initializeSentry() (*sentrySender, error) {
 	if UsingProdLogging() {
 		log.Print("Setting up Sentry.")
 	} else {
 		log.Print("Not setting up Sentry.")
-		return nil
+		return nil, nil
 	}
 
 	err := sentry.Init(sentry.ClientOptions{
@@ -22,7 +32,7 @@ func InitializeSentry() error {
 		Environment: string(GetAppEnvironment()),
 	})
 	if err != nil {
-		return MakeError("Error calling Sentry.init: %v", err)
+		return nil, MakeError("Error calling Sentry.init: %v", err)
 	}
 	log.Printf("Set Sentry release to git commit hash: %s", GetGitCommit())
 
@@ -75,7 +85,8 @@ func InitializeSentry() error {
 			log.Printf("Set Sentry tag aws.public-ipv4: %s", val)
 		}
 	})
-	return nil
+
+	return new(sentrySender), nil
 }
 
 // FlushSentry flushes events in the Sentry queue

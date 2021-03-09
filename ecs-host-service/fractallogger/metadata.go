@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"runtime"
@@ -33,6 +34,15 @@ func init_metadata() {
 		strProd := os.Getenv("USE_PROD_LOGGING")
 		return (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
 	}()
+}
+
+// Check that the program has been started with the correct permissions --- for
+// now, we just want to run as root, but this service could be assigned its own
+// user in the future.
+func RequireRootPermissions() {
+	if os.Geteuid() != 0 {
+		log.Fatal("This service needs to run as root!")
+	}
 }
 
 // Variable for hash of last Git commit --- filled in by linker
