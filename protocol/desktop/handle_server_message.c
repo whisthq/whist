@@ -34,6 +34,7 @@ extern char username[50];
 extern bool exiting;
 extern int audio_frequency;
 extern volatile bool is_timing_latency;
+extern volatile float latency;
 extern volatile clock latency_timer;
 extern volatile int ping_id;
 extern volatile int ping_failures;
@@ -111,7 +112,10 @@ static int handle_pong_message(FractalServerMessage *fmsg, size_t fmsg_size) {
         return -1;
     }
     if (ping_id == fmsg->ping_id) {
-        LOG_INFO("Latency: %f", get_timer(latency_timer));
+        float latency_time = get_timer(latency_timer);
+        LOG_INFO("Latency: %f", latency_time);
+        // Save latency as a geometric sum (Latency per ping capped at 1 second)
+        latency = 0.5 * latency + 0.5 * min(latency_time, 1.0);
         is_timing_latency = false;
         ping_failures = 0;
         try_amount = 0;

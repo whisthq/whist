@@ -58,6 +58,8 @@ void update_audio();
 
 /**
  * @brief                          This will play any queued audio packets
+ *                                 NOTE: Is thread-safe, and can be called
+ *                                 no matter what other audio calls are being made
  */
 void render_audio();
 

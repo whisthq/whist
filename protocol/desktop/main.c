@@ -76,6 +76,7 @@ volatile bool run_receive_packets;
 volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
+volatile float latency;
 volatile int ping_id;
 volatile int ping_failures;
 
@@ -617,38 +618,44 @@ int read_piped_arguments_thread_function(void* keep_piping) {
     return ret;
 }
 
-void render_all(bool on_main_thread) {
-    // Timer used in CI mode to exit after 1 min
-    static clock ci_timer;
-    start_timer(&ci_timer);
+static volatile bool run_renderer_thread = false;
+int32_t multithreaded_renderer(void* opaque) {
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
-    static clock ack_timer;
-    start_timer(&ack_timer);
+    if (init_video_renderer() != 0) {
+        LOG_FATAL("Failed to initialize video renderer!");
+    }
 
-    if (get_timer(ack_timer) > 5) {
-        ack(&packet_send_context);
-        ack(&packet_tcp_context);
+    while (run_renderer_thread) {
+        // Timer used in CI mode to exit after 1 min
+        static clock ci_timer;
+        start_timer(&ci_timer);
+
+        static clock ack_timer;
         start_timer(&ack_timer);
-    }
-    // if we are running a CI test we run for time_to_run_ci seconds
-    // before exiting
-    if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
-        exiting = 1;
-        LOG_INFO("Exiting CI run");
+
+        if (get_timer(ack_timer) > 5) {
+            ack(&packet_send_context);
+            ack(&packet_tcp_context);
+            start_timer(&ack_timer);
+        }
+        // if we are running a CI test we run for time_to_run_ci seconds
+        // before exiting
+        if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
+            exiting = 1;
+            LOG_INFO("Exiting CI run");
+        }
+
+        // Render Audio
+        // is thread-safe regardless of what other function calls are being made to audio
+        render_audio();
+        // Render video
+        render_video();
+
+        SDL_Delay(1);
     }
 
-    // Render Audio
-    render_audio();
-    // Render video, but only display the frame if being called from the main thread
-    render_video(on_main_thread);
-}
-
-int event_filter(void* opaque, const SDL_Event* event) {
-    if (event->type == SDL_WINDOWEVENT && event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
-        // Note: NULL rectangle is the entire window
-        render_all(false);
-    }
-    return 1;
+    return 0;
 }
 
 int main(int argc, char* argv[]) {
@@ -760,14 +767,11 @@ int main(int argc, char* argv[]) {
 
     // Initialize the SDL window
     window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
-    SDL_SetEventFilter((SDL_EventFilter)event_filter, NULL);
 
     if (!window) {
         destroy_socket_library();
         LOG_FATAL("Failed to initialize SDL");
     }
-
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
 
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
@@ -795,9 +799,9 @@ int main(int argc, char* argv[]) {
 #else
     init_video();
 #endif
-    if (init_video_renderer() != 0) {
-        LOG_FATAL("Failed to initialize video renderer!");
-    }
+    run_renderer_thread = true;
+    SDL_Thread* renderer_thread =
+        SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
 
     print_system_info();
     LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
@@ -892,13 +896,11 @@ int main(int argc, char* argv[]) {
         // This code will run for as long as there are events queued, or once every millisecond if
         // there are no events queued
         while (connected && !exiting && !failed) {
-            // Render Everything
-            render_all(true);
-
             // Check if window title should be updated
             // SDL_SetWindowTitle must be called in the main thread for
             // some clients (e.g. all Macs), hence why we update the title here
             // and not in handle_server_message
+            // Since its in the PollEvent loop, it won't update if PollEvent freezes
             if (should_update_window_title) {
                 if (window_title) {
                     SDL_SetWindowTitle((SDL_Window*)window, (char*)window_title);
@@ -942,21 +944,16 @@ int main(int argc, char* argv[]) {
                 safe_SDL_UnlockMutex(window_resize_mutex);
             }
 
-            clock poll_event_timer;
-            start_timer(&poll_event_timer);
-            int events = SDL_PollEvent(&sdl_msg);
-            double poll_event_time = get_timer(poll_event_timer);
-
-            if (poll_event_time * MS_IN_SECOND > 5.0) {
-                LOG_WARNING("SDL_PollEvent took too long! %f", poll_event_time);
-            }
-
-            if (events && handle_sdl_event(&sdl_msg) != 0) {
+            // Timeout after 50ms (On Windows, will hang when user is dragging or resizing the
+            // window)
+            if (SDL_WaitEventTimeout(&sdl_msg, 50) && handle_sdl_event(&sdl_msg) != 0) {
                 // unable to handle event
                 failed = true;
                 break;
             }
 
+            // After handle_sdl_event potentially captures a mouse motion,
+            // We throttle it down to only update once every 0.5ms
             if (get_timer(mouse_motion_timer) * MS_IN_SECOND > 0.5) {
                 if (update_mouse_motion()) {
                     failed = true;
@@ -975,6 +972,7 @@ int main(int argc, char* argv[]) {
         SDL_WaitThread(receive_packets_thread, NULL);
         destroy_audio();
         close_connections();
+        connected = false;
     }
 
     if (failed && using_sentry) {
@@ -995,6 +993,8 @@ int main(int argc, char* argv[]) {
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
+    run_renderer_thread = false;
+    SDL_WaitThread(renderer_thread, NULL);
     destroy_video();
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();

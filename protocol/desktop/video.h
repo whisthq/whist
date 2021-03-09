@@ -59,11 +59,8 @@ int init_video_renderer();
 
 /**
  * @brief                          Render the video frame (If any are available to render)
- *                                 NOTE: If you wish to flush the render queue without actually
- * displaying the frame, Then you may pass display_frame = false NOTE: If display_frame = true, this
- * function *must* be called from the same thread that called init_video_renderer
  */
-int render_video(bool display_frame);
+int render_video();
 
 /**
  * @brief                          Free the video thread and VideoContext data to
