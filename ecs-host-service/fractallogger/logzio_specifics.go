@@ -1,6 +1,7 @@
 package fractallogger
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"time"
@@ -20,9 +21,23 @@ var logzioTransport *logzioSender
 type logzioSender logzio.LogzioSender
 
 func (sender *logzioSender) Send(payload string) {
-	err := (*logzio.LogzioSender)(sender).Send([]byte(payload))
+	msg, err := json.Marshal(struct {
+		Message   string    `json:"message"`
+		Timestamp time.Time `json:"timestamp"`
+	}{
+		Message:   payload,
+		Timestamp: time.Now(),
+	})
+
+	if err != nil {
+		log.Printf(ColorRed(Sprintf("Couldn't marshal payload for logz.io. Error: %s", err)))
+		return
+	}
+
+	err = (*logzio.LogzioSender)(sender).Send(msg)
 	if err != nil {
 		log.Printf(ColorRed(Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
+		return
 	}
 }
 
