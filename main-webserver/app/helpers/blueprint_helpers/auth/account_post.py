@@ -46,6 +46,7 @@ def login_helper(email, password):
             return {
                 "verified": False,
                 "is_user": is_user,
+                "encrypted_config_token": "",
                 "access_token": None,
                 "refresh_token": None,
                 "verification_token": None,
@@ -64,6 +65,7 @@ def login_helper(email, password):
         "verified": user.verified,
         "is_user": is_user,
         "access_token": access_token,
+        "encrypted_config_token": user.encrypted_config_token,
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
