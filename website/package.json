@@ -104,7 +104,7 @@
         "autoprefixer": "^9.8.6",
         "jest-dev-server": "^4.4.0",
         "jest-puppeteer": "^4.4.0",
-        "postcss": "^7.0.35",
+        "postcss": "^8.2.8",
         "redux-mock-store": "^1.5.4",
         "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.3",
         "typescript-plugin-css-modules": "^3.2.0"
