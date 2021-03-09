@@ -129,8 +129,7 @@ def test_endpoint(action, **kwargs):
     """
     # check for maintenance-related things
     if action in ["create_cluster", "assign_container"]:
-        region_name = kwargs["body"]["region_name"]
-        if check_if_maintenance(region_name):
+        if check_if_maintenance():
             # server cannot be in maintenance mode to do this
             return (
                 jsonify(
@@ -141,8 +140,7 @@ def test_endpoint(action, **kwargs):
                 WEBSERVER_MAINTENANCE,
             )
     elif action in ["update_region"]:
-        region_name = kwargs["body"]["region_name"]
-        if not check_if_maintenance(region_name):
+        if not check_if_maintenance():
             # server must be in maintenance mode to do this
             return (
                 jsonify(
