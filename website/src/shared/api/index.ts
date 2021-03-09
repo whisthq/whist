@@ -1,6 +1,6 @@
 import fetch from "node-fetch"
 
-import { configGet, configPost } from "@fractal/core-ts/http"
+import { configGet, configPost } from "@fractal/core-ts"
 import { config } from "shared/constants/config"
 import history from "shared/utils/history"
 
