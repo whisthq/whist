@@ -5,11 +5,8 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    # schedule:
-    #     - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
-    push:
-        branches:
-            - mia/webserver/hanging-task-notify-and-delete
+    schedule:
+        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
 
 jobs:
     main-webserver-hanging-resource-notification:
@@ -26,8 +23,8 @@ jobs:
                     - eu-west-1
                     - eu-central-1
                 resource:
-                    # - ASGs
-                    # - Clusters
+                    - ASGs
+                    - Clusters
                     - Tasks
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
@@ -72,7 +69,7 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "${{ env.hanging_resource }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
@@ -111,18 +108,18 @@ jobs:
                     fi
                   done <<< "$packer_instances"
 
-    # notify-if-hanging-resource-fails:
-    #     name: "Notify Slack if Hanging Resource Workflow Fails"
-    #     needs:
-    #         [
-    #             main-webserver-hanging-packer-instance-notification,
-    #             main-webserver-hanging-resource-notification,
-    #         ]
-    #     if: failure()
-    #     runs-on: ubuntu-20.04
-    #     steps:
-    #         - name: Notify Slack if Hanging Resource Workflow Fails
-    #           run: |
-    #               curl -X POST \
-    #               --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
-    #               ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+    notify-if-hanging-resource-fails:
+        name: "Notify Slack if Hanging Resource Workflow Fails"
+        needs:
+            [
+                main-webserver-hanging-packer-instance-notification,
+                main-webserver-hanging-resource-notification,
+            ]
+        if: failure()
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Notify Slack if Hanging Resource Workflow Fails
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}

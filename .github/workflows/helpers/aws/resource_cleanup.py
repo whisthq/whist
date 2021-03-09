@@ -153,7 +153,6 @@ def get_hanging_asgs(region):
     all_asgs = get_all_aws_asgs(region)
 
     # return names (not ARNs) of ASGs not assocated a cluster (could be more than one ASG per cluster)
-
     return [asg.split("/")[-1] for asg in list(set(all_asgs) - set(cluster_asgs))]
 
 
@@ -175,11 +174,11 @@ def get_hanging_clusters(urls, secrets, region):
     return list(aws_clusters - db_clusters)
 
 
-# DOCUMENT ME
+# Determines if provided task is older than one day and stops it using the AWS CLI
 def delete_if_older_than_one_day(task, cluster, time):
     now = datetime.now(timezone.utc)
     then = dateutil.parser.parse(time)
-    if now - then > timedelta(seconds=1):
+    if now - then > timedelta(days=1):
         clusters, _ = subprocess.Popen(
             [
                 "aws",
@@ -198,7 +197,9 @@ def delete_if_older_than_one_day(task, cluster, time):
     return ""
 
 
+# Compares list of tasks associated with clusters in AWS to list of tasks in all DBs
 def get_hanging_tasks(urls, secrets, region):
+    # query dbs for tasks and clusters
     db_clusters = []
     db_tasks = set()
     for url, secret in zip(urls, secrets):
@@ -208,8 +209,7 @@ def get_hanging_tasks(urls, secrets, region):
     aws_tasks = set()
     aws_tasks_and_times = {}
     for cluster in db_clusters:
-        # print(cluster)
-        # aws ecs list-tasks --cluster cluster --region region
+        # get all tasks in a cluster
         tasks, _ = subprocess.Popen(
             [
                 "aws",
@@ -224,10 +224,9 @@ def get_hanging_tasks(urls, secrets, region):
             stdout=subprocess.PIPE,
         ).communicate()
         tasks = json.loads(tasks)["taskArns"]
-        # print(tasks)
         aws_tasks |= set(tasks)
+        # if there are tasks in a cluster, get created time
         if len(tasks) > 0:
-            # print("there are tasks here :)")
             task_times, _ = subprocess.Popen(
                 [
                     "aws",
@@ -243,15 +242,14 @@ def get_hanging_tasks(urls, secrets, region):
                 + tasks,
                 stdout=subprocess.PIPE,
             ).communicate()
-            # print(task_times)
             tasks_and_times = (
                 (task["containers"][0]["taskArn"], (cluster, task["createdAt"]))
                 for task in json.loads(task_times)["tasks"]
             )
             aws_tasks_and_times.update(dict(tasks_and_times))
 
+    # determine which tasks are in aws but not in the db and return them (and their creation time)
     hanging_tasks = list(aws_tasks - db_tasks)
-
     return [
         (
             task,
