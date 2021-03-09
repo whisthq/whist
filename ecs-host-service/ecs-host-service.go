@@ -765,8 +765,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 
 // Terminates the Fractal ECS host service
 func shutdownHostService() {
-	logger.Info("Beginning host service shutdown procedure.")
-
 	// Catch any panics in the calling goroutine. Note that besides the host
 	// machine itself shutting down, this method should be the _only_ way that
 	// this host service exits. In particular, we use panic() as a control flow
@@ -776,7 +774,11 @@ func shutdownHostService() {
 	// of an irrecoverable failure that mandates that the host machine accept no
 	// new connections.
 	r := recover()
-	logger.Errorf("shutdownHostService(): Caught panic: %v", r)
+	if r == nil {
+		logger.Info("Beginning host service shutdown procedure.")
+	} else {
+		logger.Infof("Shutting down host service after caught panic: %v", r)
+	}
 
 	// Flush buffered logging events before the program terminates.
 	logger.Info("Flushing Sentry...")
@@ -839,8 +841,9 @@ func initializeFilesystem() {
 	makeFractalDirectoriesFreeForAll()
 }
 
-// Delete the directory used to store the container resource allocations
-// (e.g. TTYs and cloud storage folders) on disk
+// Delete the directory used to store the container resource allocations (e.g.
+// TTYs and cloud storage folders) on disk, as well as the directory used to
+// store the SSL certificate we use for the httpserver.
 func uninitializeFilesystem() {
 	err := os.RemoveAll(fractalDir)
 	if err != nil {
@@ -882,16 +885,14 @@ func main() {
 	initializeFilesystem()
 	defer uninitializeFilesystem()
 
-	// Register a signal handler for Ctrl-C so that we still cleanup if Ctrl-C is pressed
+	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		// See our note about Sentry and goroutines above.
 		defer shutdownHostService()
 		<-sigChan
-		logger.Info("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and panicking to initiate host shutdown process...")
+		logger.Info("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and initiating host shutdown process...")
 		uninitializeFilesystem()
-		logger.Panicf("Got a Ctrl+C: already uninitialized filesystem, looking to exit")
 	}()
 
 	// Log the Git commit of the running executable
