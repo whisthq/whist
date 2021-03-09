@@ -47,9 +47,9 @@ fi
 ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 
 # This tar file, if it exists, has been retrieved from S3 and must be extracted
-tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
+tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.lz4
 if [ -f "$tarFile" ]; then
-    tar -xzf $tarFile -C $USER_CONFIGS_DIR
+    tar -I lz4 -xf $tarFile -C $USER_CONFIGS_DIR
 fi
 
 # While perhaps counterintuitive, "source" is the path in the userConfigs directory
