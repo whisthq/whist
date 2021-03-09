@@ -4,6 +4,7 @@ export type User = {
     // session auth tokens
     accessToken?: string | null // access token that lets you talk to the server when logged in
     refreshToken?: string | null // refresh token to refresh your access token when it is used up
+    encryptionToken?: string | null // encryption token for encryption app configs
     // email tokens
     emailVerificationToken?: string | null // the token that shows up in /verify?token needed to verify email
     resetToken?: string | null // the token that shows up in /reset?token needed to validate a reset
@@ -29,7 +30,7 @@ export type AuthFlow = {
     passwordResetEmail?: string | null // forgot password email
     passwordResetToken?: string | null
     passwordVerified?: string | null // null | "success" | "failed"
-    callback?: string | undefined
+    callback?: string | undefined // the URL to "call back" to (usually "fractal://")
     token?: string | null // password reset token for testing password reset
     url?: string | null // password rest url for testing pasword reset
 }

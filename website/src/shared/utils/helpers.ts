@@ -1,12 +1,18 @@
-export const generateEncryptionKey = () => {
+export const generateEncryptionToken = (password: string) => {
     /*
-        Generate an AES encryption key to send to the client-application
+        Generate an encryption key to send to the client-application
         
         Arguments:
-            None
+            password (string): plaintext password to change into encryption key
     */
 
-    //insert fancy logic
-
-    return "encryption key"
+    const crypto = require("crypto")
+    const token = crypto.pbkdf2Sync(
+        password,
+        process.env.SHA_SECRET_KEY,
+        100000,
+        32,
+        "sha256"
+    )
+    return token.toString("hex")
 }
