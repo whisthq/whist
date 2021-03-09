@@ -207,7 +207,7 @@ def get_hanging_tasks(urls, secrets, region):
     aws_tasks = set()
     aws_tasks_and_times = {}
     for cluster in db_clusters:
-        print(cluster)
+        # print(cluster)
         # aws ecs list-tasks --cluster cluster --region region
         tasks, _ = subprocess.Popen(
             [
@@ -223,7 +223,7 @@ def get_hanging_tasks(urls, secrets, region):
             stdout=subprocess.PIPE,
         ).communicate()
         tasks = json.loads(tasks)["taskArns"]
-        print(tasks)
+        # print(tasks)
         aws_tasks |= set(tasks)
         if len(tasks) > 0:
             # print("there are tasks here :)")
