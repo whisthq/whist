@@ -63,6 +63,7 @@ export const validUserCanLogin = {
     userID: "userID@fractal.co",
     name: "Valid User",
     accessToken: "accessToken",
+    encryptionToken: "encryptionToken",
     emailVerificationToken: "emailVerificationToken",
     emailVerified: true,
 }

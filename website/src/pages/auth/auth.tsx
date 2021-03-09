@@ -14,7 +14,6 @@ import { User, AuthFlow } from "shared/types/reducers"
 import { updateAuthFlow } from "store/actions/auth/pure"
 import { HEADER, AUTH_IDS, NEVER } from "testing/utils/testIDs"
 import { UPDATE_ACCESS_TOKEN } from "shared/constants/graphql"
-import { generateEncryptionKey } from "shared/utils/helpers"
 
 const Auth = (props: {
     /*
@@ -50,7 +49,6 @@ const Auth = (props: {
     const [callback, setCallback] = useState("")
     const [callbackChecked, setCallbackChecked] = useState(false)
     const [loginToken, setLoginToken] = useState("")
-    const [encryptionKey, setEncryptionKey] = useState("")
 
     const [updateAccessToken] = useMutation(UPDATE_ACCESS_TOKEN, {
         context: {
@@ -78,7 +76,6 @@ const Auth = (props: {
             location.pathname.substring(6, 17) === "loginToken="
         ) {
             setLoginToken(location.pathname.substring(17))
-            setEncryptionKey(generateEncryptionKey())
             setCallback("fractal://")
         }
 
@@ -100,7 +97,8 @@ const Auth = (props: {
             authFlow.callback !== "" &&
             callbackChecked &&
             user.accessToken &&
-            user.emailVerified
+            user.emailVerified &&
+            user.encryptionToken
         ) {
             updateAccessToken({
                 variables: {
@@ -122,6 +120,7 @@ const Auth = (props: {
         user,
         user.accessToken,
         user.emailVerified,
+        user.encryptionToken,
         loginToken,
         updateAccessToken,
         callbackChecked,
@@ -129,12 +128,7 @@ const Auth = (props: {
 
     if (redirectToCallback) {
         return (
-            <Redirect
-                to={{
-                    pathname: "/callback",
-                    state: { encryptionKey: encryptionKey },
-                }}
-            />
+            <Redirect to="/callback" />
         )
     }
 
