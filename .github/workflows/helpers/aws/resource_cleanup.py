@@ -1,7 +1,8 @@
 import subprocess
 import json
 import sys
-import time
+from datetime import datetime, timedelta, timezone
+import dateutil.parser
 
 # Uses AWS CLI to return all Auto Scaling Groups in AWS for a specified region
 def get_all_aws_asgs(region):
@@ -174,6 +175,28 @@ def get_hanging_clusters(urls, secrets, region):
     return list(aws_clusters - db_clusters)
 
 
+def delete_if_older_than_one_day(task, cluster, time):
+    now = datetime.now(timezone.utc)
+    then = dateutil.parser.parse(time)
+    if now - then > timedelta(days=1):
+        clusters, _ = subprocess.Popen(
+            [
+                "aws",
+                "ecs",
+                "stop-task",
+                "--cluster",
+                cluster,
+                "--task",
+                task,
+                "--reason",
+                "Automatically stopped by resource cleanup script (older than 1 day).",
+            ],
+            stdout=subprocess.PIPE,
+        ).communicate()
+        return " (stop triggered)"
+    return ""
+
+
 def get_hanging_tasks(urls, secrets, region):
     db_clusters = []
     db_tasks = set()
@@ -182,7 +205,9 @@ def get_hanging_tasks(urls, secrets, region):
         db_tasks |= set(get_db_tasks(url, secret, region))
 
     aws_tasks = set()
+    aws_tasks_and_times = {}
     for cluster in db_clusters:
+        print(cluster)
         # aws ecs list-tasks --cluster cluster --region region
         tasks, _ = subprocess.Popen(
             [
@@ -198,9 +223,43 @@ def get_hanging_tasks(urls, secrets, region):
             stdout=subprocess.PIPE,
         ).communicate()
         tasks = json.loads(tasks)["taskArns"]
+        print(tasks)
         aws_tasks |= set(tasks)
+        if len(tasks) > 0:
+            # print("there are tasks here :)")
+            task_times, _ = subprocess.Popen(
+                [
+                    "aws",
+                    "ecs",
+                    "describe-tasks",
+                    "--no-paginate",
+                    "--region",
+                    region,
+                    "--cluster",
+                    cluster,
+                    "--tasks",
+                ]
+                + tasks,
+                stdout=subprocess.PIPE,
+            ).communicate()
+            # print(task_times)
+            tasks_and_times = (
+                (task["containers"][0]["taskArn"], (cluster, task["createdAt"]))
+                for task in json.loads(task_times)["tasks"]
+            )
+            aws_tasks_and_times.update(dict(tasks_and_times))
 
-    return list(aws_tasks - db_tasks)
+    hanging_tasks = list(aws_tasks - db_tasks)
+
+    return [
+        (
+            task,
+            delete_if_older_than_one_day(
+                task, aws_tasks_and_times[task][0], aws_tasks_and_times[task][1]
+            ),
+        )
+        for task in hanging_tasks
+    ]
 
 
 def main():
@@ -232,7 +291,9 @@ def main():
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
-            print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in tasks]) + "\\`")
+            print(
+                "\\n- " + "\\n- ".join(["\\`" + str(t) + "\\`" + d for t, d in tasks])
+            )
 
 
 if __name__ == "__main__":
