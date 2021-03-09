@@ -64,7 +64,6 @@ func Panic(err error) {
 	if sentryTransport != nil {
 		sentryTransport.send(err)
 	}
-	fmt.Print("Stack Trace: ")
 	PrintStackTrace()
 	log.Panic(err)
 }
