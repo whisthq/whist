@@ -43,10 +43,15 @@ func Sprintf(format string, v ...interface{}) string {
 	return fmt.Sprintf(format, v...)
 }
 
+const (
+	colorReset = "\033[0m"
+	colorRed   = "\033[31m"
+)
+
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
-	log.Println(errstr)
+	log.Printf("%s%s%s", colorRed, errstr, colorReset)
 	if logzioTransport != nil {
 		logzioTransport.Send([]byte(errstr))
 	}
