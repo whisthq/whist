@@ -304,6 +304,7 @@ CREATE TABLE hardware.supported_app_images (
 
 CREATE TABLE hardware.user_app_state (
     user_id character varying(255),
+    ip character varying(255),
     task_id character varying(255) NOT NULL,
     state character varying(255)
 );
@@ -1090,6 +1091,7 @@ CREATE TABLE public.tokens (
 
 CREATE TABLE public.users (
     user_id character varying(250) NOT NULL,
+    encrypted_config_token character varying(255),
     token character varying(250),
     name character varying(250),
     password character varying(250) NOT NULL,
