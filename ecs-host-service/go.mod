@@ -12,7 +12,7 @@ require (
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
-	github.com/fractal/ecs-agent/agent v0.0.0-20210309183552-cf559bf5af6c
+	github.com/fractal/ecs-agent/agent v0.0.0-20210309214132-a92c83fc7a58
 	github.com/fractal/uinput-go v1.4.1-0.20210224145701-470172f5bd67
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-ole/go-ole v1.2.5 // indirect
