@@ -1,0 +1,57 @@
+# workflows/core-ts-linting.yml
+#
+# Core TypeScript Library: Linting
+# Lint core-ts using ESlint.
+
+name: "Core TypeScript Library: Linting"
+
+on:
+    pull_request:
+        branches:
+            - master
+            - staging
+            - dev
+    workflow_dispatch:
+
+jobs:
+    lint:
+        name: Lint core-ts
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 15
+
+            - name: Run npm install
+              working-directory: core-ts
+              run: npm install
+
+            - name: Check if Code Follows ESLint Standards
+              working-directory: core-ts
+              run: npm run lint-check
+
+    test:
+        name: Test core-ts
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 15
+
+            - name: Run npm install
+              working-directory: core-ts
+              run: npm install
+
+            - name: Run core-ts test suite
+              working-directory: core-ts
+              run: npm run test
