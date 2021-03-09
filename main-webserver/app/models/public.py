@@ -13,6 +13,7 @@ class User(db.Model):
     Attributes:
         user_id (String): User ID, typically email
         name (String): Name of user (e.g. Mike)
+        encrypted_config_token (String):  the user's app config token, stored encrypted
         token (String): The token that the user must use to initially . This token is generated
             when a user creates an account. It is sent in an email to the email address associated
             with the account. The email verification server endpoint compares the email
