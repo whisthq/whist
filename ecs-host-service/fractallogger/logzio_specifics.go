@@ -1,8 +1,10 @@
 package fractallogger
 
 import (
-	"github.com/logzio/logzio-go"
+	"log"
 	"time"
+
+	"github.com/logzio/logzio-go"
 )
 
 // Variable containing our logz.io shipping token --- filled in by linker if built on CI
@@ -10,9 +12,20 @@ var logzioShippingToken string
 
 // We use a pointer of this type so we can check if it is nil in our logging
 // functions, and therefore always call them safely.
-var logzioTransport *logzio.LogzioSender
+var logzioTransport *logzioSender
 
-func initializeLogzIO() (*logzio.LogzioSender, error) {
+// We define a custom type to be able to override the Send() function with sane
+// error handling.
+type logzioSender logzio.LogzioSender
+
+func (sender *logzioSender) Send(payload string) {
+	err := (*logzio.LogzioSender)(sender).Send([]byte(payload))
+	if err != nil {
+		log.Printf(ColorRed(Sprintf("Couldn't send payload to logz.io. Error: %s", err)))
+	}
+}
+
+func initializeLogzIO() (*logzioSender, error) {
 	if UsingProdLogging() {
 		Info("Setting up logz.io integration.")
 	} else {
@@ -34,11 +47,11 @@ func initializeLogzIO() (*logzio.LogzioSender, error) {
 		return nil, MakeError("Error initializing logz.io integration: %s", err)
 	}
 
-	return sender, nil
+	return (*logzioSender)(sender), nil
 }
 
 func StopAndDrainLogzio() {
 	if logzioTransport != nil {
-		logzioTransport.Stop()
+		(*logzio.LogzioSender)(logzioTransport).Stop()
 	}
 }
