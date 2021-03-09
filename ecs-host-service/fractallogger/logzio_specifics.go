@@ -2,6 +2,7 @@ package fractallogger
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/logzio/logzio-go"
@@ -42,6 +43,7 @@ func initializeLogzIO() (*logzioSender, error) {
 		logzio.SetUrl("https://listener.logz.io:8071"),
 		logzio.SetDrainDuration(time.Second*5),
 		logzio.SetCheckDiskSpace(false),
+		logzio.SetDebug(os.Stderr),
 	)
 	if err != nil {
 		return nil, MakeError("Error initializing logz.io integration: %s", err)
