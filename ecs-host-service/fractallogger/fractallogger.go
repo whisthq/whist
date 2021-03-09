@@ -48,7 +48,7 @@ func Error(err error) {
 	errstr := fmt.Sprintf("ERROR: %s", err)
 	log.Printf(ColorRed(errstr))
 	if logzioTransport != nil {
-		logzioTransport.Send(errstr)
+		logzioTransport.send(errstr, logzioTypeError)
 	}
 	if sentryTransport != nil {
 		sentryTransport.send(err)
@@ -59,7 +59,7 @@ func Error(err error) {
 func Panic(err error) {
 	errstr := fmt.Sprintf("PANIC: %s", err)
 	if logzioTransport != nil {
-		logzioTransport.Send(errstr)
+		logzioTransport.send(errstr, logzioTypeError)
 	}
 	if sentryTransport != nil {
 		sentryTransport.send(err)
@@ -73,7 +73,7 @@ func Info(format string, v ...interface{}) {
 	str := fmt.Sprintf(format, v...)
 	log.Print(str)
 	if logzioTransport != nil {
-		logzioTransport.Send(str)
+		logzioTransport.send(str, logzioTypeInfo)
 	}
 }
 
