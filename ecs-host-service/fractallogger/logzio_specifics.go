@@ -72,6 +72,8 @@ func initializeLogzIO() (*logzioSender, error) {
 	return (*logzioSender)(sender), nil
 }
 
+// StopAndDrainLogzio flushes events in the Logzio queue and stops new ones
+// from being recorded.
 func StopAndDrainLogzio() {
 	if logzioTransport != nil {
 		(*logzio.LogzioSender)(logzioTransport).Stop()
