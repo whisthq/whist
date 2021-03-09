@@ -52,8 +52,8 @@ const containerResourceMappings = "containerResourceMappings/"
 const userConfigs = "userConfigs/"
 
 // The filenames (NOT paths) for the encrypted and decrypted user config archives
-const encArchiveFilename = "fractal-app-config.tar.gz.enc"
-const decArchiveFilename = "fractal-app-config.tar.gz"
+const encArchiveFilename = "fractal-app-config.tar.lz4.enc"
+const decArchiveFilename = "fractal-app-config.tar.lz4"
 
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
@@ -473,7 +473,7 @@ func saveUserConfig(fractalID string) {
 		decTarPath := configPath + decArchiveFilename
 
 		tarConfigCmd := exec.Command(
-			"/usr/bin/tar", "-C", configPath, "-czf", decTarPath,
+			"/usr/bin/tar", "-I", "lz4", "-C", configPath, "-cf", decTarPath,
 			"--exclude=" + encTarPath, "--exclude=" + decTarPath,
 			".")
 		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
