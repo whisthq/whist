@@ -8,6 +8,10 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+func init() {
+	init_metadata()
+}
+
 // MakeError creates an error from format string and args.
 func MakeError(format string, v ...interface{}) error {
 	return fmt.Errorf(format, v...)
@@ -20,9 +24,10 @@ func Sprintf(format string, v ...interface{}) string {
 
 // Error logs an error and sends it to Sentry.
 func Error(err error) {
-	errstr := fmt.Sprintf("ERROR: %v", err)
-	log.Println(errstr)
-	sentry.CaptureException(err)
+	log.Println(fmt.Sprintf("ERROR: %s", err))
+	if UsingProdLogging() {
+		sentry.CaptureException(err)
+	}
 }
 
 // Panic panics on an error. We do not send it to Sentry (to save on Sentry

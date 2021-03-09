@@ -11,6 +11,30 @@ import (
 	"time"
 )
 
+// init_metadata() pre-computes and caches the results for GetAppEnvironment()
+// and UseProdLogging(). It is called in an init function in
+// `fractallogger.go`.
+func init_metadata() {
+	cachedEnvironment = func() EnvironmentType {
+		env := os.Getenv("APP_ENV")
+		switch env {
+		case "development", "dev", "DEVELOPMENT", "DEV":
+			return EnvDev
+		case "staging", "STAGING":
+			return EnvStaging
+		case "production", "prod", "PRODUCTION", "PROD":
+			return EnvProd
+		default:
+			return EnvLocalDev
+		}
+	}()
+
+	cachedUseProdLogging = func() bool {
+		strProd := os.Getenv("USE_PROD_LOGGING")
+		return (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
+	}()
+}
+
 // Variable for hash of last Git commit --- filled in by linker
 var gitCommit string
 
@@ -34,27 +58,17 @@ const (
 
 // We compute the environment type once, at program startup, and cache it in `cachedEnvironment`
 var cachedEnvironment EnvironmentType
-
-// Actually compute the environment type and cache it.
-func init() {
-	cachedEnvironment = func() EnvironmentType {
-		env := os.Getenv("APP_ENV")
-		switch env {
-		case "development", "dev", "DEVELOPMENT", "DEV":
-			return EnvDev
-		case "staging", "STAGING":
-			return EnvStaging
-		case "production", "prod", "PRODUCTION", "PROD":
-			return EnvProd
-		default:
-			return EnvLocalDev
-		}
-	}()
-}
+var cachedUseProdLogging bool
 
 // GetAppEnvironment returns the EnvironmentType of the current instance
 func GetAppEnvironment() EnvironmentType {
 	return cachedEnvironment
+}
+
+// UsingProdLogging implements the logic for us to decide whether to use
+// production-logging (i.e. with Sentry and logz.io configured).
+func UsingProdLogging() bool {
+	return cachedUseProdLogging
 }
 
 // The following functions are useful for getting system information that we
