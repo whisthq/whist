@@ -341,7 +341,7 @@ def aws_container_assign(**kwargs):
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
-        if check_if_maintenance(region):
+        if check_if_maintenance():
             return (
                 jsonify(
                     {
