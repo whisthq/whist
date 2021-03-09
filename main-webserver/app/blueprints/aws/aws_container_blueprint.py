@@ -6,10 +6,8 @@ from sqlalchemy.orm.exc import NoResultFound
 from app import fractal_pre_process
 from app.maintenance.maintenance_manager import (
     check_if_maintenance,
-    try_start_update,
-    try_end_update,
-    try_start_update_all,
-    try_end_update_all,
+    try_start_maintenance,
+    try_end_maintenance,
 )
 from app.celery.aws_ecs_creation import (
     assign_container,
@@ -221,32 +219,20 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "start_update":
+    if action == "start_maintenance":
         # synchronously try to put the webserver into maintenance mode.
         # return is a dict {"success": <bool>, "msg": <str>}. success
         # is only True if webserver is in maintenance mode. msg is
         # human-readable and tells the client what happened.
-        region_name = kwargs["body"].get("region_name", None)
-        success, msg = None, None
-        if region_name is None:
-            success, msg = try_start_update_all()
-        else:
-            success, msg = try_start_update(region_name=region_name)
+        success, msg = try_start_maintenance()
         return jsonify({"success": success, "msg": msg}), SUCCESS
 
-    if action == "end_update":
+    if action == "end_maintenance":
         # synchronously try to end maintenance mode.
         # return is a dict {"success": <bool>, "msg": <str>}. success
         # is only True if webserver has ended maintenance mode. msg is
         # human-readable and tells the client what happened.
-        region_name = kwargs["body"].get("region_name", None)
-        success, msg = None, None
-        if region_name is None:
-            success, msg = try_end_update_all()
-        else:
-            success, msg = try_end_update(
-                region_name=region_name,
-            )
+        success, msg = try_end_maintenance()
         return jsonify({"success": success, "msg": msg}), SUCCESS
 
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
