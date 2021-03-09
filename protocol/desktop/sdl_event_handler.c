@@ -261,7 +261,7 @@ int handle_mouse_motion(SDL_Event *event) {
 
     if (is_relative && !mouse_state.is_relative) {
         // old datum was absolute, new is relative
-        // hence, clear any pending absolute motion
+        // Hence, we flush out the old datum
         if (update_mouse_motion() != 0) {
             return -1;
         }

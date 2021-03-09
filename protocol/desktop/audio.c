@@ -122,13 +122,18 @@ void reinit_audio_device() {
     SDL_zero(audio_spec);
     wanted_spec.channels = 2;
     wanted_spec.freq = audio_context.decoder_frequency;
-    LOG_INFO("Audio Freqency: %d", wanted_spec.freq);
     wanted_spec.format = AUDIO_F32SYS;
     wanted_spec.silence = 0;
     wanted_spec.samples = SDL_AUDIO_BUFFER_SIZE;
 
     audio_context.dev =
         SDL_OpenAudioDevice(NULL, 0, &wanted_spec, &audio_spec, SDL_AUDIO_ALLOW_FORMAT_CHANGE);
+    if (wanted_spec.freq != audio_spec.freq) {
+        LOG_WARNING("Got Frequency %d, But Wanted Frequency %d...", audio_spec.freq,
+                    wanted_spec.freq);
+    } else {
+        LOG_INFO("Using Audio Freqency: %d", audio_spec.freq);
+    }
     if (audio_context.dev == 0) {
         LOG_ERROR("Failed to open audio: %s", SDL_GetError());
     } else {
@@ -155,10 +160,15 @@ void init_audio() {
     }
     // Set audio to be reinit'ed
     audio_refresh = true;
+    rendering = false;
 }
 
 void destroy_audio() {
     LOG_INFO("Destroying audio system");
+    // Ensure is thread-safe against arbitrary calls to render_audio
+    while (rendering) {
+        SDL_Delay(5);
+    }
     destroy_audio_device();
 }
 
@@ -250,7 +260,7 @@ void update_audio() {
     // If we're currently rendering an audio packet, don't update audio
     if (rendering) {
         // Additionally, if rendering == true, the audio_context struct is being used,
-        // so a race condition will occur if call SDL_GetQueuedAudioSize at the same time
+        // so a race condition will occur if we call SDL_GetQueuedAudioSize at the same time
         return;
     }
 
@@ -281,6 +291,11 @@ void update_audio() {
         }
     }
 
+    // Return if there's nothing to play
+    if (last_played_id == -1) {
+        return;
+    }
+
     // Buffering audio controls whether or not we're trying to accumulate an audio buffer
     static bool buffering_audio = false;
 
@@ -300,10 +315,6 @@ void update_audio() {
             LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_no_more_audio);
             buffering_audio = false;
         }
-    }
-
-    if (last_played_id == -1) {
-        return;
     }
 
     int next_to_play_id;
