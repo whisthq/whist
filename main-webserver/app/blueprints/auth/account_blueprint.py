@@ -62,11 +62,15 @@ def account_post(action, **kwargs):
         # Only returns email verification, access, and refresh tokens if
         # the username ends in @fractal.co for testing frontend integration tests
 
-        username, password = body["username"], body["password"]
+        username, password, encrypted_token = (
+            body["username"],
+            body["password"],
+            body["encrypted_token"],
+        )
         name = body["name"]
         reason_for_signup = body["feedback"]
 
-        output = register_helper(username, password, name, reason_for_signup)
+        output = register_helper(username, password, token, name, reason_for_signup)
 
         return jsonify(output), output["status"]
 
