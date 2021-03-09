@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy.sql import text
+from sqlalchemy.sql import expression, text
 from sqlalchemy.types import Text
 
 from ._meta import db
@@ -19,6 +19,8 @@ class User(db.Model):
             verification token it receives to this token.
         password (String): Hashed password
         stripe_customer_id (String): A pointer to a customer record on Fractal's Stripe account.
+        subscribed (Boolean): A boolean indicating whether or not the user should receive service.
+            True iff the User's stripe subscription is "active" or "trialing".
         reason_for_signup (String): How users heard about Fractal
         verified (Boolean): True/false email verified
     """
@@ -30,6 +32,7 @@ class User(db.Model):
     token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
     stripe_customer_id = db.Column(db.String(250))
+    subscribed = db.Column(db.Boolean, server_default=expression.true())
     created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)
     verified = db.Column(db.Boolean, default=text("false"))
