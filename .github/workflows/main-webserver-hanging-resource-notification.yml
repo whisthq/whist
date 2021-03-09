@@ -38,6 +38,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install Utility to Get Date and Time
+              run: pip install python-dateutil
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -80,6 +88,9 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install Utility to Kill Lingering AWS Packer Builder Instances
+              run: pip install aws-hashicorp-packer-reaper
+
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -90,7 +101,6 @@ jobs:
             - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
               working-directory: main-webserver
               run: |
-                  pip install aws-hashicorp-packer-reaper
                   packer_instances=$(aws-hashicorp-packer-reaper list)
                   while IFS= read -r line 
                   do 
