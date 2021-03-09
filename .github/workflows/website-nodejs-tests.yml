@@ -47,7 +47,6 @@ jobs:
             - name: Run npm install
               working-directory: website
               run: |
-                  npm config set '//npm.pkg.github.com/:_authToken' "${NPM_TOKEN}"
                   npm install
 
             - name: Increases watchers
