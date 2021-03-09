@@ -72,6 +72,7 @@
         "start": "SKIP_PREFLIGHT_CHECK=true craco start",
         "start-docker": "SKIP_PREFLIGHT_CHECK=true REACT_APP_USE_DOCKER=true craco start",
         "build": "SKIP_PREFLIGHT_CHECK=true craco build",
+        "build-netlify": "export REACT_APP_VERSION=$COMMIT_REF && npm install ../core-ts && npm run build",
         "e2e-test": "jest --runInBand",
         "ci-test": "craco test --env=jest-environment-jsdom-sixteen && jest --runInBand",
         "test": "craco test --env=jest-environment-jsdom-sixteen",
