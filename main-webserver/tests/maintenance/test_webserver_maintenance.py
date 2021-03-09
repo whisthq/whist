@@ -6,9 +6,8 @@ import os
 import pytest
 
 from app.maintenance.maintenance_manager import (
-    _REDIS_CONN,
     _REDIS_TASKS_KEY,
-    _REDIS_UPDATE_KEY,
+    _REDIS_MAINTENANCE_KEY,
 )
 from app.celery.aws_ecs_creation import (
     _create_new_cluster,
@@ -127,7 +126,7 @@ def try_problematic_endpoint(client, authorized, region_name: str, endpoint_type
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_maintenance_mode_single_region(
+def test_maintenance_mode(
     client,
     make_authorized_user,
     set_valid_subscription,
@@ -149,6 +148,9 @@ def test_maintenance_mode_single_region(
     1. have multiple celery workers to concurrently run all problematic endpoints? Current strategy
     is to do a mix of them throughout test execution.
     """
+    # _REDIS_CONN is not initialized until here
+    from app.maintenance.maintenance_manager import _REDIS_CONN
+
     # this is a free-trial user
     authorized = make_authorized_user(
         stripe_customer_id="random1234",
@@ -168,19 +170,19 @@ def test_maintenance_mode_single_region(
     # let celery actually start handling the task but not finish
     time.sleep(0.5)
     # update key should not exist yet.
-    assert not _REDIS_CONN.exists(_REDIS_UPDATE_KEY)
+    assert not _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
     # task key should exist and have one item
     assert _REDIS_CONN.exists(_REDIS_TASKS_KEY)
     tasks = _REDIS_CONN.lrange(_REDIS_TASKS_KEY, 0, -1)
     assert len(tasks) == 1
 
     # start maintenance while existing task is running
-    resp = client.post("/aws_container/start_update")
+    resp = client.post("/aws_container/start_maintenance")
 
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is False  # False because a task is still running
     # the update key should exist now that someone started maintenance
-    assert _REDIS_CONN.exists(_REDIS_UPDATE_KEY)
+    assert _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
 
     # a new task should fail out, even though webserver is not in maintenance mode yet
     resp_fail = try_problematic_endpoint(client, authorized, "us-east-1", "te_cc")
@@ -195,7 +197,7 @@ def test_maintenance_mode_single_region(
     assert getattr(_create_new_cluster, "num_calls") == 1
 
     # now maintenance request should succeed
-    resp = client.post("/aws_container/start_update")
+    resp = client.post("/aws_container/start_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -211,12 +213,12 @@ def test_maintenance_mode_single_region(
     assert resp.status_code == WEBSERVER_MAINTENANCE
 
     # now end maintenance
-    resp = client.post("/aws_container/end_update")
+    resp = client.post("/aws_container/end_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
     # update key should not exist anymore
-    assert not _REDIS_CONN.exists(_REDIS_UPDATE_KEY)
+    assert not _REDIS_CONN.exists(_REDIS_MAINTENANCE_KEY)
 
     # tasks should work again
     resp_final = try_problematic_endpoint(client, authorized, "us-east-1", "a_c")

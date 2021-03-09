@@ -152,7 +152,7 @@ def test_endpoint(action, **kwargs):
             )
 
     # handle the action. The general design pattern is to parse the arguments relevant to
-    # the action and then start a celery task to handle it. `start_update` and `end_update`
+    # the action and then start a celery task to handle it. `start_maintenance` and `end_maintenance`
     # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
