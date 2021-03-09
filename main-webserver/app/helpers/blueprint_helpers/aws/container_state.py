@@ -51,7 +51,9 @@ def can_update_container_state(user, task_id, obj=None):
     return (not obj or not task_id) or (obj.task_id == task_id and obj.state != CANCELLED)
 
 
-def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None, force=False):
+def set_container_state(
+    keyuser, keytask, user_id=None, state=None, task_id=None, ip=None, force=False
+):
     """Set a container state in the UserContinerState (user_app_state) table. We
     require a keyuser (and potentially keytask) to set it. You can null out keytask only if
     the entry already exists and force is true. Otherwise keytask is required to check
@@ -65,6 +67,7 @@ def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None
         in that entry.
         user_id (str, optional): The user_id we want to set. Defaults to None.
         state (str, optional): The state we want to set. Defaults to None.
+        ip (str, optional): which IP we want to set. Defaults to None.
         task_id (str, optional): The task id we want to set. Defaults to None.
         force (bool, optional): Whether to update with a check for validity or not.
         Defaults to False.
@@ -79,32 +82,31 @@ def set_container_state(keyuser, keytask, user_id=None, state=None, task_id=None
                 obj.task_id = task_id
             if state:
                 obj.state = state
+            if ip:
+                obj.ip = ip
             if user_id:
                 obj.user_id = user_id
             db.session.commit()
         else:
             if not state:
                 state = PENDING
-            create_container_state(keyuser, keytask, state=state)
+            create_container_state(keyuser, keytask, state=state, ip=ip)
 
 
-def create_container_state(user_id, task_id, state=PENDING):
+def create_container_state(user_id, task_id, state=PENDING, ip=None):
     """Creates a new entry into the app_info table.
 
     Args:
         user_id (str): The username of the user for whom'stdv this entry belongs.
         task_id (str): The task id of the task that's creating this.
+        ip (str, optional): the IP of this container (none if none assigned)
         state (str, optional): The state that we want to write to the table for this
         new object. Defaults to PENDING.
 
     Raises:
         Exception: if it fails to commit the creation somehow.
     """
-    obj = UserContainerState(
-        user_id=user_id,
-        task_id=task_id,
-        state=state,
-    )
+    obj = UserContainerState(user_id=user_id, task_id=task_id, state=state, ip=ip)
     sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), obj)
 
     if not sql:
