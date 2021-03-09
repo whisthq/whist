@@ -1,11 +1,15 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
+
+from app.constants.http_codes import SUCCESS
+from app.helpers.blueprint_helpers.admin.hasura_get import auth_token_helper, login_token_helper
+from app.helpers.utils.general.logs import fractal_logger
 
 hasura_bp = Blueprint("hasura_bp", __name__)
 
 
 @hasura_bp.route("/hasura/auth")
-@jwt_required()
+@jwt_required(optional=True)
 def hasura_auth_get():
     """The endpoint for the hasura auth hook.
 
@@ -16,11 +20,15 @@ def hasura_auth_get():
         and "X-Hasura-Login-Token" that will be returned to Hasura for permissions checking.
 
     """
+    auth_token = request.headers.get("Authorization")
+    auth_output = auth_token_helper(auth_token)
 
-    return jsonify(
-        {
-            "X-Hasura-Login-Token": request.headers.get("X-Hasura-Login-Token", ""),
-            "X-Hasura-Role": "user",
-            "X-Hasura-User-Id": get_jwt_identity(),
-        }
-    )
+    login_token = request.headers.get("X-Hasura-Login-Token")
+    login_output = login_token_helper(login_token)
+
+    output = dict(auth_output)
+    output.update(login_output)
+
+    fractal_logger.info(str(output))
+
+    return jsonify(output), SUCCESS

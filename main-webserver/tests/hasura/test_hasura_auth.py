@@ -1,16 +1,11 @@
 """Tests for the /hasura/auth endpoint."""
 
 import datetime
-
 from datetime import datetime as dt
 from http import HTTPStatus
-
-import pytest
-
 from flask_jwt_extended import create_access_token
 
 
-@pytest.mark.skip
 def test_no_headers(client):
     response = client.get("/hasura/auth")
     assert response.status_code == HTTPStatus.OK
@@ -21,7 +16,6 @@ def test_no_headers(client):
     }
 
 
-@pytest.mark.skip
 def test_login_header(client):
     response = client.get("/hasura/auth", headers={"X-Hasura-Login-Token": "login_token"})
     assert response.status_code == HTTPStatus.OK
