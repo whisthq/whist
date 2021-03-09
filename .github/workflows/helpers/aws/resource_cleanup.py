@@ -179,7 +179,7 @@ def get_hanging_clusters(urls, secrets, region):
 def delete_if_older_than_one_day(task, cluster, time):
     now = datetime.now(timezone.utc)
     then = dateutil.parser.parse(time)
-    if now - then > timedelta(days=1):
+    if now - then > timedelta(seconds=1):
         clusters, _ = subprocess.Popen(
             [
                 "aws",
