@@ -71,7 +71,7 @@
         "start": "craco start",
         "start-docker": "REACT_APP_USE_DOCKER=true craco start",
         "build": "craco build",
-        "build-netlify": "export REACT_APP_VERSION=$COMMIT_REF && npm install ../core-ts && npm run build",
+        "build-netlify": "export REACT_APP_VERSION=$COMMIT_REF && npm run build && rm -rf /opt/build/cache",
         "e2e-test": "jest --runInBand",
         "ci-test": "craco test --env=jest-environment-jsdom-sixteen && jest --runInBand",
         "test": "craco test --env=jest-environment-jsdom-sixteen",
