@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	init_metadata()
+	initMetadata()
 
 	// We declare error separately to avoid shadowing logzioSender.
 	var err error

@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-// init_metadata() pre-computes and caches the results for GetAppEnvironment()
+// initMetadata() pre-computes and caches the results for GetAppEnvironment()
 // and UseProdLogging(). It is called in an init function in
 // `fractallogger.go`.
-func init_metadata() {
+func initMetadata() {
 	cachedEnvironment = func() EnvironmentType {
 		env := os.Getenv("APP_ENV")
 		switch env {
@@ -36,9 +36,9 @@ func init_metadata() {
 	}()
 }
 
-// Check that the program has been started with the correct permissions --- for
-// now, we just want to run as root, but this service could be assigned its own
-// user in the future.
+// RequireRootPermissions checks that the program has been started with the
+// correct permissions --- for now, we just want to run as root, but this
+// service could be assigned its own user in the future.
 func RequireRootPermissions() {
 	if os.Geteuid() != 0 {
 		log.Fatal("This service needs to run as root!")
