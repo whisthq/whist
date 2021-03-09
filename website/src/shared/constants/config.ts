@@ -96,10 +96,20 @@ const environment: FractalEnvironment = {
     },
 }
 
-const LIVE_ENV = process.env.REACT_APP_ENVIRONMENT
-    ? process.env.REACT_APP_ENVIRONMENT.toString()
-    : "development"
-// export const config: any = environment.local
+const VALID_ENVS = new Set(["local", "development", "staging", "production"])
+
+const LIVE_ENV = (() => {
+    if (!process.env.REACT_APP_ENVIRONMENT) return "development"
+    if (!VALID_ENVS.has(process.env.REACT_APP_ENVIRONMENT.toString()))
+        throw new Error(
+            "Environment variable REACT_APP_ENVIRONMENT must be one of: " +
+                Array.from(VALID_ENVS).join(", ") +
+                ". Received: " +
+                process.env.REACT_APP_ENVIRONMENT
+        )
+    return process.env.REACT_APP_ENVIRONMENT.toString()
+})()
+
 export const config: FractalConfig = (() => {
     if (process.env.NODE_ENV !== "development")
         return environment[LIVE_ENV as keyof FractalEnvironment]
