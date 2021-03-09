@@ -201,6 +201,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 
 int32_t send_video(void* opaque) {
     UNUSED(opaque);
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     SDL_Delay(500);
 
 #if defined(_WIN32)
@@ -599,6 +600,7 @@ static int sample_rate = -1;
 
 int32_t send_audio(void* opaque) {
     UNUSED(opaque);
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
     int id = 1;
 
     AudioDevice* audio_device = create_audio_device();
