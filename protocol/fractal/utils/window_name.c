@@ -14,6 +14,9 @@ get_focused_window_name(name);
 destroy_window_name_getter();
 */
 
+#include "../core/fractal.h"
+#include "window_name.h"
+
 #if defined(_WIN32)
 
 // TODO: implement functionality for windows servers
@@ -31,9 +34,6 @@ void destroy_window_name_getter() {
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <stdbool.h>
-
-#include "../core/fractal.h"
-#include "window_name.h"
 
 Display* display;
 
