@@ -111,7 +111,7 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 	// Verify authorization and unmarshal into the right object type
 	var reqdata MountCloudStorageRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Infof(err.Error())
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
 
@@ -155,7 +155,7 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SetContainerStartValuesRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Infof(err.Error())
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
 
@@ -204,7 +204,7 @@ func processRegisterDockerContainerIDRequest(w http.ResponseWriter, r *http.Requ
 	// Verify authorization and unmarshal into the right object type
 	var reqdata RegisterDockerContainerIDRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Infof(err.Error())
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
 
@@ -272,7 +272,7 @@ func processCreateUinputDevicesRequest(w http.ResponseWriter, r *http.Request, q
 	// Verify authorization and unmarshal into the right object type
 	var reqdata CreateUinputDevicesRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Infof(err.Error())
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
 
@@ -336,7 +336,7 @@ func processRequestPortBindingsRequest(w http.ResponseWriter, r *http.Request, q
 	// Verify authorization and unmarshal into the right object type
 	var reqdata RequestPortBindingsRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Infof(err.Error())
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
 	}
 
