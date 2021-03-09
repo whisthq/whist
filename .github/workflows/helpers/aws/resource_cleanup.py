@@ -175,6 +175,7 @@ def get_hanging_clusters(urls, secrets, region):
     return list(aws_clusters - db_clusters)
 
 
+# DOCUMENT ME
 def delete_if_older_than_one_day(task, cluster, time):
     now = datetime.now(timezone.utc)
     then = dateutil.parser.parse(time)
