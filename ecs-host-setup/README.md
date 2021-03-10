@@ -101,7 +101,6 @@ Previously, the Docker daemon and ECS Agent would start up on host machine at bo
 ## Publishing
 
 The Fractal AMIs get automatically published to AWS EC2 through the `fractal-publish-ami.yml` GitHub Actions workflow. See `.github/workflows/fractal-publish-ami.yml` for the exact list of AWS regions supported and the AMI parameters.
-The workflow uses [Packer](https://www.packer.io/) to automatically build and provision AMIs, then copy to all active regions. 
+The workflow uses [Packer](https://www.packer.io/) to automatically build and provision AMIs, then copy to all active regions.
 
 Packer is run with a single command and a configuration file (`ami_config.json`), which the workflow modifies to contain the parameters defined in the workflow. The first provisioner waits for the cloud instance to to boot, which seems to fix the ip connectivity issues that sporadically arise. The rest of the provisioners provide Packer with the setup scripts to run, when to reboot, how long to wait after reboot, etc. The post-processor creates a file `manifest.json` (upon successful build) that contains the created AMI IDs. If Packer fails, the file is not found and the GitHub Action fails.
-
