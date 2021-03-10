@@ -56,7 +56,7 @@ const Plan = (props: {
                     <div className="mt-4 text-4xl font-medium">
                         Confirm Your Plan
                     </div>
-                    <div className="mt-6">
+                    <div className="font-body mt-6">
                         Currently, only the Starter plan is available. More
                         plans will be coming soon.
                     </div>
@@ -88,7 +88,7 @@ const Plan = (props: {
                 </div>
                 <div data-testid={PLAN_IDS.NEXT}>
                     <button
-                        className="mt-8 text-md font-medium flex"
+                        className="font-body mt-8 text-md font-medium flex"
                         style={{ opacity: checkedPlan ? "1" : ".6" }}
                         disabled={!checkedPlan}
                         onClick={submitPlan}

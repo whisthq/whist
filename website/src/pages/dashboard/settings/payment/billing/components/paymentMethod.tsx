@@ -50,14 +50,14 @@ const PaymentMethod = (props: {
             <div className="mt-4 text-4xl font-medium tracking-wide">
                 Enter a Payment Method
             </div>
-            <div className="mt-6">
+            <div className="font-body mt-6">
                 You have selected the{" "}
                 <span className="font-medium tracking-wide">
                     {paymentFlow.plan} plan
                 </span>
                 . Your first seven days are free, and you can cancel anytime.
             </div>
-            <div className="mt-8 mb-4 font-medium">Your card</div>
+            <div className="font-body font-semibold mt-8 mb-4 font-medium">Your card</div>
             {hasCard ? (
                 <>
                     {editingCard ? (
@@ -72,13 +72,13 @@ const PaymentMethod = (props: {
                                         alt=""
                                     />
                                 )}
-                                <div>
+                                    <div className="font-body">
                                     **** **** **** {stripeInfo.cardLastFour}
                                 </div>
                             </div>
                             <div className="flex justify-between">
                                 <div
-                                    className="bg-blue-lightest text-black px-4 py-1 mt-3 text-xs rounded font-medium cursor-pointer"
+                                    className="font-body bg-blue-lightest text-black px-4 py-1 mt-3 text-xs rounded font-medium cursor-pointer"
                                     onClick={() => {
                                         setEditingCard(true)
                                         setSavedCard(false)

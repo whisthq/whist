@@ -25,7 +25,7 @@ const Restricted = (props: { user: User; formFilledOut: boolean }) => {
             <div className="h-screen md:h-96">
                 <div className="m-auto max-w-screen-sm text-center bg-blue-lightest rounded px-12 py-12 border border-gray-400 relative top-16">
                     <div className="text-3xl">An invite is required.</div>
-                    <div className="mt-4">
+                    <div className="mt-4 font-body">
                         Fractal is currently in beta and access is invite-only.
                         You can apply for an invite below. Afterward, you'll be
                         added to our invite list and we'll email you when we're
@@ -55,7 +55,7 @@ const Restricted = (props: { user: User; formFilledOut: boolean }) => {
             <div className="h-screen md:h-96">
                 <div className="m-auto max-w-screen-sm text-center bg-blue-lightest rounded px-12 py-12 border border-gray-400 relative top-16">
                     <div className="text-3xl">An invite on its way.</div>
-                    <div className="mt-4">
+                    <div className="mt-4 font-body">
                         Thank you for applying for an invite. We're currently
                         sending out invites on a rolling basis. You should
                         expect to receive one via email at {user.userID} within

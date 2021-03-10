@@ -110,22 +110,22 @@ const Checkout = (props: {
             }
         >
             <div data-testid={PAYMENT_IDS.INFO}>
-                <div>
+                <div className="font-body font-semibold">
                     Subtotal:{" "}
-                    <div className="text-md float-right font-medium">
+                    <div className="font-body text-md float-right font-medium">
                         ${monthlyPrice.toFixed(2)} USD
                     </div>
                 </div>
-                <div>
+                <div className="font-body font-semibold">
                     Tax:{" "}
-                    <div className="text-md float-right font-medium">
+                    <div className="font-body text-md float-right font-medium">
                         ${tax.toFixed(2)} USD
                     </div>
                 </div>
                 <div className="mt-8 mb-4 border border-blue-200 w-full" />
-                <div>
+                <div className="font-body font-semibold">
                     Total:{" "}
-                    <div className="text-md float-right font-medium">
+                    <div className="font-body text-md float-right font-medium">
                         ${(monthlyPrice + tax).toFixed(2)} USD
                     </div>
                 </div>
@@ -144,20 +144,20 @@ const Checkout = (props: {
                                 }}
                             />
                         ) : (
-                            <span>Submit</span>
+                            <span className="font-body">Submit</span>
                         )}
                     </button>
                 </div>
                 {paymentWarning ? (
                     <div data-testid={PAYMENT_IDS.WARN}>
-                        <div className="mt-8 text-red-500 text-xs tracking-wide leading-normal">
+                        <div className="font-body mt-8 text-red-500 text-xs tracking-wide leading-normal">
                             There was an error submitting your payment. Please
                             make sure that your card info and zip code are
                             correct.
                         </div>
                     </div>
                 ) : (
-                    <div className="text-xs mt-8 leading-normal tracking-wide">
+                    <div className="font-body text-xs mt-8 leading-normal tracking-wide">
                         Note: You will not be charged until{" "}
                         <span className="font-medium">{trialEnd}</span>, which
                         is the end of your extended 7-day free trial. After

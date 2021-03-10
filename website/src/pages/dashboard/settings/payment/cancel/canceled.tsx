@@ -39,7 +39,7 @@ const Canceled = (props: { user: User }) => {
                 <div className="flex-none md:flex mt-4">
                     <div data-testid={CANCELED_IDS.ADD}>
                         <button
-                            className="px-12 py-2.5 bg-blue text-white mt-4 rounded mr-2 hover:bg-mint hover:text-black duration-500"
+                            className="font-body px-12 py-2.5 bg-blue text-white mt-4 rounded mr-2 hover:bg-mint hover:text-black duration-500"
                             onClick={addPlan}
                         >
                             Add a New Plan
@@ -47,7 +47,7 @@ const Canceled = (props: { user: User }) => {
                     </div>
                     <div data-testid={CANCELED_IDS.BACK}>
                         <button
-                            className="md:px-12 py-2.5 text-gray mt-4"
+                            className="font-body md:px-12 py-2.5 text-gray mt-4"
                             onClick={backToProfile}
                         >
                             Back to Profile

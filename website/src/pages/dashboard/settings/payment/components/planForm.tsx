@@ -4,6 +4,7 @@ import { connect } from "react-redux"
 import history from "shared/utils/history"
 import { PLANS } from "shared/constants/stripe"
 import { StripeInfo } from "shared/types/reducers"
+import classNames from "classnames"
 
 import styles from "styles/profile.module.css"
 import { E2E_DASHBOARD_IDS, PLAN_IDS } from "testing/utils/testIDs"
@@ -34,7 +35,7 @@ const PlanForm = (props: { stripeInfo: StripeInfo }) => {
     return (
         <div style={{ marginBottom: 25 }}>
             <div className="flex justify-between">
-                <div className={styles.sectionTitle}>Plan</div>
+                <div className={classNames("font-body", styles.sectionTitle)}>Plan</div>
                 <div
                     style={{
                         display: "flex",
@@ -44,7 +45,7 @@ const PlanForm = (props: { stripeInfo: StripeInfo }) => {
                         <button
                             type="button"
                             onClick={cancelPlan}
-                            className="text-red cursor-pointer text-sm font-medium bg-none outline-none border-none pb-3"
+                            className="font-body text-red cursor-pointer text-sm font-medium bg-none outline-none border-none pb-3"
                             id={E2E_DASHBOARD_IDS.CANCELPLAN}
                         >
                             Cancel
@@ -65,10 +66,10 @@ const PlanForm = (props: { stripeInfo: StripeInfo }) => {
                             justifyContent: "space-between",
                         }}
                     >
-                        <div className="font-medium">{stripeInfo.plan}</div>
-                        <div>
+                        <div className="font-body font-medium">{stripeInfo.plan}</div>
+                        <div className="font-body">
                             <span
-                                className="relative bottom-0.5 right-1 font-medium"
+                                className="font-body relative bottom-0.5 right-1 font-medium"
                                 style={{
                                     fontSize: 10,
                                 }}

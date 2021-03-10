@@ -6,6 +6,7 @@ import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
 import { CARDS } from "shared/constants/stripe"
 import CardField from "shared/components/cardField"
 import { StripeInfo } from "shared/types/reducers"
+import classNames from "classnames"
 
 import {
     PROFILE_IDS,
@@ -51,7 +52,7 @@ const PaymentForm = (props: {
      */
     return (
         <div data-testid={PROFILE_IDS.PAY}>
-            <div className={styles.sectionTitle}>Payment Information</div>
+            <div className={classNames("font-body", styles.sectionTitle)}>Payment Information</div>
             <div className={styles.sectionInfo}>
                 {editingCard ? (
                     <div
@@ -84,13 +85,13 @@ const PaymentForm = (props: {
                                         alt=""
                                     />
                                 )}
-                                <div>
+                                <div className="font-body">
                                     **** **** **** {stripeInfo.cardLastFour}
                                 </div>
                             </div>
                         ) : (
                             <div
-                                className={styles.dashedBox}
+                                className={classNames("font-body", styles.dashedBox)}
                                 data-testid={PAYMENT_IDS.ADDCARD}
                                 onClick={() => {
                                     setEditingCard(true)
@@ -108,7 +109,7 @@ const PaymentForm = (props: {
                                 }}
                             >
                                 {savedCard && (
-                                    <div className={styles.saved}>Saved!</div>
+                                    <div className={classNames("font-body", styles.saved)}>Saved!</div>
                                 )}
                                 <FaPencilAlt
                                     id={E2E_DASHBOARD_IDS.EDITCARD}
