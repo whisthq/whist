@@ -273,7 +273,12 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
 def _get_num_extra(taskdef, location):
     """
     Function determining how many containers to preboot based on type
-    right now only preboots chrome
+    
+    Specifically, given a taskdef and region, we first figure out
+    how many tasks we want as a buffer -- which is proportional
+    to the number of live users.  We then see how full our
+    current buffer is, and return the amount we'd need to
+    expand it to get to our ideal buffer
     :param taskdef: the task definition ARN of the container
     :param location:  what region the task is being booted in
     :return: integer determining how many containers to preboot
