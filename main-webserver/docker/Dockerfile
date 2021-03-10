@@ -1,5 +1,5 @@
 # USAGE: docker build --file docker/Dockerfile ./
-# - This assumes the build context is the repo root (see references to requirements.txt)
+# - This assumes the build context is the main-webserver/ subrepo (see references to requirements.txt)
 
 # Use official Python docker image to create the build artifacts.
 # - The multi-stage pattern is being used since various python dependencies require compilation
@@ -41,4 +41,11 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Change to the app directory, which is a mounted Docker volume.
 WORKDIR /app
+
+# Creates a non-root user and adds permission to access the /app folder.
+# Besides privilage escalation mitigation benefits, using a non-root user
+# keeps celery from complaining about being run as root when it starts up.
+RUN useradd appuser && chown -R appuser /app
+USER appuser
+
 ENTRYPOINT ["./stem-cell.sh"]
