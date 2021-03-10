@@ -17,7 +17,6 @@ relate different events across server and client.
 #include <stdlib.h>
 #include <string.h>
 
-#include "logging.h"
 #include <fractal/core/fractal.h>
 #include "clock.h"
 
@@ -52,7 +51,7 @@ double get_timer(clock timer) {
     double elapsed_time = (t2.tv_sec - timer.tv_sec) * MS_IN_SECOND;  // sec to ms
     elapsed_time += (t2.tv_usec - timer.tv_usec) / US_IN_MS;          // us to ms
 
-    // printf("elapsed time in ms is: %f\n", elapsedTime);
+    // LOG_INFO("elapsed time in ms is: %f\n", elapsedTime);
 
     // standard var to return and convert to seconds since it gets converted to
     // ms in function call
@@ -100,12 +99,12 @@ char* current_time_str() {
 
 int get_utc_offset() {
 #if defined(_WIN32)
+    LOG_ERROR("Unimplemented on Windows!");
     return 0;
 #else
     time_t t = time(NULL);
     struct tm lt = {0};
     localtime_r(&t, &lt);
-    printf("dst flag %d \n \n", lt.tm_isdst);
 
     return (int)lt.tm_gmtoff / (60 * 60);
 #endif
@@ -113,6 +112,7 @@ int get_utc_offset() {
 
 int get_dst() {
 #if defined(_WIN32)
+    LOG_ERROR("Unimplemented on Windows!");
     return 0;
 #else
     time_t t = time(NULL);
@@ -171,9 +171,11 @@ int get_time_data(FractalTimeData* time_data) {
 }
 
 void set_timezone_from_iana_name(char* linux_tz_name) {
-    // Two spaces to hide from bash history
+#ifdef _WIN32
+    LOG_ERROR("Unimplemented on Windows!");
+#else
     char cmd[512];
-    int length_used = snprintf(cmd, sizeof(cmd), "timedatctl set-timezone %s", linux_tz_name);
+    int length_used = snprintf(cmd, sizeof(cmd), "timedatectl set-timezone %s", linux_tz_name);
 
     if (length_used >= (int)sizeof(cmd)) {
         LOG_ERROR("Error: Timezone given is too long! %s", linux_tz_name);
@@ -181,12 +183,12 @@ void set_timezone_from_iana_name(char* linux_tz_name) {
     }
 
     runcmd(cmd, NULL);
-
-    return;
+#endif
 }
 
 void set_timezone_from_windows_name(char* win_tz_name) {
-    char cmd[500];
+#ifdef _WIN32
+    char cmd[256];
     //    Timezone name must end with no white space
     for (size_t i = 0; win_tz_name[i] != '\0'; i++) {
         if (win_tz_name[i] == '\n') {
@@ -196,95 +198,92 @@ void set_timezone_from_windows_name(char* win_tz_name) {
             win_tz_name[i] = '\0';
         }
     }
-    snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
+    int length_used =
+        snprintf(cmd, sizeof(cmd), "powershell -command \"Set-TimeZone -Id '%s'\"", win_tz_name);
+
+    if (length_used >= (int)sizeof(cmd)) {
+        LOG_ERROR("Error: Timezone given is too long! %s", win_tz_name);
+        return;
+    }
 
     char* response = NULL;
     runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s -> %s", cmd, response);
+    // LOG_DEBUG("Timezone powershell command: %s -> %s", cmd, response);
     free(response);
-    return;
+#else
+    LOG_ERROR("Unimplemented on Linux!");
+#endif
 }
 
 void set_timezone_from_utc(int utc, int dst_flag) {
-#ifndef _WIN32
-    // TODO come back to this when we have sudo password on linux server
-    //    char cmd[5000];
-    //    // Negative one because UNIX UTC values are flipped from usual.
-    //    West is positive and east is negative.
-    //    sprintf(cmd,
-    //    "echo {INSERT PASSWORD HERE WHEN WE CAN} |
-    //     sudo -S timedatectl set-timezoneEtc/GMT%d\0",
-    //     -1*utc);
-    LOG_ERROR("UNIMPLEMENTED: Tried to call set_timezone_from_utc from Windows");
-    return;
-#else
+#ifdef _WIN32
     if (dst_flag > 0) {
         LOG_INFO("DST active");
         utc = utc - 1;
     }
-    char* timezone;
-    //    Open powershell " here closing " in timezone
-    char cmd[5000] = "powershell.exe \"Set-TimeZone -Id \0";
+    char* timezone = "";
     switch (utc) {
         case -12:
-            timezone = " 'Dateline Standard Time' \" \0";
+            timezone = "Dateline Standard Time";
             break;
         case -11:
-            timezone = " 'UTC-11' \" \0";
+            timezone = "UTC-11";
             break;
         case -10:
-            timezone = " 'Hawaiian Standard Time' \" \0";
+            timezone = "Hawaiian Standard Time";
             break;
         case -9:
-            timezone = " 'Alaskan Standard Time' \" \0";
+            timezone = "Alaskan Standard Time";
             break;
         case -8:
-            timezone = " 'Pacific Standard Time' \" \0";
+            timezone = "Pacific Standard Time";
             break;
         case -7:
-            timezone = " 'Mountain Standard Time' \" \0";
+            timezone = "Mountain Standard Time";
             break;
         case -6:
-            timezone = " 'Central Standard Time' \" \0";
+            timezone = "Central Standard Time";
             break;
         case -5:
-            timezone = " 'US Eastern Standard Time' \" \0";
+            timezone = "US Eastern Standard Time";
             break;
         case -4:
-            timezone = " 'Atlantic Standard Time' \" \0";
+            timezone = "Atlantic Standard Time";
             break;
         case -3:
-            timezone = " ' E. South America Standard Time' \" \0";
+            timezone = " E. South America Standard Time";
             break;
         case -2:
-            timezone = " 'Mid-Atlantic Standard Time'  \" \0";
+            timezone = "Mid-Atlantic Standard Time";
             break;
         case -1:
-            timezone = " 'Cape Verde Standard Time'  \" \0";
+            timezone = "Cape Verde Standard Time";
             break;
         case 0:
-            timezone = " 'GMT Standard Time'  \" \0";
+            timezone = "GMT Standard Time";
             break;
         case 1:
-            timezone = " 'W. Europe Standard Time' \" \0";
+            timezone = "W. Europe Standard Time";
             break;
         case 2:
-            timezone = " 'E. Europe Standard Time' \" \0";
+            timezone = "E. Europe Standard Time";
             break;
         case 3:
-            timezone = " 'Turkey Standard Time' \" \0";
+            timezone = "Turkey Standard Time";
             break;
         case 4:
-            timezone = " 'Arabian Standard Time' \" \0";
+            timezone = "Arabian Standard Time";
             break;
         default:
             LOG_WARNING("Note a valid UTC offset: %d", utc);
             return;
     }
-    snprintf(cmd + strlen(cmd), strlen(timezone), "%s", timezone);
-    char* response = safe_malloc(sizeof(char) * 200);
-    runcmd(cmd, &response);
-    LOG_INFO("Timezone powershell command: %s ", cmd);
-    free(response);
+    set_timezone_from_windows_name(timezone);
+#else
+    char cmd[256];
+    // -utc because of
+    // https://www.reddit.com/r/java/comments/5i3zd1/timezoneid_etcgmt2_is_actually_gmt2/
+    snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT%d", -utc);
+    runcmd(cmd, NULL);
 #endif
 }
