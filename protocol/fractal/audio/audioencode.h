@@ -26,7 +26,7 @@ Includes
 #include <libavutil/audio_fifo.h>
 #include <libswresample/swresample.h>
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 /*
 ============================

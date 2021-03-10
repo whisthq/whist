@@ -69,7 +69,6 @@ Includes
 #include "../network/network.h"
 #include "../utils/clock.h"
 #include "../utils/logging.h"
-#include "fractal.v"
 
 #ifdef _WIN32
 #pragma warning(disable : 4200)
@@ -707,5 +706,13 @@ void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability
  *                                 num - 1)
  */
 bool safe_strncpy(char* destination, const char* source, size_t num);
+
+/**
+ * @brief                          Returns a short string representing the current git commit
+ *                                 of fractal at the time of compilation
+ *
+ * @returns                        The git commit
+ */
+char* fractal_git_revision();
 
 #endif  // FRACTAL_H

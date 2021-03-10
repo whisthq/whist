@@ -368,3 +368,6 @@ bool safe_strncpy(char* destination, const char* source, size_t num) {
     }
     return false;
 }
+
+#include "fractal.v"
+char* fractal_git_revision() { return FRACTAL_GIT_REVISION; }

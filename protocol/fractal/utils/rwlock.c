@@ -4,7 +4,7 @@
  * num_writers includes any waiting writers and any active writer
  */
 #include "rwlock.h"
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 void init_rw_lock(RWLock *rwlock) {
     rwlock->num_active_readers = 0;

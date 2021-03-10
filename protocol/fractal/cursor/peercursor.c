@@ -1,4 +1,4 @@
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "../utils/logging.h"
 #include "peercursor.h"
 

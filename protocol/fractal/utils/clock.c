@@ -18,7 +18,7 @@ relate different events across server and client.
 #include <string.h>
 
 #include "logging.h"
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "clock.h"
 
 #ifdef _WIN32

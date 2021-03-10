@@ -34,27 +34,27 @@ Includes
 #include <unistd.h>
 #endif
 
-#include "../fractal/utils/logging.h"
-#include "../fractal/utils/window_name.h"
-#include "../fractal/core/fractalgetopt.h"
-#include "../fractal/audio/audiocapture.h"
-#include "../fractal/audio/audioencode.h"
-#include "../fractal/core/fractal.h"
-#include "../fractal/cursor/cursor.h"
-#include "../fractal/input/input.h"
-#include "../fractal/network/network.h"
-#include "../fractal/utils/aes.h"
-#include "../fractal/utils/logging.h"
-#include "../fractal/video/transfercapture.h"
-#include "../fractal/video/screencapture.h"
-#include "../fractal/video/videoencode.h"
+#include <fractal/utils/logging.h>
+#include <fractal/utils/window_name.h>
+#include <fractal/core/fractalgetopt.h>
+#include <fractal/audio/audiocapture.h>
+#include <fractal/audio/audioencode.h>
+#include <fractal/core/fractal.h>
+#include <fractal/cursor/cursor.h>
+#include <fractal/input/input.h>
+#include <fractal/network/network.h>
+#include <fractal/utils/aes.h>
+#include <fractal/utils/logging.h>
+#include <fractal/video/transfercapture.h>
+#include <fractal/video/screencapture.h>
+#include <fractal/video/videoencode.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
 #include "webserver.h"
 
 #ifdef _WIN32
-#include "../fractal/utils/windows_utils.h"
+#include <fractal/utils/windows_utils.h>
 #endif
 
 #ifdef _WIN32
@@ -1023,7 +1023,7 @@ int parse_args(int argc, char* argv[]) {
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {
-                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
+                printf("Fractal client revision %s\n", fractal_git_revision());
                 return 1;
             }
             default: {
@@ -1088,7 +1088,7 @@ int main(int argc, char* argv[]) {
     }
 
     LOG_INFO("Version Number: %s", get_version());
-    LOG_INFO("Fractal server revision %s", FRACTAL_GIT_REVISION);
+    LOG_INFO("Fractal server revision %s", fractal_git_revision());
 
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_Init(SDL_INIT_VIDEO);
