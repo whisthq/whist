@@ -17,7 +17,6 @@ respective "ClipboardGet___" or "ClipboardSet___".
 */
 
 #include "clipboard_osx.h"
-#include "../utils/string_utils.h"
 
 #include <AppKit/AppKit.h>
 
