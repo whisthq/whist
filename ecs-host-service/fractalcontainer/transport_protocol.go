@@ -39,3 +39,15 @@ func (tp *transportProtocol) UnmarshalJSON(b []byte) error {
 func (tp transportProtocol) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + string(tp) + `"`), nil
 }
+
+// NewTransportProtocol returns a transportProtocol from a string in the task
+func NewTransportProtocol(protocol string) (transportProtocol, error) {
+	switch protocol {
+	case string(TransportProtocolTCP):
+		return TransportProtocolTCP, nil
+	case string(TransportProtocolUDP):
+		return TransportProtocolUDP, nil
+	default:
+		return TransportProtocolTCP, logger.MakeError(protocol + " is not a recognized transport protocol")
+	}
+}
