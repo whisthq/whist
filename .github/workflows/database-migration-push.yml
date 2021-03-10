@@ -114,11 +114,7 @@ jobs:
                       "staging": os.environ["SERVER_STAGING"],
                       "master":  os.environ["SERVER_MASTER"]
                   }
-                  app = appnames.get(base_ref)
-                  if not app:
-                    raise Exception(f"Unrecognized branch name '{app}' found as "
-                                    + "value of 'github.base_ref'. Expected one of "
-                                    + "'dev', 'staging', or 'master'.")
+                  app = appnames.get(base_ref, "dev")
 
                   config = heroku_config(app)
                   db_url = config[os.environ["HEROKU_DB_KEY"]]
