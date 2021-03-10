@@ -305,6 +305,7 @@ CREATE TABLE hardware.supported_app_images (
 CREATE TABLE hardware.user_app_state (
     user_id character varying(255),
     ip character varying(255),
+    port integer,
     task_id character varying(255) NOT NULL,
     state character varying(255)
 );
