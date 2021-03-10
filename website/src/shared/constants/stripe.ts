@@ -22,7 +22,7 @@ export const STRIPE_OPTIONS = {
     fonts: [
         {
             cssSrc:
-                "https://fonts.googleapis.com/css2?family=Maven+Pro&display=swap",
+                "https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@600&display=swap",
         },
     ],
 }
