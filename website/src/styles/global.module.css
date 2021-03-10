@@ -16,4 +16,7 @@
     --light-text-color: #efefef;
     --dark-text-color: #555555;
     --black-text-color: #000000;
+
+    --font-family-primary: "Josefin Sans";
+    --font-family-secondary: "Myriad Pro";
 }

@@ -7,6 +7,10 @@ module.exports = {
     darkMode: "class",
     theme: {
         extend: {
+            fontFamily: {
+                sans: ["Josefin Sans"],
+                body: ["Myriad-Pro"]
+            },
             colors: {
                 transparent: "transparent",
                 current: "currentColor",
@@ -65,17 +69,20 @@ module.exports = {
                 bounce: {
                     "0%, 20%, 50%, 80%, 100%": { transform: "translateY(0)" },
                     "30%": { transform: "translateY(-5px)" },
-                    "60%": { transform: "translateY(-8px)" },
+                    "60%": { transform: "translateY(-8px)" }
                 },
                 blink: {
                     "0%, 100%": { opacity: 1 },
-                    "50%": { opacity: 0 },
-                },
+                    "50%": { opacity: 0 }
+                }
             },
             animation: {
                 bounce: "bounce 5s infinite",
-                blink: "blink 1s step-end infinite",
+                blink: "blink 1s step-end infinite"
             },
+            letterSpacing: {
+                fractal: "0.5em"
+            }
         },
     },
     // variants: {
