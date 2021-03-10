@@ -59,15 +59,8 @@ else
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
 
     # Copy over the FFmpeg dylibs
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libavcodec.58.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libavdevice.58.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libavfilter.7.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libavformat.58.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libavutil.56.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libpostproc.55.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libswresample.3.dylib protocol-build/client
-    cp ../../protocol/lib/64/ffmpeg/Darwin/libswscale.5.dylib protocol-build/client
-    cp ../../protocol/client/build64/Darwin/libsentry.dylib protocol-build/client
+    cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
+    cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
     # Sign each FractalClient binary
     for filename in protocol-build/client/*.dylib; do
