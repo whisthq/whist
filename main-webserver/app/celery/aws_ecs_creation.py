@@ -99,6 +99,16 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                         f"on {container.ip}: {error}"
                     )
                 )
+                _clean_tasks_and_create_new_container(
+                    self,
+                    container.ip,
+                    container.user_id,
+                    user.task_definition_arn,
+                    region_name,
+                    user.cluster,
+                    user.dpi,
+                    webserver_url,
+                )
             else:
                 if response.ok:
                     fractal_logger.info(
@@ -112,8 +122,28 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                             f"{response.text}"
                         )
                     )
+                    _clean_tasks_and_create_new_container(
+                        self,
+                        container.ip,
+                        container.user_id,
+                        user.task_definition_arn,
+                        region_name,
+                        user.cluster,
+                        user.dpi,
+                        webserver_url,
+                    )
         else:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
+            _clean_tasks_and_create_new_container(
+                self,
+                container.ip,
+                container.user_id,
+                user.task_definition_arn,
+                region_name,
+                user.cluster,
+                user.dpi,
+                webserver_url,
+            )
 
 
 def _pass_start_values_to_instance(
@@ -149,12 +179,32 @@ def _pass_start_values_to_instance(
                 f"on {ip}: {error}"
             ),
         )
+        _clean_tasks_and_create_new_container(
+            self,
+            ip,
+            user_id,
+            user.task_definition_arn,
+            region_name,
+            user.cluster,
+            dpi,
+            webserver_url,
+        )
     else:
         if response.ok:
             fractal_logger.info("Container user values set.")
         else:
             fractal_logger.error(
                 f"Received unsuccessful set-start-values response: {response.text}"
+            )
+            _clean_tasks_and_create_new_container(
+                self,
+                ip,
+                user_id,
+                user.task_definition_arn,
+                region_name,
+                user.cluster,
+                dpi,
+                webserver_url,
             )
 
 
@@ -638,13 +688,17 @@ def _assign_container(
             )
             raise Ignore
 
-    _mount_cloud_storage(user, base_container)  # Not tested
+    _mount_cloud_storage(self, user, base_container, webserver_url, region_name)  # Not tested
     _pass_start_values_to_instance(
+        self,
+        user,
         base_container.ip,
         base_container.container_id,
         base_container.port_32262,
         base_container.dpi,
         user.user_id,
+        webserver_url,
+        region_name,
     )
     time.sleep(1)
 
