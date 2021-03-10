@@ -19,8 +19,8 @@ Includes
 ============================
 */
 
-#include "../fractal/core/fractal.h"
-#include "../fractal/utils/sdlscreeninfo.h"
+#include <fractal/core/fractal.h>
+#include <fractal/utils/sdlscreeninfo.h>
 #include "video.h"
 
 /*

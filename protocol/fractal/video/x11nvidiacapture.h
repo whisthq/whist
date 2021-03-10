@@ -2,7 +2,7 @@
 #define CAPTURE_X11NVIDIACAPTURE_H
 
 #include "nvidia-linux/NvFBCUtils.h"
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 typedef struct NvidiaCaptureDevice {
     NVFBC_SESSION_HANDLE fbcHandle;

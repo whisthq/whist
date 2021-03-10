@@ -39,7 +39,7 @@ Includes
 
 #include <string.h>
 #include "sentry.h"
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "clock.h"
 
 /*

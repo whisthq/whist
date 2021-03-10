@@ -20,7 +20,7 @@ strings, for use on windows OS's
 
 #ifdef _WIN32
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "../utils/png.h"
 #include "clipboard.h"
 

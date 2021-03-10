@@ -31,7 +31,7 @@ Includes
 #include <X11/extensions/Xdamage.h>
 #include <stdbool.h>
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "x11nvidiacapture.h"
 
 /*

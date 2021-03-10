@@ -16,19 +16,19 @@ Includes
 ============================
 */
 
-#include "../fractal/core/fractal.h"
+#include <fractal/core/fractal.h>
 
-#include "../fractal/input/input.h"
-#include "../fractal/network/network.h"
-#include "../fractal/utils/clock.h"
-#include "../fractal/utils/logging.h"
+#include <fractal/input/input.h>
+#include <fractal/network/network.h>
+#include <fractal/utils/clock.h>
+#include <fractal/utils/logging.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
 #include "webserver.h"
 
 #ifdef _WIN32
-#include "../fractal/utils/windows_utils.h"
+#include <fractal/utils/windows_utils.h>
 #endif
 
 extern Client clients[MAX_NUM_CLIENTS];

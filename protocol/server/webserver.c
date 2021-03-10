@@ -1,5 +1,5 @@
-#include "../fractal/core/fractal.h"
-#include "../fractal/utils/json.h"
+#include <fractal/core/fractal.h>
+#include <fractal/utils/json.h>
 #include "webserver.h"
 
 static clock last_protocol_info_check_time;

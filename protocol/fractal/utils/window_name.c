@@ -14,7 +14,7 @@ get_focused_window_name(name);
 destroy_window_name_getter();
 */
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "window_name.h"
 
 #if defined(_WIN32)

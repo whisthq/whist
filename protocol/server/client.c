@@ -14,8 +14,8 @@ Includes
 ============================
 */
 
-#include "../fractal/utils/mouse.h"
-#include "../fractal/utils/rwlock.h"
+#include <fractal/utils/mouse.h>
+#include <fractal/utils/rwlock.h>
 #include "client.h"
 #include "network.h"
 

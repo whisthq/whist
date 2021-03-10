@@ -18,10 +18,10 @@ Includes
 */
 
 #include "sdl_utils.h"
-#include "../fractal/utils/png.h"
+#include <fractal/utils/png.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-#include "../fractal/utils/color.h"
+#include <fractal/utils/color.h>
 #include "native_window_utils.h"
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 

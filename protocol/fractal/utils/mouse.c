@@ -1,4 +1,4 @@
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "mouse.h"
 
 FractalRGBColor mouse_colors[MAX_NUM_CLIENTS] = {

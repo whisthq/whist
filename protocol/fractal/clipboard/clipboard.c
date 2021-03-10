@@ -1,5 +1,5 @@
 #include "clipboard.h"
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 SDL_mutex* mutex;
 

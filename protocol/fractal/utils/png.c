@@ -1,4 +1,4 @@
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "png.h"
 
 #include <libavdevice/avdevice.h>

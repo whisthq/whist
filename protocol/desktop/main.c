@@ -21,7 +21,7 @@ Includes
 ============================
 */
 
-#include "sentry.h"
+#include <sentry.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -29,12 +29,12 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
-#include "../fractal/core/fractal.h"
-#include "../fractal/network/network.h"
-#include "../fractal/utils/aes.h"
-#include "../fractal/utils/clock.h"
-#include "../fractal/utils/logging.h"
-#include "../fractal/utils/sdlscreeninfo.h"
+#include <fractal/core/fractal.h>
+#include <fractal/network/network.h>
+#include <fractal/utils/aes.h>
+#include <fractal/utils/clock.h>
+#include <fractal/utils/logging.h>
+#include <fractal/utils/sdlscreeninfo.h>
 #include "audio.h"
 #include "desktop_utils.h"
 #include "network.h"
@@ -45,13 +45,13 @@ Includes
 #include <SDL2/SDL_syswm.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
-#include "../fractal/utils/color.h"
+#include <fractal/utils/color.h>
 #include "native_window_utils.h"
 #endif  // CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 
 #ifdef __APPLE__
 #include <mach-o/dyld.h>
-#include "../fractal/utils/mac_utils.h"
+#include <fractal/utils/mac_utils.h>
 #endif  // __APPLE__
 
 volatile int audio_frequency = -1;
@@ -804,7 +804,7 @@ int main(int argc, char* argv[]) {
         SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
 
     print_system_info();
-    LOG_INFO("Fractal client revision %s", FRACTAL_GIT_REVISION);
+    LOG_INFO("Fractal client revision %s", fractal_git_revision());
 
     exiting = false;
     bool failed = false;

@@ -43,7 +43,7 @@ format strings.
 #include <signal.h>
 #endif
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "../network/network.h"
 #include "logging.h"
 #include <sentry.h>
@@ -105,7 +105,7 @@ void init_logger(char *log_dir) {
         // These are used by sentry to classify events and so we can keep track of version specific
         // issues.
         char release[200];
-        sprintf(release, "fractal-protocol@%s", FRACTAL_GIT_REVISION);
+        sprintf(release, "fractal-protocol@%s", fractal_git_revision());
         sentry_options_set_release(options, release);
         sentry_options_set_environment(options, sentry_environment);
         sentry_init(options);

@@ -22,7 +22,7 @@ Includes
 #include <DXGITYPE.h>
 #include <dxgi1_2.h>
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 /*
 ============================

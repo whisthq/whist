@@ -28,8 +28,8 @@ Includes
 
 #include "desktop_utils.h"
 #include "network.h"
-#include "../fractal/utils/logging.h"
-#include "../fractal/core/fractalgetopt.h"
+#include <fractal/utils/logging.h>
+#include <fractal/core/fractalgetopt.h>
 
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
@@ -362,7 +362,7 @@ int parse_args(int argc, char *argv[]) {
                 return 1;
             }
             case FRACTAL_GETOPT_VERSION_CHAR: {  // version
-                printf("Fractal client revision %s\n", FRACTAL_GIT_REVISION);
+                printf("Fractal client revision %s\n", fractal_git_revision());
                 return 1;
             }
             default: {
