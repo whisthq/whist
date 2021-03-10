@@ -96,6 +96,8 @@ class SupportedAppImages(db.Model):
     url = db.Column(db.String(250))
     tos = db.Column(db.String(250))
     active = db.Column(db.Boolean, nullable=False, default=False)
+    # The coefficient delineating what fraction of live users we should have
+    # as a prewarmed buffer
     preboot_number = db.Column(db.Float, nullable=False)
     containers = relationship(
         "UserContainer",
