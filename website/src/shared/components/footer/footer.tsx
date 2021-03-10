@@ -13,6 +13,7 @@ import {
     SalesLink,
     BlogLink,
     DiscordLink,
+    WordmarkLink
 } from "shared/components/links"
 
 const FooterLinkList = ({
@@ -26,7 +27,7 @@ const FooterLinkList = ({
         {title ? <div className="font-bold mb-2 text-base">{title}</div> : null}
         {children({
             className:
-                "hover:text-green-400 hover:outline-none text-sm block border-none no-underline hover:no-underline",
+                "font-body hover:text-green-400 hover:outline-none text-sm block border-none no-underline hover:no-underline",
         })}
     </div>
 )
@@ -47,13 +48,8 @@ const Footer = () => {
         <div className="mx-14 my-4 dark:bg-blue-darkest space-y-8 text-gray-700 dark:text-white">
             <div className="flex flex-col md:flex-row w-full space-y-12 max-w-screen-2xl justify-between">
                 <div className="flex-col max-w-sm space-y-6">
-                    <div
-                        className="font-bold text-left text-2xl"
-                        style={{ letterSpacing: "0.25em" }}
-                    >
-                        Fractal
-                    </div>
-                    <div className="text-sm font-light leading-relaxed tracking-widest">
+                    <WordmarkLink />
+                    <div className="font-body text-sm font-light leading-relaxed tracking-widest">
                         Fractal supercharges your applications by streaming them
                         from the cloud.
                     </div>
@@ -68,7 +64,7 @@ const Footer = () => {
                         )}
                     </FooterIconList>
                 </div>
-                <div className="flex space-x-32 text-left pt-0 md:pt-3">
+                <div className="font-body flex space-x-32 text-left pt-0 md:pt-3">
                     <FooterLinkList title="RESOURCES">
                         {(props: any) => (
                             <>
@@ -90,10 +86,10 @@ const Footer = () => {
                 </div>
             </div>
             <div className=" max-w-screen-2xl flex justify-between w-full text-sm mt-1.5">
-                <div className="m-0 text-gray-400 overflow-hidden text-xs md:text-sm">
+                <div className="font-body m-0 text-gray-400 overflow-hidden text-xs md:text-sm">
                     &copy; 2021 Fractal Computers, Inc. All Rights Reserved.
                 </div>
-                <div className="hidden md:block text-gray-400">
+                <div className="font-body hidden md:block text-gray-400">
                     <HashLink id="tosPage" to="/termsofservice#top">
                         Terms of Service
                     </HashLink>{" "}

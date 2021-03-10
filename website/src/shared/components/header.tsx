@@ -48,15 +48,14 @@ const handleSignOut = (dispatch: Dispatch<any>) => {
 const Logo = (props: { className?: string; dark?: boolean }) => (
     <div
         className={classNames(
-            "flex items-center space-x-3 mr-10",
+            "flex items-center translate-x-1 space-x-6 mr-10",
             props.className
         )}
     >
-        <LogoLink className="w-6" dark={props.dark} />
+        <LogoLink className="w-6 transform md:-translate-y-0.5" dark={props.dark} />
         <WordmarkLink
             className={classNames(
                 "text-xl font-medium text-gray dark:text-gray-100",
-                "transition duration-500",
                 mobileHidden
             )}
         />
@@ -64,16 +63,17 @@ const Logo = (props: { className?: string; dark?: boolean }) => (
 )
 
 const startButtonClasses = classNames(
-    "text-gray dark:text-gray-300 hover:text-blue dark:hover:text-mint",
-    "duration-500 tracking-widest hover:no-underline whitespace-nowrap"
+    "text-gray-500 dark:text-gray-300 hover:text-blue dark:hover:text-mint",
+    "duration-500 font-body tracking-widest hover:no-underline whitespace-nowrap"
 )
 
 const authButtonClasses = classNames(
-    "text-white dark:text-black bg-blue dark:bg-mint text-right",
+    "font-body text-gray-100 dark:text-black bg-blue dark:bg-mint text-right",
     "px-10 py-2 rounded transition duration-500 whitespace-nowrap"
 )
 
-const authTextClasses = classNames("font-bold dark:text-white tracking-tight")
+const authTextClasses = classNames(
+    "font-bold text-gray-900 dark:text-white whitespace-nowrap tracking-wide")
 
 const AboutLinkStyled = withClass(AboutLink, startButtonClasses)
 const SupportLinkStyled = withClass(SupportLink, startButtonClasses)
@@ -89,7 +89,6 @@ const MyAccountLinkBold = withClass(
 const SignInLinkButton = withClass(SignInLink, authButtonClasses)
 const SignInLinkBold = withClass(
     SignInLink,
-    startButtonClasses,
     authTextClasses
 )
 const SignOutLinkButton = withClass(SignOutLink, authButtonClasses)

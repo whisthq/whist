@@ -84,7 +84,7 @@ export const TypeWriter = (props: {
     }, [])
 
     return (
-        <div className={classNames("p-0 m-0 text-center", props.classNameText)}>
+        <div className={classNames(props.classNameText)}>
             {display}
             <div
                 className={classNames(

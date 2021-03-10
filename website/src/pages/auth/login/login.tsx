@@ -124,6 +124,7 @@ const Login = (props: {
                     {authFlow.loginWarning && authFlow.loginWarning !== "" && (
                         <div data-testid={AUTH_IDS.WARN}>
                             <div
+                                className="font-body text-center"
                                 style={{
                                     width: "100%",
                                     background: "#ff5627",

@@ -17,7 +17,7 @@ export const SwitchMode = (props: {
     const { question, link, closer, id, onClick } = props
 
     return (
-        <div style={{ textAlign: "center" }}>
+        <div className="font-body" style={{ textAlign: "center" }}>
             {question + " "}
             {width < ScreenSize.SMALL && <br />}
             <span
