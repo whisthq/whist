@@ -9,7 +9,7 @@ import { connect } from "react-redux"
 import { Switch, Route } from "react-router-dom"
 
 import EmailForm from "pages/auth/pages/forgot/pages/emailForm/emailForm"
-import Reset from "pages/auth/pages/forgot/pages/reset/reset"
+import PasswordResetForm from "pages/auth/pages/forgot/pages/passwordResetForm/passwordResetForm"
 
 import { routeMap, fractalRoute } from "shared/constants/routes"
 
@@ -26,7 +26,7 @@ const Forgot = (props: {
         <>
             <Switch>
                 <Route exact path={fractalRoute(routeMap.AUTH.FORGOT)} component={EmailForm} />
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET)} component={Reset} />
+                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET)} component={PasswordResetForm} />
             </Switch>
         </>
     )

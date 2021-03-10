@@ -264,7 +264,6 @@ export function* forgotPassword(action: any) {
 
 export function* validateResetToken(action: any) {
     const state = yield select()
-    console.log(state)
     const { json } = yield call(
         api.validateVerification, 
         state.AuthReducer.user.accessToken,

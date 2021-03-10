@@ -19,7 +19,11 @@ export const routeMap = {
         CALLBACK: "/auth/callback",
         FORGOT: {
             ROOT: "/auth/forgot",
-            RESET: "/auth/forgot/reset"
+            RESET: {
+                ROOT: "/auth/forgot/reset",
+                ALLOWED: "/auth/forgot/reset/allowed",
+                ERROR: "/auth/forgot/reset/error"
+            }
         },
         SIGNUP: "/auth/signup",
         VERIFY: "/auth/verify"

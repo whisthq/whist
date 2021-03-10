@@ -25,6 +25,7 @@ import {
     checkEmailVerbose,
     signupEnabled,
     checkEmail,
+    checkConfirmPasswordVerbose
 } from "pages/auth/shared/helpers/authHelpers"
 import {routeMap, fractalRoute} from "shared/constants/routes"
 
@@ -143,16 +144,10 @@ const Signup = (props: {
     }, [name, enteredName])
 
     useEffect(() => {
-        if (
-            confirmPassword !== password &&
-            password.length > 0 &&
-            confirmPassword.length > 0
-        ) {
-            setConfirmPasswordWarning("Doesn't match")
-        } else {
-            setConfirmPasswordWarning("")
+        const warning = checkConfirmPasswordVerbose(password, confirmPassword)
+        if(warning !== confirmPasswordWarning) {
+            setConfirmPasswordWarning(warning)
         }
-        // we only want to change on a specific state change
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [confirmPassword])
 
