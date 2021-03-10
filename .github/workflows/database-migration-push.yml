@@ -15,7 +15,7 @@ on:
             - dev
         paths:
             - "main-webserver/db_migration/schema.sql"
-            - ".github/workflows/database-migration.yml"
+            - ".github/workflows/database-migration-push.yml"
     workflow_dispatch:
 
 jobs:
