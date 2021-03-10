@@ -294,7 +294,7 @@ CREATE TABLE hardware.supported_app_images (
     url character varying,
     tos character varying,
     active boolean NOT NULL,
-    preboot_number integer DEFAULT 0 NOT NULL
+    preboot_number float DEFAULT 0.0 NOT NULL
 );
 
 
@@ -1677,4 +1677,3 @@ ALTER TABLE ONLY logs.login_history
 --
 -- PostgreSQL database dump complete
 --
-
