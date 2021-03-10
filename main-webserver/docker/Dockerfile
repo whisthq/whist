@@ -24,7 +24,7 @@ RUN apt-get update \
 
 # Install python requirements
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Use official Python docker image as base.
 # - Specify full Python version to avoid disparities in images (i.e. if someone
