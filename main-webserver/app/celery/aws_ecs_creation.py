@@ -280,6 +280,7 @@ def _get_num_extra(taskdef, location):
     """
 
     def _get_count_helper(query):
+        # based on https://gist.github.com/hest/8798884
         from sqlalchemy.sql.functions import func
 
         count_q = query.statement.with_only_columns([func.count()]).order_by(None)
