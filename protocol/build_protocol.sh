@@ -28,7 +28,6 @@ fi
     cd protocol &&                 \
     cmake                          \
         -S .                       \
-        -D BUILD_CLIENT=OFF        \
         -D DOWNLOAD_BINARIES=OFF   \
         ${release_tag} &&          \
     make -j FractalServer          \

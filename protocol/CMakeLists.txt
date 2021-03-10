@@ -55,9 +55,6 @@ include(cmake/clang-format.cmake)
 include(cmake/default-build.cmake)
 include(cmake/version-info.cmake)
 
-option(BUILD_SERVER "build FractalServer" ON)
-option(BUILD_CLIENT "build FractalClient" ON)
-
 # For debug builds log every thing, for release builds log warnings or higher
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
     add_definitions(-DLOG_LEVEL=5)
@@ -303,11 +300,7 @@ include_directories(sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
 add_subdirectory(fractal)
-if (${BUILD_CLIENT} MATCHES ON)
-    message(STATUS "building client")
-    add_subdirectory(client)
-endif()
-if (${BUILD_SERVER} MATCHES ON AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
-    message(STATUS "building server")
+add_subdirectory(client)
+if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     add_subdirectory(server)
 endif()
