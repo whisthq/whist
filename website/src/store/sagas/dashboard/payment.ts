@@ -8,7 +8,7 @@ import * as api from "shared/api"
 // not jwt tokens (i.e. the type you get when you create a token from
 // a card number + date + digits on the back)
 
-export function* addCard(action: any) {
+export function* addCard(action: any): any {
     const state = yield select()
 
     const { json } = yield call(
@@ -48,7 +48,7 @@ export function* addCard(action: any) {
     }
 }
 
-export function* deleteCard(action: any) {
+export function* deleteCard(action: any): any {
     const state = yield select()
 
     const { json } = yield call(
@@ -78,7 +78,7 @@ export function* deleteCard(action: any) {
 
 // to modify subscription just call this
 // or pass in a null token (not yet supported)
-export function* addSubscription(action: any) {
+export function* addSubscription(action: any): any {
     const state = yield select()
 
     const { json } = yield call(
@@ -116,7 +116,7 @@ export function* addSubscription(action: any) {
     }
 }
 
-export function* deleteSubscription(action: any) {
+export function* deleteSubscription(action: any): any {
     const state = yield select()
 
     yield call(api.cancelMail, state.AuthReducer.user.userID, action.message)
