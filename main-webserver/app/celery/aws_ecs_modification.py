@@ -226,10 +226,9 @@ def update_task_definitions(app_id: str = None, task_definition_arn: str = None)
         all_app_data = SupportedAppImages.query.all()
         # we must cast to python objects because the recursive call to update_task_definitions
         # does a db.session.commit, which invalidates existing objects. that causes the
-        # second app_id to fail.
+        # second iteration of the for-loop to fail.
         all_app_ids = [app_data.app_id for app_data in all_app_data]
         for app_id in all_app_ids:
-            # fetches latest task def from API
             update_task_definitions(app_id=app_id)
         return
 

@@ -584,9 +584,10 @@ class ECSClient:
         """
         Get info on the task.
 
-        Returns a dict of task information. See
-        https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_task_definition
-        for the response syntax.
+        Returns:
+            task_info: a dict of task information. See
+            https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_task_definition
+            for the response syntax.
         """
         return self.ecs_client.describe_task_definition(taskDefinition=self.task_definition_arn)
 
