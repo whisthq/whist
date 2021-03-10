@@ -586,7 +586,7 @@ func getUserConfig(fractalID string) error {
 }
 
 // If the user ID is not set for the given fractalID yet, that means that both necessary tasks have not
-// been completed yet before setting the container as ready : these tasks are saveConfigEncryptionToken
+// been completed yet before setting the container as ready : these tasks are handleSetConfigEncryptionTokenRequest 
 // and handleStartValuesRequest. If both tasks have completed, then get the user's config and set
 // the container as ready.
 func completeContainerSetup(fractalID string, userID string) error {
@@ -599,13 +599,14 @@ func completeContainerSetup(fractalID string, userID string) error {
 	}
 
 	// Populate the user config folder for the container's app
-	err = getUserConfig(fractalID)
+	err := getUserConfig(fractalID)
 	if err != nil {
 		logger.Error(err)
 	}
 
 	// Indicate that we are ready for the container to read the data back
 	// (see comment at the end of containerStartHandler)
+	datadir := fractalDir + fractalID + "/" + containerResourceMappings
 	err = writeAssignmentToFile(datadir+".ready", ".ready")
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
@@ -634,14 +635,13 @@ func handleSetConfigEncryptionTokenRequest(req *httpserver.SetConfigEncryptionTo
 	fractalID, ok := fractalIDs[containerID]
 	if !ok {
 		// This is actually an error, since we received a DPI request.
-		return logger.MakeError("saveConfigEncryptionToken(): couldn't find FractalID mapping for container with DockerID %s", containerID)
+		return logger.MakeError("handleSetConfigEncryptionTokenRequest(): couldn't find FractalID mapping for container with DockerID %s", containerID)
 	}
 
 	// Save config encryption token in map
-	configEncryptionTokens[fractalID] := string(req.ConfigEncryptionToken)
+	configEncryptionTokens[fractalID] = string(req.ConfigEncryptionToken)
 
 	userID := string(req.UserID)
-
 	return completeContainerSetup(fractalID, userID)
 }
 
@@ -683,6 +683,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not write value %v to ID file %v. Error: %s", req.ContainerARN, filename, err)
 	}
 
+	userID := string(req.UserID)
 	return completeContainerSetup(fractalID, userID)
 }
 
@@ -1102,7 +1103,7 @@ eventLoop:
 				serverevent.ReturnResult("", err)
 
 			case *httpserver.SetConfigEncryptionTokenRequest:
-				err := saveConfigEncryptionToken(serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
+				err := handleSetConfigEncryptionTokenRequest(serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
 				if err != nil {
 					logger.Error(err)
 				}
