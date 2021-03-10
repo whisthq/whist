@@ -37,15 +37,13 @@ repos:
         entry: beautysh
         types: [shell]
 
-  # To use Hadolint, you first need to install it locally via your package manager (i.e. brew install hadolint)
   - repo: local
     hooks:
       - id: hadolint
         name: "Hadolint (for all repositories)"
         language: docker_image
-        additional_dependencies: [hadolint]
-        entry: hadolint ./**/*Dockerfile
-        types: [shell]
+        entry: hadolint/hadolint:v1.23.0 hadolint
+        files: ^.*Dockerfile.*$
 
   #
   # Hooks that only run on specific repositories/subfolders
@@ -72,16 +70,6 @@ repos:
         files: '^main-webserver/.*\.py'
         language_version: python3
         args: [--rcfile, main-webserver/pylintrc]
-
-  # To use Hadolint, you first need to install it locally via your package manager (i.e. brew install hadolint)
-  - repo: local
-    hooks:
-      - id: hadolint
-        name: "Hadolint (for all /container-images)"
-        language: docker_image
-        additional_dependencies: [hadolint]
-        entry: hadolint ./**/*Dockerfile.20
-        types: [shell]
 
   - repo: git://github.com/dnephin/pre-commit-golang
     rev: master
