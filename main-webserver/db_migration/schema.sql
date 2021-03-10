@@ -1490,6 +1490,16 @@ CREATE INDEX ip_and_port ON hardware.user_containers USING btree (ip, port_32262
 
 
 --
+-- Name: loc_taskdef_assignment; Type: INDEX; Schema: hardware; Owner: -
+--
+
+CREATE INDEX loc_taskdef_assignment
+    ON hardware.user_containers USING btree
+    (location COLLATE pg_catalog."default" ASC NULLS LAST, task_definition COLLATE pg_catalog."default" ASC NULLS LAST, is_assigned ASC NULLS LAST)
+    TABLESPACE pg_default;
+
+
+--
 -- Name: event_invocation_logs_event_id_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
 --
 
