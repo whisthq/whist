@@ -5,6 +5,8 @@ package fractalcontainer
 // host service packages.
 
 import (
+	"sync"
+
 	uinput "github.com/fractal/uinput-go"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
@@ -23,7 +25,7 @@ type UinputDevices struct {
 }
 
 type FractalContainer interface {
-	// AllocatePortBindings()
+	AllocatePortBindings([]PortBinding) ([]PortBinding, error)
 }
 
 // func New(fid FractalID) FractalContainer {
@@ -31,11 +33,12 @@ type FractalContainer interface {
 // }
 
 type containerData struct {
-	fractalID      FractalID
-	dockerID       DockerID
+	rwlock sync.RWMutex
+	FractalID
+	DockerID
 	appName        string
 	userID         string
 	uinputDevices  UinputDevices
 	deviceMappings []dockercontainer.DeviceMapping
-	portBindings   []PortBinding
+	PortBindings   []PortBinding
 }
