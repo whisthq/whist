@@ -77,7 +77,7 @@
             },
             "extraFiles": [
                 {
-                    "from": "protocol-build/desktop/",
+                    "from": "protocol-build/client/",
                     "to": "MacOS/"
                 }
             ],

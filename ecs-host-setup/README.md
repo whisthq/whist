@@ -48,7 +48,7 @@ cd ~/fractal/container-images
 
 If you are on a high-DPI screen, you can optionally prepend the final line of the above code block with `FRACTAL_DPI=250` (or any other value) to override the default DPI value of 96 for the container.
 
-- Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/desktop/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/desktop/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
+- Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
 
 ## Setting Up an AMI
 

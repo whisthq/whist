@@ -23,7 +23,7 @@ Includes
 #include <fractal/utils/sdlscreeninfo.h>
 #include "sdl_utils.h"
 #include "audio.h"
-#include "desktop_utils.h"
+#include "client_utils.h"
 #include "network.h"
 
 // Keyboard state variables

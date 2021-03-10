@@ -36,7 +36,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/sdlscreeninfo.h>
 #include "audio.h"
-#include "desktop_utils.h"
+#include "client_utils.h"
 #include "network.h"
 #include "sdl_event_handler.h"
 #include "sdl_utils.h"
@@ -162,7 +162,7 @@ static bool updater_initialized = false;
 
 void init_update() {
     /*
-        Initialize desktop update handler.
+        Initialize client update handler.
         Anything that will be continuously be called (within `update()`)
         that changes program state should be initialized in here.
     */
