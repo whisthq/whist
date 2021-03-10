@@ -51,7 +51,7 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
-extern volatile float latency;
+extern volatile double latency;
 
 extern volatile int running_ci;
 
