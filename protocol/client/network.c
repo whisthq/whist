@@ -20,7 +20,7 @@ Includes
 
 #include <fractal/core/fractal.h>
 #include "network.h"
-#include "desktop_utils.h"
+#include "client_utils.h"
 
 // Init information
 extern volatile int audio_frequency;

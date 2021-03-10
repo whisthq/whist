@@ -32,23 +32,23 @@ In order to give the user their low-latency high-FPS experience, the protocol ex
 -   `encoder_t` from `videoencode.c` will be used to encode the screenshot using h264, if needed. If Nvidia Capture SDK is being used (`USING_GPU_CAPTURE == true` and on linux), then the image will already be encoded upon capture, and this is not necessary.
 -   A `Frame*` is created and the members of the `Frame` struct is filled in, see `./server/main.c` for the code and `./fractal/core/fractal.h` for the `Frame` struct.
 -   `broadcast_udp_packet` from `./server/network.c`is called with the `Frame*` passed in. This will break-up the `Frame*` into hundreds of individual network packets.
--   On the client, these packets are received in `./desktop/main.c` and passed into `receive_video` in `./desktop/video.c`.
+-   On the client, these packets are received in `./client/main.c` and passed into `receive_video` in `./client/video.c`.
 -   `receive_video` will receive video packets and will save them in a buffer (packet 17 will be stored at `buffer + PACKET_SIZE*(17-1)`, so that the packets go into their correct slot until the entire `Frame*` is recreated). `video.c` keeps track of the ID of the most recently rendered frame, ie ID 247. Once all of the packets of ID 248 are received, it will take the pointer to the beginning of the buffer and then render it. Each packet will contain the number of packets for the `Frame*`, so once one is received, the client will know when all of them have been received.
 -   Once a `Frame*` has been accumulated, `render_screen` in `./server/video.c` will trigger, and `video_decoder_decode` from `./fractal/video/videodecode.c` will be called. Any cursor image will be rendered on-top, along with `sws_scale`'ing if the frame is not the same resolution as the client. Peruse `render_screen` for further details.
 -   Finally, `SDL_RenderPresent` will be called, rendering the Frame.
--   If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./desktop/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
+-   If no packet from the expected ID is received within a couple hundred milliseconds, or if a subset of packets have been received and it's been a couple hundred milliseconds since the last seen packet, then the `./client/video.c`protocol will send a `nack()` to the server in order to get a copy of the presumably dropped or missed packet. The server keeps the last couple `Frame*`'s in a buffer in order to respond to `nack()`'s.
 
-The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./fractal/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./desktop/audio.c`
+The same process is used for audio capture, encoding, decoding, and playing. See `send_audio` of `./server/main.c`, `./fractal/audio/audio{capture,encode,decode}.c`, and `receive_audio` of `./client/audio.c`
 
 Throughout the life of the protocol, various messages will be send to and from the client and server. For example, if the client and server are of different resolution, the image will appear stretched, so to fix this the client will send a message to server to ask the server to change resolutions to match the client.
 
--   To send a message from client to server, call `send_fmsg`. See `./desktop/main.c` for usage.
+-   To send a message from client to server, call `send_fmsg`. See `./client/main.c` for usage.
 -   To send a message from server to client, create a `FractalServerMessage` and call `broadcast_tcp_packet` or `broadcast_udp_packet`. See `./server/main.c` for usage.
--   To handle a server message on the client, see `./desktop/handle_server_message.c`
+-   To handle a server message on the client, see `./client/handle_server_message.c`
 -   To handle a client message on the server, see `./server/handle_client_message.c`
 -   See `./fractal/core/fractal.h` for struct definitions.
 
-Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./desktop/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
+Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
 
 ## File Structure
 
@@ -56,9 +56,9 @@ Of course, input must also be sent from client to server. This is handled in the
 
 ```
 ./protocol
-├── desktop
+├── client
 │   ├── audio.c <- Handle and play audio packets
-│   ├── desktop_utils.c <- cmdline options, among others
+│   ├── client_utils.c <- cmdline options, among others
 │   ├── handle_server_message.c <- Handle server fmsg's
 │   ├── main.c <- SDL Event loop, receive and categorize packets as fmsg/audio/video
 │   ├── network.c <- Functions to connect to server, and send_fmsg
@@ -181,15 +181,15 @@ We use CMake to build. If you are using VS code, VS or Clion, this is pretty eas
 
 Currently, we use the same compiler flags for Debug and Release because we distribute binaries with debug flags, to better troubleshoot errors and bugs.
 
-The build target for desktop is "FractalClient" and the server is "FractalServer".
+The build target for client is "FractalClient" and the server is "FractalServer".
 
 #### MacOS CLI
 
-You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/desktop` and run `make` to compile the MacOS client. The client will be in `/protocol/desktop/build64/Darwin`.
+You can simply run `cmake .` from the root folder, `/protocol/`, which will generate the makefiles. You can then run `make FractalClient` from the root folder, or cd into `/client` and run `make` to compile the MacOS client. The client will be in `/protocol/client/build64/Darwin`.
 
 #### Linux CLI
 
-Install cmake and ccmake; ccmake is a TUI for configuring the build. From the root of the repo run `ccmake .`. You will initially see a blank screen because no cache has been built yet. Hit `c` to configure. This will populate the cache and show you a page with various settings. The three you care about are `BUILD_CLIENT` and `BUILD_SERVER` which are both `ON` or `OFF`, and `CMAKE_BUILD_TYPE` which is one of `Debug` or `Release`.
+Install cmake and ccmake; ccmake is a TUI for configuring the build. From the root of the repo run `ccmake .`. You will initially see a blank screen because no cache has been built yet. Hit `c` to configure. This will populate the cache and show you a page with various settings. The setting you will likely care about is `CMAKE_BUILD_TYPE` which is one of `Debug` or `Release`.
 
 Next hit `c` again to reconfigure with your possibly new settings, then hit `g` to generate the makefile. This makefile has all of the build targets, including FractalClient, FractalServer and all of our libraries. It also includes CMake targets such as clean, edit_cache and rebuild cache.
 
@@ -200,7 +200,7 @@ If you would like to keep your repo cleaner, make a build folder in `/protocol` 
 
 #### Windows CLI
 
-To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root directory from an x86_64 Visual Studio Developper Command Prompt, which is obtained through downloading Visual Studio. This tells CMake to generate NMake-style makefiles. Then, run `nmake` in either `/server` or `/desktop`, depending on which one you want to compile.
+To build on Windows, run the command `cmake -G "NMake Makefiles"` at the root directory from an x86_64 Visual Studio Developper Command Prompt, which is obtained through downloading Visual Studio. This tells CMake to generate NMake-style makefiles. Then, run `nmake` in either `/server` or `/client`, depending on which one you want to compile.
 
 #### Further documentation
 
@@ -241,7 +241,7 @@ If using VSCode or Visual Studio, please set this up in your editor to format on
 
 We have [pre-commit hooks](https://pre-commit.com/) with clang-format support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for clang-format.
 
-We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/` `desktop/` and `fractal/`. You can call it by running `make clang-format`.
+We also have a custom build target in the CMake 'clang-format' which will run with this style over all `.c` and `.h` files in `server/` `client/` and `fractal/`. You can call it by running `make clang-format`.
 
 ### clang-tidy
 

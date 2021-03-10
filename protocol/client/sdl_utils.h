@@ -30,8 +30,8 @@ Public Functions
 */
 
 /**
- * @brief                          Attaches the current thread to the specified
- *                                 current input desktop
+ * @brief                          Creates the SDL window,
+ *                                 with the currently running thread at the owner
  *
  * @param output_width             The width of the SDL window to create, in
  *                                 pixels

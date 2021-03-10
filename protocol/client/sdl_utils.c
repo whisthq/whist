@@ -112,7 +112,7 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
                      char* icon_filename) {
     /*
-        Attaches the current thread to the specified current input desktop
+        Attaches the current thread to the specified current input client
 
         Arguments:
             target_output_width (int): The width of the SDL window to create, in pixels

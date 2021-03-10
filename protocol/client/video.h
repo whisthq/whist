@@ -1,5 +1,5 @@
-#ifndef DESKTOP_VIDEO_H
-#define DESKTOP_VIDEO_H
+#ifndef CLIENT_VIDEO_H
+#define CLIENT_VIDEO_H
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file video.h
@@ -77,4 +77,4 @@ void destroy_video();
  */
 void set_video_active_resizing(bool is_resizing);
 
-#endif  // DESKTOP_VIDEO_H
+#endif  // CLIENT_VIDEO_H

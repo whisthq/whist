@@ -19,7 +19,7 @@ endif()
 add_executable(FractalClient
         main.c
         audio.c
-        desktop_utils.c
+        client_utils.c
         network.c
         sdl_event_handler.c
         sdl_utils.c
@@ -39,7 +39,7 @@ add_custom_command(
         TARGET FractalClient POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
-        ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+        ${CMAKE_SOURCE_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME})
 
 # MacOS and Windows default to crashpad for Sentry, and crashpad_handler needs to be in
 #   the same folder as the executable
@@ -48,25 +48,25 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
-            ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+            ${CMAKE_SOURCE_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME})
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
-            ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+            ${CMAKE_SOURCE_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME})
 endif()
 
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/desktop/build${arch}/${CMAKE_SYSTEM_NAME})
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME})
 
 # move necessary files into the build directory
 add_custom_command(TARGET FractalClient PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        ${CMAKE_SOURCE_DIR}/desktop/loading $<TARGET_FILE_DIR:FractalClient>/loading)
+        ${CMAKE_SOURCE_DIR}/client/loading $<TARGET_FILE_DIR:FractalClient>/loading)
 
 # Print out compile flags in verbose mode of CMake
 message(VERBOSE "c base flags${CMAKE_C_FLAGS}")

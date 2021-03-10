@@ -84,7 +84,7 @@ export const launchProtocol = async (
         FractalDirectory.getRootDirectory(),
         require("os").platform() === OperatingSystem.MAC
             ? "MacOS"
-            : "protocol-build/desktop"
+            : "protocol-build/client"
     )
     const iconPath = require("path").join(
         FractalDirectory.getRootDirectory(),

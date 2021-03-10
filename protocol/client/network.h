@@ -1,5 +1,5 @@
-#ifndef DESKTOP_NETWORK_H
-#define DESKTOP_NETWORK_H
+#ifndef CLIENT_NETWORK_H
+#define CLIENT_NETWORK_H
 
 #include <fractal/core/fractal.h>
 
@@ -66,4 +66,4 @@ int send_server_quit_messages(int num_messages);
  */
 int send_fmsg(FractalClientMessage* fmsg);
 
-#endif  // DESKTOP_NETWORK_H
+#endif  // CLIENT_NETWORK_H

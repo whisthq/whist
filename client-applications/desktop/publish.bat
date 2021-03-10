@@ -16,19 +16,19 @@ if "%1%" == "--help" (
     PowerShell.exe -ExecutionPolicy Bypass -Command "& './setVersion.ps1'" -version %version% -bucket %bucket%
 
     cd ..\..\protocol
-    cmake . -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" -D BUILD_SERVER=OFF -D USE_CLIENT_APP_ICON=ON
+    cmake . -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" -D USE_CLIENT_APP_ICON=ON
     nmake FractalClient
     cd ..\client-applications\desktop
     rmdir /S/Q protocol-build
     mkdir protocol-build
     cd protocol-build
-    mkdir desktop
-    mkdir desktop\loading
+    mkdir client
+    mkdir client\loading
     cd ..
-    
+
     REM Rename FractalClient to Fractal for consistency with Electron app name, and move over to client-app
-    xcopy /s ..\..\protocol\desktop\build64\Windows protocol-build\desktop
-    rename protocol-build\desktop\FractalClient.exe Fractal.exe
+    xcopy /s ..\..\protocol\client\build64\Windows protocol-build\client
+    rename protocol-build\client\FractalClient.exe Fractal.exe
 
     REM Note: we no longer add the logo to the executable because the logo gets set
     REM in the protocol directly via SDL

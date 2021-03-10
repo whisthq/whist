@@ -582,7 +582,7 @@ def _assign_container(
         # pylint: disable=line-too-long
     fractal_logger.info(
         f"""container pinged!  To connect, run:
-            desktop {base_container.ip} -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
+            client {base_container.ip} -p32262:{base_container.port_32262}.32263:{base_container.port_32263}.32273:{base_container.port_32273} -k {base_container.secret_key}
             """,
         extra={"label": username},
     )
