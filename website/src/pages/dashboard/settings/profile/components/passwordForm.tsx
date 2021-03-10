@@ -10,6 +10,7 @@ import { User, AuthFlow } from "shared/types/reducers"
 import * as PureAuthAction from "store/actions/auth/pure"
 import { updatePassword } from "store/actions/auth/sideEffects"
 import { checkPasswordVerbose } from "pages/auth/constants/authHelpers"
+import classNames from "classnames"
 
 import { E2E_DASHBOARD_IDS, PROFILE_IDS } from "testing/utils/testIDs"
 
@@ -116,10 +117,10 @@ const PasswordForm = (props: {
 
     return (
         <div style={{ marginTop: 15 }} data-testid={PROFILE_IDS.PASSWORD}>
-            <div className={styles.sectionTitle}>Password</div>
+            <div className={classNames("font-body", styles.sectionTitle)}>Password</div>
             <div className={styles.sectionInfo}>
                 {user.usingGoogleLogin && (
-                    <div style={{ fontStyle: "italic" }}>
+                    <div className="font-body" style={{ fontStyle: "italic" }}>
                         Logged in through Google
                     </div>
                 )}
@@ -172,11 +173,11 @@ const PasswordForm = (props: {
                                         }}
                                     />
                                 ) : (
-                                    <span>SAVE</span>
+                                    <span className="font-body">SAVE</span>
                                 )}
                             </button>
                             <button
-                                className={sharedStyles.whiteButton}
+                                className={classNames("font-body", sharedStyles.whiteButton)}
                                 style={{
                                     width: "47%",
                                     padding: "15px 0px",
@@ -198,7 +199,7 @@ const PasswordForm = (props: {
                             justifyContent: "space-between",
                         }}
                     >
-                        <div>••••••••••••</div>
+                        <div className="font-body">••••••••••••</div>
                         <div
                             style={{
                                 display: "flex",

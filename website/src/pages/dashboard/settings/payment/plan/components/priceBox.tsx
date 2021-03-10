@@ -1,6 +1,7 @@
 import React from "react"
 import { Col } from "react-bootstrap"
 import { FaCheck } from "react-icons/fa"
+import classNames from "classnames"
 
 export const PriceBox = (props: {
     name: string
@@ -38,9 +39,10 @@ export const PriceBox = (props: {
             >
                 <div className="font-medium text-2xl mb-1">{name}</div>
                 <div
-                    className={
-                        checked ? "text-white text-sm" : "text-gray text-sm"
-                    }
+                    className={classNames(
+                        checked ? "text-white text-sm" : "text-gray text-sm",
+                        "font-body"
+                    )}
                 >
                     {subText}
                 </div>
@@ -58,18 +60,20 @@ export const PriceBox = (props: {
                     details.map((detail: string) => (
                         <div className="flex mb-2" key={detail}>
                             <FaCheck
-                                className={
+                                className={classNames(
                                     !checked
                                         ? "text-sm mr-3 text-gray"
-                                        : "text-sm mr-3 text-white"
-                                }
+                                        : "text-sm mr-3 text-white",
+                                    "font-body"
+                                )}
                             />
                             <div
-                                className={
+                                className={classNames(
                                     !checked
                                         ? "text-sm text-gray relative bottom-1"
-                                        : "text-sm text-white relative bottom-1"
-                                }
+                                        : "text-sm text-white relative bottom-1",
+                                    "font-body"
+                                )}
                             >
                                 {detail}
                             </div>

@@ -65,13 +65,13 @@ const Home = (props: {
                     <div className="text-4xl tracking-wide leading-snug">
                         Upgrade your plan for unlimited access.
                     </div>
-                    <div className="mt-4">
+                    <div className="font-body mt-4">
                         Your free trial expired on {trialEndDate}.
                     </div>
                     <Link to="/dashboard/settings/payment/plan">
                         <button
                             type="button"
-                            className="text-white hover:text-black rounded bg-blue border-none px-20 py-3 mt-8 font-medium hover:bg-mint duration-500 tracking-wide"
+                            className="font-body text-white hover:text-black rounded bg-blue border-none px-20 py-3 mt-8 font-medium hover:bg-mint duration-500 tracking-wide"
                         >
                             UPGRADE PLAN
                         </button>

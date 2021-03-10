@@ -1,5 +1,6 @@
 import React from "react"
 import { connect } from "react-redux"
+import classNames from "classnames"
 
 import NameForm from "pages/dashboard/settings/profile/components/nameForm"
 import PasswordForm from "pages/dashboard/settings/profile/components/passwordForm"
@@ -20,9 +21,9 @@ const Profile = (props: any) => {
     // }, [dispatch])
 
     return (
-        <div className="w-full mt-12 md:m-auto md:max-w-screen-sm md:mt-16">
+        <div className="font-body w-full mt-12 md:m-auto md:max-w-screen-sm md:mt-16">
             <div className={styles.sectionTitle}>Email</div>
-            <div className={`${styles.sectionInfo} ${styles.dashedBox}`}>
+            <div className={classNames("font-body", `${styles.sectionInfo} ${styles.dashedBox}`)}>
                 {user.userID}
             </div>
             <NameForm />

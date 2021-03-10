@@ -84,7 +84,7 @@ const Cancel = (props: {
                 <div className="mt-4 text-4xl font-medium tracking-wide">
                     Cancel Plan
                 </div>
-                <div className="mt-6">
+                <div className="font-body mt-6">
                     We're always striving to improve Fractal. Could you briefly
                     describe why you are canceling your plan or provide any
                     feedback that could help us improve?
@@ -95,7 +95,7 @@ const Cancel = (props: {
                         placeholder="Your feedback here!"
                         onChange={updateFeedback}
                         wrap="soft"
-                        className="w-full mt-4 p-6 resize-none border-0 outline-none bg-blue-lightest rounded"
+                        className="font-body w-full mt-4 p-6 resize-none border-0 outline-none bg-blue-lightest rounded"
                     />
                 </div>
                 {warning && (
@@ -119,13 +119,13 @@ const Cancel = (props: {
                                     }}
                                 />
                             ) : (
-                                <span>Continue</span>
+                                <span className="font-body">Continue</span>
                             )}
                         </button>
                     </div>
                     <div data-testid={CANCEL_IDS.BACK}>
                         <button
-                            className="px-12 py-2.5 text-gray mt-4"
+                            className="font-body px-12 py-2.5 text-gray mt-4"
                             onClick={backToProfile}
                         >
                             Back

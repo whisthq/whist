@@ -42,17 +42,17 @@ const Confirmation = (props: { user: User; stripeInfo: StripeInfo }) => {
         return (
             <div className="relative m-auto pt-8 max-w-screen-sm">
                 <div data-testid={CONFIRMATION_IDS.INFO}>
-                    <div className="mt-4 text-4xl font-medium tracking-wide">
+                    <div className="font-body mt-4 text-4xl font-medium tracking-wide">
                         Congratulations!
                     </div>
-                    <div className="mt-6">
+                    <div className="font-body mt-6">
                         You've successfully upgraded your plan and won't be
                         charged until {trialEnd}.
                     </div>
                 </div>
                 <div data-testid={CONFIRMATION_IDS.BACK}>
                     <button
-                        className="text-left text-white font-medium mt-8 bg-blue px-12 py-2.5 rounded hover:bg-mint hover:text-black"
+                        className="font-body text-left text-white font-medium mt-8 bg-blue px-12 py-2.5 rounded hover:bg-mint hover:text-black"
                         onClick={backToProfile}
                         style={{ transitionDuration: "0.5s" }}
                     >

@@ -54,9 +54,9 @@ export const SignoutButton = (props: {
                 size="sm"
             >
                 <Modal.Body className="text-center py-6 px-10">
-                    <div>Are you sure you want to sign out?</div>
+                    <div className="font-body">Are you sure you want to sign out?</div>
                     <button
-                        className="bg-red hover:bg-red-800 duration-500 text-white w-full rounded mt-6 border-none outline-none py-2"
+                        className="font-body bg-red hover:bg-red-800 duration-500 text-white w-full rounded mt-6 border-none outline-none py-2"
                         onClick={handleSignOut}
                     >
                         Sign Out
