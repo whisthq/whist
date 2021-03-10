@@ -1,8 +1,8 @@
-#include "../fractal/core/fractal.h"
-#include "../fractal/network/network.h"
+#include <fractal/core/fractal.h>
+#include <fractal/network/network.h>
 #include <stdio.h>
 
-#include "../fractal/utils/aes.h"
+#include <fractal/utils/aes.h>
 
 #include "client.h"
 #include "webserver.h"

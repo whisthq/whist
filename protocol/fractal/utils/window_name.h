@@ -22,7 +22,7 @@ Includes
 ============================
 */
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 /*
 ============================

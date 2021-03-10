@@ -88,7 +88,7 @@ Includes
 #include <sys/socket.h>
 #endif
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 /*
 ============================

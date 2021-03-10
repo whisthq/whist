@@ -15,7 +15,7 @@ clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
 */
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "clipboard.h"
 
 bool start_tracking_clipboard_updates();

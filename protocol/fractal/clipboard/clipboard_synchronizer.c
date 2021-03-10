@@ -36,7 +36,7 @@ destroyClipboardSynchronizer();
 
 #include <stdio.h>
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "clipboard.h"
 
 #define MS_IN_SECOND 1000

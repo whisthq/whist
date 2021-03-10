@@ -1,7 +1,7 @@
 #ifndef DESKTOP_NETWORK_H
 #define DESKTOP_NETWORK_H
 
-#include "../fractal/core/fractal.h"
+#include <fractal/core/fractal.h>
 
 /**
  * Copyright Fractal Computers, Inc. 2020

@@ -18,7 +18,7 @@ Includes
 
 #include "network.h"
 
-#include "../fractal/core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "network.h"
 #include "desktop_utils.h"
 

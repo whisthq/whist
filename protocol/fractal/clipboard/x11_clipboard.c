@@ -28,7 +28,7 @@ whatever files are in the SET_CLIPBOARD directory.
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 #include "clipboard.h"
 #include "../utils/png.h"
 

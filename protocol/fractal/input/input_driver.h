@@ -20,7 +20,7 @@ Includes
 ============================
 */
 
-#include "../core/fractal.h"
+#include <fractal/core/fractal.h>
 
 #if INPUT_DRIVER == WINAPI_INPUT_DRIVER
 #include "winapi_input_driver.h"
