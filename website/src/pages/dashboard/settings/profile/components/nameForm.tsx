@@ -12,6 +12,7 @@ import { E2E_DASHBOARD_IDS, PROFILE_IDS } from "testing/utils/testIDs"
 
 import styles from "styles/profile.module.css"
 import sharedStyles from "styles/shared.module.css"
+import classNames from "classnames"
 
 const NameForm = (props: { dispatch: Dispatch<any>; user: User }) => {
     const { dispatch, user } = props
@@ -74,7 +75,7 @@ const NameForm = (props: { dispatch: Dispatch<any>; user: User }) => {
 
     return (
         <div style={{ marginTop: 15 }} data-testid={PROFILE_IDS.NAME}>
-            <div className={styles.sectionTitle}>Name</div>
+            <div className={classNames("font-body", styles.sectionTitle)}>Name</div>
             <div className={styles.sectionInfo}>
                 {editingName ? (
                     <div
@@ -102,14 +103,14 @@ const NameForm = (props: { dispatch: Dispatch<any>; user: User }) => {
                             }}
                         >
                             <button
-                                className={styles.saveButton}
+                                className={classNames("font-body", styles.saveButton)}
                                 data-testid={PROFILE_IDS.SAVE}
                                 onClick={saveNewName}
                             >
                                 SAVE
                             </button>
                             <button
-                                className={sharedStyles.whiteButton}
+                                className={classNames("font-body", sharedStyles.whiteButton)}
                                 style={{
                                     width: "47%",
                                     padding: "10px 0px",
@@ -133,7 +134,7 @@ const NameForm = (props: { dispatch: Dispatch<any>; user: User }) => {
                                     justifyContent: "space-between",
                                 }}
                             >
-                                <div>{user.name} </div>
+                                <div className="font-body">{user.name} </div>
                                 <div>
                                     {savedName && (
                                         <div className={styles.saved}>
@@ -152,7 +153,7 @@ const NameForm = (props: { dispatch: Dispatch<any>; user: User }) => {
                             </div>
                         ) : (
                             <div
-                                className={styles.dashedBox}
+                                className={classNames("font-body", styles.dashedBox)}
                                 onClick={() => {
                                     setEditingName(true)
                                     setSavedName(false)

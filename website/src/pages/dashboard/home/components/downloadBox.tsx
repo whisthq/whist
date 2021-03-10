@@ -109,7 +109,7 @@ export const DownloadBox = (props: {
                         className="rounded bg-blue text-white border-none px-4 md:px-20 py-3 mt-8 flex justify-center"
                     >
                         {largeIcon}
-                        <div>
+                        <div className="font-body transform translate-y-0.5">
                             {canBig
                                 ? "Download Fractal for " + osName
                                 : "Downloading..."}
@@ -144,7 +144,7 @@ export const DownloadBox = (props: {
                         className="rounded bg-blue text-white border-none px-4 md:px-20 py-3 mt-3 flex justify-center"
                     >
                         {smallIcon}
-                        <div>
+                        <div className="font-body transform translate-y-0.5">
                             {canSmall
                                 ? "Download Fractal for " +
                                   againstOS("Windows", "macOS")
