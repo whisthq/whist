@@ -79,7 +79,7 @@ from app.helpers.utils.general.logs import fractal_logger
 
 fractal_logger.<loglevel>(msg)
 
-fractal_logger can handle an extra argument that is a dictionary 
+fractal_logger can handle an extra argument that is a dictionary
 containing the following supported keys:
 - label
 
@@ -92,9 +92,11 @@ fractal_logger = _create_fractal_logger()
 
 
 def fractal_log(function, label, logs, level=logging.INFO):
-    fractal_logger.warning(f"fractal_log is deprecated. Called by function {function}.")
+    # stacklevel usually defaults to 1. We increase it to 2 here to keep `fractal_log`
+    # from appearing the logs and instead show the calling function's information.
+    fractal_logger.warning(
+        f"fractal_log is deprecated. Called by function {function}.", stacklevel=2
+    )
     fractal_logger.log(
-        level=level,
-        msg=logs,
-        extra={"label": label, "function": function},
+        level=level, msg=logs, extra={"label": label, "function": function}, stacklevel=2
     )
