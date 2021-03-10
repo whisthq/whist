@@ -76,7 +76,7 @@ export const About = (props: { useWidth?: boolean }) => {
                     >
                         <h2>Our Stories</h2>
                         <p
-                            className=".heading"
+                            className="font-body .heading"
                             style={{
                                 marginTop: 25,
                             }}
@@ -96,7 +96,7 @@ export const About = (props: { useWidth?: boolean }) => {
                     <Row style={{ marginTop: 100 }}>
                         <Col md={5}>
                             <h2>Our Investors</h2>
-                            <p
+                            <p  className="font-body"
                                 style={{
                                     marginTop: 30,
                                     marginBottom: 20,

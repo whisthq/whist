@@ -69,6 +69,7 @@ const EmployeeBox = (props: { image: string; name: string; text: string }) => {
                                 {props.name}
                             </div>
                             <div
+                                className="font-body"
                                 style={{
                                     marginTop: 20,
                                     color: "#555555",

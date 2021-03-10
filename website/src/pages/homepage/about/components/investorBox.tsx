@@ -165,6 +165,7 @@ const InvestorBox = () => {
                                     Pankaj Patel
                                 </div>
                                 <div
+                                    className="font-body"
                                     style={{
                                         margin: 0,
                                         padding: 0,
@@ -265,6 +266,7 @@ const InvestorBox = () => {
                                     Michael Stoppelman
                                 </div>
                                 <div
+                                    className="font-body"
                                     style={{
                                         margin: 0,
                                         padding: 0,
@@ -346,6 +348,7 @@ const InvestorBox = () => {
                                     Dan (DC) Posch
                                 </div>
                                 <div
+                                    className="font-body"
                                     style={{
                                         margin: 0,
                                         padding: 0,
