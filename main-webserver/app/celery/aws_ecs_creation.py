@@ -567,6 +567,7 @@ def _assign_container(
         task_id=self.request.id,
         state=PENDING,
         ip=base_container.ip,
+        port=base_container.port_32262,
         force=True,  # necessary since check will fail otherwise
     )
 
