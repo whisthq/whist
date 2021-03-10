@@ -54,7 +54,7 @@ export const WordmarkLink = (props: { className?: string }) => (
     <Link
         className={classNames(
             props.className,
-            "outline-none tracking-widest hover:no-underline"
+            "outline-none font-semibold hover:no-underline tracking-fractal"
         )}
         to="/"
     >
@@ -107,7 +107,7 @@ export const BlogLink = (props: any) => (
     /* eslint-disable react/jsx-no-target-blank */
     <a
         {...props}
-        href="fractal.medium.com"
+        href="https://medium.com/@fractal"
         target="_blank"
         rel="noopener noreferror"
     >
@@ -121,7 +121,7 @@ export const DiscordLink = (props: any) => (
     /* eslint-disable react/jsx-no-target-blank */
     <a
         {...props}
-        href="https://discord.gg/HjPpDGvEeA"
+        href="https://medium.com/@fractal"
         target="_blank"
         rel="noopener noreferror"
     >

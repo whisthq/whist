@@ -15,6 +15,7 @@ const Input = (props: {
     return (
         <div style={{ width: "100%" }}>
             <div
+                className="font-body"
                 style={{
                     width: "100%",
                     display: "flex",
@@ -22,6 +23,7 @@ const Input = (props: {
                 }}
             >
                 <div
+                    className="font-body"
                     style={{
                         fontSize: 14,
                         fontWeight: "bold",
@@ -31,6 +33,7 @@ const Input = (props: {
                     {props.text}
                 </div>
                 <div
+                    className="font-body"
                     style={{
                         fontSize: 14,
                     }}
@@ -39,6 +42,7 @@ const Input = (props: {
                 </div>
                 {props.warning && props.warning !== "" && (
                     <div
+                        className="font-body"
                         style={{
                             color: "white",
                             background: "#fc3d03",
@@ -56,7 +60,7 @@ const Input = (props: {
                 aria-label="Default"
                 aria-describedby="inputGroup-sizing-default"
                 placeholder={props.placeholder}
-                className="w-full bg-white border-gray-100 px-4 py-3 outline-none rounded-none text-black"
+                className="font-body w-full bg-white border-gray-100 px-4 py-3 outline-none rounded-none text-black"
                 onChange={props.onChange}
                 onKeyPress={props.onKeyPress}
                 value={props.value}

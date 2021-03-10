@@ -1,4 +1,3 @@
-import React from "react"
 import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM, FaBars} from "react-icons/fa"
 import classNames from "classnames"
 
@@ -25,7 +24,7 @@ export const TwitterIcon = (props: any) => (
 )
 
 export const MediumIcon = (props: any) => (
-    <LogoIcon {...props} id="medium" href="fractal.medium.com">
+    <LogoIcon {...props} id="medium" href="https://medium.com/@fractal">
         <FaMediumM />
     </LogoIcon>
 )
