@@ -305,7 +305,7 @@ include_directories(sentry-native/include)
 add_subdirectory(fractal)
 if (${BUILD_CLIENT} MATCHES ON)
     message(STATUS "building client")
-    add_subdirectory(desktop)
+    add_subdirectory(client)
 endif()
 if (${BUILD_SERVER} MATCHES ON AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") #Server does not ever build on macos
     message(STATUS "building server")

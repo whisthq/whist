@@ -41,10 +41,10 @@ sentry-native
 version
 **/build32
 **/build64
-desktop/log.txt
+client/log.txt
 server/log.txt
 share/
-desktop/external_utils/Windows/ssh.exe
+client/external_utils/Windows/ssh.exe
 *.v
 ._share
 connection_id.txt
@@ -57,7 +57,7 @@ connection_id.txt
 *.internal
 *.includecache
 fractal/**/*.lib
-desktop/*.lib
+client/*.lib
 server/*.lib
 CMakeSettings.json
 cmake-build-*

@@ -5,7 +5,7 @@
 
 # This script can only be run if compile_commands.json exists:
 #   set(CMAKE_EXPORT_COMPILE_COMMANDS ON) must be set in CMakeLists.txt
-# This script can only be run after calling make within /desktop (and /server, if applicable)
+# This script can only be run after calling make within /client (and /server, if applicable)
 
 # run with option -c for CI check without replacement option
 OPTIND=1
@@ -34,7 +34,7 @@ esac
 # array of all folders to be checked and modified
 declare -a includeFolders=(
     "fractal"
-    "desktop"
+    "client"
     "server"
 )
 
@@ -47,12 +47,12 @@ fixesFilename=clang-tidy-fixes.yaml
 echo "Running clang-tidy into ${yamlFolder}/${fixesFilename}"
 
 # generate string of arguments to pass in for files to tidy
-filesToFix="desktop/main.c server/main.c"
+filesToFix="client/main.c server/main.c"
 for folder in "${includeFolders[@]}"
 do
     for cFilePath in $(find $folder -type f -regex ".*\.\c")
     do
-        if [[ "$cFilePath" != *"desktop/main.c"* && "$cFilePath" != *"server/main.c"* ]]
+        if [[ "$cFilePath" != *"client/main.c"* && "$cFilePath" != *"server/main.c"* ]]
         then
             filesToFix="${filesToFix} ${cFilePath}"
         fi
@@ -60,7 +60,7 @@ do
 done
 
 # header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
-headerFilter="desktop/|fractal/|server/"
+headerFilter="client/|fractal/|server/"
 
 clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix
 

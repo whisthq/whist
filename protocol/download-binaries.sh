@@ -51,9 +51,9 @@ esac
 # Create Directory Structure
 ###############################
 
-mkdir -p desktop/build64/Windows
-mkdir -p desktop/build64/Darwin
-mkdir -p desktop/build64/Linux
+mkdir -p client/build64/Windows
+mkdir -p client/build64/Darwin
+mkdir -p client/build64/Linux
 mkdir -p server/build64
 mkdir -p lib/64/SDL2
 
@@ -68,7 +68,7 @@ if has_updated "$LIB"; then
 
     # Copy Windows files
     if [[ "$OS" =~ "Windows" ]]; then
-        cp shared-libs/share/64/Windows/* desktop/build64/Windows/
+        cp shared-libs/share/64/Windows/* client/build64/Windows/
         cp shared-libs/share/64/Windows/* server/build64
     fi
 
@@ -81,7 +81,7 @@ fi
 
 # Copy macOS files
 if [[ "$OS" == "Mac" ]]; then
-    cp lib/64/ffmpeg/Darwin/* desktop/build64/Darwin/
+    cp lib/64/ffmpeg/Darwin/* client/build64/Darwin/
 fi
 
 ###############################

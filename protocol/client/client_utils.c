@@ -1,12 +1,12 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file desktop_utils.c
+ * @file client_utils.c
  * @brief This file contains helper functions for FractalClient
 ============================
 Usage
 ============================
 
-Call these functions from anywhere within desktop where they're
+Call these functions from anywhere within client where they're
 needed.
 */
 
@@ -26,7 +26,7 @@ Includes
 #include <stdlib.h>
 #include <string.h>
 
-#include "desktop_utils.h"
+#include "client_utils.h"
 #include "network.h"
 #include <fractal/utils/logging.h>
 #include <fractal/core/fractalgetopt.h>
@@ -282,7 +282,7 @@ Public Function Implementations
 
 int parse_args(int argc, char *argv[]) {
     /*
-        Parse the arguments passed into the desktop application
+        Parse the arguments passed into the client application
 
         Arguments:
             argc (int): number of arguments
@@ -292,12 +292,12 @@ int parse_args(int argc, char *argv[]) {
             (int): 0 on success and -1 on failure
     */
 
-    // TODO: replace `desktop` with argv[0]
+    // TODO: replace `client` with argv[0]
     usage =
-        "Usage: desktop [OPTION]... IP_ADDRESS\n"
-        "Try 'desktop --help' for more information.\n";
+        "Usage: client [OPTION]... IP_ADDRESS\n"
+        "Try 'client --help' for more information.\n";
     const char *usage_details =
-        "Usage: desktop [OPTION]... IP_ADDRESS\n"
+        "Usage: client [OPTION]... IP_ADDRESS\n"
         "\n"
         "All arguments to both long and short options are mandatory.\n"
         // regular options should look nice, with 2-space indenting for multiple lines

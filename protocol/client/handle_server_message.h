@@ -33,7 +33,7 @@ Public Functions
  * @brief                          Handles message received by client from
  *                                 server, on client-side
  *
- * @details                        Updates desktop state, replies to server,
+ * @details                        Updates client state, replies to server,
  *                                 or performs whatever side-effects appropriate
  *                                 in handling message from server. Logs errors.
  *

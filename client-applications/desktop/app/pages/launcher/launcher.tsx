@@ -162,7 +162,7 @@ export const Launcher = (props: {
             FractalDirectory.getRootDirectory(),
             require("os").platform() === "darwin"
                 ? "MacOS/log.txt"
-                : "protocol-build/desktop/log.txt"
+                : "protocol-build/client/log.txt"
         )
 
         const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`

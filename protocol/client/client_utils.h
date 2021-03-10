@@ -1,17 +1,17 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file desktop_utils.c
+ * @file client_utils.c
  * @brief TODO
 ============================
 Usage
 ============================
 
-Call these functions from anywhere within desktop where they're
+Call these functions from anywhere within client where they're
 needed.
 */
 
-#ifndef DESKTOP_UTILS_H
-#define DESKTOP_UTILS_H
+#ifndef CLIENT_UTILS_H
+#define CLIENT_UTILS_H
 
 /*
 ============================
@@ -47,7 +47,7 @@ Public Functions
 */
 
 /**
- * @brief                          Parse the arguments passed into the desktop application
+ * @brief                          Parse the arguments passed into the client application
  *
  * @param argc                     Number of arguments
  *
@@ -145,4 +145,4 @@ int update_mouse_motion();
  */
 void send_message_dimensions();
 
-#endif  // DESKTOP_UTILS_H
+#endif  // CLIENT_UTILS_H

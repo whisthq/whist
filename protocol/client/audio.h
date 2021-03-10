@@ -1,5 +1,5 @@
-#ifndef DESKTOP_AUDIO_H
-#define DESKTOP_AUDIO_H
+#ifndef CLIENT_AUDIO_H
+#define CLIENT_AUDIO_H
 /**
  * Copyright Fractal Computers, Inc. 2020
  * @file audio.h
@@ -69,4 +69,4 @@ void render_audio();
  */
 void destroy_audio();
 
-#endif  // DESKTOP_AUDIO_H
+#endif  // CLIENT_AUDIO_H
