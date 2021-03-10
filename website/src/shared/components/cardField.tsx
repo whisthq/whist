@@ -114,7 +114,7 @@ const CardField = (props: {
     const CARD_OPTIONS = {
         style: {
             base: {
-                fontFamily: "Maven Pro",
+                fontFamily: "Josefin Sans",
                 fontSmoothing: "antialiased",
                 fontSize: "15px",
                 "::placeholder": {
@@ -135,6 +135,7 @@ const CardField = (props: {
         >
             {warning && (
                 <div
+                    className="font-body"
                     style={{
                         color: "white",
                         background: "#fc3d03",
@@ -149,7 +150,7 @@ const CardField = (props: {
                 </div>
             )}
             <CardElement
-                className="bg-blue-100 py-3 px-5 w-full rounded"
+                className="font-body bg-blue-100 py-3 px-5 w-full rounded"
                 options={CARD_OPTIONS}
                 onChange={() => setWarning(false)}
                 id={PAYMENT_IDS.CARD_FORM}
@@ -157,7 +158,7 @@ const CardField = (props: {
             <div className="flex">
                 <button
                     type="submit"
-                    className="w-3/6 py-2.5 bg-blue text-white mt-4 rounded mr-2 hover:bg-mint hover:text-black duration-500"
+                    className="font-body w-3/6 py-2.5 bg-blue text-white mt-4 rounded mr-2 hover:bg-mint hover:text-black duration-500"
                 >
                     {savingCard ? (
                         <FontAwesomeIcon
@@ -168,11 +169,11 @@ const CardField = (props: {
                             }}
                         />
                     ) : (
-                        <span>SAVE</span>
+                        <span className="font-body">SAVE</span>
                     )}
                 </button>
                 <button
-                    className="w-5/12 py-2.5 text-gray mt-4"
+                    className="font-body w-5/12 py-2.5 text-gray mt-4"
                     onClick={() => setEditingCard(false)}
                 >
                     CANCEL

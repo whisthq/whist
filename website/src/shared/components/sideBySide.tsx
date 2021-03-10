@@ -294,6 +294,7 @@ export const SideBySide = (props: any) => {
                             {headers[props.case]}
                         </h2>
                         <p
+                            className="font-body"
                             style={{
                                 color: "#111111",
                                 paddingTop: 30,
