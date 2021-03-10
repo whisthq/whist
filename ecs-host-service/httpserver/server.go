@@ -168,8 +168,8 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 
 // SetConfigEncryptionTokenRequest
 type SetConfigEncryptionTokenRequest struct {
-	HostPort                int         `json:"host_port"`               // Port on the host to whose container this user corresponds
-	UserID                  string      `json:"user_id"`                 // User to whom token belongs
+    HostPort                int         `json:"host_port"`               // Port on the host to whose container this user corresponds
+    UserID                  string      `json:"user_id"`                 // User to whom token belongs
     ConfigEncryptionToken   string      `json:"config_encryption_token"` // User-specific private encryption token
     resultChan   chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
 }
