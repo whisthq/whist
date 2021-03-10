@@ -23,6 +23,7 @@ export type AuthFlow = {
     callback?: string | undefined
     token?: string | null
     url?: string | null
+    resetDone?: boolean
 }
 
 export const DEFAULT = {
@@ -53,6 +54,7 @@ export const DEFAULT = {
         // fields for testing reset password
         token: null, //reset password token
         url: null, // should be dev.fractal.co
+        resetDone: false
     },
 }
 
