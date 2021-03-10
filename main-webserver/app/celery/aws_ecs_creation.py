@@ -270,16 +270,20 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     return task_id, curr_ip, curr_network_binding, aeskey
 
 
-def _get_num_extra(taskdef):
+def _get_num_extra(taskdef, location):
     """
     Function determining how many containers to preboot based on type
     right now only preboots chrome
     :param taskdef: the task definition ARN of the container
+    :param location:  what region the task is being booted in
     :return: integer determining how many containers to preboot
     """
     app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
     if app_image_for_taskdef:
-        return app_image_for_taskdef.preboot_number
+        num_running = float(
+            len(UserContainer.query.filter_by(task_definition=taskdef, location=location).all())
+        )
+        return max(1, num_running * app_image_for_taskdef.preboot_number)
     return 0
 
 
@@ -382,7 +386,7 @@ def _assign_container(
             # Simply set the output appropriately.
             base_container = None
 
-        num_extra = _get_num_extra(task_definition_arn)
+        num_extra = _get_num_extra(task_definition_arn, region_name)
     else:
         num_extra = 0
         base_container = False
