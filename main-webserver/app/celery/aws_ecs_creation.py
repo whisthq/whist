@@ -653,12 +653,12 @@ def _assign_container(
         _pass_start_values_to_instance(base_container, webserver_url)
     except StartValueException:
         return _clean_tasks_and_create_new_container(
-            container.ip,
-            container.user_id,
-            container.task_definition,
-            container.location,
-            container.cluster,
-            container.dpi,
+            base_container.ip,
+            base_container.user_id,
+            base_container.task_definition,
+            base_container.location,
+            base_container.cluster,
+            base_container.dpi,
             webserver_url,
         )
 
