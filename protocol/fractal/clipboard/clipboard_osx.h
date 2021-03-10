@@ -24,7 +24,6 @@ Includes
 ============================
 */
 
-#pragma once
 #include <fractal/core/fractal.h>
 
 /*

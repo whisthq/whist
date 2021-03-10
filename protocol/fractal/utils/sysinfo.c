@@ -11,6 +11,37 @@ Call the respective functions to log a device's OS, model, CPU, RAM, etc.
 
 #include "sysinfo.h"
 
+/*
+============================
+Includes
+============================
+*/
+
+#ifdef _WIN32
+#pragma warning(disable : 4201)
+#include <D3D11.h>
+#include <D3d11_1.h>
+#include <DXGITYPE.h>
+#include <dxgi1_2.h>
+#include <windows.h>
+#pragma comment(lib, "dxguid.lib")
+#include <processthreadsapi.h>
+#include <psapi.h>
+#else
+#ifdef __APPLE__
+#include <sys/sysctl.h>
+#include <sys/types.h>
+#else
+#include <sys/sysinfo.h>
+#endif
+#include <sys/statvfs.h>
+#include <sys/utsname.h>
+#endif
+
+#include <stdio.h>
+
+#include "logging.h"
+
 void print_os_info() {
 #ifdef _WIN32
     char buf[1024];
