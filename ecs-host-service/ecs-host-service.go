@@ -919,7 +919,7 @@ func main() {
 	}
 
 	// Start the HTTP server and listen for events
-	serverEvents, err := httpserver.StartHTTPSServer()
+	httpServerEvents, err := httpserver.StartHTTPSServer()
 	if err != nil {
 		logger.Panic(err)
 	}
@@ -1002,7 +1002,7 @@ eventLoop:
 				containerDieHandler(ctx, cli, dockerevent.ID)
 			}
 
-		case serverevent := <-serverEvents:
+		case serverevent := <-httpServerEvents:
 			switch serverevent.(type) {
 			case *httpserver.SetContainerStartValuesRequest:
 				err := handleStartValuesRequest(serverevent.(*httpserver.SetContainerStartValuesRequest))
