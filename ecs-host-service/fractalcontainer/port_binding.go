@@ -1,9 +1,10 @@
 package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 
 import (
-// "math/rand"
+	"math/rand"
+	"sync"
 
-// logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
 // A PortBinding represents a single port that is bound inside a container to a
@@ -19,114 +20,129 @@ type PortBinding struct {
 	Protocol transportProtocol
 }
 
-/*
 const (
 	// Obtained from reading though Docker daemon source code
 	minAllowedPort = 1025  // inclusive
 	maxAllowedPort = 49151 // exclusive
 
-	reserved = "reserved"
+	reserved FractalID = FractalID("reserved")
 )
 
-func init() {
-	// TODO
-	// Mark certain ports as "reserved" so they don't get allocated for containers
-	// tcpPorts[httpserver.PortToListen] = reserved // For the host service itself
-}
-
-// Unexported maps to keep track of free vs allocated host ports
-type protocolSpecificMap map[uint16]string
-
-var tcpPorts protocolSpecificMap = make(map[uint16]string)
-var udpPorts protocolSpecificMap = make(map[uint16]string)
-
-// AllocatePortBindings allocates the desired port bindings and updates `PortBindings` to match
-func AllocatePortBindings(fractalID string, binds []PortBinding) ([]PortBinding, error) {
-	var reterr error = nil
-
-	// Check that PortBindings[fractalID] doesn't exist already, then set it to an empty slice
-	if v, exists := PortBindings[fractalID]; exists {
-		return nil, logger.MakeError("AllocatePorts: FractalID %v already has a PortBinding value: %v", fractalID, v)
-	}
-	PortBindings[fractalID] = []fractaltypes.PortBinding{}
-
-	for _, v := range binds {
-		reterr = allocateSinglePort(fractalID, v)
-		if reterr != nil {
-			break
-		}
-	}
-
-	// If one allocation failed, we don't want to leak any ports.
-	if reterr != nil {
-		FreePortBindings(fractalID)
-		return nil, reterr
-	}
-
-	return PortBindings[fractalID], nil
-}
-
-// assumes that PortBindings[`fractalID`] exists
-func allocateSinglePort(fractalID string, bind fractaltypes.PortBinding) error {
-	mapToUse, err := getMapFromProtocol(bind.Protocol)
+// MarkPortReserved lets us mark certain ports as "reserved" so they don't get
+// allocated for containers. This needs to be called at program initialization
+// (ideally in an `init` function), before any containers are started.
+func MarkPortReserved(num uint16, protocol transportProtocol) {
+	mapToUse, err := getProtocolSpecificHostPortMap(protocol)
 	if err != nil {
-		return logger.MakeError("allocateSinglePort: failed for FractalID %s. Error: %s", fractalID, err)
+		logger.Panic(err)
+	}
+	(*mapToUse)[num] = reserved
+	logger.Infof("Marked Port %v/%s as reserved", num, protocol)
+}
+
+// Unexported global maps to keep track of free vs allocated host ports
+type protocolSpecificHostPortMap map[uint16]FractalID
+
+var tcpPortMap protocolSpecificHostPortMap = make(map[uint16]FractalID)
+var udpPortMap protocolSpecificHostPortMap = make(map[uint16]FractalID)
+
+// Lock to protect `tcpPortMap` and `udpPortMap`
+var portMapLocks = new(sync.Mutex)
+
+// allocateSinglePort allocates a single port given a desired binding. It
+// requires that `portMapLocks` is held throughout.
+func allocateSinglePort(bind PortBinding, fid FractalID) (PortBinding, error) {
+	mapToUse, err := getProtocolSpecificHostPortMap(bind.Protocol)
+	if err != nil {
+		return bind, logger.MakeError("allocateSinglePort: failed for FractalID %s. Error: %s", fid, err)
 	}
 
 	// If the given HostPort is nonzero, we want to use that one specifically. Else, we have to randomly allocate a free one.
 	if bind.HostPort != 0 {
 		// Check that this port isn't already allocated to a container
 		if v, exists := (*mapToUse)[bind.HostPort]; exists {
-			return logger.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v for FractalID %v: Already bound to %v", bind.HostPort, bind.Protocol, fractalID, v)
+			return bind, logger.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v for FractalID %v: Already bound to %v", bind.HostPort, bind.Protocol, fid, v)
 		}
 
 		// Mark it as allocated and update PortBindings
-		(*mapToUse)[bind.HostPort] = fractalID
-		PortBindings[fractalID] = append(PortBindings[fractalID], bind)
-
+		(*mapToUse)[bind.HostPort] = fid
+		return bind, nil
 	} else {
 		// Gotta allocate a port ourselves
 		randomPort := randomPortInAllowedRange()
 		numTries := 0
 		for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
 			numTries++
-			if numTries >= 1000 {
-				return logger.MakeError("Tried %v times to allocate a random host port for container port %v/%v for FractalID %v. Breaking out to avoid spinning for too long.", numTries, bind.HostPort, bind.Protocol, fractalID)
+			if numTries >= 100 {
+				return bind, logger.MakeError("Tried %v times to allocate a random host port for container port %v/%v for FractalID %v. Breaking out to avoid spinning for too long.", numTries, bind.HostPort, bind.Protocol, fid)
 			}
 		}
 
 		// Mark it as allocated and update PortBindings
-		(*mapToUse)[randomPort] = fractalID
-		PortBindings[fractalID] = append(PortBindings[fractalID], fractaltypes.PortBinding{
+		(*mapToUse)[randomPort] = fid
+		return PortBinding{
 			ContainerPort: bind.ContainerPort,
 			HostPort:      randomPort,
 			Protocol:      bind.Protocol,
-		})
+			BindIP:        bind.BindIP,
+		}, nil
 	}
-
-	return nil
 }
 
-// FreePortBindings frees all ports that were mapped to the given FractalID
-func FreePortBindings(fractalID string) {
-	binds, exists := PortBindings[fractalID]
-	if !exists {
+// freePortBindings marks all provided PortBindings as free in `tcpPortMap` and
+// `udpPortMap`. It requires that `portMapLocks` is held throughout.
+func freePortBindings(binds []PortBinding) {
+	if binds == nil {
 		return
 	}
 
-	logger.Infof("Deleting all port bindings for FractalID %s", fractalID)
+	logger.Infof("Deleting the following PortBindings: %v")
 
 	for _, bind := range binds {
-		mapToUse, err := getMapFromProtocol(bind.Protocol)
+		mapToUse, err := getProtocolSpecificHostPortMap(bind.Protocol)
 		if err != nil {
-			logger.Errorf("FreePortBindings: failed for FractalID %s and bind %v. Error: %s", fractalID, bind, err)
-			continue
+			logger.Errorf("FreePortBindings: failed for bind %v. Error: %s", bind, err)
 		}
 
 		delete(*mapToUse, bind.HostPort)
 	}
+}
 
-	delete(PortBindings, fractalID)
+// AllocatePortBindings allocates the desired port bindings and updates `PortBindings` to match. It returns the new value of `container.PortBindings`.
+func (container *containerData) AllocatePortBindings(desiredBinds []PortBinding) ([]PortBinding, error) {
+	// Lock the container for writing
+	container.rwlock.Lock()
+	defer container.rwlock.Unlock()
+
+	portMapLocks.Lock()
+	defer portMapLocks.Unlock()
+
+	var reterr error = nil
+
+	// Check that container.PortBindings doesn't already exist, then set it to an empty slice
+	if len(container.PortBindings) != 0 {
+		return nil, logger.MakeError("AllocatePortBindings: Container with FractalID %s already has nonempty PortBindings: %v", container.FractalID, container.PortBindings)
+	}
+	container.PortBindings = make([]PortBinding, len(desiredBinds))
+
+	for _, v := range desiredBinds {
+		var b PortBinding
+		b, reterr = allocateSinglePort(v, container.FractalID)
+		if reterr != nil {
+			break
+		} else {
+			container.PortBindings = append(container.PortBindings, b)
+		}
+	}
+
+	// If one allocation failed, we don't want to leak any ports.
+	if reterr != nil {
+		freePortBindings(container.PortBindings)
+		container.PortBindings = nil
+		return nil, reterr
+	}
+
+	return container.PortBindings, nil
 }
 
 // Helper function to generate random port values in the allowed range
@@ -137,14 +153,13 @@ func randomPortInAllowedRange() uint16 {
 // Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
 // either "tcp" or "udp"), and return a pointer to the correct map to
 // read/modify (i.e. either `tcpPorts` or `udpPorts`).
-func getMapFromProtocol(protocol string) (*protocolSpecificMap, error) {
+func getProtocolSpecificHostPortMap(protocol transportProtocol) (*protocolSpecificHostPortMap, error) {
 	switch protocol {
-	case "tcp":
-		return &tcpPorts, nil
-	case "udp":
-		return &udpPorts, nil
+	case TransportProtocolTCP:
+		return &tcpPortMap, nil
+	case TransportProtocolUDP:
+		return &udpPortMap, nil
 	default:
-		return nil, logger.MakeError("getMapFromProtocol: received incorrect protocol: %v", protocol)
+		return nil, logger.MakeError("getProtocolSpecificHostPortMap: received incorrect protocol: %v", protocol)
 	}
 }
-*/
