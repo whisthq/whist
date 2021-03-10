@@ -164,7 +164,7 @@ function* emailSignup(action: {
     }
 }
 
-export function* sendVerificationEmail(action: any) {
+export function* sendVerificationEmail(action: any): any {
     const state = yield select()
     if (action.email !== "" && action.name !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -188,7 +188,7 @@ export function* sendVerificationEmail(action: any) {
     }
 }
 
-export function* validateVerificationToken(action: any) {
+export function* validateVerificationToken(action: any): any {
     const state = yield select()
     const { json, response } = yield call(
         api.validateVerification,
@@ -219,7 +219,7 @@ export function* validateVerificationToken(action: any) {
     }
 }
 
-export function* forgotPassword(action: any) {
+export function* forgotPassword(action: any): any {
     const state = yield select()
     const { json } = yield call(
         api.passwordForgot,
@@ -316,7 +316,7 @@ export function* resetPassword(action: any) {
     }
 }
 
-export function* updatePassword(action: any) {
+export function* updatePassword(action: any): any {
     const state = yield select()
 
     const { json } = yield call(
@@ -348,7 +348,7 @@ export function* updatePassword(action: any) {
     }
 }
 
-function* fetchPaymentInfo(action: any) {
+function* fetchPaymentInfo(action: any): any {
     const state = yield select()
     const { json } = yield call(
         api.stripePaymentInfo,
