@@ -73,7 +73,7 @@ static enum AVPixelFormat sws_input_fmt;
 
 #ifdef __APPLE__
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-extern volatile SDL_Renderer* renderer;
+extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
 #define LOG_VIDEO false
@@ -769,7 +769,9 @@ int init_video_renderer() {
 // SDL guidelines say that renderer functions should be done on the main thread,
 //      but our implementation requires that the renderer is made in this thread
 //      for non-MacOS
-#ifndef __APPLE__
+#ifdef __APPLE__
+    SDL_Renderer* renderer = (SDL_Renderer*)init_sdl_renderer;
+#else
     SDL_Renderer* renderer = SDL_CreateRenderer(
         (SDL_Window*)window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 #endif

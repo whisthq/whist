@@ -37,7 +37,7 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 
 #ifdef __APPLE__
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
-volatile SDL_Renderer* renderer;
+volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
 /*
@@ -189,7 +189,7 @@ SDL_Window* init_sdl(int target_output_width, int target_output_height, char* na
     renderer creation
 */
 #ifdef __APPLE__
-    renderer =
+    init_sdl_renderer =
         SDL_CreateRenderer(sdl_window, -1, SDL_RENDERER_PRESENTVSYNC | SDL_RENDERER_ACCELERATED);
 #endif
 
