@@ -58,21 +58,21 @@ export const Top = () => {
 
     return (
         <div>
-            {width > ScreenSize.MEDIUM && (
-                <SymmetricGeometric className="absolute" />
-            )}
+            <div className="text-white text-lg m-auto text-center py-8">
+            </div>
+            {width > ScreenSize.MEDIUM && <SymmetricGeometric className="absolute"/>}
             <div className="mt-16 text-center">
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1500 : 0}>
                     <div className="text-5xl md:text-8xl dark:text-gray-300">
                         <div>
                             Chrome,
-                            <div className="flex justify-center relative top-2">
-                                <div className="mr-3">just</div>
+                            <div className="flex justify-center relative">
+                                <div className="mr-3 py-2">just</div>
                                 <TypeWriter
                                     words={adjectives}
                                     startAt={5}
                                     classNameCursor="bg-blue-800"
-                                    classNameText="text-blue dark:text-mint relative"
+                                    classNameText="py-2 text-blue dark:text-mint relative"
                                 />
                             </div>
                         </div>
@@ -80,22 +80,20 @@ export const Top = () => {
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1700 : 100}>
                     <div className="mt-10 md:mt-12 relative">
-                        <p className="m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
+                        <p className="font-body m-auto max-w-screen-sm dark:text-gray-400 tracking-wider">
                             Load pages instantly. Use 10x less memory. Enjoy
                             complete privacy. Fractal is a supercharged version
                             of Chrome that runs in the cloud.
                         </p>
                         <Link to="/auth">
                             <button
-                                className={classNames(
-                                    "rounded bg-blue dark:bg-mint text-gray-100 dark:text-black px-8 py-3 mt-8",
-                                    "w-full md:w-48 hover:bg-mint hover:text-black duration-500 mt-12 tracking-wide"
-                                )}
+                                className={classNames("relative text-gray-100 rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8 font-light",
+                                                      "w-full md:w-48 transition duration-500 hover:bg-mint hover:text-black mt-12 tracking-wide")}
                                 style={{ opacity: 1.0 }}
                                 onMouseEnter={() => setHovering(true)}
                                 onMouseLeave={() => setHovering(false)}
                             >
-                                <div>GET STARTED</div>
+                                <div className="transform translate-y-0.5">GET STARTED</div>
                             </button>
                         </Link>
                     </div>

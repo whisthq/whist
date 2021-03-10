@@ -40,7 +40,7 @@ export const Middle = () => {
                     </>
                 }
                 text={
-                    <div className="dark:text-gray-400 tracking-wider">
+                    <div className="font-body dark:text-gray-400 tracking-wider">
                         Fractal runs in the cloud on gigabit Internet. Browse
                         the web at lightning speeds, even if your own Internet
                         is slow.
@@ -79,7 +79,7 @@ export const Middle = () => {
                         </>
                     }
                     text={
-                        <div className="dark:text-gray-400 tracking-wider">
+                        <div className="font-body dark:text-gray-400 tracking-wider">
                             Today, your computer runs out of memory and slows
                             down when you open too many tabs. By running in the
                             cloud, Fractal never consumes more than 300MB of
@@ -102,13 +102,13 @@ export const Middle = () => {
                                     }
                                 />
                             </div>
-                            <div className="absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
+                            <div className="font-body absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
                                 <div>Chrome uses 4GB RAM</div>
                             </div>
-                            <div className="absolute bg-mint-light px-10 py-3 text-gray font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl">
+                            <div className="font-body absolute bg-mint-light px-10 py-3 text-gray font-bold rounded top-56 md:top-52 right-4 md:right-64 text-xs w-56 shadow-xl">
                                 <div>Fractal uses 0.3GB RAM</div>
                             </div>
-                            <div className="text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">
+                            <div className="font-body text-sm font-bold text-gray dark:text-gray-300 tracking-wide mt-0 md:pt-8 w-full">
                                 RAM usage vs. number of tabs open
                             </div>
                         </div>
@@ -129,7 +129,8 @@ export const Middle = () => {
                     </>
                 }
                 text={
-                    <div className="dark:text-gray-400 tracking-wider mb-4">
+
+                    <div className="font-body dark:text-gray-400 tracking-wider mb-4">
                         Because Fractal runs in datacenters, your IP address and
                         location are hidden from websites (similar to a VPN),
                         and your browsing data is not stored on your computer.
