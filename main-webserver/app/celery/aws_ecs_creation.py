@@ -279,11 +279,11 @@ def _get_num_extra(taskdef, location):
     :return: integer determining how many containers to preboot
     """
 
-    def get_count(q):
+    def _get_count_helper(query):
         from sqlalchemy.sql.functions import func
 
-        count_q = q.statement.with_only_columns([func.count()]).order_by(None)
-        count = q.session.execute(count_q).scalar()
+        count_q = query.statement.with_only_columns([func.count()]).order_by(None)
+        count = query.session.execute(count_q).scalar()
         return count
 
     app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
@@ -291,7 +291,7 @@ def _get_num_extra(taskdef, location):
 
         # get the number we want prewarmed
         num_needed_running = float(
-            get_count(
+            _get_count_helper(
                 UserContainer.query.filter_by(
                     task_definition=taskdef, location=location, is_assigned=True
                 )
@@ -300,7 +300,7 @@ def _get_num_extra(taskdef, location):
         # then floor it at 1
         num_needed_running = max(1, num_needed_running * app_image_for_taskdef.preboot_number)
         # then see how many prewarmed are currently running
-        num_currently_running = get_count(
+        num_currently_running = _get_count_helper(
             UserContainer.query.filter_by(
                 task_definition=taskdef, location=location, is_assigned=False
             )
