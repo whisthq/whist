@@ -42,6 +42,11 @@ from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNI
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
+
+class StartValueException(Exception):
+    pass
+
+
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -99,16 +104,7 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                         f"on {container.ip}: {error}"
                     )
                 )
-                _clean_tasks_and_create_new_container(
-                    self,
-                    container.ip,
-                    container.user_id,
-                    user.task_definition_arn,
-                    region_name,
-                    user.cluster,
-                    user.dpi,
-                    webserver_url,
-                )
+                raise StartValueException
             else:
                 if response.ok:
                     fractal_logger.info(
@@ -122,28 +118,10 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                             f"{response.text}"
                         )
                     )
-                    _clean_tasks_and_create_new_container(
-                        self,
-                        container.ip,
-                        container.user_id,
-                        user.task_definition_arn,
-                        region_name,
-                        user.cluster,
-                        user.dpi,
-                        webserver_url,
-                    )
+                    raise StartValueException
+
         else:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
-            _clean_tasks_and_create_new_container(
-                self,
-                container.ip,
-                container.user_id,
-                user.task_definition_arn,
-                region_name,
-                user.cluster,
-                user.dpi,
-                webserver_url,
-            )
 
 
 def _pass_start_values_to_instance(
@@ -162,12 +140,12 @@ def _pass_start_values_to_instance(
 
     try:
         response = requests.put(
-            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
+            f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
             json={
-                "host_port": port,
-                "container_ARN": container_id,
-                "dpi": dpi,
-                "user_id": user_id,
+                "host_port": container.port_32262,
+                "container_ARN": container.container_id,
+                "dpi": container.dpi,
+                "user_id": container.user_id,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -176,19 +154,10 @@ def _pass_start_values_to_instance(
         fractal_logger.error(
             (
                 "Encountered an error while attempting to connect to the ECS host service running "
-                f"on {ip}: {error}"
+                f"on {container.ip}: {error}"
             ),
         )
-        _clean_tasks_and_create_new_container(
-            self,
-            ip,
-            user_id,
-            user.task_definition_arn,
-            region_name,
-            user.cluster,
-            dpi,
-            webserver_url,
-        )
+        raise StartValueException
     else:
         if response.ok:
             fractal_logger.info("Container user values set.")
@@ -196,16 +165,7 @@ def _pass_start_values_to_instance(
             fractal_logger.error(
                 f"Received unsuccessful set-start-values response: {response.text}"
             )
-            _clean_tasks_and_create_new_container(
-                self,
-                ip,
-                user_id,
-                user.task_definition_arn,
-                region_name,
-                user.cluster,
-                dpi,
-                webserver_url,
-            )
+            raise StartValueException
 
 
 bundled_region = {
@@ -688,18 +648,20 @@ def _assign_container(
             )
             raise Ignore
 
-    _mount_cloud_storage(self, user, base_container, webserver_url, region_name)  # Not tested
-    _pass_start_values_to_instance(
-        self,
-        user,
-        base_container.ip,
-        base_container.container_id,
-        base_container.port_32262,
-        base_container.dpi,
-        user.user_id,
-        webserver_url,
-        region_name,
-    )
+    try:
+        _mount_cloud_storage(user, base_container, webserver_url)
+        _pass_start_values_to_instance(base_container, webserver_url)
+    except StartValueException:
+        return _clean_tasks_and_create_new_container(
+            container.ip,
+            container.user_id,
+            container.task_definition,
+            container.location,
+            container.cluster,
+            container.dpi,
+            webserver_url,
+        )
+
     time.sleep(1)
 
     if not _poll(base_container.container_id):
