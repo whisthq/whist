@@ -129,19 +129,23 @@ LOGS_TASK_ID=$(curl \
 END
 )
 
-# Poll for logs upload to finish
-state=PENDING
-while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
-    # GET $WEBSERVER_URL/status/$LOGS_TASK_ID
-    #   Get the status of the logs upload task.
+get_task_state() {
+    # GET $WEBSERVER_URL/status/$1
+    #   Get the status of the provided task.
     # JSON Response:
     #   state: The status for the task, "SUCCESS" on completion
-    state=$(curl -L -X GET "$WEBSERVER_URL/status/$LOGS_TASK_ID" | jq -e ".state")
+    curl -L -X GET "$WEBSERVER_URL/status/$1" | jq -e ".state"
+}
 
+# Poll for logs upload to finish
+state=$(get_task_state $LOGS_TASK_ID)
+while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     # Since this is post-disconnect, we can afford to query with such a low frequency.
     # We choose to do this to reduce strain on the webserver, with the understanding
     # that we're adding at most 5 seconds to container shutdown time in expectation.
     sleep 5
+
+    state=$(get_task_state $LOGS_TASK_ID)
 done
 
 # POST $WEBSERVER_URL/container/delete

@@ -241,7 +241,6 @@ RUN apt-get install --no-install-recommends -y \
     fonts-noto-core \
     fonts-noto-cjk \
     fonts-noto-cjk-extra \
-    fonts-noto-color-emoji \
     fonts-noto-extra \
     fonts-noto-mono \
     fonts-noto-ui-core \
@@ -250,6 +249,9 @@ RUN apt-get install --no-install-recommends -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
+
+# Use twemoji font
+RUN wget -qO /usr/local/share/fonts/TwemojiMozilla.ttf https://github.com/mozilla/twemoji-colr/releases/download/v0.5.1/TwemojiMozilla.ttf
 
 # Workaround for sudo bug in containers https://github.com/sudo-project/sudo/issues/42
 RUN echo "Set disable_coredump false" >> /etc/sudo.conf
