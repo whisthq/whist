@@ -14,7 +14,7 @@
 }
 
 .googleButton {
-    font-family: "Maven Pro" !important;
+    font-family: --font-family-primary;
     width: 100%;
     border: none;
     outline: none;

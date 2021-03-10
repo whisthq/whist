@@ -50,7 +50,7 @@
 
 .MyCardElement {
     width: 100%;
-    font-family: "Maven Pro";
+    font-family: --font-family-primary;
     -webkit-transition: box-shadow 150ms ease;
     transition: box-shadow 150ms ease;
     padding: 5px 20px;
@@ -60,7 +60,7 @@
 
 .MyCardElementWarning {
     width: 100%;
-    font-family: "Maven Pro";
+    font-family: --font-family-secondary;
     -webkit-transition: box-shadow 150ms ease;
     transition: box-shadow 150ms ease;
     padding: 15px 20px;

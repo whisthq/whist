@@ -1,3 +1,36 @@
+@import "~styles/global.module.css";
+
+@font-face {
+    font-family: --font-family-primary;
+    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+    font-weight: normal; /* normal == 400 */
+    font-style: normal;
+}
+
+@font-face {
+    font-family: --font-family-primary;
+    src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
+    font-weight: bold;  /* bold == 700 */
+    font-style: bold;
+}
+
+@font-face {
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Light.otf");
+    font-weight: 300;
+}
+
+@font-face {
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Semibold.otf");
+    font-weight: 600;
+}
+
+@font-face {
+    font-family: "Myriad-Pro";
+    src: url("../assets/fonts/MyriadPro-Bold.otf");
+    font-weight: 800;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
