@@ -950,24 +950,24 @@ func main() {
 	}
 
 	// In the following loop, this var determines whether to re-initialize the
-	// event stream. This is necessary because the Docker event stream needs to
-	// be reopened after any error is sent over the error channel.
-	needToReinitializeEventStream := false
+	// Docker event stream. This is necessary because the Docker event stream
+	// needs to be reopened after any error is sent over the error channel.
+	needToReinitDockerEventStream := false
 	dockerevents, dockererrs := cli.Events(context.Background(), eventOptions)
 	logger.Info("Initialized docker event stream.")
 	logger.Info("Entering event loop...")
 
 eventLoop:
 	for {
-		if needToReinitializeEventStream {
+		if needToReinitDockerEventStream {
 			dockerevents, dockererrs = cli.Events(context.Background(), eventOptions)
-			needToReinitializeEventStream = false
+			needToReinitDockerEventStream = false
 			logger.Info("Re-initialized docker event stream.")
 		}
 
 		select {
 		case err := <-dockererrs:
-			needToReinitializeEventStream = true
+			needToReinitDockerEventStream = true
 			switch {
 			case err == nil:
 				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
@@ -989,8 +989,8 @@ eventLoop:
 				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			}
 			if dockerevent.Action == "start" {
-				// We want the container start handler to die immediately upon failure,
-				// so it returns an error as soon as it encounters one.
+				// We want the container start handler to abort immediately upon
+				// failure, so it returns an error as soon as it encounters one.
 				err := containerStartHandler(ctx, cli, dockerevent.ID)
 				if err != nil {
 					logger.Errorf("Error processing dockerevent %s for %s %s: %v", dockerevent.Action, dockerevent.Type, dockerevent.ID, err)
