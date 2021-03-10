@@ -14,8 +14,7 @@ on:
             - staging
             - dev
         paths:
-            - "main-webserver/**"
-            - "!main-webserver/README.md"
+            - "main-webserver/db_migration/schema.sql"
             - ".github/workflows/database-migration.yml"
     workflow_dispatch:
 
