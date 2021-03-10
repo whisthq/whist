@@ -27,8 +27,8 @@ jobs:
             SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
             SLACK_CHANNEL: "alerts"
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            GITHUB_ISSUE: ${{ github.event.number }}
-            GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
+            GITHUB_SHA: ${{ github.sha }}
+            GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
             HEROKU_DB_KEY: "DATABASE_URL"
             HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
             SERVER_DEV: "fractal-dev-server"
@@ -180,21 +180,22 @@ jobs:
                       if not f.read():
                           sys.exit(0)
 
-                  github_issue = os.environ["GITHUB_ISSUE"]
+
+                  github_sha = os.environ["GITHUB_SHA"]
                   github_branch = os.environ["GITHUB_BRANCH"]
 
 
                   def issue_url(number):
-                      return urllib.parse.urljoin(os.environ["GITHUB_PR_URL"],
+                      return urllib.parse.urljoin(os.environ["GITHUB_SHA_URL"],
                                                   number)
 
 
-                  slack_redirect = (f"You can take a look at PR #{github_issue} "
-                                     + f"here:\n{issue_url(github_issue)}")
+                  slack_redirect = (f"You can take a look the commit "
+                                     + f"here:\n{issue_url(github_sha)}")
 
 
                   title = "Database migration performed"
-                  body = (f"PR #{github_issue} was merged and triggered "
+                  body = (f"A PR was merged and triggered "
                           + "an automatic schema migration on branch: "
                           + f"`{github_branch}`.\n\n"
                           + "Check the GitHub Actions logs for details. "
