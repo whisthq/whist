@@ -88,7 +88,6 @@ class SupportedAppImages(db.Model):
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
 
     app_id = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
-    # region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     logo_url = db.Column(db.String(250), nullable=False)
     task_definition = db.Column(db.String(250), nullable=False)
     category = db.Column(db.String(250))

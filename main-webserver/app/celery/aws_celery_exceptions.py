@@ -1,6 +1,10 @@
 from app.exceptions import _FractalError
 
 
+class InvalidAppId(Exception):
+    pass
+
+
 class InvalidTaskDefinition(Exception):
     pass
 

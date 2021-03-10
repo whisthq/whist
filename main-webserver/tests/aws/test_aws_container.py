@@ -310,6 +310,7 @@ def test_update_region(client, monkeypatch):
     region_to_ami_pre = {region.region_name: region.ami_id for region in all_regions_pre}
 
     # -- actual webserver requests start -- #
+    # this should fail cause server is not in maintenance mode
     resp = client.post(
         "/aws_container/update_region",
         json=dict(
@@ -403,23 +404,42 @@ def test_update_task_defs(client, authorized, monkeypatch):
     monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
 
     # cache the current task defs
+    db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
     app_id_to_taskdef = {app_data.app_id: app_data.task_definition for app_data in all_app_data}
 
+    # -- actual webserver requests start -- #
+    # this should fail cause server is not in maintenance mode
     resp = client.post("/aws_container/update_taskdefs")
-    task = queryStatus(client, resp, timeout=50)
+    assert resp.status_code == BAD_REQUEST
+
+    # then, we put server into maintenance mode
+    resp = client.post("/aws_container/start_maintenance", json={"region_name": "us-east-1"})
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+
+    # now we try again
+    resp = client.post("/aws_container/update_taskdefs")
+    task = queryStatus(client, resp, timeout=2)
     if task["status"] < 1:
         fractal_logger.error(f"task timed out with output {task['output']}")
         assert False
+
+    # finally, we end maintenance mode
+    resp = client.post("/aws_container/end_maintenance", json={"region_name": "us-east-1"})
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+    # -- webserver requests end -- #
 
     # refresh db objects
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
-        assert app_data.task_definition.split(":")[1] == -1
+        assert app_data.task_definition.split(":")[1] == "-1"
 
     # restore db to old state
-    all_app_data = SupportedAppImages.query.all().with_for_update()
+    db.session.expire_all()
+    all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
         app_data.task_definition = app_id_to_taskdef[app_data.app_id]
     db.session.commit()

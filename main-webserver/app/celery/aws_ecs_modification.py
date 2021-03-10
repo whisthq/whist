@@ -18,7 +18,10 @@ from app.models import (
     SupportedAppImages,
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.celery.aws_celery_exceptions import InvalidTaskDefinition
+from app.celery.aws_celery_exceptions import (
+    InvalidAppId,
+    InvalidTaskDefinition,
+)
 
 
 @shared_task(bind=True)
@@ -143,11 +146,6 @@ def update_region(self, region_name="us-east-1", ami=None):
     :param ami (str): which AMI to use
     :return: which cluster was updated
     """
-    # update all task definitions to the latest version
-    all_app_data = SupportedAppImages.query.all()
-    for app_data in all_app_data:
-        update_task_definitions.delay(app_data.app_id)
-
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
     ).first()
@@ -206,14 +204,15 @@ def update_region(self, region_name="us-east-1", ami=None):
     )
 
 
-@shared_task(bind=True)
-def update_task_definitions(self, app_id: str = None, task_definition_arn: str = None):
+@shared_task
+def update_task_definitions(app_id: str = None, task_definition_arn: str = None):
     """
     Updates task definitions for `app_id` to `task_definition_arn`.
-    If `app_id`=None, we update all app ids.
+    If `app_id`=None, we update all app ids to their latest version. `task_definition_arn` is ignored.
     If `task_definition_arn`=None, we use the latest revision in ECS.
     Parallelizing this function could help reduce task time, but the AWS API responds
-    in usually under a tenth of a second.
+    in usually under a tenth of a second. We'd also need to coordinate that with
+    Github workflows to make sure all tasks finish. It's much simpler to do one task here.
 
     Args:
         app_id: which app id to update. If None, we update all in SupportedAppImages. We ignore
@@ -223,12 +222,20 @@ def update_task_definitions(self, app_id: str = None, task_definition_arn: str =
             in SupportedAppImages.
     """
     if app_id is None:
+        # iterate through all apps and update their task definitions
         all_app_data = SupportedAppImages.query.all()
-        for app_data in all_app_data:
-            update_task_definitions(self, app_id=app_data.app_id)
+        # we must cast to python objects because the recursive call to update_task_definitions
+        # does a db.session.commit, which invalidates existing objects. that causes the
+        # second app_id to fail.
+        all_app_ids = [app_data.app_id for app_data in all_app_data]
+        for app_id in all_app_ids:
+            # fetches latest task def from API
+            update_task_definitions(app_id=app_id)
         return
 
-    app_data = SupportedAppImages.query.get(app_id).with_for_update()
+    app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
+    if app_data is None:
+        raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")
     if task_definition_arn is None:
         # this gets the task definition without the version number
         current_task_def = app_data.task_definition.split(":")[0]
@@ -244,8 +251,9 @@ def update_task_definitions(self, app_id: str = None, task_definition_arn: str =
         fractal_logger.error(error_msg)
         raise InvalidTaskDefinition(error_msg)
 
+    fractal_logger.info(f"App {app_data.app_id} has new task def: {task_definition_arn}")
     app_data.task_definition = task_definition_arn
-    db.session.commit()
+    fractal_sql_commit(db)
 
 
 @shared_task(bind=True)
