@@ -280,10 +280,23 @@ def _get_num_extra(taskdef, location):
     """
     app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
     if app_image_for_taskdef:
-        num_running = float(
-            len(UserContainer.query.filter_by(task_definition=taskdef, location=location).all())
+        # get the number we want prewarmed
+        num_needed_running = float(
+            len(
+                UserContainer.query.filter_by(
+                    task_definition=taskdef, location=location, is_assigned=True
+                ).all()
+            )
         )
-        return max(1, num_running * app_image_for_taskdef.preboot_number)
+        # then floor it at 1
+        num_needed_running = max(1, num_needed_running * app_image_for_taskdef.preboot_number)
+        # then see how many prewarmed are currently running
+        num_currently_running = len(
+            UserContainer.query.filter_by(
+                task_definition=taskdef, location=location, is_assigned=False
+            ).all()
+        )
+        return min(0, num_needed_running - num_currently_running)
     return 0
 
 
