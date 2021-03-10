@@ -32,10 +32,7 @@ case "$1" in
     "celery")
         # The two containers share the same requirements.txt file, but we only
         # want the watchmedo utility to be installed in the Celery container.
-        # Set C_FORCE_ROOT to suppress a fatal error related to the Celery
-        # worker using pickle for task serialization and deserialization while
-        # running as root.
-        C_FORCE_ROOT=1 $([ -n "$HOT_RELOAD" ] && \
+        $([ -n "$HOT_RELOAD" ] && \
             (pip install watchdog[watchmedo] >&2 echo "watchmedo auto-restart -R -d . --")) \
             celery \
             --app entry.celery \
