@@ -18,7 +18,8 @@ function has_updated {
         return 1 # Return false since the lib hasn't updated
     else
         # Delete old timestamp line for that lib, if it exists
-        sed -i"" "/^$1 /d" .libcache
+        NEW_LIBCACHE=$(sed "/^$1 /d" .libcache)
+        echo "$NEW_LIBCACHE" > .libcache
         # Append new timestamp line to .libcache
         echo "$TIMESTAMP_LINE" >> .libcache
         # Print found library
