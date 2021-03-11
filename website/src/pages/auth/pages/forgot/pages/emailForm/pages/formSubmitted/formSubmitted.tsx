@@ -47,15 +47,14 @@ const FormSubmitted = () => {
 
     return (
         <AuthContainer title={title}>
-            <div className="text-gray mt-4 text-center">
-                {text}
+            <div className="mt-4">
+                <AuthNavigator
+                    beforeLink={`${text} To receive another email, click `}
+                    link="here"
+                    afterLink="."
+                    redirect={fractalRoute(routeMap.AUTH.FORGOT.EMAIL)}
+                />
             </div>
-            <AuthNavigator
-                beforeLink="To receive another email, click "
-                link="here"
-                afterLink="."
-                redirect={fractalRoute(routeMap.AUTH.FORGOT.EMAIL)}
-            />
         </AuthContainer>
     )
 }

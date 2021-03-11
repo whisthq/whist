@@ -1,5 +1,5 @@
 // npm imports
-import React, { useState, KeyboardEvent, ChangeEvent } from "react"
+import React, { useState, useEffect, KeyboardEvent, ChangeEvent } from "react"
 
 // Component imports
 import AuthNavigator from "pages/auth/shared/components/authNavigator"
@@ -35,9 +35,8 @@ const Form = () => {
     const forgot = () => {
         if (checkEmail(email)) {
             setProcessing(true)
-            forgotPassword(email).then(({ json, success }) => {
-                if (json && json.verified && success) {
-                    // Set password reset email and redirect
+            forgotPassword(email).then(({ json }) => {
+                if (json && json.verified && json.status === FractalHTTPCode.SUCCESS) {
                     dispatch({
                         body: {
                             email: email,

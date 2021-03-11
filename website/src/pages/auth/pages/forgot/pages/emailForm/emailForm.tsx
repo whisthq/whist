@@ -19,7 +19,7 @@ const EmailForm = () => {
             <Switch>
                 <Route
                     exact
-                    path={fractalRoute(routeMap.AUTH.FORGOT)}
+                    path={fractalRoute(routeMap.AUTH.FORGOT.EMAIL)}
                     component={Form}
                 />
                 <Route

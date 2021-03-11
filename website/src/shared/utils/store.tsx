@@ -1,5 +1,10 @@
-import React, {createContext, useReducer, useContext} from "react"
+import React, {createContext, useReducer, useContext, useEffect} from "react"
 import { deep_copy } from "shared/utils/reducerHelpers"
+
+interface FractalContext {
+    state: any,
+    dispatch: any
+}
 
 const reducer = (
     state: any,
@@ -11,12 +16,25 @@ const reducer = (
     return Object.assign(stateCopy, action.body)
 }
 
-interface FractalContext {
-    state: any,
-    dispatch: any
+const persistState = (storageKey: string, state: object): void => {
+    window.localStorage.setItem(storageKey, JSON.stringify(state));
 }
 
-export const createProvider = (initialState: any) => {
+const getInitialState = (storageKey: string): object | undefined => {
+    const savedState = window.localStorage.getItem(storageKey);
+    try {
+        if (!savedState) {
+            return undefined
+        }
+        return JSON.parse(savedState ?? {})
+    } catch (e) {
+        return undefined
+    }
+}
+
+export const createProvider = (initialState: object, storageKey: string) => {
+  initialState = getInitialState(storageKey) ?? initialState 
+
   const fractalContext = createContext({})
   const { Provider } = fractalContext
 
@@ -25,6 +43,8 @@ export const createProvider = (initialState: any) => {
   }) => {
       const { children } = props
       const [state, dispatch] = useReducer(reducer, initialState)
+
+      useEffect(() => persistState(storageKey, state), [state])
 
       return <Provider value={{ state, dispatch }}>{children}</Provider>
   }

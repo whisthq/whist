@@ -18,14 +18,15 @@ export const routeMap = {
         ROOT: "/auth",
         CALLBACK: "/auth/callback",
         FORGOT: {
-            ROOT: "/auth/forgot",
+            ROOT: "/auth/forgot/email",
             RESET: {
                 ROOT: "/auth/forgot/reset",
                 ALLOWED: "/auth/forgot/reset/allowed",
-                ERROR: "/auth/forgot/reset/error"
+                ERROR: "/auth/forgot/reset/error",
+                SUCCESS: "/auth/forgot/reset/success"
             },
             EMAIL: {
-                ROOT: "/auth/forgot",
+                ROOT: "/auth/forgot/email",
                 SUBMITTED: "/auth/forgot/email/submitted"
             }
         },

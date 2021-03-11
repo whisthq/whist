@@ -122,7 +122,7 @@ const Auth = (props: {
             <Switch>
                 <Route exact path={fractalRoute(routeMap.AUTH)} component={Login}/>
                 <Route path={fractalRoute(routeMap.AUTH.SIGNUP)} component={Signup}/>
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT)} component={Forgot}/>
+                <Route path={[fractalRoute(routeMap.AUTH.FORGOT.EMAIL), fractalRoute(routeMap.AUTH.FORGOT.RESET)]} component={Forgot}/>
                 <Route path={fractalRoute(routeMap.AUTH.VERIFY)} component={Verify}/>
                 <Route path={fractalRoute(routeMap.AUTH.CALLBACK)} component={Callback}/>
             </Switch>

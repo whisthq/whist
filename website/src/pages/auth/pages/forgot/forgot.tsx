@@ -19,7 +19,7 @@ const Forgot = () => {
             <FractalProvider>
                 <Switch>
                     <Route
-                        path={fractalRoute(routeMap.AUTH.FORGOT)}
+                        path={fractalRoute(routeMap.AUTH.FORGOT.EMAIL)}
                         component={EmailForm}
                     />
                     <Route
