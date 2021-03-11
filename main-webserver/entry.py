@@ -12,11 +12,16 @@ here: https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#application-
 
 from app.factory import create_app
 from app.celery_utils import make_celery
+from app import set_web_requests_status
+from app.helpers.utils.general.logs import fractal_logger
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 
 app = create_app()
 celery = make_celery(app)
 
 celery.set_default()
+
+if not set_web_requests_status(True):
+    fractal_logger.error("Could not enable web requests at startup. Failing out.")
 
 maintenance_init_redis_conn(app.config["REDIS_URL"])
