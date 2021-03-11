@@ -1,4 +1,4 @@
-package portbinding // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbinding"
+package portbindings // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 
 import (
 	"math/rand"
