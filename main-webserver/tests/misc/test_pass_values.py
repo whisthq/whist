@@ -4,7 +4,6 @@ import requests
 from requests import ConnectionError
 from app.celery.aws_ecs_creation import (
     _pass_start_values_to_instance,
-    assign_container,
     StartValueException,
 )
 

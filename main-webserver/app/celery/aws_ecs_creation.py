@@ -124,18 +124,12 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(
-    ip: str, container_id: str, port: int, dpi: int, user_id: int
-) -> None:
+def _pass_start_values_to_instance(container: UserContainer) -> None:
     """
     Send the instance start values to the host service.
 
     Arguments:
-        ip: The IP address of the instance on which the container is running.
-        container_id: The id (currently ARN) of the container.
-        port: The port on the instance to which port 32262 within the container has been mapped.
-        dpi: The DPI of the client display.
-        user_id: The container's assigned user's user ID
+        container: An instance of the UserContainer model.
     """
 
     try:
@@ -649,8 +643,8 @@ def _assign_container(
             raise Ignore
 
     try:
-        _mount_cloud_storage(user, base_container, webserver_url)
-        _pass_start_values_to_instance(base_container, webserver_url)
+        _mount_cloud_storage(user, base_container)
+        _pass_start_values_to_instance(base_container)  # not tested
     except StartValueException:
         return _clean_tasks_and_create_new_container(
             base_container.ip,
