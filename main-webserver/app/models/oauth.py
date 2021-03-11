@@ -1,7 +1,5 @@
 """Data models for securely Fractal's third-party app credentials."""
 
-import logging
-
 from datetime import datetime, timezone
 
 import requests
@@ -12,7 +10,7 @@ from google_auth_oauthlib.flow import Flow
 from oauthlib.oauth2 import InvalidGrantError
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
 
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 
 from ._meta import db, secret_key
 
@@ -222,10 +220,10 @@ class Credential(db.Model):
 
             dropbox.auth_token_revoke()
 
-            log_kwargs = {
-                "logs": f"successfully revoked Dropbox access for user '{self.user_id}'.",
-                "level": logging.INFO,
-            }
+            fractal_logger.info(
+                f"successfully revoked Dropbox access for user '{self.user_id}'.",
+                extra={"label": self.user_id},
+            )
         elif self.provider_id == "google":
             response = requests.post(
                 "https://oauth2.googleapis.com/revoke",
@@ -234,26 +232,20 @@ class Credential(db.Model):
             )
 
             if response.ok:
-                log_kwargs = {
-                    "logs": f"Successfully revoked Google Drive access for user '{self.user_id}'.",
-                    "level": logging.INFO,
-                }
+                fractal_logger.info(
+                    f"Successfully revoked Google Drive access for user '{self.user_id}'.",
+                    extra={"label": self.user_id},
+                )
             else:
-                log_kwargs = {
-                    "logs": (
+                fractal_logger.warning(
+                    (
                         "Encountered an error while attempting to Google Drive access for user "
                         f"'{self.user_id}': {response.text}"
                     ),
-                    "level": logging.WARNING,
-                }
+                    extra={"label": self.user_id},
+                )
         else:
             raise OAuthProviderError(self.provider_id)
-
-        fractal_log(
-            function="Credential.revoke",
-            label=self.user_id,
-            **log_kwargs,
-        )
 
         if cleanup:
             db.session.delete(self)

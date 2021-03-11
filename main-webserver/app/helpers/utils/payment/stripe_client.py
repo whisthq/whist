@@ -16,7 +16,7 @@ from pyzipcode import ZipCodeDatabase
 # { state_code : state_name } for all states
 from app.constants.states import STATE_LIST
 
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.time import date_to_unix, get_today
 
 from app.models import db, User, LoginHistory
@@ -362,11 +362,7 @@ class StripeClient:
         # else make a new one with the corresponding params
         if subscriptions:
             stripe.SubscriptionItem.modify(subscriptions[0]["items"]["data"][0]["id"], price=price)
-            fractal_log(
-                function="StripeClient.create_subscription",
-                label=email,
-                logs="Customer updated successful",
-            )
+            fractal_logger.info("Customer updated successful", extra={"label": email})
         else:
             # we have not yet allowed customers to delete cards, but
             # in the future when we do we should either not let them go below one, or
@@ -379,11 +375,7 @@ class StripeClient:
                 trial_end=trial_end,
                 default_tax_rates=[tax_rate],
             )
-            fractal_log(
-                function="StripeClient.create_subscription",
-                label=email,
-                logs="Customer subscription created successful",
-            )
+            fractal_logger.info("Customer subscription created successful", extra={"label": email})
 
         return True
 
@@ -417,10 +409,8 @@ class StripeClient:
             raise InvalidOperation
         else:
             stripe.Subscription.delete(subscription[0]["id"])
-            fractal_log(
-                function="StripeClient.cancel_subscription",
-                label=email,
-                logs="Cancelled stripe subscription for {}".format(email),
+            fractal_logger.info(
+                "Cancelled stripe subscription for {}".format(email), extra={"label": email}
             )
             return True
 
@@ -558,13 +548,11 @@ class StripeClient:
             user_price = up("plan")
 
         if user_price != hourly_price:
-            fractal_log(
-                function="StripeClient.charge_hourly",
-                label=email,
-                logs="{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
+            fractal_logger.error(
+                "{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
                     username=email
                 ),
-                level=logging.ERROR,
+                extra={"label": email},
             )
             return
 
@@ -575,13 +563,11 @@ class StripeClient:
         )
 
         if latest_user_activity.action != "logon":
-            fractal_log(
-                function="StripeClient.charge_hourly",
-                label=email,
-                logs="{username} logged off and is an hourly subscriber, but no logon was found".format(
+            fractal_logger.error(
+                "{username} logged off and is an hourly subscriber, but no logon was found".format(
                     username=email
                 ),
-                level=logging.ERROR,
+                extra={"label": email},
             )
             return
 
@@ -624,12 +610,11 @@ class StripeClient:
                 ),
             )
 
-            fractal_log(
-                function="StripeClient.charge_hourly",
-                label=email,
-                logs="{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(
+            fractal_logger.info(
+                "{username} used Fractal for {hours_used} hours and is an hourly subscriber. Charged {amount} cents".format(
                     username=email, hours_used=str(total_hours), amount=total_price
                 ),
+                extra={"label": email},
             )
 
         def add_product(self, email, product_name, price_name):

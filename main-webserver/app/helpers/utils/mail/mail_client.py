@@ -1,10 +1,9 @@
-import logging
 import requests
 from jinja2 import Template
 
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.models import User, EmailTemplates
 from app.exceptions import TemplateNotFound, SendGridException
 from app.helpers.utils.general.tokens import get_access_tokens
@@ -79,20 +78,13 @@ class MailClient:
             html_file_url = str(templates[email_id]["url"])
             subject = str(templates[email_id]["title"])
 
-            fractal_log(
-                logs=f"Sending {html_file_url} with subject {subject}",
-                label=from_email,
-                function="send_email",
+            fractal_logger.info(
+                f"Sending {html_file_url} with subject {subject}", extra={"label": from_email}
             )
             try:
                 html_as_string = requests.get(html_file_url)
             except Exception as e:
-                fractal_log(
-                    logs=f"An exception occured: {str(e)}",
-                    label=from_email,
-                    function="send_email",
-                    level=logging.ERROR,
-                )
+                fractal_logger.error("", exc_info=True, extra={"label": from_email})
                 raise Exception from e
             jinja_template = Template(html_as_string.text)
 
@@ -100,12 +92,7 @@ class MailClient:
             try:
                 jinja_template = Template(open(html_file).read())
             except Exception as e:
-                fractal_log(
-                    logs=f"An exception occured: {str(e)}",
-                    label=from_email,
-                    function="send_email",
-                    level=logging.ERROR,
-                )
+                fractal_logger.error("", exc_info=True, extra={"label": from_email})
                 raise IOError from e
 
         try:
@@ -118,12 +105,7 @@ class MailClient:
             )
             self.sendgrid_client.send(message)
         except Exception as e:
-            fractal_log(
-                logs=f"An exception occured: {str(e)}",
-                label=from_email,
-                function="send_email",
-                level=logging.ERROR,
-            )
+            fractal_logger.error("", exc_info=True, extra={"label": from_email})
             raise SendGridException from e
 
 
