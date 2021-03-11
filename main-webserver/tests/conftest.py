@@ -245,7 +245,7 @@ def make_user():
     Args:
         stripe_customer_id: Optional. The test user's Stripe customer ID.
         created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
-            a timezone-aware time stamp. Defaults to the current time.
+            a timezone-aware datetime object. Defaults to the current time.
         domain (Optional[str]): Which domain the user email address should be in.
         kwargs: Optional. Additional keyword arguments that will be passed directly to the User
             constructor. The user_id and password keys will be ignored.
@@ -295,20 +295,26 @@ def make_authorized_user(client, make_user, monkeypatch):
     Args:
         stripe_customer_id: Optional. The test user's Stripe customer ID.
         created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
-            a timezone-aware time stamp. Defaults to the current time.
+            a timezone-aware datetime object. Defaults to the current time.
         domain (Optional[str]): Which domain the user email address should be in.
+        kwargs: Optional. Additional keyword arguments that will be passed directly to the User
+            constructor. The user_id and password keys will be ignored.
 
     Returns:
         An instance of the User model representing the authorized user.
     """
 
     def _authorized_user(
-        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
+        stripe_customer_id=None,
+        created_timestamp=datetime.now(timezone.utc),
+        domain="fractal.co",
+        **kwargs,
     ):
         user = make_user(
             stripe_customer_id=stripe_customer_id,
             created_timestamp=created_timestamp,
             domain=domain,
+            **kwargs,
         )
         access_token = create_access_token(identity=user.user_id)
 

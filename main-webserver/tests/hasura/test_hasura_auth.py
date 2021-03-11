@@ -27,9 +27,7 @@ def test_login_header(client):
 
 
 def test_auth_header(client, make_authorized_user):
-    authorized = make_authorized_user(
-        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
-    )
+    authorized = make_authorized_user()
     access_token = create_access_token(authorized.user_id)
 
     response = client.get(
