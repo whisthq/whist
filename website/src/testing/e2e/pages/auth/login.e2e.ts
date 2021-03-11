@@ -3,7 +3,7 @@ import expectPuppeteer from "expect-puppeteer"
 import { msWait } from "testing/utils/utils"
 import {
     E2E_AUTH_IDS,
-    E2E_HOMGEPAGE_IDS,
+    E2E_HOMEPAGE_IDS,
     LOCAL_URL,
     EMAIL_API_KEY,
 } from "testing/utils/testIDs"
@@ -56,7 +56,7 @@ describe("Login Page", () => {
     test("renders correctly", async () => {
         await page.goto(LOCAL_URL)
         // sign in page
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         await msWait(500)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
         // log in page
@@ -70,7 +70,7 @@ describe("Login Page", () => {
     test("Logs in a valid user", async () => {
         await page.goto(LOCAL_URL)
         // sign in page
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
         // log in page
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
@@ -88,7 +88,7 @@ describe("Login Page", () => {
     test("Submit forgot password request", async () => {
         await page.goto(LOCAL_URL)
         // sign in page
-        await expect(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expect(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         await msWait(500)
         await expect(page.url()).toMatch(LOCAL_URL + "/auth")
         // creates new inbox
