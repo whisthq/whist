@@ -3,6 +3,7 @@ import argparse
 import time
 import json
 from typing import List
+from urllib.parse import urljoin
 
 import requests
 
@@ -24,30 +25,6 @@ SCRIPTS_NEEDING_ADMIN = [
 ]
 
 
-def join_url_endpoint(web_url: str, endpoint: str) -> str:
-    """
-    Robustly joins a web_url and endpoint.
-    Examples:
-        join_url_endpoint("http://localhost", "endpoint") = "http://localhost/endpoint"
-        join_url_endpoint("http://localhost", "/endpoint") = "http://localhost/endpoint"
-        join_url_endpoint("http://localhost/", "/endpoint") = "http://localhost/endpoint"
-
-    Args:
-        web_url: URL to run script on
-        endpoint: endpoint at URL to hit
-
-    Returns:
-        Full URL to hit.
-    """
-    if web_url[-1] == "/":
-        # ignore ending slash
-        web_url = web_url[:-1]
-    if len(endpoint) > 0 and endpoint[0] == "/":
-        # ignore starter slash
-        endpoint = endpoint[1:]
-    return f"{web_url}/{endpoint}"
-
-
 def make_get_request(web_url: str, endpoint: str, admin_token: str = None):
     """
     Makes a GET request. Properly formats admin_token (if given).
@@ -60,7 +37,7 @@ def make_get_request(web_url: str, endpoint: str, admin_token: str = None):
     Returns:
         Response from requests library.
     """
-    url = join_url_endpoint(web_url, endpoint)
+    url = urljoin(web_url, endpoint)
     headers = None
     if admin_token is not None:
         headers = {
@@ -87,7 +64,7 @@ def make_post_request(
     Returns:
         Response from requests library.
     """
-    url = join_url_endpoint(web_url, endpoint)
+    url = urljoin(web_url, endpoint)
     headers = None
     if admin_token is not None:
         headers = {
