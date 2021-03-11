@@ -46,7 +46,8 @@ export const signupEmail = async (
     username: string,
     password: string,
     name: string,
-    feedback: string
+    feedback: string,
+    encryptedConfigKey: string
 ) =>
     /*
         API call to the /account/register endpoint to register a new email
@@ -57,12 +58,13 @@ export const signupEmail = async (
             name (string): name of the new user
             feedback (string): feedback from the new user (deprecated - currently 
                 sending an empty string)
+            encryptedConfigKey (string): encrypted configuration key (for encrypting/decrypting user app configs)
         Returns:
             { json, success } (JSON) : Returned JSON of POST request and success True/False
     */
     post({
         endpoint: "/account/register",
-        body: { username, password, name, feedback },
+        body: { username, password, name, feedback, encryptedConfigKey },
     })
 
 export const emailVerification = async (
@@ -149,15 +151,16 @@ export const validatePasswordReset = async (token: string) =>
 export const passwordReset = async (
     token: string,
     username: string,
-    password: string
+    password: string,
+    encryptedConfigKey: string
 ) =>
     post({
         endpoint: "/account/update",
-        body: { username, password },
+        body: { username, password, encryptedConfigKey },
         accessToken: token,
     })
 
-export const passwordUpdate = async (
+export const passwordVerify = async (
     accessToken: string,
     username: string,
     password: string
