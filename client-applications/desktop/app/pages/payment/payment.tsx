@@ -51,7 +51,7 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
         dispatch(updateUser(deepCopyObject(AuthDefault.user)))
         dispatch(updateAuthFlow(deepCopyObject(AuthDefault.authFlow)))
         storage.set(FractalAuthCache.ACCESS_TOKEN, null)
-        storage.set(FractalAuthCache.CONFIG_KEY, null)
+        storage.set(FractalAuthCache.CONFIG_TOKEN, null)
         history.push(FractalRoute.LOGIN)
     }
 
