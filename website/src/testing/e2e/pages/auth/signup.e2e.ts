@@ -4,7 +4,7 @@ import { msWait } from "testing/utils/utils"
 import { generateUser } from "testing/utils/testHelpers"
 import {
     E2E_AUTH_IDS,
-    E2E_HOMGEPAGE_IDS,
+    E2E_HOMEPAGE_IDS,
     LOCAL_URL,
     EMAIL_API_KEY,
 } from "testing/utils/testIDs"
@@ -58,7 +58,7 @@ describe("Signup page", () => {
         await expectPuppeteer(page).toClick("button", { text })
 
     test("renders correctly", async () => {
-        await expect(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expect(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         await msWait(500)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
         // checks sign up form fields
@@ -70,7 +70,7 @@ describe("Signup page", () => {
 
     test("fills out signup and sees warnings", async () => {
         await page.goto(LOCAL_URL)
-        await expect(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expect(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         await msWait(500)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
@@ -97,7 +97,7 @@ describe("Signup page", () => {
 
     test("fills out signup form and sends verification email ", async () => {
         await page.goto(LOCAL_URL)
-        await expect(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expect(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         await msWait(500)
         await expect(page.url()).toMatch(LOCAL_URL + "/auth")
         // creates new inbox

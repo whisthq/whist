@@ -4,7 +4,7 @@ import { msWait } from "testing/utils/utils"
 import {
     E2E_AUTH_IDS,
     E2E_DASHBOARD_IDS,
-    E2E_HOMGEPAGE_IDS,
+    E2E_HOMEPAGE_IDS,
     LOCAL_URL,
 } from "testing/utils/testIDs"
 import { verifiedUser, payingUser } from "testing/utils/testState"
@@ -59,7 +59,7 @@ describe("Dashboard Page", () => {
 
     test("Logs in and navigates side bar", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
@@ -90,7 +90,7 @@ describe("Dashboard Page", () => {
 
     test("Shows the correct UI to a paying user", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
@@ -108,7 +108,7 @@ describe("Dashboard Page", () => {
 
     test("Navigates to profile page and edits name", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
@@ -141,7 +141,7 @@ describe("Dashboard Page", () => {
 
     test("Navigates to profile page and edits password", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
