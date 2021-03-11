@@ -1,9 +1,6 @@
-import React, { useContext } from "react"
+import React from "react"
 import { Row, Col } from "react-bootstrap"
 import Popup from "reactjs-popup"
-
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
 
 import BSV from "assets/investorPhotos/bsv.svg"
 import DC from "assets/investorPhotos/dc.svg"
@@ -18,14 +15,13 @@ import Slow from "assets/investorPhotos/slow.svg"
 import styles from "styles/about.module.css"
 
 const InvestorBox = () => {
-    const { width } = useContext(MainContext)
+    // TODO: Mobile compatibility
     return (
         <Row
             style={{
                 margin: 20,
-                padding: width > ScreenSize.SMALL ? 20 : 0,
-                border:
-                    width > ScreenSize.SMALL ? "solid 10px #0b172b" : "none",
+                padding: 20,
+                border: "solid 10px #0b172b",
                 borderRadius: 5,
             }}
         >

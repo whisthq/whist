@@ -1,40 +1,37 @@
-import React, {
-    useState,
-    useEffect,
-    KeyboardEvent,
-    ChangeEvent,
-    Dispatch,
-} from "react"
+// npm imports
+import React from "react"
 import { connect } from "react-redux"
 import { Switch, Route } from "react-router-dom"
 
+// Component imports
 import EmailForm from "pages/auth/pages/forgot/pages/emailForm/emailForm"
 import PasswordResetForm from "pages/auth/pages/forgot/pages/passwordResetForm/passwordResetForm"
+import { FractalProvider } from "pages/auth/pages/forgot/shared/store/store"
 
+// Constant + type imports
 import { routeMap, fractalRoute } from "shared/constants/routes"
 
-const Forgot = (props: {
-    dispatch: Dispatch<any>
-}) => {
+const Forgot = () => {
     /*
         Component for when the user forgets their login information.
-
-        Arguments:
-            dispatch (Dispatch<any>): Action dispatcher
     */
-    return(
+    return (
         <>
-            <Switch>
-                <Route exact path={fractalRoute(routeMap.AUTH.FORGOT)} component={EmailForm} />
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET)} component={PasswordResetForm} />
-            </Switch>
+            <FractalProvider>
+                <Switch>
+                    <Route
+                        exact
+                        path={fractalRoute(routeMap.AUTH.FORGOT)}
+                        component={EmailForm}
+                    />
+                    <Route
+                        path={fractalRoute(routeMap.AUTH.FORGOT.RESET)}
+                        component={PasswordResetForm}
+                    />
+                </Switch>
+            </FractalProvider>
         </>
     )
 }
 
-const mapStateToProps = () => {
-    return {
-    }
-}
-
-export default connect(mapStateToProps)(Forgot)
+export default Forgot

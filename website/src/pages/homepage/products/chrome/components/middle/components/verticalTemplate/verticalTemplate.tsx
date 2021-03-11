@@ -1,9 +1,7 @@
-import React, { useContext } from "react"
+import React from "react"
 import { Row, Col } from "react-bootstrap"
 
 import Geometric from "shared/components/geometric/geometric"
-import MainContext from "shared/context/mainContext"
-import { ScreenSize } from "shared/constants/screenSizes"
 
 export const VerticalTemplate = (props: {
     visible: boolean
@@ -23,12 +21,11 @@ export const VerticalTemplate = (props: {
             background (boolean): Should the animated background be visible
     */
 
-    const { width } = useContext(MainContext)
     const { title, text, image, visible } = props
 
     return (
         <div className="mt-24 md:mt-52">
-            {props.background && width > ScreenSize.MEDIUM && (
+
                 <>
                     <div className="relative">
                         <div
@@ -53,7 +50,7 @@ export const VerticalTemplate = (props: {
                         </div>
                     </div>
                 </>
-            )}
+            
             <Row>
                 <Col md={12} className="text-center">
                     <div className="text-gray dark:text-gray-300 text-4xl md:text-6xl mb-8 leading-relaxed">

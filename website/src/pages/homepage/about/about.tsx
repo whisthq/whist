@@ -1,4 +1,4 @@
-import React, { useContext } from "react"
+import React from "react"
 import { Row, Col, Carousel } from "react-bootstrap"
 
 import InvestorBox from "pages/homepage/about/components/investorBox"
@@ -7,8 +7,6 @@ import EmployeeBox from "pages/homepage/about/components/employeeBox"
 import Footer from "shared/components/footer/footer"
 import Header from "shared/components/header"
 import SideBySide from "shared/components/sideBySide"
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
 
 import { teamData } from "pages/homepage/about/constants/team"
 
@@ -19,11 +17,7 @@ import sharedStyles from "styles/shared.module.css"
 
 export const About = (props: { useWidth?: boolean }) => {
     const { useWidth } = props
-
-    const { width } = useContext(MainContext)
-
-    const screenWidth = useWidth === true || useWidth === false ? 992 : width
-
+    // TODO: CHECK MOBILE COMPATIBILITY
     let teamCards = []
     let shuffledTeamData = teamData
         .map((a) => ({ sort: Math.random(), value: a }))
@@ -58,7 +52,7 @@ export const About = (props: { useWidth?: boolean }) => {
                 </div>
                 <div
                     style={{
-                        marginTop: screenWidth > ScreenSize.LARGE ? 50 : 0,
+                        marginTop: 50
                     }}
                 >
                     <div data-testid={SIDE_BY_SIDE}>
@@ -70,8 +64,7 @@ export const About = (props: { useWidth?: boolean }) => {
                         md={12}
                         style={{
                             textAlign: "left",
-                            marginTop:
-                                screenWidth > ScreenSize.XLARGE ? 100 : 50,
+                            marginTop: 50
                         }}
                     >
                         <h2>Our Stories</h2>
@@ -121,10 +114,7 @@ export const About = (props: { useWidth?: boolean }) => {
                             </p>
                         </Col>
                         <Col
-                            md={{
-                                span: screenWidth > ScreenSize.LARGE ? 6 : 7,
-                                offset: screenWidth > ScreenSize.LARGE ? 1 : 0,
-                            }}
+                            md={6}
                             style={{ padding: 0 }}
                         >
                             <InvestorBox />

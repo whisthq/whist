@@ -10,7 +10,6 @@ export const EMAIL_SIGNUP = "EMAIL_SIGNUP"
 export const VALIDATE_VERIFY_TOKEN = "VALIDATE_SIGNUP_TOKEN"
 export const VALIDATE_RESET_TOKEN = "VALIDATE_RESET_TOKEN"
 
-export const FORGOT_PASSWORD = "FORGOT_PASSWORD"
 export const RESET_PASSWORD = "RESET_PASSWORD"
 export const UPDATE_PASSWORD = "UPDATE_PASSWORD"
 
@@ -72,14 +71,6 @@ export const validateVerificationToken = (token: string) => {
 export const validateResetToken = (token: string) => {
     return {
         type: VALIDATE_RESET_TOKEN,
-        token,
-    }
-}
-
-export const forgotPassword = (username: string, token?: string) => {
-    return {
-        type: FORGOT_PASSWORD,
-        username,
         token,
     }
 }

@@ -11,8 +11,8 @@ import Input from "shared/components/input"
 import FractalKey from "shared/types/input"
 import { AuthFlow } from "store/reducers/auth/default"
 
-import * as AuthSideEffect from "store/actions/auth/sideEffects"
-import * as AuthPureAction from "store/actions/auth/pure"
+import {forgotPassword} from "shared/api/index"
+import { useFractalProvider } from "pages/auth/pages/forgot/shared/store/store"
 
 import { checkEmail } from "pages/auth/shared/helpers/authHelpers"
 import AuthNavigator from "pages/auth/shared/components/authNavigator"
@@ -27,7 +27,6 @@ import history from "shared/utils/history"
 const EmailForm = (props: {
     dispatch: Dispatch<any>
     authFlow: AuthFlow
-    emailToken?: string
 }) => {
     /*
         Component for when the user forgets their login information.
@@ -37,7 +36,9 @@ const EmailForm = (props: {
             user (User): User from Redux state
             authFlow (AuthFlow): AuthFlow from Redux state
     */
-    const { authFlow, emailToken, dispatch } = props
+    const { authFlow } = props
+
+    const { dispatch } = useFractalProvider()
 
     const [email, setEmail] = useState("")
     const [processing, setProcessing] = useState(false)
@@ -50,12 +51,14 @@ const EmailForm = (props: {
     const forgot = () => {
         if (checkEmail(email)) {
             setProcessing(true)
-            dispatch(
-                AuthPureAction.updateAuthFlow({
-                    passwordResetEmail: email,
-                })
-            )
-            dispatch(AuthSideEffect.forgotPassword(email))
+            forgotPassword(email).then(({ json, success }) => {
+                if(json && json.verified && success) {
+                    // Set password reset email and redirect
+                    dispatch({body: {email: email}})
+                } else {
+                    // Show warnings
+                }
+            })
         }
     }
 

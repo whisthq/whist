@@ -4,6 +4,7 @@
 import React, {
     useState,
     useEffect,
+    useContext,
     ChangeEvent,
     KeyboardEvent,
     Dispatch,
@@ -17,7 +18,6 @@ import AuthNavigator from "pages/auth/shared/components/authNavigator"
 import PasswordConfirmForm from "shared/components/passwordConfirmForm"
 
 // Function imports
-import { validateAccessToken } from "shared/api/index"
 import {
     checkPassword,
     checkPasswordVerbose,
@@ -25,6 +25,7 @@ import {
 } from "pages/auth/shared/helpers/authHelpers"
 import history from "shared/utils/history"
 import {routeMap, fractalRoute} from "shared/constants/routes"
+import { useFractalProvider } from "pages/auth/pages/forgot/shared/store/store"
 
 // Constant + type imports
 import FractalKey from "shared/types/input"
@@ -43,13 +44,13 @@ const Allowed = (props: {
     // Dynamic warnings if password is not valid (e.g. too short, doesn't match)
     const [passwordWarning, setPasswordWarning] = useState("")
     const [confirmPasswordWarning, setConfirmPasswordWarning] = useState("")
-    // Toggles when to show loading animation
-    const [processing, setProcessing] = useState(true)
-    // For access token in URL, which determines if user is allowed to reset their password
-    const [accessTokenValid, setAccessTokenValid] = useState(false)
 
+    // const globalState = useFractalProvider()
+    // console.log(globalState)
+    
     // Dispatches password reset API call
     const reset = () => {
+        // TODO: Call reset password with the email
         if (checkPassword(password) && (confirmPassword === password)) {
             dispatch(
                 resetPassword(password)
@@ -74,20 +75,6 @@ const Allowed = (props: {
             reset()
         }
     }
-
-    // On page load, read the access token from the URL and validate it to determine
-    // if the user is allowed to reset their password
-    useEffect(() => {
-        if(accessToken) {
-            validateAccessToken(accessToken).then(({json}) => {
-                const isValid = (json && json.status === 200)
-                setAccessTokenValid(isValid)
-                setProcessing(false)
-            })
-        } else {
-            setProcessing(false)
-        }
-    }, [])
 
     // On password change, display warnings if password is invalid
     useEffect(() => {

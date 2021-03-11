@@ -387,7 +387,6 @@ export default function* authSaga() {
         ),
         takeEvery(AuthSideEffect.VALIDATE_RESET_TOKEN, validateResetToken),
         takeEvery(AuthSideEffect.RESET_PASSWORD, resetPassword),
-        takeEvery(AuthSideEffect.FORGOT_PASSWORD, forgotPassword),
         takeEvery(
             AuthSideEffect.SEND_VERIFICATION_EMAIL,
             sendVerificationEmail

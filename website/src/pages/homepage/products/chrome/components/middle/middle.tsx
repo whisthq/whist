@@ -1,7 +1,4 @@
-import React, { useState, useContext } from "react"
-
-import MainContext from "shared/context/mainContext"
-import { ScreenSize } from "shared/constants/screenSizes"
+import React, { useState } from "react"
 
 import ChromeBackground from "assets/largeGraphics/speedTestBackground.svg"
 import SpeedTest from "assets/gifs/speedTest.gif"
@@ -19,10 +16,8 @@ export const Middle = () => {
  
         Arguments: none
     */
-    const { width } = useContext(MainContext)
-
     const [visible, setVisible] = useState(false)
-
+    // TODO: Mobile Compatibility
     return (
         <div>
             <VerticalTemplate
@@ -90,16 +85,12 @@ export const Middle = () => {
                         <div className="m-auto inline-block max-w-xs md:max-w-none">
                             <div className="relative right-32 md:right-0">
                                 <AnimatedLineB
-                                    scale={
-                                        width > ScreenSize.MEDIUM ? 1.0 : 0.5
-                                    }
+                                    scale={1.0}
                                 />
                             </div>
                             <div className="relative right-32 bottom-24 md:right-0 md:bottom-0">
                                 <AnimatedLineA
-                                    scale={
-                                        width > ScreenSize.MEDIUM ? 1.0 : 0.5
-                                    }
+                                    scale={1.0}
                                 />
                             </div>
                             <div className="absolute bg-blue-light px-10 py-3 text-blue font-bold rounded top-4 md:top-24 right-4 md:right-64 text-xs w-56 shadow-xl">
@@ -158,7 +149,7 @@ export const Middle = () => {
                             <div
                                 className="relative bg-blue-light text-blue px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-8"
                                 style={{
-                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
+                                    left: 275
                                 }}
                             >
                                 Not Traced
@@ -180,7 +171,7 @@ export const Middle = () => {
                             <div
                                 className="relative animate-bounce bg-mint text-gray px-4 md:px-8 py-2.5 rounded text-xs font-bold w-36 tracking-wide bottom-6 delay-500 duration-500"
                                 style={{
-                                    left: width > ScreenSize.MEDIUM ? 275 : 170,
+                                    left: 275
                                 }}
                             >
                                 Not Stored

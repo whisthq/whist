@@ -37,8 +37,8 @@ const PasswordResetForm = () => {
         <>
             <Switch>
                 <Route exact path={fractalRoute(routeMap.AUTH.FORGOT.RESET)} component={Loading} />
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ALLOWED)} component={Allowed} />
                 <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ERROR)} component={Error} />
+                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ALLOWED)} render={() => <Allowed accessToken={accessToken}/>} />
             </Switch>
         </>
     )
