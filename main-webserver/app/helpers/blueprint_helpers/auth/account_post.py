@@ -198,8 +198,8 @@ def delete_helper(username):
     return {"status": SUCCESS, "error": None}
 
 
-def reset_password_helper(username, password):
-    """Updates the password for a user in the users SQL table
+def reset_password_helper(username, password, encrypted_config_token):
+    """Updates the password and config token for a user in the users SQL table
 
     Args:
         username (str): The user to update the password for
@@ -208,12 +208,13 @@ def reset_password_helper(username, password):
     user = User.query.get(username)
 
     if user:
-        old_config_token = user.encrypted_config_token
         pwd_token = hash_value(password)
-
         user.password = pwd_token
+
+        user.encrypted_config_token = encrypted_config_token
+
         db.session.commit()
-        return {"status": SUCCESS, "old_token": old_config_token}
+        return {"status": SUCCESS}
     else:
         return {"status": BAD_REQUEST}
 
@@ -251,7 +252,7 @@ def update_user_helper(body):
                 to_email=user.user_id, email_id="EMAIL_VERIFICATION", jinja_args={"url": url}
             )
         if "password" in body:
-            result_dict = reset_password_helper(body["username"], body["password"])
+            result_dict = reset_password_helper(body["username"], body["password"], body["encrypted_config_token"])
             if result_dict["status"] == SUCCESS:
                 result_dict["msg"] = "Password updated successfully"
             else:

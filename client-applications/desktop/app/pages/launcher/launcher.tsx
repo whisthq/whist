@@ -58,7 +58,7 @@ export const Launcher = (props: {
     timer: Timer
     region: AWSRegion | undefined
     dispatch: Dispatch
-    configKey: string
+    configToken: string
 }) => {
     /*
         Protocol launcher with animated loading screen. User will be redirected to this page
@@ -69,7 +69,7 @@ export const Launcher = (props: {
             taskID (string): Container creation celery ID
             container (Container): Container from Redux state
             dispatch (Dispatch): Redux action dispatcher
-            configKey (string): configuration key to encrypt app configs
+            configToken (string): config token to encrypt app configs
     */
 
     const {
@@ -82,7 +82,7 @@ export const Launcher = (props: {
         timer,
         region,
         dispatch,
-        configKey,
+        configToken,
     } = props
 
     const ipc = require("electron").ipcRenderer
@@ -100,7 +100,7 @@ export const Launcher = (props: {
     const [loadingMessage, setLoadingMessage] = useState("")
 
     const [loginClosed, setLoginClosed] = useState(false)
-    const [configKeyRetrieved, setConfigKeyRetrieved] = useState(false)
+    const [configTokenRetrieved, setConfigTokenRetrieved] = useState(false)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -202,31 +202,31 @@ export const Launcher = (props: {
     }, [])
 
     useEffect(() => {
-        if (!configKeyRetrieved) {
+        if (!configTokenRetrieved) {
             if (
                 ipc.sendSync(FractalIPC.CHECK_BROWSER, [
                     BROWSER_WINDOW_IDS.LOGIN,
                 ])
             ) {
-                const retrievedConfigKey = ipc.sendSync(
-                    FractalIPC.GET_CONFIG_KEY
+                const retrievedConfigToken = ipc.sendSync(
+                    FractalIPC.GET_CONFIG_TOKEN
                 )
-                dispatch(updateUser({ configKey: retrievedConfigKey }))
-                storage.set(FractalAuthCache.CONFIG_KEY, retrievedConfigKey)
+                dispatch(updateUser({ configToken: retrievedConfigToken }))
+                storage.set(FractalAuthCache.CONFIG_TOKEN, retrievedConfigToken)
             }
-            setConfigKeyRetrieved(true)
-        } else if (!configKey || configKey === "") {
+            setConfigTokenRetrieved(true)
+        } else if (!configToken || configToken === "") {
             setTaskState(FractalAppState.FAILURE)
-            logger.logError("User missing configuration key", userID)
+            logger.logError("User missing configuration token", userID)
         }
-    }, [configKeyRetrieved])
+    }, [configTokenRetrieved])
 
     useEffect(() => {
-        if (!loginClosed && configKeyRetrieved) {
+        if (!loginClosed && configTokenRetrieved) {
             ipc.sendSync(FractalIPC.CLOSE_BROWSER, [BROWSER_WINDOW_IDS.LOGIN])
             setLoginClosed(true)
         }
-    }, [loginClosed, configKeyRetrieved])
+    }, [loginClosed, configTokenRetrieved])
 
     useEffect(() => {
         if (timedOut) {
@@ -418,7 +418,7 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
-        configKey: state.AuthReducer.user.configKey,
+        configToken: state.AuthReducer.user.configToken,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,

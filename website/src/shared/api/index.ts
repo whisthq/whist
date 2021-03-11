@@ -47,8 +47,8 @@ export const signupEmail = async (
     password: string,
     name: string,
     feedback: string,
-    encryptedConfigKey: string
-) =>
+    encryptedConfigToken: string
+) => {
     /*
         API call to the /account/register endpoint to register a new email
 
@@ -58,14 +58,23 @@ export const signupEmail = async (
             name (string): name of the new user
             feedback (string): feedback from the new user (deprecated - currently 
                 sending an empty string)
-            encryptedConfigKey (string): encrypted configuration key (for encrypting/decrypting user app configs)
+            encryptedConfigToken (string): encrypted configuration token (for encrypting/decrypting user app configs)
         Returns:
             { json, success } (JSON) : Returned JSON of POST request and success True/False
     */
+
+    const body = {
+        username,
+        password,
+        name,
+        feedback,
+        encrypted_config_token: encryptedConfigToken,
+    }
     post({
         endpoint: "/account/register",
-        body: { username, password, name, feedback, encryptedConfigKey },
+        body,
     })
+}
 
 export const emailVerification = async (
     username: string,
@@ -87,7 +96,7 @@ export const emailVerification = async (
         email_id: "EMAIL_VERIFICATION",
         to_email: username,
         email_args: {
-            name: name,
+            name,
             link: config.url.FRONTEND_URL + "/verify?" + token,
         },
     }
@@ -152,13 +161,19 @@ export const passwordReset = async (
     token: string,
     username: string,
     password: string,
-    encryptedConfigKey: string
-) =>
-    post({
+    encryptedConfigToken: string
+) => {
+    const body = {
+        username,
+        password,
+        encrypted_config_token: encryptedConfigToken,
+    }
+    return post({
         endpoint: "/account/update",
-        body: { username, password, encryptedConfigKey },
+        body,
         accessToken: token,
     })
+}
 
 export const passwordVerify = async (
     accessToken: string,
