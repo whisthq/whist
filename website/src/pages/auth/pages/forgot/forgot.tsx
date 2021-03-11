@@ -1,6 +1,5 @@
 // npm imports
 import React from "react"
-import { connect } from "react-redux"
 import { Switch, Route } from "react-router-dom"
 
 // Component imports
@@ -20,7 +19,6 @@ const Forgot = () => {
             <FractalProvider>
                 <Switch>
                     <Route
-                        exact
                         path={fractalRoute(routeMap.AUTH.FORGOT)}
                         component={EmailForm}
                     />

@@ -1,5 +1,6 @@
 const DEFAULT = {
-    email: ""
+    email: null,
+    emailServerResponse: null 
 }
 
 export default DEFAULT

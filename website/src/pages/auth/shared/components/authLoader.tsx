@@ -5,9 +5,12 @@ import React from "react"
 import AuthContainer from "pages/auth/shared/components/authContainer"
 import { PuffAnimation } from "shared/components/loadingAnimations"
 
-const Error = () => {
+const AuthLoader = (props: {
+    title: string
+}) => {
+    const { title } = props
     return (
-        <AuthContainer title="Please wait while we authenticate you">
+        <AuthContainer title={title}>
             <div>
                 <PuffAnimation />
             </div>
@@ -15,4 +18,4 @@ const Error = () => {
     )
 }
 
-export default Error
+export default AuthLoader

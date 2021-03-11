@@ -9,13 +9,14 @@ import { routeMap, fractalRoute } from "shared/constants/routes"
 import history from "shared/utils/history"
 
 // Component imports
-import Loading from "pages/auth/pages/forgot/pages/passwordResetForm/pages/loading/loading"
+import AuthLoader from "pages/auth/shared/components/authLoader"
 import Allowed from "pages/auth/pages/forgot/pages/passwordResetForm/pages/allowed/allowed"
 import Error from "pages/auth/pages/forgot/pages/passwordResetForm/pages/error/error"
 
 const PasswordResetForm = () => {
     // Read the access token from the URL, which determines if the user is allowed to password reset
     const accessToken = useLocation().search.substring(1, useLocation().search.length)
+    const loadingTitle = "Please wait while we authenticate you"
 
     // On page load, read the access token from the URL and validate it to determine
     // if the user is allowed to reset their password
@@ -33,12 +34,22 @@ const PasswordResetForm = () => {
         }
     }, [])
 
-    return(
+    return (
         <>
             <Switch>
-                <Route exact path={fractalRoute(routeMap.AUTH.FORGOT.RESET)} component={Loading} />
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ERROR)} component={Error} />
-                <Route path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ALLOWED)} render={() => <Allowed accessToken={accessToken}/>} />
+                <Route
+                    exact
+                    path={fractalRoute(routeMap.AUTH.FORGOT.RESET)}
+                    render={() => <AuthLoader title={loadingTitle} />}
+                />
+                <Route
+                    path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ALLOWED)}
+                    render={() => <Allowed accessToken={accessToken} />}
+                />
+                <Route
+                    path={fractalRoute(routeMap.AUTH.FORGOT.RESET.ERROR)}
+                    component={Error}
+                />
             </Switch>
         </>
     )

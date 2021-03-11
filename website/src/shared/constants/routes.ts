@@ -23,6 +23,10 @@ export const routeMap = {
                 ROOT: "/auth/forgot/reset",
                 ALLOWED: "/auth/forgot/reset/allowed",
                 ERROR: "/auth/forgot/reset/error"
+            },
+            EMAIL: {
+                ROOT: "/auth/forgot",
+                SUBMITTED: "/auth/forgot/email/submitted"
             }
         },
         SIGNUP: "/auth/signup",
