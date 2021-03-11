@@ -54,7 +54,7 @@ export const Launcher = (props: {
     timer: Timer
     region: AWSRegion | undefined
     dispatch: Dispatch
-    encryptionToken: string
+    configKey: string
 }) => {
     /*
         Protocol launcher with animated loading screen. User will be redirected to this page
@@ -64,6 +64,8 @@ export const Launcher = (props: {
             userID (string): User ID
             taskID (string): Container creation celery ID
             container (Container): Container from Redux state
+            dispatch (Dispatch): Redux action dispatcher
+            configKey (string): configuration key to encrypt app configs
     */
 
     const {
@@ -76,7 +78,7 @@ export const Launcher = (props: {
         timer,
         region,
         dispatch,
-        encryptionToken
+        configKey,
     } = props
 
     const ipc = require("electron").ipcRenderer
@@ -92,7 +94,7 @@ export const Launcher = (props: {
     const [loadingMessage, setLoadingMessage] = useState("")
 
     const [loginClosed, setLoginClosed] = useState(false)
-    const [encryptionTokenRetrieved, setEncryptionTokenRetrieved] = useState(false)
+    const [configKeyRetrieved, setConfigKeyRetrieved] = useState(false)
 
     const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
@@ -148,27 +150,29 @@ export const Launcher = (props: {
     }, [])
 
     useEffect(() => {
-        if (!encryptionTokenRetrieved){
-            if (ipc.sendSync(FractalIPC.CHECK_BROWSER, [BROWSER_WINDOW_IDS.LOGIN])) {
-                const encryptionToken = ipc.sendSync(FractalIPC.GET_ENCRYPTION_KEY)
-                dispatch(updateUser({encryptionToken: encryptionToken}))
-                storage.set(FractalAuthCache.ENCRYPTION_TOKEN, encryptionToken)
+        if (!configKeyRetrieved) {
+            if (
+                ipc.sendSync(FractalIPC.CHECK_BROWSER, [
+                    BROWSER_WINDOW_IDS.LOGIN,
+                ])
+            ) {
+                const retrievedConfigKey = ipc.sendSync(FractalIPC.GET_CONFIG_KEY)
+                dispatch(updateUser({ configKey: retrievedConfigKey }))
+                storage.set(FractalAuthCache.CONFIG_KEY, retrievedConfigKey)
             }
-                setEncryptionTokenRetrieved(true)
-        } else {
-            if (!encryptionToken || encryptionToken === "") {
-                setTaskState(FractalAppState.FAILURE)
-                logger.logError("User missing encryption key", userID)
-            }
+            setConfigKeyRetrieved(true)
+        } else if (!configKey || configKey === "") {
+            setTaskState(FractalAppState.FAILURE)
+            logger.logError("User missing configuration key", userID)
         }
-    }, [encryptionTokenRetrieved])
+    }, [configKeyRetrieved])
 
     useEffect(() => {
-        if (!loginClosed && encryptionTokenRetrieved) {
+        if (!loginClosed && configKeyRetrieved) {
             ipc.sendSync(FractalIPC.CLOSE_BROWSER, [BROWSER_WINDOW_IDS.LOGIN])
             setLoginClosed(true)
         }
-    }, [loginClosed, encryptionTokenRetrieved])
+    }, [loginClosed, configKeyRetrieved])
 
     useEffect(() => {
         if (userID) {
@@ -243,11 +247,16 @@ export const Launcher = (props: {
     }, [dispatch, protocol, shouldLaunchProtocol, protocolLock])
 
     useEffect(() => {
-        if (protocol && taskState === FractalAppState.NO_TASK && region && encryptionTokenRetrieved) {
+        if (
+            protocol &&
+            taskState === FractalAppState.NO_TASK &&
+            region &&
+            configKeyRetrieved
+        ) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, region, taskState, encryptionTokenRetrieved])
+    }, [protocol, region, taskState, configKeyRetrieved])
 
     // Listen to container creation task state
     useEffect(() => {
@@ -342,7 +351,7 @@ export const mapStateToProps = (state: {
 }) => {
     return {
         userID: state.AuthReducer.user.userID,
-        encryptionToken: state.AuthReducer.user.encryptionToken,
+        configKey: state.AuthReducer.user.configKey,
         taskID: state.ContainerReducer.task.taskID,
         status: state.ContainerReducer.task.status,
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
