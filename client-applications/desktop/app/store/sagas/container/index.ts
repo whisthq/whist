@@ -25,7 +25,7 @@ function* createContainer() {
     const state = yield select()
     const userID = state.AuthReducer.user.userID
     const accessToken = state.AuthReducer.user.accessToken
-    const encryptionToken = state.AuthReducer.user.encryptionToken
+    const configKey = state.AuthReducer.user.configKey
     const region = state.ClientReducer.computerInfo.region
 
     // Get client DPI
@@ -36,7 +36,7 @@ function* createContainer() {
         region: region,
         app: "Google Chrome",
         dpi: dpi,
-        encryptionToken: encryptionToken,
+        configKey: configKey,
     }
 
     // Send container assign request

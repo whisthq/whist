@@ -35,11 +35,10 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
     const ipc = require("electron").ipcRenderer
 
     const upgrade = () => {
-        ipc.sendSync(
-            FractalIPC.LOAD_BROWSER,
-            [`${config.url.FRONTEND_URL}/dashboard/settings/payment`,
-            BROWSER_WINDOW_IDS.PAYMENT]
-        )
+        ipc.sendSync(FractalIPC.LOAD_BROWSER, [
+            `${config.url.FRONTEND_URL}/dashboard/settings/payment`,
+            BROWSER_WINDOW_IDS.PAYMENT,
+        ])
     }
 
     const refresh = () => {
@@ -52,7 +51,7 @@ export const Payment = (props: { userID: string; dispatch: Dispatch }) => {
         dispatch(updateUser(deepCopyObject(AuthDefault.user)))
         dispatch(updateAuthFlow(deepCopyObject(AuthDefault.authFlow)))
         storage.set(FractalAuthCache.ACCESS_TOKEN, null)
-        storage.set(FractalAuthCache.ENCRYPTION_TOKEN, null)
+        storage.set(FractalAuthCache.CONFIG_KEY, null)
         history.push(FractalRoute.LOGIN)
     }
 
