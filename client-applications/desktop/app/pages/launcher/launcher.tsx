@@ -208,7 +208,9 @@ export const Launcher = (props: {
                     BROWSER_WINDOW_IDS.LOGIN,
                 ])
             ) {
-                const retrievedConfigKey = ipc.sendSync(FractalIPC.GET_CONFIG_KEY)
+                const retrievedConfigKey = ipc.sendSync(
+                    FractalIPC.GET_CONFIG_KEY
+                )
                 dispatch(updateUser({ configKey: retrievedConfigKey }))
                 storage.set(FractalAuthCache.CONFIG_KEY, retrievedConfigKey)
             }
@@ -310,16 +312,11 @@ export const Launcher = (props: {
     }, [dispatch, protocol, shouldLaunchProtocol, protocolLock])
 
     useEffect(() => {
-        if (
-            protocol &&
-            taskState === FractalAppState.NO_TASK &&
-            region &&
-            configKeyRetrieved
-        ) {
+        if (protocol && taskState === FractalAppState.NO_TASK && region) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, region, taskState, configKeyRetrieved])
+    }, [protocol, region, taskState])
 
     // Listen to container creation task state
     useEffect(() => {
