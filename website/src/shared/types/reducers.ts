@@ -4,7 +4,7 @@ export type User = {
     // session auth tokens
     accessToken?: string | null // access token that lets you talk to the server when logged in
     refreshToken?: string | null // refresh token to refresh your access token when it is used up
-    configKey?: string | null // configKey for encrypting app configs
+    configToken?: string | null // config token for encrypting app configs
     // email tokens
     emailVerificationToken?: string | null // the token that shows up in /verify?token needed to verify email
     resetToken?: string | null // the token that shows up in /reset?token needed to validate a reset

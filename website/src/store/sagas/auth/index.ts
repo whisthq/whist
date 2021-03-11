@@ -2,9 +2,9 @@ import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
 import history from "shared/utils/history"
 import {
-    decryptConfigKey,
-    encryptConfigKey,
-    generateConfigKey,
+    decryptConfigToken,
+    encryptConfigToken,
+    generateConfigToken,
 } from "shared/utils/helpers"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { updateStripeInfo } from "store/actions/dashboard/payment/pure"
@@ -18,18 +18,31 @@ function* emailLogin(action: {
     rememberMe?: boolean
     type: string
 }) {
+    /*
+        Function that calls the /account/login endpoint on the webserver to try and login to the website.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            email (string): email to login with
+            password (string): password to login with
+            rememberMe (boolean): whether the user wants to stay logged in (deprecated)
+            type (string): identifier for this side effect
+    */
     const { json } = yield call(api.loginEmail, action.email, action.password)
 
     if (json && json.access_token) {
-        const encryptedConfigKey = json.encrypted_config_key // name TBD, dependent on webserver
-        const configKey = decryptConfigKey(encryptedConfigKey, action.password)
+        const encryptedConfigToken = json.encrypted_config_token
+        const configToken = decryptConfigToken(
+            encryptedConfigToken,
+            action.password
+        )
         yield put(
             updateUser({
                 userID: action.email,
                 name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                configKey: configKey,
+                configToken: configToken,
                 emailVerified: json.verified,
                 emailVerificationToken: json.verification_token,
             })
@@ -72,6 +85,9 @@ export function* googleLogin(action: {
     rememberMe?: boolean
     type: string
 }) {
+    /*
+        Function that logs in using a user's Google account (unused)
+    */
     if (action.code) {
         var { json, response } = yield call(api.loginGoogle, action.code)
         if (json) {
@@ -127,15 +143,29 @@ function* emailSignup(action: {
     type: string
     name: string
 }) {
-    const configKey = yield call(generateConfigKey())
-    const encryptedKey = encryptConfigKey(configKey, action.password)
+    /*
+        Function that calls the /account/register endpoint on the webserver to try and register a new user.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            email (string): email to signup with
+            password (string): password to signup with
+            rememberMe (boolean): whether the user wants to stay logged in (deprecated)
+            type (string): identifier for this side effect
+            name (string): name of the user
+    */
+    const configToken = yield call(generateConfigToken())
+    const encryptedConfigToken = encryptConfigToken(
+        configToken,
+        action.password
+    )
     const { json, response } = yield call(
         api.signupEmail,
         action.email,
         action.password,
         action.name,
         "",
-        encryptedKey
+        encryptedConfigToken
     )
 
     if (json && response.status === 200) {
@@ -145,7 +175,7 @@ function* emailSignup(action: {
                 name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                configKey: configKey,
+                configToken: configToken,
                 emailVerificationToken: json.verification_token,
             })
         )
@@ -180,12 +210,17 @@ function* emailSignup(action: {
     }
 }
 
-export function* sendVerificationEmail(action: {
-    email?: string
-    name?: string
-    token?: string
-    type: string
-}): any {
+export function* sendVerificationEmail(action: any): any {
+    /*
+        Function that calls the /mail endpoint on the webserver to send a verification email to the user.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            email (string): email to login with
+            name (string): name of the user
+            token (string): email verification token of the user (received from webserver on login/signup)
+            type (string): identifier for this side effect
+    */
     const state = yield select()
     if (action.email !== "" && action.name !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -213,6 +248,14 @@ export function* validateVerificationToken(action: {
     token: string
     type: string
 }): any {
+    /*
+        Function that calls the /account/verify endpoint on the webserver to try and verify a user's email verification token.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            token (string): email verification token to verify
+            type (string): identifier for this side effect
+    */
     const state = yield select()
     const { json, response } = yield call(
         api.validateVerification,
@@ -248,6 +291,15 @@ export function* forgotPassword(action: {
     token: string
     type: string
 }): any {
+    /*
+        Function that calls the /mail endpoint on the webserver to send a password forgot/reset email.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            username (string): email of the user
+            token (string): access (? email verification?) token for the user // check after Ming's auth refactor
+            type (string): identifier for this side effect
+    */
     const state = yield select()
     const { json } = yield call(
         api.passwordForgot,
@@ -294,6 +346,14 @@ export function* forgotPassword(action: {
 }
 
 export function* validateResetToken(action: { token: string; type: string }) {
+    /*
+        Function that calls the /token/validate endpoint on the webserver to verify the token that was passed through the "Forgot Password" url
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            token (string): access token of the user
+            type (string): identifier for this side effect
+    */
     yield select()
     const { json } = yield call(api.validatePasswordReset, action.token)
 
@@ -322,14 +382,27 @@ export function* resetPassword(action: {
     password: string
     type: string
 }) {
-    const configKey = yield call(generateConfigKey())
-    const encryptedKey = encryptConfigKey(configKey, action.password)
+    /*
+        Function that calls the /account/update endpoint on the webserver to try and change an existing user's password.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            username (string): user email
+            password (string): password to change to
+            token (string): user's access token
+            type (string): identifier for this side effect
+    */
+    const configToken = yield call(generateConfigToken())
+    const encryptedConfigToken = encryptConfigToken(
+        configToken,
+        action.password
+    )
     const { response } = yield call(
         api.passwordReset,
         action.token,
         action.username,
         action.password,
-        encryptedKey
+        encryptedConfigToken
     )
 
     // TODO do something with the response https://github.com/fractal/website/issues/334
@@ -357,6 +430,18 @@ export function* updatePassword(action: {
     newPassword: string
     type: string
 }): any {
+    /*
+        Function that calls the /account/verify_password endpoint to verify that the currently logged-in user is valid,
+        then uses the /account/update endpoint on the webserver to try and change the existing user's password. Assumes that the user 
+        remembers their old password.
+
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            currentPassword (string): current password
+            newPassword (string): password to change to
+            type (string): identifier for this side effect
+    */
     const state = yield select()
 
     const { json } = yield call(
@@ -374,14 +459,17 @@ export function* updatePassword(action: {
                 })
             )
 
-            const configKey = state.AuthReducer.user.configKey
-            const encryptedKey = encryptConfigKey(configKey, action.newPassword)
+            const configToken = state.AuthReducer.user.configToken
+            const encryptedConfigToken = encryptConfigToken(
+                configToken,
+                action.newPassword
+            )
             const { response } = yield call(
                 api.passwordReset,
                 state.AuthReducer.user.accessToken,
                 state.AuthReducer.user.userID,
                 action.newPassword,
-                encryptedKey
+                encryptedConfigToken
             )
 
             // TODO do something with the response https://github.com/fractal/website/issues/334
@@ -412,7 +500,15 @@ export function* updatePassword(action: {
     }
 }
 
-function* fetchPaymentInfo(action: { email: string; type: string }): any {
+function* fetchPaymentInfo(action: any): any {
+    /*
+        Function that calls the /stripe/retrieve endpoint on the webserver to retrieve the user's payment information.
+        It also processes the returned json and updates the state of the application as necessary.
+
+        Args:
+            email (string): user's email
+            type (string): identifier for this side effect
+    */
     const state = yield select()
     const { json } = yield call(
         api.stripePaymentInfo,
