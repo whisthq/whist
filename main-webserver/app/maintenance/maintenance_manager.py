@@ -26,7 +26,7 @@ import ssl
 
 import redis
 
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.models import RegionToAmi
 
 
@@ -139,11 +139,7 @@ def try_start_maintenance() -> Tuple[bool, str]:
         # starts maintenance ends up printing.
         maintenance_started = _REDIS_CONN.setnx(_REDIS_MAINTENANCE_KEY, 1)
         if maintenance_started:
-            fractal_log(
-                "try_start_maintenance",
-                None,
-                "Putting webserver into maintenance mode.",
-            )
+            fractal_logger.info("Putting webserver into maintenance mode.")
             return_msg = "Put webserver into maintenance mode."
         else:
             return_msg = "Webserver is already in maintenance mode."
@@ -157,11 +153,7 @@ def try_start_maintenance() -> Tuple[bool, str]:
             "Cannot start maintenance mode, but stopping new tasks from running."
             f" Waiting on {len(tasks)} task to finish. Task IDs: {tasks}."
         )
-        fractal_log(
-            "try_start_maintenance",
-            None,
-            log,
-        )
+        fractal_logger.info(log)
         return_msg = (
             f"There are {len(tasks)} tasks currently running."
             f" However, all new maintenance tracked tasks will not run."
@@ -198,11 +190,7 @@ def try_end_maintenance() -> bool:
         # see function docstring for why we return True here
         return True, "Webserver was not in maintenance mode."
 
-    fractal_log(
-        "try_end_maintenance",
-        None,
-        "Ended webserver maintenance mode.",
-    )
+    fractal_logger.info("Ended webserver maintenance mode.")
 
     _REDIS_CONN.delete(_REDIS_MAINTENANCE_KEY)
     _release_lock()
@@ -310,16 +298,10 @@ def maintenance_track_task(func: Callable):
                 f"Args: {args}. "
                 f"Kwargs: {kwargs}."
             )
-            fractal_log(
-                "maintenance_track_task",
-                None,
-                msg,
-            )
+            fractal_logger.info(msg)
             raise ValueError("MAINTENANCE ERROR. Failed to register task.")
 
-        fractal_log(
-            "maintenance_track_task", None, f"Registered tracked task: {self_obj.request.id}."
-        )
+        fractal_logger.info(f"Registered tracked task: {self_obj.request.id}.")
 
         exception = None
         try:
@@ -336,18 +318,11 @@ def maintenance_track_task(func: Callable):
                 f"Args: {args}. "
                 f"Kwargs: {kwargs}."
             )
-            fractal_log(
-                "maintenance_track_task",
-                None,
-                msg,
-                level=logging.ERROR,
-            )
+            fractal_logger.error(msg)
             # exception can be None here
             raise ValueError("MAINTENANCE ERROR. Failed to deregister task.") from exception
 
-        fractal_log(
-            "maintenance_track_task", None, f"Deregistered tracked task: {self_obj.request.id}."
-        )
+        fractal_logger.info(f"Deregistered tracked task: {self_obj.request.id}.")
 
         # raise any exception to caller
         if exception is not None:
