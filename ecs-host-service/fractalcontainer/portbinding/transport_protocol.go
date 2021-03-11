@@ -1,4 +1,4 @@
-package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+package portbinding // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbinding"
 
 import (
 	"strings"
