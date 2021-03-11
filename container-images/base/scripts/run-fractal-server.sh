@@ -33,8 +33,9 @@ fi
 # Send in Fractal webserver url, if set
 if [ -f "$WEBSERVER_URL_FILENAME" ]; then
     export WEBSERVER_URL=$(cat $WEBSERVER_URL_FILENAME)
+    OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
-OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
+
 
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
@@ -98,6 +99,10 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/fractal/FractalServer $OPTIONS
 
+# If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
+if [[ ! ${WEBSERVER_URL+x} ]]; then
+    exit 0
+fi
 
 # POST $WEBSERVER_URL/logs
 #   Upload the logs from the protocol run to S3.
