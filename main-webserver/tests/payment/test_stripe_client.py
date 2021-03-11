@@ -120,10 +120,6 @@ def _generate_source(number=stripe_no_auth_card, zipcode=dummy_zip_us, malformed
     )  # invalid source json
 
 
-# for i in range(100):
-#     fractal_log("Generated Token:", f"{i}", _generate_token())
-
-
 def _remove_stripe_customer(email):
     """Makes sure there is no stripe customer with given email. If there is
     the user is deleted. Also removes user id from database.

@@ -1,6 +1,6 @@
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.helpers.utils.general.logs import fractal_log
+from app.helpers.utils.general.logs import fractal_logger
 from app.models import db, UserContainer
 
 
@@ -40,11 +40,9 @@ def ensure_container_exists(container: UserContainer) -> UserContainer:
     if not ecs_client.check_task_exists():
         # the task doesn't really exist! we should delete from the database
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
-        fractal_log(
-            function="ensure_container_exists",
-            label=container.container_id,
-            logs=f"Task was not in region {container.location} cluster {container.cluster}!"
-            "Deleted erroneous entry from database.",
+        fractal_logger.info(
+            f"Task was not in region {container.location} cluster {container.cluster}!",
+            extra={"label": container.container_id},
         )
         return None
     return container
