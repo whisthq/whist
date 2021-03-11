@@ -49,11 +49,10 @@ export const Login = (props: {
 
     const [addLogin] = useMutation(ADD_LOGIN_TOKEN, {
         onCompleted: () => {
-            ipc.sendSync(
-                FractalIPC.LOAD_BROWSER,
-                [`${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`,
-                BROWSER_WINDOW_IDS.LOGIN]
-            )
+            ipc.sendSync(FractalIPC.LOAD_BROWSER, [
+                `${config.url.FRONTEND_URL}/auth/loginToken=${loginToken}`,
+                BROWSER_WINDOW_IDS.LOGIN,
+            ])
         },
         onError: (err) => {
             throw err
