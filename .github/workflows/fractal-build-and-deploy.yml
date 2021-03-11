@@ -524,24 +524,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
-            - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
-              run: |
-                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
-
-                  if [ "$BRANCH_NAME" == "master" ]; then
-                    echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://prod-server.fractal.co/" >> $GITHUB_ENV
-                  elif [ "$BRANCH_NAME" == "staging" ]; then
-                    echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://staging-server.fractal.co/" >> $GITHUB_ENV
-                  else
-                    echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://dev-server.fractal.co/" >> $GITHUB_ENV
-                  fi
-
             - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
               working-directory: ecs-host-setup
               run: |
@@ -581,6 +563,8 @@ jobs:
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN=$(python \
                     main-webserver/scripts/webserver_scripts.py \
