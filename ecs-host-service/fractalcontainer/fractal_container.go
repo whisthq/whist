@@ -5,10 +5,12 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 // host service packages.
 
 import (
+	"io"
 	"sync"
 
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbinding"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinput"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
@@ -42,63 +44,72 @@ type FractalContainer interface {
 	GetAppName() AppName
 	GetUserID() UserID
 
-	GetPortBindings() []portbinding.PortBinding
-	AssignPortBindings([]portbinding.PortBinding) error
+	GetPortBindings() []portbindings.PortBinding
+	AssignPortBindings([]portbindings.PortBinding) error
 	FreePortBindings()
 
-	// AssignUinputDevices() ([]dockercontainer.DeviceMapping, error)
-	// FreeUinputDevices()
+	GetDeviceMappings() []dockercontainer.DeviceMapping
+	InitializeUinputDevices() error
+	FreeUinputDevices()
 
-	// Close()
+	io.Closer
 }
 
 func New(fid FractalID) FractalContainer {
-	return &containerData{FractalID: fid}
+	return &containerData{
+		fractalID:            fid,
+		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
+		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
+	}
 }
 
 type containerData struct {
-	rwlock sync.RWMutex
-	FractalID
-	DockerID
-	AppName
-	UserID
-	uinput.UinputDevices
-	DeviceMappings []dockercontainer.DeviceMapping
-	PortBindings   []portbinding.PortBinding
+	rwlock    sync.RWMutex
+	fractalID FractalID
+	dockerID  DockerID
+	appName   AppName
+	userID    UserID
+
+	uinputDevices        *uinputdevices.UinputDevices
+	uinputDeviceMappings []dockercontainer.DeviceMapping
+	// Not currently needed --- this is just here for extensibility
+	otherDeviceMappings []dockercontainer.DeviceMapping
+
+	portBindings []portbindings.PortBinding
 }
 
 func (c *containerData) GetFractalID() FractalID {
 	c.rwlock.RLock()
-	c.rwlock.RUnlock()
-	return c.FractalID
+	defer c.rwlock.RUnlock()
+	return c.fractalID
 }
 
 func (c *containerData) GetDockerID() DockerID {
 	c.rwlock.RLock()
-	c.rwlock.RUnlock()
-	return c.DockerID
+	defer c.rwlock.RUnlock()
+	return c.dockerID
 }
 
 func (c *containerData) GetAppName() AppName {
 	c.rwlock.RLock()
-	c.rwlock.RUnlock()
-	return c.AppName
+	defer c.rwlock.RUnlock()
+	return c.appName
 }
 
 func (c *containerData) GetUserID() UserID {
 	c.rwlock.RLock()
-	c.rwlock.RUnlock()
-	return c.UserID
+	defer c.rwlock.RUnlock()
+	return c.userID
 }
 
-func (c *containerData) GetPortBindings() []portbinding.PortBinding {
+func (c *containerData) GetPortBindings() []portbindings.PortBinding {
 	c.rwlock.RLock()
-	c.rwlock.RUnlock()
-	return c.PortBindings
+	defer c.rwlock.RUnlock()
+	return c.portBindings
 }
 
-func (c *containerData) AssignPortBindings(desired []portbinding.PortBinding) error {
-	result, err := portbinding.Allocate(desired)
+func (c *containerData) AssignPortBindings(desired []portbindings.PortBinding) error {
+	result, err := portbindings.Allocate(desired)
 	if err != nil {
 		return err
 	}
@@ -106,7 +117,7 @@ func (c *containerData) AssignPortBindings(desired []portbinding.PortBinding) er
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	c.PortBindings = result
+	c.portBindings = result
 	return err
 }
 
@@ -114,6 +125,52 @@ func (c *containerData) FreePortBindings() {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	portbinding.Free(c.PortBindings)
-	c.PortBindings = nil
+	portbindings.Free(c.portBindings)
+	c.portBindings = nil
+}
+
+func (c *containerData) GetDeviceMappings() []dockercontainer.DeviceMapping {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+	return append(c.uinputDeviceMappings, c.otherDeviceMappings...)
+}
+
+func (c *containerData) InitializeUinputDevices() error {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	devices, mappings, err := uinputdevices.Allocate()
+	if err != nil {
+		return logger.MakeError("Couldn't allocate uinput devices: %s", err)
+	}
+
+	c.uinputDevices = devices
+	c.uinputDeviceMappings = mappings
+
+	go func() {
+		err := uinputdevices.SendDeviceFDsOverSocket(devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
+		if err != nil {
+			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
+		} else {
+			logger.Infof("SendDeviceFDsOverSocket returned successfully for FractalID %s", c.fractalID)
+		}
+	}()
+
+	return nil
+}
+
+func (c *containerData) FreeUinputDevices() {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+	c.uinputDevices.Close()
+	c.uinputDevices = nil
+	c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
+}
+
+func (c *containerData) Close() error {
+	// Each constituent function locks, so we don't need to lock here.
+	c.FreePortBindings()
+	c.FreeUinputDevices()
+
+	return nil
 }
