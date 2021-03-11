@@ -3,7 +3,7 @@ export enum FractalIPC {
     LOAD_BROWSER = "loadBrowser",
     CHECK_BROWSER = "checkBrowser",
     CLOSE_BROWSER = "closeBrowser",
-    GET_CONFIG_KEY = "getConfigKey",
+    GET_CONFIG_TOKEN = "getConfigToken",
     FORCE_QUIT = "forceQuit",
     UPDATE = "update",
     CUSTOM_URL = "customURL",

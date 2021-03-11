@@ -23,7 +23,7 @@ import styles from "pages/loading/loading.css"
 export const Loading = (props: {
     userID: string
     accessToken: string
-    configKey: string
+    configToken: string
     failures: number
     dispatch: Dispatch
 }) => {
@@ -34,11 +34,11 @@ export const Loading = (props: {
         Arguments:
             userID: User ID
             accessToken: Access token
-            configKey: configuration key for encrypting app configs
+            configToken: configuration token for encrypting app configs
             failures: Number of login failures
     */
 
-    const { failures, userID, accessToken, configKey, dispatch } = props
+    const { failures, userID, accessToken, configToken, dispatch } = props
 
     const [listenerCreated, setListenerCreated] = useState(false)
     const [reduxCleared, setReduxCleared] = useState(false)
@@ -98,7 +98,7 @@ export const Loading = (props: {
             return
         }
         logger.logInfo(`Redux was cleared successfully`, userID)
-        if (userID !== "" && accessToken !== "" && configKey !== "") {
+        if (userID !== "" && accessToken !== "" && configToken !== "") {
             logger.logInfo(`Authenticated, redirecting to launcher`, userID)
             dispatch(updateTimer({ appDoneLoading: Date.now() }))
             dispatch(updateTask({ shouldLaunchProtocol: true }))
@@ -107,13 +107,13 @@ export const Loading = (props: {
         }
         logger.logInfo(`Not yet authenticated`, userID)
         const cachedAccessToken = storage.get(FractalAuthCache.ACCESS_TOKEN)
-        const cachedConfigKey = storage.get(FractalAuthCache.CONFIG_KEY)
-        dispatch(updateUser({ configKey: cachedConfigKey }))
-        // If we have the cached access token and config key, and have not unsuccessfully verified them,
+        const cachedConfigToken = storage.get(FractalAuthCache.CONFIG_TOKEN)
+        dispatch(updateUser({ configToken: cachedConfigToken }))
+        // If we have the cached access token and config token, and have not unsuccessfully verified them,
         // then verify the cached access token. Otherwise, redirect the user to login.
         const shouldValidate = !!(
             cachedAccessToken &&
-            cachedConfigKey &&
+            cachedConfigToken &&
             failures === 0
         )
         if (shouldValidate) {
@@ -121,7 +121,7 @@ export const Loading = (props: {
             dispatch(validateAccessToken(cachedAccessToken))
         } else {
             logger.logInfo(
-                `Redirecting to login, cached access token is ${cachedAccessToken}, cached config key is ${cachedConfigKey}, and validation failures is ${failures.toString()}`,
+                `Redirecting to login, cached access token is ${cachedAccessToken}, cached config token is ${cachedConfigToken}, and validation failures is ${failures.toString()}`,
                 userID
             )
             dispatch(updateTimer({ appDoneLoading: Date.now() }))
@@ -130,7 +130,7 @@ export const Loading = (props: {
     }, [
         reduxCleared,
         accessToken,
-        configKey,
+        configToken,
         updateReceived,
         needsUpdate,
         failures,
@@ -157,7 +157,7 @@ const mapStateToProps = (state: {
     return {
         userID: state.AuthReducer.user.userID,
         accessToken: state.AuthReducer.user.accessToken,
-        configKey: state.AuthReducer.user.configKey,
+        configToken: state.AuthReducer.user.configToken,
         failures: state.AuthReducer.authFlow.failures,
     }
 }

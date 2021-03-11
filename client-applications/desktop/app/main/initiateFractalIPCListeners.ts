@@ -111,20 +111,20 @@ export const initiateFractalIPCListeners = (
         event.returnValue = windowExists
     })
 
-    ipc.on(FractalIPC.GET_CONFIG_KEY, (event, argv) => {
+    ipc.on(FractalIPC.GET_CONFIG_TOKEN, (event, argv) => {
         /*
-            Listener to retrieve the configuration key from the login window
+            Listener to retrieve the configuration token from the login window
 
-            Returns: null, or the value of the retrieved config key
+            Returns: null, or the value of the retrieved config token
          */
         if (loginWindow !== null) {
             loginWindow.webContents
                 .executeJavaScript(
-                    'document.getElementById("configKey").textContent',
+                    'document.getElementById("configToken").textContent',
                     true
                 )
-                .then((configKey) => {
-                    event.returnValue = configKey
+                .then((configToken) => {
+                    event.returnValue = configToken
                     return null
                 })
                 .catch((err) => {
