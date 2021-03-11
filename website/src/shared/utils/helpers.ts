@@ -2,7 +2,7 @@ const crypto = require("crypto")
 
 export const generateHashedPassword = (password: string): string => {
     /*
-        Hash the user's plain-text password (to later use as encryption/decryption password for the config key)
+        Hash the user's plain-text password (to later use as encryption/decryption password for the config token)
         
         Arguments:
             password (string): plaintext password to hash
@@ -17,9 +17,9 @@ export const generateHashedPassword = (password: string): string => {
     return token.toString("hex")
 }
 
-export const generateConfigKey = async (): Promise<string> => {
+export const generateConfigToken = async (): Promise<string> => {
     /*
-        Generate a unique config key to encrypt/decrypt user configs with
+        Generate a unique config token to encrypt/decrypt user configs with
  
         Arguments:
             none
@@ -37,9 +37,9 @@ export const generateConfigKey = async (): Promise<string> => {
 
 const algorithm = "aes-256-gcm"
 
-export const encryptConfigKey = (text: string, password: string): string => {
+export const encryptConfigToken = (text: string, password: string): string => {
     /*
-        Encrypt the given config key with the given password
+        Encrypt the given config token with the given password
 
         Arguments:
             text (string): text to encrypt
@@ -58,9 +58,9 @@ export const encryptConfigKey = (text: string, password: string): string => {
     return crypted
 }
 
-export const decryptConfigKey = (text: string, password: string): string => {
+export const decryptConfigToken = (text: string, password: string): string => {
     /*
-        Decrypt the given configc key with the given password
+        Decrypt the given config token with the given password
 
         Arguments:
             text (string): text to encrypt

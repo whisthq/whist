@@ -1,7 +1,7 @@
 export enum FractalAuthCache {
     ACCESS_TOKEN = "accessToken",
     ONBOARDED = "onboarded",
-    CONFIG_KEY = "configKey",
+    CONFIG_TOKEN = "configToken",
 }
 
 export enum FractalClientCache {
