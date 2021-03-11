@@ -1,20 +1,15 @@
 import json
-import datetime
-
-
-from datetime import datetime as dt
 
 from functools import wraps
 
-from flask import current_app, jsonify, request
+from flask import abort, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
+from sqlalchemy.orm.exc import NoResultFound
 
 from app.models import User
 
 from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
-from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.payment.stripe_client import StripeClient
 
 
 def fractal_auth(func):
@@ -156,35 +151,21 @@ def payment_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-
-        current_user = get_jwt_identity()
+        try:
+            user = User.query.filter_by(user_id=get_jwt_identity()).one()
+        except NoResultFound:
+            abort(UNAUTHORIZED)
 
         # admin/developer override
-        if not check_developer():
-
-            user = User.query.get(current_user)
-            stripe_client = StripeClient(current_app.config["STRIPE_SECRET"])
-
-            assert user
-
-            customer = stripe_client.user_schema.dump(user)
-            stripe_customer_id = customer["stripe_customer_id"]
-
-            time_diff = round(dt.now(datetime.timezone.utc).timestamp()) - user.created_timestamp
-            days_since_account_created = (
-                time_diff / SECONDS_IN_MINUTE / MINUTES_IN_HOUR / HOURS_IN_DAY
+        if not check_developer() and not user.subscribed:
+            return (
+                jsonify(
+                    {
+                        "error": ("User is not a valid paying user."),
+                    }
+                ),
+                PAYMENT_REQUIRED,
             )
-            subscriptions = stripe_client.get_subscriptions(stripe_customer_id)
-
-            if days_since_account_created >= 7 and (not stripe_customer_id or not subscriptions):
-                return (
-                    jsonify(
-                        {
-                            "error": ("User is not a valid paying user."),
-                        }
-                    ),
-                    PAYMENT_REQUIRED,
-                )
 
         return func(*args, **kwargs)
 
