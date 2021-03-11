@@ -247,19 +247,35 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install --upgrade pip && pip install -r scripts/requirements.txt
+
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
               run: |
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(curl -X POST \
-                        -H "Content-Type: application/json" \
-                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+                  TOKEN=$(python \
+                    scripts/webserver_scripts.py \
+                    --web_url $WEBSERVER_URL \
+                    --script login \
+                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
+                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
+                    | jq -r ".access_token")
 
-                  # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN start
+                  # use a python script to start maintenance and poll for success
+                  python \
+                    scripts/webserver_scripts.py \
+                    --web_url $WEBSERVER_URL \
+                    --script start_maintenance \
+                    --admin_token $TOKEN
 
                   # we only get here if previous step has exit code 0
                   echo "Put webserver at $WEBSERVER_URL into maintenance mode"
@@ -465,6 +481,15 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install --upgrade pip && pip install -r scripts/requirements.txt
+
             ######################## Building ECS Host Service ########################
 
             # To build ECS Host Service
@@ -555,13 +580,18 @@ jobs:
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              working-directory: ecs-host-setup
               run: |
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  token=$(curl -X POST \
-                    -H "Content-Type: application/json" \
-                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+                  TOKEN=$(python \
+                    main-webserver/scripts/webserver_scripts.py \
+                    --web_url $WEBSERVER_URL \
+                    --script login \
+                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
+                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
+                    | jq -r ".access_token")
+
+                  # move into ecs-host-setup to run packer commands
+                  cd ecs-host-setup
 
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
                   packer -machine-readable build ami_config.json
@@ -569,36 +599,23 @@ jobs:
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
 
+                  # move back to monorepo root
+                  cd ..
+
                   # loop through each region, replace comma with space for delimiting
                   for artifact in ${new_ami_ids//,/ }
                   do
                     ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
                     region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
 
-                    # update appropriate database with new AMI IDs
-                    curl -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                    --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
-                    ${{ env.graphql_db_url }}
-
-                    # run update_region on each region
-                    celery_task_output_id=$(curl -X POST \
-                      -H "Content-Type: application/json" \
-                      -H "Authorization: Bearer ${token}" \
-                      --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region" | jq -er ".ID") # the -e option makes jq return with error code 1 if element not found
-
-                    # ensures update_region was called successfully
-                    if [[ $? =~ 1 ]]; then
-                      echo "Failed to update $region" && false
-                    fi
-
-                    # poll for update_region and its subtasks
-                    ../.github/workflows/helpers/ecs-host-setup/poll_webserver_update_region_celery.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
-                    if [[ $? =~ 1 ]]; then
-                      echo "Failed to update $region" && false
-                    fi
+                    # use a python script to update webserver AMIs
+                    python \
+                      main-webserver/scripts/webserver_scripts.py \
+                      --web_url $WEBSERVER_URL \
+                      --script update_region \
+                      --admin_token $TOKEN \
+                      --region_name $region \
+                      --ami $ami_id
 
                   done
 
@@ -984,6 +1001,15 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install --upgrade pip && pip install -r scripts/requirements.txt
+
             - name: End webserver maintenance mode
               working-directory: main-webserver
               run: |
@@ -992,13 +1018,20 @@ jobs:
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(curl -X POST \
-                        -H "Content-Type: application/json" \
-                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+                  TOKEN=$(python \
+                    scripts/webserver_scripts.py \
+                    --web_url $WEBSERVER_URL \
+                    --script login \
+                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
+                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
+                    | jq -r ".access_token")
 
-                  # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
+                  # use a python script to end maintenance and poll for success
+                  python \
+                    scripts/webserver_scripts.py \
+                    --web_url $WEBSERVER_URL \
+                    --script end_maintenance \
+                    --admin_token $TOKEN
 
                   # we only get here if previous step has exit code 0
                   echo "Webserver at $WEBSERVER_URL exited maintenance mode"
