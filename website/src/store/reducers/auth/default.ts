@@ -6,7 +6,7 @@ export const DEFAULT = {
         // session auth tokens
         accessToken: null, // access token that lets you talk to the server when logged in
         refreshToken: null, // refresh token to refresh your access token when it is used up
-        encryptionToken: null, // encryption token to encrypt user configs
+        configKey: null, // configKey to encrypt user configs
         // email tokens
         emailVerificationToken: null, // the token that shows up in /verify?token needed to verify email
         resetToken: null, // the token that shows up in /reset?token needed to validate a reset

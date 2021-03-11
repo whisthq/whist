@@ -240,20 +240,20 @@ const createWindow = async () => {
         event.returnValue = windowExists
     })
 
-    ipc.on(FractalIPC.GET_ENCRYPTION_KEY, (event, argv) => {
+    ipc.on(FractalIPC.GET_CONFIG_KEY, (event, argv) => {
         /*
-            Listener to retrieve the encryption key from the login window
+            Listener to retrieve the configuration key from the login window
 
-            Returns: null, or the value of the retrieved encryptionToken
+            Returns: null, or the value of the retrieved config key
          */
         if (loginWindow !== null) {
             loginWindow.webContents
                 .executeJavaScript(
-                    'document.getElementById("encryptionToken").textContent',
+                    'document.getElementById("configKey").textContent',
                     true
                 )
-                .then((encryptionToken) => {
-                    event.returnValue = encryptionToken
+                .then((configKey) => {
+                    event.returnValue = configKey
                     return null
                 })
                 .catch((err) => {

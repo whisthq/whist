@@ -98,7 +98,7 @@ const Auth = (props: {
             callbackChecked &&
             user.accessToken &&
             user.emailVerified &&
-            user.encryptionToken
+            user.configKey
         ) {
             updateAccessToken({
                 variables: {
@@ -120,7 +120,7 @@ const Auth = (props: {
         user,
         user.accessToken,
         user.emailVerified,
-        user.encryptionToken,
+        user.configKey,
         loginToken,
         updateAccessToken,
         callbackChecked,
