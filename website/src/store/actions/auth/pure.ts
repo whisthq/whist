@@ -10,7 +10,7 @@ export const updateUser = (body: {
     name?: string
     accessToken?: string
     refreshToken?: string
-    configKey?: string
+    configToken?: string
     emailVerificationToken?: string
     emailVerified?: boolean
     usingGoogleLogin?: boolean

@@ -40,8 +40,8 @@ const AuthCallback = (props: { authFlow: AuthFlow; user: User }) => {
                     to try again, or click <Link to="/dashboard">here</Link> to
                     return home.
                 </div>
-                <p id="configKey" hidden>
-                    {user.configKey}
+                <p id="configToken" hidden>
+                    {user.configToken}
                 </p>
             </div>
         </div>
