@@ -89,7 +89,6 @@ def make_post_request(
     """
     url = join_url_endpoint(web_url, endpoint)
     headers = None
-    print("aT", admin_token)
     if admin_token is not None:
         headers = {
             "Authorization": f"Bearer {admin_token}",
