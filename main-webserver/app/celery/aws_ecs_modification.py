@@ -208,7 +208,7 @@ def update_region(self, region_name="us-east-1", ami=None):
 def update_task_definitions(app_id: str = None, task_definition_arn: str = None):
     """
     Updates task definitions for `app_id` to `task_definition_arn`.
-    If `app_id`=None, we update all app ids to their latest version. `task_definition_arn` is ignored.
+    If `app_id`=None, we update all app ids to their latest version. `task_definition_arn` ignored.
     If `task_definition_arn`=None, we use the latest revision in ECS.
     Parallelizing this function could help reduce task time, but the AWS API responds
     in usually under a tenth of a second. We'd also need to coordinate that with
@@ -228,8 +228,8 @@ def update_task_definitions(app_id: str = None, task_definition_arn: str = None)
         # does a db.session.commit, which invalidates existing objects. that causes the
         # second iteration of the for-loop to fail.
         all_app_ids = [app_data.app_id for app_data in all_app_data]
-        for app_id in all_app_ids:
-            update_task_definitions(app_id=app_id)
+        for _app_id in all_app_ids:  # name is _app_id to not override app_id function arg
+            update_task_definitions(app_id=_app_id)
         return
 
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
