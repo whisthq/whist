@@ -89,14 +89,3 @@ fractal_logger.error("oh no")
 fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
-
-
-def fractal_log(function, label, logs, level=logging.INFO):
-    # stacklevel usually defaults to 1. We increase it to 2 here to keep `fractal_log`
-    # from appearing the logs and instead show the calling function's information.
-    fractal_logger.warning(
-        f"fractal_log is deprecated. Called by function {function}.", stacklevel=2
-    )
-    fractal_logger.log(
-        level=level, msg=logs, extra={"label": label, "function": function}, stacklevel=2
-    )
