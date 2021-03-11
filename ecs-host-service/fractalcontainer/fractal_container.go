@@ -26,11 +26,12 @@ type UinputDevices struct {
 
 type FractalContainer interface {
 	AllocatePortBindings([]PortBinding) ([]PortBinding, error)
+	GetFractalID() FractalID
 }
 
-// func New(fid FractalID) FractalContainer {
-// return &containerData{fid}
-// }
+func New(fid FractalID) FractalContainer {
+	return &containerData{FractalID: fid}
+}
 
 type containerData struct {
 	rwlock sync.RWMutex
@@ -41,4 +42,8 @@ type containerData struct {
 	uinputDevices  UinputDevices
 	deviceMappings []dockercontainer.DeviceMapping
 	PortBindings   []PortBinding
+}
+
+func (c *containerData) GetFractalID() FractalID {
+	return c.FractalID
 }
