@@ -1,7 +1,11 @@
 import { put, takeEvery, all, call, select, delay } from "redux-saga/effects"
 
 import history from "shared/utils/history"
-import { generateEncryptionToken } from "shared/utils/helpers"
+import {
+    decryptConfigKey,
+    encryptConfigKey,
+    generateConfigKey,
+} from "shared/utils/helpers"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { updateStripeInfo } from "store/actions/dashboard/payment/pure"
 import * as AuthSideEffect from "store/actions/auth/sideEffects"
@@ -17,14 +21,15 @@ function* emailLogin(action: {
     const { json } = yield call(api.loginEmail, action.email, action.password)
 
     if (json && json.access_token) {
-        const encryptionToken = generateEncryptionToken(action.password)
+        const encryptedConfigKey = json.encrypted_config_key // name TBD, dependent on webserver
+        const configKey = decryptConfigKey(encryptedConfigKey, action.password)
         yield put(
             updateUser({
                 userID: action.email,
                 name: json.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                encryptionToken: encryptionToken,
+                configKey: configKey,
                 emailVerified: json.verified,
                 emailVerificationToken: json.verification_token,
             })
@@ -62,7 +67,11 @@ function* emailLogin(action: {
 }
 
 // also used for signup
-export function* googleLogin(action: any) {
+export function* googleLogin(action: {
+    code: any
+    rememberMe?: boolean
+    type: string
+}) {
     if (action.code) {
         var { json, response } = yield call(api.loginGoogle, action.code)
         if (json) {
@@ -118,23 +127,25 @@ function* emailSignup(action: {
     type: string
     name: string
 }) {
+    const configKey = yield call(generateConfigKey())
+    const encryptedKey = encryptConfigKey(configKey, action.password)
     const { json, response } = yield call(
         api.signupEmail,
         action.email,
         action.password,
         action.name,
-        ""
+        "",
+        encryptedKey
     )
 
     if (json && response.status === 200) {
-        const encryptionToken = generateEncryptionToken(action.password)
         yield put(
             updateUser({
                 userID: action.email,
                 name: action.name,
                 accessToken: json.access_token,
                 refreshToken: json.refresh_token,
-                encryptionToken: encryptionToken,
+                configKey: configKey,
                 emailVerificationToken: json.verification_token,
             })
         )
@@ -169,7 +180,12 @@ function* emailSignup(action: {
     }
 }
 
-export function* sendVerificationEmail(action: any): any {
+export function* sendVerificationEmail(action: {
+    email?: string
+    name?: string
+    token?: string
+    type: string
+}): any {
     const state = yield select()
     if (action.email !== "" && action.name !== "" && action.token !== "") {
         const { json, response } = yield call(
@@ -193,7 +209,10 @@ export function* sendVerificationEmail(action: any): any {
     }
 }
 
-export function* validateVerificationToken(action: any): any {
+export function* validateVerificationToken(action: {
+    token: string
+    type: string
+}): any {
     const state = yield select()
     const { json, response } = yield call(
         api.validateVerification,
@@ -224,7 +243,11 @@ export function* validateVerificationToken(action: any): any {
     }
 }
 
-export function* forgotPassword(action: any): any {
+export function* forgotPassword(action: {
+    username: string
+    token: string
+    type: string
+}): any {
     const state = yield select()
     const { json } = yield call(
         api.passwordForgot,
@@ -270,7 +293,7 @@ export function* forgotPassword(action: any): any {
     }
 }
 
-export function* validateResetToken(action: any) {
+export function* validateResetToken(action: { token: string; type: string }) {
     yield select()
     const { json } = yield call(api.validatePasswordReset, action.token)
 
@@ -293,22 +316,24 @@ export function* validateResetToken(action: any) {
     }
 }
 
-export function* resetPassword(action: any) {
+export function* resetPassword(action: {
+    token: string
+    username: string
+    password: string
+    type: string
+}) {
+    const configKey = yield call(generateConfigKey())
+    const encryptedKey = encryptConfigKey(configKey, action.password)
     const { response } = yield call(
         api.passwordReset,
         action.token,
         action.username,
-        action.password
+        action.password,
+        encryptedKey
     )
 
     // TODO do something with the response https://github.com/fractal/website/issues/334
     if (response && response.status === 200) {
-        const encryptionToken = generateEncryptionToken(action.password)
-        yield put(
-            updateUser({
-                encryptionToken: encryptionToken,
-            })
-        )
         yield put(
             updateAuthFlow({
                 resetDone: true,
@@ -327,11 +352,15 @@ export function* resetPassword(action: any) {
     }
 }
 
-export function* updatePassword(action: any): any {
+export function* updatePassword(action: {
+    currentPassword: string
+    newPassword: string
+    type: string
+}): any {
     const state = yield select()
 
     const { json } = yield call(
-        api.passwordUpdate,
+        api.passwordVerify,
         state.AuthReducer.user.accessToken,
         state.AuthReducer.user.userID,
         action.currentPassword
@@ -344,11 +373,35 @@ export function* updatePassword(action: any): any {
                     passwordVerified: "success",
                 })
             )
-            yield call(resetPassword, {
-                password: action.newPassword,
-                token: state.AuthReducer.user.accessToken,
-                username: state.AuthReducer.user.userID,
-            })
+
+            const configKey = state.AuthReducer.user.configKey
+            const encryptedKey = encryptConfigKey(configKey, action.newPassword)
+            const { response } = yield call(
+                api.passwordReset,
+                state.AuthReducer.user.accessToken,
+                state.AuthReducer.user.userID,
+                action.newPassword,
+                encryptedKey
+            )
+
+            // TODO do something with the response https://github.com/fractal/website/issues/334
+            if (response && response.status === 200) {
+                yield put(
+                    updateAuthFlow({
+                        resetDone: true,
+                        passwordResetEmail: null,
+                        passwordResetToken: null,
+                    })
+                )
+            } else {
+                yield put(
+                    updateAuthFlow({
+                        resetDone: false,
+                        passwordResetEmail: null,
+                        passwordResetToken: null,
+                    })
+                )
+            }
         } else {
             yield put(
                 updateAuthFlow({
@@ -359,7 +412,7 @@ export function* updatePassword(action: any): any {
     }
 }
 
-function* fetchPaymentInfo(action: any): any {
+function* fetchPaymentInfo(action: { email: string; type: string }): any {
     const state = yield select()
     const { json } = yield call(
         api.stripePaymentInfo,

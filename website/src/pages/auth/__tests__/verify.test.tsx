@@ -5,7 +5,7 @@ import { removeNondeterminism, removeRiskyProps } from "testing/utils/utils"
 import { customRender } from "testing/utils/customRender"
 import {
     invalidUser,
-    validUser,
+    validUserCanLogin,
     startingAuthFlow,
 } from "testing/utils/testState"
 import { singleAssign } from "testing/utils/testHelpers"
@@ -22,13 +22,13 @@ describe("<Verify />", () => {
             get[id] = () => screen.getByTestId(vids[id])
         }
 
-        // const userCopy = deepCopy(validUser)
+        // const userCopy = deepCopy(validUserCanLogin)
         // userCopy.emailVerified = false
 
         const state = (isValidUser: boolean) =>
             singleAssign({
                 AuthReducer: {
-                    user: isValidUser ? validUser : invalidUser,
+                    user: isValidUser ? validUserCanLogin : invalidUser,
                     authFlow: startingAuthFlow("Sign up"),
                 },
             })
