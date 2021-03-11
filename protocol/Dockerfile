@@ -67,7 +67,7 @@ RUN apt-get update \
 
 # Create fractal Linux user for building the protocol
 RUN groupadd fractal
-RUN useradd -ou ${uid} -g fractal fractal-builder
+RUN useradd -lou ${uid} -g fractal fractal-builder
 RUN usermod -aG sudo fractal-builder
 RUN echo "fractal-builder:password" | chpasswd
 
