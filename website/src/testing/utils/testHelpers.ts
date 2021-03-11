@@ -5,9 +5,10 @@ import { DEFAULT as authDefaultState } from "store/reducers/auth/default"
 import { DEFAULT as dashboardDefaultState } from "store/reducers/dashboard/default"
 import { LOCAL_URL } from "testing/utils/testIDs"
 import { msWait } from "testing/utils/utils"
-import { TestUser } from "testing/utils/testState"
+import { TestUser, verifiedUser, payingUser } from "testing/utils/testState"
 import { signupEmail, deleteAccount } from "shared/api/index"
 import { graphQLPost } from "shared/api/index"
+import { isEmpty } from "lodash"
 import {
     UPDATE_USER,
     DELETE_USER,
@@ -105,6 +106,14 @@ export const deleteInput = async (page: puppeteer.Page, id: string) => {
 export const type = async (page: puppeteer.Page, id: string, content: string) =>
     await page.type("#" + id, content)
 
+export const checkGraphQLErrors = (response: { json: any }) => {
+    if (!isEmpty(response.json.errors))
+        throw {
+            data: response.json.errors,
+            error: new Error("GraphQL error."),
+        }
+}
+
 export const launchURL = async () => {
     let headless = true
     if (process.env.HEADLESS) {
@@ -113,6 +122,7 @@ export const launchURL = async () => {
 
     const browser = await puppeteer.launch({
         headless: headless,
+        executablePath: "/opt/homebrew/bin/chromium",
         args: [
             "incognito",
             "--disable-web-security",
@@ -147,6 +157,13 @@ export const loadHasuraToken = () => {
             ? process.env.HASURA_ADMIN_KEY
             : ""
     }
+    if (!hasuraToken) {
+        throw new Error(
+            "Could not load Hasura token. " +
+                "Set HASURA_ADMIN_KEY in your .env " +
+                "or an environment variable."
+        )
+    }
     return hasuraToken
 }
 
@@ -165,7 +182,7 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
 
     await signupEmail(user.userID, user.password, user.name, user.feedback)
 
-    await graphQLPost(
+    const output = await graphQLPost(
         UPDATE_USER,
         "UpdateUser",
         {
@@ -176,6 +193,7 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
         hasuraToken,
         true
     )
+    checkGraphQLErrors(output)
 }
 
 export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
@@ -191,7 +209,7 @@ export const deleteUserDB = async (user: TestUser, hasuraToken: string) => {
         hasuraToken = loadHasuraToken()
     }
 
-    await graphQLPost(
+    const output = await graphQLPost(
         DELETE_USER,
         "DeleteUser",
         {
@@ -226,6 +244,7 @@ export const insertUserInvite = async (user: TestUser, hasuraToken: string) => {
         hasuraToken,
         true
     )
+    checkGraphQLErrors(output)
 }
 
 export const deleteUserInvite = async (user: TestUser, hasuraToken: string) => {
@@ -241,7 +260,7 @@ export const deleteUserInvite = async (user: TestUser, hasuraToken: string) => {
         hasuraToken = loadHasuraToken()
     }
 
-    await graphQLPost(
+    const output = await graphQLPost(
         DELETE_INVITE,
         "DeleteInvite",
         {
@@ -250,4 +269,17 @@ export const deleteUserInvite = async (user: TestUser, hasuraToken: string) => {
         hasuraToken,
         true
     )
+    checkGraphQLErrors(output)
+}
+
+export const insertUserDBInvite = async (user: TestUser) => {
+    const hasuraToken = loadHasuraToken()
+    await insertUserDB(user, hasuraToken)
+    await insertUserInvite(user, hasuraToken)
+}
+
+export const deleteUserDBInvite = async (user: TestUser) => {
+    const hasuraToken = loadHasuraToken()
+    await deleteUserDB(user, hasuraToken)
+    await deleteUserInvite(user, hasuraToken)
 }

@@ -177,7 +177,7 @@ export const CANCELED_IDS = {
 }
 
 // e2e testing ids
-export const E2E_HOMGEPAGE_IDS = {
+export const E2E_HOMEPAGE_IDS = {
     SIGNIN: "signin",
 }
 
@@ -187,6 +187,7 @@ export const E2E_AUTH_IDS = {
     PASSWORD: "passwordInput",
     CONFIRMPASSWORD: "confirmPasswordInput",
     LOGINSWITCH: "loginSwitch",
+    SIGNUPSWITCH: "signupSwitch",
     FORGOTSWITCH: "forgotSwitch",
 }
 

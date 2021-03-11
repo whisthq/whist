@@ -4,7 +4,7 @@ import { msWait } from "testing/utils/utils"
 import {
     E2E_AUTH_IDS,
     E2E_DASHBOARD_IDS,
-    E2E_HOMGEPAGE_IDS,
+    E2E_HOMEPAGE_IDS,
     LOCAL_URL,
 } from "testing/utils/testIDs"
 import { verifiedUser } from "testing/utils/testState"
@@ -55,7 +55,7 @@ describe("Dashboard Plan page", () => {
 
     test("Logs in and adds a plan", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
@@ -139,7 +139,7 @@ describe("Dashboard Plan page", () => {
 
     test("Logs in and edits card", async () => {
         await page.goto(LOCAL_URL)
-        await expectPuppeteer(page).toClick("#" + E2E_HOMGEPAGE_IDS.SIGNIN)
+        await expectPuppeteer(page).toClick("#" + E2E_HOMEPAGE_IDS.SIGNIN)
         expect(page.url()).toMatch(LOCAL_URL + "/auth")
 
         await expectPuppeteer(page).toClick("#" + E2E_AUTH_IDS.LOGINSWITCH)
