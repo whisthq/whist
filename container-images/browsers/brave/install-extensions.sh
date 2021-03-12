@@ -23,5 +23,6 @@ install_brave_extension () {
     echo Added \""$pref_file_path"\" ["$2"]
 }
 
-# Install uBlock Ad Blocker
-install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"
+# Install Chromium Extension
+# format: install_brave_extension [extension string ID] [extension name]
+# i.e.: install_brave_extension "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin"

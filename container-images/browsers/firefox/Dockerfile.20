@@ -52,9 +52,11 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Firefox extensions - uBlock
-RUN wget -P "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/" "https://addons.mozilla.org/firefox/downloads/file/3663488/ublock_origin-1.30.6-an+fx.xpi"
-RUN mv "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/ublock_origin-1.30.6-an+fx.xpi" "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/uBlock0@raymondhill.net.xpi"
+# Install Firefox extensions 
+# To install new Firefox extensions, first wget the file from Mozilla and then move it to /usr/share/mozilla/extensions
+# i.e.:
+# RUN wget -P "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/" "https://addons.mozilla.org/firefox/downloads/file/3663488/ublock_origin-1.30.6-an+fx.xpi"
+# RUN mv "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/ublock_origin-1.30.6-an+fx.xpi" "/usr/share/mozilla/extensions/{ec8030f7-c20a-464f-9b0e-13a3a9e97384}/uBlock0@raymondhill.net.xpi"
 
 # Use precise scrolling
 RUN echo export MOZ_USE_XINPUT2=1 | tee /etc/profile.d/use-xinput2.sh
