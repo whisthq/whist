@@ -1,10 +1,6 @@
 import React, { Dispatch, useState, ReactNode } from "react"
-import { connect } from "react-redux"
-import * as PureAuthAction from "store/actions/auth/pure"
-import * as PaymentPureAction from "store/actions/dashboard/payment/pure"
-import { deepCopy } from "shared/utils/reducerHelpers"
-import { withClass } from "shared/utils/withClass"
-import history from "shared/utils/history"
+import { withClass } from "@app/shared/utils/withClass"
+import history from "@app/shared/utils/history"
 import classNames from "classnames"
 import {
     AboutLink,
@@ -17,33 +13,18 @@ import {
     SignOutLink,
     HomeLink,
     SettingsLink,
-} from "shared/components/links"
-import { BarsIcon } from "shared/components/icons"
+} from "@app/shared/components/links"
+import { BarsIcon } from "@app/shared/components/icons"
 import {
     JustifyStartEndRow,
     JustifyStartEndCol,
     ScreenFull,
-} from "shared/components/layouts"
-
-import { DEFAULT as AUTH_DEFAULT } from "store/reducers/auth/default"
-import { DEFAULT as DASHBOARD_DEFAULT } from "store/reducers/dashboard/default"
-import { User, AuthFlow } from "shared/types/reducers"
+} from "@app/shared/components/layouts"
 
 const mobileHidden = "hidden md:inline"
 
-const handleSignOut = (dispatch: Dispatch<any>) => {
-    dispatch(PureAuthAction.updateUser(deepCopy(AUTH_DEFAULT.user)))
-    dispatch(
-        PaymentPureAction.updateStripeInfo(
-            deepCopy(DASHBOARD_DEFAULT.stripeInfo)
-        )
-    )
-    dispatch(
-        PaymentPureAction.updatePaymentFlow(
-            deepCopy(DASHBOARD_DEFAULT.paymentFlow)
-        )
-    )
-    history.push("/auth")
+const handleSignOut = (dispatch: Function) => {
+    console.log("SIGNED Out")
 }
 const Logo = (props: { className?: string; dark?: boolean }) => (
     <div
@@ -115,17 +96,14 @@ const EndHeaderCol = (props?: any) => (
 )
 
 const Header = (props: {
-    dispatch: Dispatch<any>
-    user: User
+    onAccountPage?: boolean | false
+    isSignedIn?: boolean | false
     dark?: boolean
-    account?: boolean
 }) => {
     let [expanded, setExpanded] = useState(false)
 
     history.listen(() => setExpanded(false))
-    const isSignedIn = props.user.userID
-    const onAccountPage = props.account
-    const handleSignOutClick = () => handleSignOut(props.dispatch)
+    const handleSignOutClick = () => handleSignOut(() => null)
 
     return (
         <div className="relative w-full">
@@ -134,7 +112,7 @@ const Header = (props: {
                     start={
                         <StartHeaderRow>
                             <Logo dark={props.dark} />
-                            {!onAccountPage && (
+                            {!props.onAccountPage && (
                                 <>
                                     <AboutLinkStyled className={mobileHidden} />
                                     <SupportLinkStyled
@@ -149,8 +127,8 @@ const Header = (props: {
                     }
                     end={
                         <EndHeaderRow>
-                            {isSignedIn ? (
-                                !onAccountPage && (
+                            {props.isSignedIn ? (
+                                !props.onAccountPage && (
                                     <MyAccountLinkBold
                                         className={mobileHidden}
                                     />
@@ -177,7 +155,7 @@ const Header = (props: {
                     <JustifyStartEndCol
                         start={
                             <StartHeaderCol>
-                                {isSignedIn && onAccountPage ? (
+                                {props.isSignedIn && props.onAccountPage ? (
                                     <>
                                         <HomeLinkStyled />
                                         <SettingsLinkStyled />
@@ -194,8 +172,8 @@ const Header = (props: {
                         middle={<div className="h-8"></div>}
                         end={
                             <EndHeaderCol>
-                                {isSignedIn && <MyAccountLinkStyled />}
-                                {isSignedIn ? (
+                                {props.isSignedIn && <MyAccountLinkStyled />}
+                                {props.isSignedIn ? (
                                     <SignOutLinkButton
                                         onClick={handleSignOutClick}
                                     />
@@ -211,12 +189,4 @@ const Header = (props: {
     )
 }
 
-const mapStateToProps = (state: {
-    AuthReducer: { user: User; authFlow: AuthFlow }
-}) => {
-    return {
-        user: state.AuthReducer.user,
-    }
-}
-
-export default connect(mapStateToProps)(Header)
+export default (Header)

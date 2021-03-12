@@ -1,8 +1,8 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import classNames from "classnames"
-import LogoBlack from "assets/icons/logoBlack.svg"
-import LogoWhite from "assets/icons/logoWhite.svg"
+import LogoBlack from "@app/assets/icons/logoBlack.svg"
+import LogoWhite from "@app/assets/icons/logoWhite.svg"
 
 export const AboutLink = (props: { className: string }) => (
     <Link className={props.className} to="/about" id="about">

@@ -1,5 +1,4 @@
 import React from "react"
-
 import styles from "pages/login/components/geometric/geometric.css"
 
 export const Geometric = (props: {

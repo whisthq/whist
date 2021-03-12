@@ -1,12 +1,12 @@
-import AmericanExpress from "assets/cards/americanExpress.svg"
-import DinersClub from "assets/cards/dinersClub.svg"
-import Discover from "assets/cards/discover.svg"
-import JCB from "assets/cards/jcb.svg"
-import MasterCard from "assets/cards/masterCard.svg"
-import UnionPay from "assets/cards/unionPay.svg"
-import Visa from "assets/cards/visa.svg"
+import AmericanExpress from "@app/assets/cards/americanExpress.svg"
+import DinersClub from "@app/assets/cards/dinersClub.svg"
+import Discover from "@app/assets/cards/discover.svg"
+import JCB from "@app/assets/cards/jcb.svg"
+import MasterCard from "@app/assets/cards/masterCard.svg"
+import UnionPay from "@app/assets/cards/unionPay.svg"
+import Visa from "@app/assets/cards/visa.svg"
 
-import { FractalPlan } from "shared/types/payment"
+import { FractalPlan } from "@app/shared/types/payment"
 
 export const CARDS: { [key: string]: any } = {
     "American Express": AmericanExpress,

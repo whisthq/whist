@@ -1,8 +1,8 @@
 import React, { useContext } from "react"
 import { HashLink } from "react-router-hash-link"
 
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import MainContext from "@app/shared/context/mainContext"
 
 const Cookies = () => {
     const { width } = useContext(MainContext)

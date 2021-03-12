@@ -1,9 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React, { useEffect } from "react"
 import ReactGA from "react-ga"
-import { config } from "shared/constants/config"
+import { config } from "@app/shared/constants/config"
 
-if (process.env.NODE_ENV === "production") {
+if (import.meta.env.NODE_ENV === "production") {
     // optional add gaOptions : {a bunch of options} such as debug and so forth... this should go in config
     ReactGA.initialize(
         config.keys.GOOGLE_ANALYTICS_TRACKING_CODES.map(
