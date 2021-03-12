@@ -258,27 +258,18 @@ jobs:
 
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
+              shell: python3
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  WEBSERVER_URL = ${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  USERNAME = ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}
+                  PASSWORD = ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}
 
+                  from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(python \
-                    scripts/webserver_scripts.py \
-                    --web_url $WEBSERVER_URL \
-                    --script login \
-                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
-                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
-                    | jq -r ".access_token")
-
-                  # use a python script to start maintenance and poll for success
-                  python \
-                    scripts/webserver_scripts.py \
-                    --web_url $WEBSERVER_URL \
-                    --script start_maintenance \
-                    --admin_token $TOKEN
-
-                  # we only get here if previous step has exit code 0
-                  echo "Put webserver at $WEBSERVER_URL into maintenance mode"
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+                  
+                  from scripts.maintenance_scripts import start_maintenance
+                  start_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack success
               run: |
@@ -287,7 +278,7 @@ jobs:
 
                   curl -X POST \
                   --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure
@@ -298,7 +289,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Container Images: Build & Publish to GitHub Container Registry
