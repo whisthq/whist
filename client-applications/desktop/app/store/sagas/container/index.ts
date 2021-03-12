@@ -1,6 +1,6 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
-import { apiGet, apiPost } from "shared/utils/general/api"
+import { apiGet, apiPost, apiPut } from "shared/utils/general/api"
 
 import { FractalAPI, FractalHTTPCode } from "shared/types/api"
 import * as ContainerAction from "store/actions/container/sideEffects"
@@ -67,13 +67,14 @@ function* createContainer() {
     }
 }
 
-function* getContainerInfo(action: { taskID: string }) {
+function* getContainerInfo(action: { taskID: string; type: string }) {
     /*
     Description:
         Sends GET request to retrieve Celery task status (for container creation)
 
     Arguments: 
         action (Record): Redux action with Celery task ID
+        type (string): identifier for this side effect
     */
 
     const state = yield select()
@@ -113,9 +114,50 @@ function* getContainerInfo(action: { taskID: string }) {
     }
 }
 
+function* setHostServiceConfigToken() {
+    /*
+    Description:
+        Sends PUT request to pass config encryption token to the host service
+
+    Arguments: none
+    */
+    const state = yield select()
+    const userID = state.AuthReducer.user.userID
+    const ip = state.ContainerReducer.hostService.ip
+    const port = state.ContainerReducer.hostService.port
+
+    const HOST_SERVICE_PORT = "4678"
+
+    const body = {
+        user_id: userID,
+        host_port: port,
+        config_encryption_token: state.AuthReducer.user.configToken,
+        auth_secret: "auth_secret",
+    }
+
+    const { success } = yield call(
+        apiPut,
+        `/set_config_encryption_token`,
+        body,
+        `https://${ip}:${HOST_SERVICE_PORT}`
+    )
+
+    if (!success) {
+        yield put(
+            updateTask({
+                status: FractalTaskStatus.FAILURE,
+            })
+        )
+    }
+}
+
 export default function* containerSaga() {
     yield all([
         takeEvery(ContainerAction.CREATE_CONTAINER, createContainer),
         takeEvery(ContainerAction.GET_CONTAINER_INFO, getContainerInfo),
+        takeEvery(
+            ContainerAction.SET_HOST_SERVICE_CONFIG_TOKEN,
+            setHostServiceConfigToken
+        ),
     ])
 }
