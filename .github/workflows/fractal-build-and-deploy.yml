@@ -986,24 +986,24 @@ jobs:
               run: pip install --upgrade pip && pip install -r scripts/requirements.txt
 
             - name: End webserver maintenance mode
-              working-directory: main-webserver
+              working-directory: main-webserver/scripts
               shell: python3 {0}
               run: |
-                  import os
-                  files = os.listdir(".")
-                  print(files)
-                  script_files = os.listdir("scripts")
-                  print(script_files)
+                  # import os
+                  # files = os.listdir(".")
+                  # print(files)
+                  # script_files = os.listdir("scripts")
+                  # print(script_files)
 
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  from scripts.misc_scripts import login
+                  from misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
                   
-                  from scripts.maintenance_scripts import end_maintenance
+                  from maintenance_scripts import end_maintenance
                   end_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
@@ -1011,7 +1011,7 @@ jobs:
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure
@@ -1022,5 +1022,5 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
