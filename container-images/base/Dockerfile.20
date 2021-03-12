@@ -404,8 +404,11 @@ RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 RUN systemctl disable sshd
 
-# Ubuntu 20-specific systemd fix (pre-systemd 246)
-COPY config/systemd-logind-override-ubuntu20.conf /etc/systemd/system/systemd-logind.service.d/override.conf
+# Set ProtectHostname=no for the systemd process (Needed for pre-systemd 246)
+COPY config/no-hostname.conf /etc/systemd/system/systemd-logind.service.d/override.conf
+# Remove ProtestHostname=yes lines from timesync and timedate
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
 
 # Set our fractal systemd files to be root-visible only
 RUN chgrp root /etc/systemd/system/fractal*
