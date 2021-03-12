@@ -1,8 +1,15 @@
 import time
 import argparse
+import sys
+import os
+
+# this adds the webserver repo root to the python path no matter where
+# this file is called from. We can now import from `scripts`.
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), ".."))
 
 from scripts.celery_scripts import poll_celery_task
 from scripts.utils import make_post_request
+
 
 # all currently supported scripts
 SUPPORTED_SCRIPTS = [
@@ -94,7 +101,7 @@ def update_region(web_url: str, admin_token: str, region_name: str, ami: str):
         admin_token: Needed to authorize use of the update_region endpoint.
         region_name: Region to update. Ex: us-east-1
         ami: New AMI for region.
-    
+
     Returns:
         None. Errors out if failure.
     """
@@ -164,6 +171,10 @@ def run_script(web_url: str, script: str, admin_token: str = None):
         script: Script to run. Must be in SUPPORTED_SCRIPTS
         admin_token: Optionally provided admin token. Some need it (see SCRIPTS_NEEDING_ADMIN)
     """
+    assert script in SUPPORTED_SCRIPTS
+    if script in SCRIPTS_NEEDING_ADMIN:
+        assert admin_token is not None
+
     # dispatch based on method
     if script == "start_maintenance":
         return handle_start_maintenance(web_url, admin_token)
@@ -192,4 +203,4 @@ if __name__ == "__main__":
         help="Admin token for special permissions.",
     )
     args, _ = parser.parse_known_args()
-    run_script(args.web_url, args.script)
+    run_script(args.web_url, args.script, args.admin_token)

@@ -26,11 +26,11 @@ def make_get_request(web_url: str, endpoint: str, admin_token: str = None):
 
 
 def make_post_request(
-        web_url: str,
-        endpoint: str,
-        payload: dict,
-        admin_token: str = None,
-    ) -> requests.Response:
+    web_url: str,
+    endpoint: str,
+    payload: dict,
+    admin_token: str = None,
+) -> requests.Response:
     """
     Makes a POST request. Properly formats admin_token (if given) and payload.
 
@@ -53,4 +53,3 @@ def make_post_request(
     if payload is not None:
         payload_str = json.dumps(payload)
     return requests.post(url=url, headers=headers, data=payload_str)
-    
