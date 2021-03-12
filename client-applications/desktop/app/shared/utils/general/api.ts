@@ -226,3 +226,44 @@ export const graphQLPost = async (
         return err
     }
 }
+
+export const apiPut = async (
+    endpoint: string,
+    body: Record<string, any>,
+    server: string | undefined
+) => {
+    /*
+    Description:
+        Sends an HTTP get request
+
+    Arguments:
+        endpoint (string) : HTTP endpoint (e.g. /account/login)
+        body (JSON) : PUT request body
+        server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
+
+    Returns:
+        { json, success, response } (JSON) : Returned JSON of POST request, success True/False, and HTTP response
+    */
+    if (server) {
+        try {
+            const fullUrl = `${server}${endpoint}`
+            const response = await fractalBackoff(() =>
+                fetch(fullUrl, {
+                    method: FractalHTTPRequest.PUT,
+                    headers: {
+                        "Content-Type": FractalHTTPContent.JSON,
+                    },
+                    body: JSON.stringify(body),
+                })
+            )
+            const json = await response.json()
+            const success = checkJSON(json) && checkResponse(response)
+            return { json, success, response }
+        } catch (err) {
+            debugLog(err)
+            return err
+        }
+    } else {
+        return { json: null, success: false, response: null }
+    }
+}
