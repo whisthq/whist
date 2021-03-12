@@ -705,12 +705,7 @@ def _assign_container(
     except StartValueException:
         if num_tries <= 3:
             return _clean_tasks_and_create_new_container(
-                base_container.ip,
-                base_container.user_id,
-                base_container.task_definition,
-                base_container.location,
-                base_container.cluster,
-                base_container.dpi,
+                base_container,
                 webserver_url,
                 num_tries,
             )
