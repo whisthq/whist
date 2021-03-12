@@ -6,15 +6,11 @@ class InvalidAppId(Exception):
     Raised when the user provides an invalid app id.
     """
 
-    pass
-
 
 class InvalidTaskDefinition(Exception):
     """
     Raised when the user provides an invalid task definition.
     """
-
-    pass
 
 
 class ContainerNotAvailableError(_FractalError):
