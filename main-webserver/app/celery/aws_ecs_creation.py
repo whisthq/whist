@@ -148,7 +148,7 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                         f"on {container.ip}: {error}"
                     )
                 )
-                raise StartValueException
+                raise StartValueException from error
             else:
                 if response.ok:
                     fractal_logger.info(
@@ -178,7 +178,8 @@ def _pass_start_values_to_instance(container: UserContainer) -> None:
 
     try:
         response = requests.put(
-            f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
+            f"""https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}
+            /set_container_start_values""",
             json={
                 "host_port": container.port_32262,
                 "container_ARN": container.container_id,
@@ -195,7 +196,7 @@ def _pass_start_values_to_instance(container: UserContainer) -> None:
                 f"on {container.ip}: {error}"
             ),
         )
-        raise StartValueException
+        raise StartValueException from error
     else:
         if response.ok:
             fractal_logger.info("Container user values set.")
