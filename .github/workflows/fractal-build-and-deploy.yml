@@ -254,11 +254,11 @@ jobs:
 
             - name: Upgrade pip and install webserver scripting dependencies
               working-directory: main-webserver
-              run: pip install --upgrade pip && pip install -r scripts/requirements.txt
+              run: pip install -r scripts/requirements.txt
 
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
-              shell: python3
+              shell: python3 {0}
               run: |
                   WEBSERVER_URL = ${{ needs.fractal-publish-build-config.outputs.webserver_url }}
                   USERNAME = ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}
