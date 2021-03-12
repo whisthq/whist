@@ -197,7 +197,10 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "update_taskdefs":
-        # update the task definitions for our supported app images
+        # update the task definition numbers for fractal's supported app images
+        # payload can optionally contain `app_id` and `task_definition_arn`.
+        # see `update_task_definitions` for how these are used and the behavior
+        # of this endpoint. returns a celery task ID.
         app_id, task_definition_arn = (
             kwargs["body"].get("app_id", None),
             kwargs["body"].get("task_definition_arn", None),

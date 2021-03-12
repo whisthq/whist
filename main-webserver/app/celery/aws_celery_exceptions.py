@@ -2,10 +2,18 @@ from app.exceptions import _FractalError
 
 
 class InvalidAppId(Exception):
+    """
+    Raised when the user provides an invalid app id.
+    """
+
     pass
 
 
 class InvalidTaskDefinition(Exception):
+    """
+    Raised when the user provides an invalid task definition.
+    """
+
     pass
 
 

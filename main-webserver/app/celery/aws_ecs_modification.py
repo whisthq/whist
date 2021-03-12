@@ -212,7 +212,7 @@ def update_task_definitions(app_id: str = None, task_definition_arn: str = None)
     If `task_definition_arn`=None, we use the latest revision in ECS.
     Parallelizing this function could help reduce task time, but the AWS API responds
     in usually under a tenth of a second. We'd also need to coordinate that with
-    Github workflows to make sure all tasks finish. It's much simpler to do one task here.
+    Github workflows to make sure all tasks finish. It's much simpler to have just one task here.
 
     Args:
         app_id: which app id to update. If None, we update all in SupportedAppImages. We ignore
