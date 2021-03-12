@@ -210,7 +210,6 @@ def reset_password_helper(username, password, encrypted_config_token):
     if user:
         pwd_token = hash_value(password)
         user.password = pwd_token
-
         user.encrypted_config_token = encrypted_config_token
 
         db.session.commit()
