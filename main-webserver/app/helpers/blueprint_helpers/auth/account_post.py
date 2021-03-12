@@ -73,14 +73,14 @@ def login_helper(email, password):
     }
 
 
-def register_helper(username, password, encrypted_token, name, reason_for_signup):
+def register_helper(username, password, encrypted_config_token, name, reason_for_signup):
     """Stores username and password in the database and generates user metadata, like their
     user ID and promo code
 
     Parameters:
     username (str): The username
     password (str): The password
-    encrypted_token (str):  the encrypted config access token
+    encrypted_config_token (str):  the encrypted config access token
     name (str): The person's name
     reason_for_signup (str): The person's reason for signing up
 
@@ -104,7 +104,7 @@ def register_helper(username, password, encrypted_token, name, reason_for_signup
     # Add the user to the database
     new_user = User(
         user_id=username,
-        encrypted_config_token=encrypted_token,
+        encrypted_config_token=encrypted_config_token,
         password=pwd_token,
         token=token,
         name=name,
