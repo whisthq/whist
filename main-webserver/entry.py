@@ -22,6 +22,6 @@ celery = make_celery(app)
 celery.set_default()
 
 if not set_web_requests_status(True):
-    fractal_logger.error("Could not enable web requests at startup. Failing out.")
+    fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
 
 maintenance_init_redis_conn(app.config["REDIS_URL"])
