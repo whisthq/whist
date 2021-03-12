@@ -986,7 +986,7 @@ jobs:
               run: pip install --upgrade pip && pip install -r scripts/requirements.txt
 
             - name: End webserver maintenance mode
-              working-directory: main-webserver/scripts
+              working-directory: main-webserver
               shell: python3 {0}
               run: |
                   # import os
@@ -994,16 +994,18 @@ jobs:
                   # print(files)
                   # script_files = os.listdir("scripts")
                   # print(script_files)
+                  import sys
+                  sys.path.append(".")
 
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  from misc_scripts import login
+                  from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
                   
-                  from maintenance_scripts import end_maintenance
+                  from scripts.maintenance_scripts import end_maintenance
                   end_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
