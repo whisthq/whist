@@ -1,9 +1,9 @@
 # workflows/core-ts-linting.yml
 #
-# Core TypeScript Library: Linting
-# Lint core-ts using ESlint.
+# Core TypeScript Library: Check PR
+# Checks a Core-TS PR for linting and testing success.
 
-name: "Core TypeScript Library: Linting"
+name: "Core TypeScript Library: Check PR"
 
 on:
     pull_request:
@@ -11,11 +11,15 @@ on:
             - master
             - staging
             - dev
+        paths:
+            - "core-ts/**"
+            - "!core-ts/README.md"
+            - ".github/workflows/core-ts-check-pr.yml"
     workflow_dispatch:
 
 jobs:
     lint:
-        name: Lint core-ts
+        name: Linting
         runs-on: ubuntu-20.04
 
         steps:
@@ -36,7 +40,7 @@ jobs:
               run: npm run lint-check
 
     test:
-        name: Test core-ts
+        name: Testing
         runs-on: ubuntu-20.04
 
         steps:
