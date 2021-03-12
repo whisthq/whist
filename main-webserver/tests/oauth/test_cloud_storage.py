@@ -3,7 +3,7 @@
 import pytest
 import requests
 
-from app.celery.aws_ecs_creation import _mount_cloud_storage
+from app.celery.aws_ecs_creation import _mount_cloud_storage, StartValueException
 
 from ..patches import function, Object
 
@@ -38,14 +38,28 @@ def test_oauth_not_configured(container, make_credential, provider, user, monkey
         _mount_cloud_storage(user, c)
 
 
-@pytest.mark.parametrize("ok", (True, False))
-def test_handle_status(app, container, make_credential, provider, user, monkeypatch, ok):
+def test_unsuccessful_handle_status(app, container, make_credential, provider, user, monkeypatch):
     """Handle both successful and unsuccessful responses from the host service."""
 
     response = Object()
 
     monkeypatch.setattr(requests, "post", function(returns=response))
-    monkeypatch.setattr(response, "ok", ok)
+    monkeypatch.setattr(response, "ok", False)
+    monkeypatch.setattr(response, "text", "response text")
+    make_credential(provider)
+
+    with container() as c:
+        with pytest.raises(StartValueException):
+            _mount_cloud_storage(user, c)
+
+
+def test_successful_handle_status(app, container, make_credential, provider, user, monkeypatch):
+    """Handle both successful and unsuccessful responses from the host service."""
+
+    response = Object()
+
+    monkeypatch.setattr(requests, "post", function(returns=response))
+    monkeypatch.setattr(response, "ok", True)
     monkeypatch.setattr(response, "text", "response text")
     make_credential(provider)
 
@@ -60,4 +74,5 @@ def test_handle_exception(app, container, make_credential, provider, user, monke
     make_credential(provider)
 
     with container() as c:
-        _mount_cloud_storage(user, c)
+        with pytest.raises(StartValueException):
+            _mount_cloud_storage(user, c)

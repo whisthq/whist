@@ -52,6 +52,50 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
+def _clean_tasks_and_create_new_container(container, webserver_url, num_tries):
+    # stop base container task if it is running
+    ecs_client = ECSClient(
+        base_cluster=container.cluster, region_name=container.location, grab_logs=False
+    )
+    ecs_client.add_task(container)
+
+    if not ecs_client.check_if_done(offset=0):
+        ecs_client.stop_task(
+            reason="Failure to mount cloud storage or pass start values to instance", offset=0
+        )
+
+    # delete every task that is unassigned with that instance IP in the DB
+    all_tasks = UserContainer.query.filter_by(ip=container.ip, is_assigned=False).all()
+    for task in all_tasks:
+        # stop the task if it is running
+        ecs_client = ECSClient(
+            base_cluster=task.cluster, region_name=task.location, grab_logs=False
+        )
+        ecs_client.add_task(task)
+
+        if not ecs_client.check_if_done(offset=0):
+            ecs_client.stop_task(
+                reason="Failure to mount cloud storage or pass start values to instance", offset=0
+            )
+
+        # delete from db
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), task)
+
+    # delete base container from db
+    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+
+    # assign a new container for that user
+    return assign_container(
+        container.user_id,
+        container.task_definition,
+        container.location,
+        container.cluster,
+        container.dpi,
+        webserver_url,
+        num_tries,
+    )
+
+
 def _mount_cloud_storage(user: User, container: UserContainer) -> None:
     """Send a request to the ECS host service to mount a cloud storage folder to the container.
 
@@ -436,6 +480,7 @@ def assign_container(
 
 
 def _assign_container(
+<<<<<<< HEAD
     self: Task,
     username: str,
     task_definition_arn: str,
@@ -445,6 +490,17 @@ def _assign_container(
     dpi: Optional[int] = 96,
     webserver_url: str = "fractal-dev-server.herokuapp.com",
 ) -> Dict[str, Any]:
+=======
+    self,
+    username,
+    task_definition_arn,
+    region_name="us-east-1",
+    cluster_name=None,
+    dpi=96,
+    webserver_url=None,
+    num_tries=0,
+):
+>>>>>>> 7afccbd3e... fixed tests, added max tries of 3
     """
     See assign_container. This is helpful to mock.
     """
@@ -645,16 +701,19 @@ def _assign_container(
     try:
         _mount_cloud_storage(user, base_container)
         _pass_start_values_to_instance(base_container)  # not tested
+        num_tries += 1
     except StartValueException:
-        return _clean_tasks_and_create_new_container(
-            base_container.ip,
-            base_container.user_id,
-            base_container.task_definition,
-            base_container.location,
-            base_container.cluster,
-            base_container.dpi,
-            webserver_url,
-        )
+        if num_tries <= 3:
+            return _clean_tasks_and_create_new_container(
+                base_container.ip,
+                base_container.user_id,
+                base_container.task_definition,
+                base_container.location,
+                base_container.cluster,
+                base_container.dpi,
+                webserver_url,
+                num_tries,
+            )
 
     time.sleep(1)
 
