@@ -35,7 +35,7 @@ const get = configGet(httpConfig)
 
 const post = configPost(httpConfig)
 
-export const loginEmail = async (username: string, password: string) =>
+export const emailLogin = async (username: string, password: string) =>
     post({ endpoint: "/account/login", body: { username, password } })
 
 export const loginGoogle = async (code: any) =>

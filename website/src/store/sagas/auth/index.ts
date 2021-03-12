@@ -12,7 +12,7 @@ function* emailLogin(action: {
     password: string
     type: string
 }) {
-    const { json } = yield call(api.loginEmail, action.email, action.password)
+    const { json } = yield call(api.emailLogin, action.email, action.password)
 
     if (json && json.access_token) {
         yield put(

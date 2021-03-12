@@ -3,10 +3,10 @@ import { connect } from "react-redux"
 import { useMutation } from "@apollo/client"
 import { Switch, Route } from "react-router-dom"
 
-import Login from "pages/auth/pages/login/login"
-import Signup from "pages/auth/pages/signup/signup"
+import Login from "pages/auth/pages/account/login/login"
+import Signup from "pages/auth/pages/account/signup/signup"
 import Forgot from "pages/auth/pages/forgot/forgot"
-import Verify from "pages/auth/pages/verify/verify"
+import Verify from "pages/auth/pages/account/verify/verify"
 import Callback from "pages/auth/pages/callback/callback"
 import ScrollToTop from "shared/components/scrollToTop"
 
