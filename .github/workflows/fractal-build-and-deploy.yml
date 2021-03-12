@@ -260,6 +260,10 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append(".")
+
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
@@ -267,7 +271,7 @@ jobs:
                   from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-                  
+
                   from scripts.maintenance_scripts import start_maintenance
                   start_maintenance(WEBSERVER_URL, TOKEN)
 
@@ -989,11 +993,7 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  # import os
-                  # files = os.listdir(".")
-                  # print(files)
-                  # script_files = os.listdir("scripts")
-                  # print(script_files)
+                  # this allows us to import from `scripts`
                   import sys
                   sys.path.append(".")
 
@@ -1004,7 +1004,7 @@ jobs:
                   from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-                  
+
                   from scripts.maintenance_scripts import end_maintenance
                   end_maintenance(WEBSERVER_URL, TOKEN)
 
