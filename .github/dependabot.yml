@@ -176,3 +176,12 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
+  ###################### Core-ts ######################
+
+  - package-ecosystem: "npm"
+    directory: "/core-ts" # looks for package.json and [package-lock/yarn].lock file in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  #####################################################

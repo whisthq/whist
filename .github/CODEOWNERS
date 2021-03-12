@@ -18,6 +18,7 @@
 /main-webserver/        @fractal/code-standard-reviewers @FishmanL @owenniles @jmather625
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki @sardination
 /website/               @fractal/code-standard-reviewers @mingy98 @neilyio @rpadaki
+/core-ts/               @fractal/code-standard-reviewers @neilyio @mingy98 @rpadaki
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
