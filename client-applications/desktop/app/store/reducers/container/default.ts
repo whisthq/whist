@@ -20,9 +20,15 @@ export type Container = {
     region?: AWSRegion | undefined
 }
 
+export type HostService = {
+    ip?: string
+    port?: number
+}
+
 export type ContainerState = {
     task: Task
     container: Container
+    hostService: HostService
 }
 
 export const DEFAULT: ContainerState = {
@@ -41,5 +47,9 @@ export const DEFAULT: ContainerState = {
         port32273: "",
         location: "",
         secretKey: "",
+    },
+    hostService: {
+        ip: "",
+        port: 0,
     },
 }
