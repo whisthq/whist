@@ -987,29 +987,18 @@ jobs:
 
             - name: End webserver maintenance mode
               working-directory: main-webserver
+              shell: python3 {0}
               run: |
-                  # this only runs if there are no failures in the workflow so far
-                  # if there are, the webserver stays in maintenance mode
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
+                  from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(python \
-                    scripts/webserver_scripts.py \
-                    --web_url $WEBSERVER_URL \
-                    --script login \
-                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
-                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
-                    | jq -r ".access_token")
-
-                  # use a python script to end maintenance and poll for success
-                  python \
-                    scripts/webserver_scripts.py \
-                    --web_url $WEBSERVER_URL \
-                    --script end_maintenance \
-                    --admin_token $TOKEN
-
-                  # we only get here if previous step has exit code 0
-                  echo "Webserver at $WEBSERVER_URL exited maintenance mode"
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+                  
+                  from scripts.maintenance_scripts import end_maintenance
+                  end_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
               run: |
