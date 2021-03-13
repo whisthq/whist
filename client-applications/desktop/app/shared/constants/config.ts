@@ -4,6 +4,10 @@ import {
     FractalNodeEnvironment,
     FractalCIEnvironment,
 } from "shared/types/config"
+/*
+    Host service port
+*/
+export const HOST_SERVICE_PORT = "4678"
 
 /*
     Webserver URLs
