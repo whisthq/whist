@@ -48,7 +48,7 @@
         "react-google-login": "^5.2.2",
         "react-icons": "^4.2.0",
         "react-modal": "^3.12.1",
-        "react-native": "^0.63.4",
+        "react-native": "^0.64.0",
         "react-redux": "^7.2.2",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
