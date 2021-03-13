@@ -15,6 +15,9 @@ on:
             - "client-applications/**"
             - "!client-applications/README.md"
             - ".github/workflows/client-applications-linting.yml"
+            - "core-ts/**"
+            - "!core-ts/README.md"
+            - ".github/workflows/core-ts-check-pr.yml"            
     workflow_dispatch:
 
 jobs:
