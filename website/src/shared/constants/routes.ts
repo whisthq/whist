@@ -18,7 +18,7 @@ export const routeMap = {
         ROOT: "/auth",
         CALLBACK: "/auth/callback",
         FORGOT: {
-            ROOT: "/auth/forgot/email",
+            ROOT: "/auth/forgot",
             RESET: {
                 ROOT: "/auth/forgot/reset",
                 ALLOWED: "/auth/forgot/reset/allowed",
@@ -30,8 +30,12 @@ export const routeMap = {
                 SUBMITTED: "/auth/forgot/email/submitted"
             }
         },
-        SIGNUP: "/auth/signup",
-        VERIFY: "/auth/verify"
+        ACCOUNT: {
+            ROOT: "/auth/account",
+            LOGIN: "/auth/account/login",
+            SIGNUP: "/auth/account/signup",
+            VERIFY: "/auth/account/verify"
+        }
     },
     DASHBOARD: {
         ROOT: "/dashboard",

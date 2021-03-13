@@ -22,16 +22,15 @@ import {
     checkPassword,
 } from "pages/auth/shared/helpers/authHelpers"
 import {routeMap, fractalRoute} from "shared/constants/routes"
+import {updateUser} from "store/actions/auth/pure"
 
 // Type + constant imports
 import FractalKey from "shared/types/input"
-import { User } from "store/reducers/auth/default"
 import PLACEHOLDER from "shared/constants/form"
 import { AUTH_IDS, E2E_AUTH_IDS } from "testing/utils/testIDs"
 
 const Login = (props: {
     dispatch: Dispatch<any>
-    user: User
 }) => {
     /*
         Component for logging into the Fractal system.
@@ -43,7 +42,7 @@ const Login = (props: {
             dispatch (Dispatch<any>): Action dispatcher
             user (User): User from Redux state
     */
-    const { dispatch, user } = props
+    const { dispatch } = props
 
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
@@ -56,13 +55,18 @@ const Login = (props: {
             setProcessing(true)
             emailLogin(email, password).then(({json}) => {
                 if(json && json.access_token) {
-                    // TODO: Success logic
+                    dispatch(updateUser({
+                        userID: email,
+                        name: json.name,
+                        accessToken: json.access_token,
+                        refreshToken: json.refresh_token,
+                        emailVerified: json.verified,
+                        emailVerificationToken: json.verification_token
+                    }))
                 } else {
-                    // TODO: Failure logicx
+                    // TODO: Failure logic
                 }
             })
-
-            dispatch(emailLogin(email, password))
         } else {
             setLoginWarning("Invalid email or password. Try again.")
         }
@@ -133,21 +137,12 @@ const Login = (props: {
                     beforeLink="No account?"
                     link={PLACEHOLDER.SIGNUPSWITCH}
                     afterLink="."
-                    redirect={fractalRoute(routeMap.AUTH.SIGNUP)}
+                    redirect={fractalRoute(routeMap.AUTH.ACCOUNT.SIGNUP)}
                 />
             </div>
         </AuthContainer>
     )
 }
 
-const mapStateToProps = (state: {
-    AuthReducer: {
-        user: User
-    }
-}) => {
-    return {
-        user: state.AuthReducer.user,
-    }
-}
 
-export default connect(mapStateToProps)(Login)
+export default connect()(Login)

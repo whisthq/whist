@@ -3,10 +3,8 @@ import { connect } from "react-redux"
 import { useMutation } from "@apollo/client"
 import { Switch, Route } from "react-router-dom"
 
-import Login from "pages/auth/pages/account/login/login"
-import Signup from "pages/auth/pages/account/signup/signup"
+import Account from "pages/auth/pages/account/account"
 import Forgot from "pages/auth/pages/forgot/forgot"
-import Verify from "pages/auth/pages/account/verify/verify"
 import Callback from "pages/auth/pages/callback/callback"
 import ScrollToTop from "shared/components/scrollToTop"
 
@@ -116,15 +114,23 @@ const Auth = (props: {
         callbackChecked,
     ])
 
-    return(
+    return (
         <div>
-            <ScrollToTop/>
+            <ScrollToTop />
             <Switch>
-                <Route exact path={fractalRoute(routeMap.AUTH)} component={Login}/>
-                <Route path={fractalRoute(routeMap.AUTH.SIGNUP)} component={Signup}/>
-                <Route path={[fractalRoute(routeMap.AUTH.FORGOT.EMAIL), fractalRoute(routeMap.AUTH.FORGOT.RESET)]} component={Forgot}/>
-                <Route path={fractalRoute(routeMap.AUTH.VERIFY)} component={Verify}/>
-                <Route path={fractalRoute(routeMap.AUTH.CALLBACK)} component={Callback}/>
+                <Route exact path={fractalRoute(routeMap.AUTH)} component={Account}/>
+                <Route
+                    path={fractalRoute(routeMap.AUTH.ACCOUNT)}
+                    component={Account}
+                />
+                <Route
+                    path={fractalRoute(routeMap.AUTH.FORGOT)}
+                    component={Forgot}
+                />
+                <Route
+                    path={fractalRoute(routeMap.AUTH.CALLBACK)}
+                    component={Callback}
+                />
             </Switch>
         </div>
     )
