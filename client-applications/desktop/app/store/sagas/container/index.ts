@@ -1,18 +1,17 @@
 import { put, takeEvery, all, call, select } from "redux-saga/effects"
 
 import { apiGet, apiPost, apiPut } from "shared/utils/general/api"
-
+import { findDPI } from "shared/utils/general/dpi"
+import { deepCopyObject } from "shared/utils/general/reducer"
 import { FractalAPI, FractalHTTPCode } from "shared/types/api"
+import { FractalTaskStatus } from "shared/types/containers"
+import { FractalRoute } from "shared/types/navigation"
+import { HOST_SERVICE_PORT } from "shared/constants/config"
 import * as ContainerAction from "store/actions/container/sideEffects"
 import { updateUser } from "store/actions/auth/pure"
-import { FractalTaskStatus } from "shared/types/containers"
 import { updateTask, updateContainer } from "store/actions/container/pure"
 import { DEFAULT } from "store/reducers/auth/default"
-import { FractalRoute } from "shared/types/navigation"
 import { history } from "store/history"
-import { deepCopyObject } from "shared/utils/general/reducer"
-import { findDPI } from "shared/utils/general/dpi"
-
 import { DEFAULT as ContainerDefault } from "store/reducers/container/default"
 
 function* createContainer() {
@@ -114,32 +113,36 @@ function* getContainerInfo(action: { taskID: string; type: string }) {
     }
 }
 
-function* setHostServiceConfigToken() {
+function* setHostServiceConfigToken(action: {
+    ip: string
+    port: number
+    type: string
+}) {
     /*
     Description:
         Sends PUT request to pass config encryption token to the host service
 
-    Arguments: none
+    Arguments:
+        ip (string): IP address to host service
+        port (number): port to pass to the host service // is this correct?
+        type (string): identifier for this side effect
     */
     const state = yield select()
     const userID = state.AuthReducer.user.userID
-    const ip = state.ContainerReducer.hostService.ip
-    const port = state.ContainerReducer.hostService.port
-
-    const HOST_SERVICE_PORT = "4678"
+    const accessToken = state.AuthReducer.user.access_token
 
     const body = {
         user_id: userID,
-        host_port: port,
+        host_port: action.port,
         config_encryption_token: state.AuthReducer.user.configToken,
-        auth_secret: "auth_secret",
+        access_token: accessToken,
     }
 
     const { success } = yield call(
         apiPut,
-        `/set_config_encryption_token`,
+        FractalAPI.HOST_SERVICE.SET_CONFIG_TOKEN,
         body,
-        `https://${ip}:${HOST_SERVICE_PORT}`
+        `https://${action.ip}:${HOST_SERVICE_PORT}`
     )
 
     if (!success) {
