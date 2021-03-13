@@ -1,9 +1,9 @@
 # workflows/website-linting.yml
 #
-# Website: Linting
-# Lint website using eslint.
+# Website: Check PR
+# Checks a website PR for linting and building success.
 
-name: "Website: Linting"
+name: "Website: Check PR"
 
 on:
     pull_request:
@@ -14,11 +14,17 @@ on:
         paths:
             - "website/**"
             - "!website/README.md"
-            - ".github/workflows/website-linting.yml"
+            - ".github/workflows/website-check-pr.yml"
+            - "core-ts/**"
+            - "!core-ts/README.md"
+            - ".github/workflows/core-ts-check-pr.yml"
+    workflow_dispatch:
 
 jobs:
-    website-linting-main:
-        name: Lint Website
+    # Linting
+    # Checks for formatting using ESlint.
+    website-linting-check-pr-linting:
+        name: Linting
         runs-on: ubuntu-20.04
 
         env:
@@ -28,9 +34,6 @@ jobs:
         steps:
             - name: Check out Git Repository
               uses: actions/checkout@v2
-              with:
-                  persist-credentials: false # otherwise, the token used is the GITHUB_TOKEN, instead of your personal token
-                  fetch-depth: 0 # otherwise, you will fail to push refs to dest repo
 
             - name: Install Node.js 14
               uses: actions/setup-node@v2.1.5
@@ -39,9 +42,69 @@ jobs:
 
             - name: Run npm install
               working-directory: website
-              run: |
-                  npm install
+              run: npm install
 
             - name: Check if code follows ESLint standards
               working-directory: website
               run: npm run lint-check
+
+    # Testing
+    # Runs the website test suite.
+    website-check-pr-testing:
+        name: Testing
+        runs-on: ubuntu-20.04
+
+        env:
+            CI: true
+            NPM_TOKEN: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
+
+        steps:
+            - name: Check out Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Install Node.js 14
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 14
+
+            - name: Run npm install
+              working-directory: website
+              run: npm install
+
+            - name: Increase watchers
+              run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
+
+            - name: Run retrieve.py to retrieve .env file
+              working-directory: website
+              run: pip install boto3 && cd scripts && python retrieve.py
+
+            - name: Run npm ci
+              working-directory: website
+              run: npm ci
+
+            - name: Run npm build
+              working-directory: website
+              run: npm run build --if-present
+
+            - name: Set GraphQL Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
+              run: |
+                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
+                  elif [ "${GITHUB_REF##*/}" == "staging" ]; then
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
+                  else
+                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
+                  fi
+
+            - name: Run npm test
+              working-directory: website
+              run: npm run ci-test
+              env:
+                  HASURA_ADMIN_KEY: ${{ env.hasura_graphql_access_key }}
