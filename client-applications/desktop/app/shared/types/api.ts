@@ -22,6 +22,10 @@ export class FractalAPI {
         EXTERNAL: "/external_apps",
         CONNECTED: "/connected_apps",
     }
+
+    static HOST_SERVICE = {
+        SET_CONFIG_TOKEN: "/set_config_encryption_token",
+    }
 }
 
 export enum FractalHTTPCode {

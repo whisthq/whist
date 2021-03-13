@@ -4,7 +4,7 @@ import { useSubscription } from "@apollo/client"
 
 import { FractalLogger } from "shared/utils/general/logging"
 import { Dispatch } from "shared/types/redux"
-import { SUBSCRIBE_USER_APP_STATE } from "shared/constants/graphql"
+import { SUBSCRIBE_USER_APP_STATE, SUBSCRIBE_USER_HOST_SERVICE } from "shared/constants/graphql"
 import { FractalAppState, FractalTaskStatus } from "shared/types/containers"
 import { deepCopyObject } from "shared/utils/general/reducer"
 import { User } from "store/reducers/auth/default"
@@ -25,6 +25,7 @@ import { updateTimer } from "store/actions/client/pure"
 import {
     getContainerInfo,
     createContainer,
+    setHostServiceConfigToken,
 } from "store/actions/container/sideEffects"
 import { FractalIPC } from "shared/types/ipc"
 import { BROWSER_WINDOW_IDS } from "shared/types/browsers"
@@ -101,9 +102,14 @@ export const Launcher = (props: {
 
     const [loginClosed, setLoginClosed] = useState(false)
     const [configTokenRetrieved, setConfigTokenRetrieved] = useState(false)
+    const [configTokenSent, setConfigTokenSent] = useState(false)
 
-    const { data, loading, error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
+    const { data: state_data, loading: state_loading, error: state_error } = useSubscription(SUBSCRIBE_USER_APP_STATE, {
         variables: { taskID: taskID },
+    })
+
+    const { data: host_service_data, loading: host_service_loading, error: host_service_error } = useSubscription(SUBSCRIBE_USER_HOST_SERVICE, {
+        variables: { userID: userID },
     })
 
     // Restores Redux state to before a container was created
@@ -242,6 +248,26 @@ export const Launcher = (props: {
         }
     }, [timedOut])
 
+
+    useEffect(() => {
+        if (host_service_error) {
+            logger.logError(`Subscription for host and ip failed: ${host_service_error}`, userID)
+        } else if (host_service_loading) {
+            logger.logInfo(`Subscription for host and ip loading`, userID)
+        } else {
+            const { ip, port } = host_service_data && host_service_data.hardware_user_app_state && host_service_data.hardware_user_app_state[0]
+                    ? host_service_data.hardware_user_app_state[0]
+                    : { ip: null, port: null }
+
+            logger.logInfo(`Host service IP is ${ip} and port is ${port}`, userID)
+            if (ip && port) {
+                dispatch(setHostServiceConfigToken(ip, port))
+                setConfigTokenSent(true)
+            }
+        }
+    }, [host_service_data, host_service_loading, host_service_error])
+
+
     useEffect(() => {
         if (shouldForceQuit && disconnected) {
             forceQuit()
@@ -312,26 +338,26 @@ export const Launcher = (props: {
     }, [dispatch, protocol, shouldLaunchProtocol, protocolLock])
 
     useEffect(() => {
-        if (protocol && taskState === FractalAppState.NO_TASK && region) {
+        if (protocol && taskState === FractalAppState.NO_TASK && region && configTokenSent) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, region, taskState])
+    }, [protocol, region, taskState, configTokenSent])
 
     // Listen to container creation task state
     useEffect(() => {
-        if (error) {
+        if (state_error) {
             logger.logError(
-                `User container subscription errored: ${error}`,
+                `User container subscription errored: ${state_error}`,
                 userID
             )
             setTaskState(FractalAppState.FAILURE)
         } else if (!timedOut) {
             const currentState =
-                data &&
-                data.hardware_user_app_state &&
-                data.hardware_user_app_state[0]
-                    ? data.hardware_user_app_state[0].state
+                state_data &&
+                state_data.hardware_user_app_state &&
+                state_data.hardware_user_app_state[0]
+                    ? state_data.hardware_user_app_state[0].state
                     : null
 
             logger.logInfo(`User container state: ${currentState}`, userID)
@@ -364,7 +390,7 @@ export const Launcher = (props: {
                 }
             }
         }
-    }, [data, loading, error, timedOut])
+    }, [state_data, state_loading, state_error, timedOut])
 
     // If container has been created and protocol hasn't been launched yet, launch protocol
     useEffect(() => {
@@ -424,6 +450,7 @@ export const mapStateToProps = (state: {
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
         protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
+        
         region: state.ClientReducer.computerInfo.region,
         timer: state.ClientReducer.timer,
     }

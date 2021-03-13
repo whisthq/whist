@@ -8,6 +8,15 @@ export const SUBSCRIBE_USER_APP_STATE = gql`
         }
     }
 `
+export const SUBSCRIBE_USER_HOST_SERVICE = gql`
+    subscription GetHostServiceInfo($userID: String!) {
+        hardware_user_app_state(where: { user_id: { _eq: $userID } }) {
+            ip
+            port
+            user_id
+        }
+    }
+`
 
 export const QUERY_REGION_TO_AMI = gql`
     query GetRegionToAmi {
