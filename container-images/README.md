@@ -2,23 +2,99 @@
 
 This repository contains the code for containerizing the various applications that Fractal streams. The base Dockerfile.20 running the containerized Fractal protocol is under the `/base/` subfolder, and is used as a starter image for the application Dockerfiles which are in each of their respective application-type subfolders. This base image runs **Ubuntu 20.04** and installs everything needed to interface with the drivers and the Fractal protocol.
 
-TODO: add a directory structure like Nick did for the protocol, which is really good. (https://github.com/fractal/fractal/issues/1133)
+## File Structure
 
-### Supported Applications
+A tree structure is provided below:
 
-All of the following applications are based off of the **Ubuntu 20.04 Base Image**.
-
-| Browsers         | Creative (2D/3D) | Creative (Video) | Productivity |
-| ---------------- | ---------------- | ---------------- | ------------ |
-| Google Chrome    | Blender          | Lightworks       | Slack        |
-| Mozilla Firefox  | Blockbench       | Kdenlive         | Notion       |
-| Brave Browser    | Figma            |                  | Discord      |
-| Sidekick Browser | TextureLab       |                  | R Studio     |
-|                  | Gimp             |                  | FreeCAD      |
-|                  | Inkscape         |                  |              |
-|                  | Krita            |                  |              |
-
-See [Adding New Applications](#Adding-New-Applications) for details on how to add support for new applications and integrate them with our continuous delivery pipeline.
+```
+./container-images
+├── base
+│   ├── Dockerfile.20 <- Base container image on which all of our application images depend
+│   ├── config
+│   │   ├── 01-fractal-nvidia.conf <- Configuration file for a Nvidia GPU-powered virtual display
+│   │   ├── 02-fractal-dummy.conf <- Configuration file for a software-powered virtual display
+│   │   ├── Xmodmap <- Configuration file for keystroke mappings on Linux Ubuntu
+│   │   ├── app-config-map.json <- Map for applications settings configuration location on Ubuntu
+│   │   ├── awesome-rc.lua <- Configuration file for our AwesomeWM window manager
+│   │   ├── fractal-display-config.env <- Environment variables for the Fractal virtual displays
+│   │   ├── gtk-3-settings.ini <- Configuration file for GTK-basedapplications
+│   │   ├── pulse-client.conf <- Configuration file for our PulseAudio server
+│   │   ├── qt4-settings.conf <- Configuration file for QT4-based applications
+│   │   └── systemd-logind-override-ubuntu20.conf <- Custom configuration for hostnames
+│   ├── scripts
+│   │   ├── docker-entrypoint.sh <- First script run within a container, to start systemd
+│   │   ├── entry.sh <- Script to start the `fractal` systemd user within a container
+│   │   ├── run-fractal-server.sh <- Script to start the Fractal server protocol
+│   │   ├── update-xorg-conf.sh <- Script to update the X Server to use the Nvidia GPU and uinput node
+│   │   └── xinitrc <- Script to start the window manager and Fractal application
+│   └── services
+│       ├── fractal-audio.service <- Systemd service to start a PulseAudio server
+│       ├── fractal-display.service <- Systemd service to start the Fractal virtual display
+│       ├── fractal-entrypoint.service <- Systemd service to start the Fractal systemd user
+│       ├── fractal-protocol.service <- Systemd service to start the Fractal server protocol
+│       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Fractal configuration
+├── browsers
+│   ├── brave
+│   │   ├── Dockerfile.20 <- Container image for Brave Browser
+│   │   └── install-extensions.sh <- Helper script to install Chromium extensions onto Brave
+│   ├── chrome
+│   │   ├── Dockerfile.20 <- Container image for Google Chrome
+│   │   ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
+│   │   └── start-chrome.sh <- Helper script to start Chrome with specific flags
+│   ├── firefox
+│   │   └── Dockerfile.20 <- Container image for Mozilla Firefox
+│   └── sidekick
+│       └── Dockerfile.20 <- Container image for Sidekick Browser
+├── build_container_image.sh <- Helper script to build a specific Docker image
+├── creative
+│   ├── blender
+│   │   ├── Dockerfile.20 <- Container image for Blender
+│   │   └── userpref.blend <- Fractal-provided default Blender user settings
+│   ├── blockbench
+│   │   └── Dockerfile.20 <- Container image for Blockbench
+│   ├── figma
+│   │   ├── Dockerfile.20 <- Container image for the Figma desktop application
+│   │   ├── figma-app.desktop <- Desktop shortcut file associated with the Figma desktop application
+│   │   ├── figma-font-bindings
+│   │   │   ├── index.d.ts <- Module file for the Figma font bindings
+│   │   │   ├── native
+│   │   │   │   ├── Cargo.lock <- Rust Figma font bindings lock file
+│   │   │   │   ├── Cargo.toml <- Rust Figma font bindings project file
+│   │   │   │   ├── build.rs <- Main build file for generating fonts object
+│   │   │   │   └── src
+│   │   │   │       ├── async_font.rs <- Main file to generate font objects
+│   │   │   │       └── lib.rs <- Helper functions to generate font objects
+│   │   │   ├── package-lock.json <- Figma font bindings module lock file
+│   │   │   └── package.json <- Figma font bindings module project file
+│   │   └── run-figma.sh <- Helper script to start the Figma desktop application
+│   ├── gimp
+│   │   ├── Dockerfile.20 <- Container image for Gimp
+│   │   └── gimprc <- Fractal Gimp configuration file
+│   ├── godot
+│   │   └── Dockerfile.20 <- Container image for Godot Game Engine
+│   └── lightworks
+│       └── Dockerfile.20 <- Container image for Lightworks Video Editor
+├── helper-scripts
+│   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
+│   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
+│   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
+│   └── run_container_image.sh <- Helper script to run a build container image
+├── productivity
+│   ├── notion
+│   │   ├── Dockerfile.20 <- Container image for the Notion desktop application
+│   │   ├── notion-app.desktop <- Desktop shortcut file associated with the Notion desktop application
+│   │   └── run-notion.sh <- Helper script to start Notion with the right parameters
+│   └── slack
+│       ├── Dockerfile.20 <- Container image for Slack
+│       └── run-slack.sh <- Helper script to start Slack with the right parameters
+├── push_container_image.sh <- Helper script to push a built container image to GHCR
+├── run_local_container_image.sh <- Helper script to run a locally-built container image
+├── run_remote_container_image.sh <- Helper script to fetch and run a container image stored on GHCR
+└── testing-scripts
+    ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Fractal protocol server in a container and a client
+    ├── uinput_server.c <- Helper script to set up a Linux uinput server in a container
+    └── uinput_tester.py <- Helper script to test sending uinput events to a uinput server in a container
+```
 
 ## Development
 
@@ -131,17 +207,6 @@ Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub pe
 ### Continous Delivery
 
 This is how we push to production. For every push to `master`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractal/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
-
-#### Adding New Applications
-
-For every new application that you add support for, in addition to creating its own subfolder under the relevant category and creating application-specific **Dockerfile.20**, you need to:
-
--   Add the path to your new Dockerfile.20 in `.pre-commit-config.yaml`, for pre-commit hooks
--   Update the list of supported applications in this README
-
-Note that before your new application is ready to go into production, you need to also edit the database with the app's logo, terms of service link, description, task definition link, etc.
-
-And, if you're adding a new AWS region, you should add the region name under `aws-regions` in `push-images.yml`.
 
 ## Styling
 
