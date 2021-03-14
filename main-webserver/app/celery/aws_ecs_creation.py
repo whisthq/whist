@@ -112,9 +112,7 @@ def _mount_cloud_storage(user, container):
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(
-    ip, container_id, port, dpi, user_id, config_encryption_token=""
-):
+def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, user_access_token):
     """
     Send the instance start values to the host service.
 
@@ -124,7 +122,7 @@ def _pass_start_values_to_instance(
         port: The port on the instance to which port 32262 within the container has been mapped.
         dpi: The DPI of the client display.
         user_id: The container's assigned user's user ID
-        config_encryption_token: the encryption token for the user's config
+        user_access_token: the user's JWT access token
     """
 
     try:
@@ -135,6 +133,7 @@ def _pass_start_values_to_instance(
                 "container_ARN": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
+                "access_token": user_access_token,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -561,6 +560,18 @@ def _assign_container(
             )
             raise Ignore
 
+    _mount_cloud_storage(user, base_container)  # Not tested
+    _pass_start_values_to_instance(
+        base_container.ip,
+        base_container.container_id,
+        base_container.port_32262,
+        base_container.dpi,
+        user.user_id,
+        user.access_token,
+    )
+    # give the host service time to process the req before telling the client about it
+    time.sleep(1)
+
     set_container_state(
         keyuser=username,
         keytask=self.request.id,
@@ -570,16 +581,6 @@ def _assign_container(
         port=base_container.port_32262,
         force=True,  # necessary since check will fail otherwise
     )
-
-    _mount_cloud_storage(user, base_container)  # Not tested
-    _pass_start_values_to_instance(
-        base_container.ip,
-        base_container.container_id,
-        base_container.port_32262,
-        base_container.dpi,
-        user.user_id,
-    )
-    time.sleep(1)
 
     if not _poll(base_container.container_id):
 
