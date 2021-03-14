@@ -191,12 +191,13 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(container: UserContainer) -> None:
+def _pass_start_values_to_instance(container: UserContainer, user_access_token: str = "") -> None:
     """
     Send the instance start values to the host service.
 
     Arguments:
         container: An instance of the UserContainer model.
+        user_access_token: the user's JWT access token
 
     Returns:
         None
@@ -217,6 +218,7 @@ def _pass_start_values_to_instance(container: UserContainer) -> None:
                 "container_ARN": container.container_id,
                 "dpi": container.dpi,
                 "user_id": container.user_id,
+                "access_token": user_access_token,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -725,7 +727,7 @@ def _assign_container(
 
     try:
         _mount_cloud_storage(user, base_container)
-        _pass_start_values_to_instance(base_container)
+        _pass_start_values_to_instance(base_container, user.access_token)
     except StartValueException:
         num_tries += 1
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
@@ -737,6 +739,16 @@ def _assign_container(
             )
 
     time.sleep(1)
+
+    set_container_state(
+        keyuser=username,
+        keytask=self.request.id,
+        task_id=self.request.id,
+        state=PENDING,
+        ip=base_container.ip,
+        port=base_container.port_32262,
+        force=True,  # necessary since check will fail otherwise
+    )
 
     if not _poll(base_container.container_id):
         set_container_state(
