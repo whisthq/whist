@@ -266,5 +266,9 @@ func (c *containerData) Close() {
 	ttys.Free(c.tty)
 	c.tty = 0
 
+	// Clean resource mappings
 	c.cleanResourceMappingDir()
+
+	// Clean up user configs
+	c.cleanUserConfigDir()
 }
