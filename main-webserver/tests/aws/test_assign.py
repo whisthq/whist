@@ -79,9 +79,9 @@ def test_get_num_extra_empty(deployment_stage):
 
 
 def test_get_num_extra_full(container, deployment_stage):
-    _ = container(delete_quick=False, is_assigned=False)
-    db.session.expire_all()
-    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
+    with container(delete_quick=False, is_assigned=False) as _:
+        db.session.expire_all()
+        assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
 
 
 def test_get_num_extra_fractional(container, deployment_stage):
