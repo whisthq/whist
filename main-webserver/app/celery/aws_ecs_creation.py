@@ -298,9 +298,11 @@ def _get_num_extra(taskdef, location):
 
         # get the number we want prewarmed
         num_needed_running = float(
-            _get_count_helper(
-                UserContainer.query.filter_by(
-                    task_definition=taskdef, location=location, is_assigned=True
+            len(
+                list(
+                    UserContainer.query.filter_by(
+                        task_definition=taskdef, location=location, is_assigned=True
+                    ).all()
                 )
             )
         )
@@ -308,9 +310,11 @@ def _get_num_extra(taskdef, location):
         # then floor it at 1
         num_needed_running = max(1, num_needed_running * app_image_for_taskdef.preboot_number)
         # then see how many prewarmed are currently running
-        num_currently_running = _get_count_helper(
-            UserContainer.query.filter_by(
-                task_definition=taskdef, location=location, is_assigned=False
+        num_currently_running = len(
+            list(
+                UserContainer.query.filter_by(
+                    task_definition=taskdef, location=location, is_assigned=False
+                ).all()
             )
         )
         fractal_logger.info(f"unassigned in db: {num_currently_running}")
