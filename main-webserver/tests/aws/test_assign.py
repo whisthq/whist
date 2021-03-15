@@ -12,6 +12,7 @@ import time
 from app.celery.aws_ecs_creation import assign_container, _get_num_extra
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.payment.stripe_client import StripeClient
+from app.models import db
 from app.serializers.public import UserSchema
 
 from ..patches import function, Object
@@ -79,12 +80,14 @@ def test_get_num_extra_empty(deployment_stage):
 
 def test_get_num_extra_full(container, deployment_stage):
     _ = container(delete_quick=False, is_assigned=False)
+    db.session.expire_all()
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
 
 
 def test_get_num_extra_fractional(container, deployment_stage):
     for _ in range(15):
         _ = container(delete_quick=False, is_assigned=True)
+    db.session.expire_all()
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 3
 
 
@@ -92,6 +95,7 @@ def test_get_num_extra_subtracts(container, deployment_stage):
     for _ in range(15):
         _ = container(delete_quick=False, is_assigned=True)
     _ = container(delete_quick=False, is_assigned=False)
+    db.session.expire_all()
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 2
 
 
