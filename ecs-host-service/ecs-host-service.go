@@ -613,13 +613,12 @@ func getUserConfig(fractalID string) error {
 // handleSetConfigEncryptionTokenRequest and handleStartValuesRequest. If both tasks have completed,
 // then get the user's config and set the container as ready.
 func completeContainerSetup(fractalID string, userID string, userAccessToken string, callerFunction string) error {
-	// If the user ID has not been set yet, then set it and return because
+	// If this function hasn't been called yet, then set the caller and return because
 	// that means that both required functions have not been run yet.
-	_, userIDExists := containerUserIDs[fractalID]
-	if !userIDExists {
-		containerUserIDs[fractalID] = userID
+	alreadyCalledEndpoint, alreadyCalledEndpointExists := calledSetupEndpoints[fractalID]
+	if !alreadyCalledEndpointExists {
 		containerUserAccessTokens[fractalID] = userAccessToken
-        calledSetupEndpoints[fractalID] = callerFunction
+                calledSetupEndpoints[fractalID] = callerFunction
 		return nil
 	} else {
         // If a malicious user is requesting the same endpoint multiple times, they won't get past
@@ -627,11 +626,12 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
         //     are only two endpoints that can lead to this point.
         // NOTE: if more endpoints are added to call `completeContainerSetup`, then please view the
         //    note above the declaration of `calledSetupEndpoints`.
-        alreadyCalledEndpoint, ok := calledSetupEndpoints[fractalID]
-        if !ok || alreadyCalledEndpoint == callerFunction {
+        if alreadyCalledEndpoint == callerFunction {
+            logger.Errorf("Same container setup endpoint called multiple times for user %s", userID)
             return nil
         }
         delete(calledSetupEndpoints, fractalID)
+	containerUserIDs[fractalID] = userID
     }
 
 	var err error
@@ -644,11 +644,11 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 			logger.Error(err)
 		}
 	} else {
-        // If the access tokens are not the same, then remove the user ID and config encryption
-        //     tokens from the map and log an error. This will allow the container to still run,
-        //     but without any app config to save at the end of the session.
+        // If the access tokens are not the same, then remove the user ID from the map and 
+	//     log an error. This will allow the container to still run, but prevent any 
+	//     app config from saving at the end of the session.
+        logger.Errorf("User access tokens for user %s did not match - not retrieving config", userID)
         delete(containerUserIDs, fractalID)
-        delete(configEncryptionTokens, fractalID)
     }
 
 	// Indicate that we are ready for the container to read the data back
@@ -891,6 +891,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	delete(containerAppNames, fractalID)
 	delete(containerUserIDs, fractalID)
 	delete(containerUserAccessTokens, fractalID)
+        delete(calledSetupEndpoints, fractalID)
 
 	resourcetrackers.FreePortBindings(fractalID)
 	delete(containerIDs, hostPort)
