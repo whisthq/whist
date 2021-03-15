@@ -122,18 +122,26 @@ int get_dst() {
 #endif
 }
 
-int get_time_data(FractalTimeData* time_data) {
-#ifdef _WIN32
-    time_data->use_win_name = 1;
-    time_data->use_linux_name = 0;
-
+char* get_timezone_from_windows_name() {
     char* win_tz_name = NULL;
     runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
-    safe_strncpy(time_data->win_tz_name, win_tz_name, sizeof(time_data->win_tz_name));
-    time_data->win_tz_name[strlen(time_data->win_tz_name) - 1] = '\0';
-    free(win_tz_name);
+    LOG_DEBUG("Getting Windows TimeZone %s", win_tz_name);
+    win_tz_name[strlen(win_tz_name) - 1] = '\0';
+    return win_tz_name;
+}
 
-    LOG_INFO("Sending Windows TimeZone %s", time_data->win_tz_name);
+int get_time_data(FractalTimeData* time_data) {
+#ifdef _WIN32
+    time_data->use_win_name = 0;
+    time_data->use_linux_name = 0;
+
+    char* utc_offset_str;
+    runcmd("powershell.exe \"Get-Date -UFormat \\\"\%Z\\\"\"", &utc_offset_str);
+
+    time_data->utc_offset = atoi(utc_offset_str);
+    time_data->dst_flag = 0;
+
+    free(utc_offset_str);
 
     return 0;
 #elif __APPLE__
@@ -167,6 +175,26 @@ int get_time_data(FractalTimeData* time_data) {
     free(response);
 
     return 0;
+#endif
+}
+
+void set_time_data(FractalTimeData* time_data) {
+#ifdef _WIN32
+    if (time_data.use_win_name) {
+        LOG_INFO("Setting time from windows time zone %s", time_data.win_tz_name);
+        set_timezone_from_windows_name(time_data.win_tz_name);
+    } else {
+        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
+        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
+    }
+#else
+    if (time_data.use_linux_name) {
+        LOG_INFO("Setting time from IANA time zone %s", time_data.linux_tz_name);
+        set_timezone_from_iana_name(time_data.linux_tz_name);
+    } else {
+        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
+        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
+    }
 #endif
 }
 
@@ -280,7 +308,7 @@ void set_timezone_from_utc(int utc, int dst_flag) {
     }
     set_timezone_from_windows_name(timezone);
 #else
-    char cmd[256];
+    char cmd[512];
     // -utc because of
     // https://www.reddit.com/r/java/comments/5i3zd1/timezoneid_etcgmt2_is_actually_gmt2/
     snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT%d", -utc);
