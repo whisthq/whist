@@ -74,7 +74,7 @@ type FractalContainer interface {
 	// directory accessible to only this container. These data are only known
 	// once a container is assigned to a user and are provided by the fractal
 	// webserver.
-	WriteStartValues() error
+	WriteStartValues(dpi int, containerARN string) error
 	// MarkReady tells the protocol inside the container that it is ready to
 	// start and accept connections.
 	MarkReady() error
@@ -83,11 +83,15 @@ type FractalContainer interface {
 }
 
 func New(fid FractalID) FractalContainer {
-	return &containerData{
+	c := &containerData{
 		fractalID:            fid,
 		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
 		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
 	}
+
+	c.createResourceMappingDir()
+
+	return c
 }
 
 type containerData struct {
@@ -150,8 +154,6 @@ func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) 
 	c.fractalID = f
 	c.dockerID = d
 	c.appName = name
-
-	c.createResourceMappingDir()
 
 	return nil
 }

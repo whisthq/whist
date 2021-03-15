@@ -24,6 +24,7 @@ func (c *containerData) WriteResourcesForProtocol() error {
 		return err
 	}
 
+	// Write TTY
 	err = writeDataToFile(c.getResourceMappingDir()+"tty", logger.Sprintf("%d", c.GetTTY()))
 	if err != nil {
 		// Don't need to wrap err here because writeDataToFile already contains the relevant info
@@ -33,8 +34,19 @@ func (c *containerData) WriteResourcesForProtocol() error {
 	return nil
 }
 
-func (c *containerData) WriteStartValues() error {
-	// TODO
+func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
+	// Write DPI
+	if err := writeDataToFile(c.getResourceMappingDir()+"DPI", logger.Sprintf("%v", dpi)); err != nil {
+		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+		return err
+	}
+
+	// Write ContainerARN
+	if err := writeDataToFile(c.getResourceMappingDir()+"ContainerARN", containerARN); err != nil {
+		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+		return err
+	}
+
 	return nil
 }
 
@@ -72,6 +84,7 @@ func (c *containerData) cleanResourceMappingDir() {
 	}
 }
 
+// TODO: refactor out all the `c.getResourceMappingDir() calls`
 func writeDataToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
