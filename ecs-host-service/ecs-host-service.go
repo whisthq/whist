@@ -489,7 +489,7 @@ func saveUserConfig(fractalID string) {
 			logger.Infof("Tar config directory output: %s", tarConfigOutput)
 		}
 
-		// At this point, config archive must exist: decrypt app config
+		// At this point, config archive must exist: encrypt app config
 		encryptConfigCmd := exec.Command(
 			"/usr/bin/openssl", "aes-256-cbc", "-e",
 			"-in", decTarPath,
@@ -513,8 +513,7 @@ func saveUserConfig(fractalID string) {
 		}
 	}
 
-	// remove app name and encryption key mapping for container on fractalID
-	delete(containerAppNames, fractalID)
+	// remove config encryption key mapping for container on fractalID
 	delete(configEncryptionTokens, fractalID)
 
 	// clear contents of config directory
@@ -602,10 +601,11 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 		return nil
 	}
 
-	err := nil
+	var err error
 	// Populate the user config folder for the container's app ONLY if both the client app
 	//     and webserver have passed the same user access token to the host service
-	if (userAccessToken == containerUserAccessTokens[fractalID]) {
+	storedUserAccessToken := containerUserAccessTokens[fractalID]
+	if (userAccessToken == storedUserAccessToken) {
 		err = getUserConfig(fractalID)
 		if err != nil {
 			logger.Error(err)
@@ -693,7 +693,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	userID := string(req.UserID)
-	userAccessToken := string(reqs.UserAccessToken)
+	userAccessToken := string(req.UserAccessToken)
 	return completeContainerSetup(fractalID, userID, userAccessToken)
 }
 
@@ -849,6 +849,9 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 
 	// Delete user config and resave to S3
 	saveUserConfig(fractalID)
+        delete(containerAppNames, fractalID)
+	delete(containerUserIDs, fractalID)
+	delete(containerUserAccessTokens, fractalID)
 
 	resourcetrackers.FreePortBindings(fractalID)
 	delete(containerIDs, hostPort)
