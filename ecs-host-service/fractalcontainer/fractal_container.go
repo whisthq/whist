@@ -44,6 +44,8 @@ type FractalContainer interface {
 	GetAppName() AppName
 	GetUserID() UserID
 
+	RegisterCreation(FractalID, DockerID, AppName) error
+
 	GetPortBindings() []portbindings.PortBinding
 	AssignPortBindings([]portbindings.PortBinding) error
 	FreePortBindings()
@@ -100,6 +102,20 @@ func (c *containerData) GetUserID() UserID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.userID
+}
+
+func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) error {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	if len(f) == 0 || len(d) == 0 || len(name) == 0 {
+		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s")
+	}
+
+	c.fractalID = f
+	c.dockerID = d
+	c.appName = name
+	return nil
 }
 
 func (c *containerData) GetPortBindings() []portbindings.PortBinding {
