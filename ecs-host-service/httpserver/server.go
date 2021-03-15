@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os/exec"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
-	types "github.com/fractal/fractal/ecs-host-service/fractaltypes"
 )
 
 // Variables for the auth_secret used to communicate between the webserver and
@@ -25,6 +25,10 @@ const (
 	certPath           = FractalPrivatePath + "cert.pem"
 	privatekeyPath     = FractalPrivatePath + "key.pem"
 )
+
+func init() {
+	portbindings.Reserve(PortToListen, portbindings.TransportProtocolTCP)
+}
 
 // A ServerRequest represents a request from the server --- it is exported so
 // that we can implement the top-level event handlers in parent packages. They
@@ -166,208 +170,6 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	res.send(w)
 }
 
-// RegisterDockerContainerIDRequest defines the (unauthenticated)
-// `register_docker_container_id` endpoint, which is used by the ecs-agent
-// (built into the host service, in package `ecsagent`) to tell us the mapping
-// between Docker container IDs and FractalIDs (which are used track containers
-// before they are actually started, and therefore assigned a Docker runtime
-// ID). FractalIDs are also used to dynamically provide each container with a
-// directory that only that container has access to).
-type RegisterDockerContainerIDRequest struct {
-	DockerID   string             `json:"docker_id"`  // Docker runtime ID of this container
-	FractalID  string             `json:"fractal_id"` // FractalID corresponding to this container
-	AppName    string             `json:"app_name"`   // App Name (e.g. browsers/chrome) for this container
-	resultChan chan requestResult // Channel to pass result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *RegisterDockerContainerIDRequest) ReturnResult(result string, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass request result
-// back to the HTTP request handler via ReturnResult.
-func (s *RegisterDockerContainerIDRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// Process an HTTP request for setting the mapping of Container ID to a FractalID, to be handled in ecs-host-service.go
-func processRegisterDockerContainerIDRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is a POST
-	if verifyRequestType(w, r, http.MethodPost) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata RegisterDockerContainerIDRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
-// CreateRegisterDockerContainerIDRequestBody creates the necessary body for a
-// RegisterDockerContainerIDRequest, including authentication.
-func CreateRegisterDockerContainerIDRequestBody(r RegisterDockerContainerIDRequest) ([]byte, error) {
-	body, err := json.Marshal(
-		struct {
-			AuthSecret string `json:"auth_secret"`
-			DockerID   string `json:"docker_id"`
-			FractalID  string `json:"fractal_id"`
-			AppName    string `json:"app_name"`
-		}{
-			AuthSecret: webserverAuthSecret,
-			DockerID:   r.DockerID,
-			FractalID:  r.FractalID,
-			AppName:    r.AppName,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
-// CreateUinputDevicesRequest defines the (unauthenticated)
-// `create_uinput_devices` endpoint, which is used by the ecs-agent (built into
-// the host service, in package `ecsagent`) to create uinput devices on the
-// host. We return the paths of these devices on disk, and they are mounted by
-// the ecs-agent when it creates the container.
-type CreateUinputDevicesRequest struct {
-	FractalID  string             `json:"fractal_id"` // FractalID corresponding to the container for which we are requesting the uinput devices to be created
-	resultChan chan requestResult // Channel to pass result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *CreateUinputDevicesRequest) ReturnResult(result string, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass request result
-// back to the HTTP request handler via ReturnResult.
-func (s *CreateUinputDevicesRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-func processCreateUinputDevicesRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is a POST
-	if verifyRequestType(w, r, http.MethodPost) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata CreateUinputDevicesRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
-// CreateCreateUinputDevicesRequestBody creates the necessary body for a CreateUinputDevicesRequest, including authentication
-func CreateCreateUinputDevicesRequestBody(r CreateUinputDevicesRequest) ([]byte, error) {
-	body, err := json.Marshal(
-		struct {
-			AuthSecret string `json:"auth_secret"`
-			FractalID  string `json:"fractal_id"`
-		}{
-			AuthSecret: webserverAuthSecret,
-			FractalID:  r.FractalID,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
-// RequestPortBindingsRequest defines the (unauthenticated)
-// `request_port_bindings` endpoint, which is used by the ecs-agent (built into
-// the host service, in package `ecsagent`) to request port bindings on the
-// host for containers. We allocate the host ports to be bound and return them,
-// so the docker runtime can actually bind them into the container.
-type RequestPortBindingsRequest struct {
-	FractalID  string              `json:"fractal_id"` // FractalID corresponding to the relevant container
-	Bindings   []types.PortBinding `json:"bindings"`   // Desired port bindings, with "0" as the hostPort indicating that we should allocate a port there.
-	resultChan chan requestResult  // Channel to pass result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *RequestPortBindingsRequest) ReturnResult(result string, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass request result
-// back to the HTTP request handler via ReturnResult.
-func (s *RequestPortBindingsRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-func processRequestPortBindingsRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is a POST
-	if verifyRequestType(w, r, http.MethodPost) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata RequestPortBindingsRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
-// CreateRequestPortBindingsRequestBody creates the necessary body for a RequestPortBindingsRequest, including authentication
-func CreateRequestPortBindingsRequestBody(r RequestPortBindingsRequest) ([]byte, error) {
-	body, err := json.Marshal(
-		struct {
-			AuthSecret string              `json:"auth_secret"`
-			FractalID  string              `json:"fractal_id"`
-			Bindings   []types.PortBinding `json:"bindings"`
-		}{
-			AuthSecret: webserverAuthSecret,
-			FractalID:  r.FractalID,
-			Bindings:   r.Bindings,
-		},
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return body, nil
-}
-
 // Helper functions
 
 // Function to verify the type (method) of a request
@@ -486,10 +288,7 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 
 	http.Handle("/", http.NotFoundHandler())
 	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
-	http.HandleFunc("/register_docker_container_id", createHandler(processRegisterDockerContainerIDRequest))
-	http.HandleFunc("/create_uinput_devices", createHandler(processCreateUinputDevicesRequest))
 	http.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
-	http.HandleFunc("/request_port_bindings", createHandler(processRequestPortBindingsRequest))
 	go func() {
 		// TODO: defer things correctly so that a panic here is actually caught and resolved
 		// https://github.com/fractal/fractal/issues/1128
