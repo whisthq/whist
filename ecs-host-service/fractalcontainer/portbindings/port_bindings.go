@@ -7,6 +7,12 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+func init() {
+	// This is for the ECS-Agent's "introspection endpoint", whatever that is. We
+	// do this to avoid triggering some sentry errors.
+	Reserve(51678, TransportProtocolTCP)
+}
+
 // A PortBinding represents a single port that is bound inside a container to a
 // port with the same protocol on the host.
 type PortBinding struct {
