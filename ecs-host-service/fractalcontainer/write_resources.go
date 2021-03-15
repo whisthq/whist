@@ -55,7 +55,7 @@ func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
 // container's assigned user and running application.
 func (c *containerData) PopulateUserConfigs() error {
 	// Make directory for user configs
-	configDir := logger.Sprintf("/fractal/%s/userConfigs/", c.fractalID)
+	configDir := c.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
 		return logger.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
@@ -68,7 +68,7 @@ func (c *containerData) PopulateUserConfigs() error {
 	}
 
 	// Retrieve config from s3
-	s3ConfigPath := logger.Sprintf("s3://fractal-user-app-configs/%s/%s/fractal-app-config.tar.gz", c.userID, c.appName)
+	s3ConfigPath := c.getS3ConfigPath()
 	getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configDir)
 	getConfigOutput, err := getConfigCmd.CombinedOutput()
 	// If aws s3 cp errors out due to the file not existing, don't log an error because
@@ -95,6 +95,55 @@ func (c *containerData) PopulateUserConfigs() error {
 	}
 
 	return nil
+}
+
+func (c *containerData) BackupUserConfigs() error {
+	// Clear contents of config directory at the end of the function
+	defer c.cleanUserConfigDir()
+
+	if len(c.userID) == 0 {
+		return logger.MakeError("Cannot save user configs for FractalID %s since UserID is empty.", c.fractalID)
+	}
+
+	configDir := c.getUserConfigDir()
+	tarPath := configDir + "fractal-app-config.tar.gz"
+	s3ConfigPath := c.getS3ConfigPath()
+
+	tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configDir, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
+	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
+	// tar is only fatal when exit status is 2 -
+	//    exit status 1 just means that some files have changed while tarring,
+	//    which is an ignorable error
+	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
+		return logger.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
+	} else {
+		logger.Infof("Tar config directory output: %s", tarConfigOutput)
+	}
+
+	saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
+	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
+	if err != nil {
+		return logger.MakeError("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
+	} else {
+		logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
+	}
+
+	return nil
+}
+
+func (c *containerData) cleanUserConfigDir() {
+	err := os.RemoveAll(c.getUserConfigDir())
+	if err != nil {
+		logger.Errorf("Failed to remove dir %s. Error: %s", c.getUserConfigDir(), err)
+	}
+}
+
+func (c *containerData) getUserConfigDir() string {
+	return logger.Sprintf("/fractal/%s/userConfigs/", c.fractalID)
+}
+
+func (c *containerData) getS3ConfigPath() string {
+	return logger.Sprintf("s3://fractal-user-app-configs/%s/%s/fractal-app-config.tar.gz", c.userID, c.appName)
 }
 
 func (c *containerData) MarkReady() error {
