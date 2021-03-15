@@ -12,7 +12,7 @@ import time
 from app.celery.aws_ecs_creation import assign_container, _get_num_extra
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.payment.stripe_client import StripeClient
-from app.models import db
+from app.models import SupportedAppImages
 from app.serializers.public import UserSchema
 
 from ..patches import function, Object
@@ -86,14 +86,34 @@ def test_get_num_extra_full(bulk_container, deployment_stage):
 def test_get_num_extra_fractional(bulk_container, deployment_stage):
     for _ in range(15):
         _ = bulk_container(is_assigned=True)
-    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 3
+    preboot_num = (
+        SupportedAppImages.query.filter_by(
+            task_definition=f"fractal-{deployment_stage}-browsers-chrome"
+        )
+        .first()
+        .preboot_number
+    )
+    assert (
+        _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1")
+        == 15.0 * preboot_num
+    )
 
 
 def test_get_num_extra_subtracts(bulk_container, deployment_stage):
     for _ in range(15):
         _ = bulk_container(is_assigned=True)
     _ = bulk_container(is_assigned=False)
-    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 2
+    preboot_num = (
+        SupportedAppImages.query.filter_by(
+            task_definition=f"fractal-{deployment_stage}-browsers-chrome"
+        )
+        .first()
+        .preboot_number
+    )
+    assert (
+        _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1")
+        == (15.0 * preboot_num) - 1
+    )
 
 
 @pytest.fixture
