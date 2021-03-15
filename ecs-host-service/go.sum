@@ -88,8 +88,11 @@ github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072/go.mod 
 github.com/fatih/structs v1.1.0/go.mod h1:9NiDSp5zOcgEDl+j00MP/WkGVPOlPRLejGD8Ga6PJ7M=
 github.com/fractal/ecs-agent/agent v0.0.0-20210309214132-a92c83fc7a58 h1:2WVAX1rOKkLUdN3nXI95d3S67Hp5KLqql9aLG41BF4o=
 github.com/fractal/ecs-agent/agent v0.0.0-20210309214132-a92c83fc7a58/go.mod h1:blz8GuLhNJUKERQ+T6yXAwXmo6wgLKPEvTeoagC9Xac=
-github.com/fractal/uinput-go v1.4.1-0.20210317222648-a8da4c4638d7 h1:XcTkAu6RTzoChyyb6w4Fi+FZDb+IKX+NUYpOPwN1CRw=
-github.com/fractal/uinput-go v1.4.1-0.20210317222648-a8da4c4638d7/go.mod h1:bG0ywqQr5fU8ua8Be8QVMclwlMeYEHHftEHKgUUMhKI=
+github.com/fractal/ecs-agent/agent v0.0.0-20210315140334-20cee0a916f6 h1:7iRdNMbBUQVeeHUrMQYMFMYV/lBEEUOOGPkikUBumpc=
+github.com/fractal/ecs-agent/agent v0.0.0-20210315140334-20cee0a916f6/go.mod h1:hTfM6uOQRaSdmgwRGhu9gvu5aTqjZg49lMnabN2mNjc=
+github.com/fractal/fractal/ecs-host-service v0.0.0-20210315135651-d167f96ccf94/go.mod h1:TPLm7GIXzmPps4lDmRAzKtPEdh1I2YKbaTGC4JCP7mU=
+github.com/fractal/uinput-go v1.4.1-0.20210224145701-470172f5bd67 h1:StPmrKuCgMGhVnhC6AsOppaGpkcJtXQRVBaULNyvxDU=
+github.com/fractal/uinput-go v1.4.1-0.20210224145701-470172f5bd67/go.mod h1:bG0ywqQr5fU8ua8Be8QVMclwlMeYEHHftEHKgUUMhKI=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/gavv/httpexpect v2.0.0+incompatible/go.mod h1:x+9tiU1YnrOvnB725RkpoLv1M62hOWzwo5OXotisrKc=
