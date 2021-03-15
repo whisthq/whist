@@ -11,15 +11,12 @@ import (
 	"encoding/json"
 	"io"
 	"math/rand"
-	"net"
 	"os"
 	"os/exec"
 	"os/signal"
-	"strconv"
 	"strings"
 	"syscall"
 	"time"
-	"unsafe"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry.  For the same reason, we make sure
@@ -28,18 +25,19 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
-	fractaltypes "github.com/fractal/fractal/ecs-host-service/fractaltypes"
 	webserver "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
-	resourcetrackers "github.com/fractal/fractal/ecs-host-service/resourcetrackers"
-
-	uinput "github.com/fractal/uinput-go"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockerevents "github.com/docker/docker/api/types/events"
 	dockerfilters "github.com/docker/docker/api/types/filters"
 	dockerclient "github.com/docker/docker/client"
 )
+
+func init() {
+	// Initialize random number generator for all subpackages
+	rand.Seed(time.Now().UnixNano())
+}
 
 // The locations on disk where we store our data, including cloud storage
 // mounts and container resource allocations. Note that we keep the cloud
@@ -48,7 +46,6 @@ import (
 const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
 const fractalTempDir = fractalDir + "temp/"
-const containerResourceMappings = "containerResourceMappings/"
 const userConfigs = "userConfigs/"
 
 // TODO: get rid of this security nemesis
@@ -85,194 +82,9 @@ func startECSAgent() {
 // Container state manangement/mappings
 // ------------------------------------
 
-// reserve the first 10 TTYs for the host system
-var ttyState [256]string = [256]string{"reserved", "reserved", "reserved", "reserved",
-	"reserved", "reserved", "reserved", "reserved", "reserved", "reserved"}
-
-// keep track of the mapping from hostPort to Docker container ID
-var containerIDs map[uint16]string = make(map[uint16]string)
-
-// keep track of the mapping from Docker container ID to FractalID (a
-// unique identifier for each container created by our modified ecs-agent
-var fractalIDs map[string]string = make(map[string]string)
-
-// keep track of the mapping from FractalID to app (e.g. browsers/chrome)
-var containerAppNames map[string]string = make(map[string]string)
-
-// keep track of the mapping from FractalID to UserID
-var containerUserIDs map[string]string = make(map[string]string)
-
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
-
-type uinputDevices struct {
-	absmouse uinput.TouchPad
-	relmouse uinput.Mouse
-	keyboard uinput.Keyboard
-}
-
-// keep track of mapping from FractalID to uinput devices
-var devices map[string]uinputDevices = make(map[string]uinputDevices)
-
-// we keep track of mapping from FractalIDs to host ports in `resourcetrackers.PortBindings`
-// TODO(djsavvy): move other tracked resources to the `resourcetrackers` package.
-// (https://github.com/fractal/fractal/issues/1130)
-
-// Updates the fractalIDs mapping with a request from the ecs-agent
-func addFractalIDMappings(req *httpserver.RegisterDockerContainerIDRequest) error {
-	if req.DockerID == "" || req.FractalID == "" || req.AppName == "" {
-		return logger.MakeError("Got a RegisterDockerContainerIDRequest with an empty field!. req.DockerID: \"%s\", req.FractalID: \"%s\", req.AppName: \"%s\"",
-			req.DockerID, req.FractalID, req.AppName)
-	}
-
-	fractalIDs[req.DockerID] = req.FractalID
-	containerAppNames[req.FractalID] = req.AppName
-	logger.Infof("Added mapping from DockerID %s to FractalID %s", req.DockerID, req.FractalID)
-	return nil
-}
-
-func linuxUIGetSysName(len uintptr) uintptr {
-	// from ioctl.h and uinput.h
-	const (
-		iocDirshift  = 30
-		iocSizeshift = 16
-		iocTypeshift = 8
-		iocNrshift   = 0
-		iocRead      = 2
-		uiIoctlBase  = 85 // 'U'
-	)
-
-	linuxIoc := func(dir uintptr, requestType uintptr, nr uintptr, size uintptr) uintptr {
-		return (dir << iocDirshift) + (requestType << iocTypeshift) + (nr << iocNrshift) + (size << iocSizeshift)
-	}
-
-	return linuxIoc(iocRead, uiIoctlBase, 44, len)
-}
-
-// getDeviceFilePath returns the file path (e.g. /dev/input/event3) given a file descriptor corresponding to a virtual device created with uinput
-func getDeviceFilePath(fd *os.File) (string, error) {
-	const maxlen uintptr = 32
-	bsysname := make([]byte, maxlen)
-	_, _, errno := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd.Fd()), linuxUIGetSysName(maxlen), uintptr(unsafe.Pointer(&bsysname[0])))
-	if errno != 0 {
-		return "", logger.MakeError("ioctl to get sysname failed with errno %d", errno)
-	}
-	sysname := string(bytes.Trim(bsysname, "\x00"))
-	syspath := logger.Sprintf("/sys/devices/virtual/input/%s", sysname)
-	sysdir, err := os.Open(syspath)
-	if err != nil {
-		return "", logger.MakeError("could not open directory %s: %s", syspath, err)
-	}
-	names, err := sysdir.Readdirnames(0)
-	if err != nil {
-		return "", logger.MakeError("Readdirnames for directory %s failed: %s", syspath, err)
-	}
-	for _, name := range names {
-		if strings.HasPrefix(name, "event") {
-			return "/dev/input/" + name, nil
-		}
-	}
-	return "", logger.MakeError("did not find file in %s with prefix 'event'", syspath)
-}
-
-// Create uinput devices and pass them back to the ecs-agent
-func createUinputDevices(r *httpserver.CreateUinputDevicesRequest) ([]fractaltypes.UinputDeviceMapping, error) {
-	FractalID := r.FractalID
-	logger.Infof("Processing CreateUinputDevicesRequest for FractalID: %s", FractalID)
-
-	absmouse, err := uinput.CreateTouchPad("/dev/uinput", []byte("Fractal Virtual Absolute Input"), 0, 0xFFF, 0, 0xFFF)
-	if err != nil {
-		return nil, logger.MakeError("Could not create virtual absolute input: %s", err)
-	}
-	absmousePath, err := getDeviceFilePath(absmouse.DeviceFile())
-	if err != nil {
-		return nil, logger.MakeError("Failed to get device path for virtual absolute input: %s", err)
-	}
-
-	relmouse, err := uinput.CreateMouse("/dev/uinput", []byte("Fractal Virtual Relative Input"))
-	if err != nil {
-		logger.Errorf("Could not create virtual relative input: %s", err)
-	}
-	relmousePath, err := getDeviceFilePath(relmouse.DeviceFile())
-	if err != nil {
-		return nil, logger.MakeError("Failed to get device path for virtual relative input: %s", err)
-	}
-
-	keyboard, err := uinput.CreateKeyboard("/dev/uinput", []byte("Fractal Virtual Keyboard"))
-	if err != nil {
-		logger.Errorf("Could not create virtual keyboard: %s", err)
-	}
-	keyboardPath, err := getDeviceFilePath(keyboard.DeviceFile())
-	if err != nil {
-		return nil, logger.MakeError("Failed to get device path for virtual keyboard: %s", err)
-	}
-
-	devices[FractalID] = uinputDevices{absmouse: absmouse, relmouse: relmouse, keyboard: keyboard}
-
-	// set up goroutine to create unix socket and pass file descriptors to protocol
-	go func() {
-		// TODO: handle errors better
-		// TODO: exit goroutine if container dies
-		// (https://github.com/fractal/fractal/issues/1131)
-		dirname := fractalTempDir + FractalID + "/sockets/"
-		filename := dirname + "uinput.sock"
-		os.MkdirAll(dirname, 0777)
-		os.RemoveAll(filename)
-		server, err := net.Listen("unix", filename)
-		if err != nil {
-			logger.Errorf("Could not create unix socket at %s: %s", filename, err)
-			return
-		}
-		defer server.Close()
-
-		logger.Infof("Successfully created unix socket at: %s", filename)
-
-		// server.Accept() blocks until the protocol connects
-		client, err := server.Accept()
-		if err != nil {
-			logger.Errorf("Could not connect to client over unix socket: %s", err)
-			return
-		}
-		defer client.Close()
-
-		connf, err := client.(*net.UnixConn).File()
-		if err != nil {
-			logger.Errorf("Could not get file corresponding to client connection: %s", err)
-			return
-		}
-		defer connf.Close()
-
-		connfd := int(connf.Fd())
-		fds := [3]int{int(absmouse.DeviceFile().Fd()), int(relmouse.DeviceFile().Fd()), int(keyboard.DeviceFile().Fd())}
-		rights := syscall.UnixRights(fds[:]...)
-		syscall.Sendmsg(connfd, nil, rights, nil, 0)
-		logger.Infof("Sent uinput file descriptors to %s", FractalID)
-	}()
-
-	return []fractaltypes.UinputDeviceMapping{
-		{
-			PathOnHost:        absmousePath,
-			PathInContainer:   absmousePath,
-			CgroupPermissions: "rwm", // read, write, mknod (the default)
-		},
-		{
-			PathOnHost:        relmousePath,
-			PathInContainer:   relmousePath,
-			CgroupPermissions: "rwm", // read, write, mknod (the default)
-		},
-		{
-			PathOnHost:        keyboardPath,
-			PathInContainer:   keyboardPath,
-			CgroupPermissions: "rwm", // read, write, mknod (the default)
-		},
-	}, nil
-}
-
-// Allocate the necessary host ports and pass them back to the ecs-agent
-func allocateHostPorts(r *httpserver.RequestPortBindingsRequest) ([]fractaltypes.PortBinding, error) {
-	return resourcetrackers.AllocatePortBindings(r.FractalID, r.Bindings)
-}
 
 // Unmounts a cloud storage directory mounted on hostPort
 func unmountCloudStorageDir(hostPort uint16, path string) {
@@ -596,99 +408,6 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	return nil
 }
 
-// Helper function to write data to a file
-func writeAssignmentToFile(filename, data string) (err error) {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
-	if err != nil {
-		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
-	}
-	// Instead of deferring the close() and sync() of the file, as is
-	// conventional, we do it at the end of the function to avoid some annoying
-	// linter errors
-	_, err = file.WriteString(data)
-	if err != nil {
-		return logger.MakeError("Couldn't write assignment with data %s to file %s. Error: %v", data, filename, err)
-	}
-
-	err = file.Sync()
-	if err != nil {
-		return logger.MakeError("Couldn't sync file %s. Error: %v", filename, err)
-	}
-
-	err = file.Close()
-	if err != nil {
-		return logger.MakeError("Couldn't close file %s. Error: %v", filename, err)
-	}
-
-	logger.Info("Wrote data \"%s\" to file %s\n", data, filename)
-	return nil
-}
-
-// Starts a container on the host by assigning to it the relevant parameters and
-// an unused TTY
-func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id string) error {
-	c, err := cli.ContainerInspect(ctx, id)
-	if err != nil {
-		return logger.MakeError("Error running ContainerInspect on container %s: %v", id, err)
-	}
-
-	// Create a container-specific directory to store mappings. Exit if it's a
-	// non-fractal container.
-	//   Get the fractalID and use it to compute the right directory
-	fractalID, ok := fractalIDs[id]
-	if !ok {
-		return logger.MakeError("containerStartHandler(): couldn't find FractalID mapping for container with name %s", c.Name)
-	}
-	datadir := fractalDir + fractalID + "/" + containerResourceMappings
-
-	err = os.MkdirAll(datadir, 0777)
-	if err != nil {
-		return logger.MakeError("Failed to create container-specific directory %s. Error: %v", datadir, err)
-	}
-	logger.Info("Created container-specific directory %s\n", datadir)
-
-	// Keep track of port mapping
-	// We only need to keep track of the mapping of the container's tcp 32262 on the host
-	hostPort, exists := c.NetworkSettings.Ports["32262/tcp"]
-	if !exists {
-		return logger.MakeError("Could not find mapping for port 32262/tcp for container %s with name %s", id, c.Name)
-	}
-	if len(hostPort) != 1 {
-		return logger.MakeError("The hostPort mapping for port 32262/tcp for container %s has length not equal to 1!. Mapping: %+v", id, hostPort)
-	}
-	err = writeAssignmentToFile(datadir+"hostPort_for_my_32262_tcp", hostPort[0].HostPort)
-	if err != nil {
-		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
-		return err
-	}
-
-	// Write the tty assignment to a file
-	err = writeAssignmentToFile(datadir+"tty", logger.Sprintf("%d", assignedTty))
-	if err != nil {
-		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
-		return err
-	}
-
-	// If we didn't run into any errors so far, we add this container to the
-	// `containerIDs` map.
-	hostPortInt64, err := strconv.ParseUint(hostPort[0].HostPort, 10, 16)
-	if err != nil {
-		err := logger.MakeError("containerStartHandler(): The hostPort %s for container %s did not parse into a uint16!", hostPort, id)
-		return err
-	}
-	hostPortUint16 := uint16(hostPortInt64)
-	containerIDs[hostPortUint16] = id
-
-	// We do not mark the container as "ready" but instead let handleStartValuesRequest
-	// do that, since we don't want to mark a container as ready until the start values are
-	// set. We are confident that the start values request will arrive after the Docker
-	// start handler is called, since the start values request is not triggered until the
-	// webserver receives the hostPort from AWS, which does not happen until the
-	// container is in a "RUNNING" state.
-
-	return nil
-}
-
 // Handle tasks to be completed when a container dies
 func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
 	// Get the fractalID and use it to compute the right data directory. Also,
@@ -975,14 +694,7 @@ eventLoop:
 			if dockerevent.Action == "die" || dockerevent.Action == "start" {
 				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 			}
-			if dockerevent.Action == "start" {
-				// We want the container start handler to abort immediately upon
-				// failure, so it returns an error as soon as it encounters one.
-				err := containerStartHandler(ctx, cli, dockerevent.ID)
-				if err != nil {
-					logger.Errorf("Error processing dockerevent %s for %s %s: %v", dockerevent.Action, dockerevent.Type, dockerevent.ID, err)
-				}
-			} else if dockerevent.Action == "die" {
+			if dockerevent.Action == "die" {
 				// Since we want all steps in the die handler to be attempted,
 				// regardless of earlier errors, we let the containerDieHandler report
 				// its own errors, and return nothing to us.
@@ -1004,41 +716,6 @@ eventLoop:
 					logger.Error(err)
 				}
 				serverevent.ReturnResult("", err)
-
-			case *httpserver.RegisterDockerContainerIDRequest:
-				err := addFractalIDMappings(serverevent.(*httpserver.RegisterDockerContainerIDRequest))
-				if err != nil {
-					logger.Error(err)
-				}
-				serverevent.ReturnResult("", err)
-
-			case *httpserver.CreateUinputDevicesRequest:
-				list, err := createUinputDevices(serverevent.(*httpserver.CreateUinputDevicesRequest))
-				if err != nil {
-					logger.Error(err)
-					serverevent.ReturnResult("", err)
-				} else {
-					if result, err := json.Marshal(list); err != nil {
-						logger.Error(err)
-						serverevent.ReturnResult("", err)
-					} else {
-						serverevent.ReturnResult(string(result), nil)
-					}
-				}
-
-			case *httpserver.RequestPortBindingsRequest:
-				list, err := allocateHostPorts(serverevent.(*httpserver.RequestPortBindingsRequest))
-				if err != nil {
-					logger.Error(err)
-					serverevent.ReturnResult("", err)
-				} else {
-					if result, err := json.Marshal(list); err != nil {
-						logger.Error(err)
-						serverevent.ReturnResult("", err)
-					} else {
-						serverevent.ReturnResult(string(result), nil)
-					}
-				}
 
 			default:
 				err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
