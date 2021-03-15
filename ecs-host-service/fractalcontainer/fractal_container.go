@@ -150,6 +150,9 @@ func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) 
 	c.fractalID = f
 	c.dockerID = d
 	c.appName = name
+
+	c.createResourceMappingDir()
+
 	return nil
 }
 
@@ -230,4 +233,6 @@ func (c *containerData) Close() {
 	// Free TTY
 	ttys.Free(c.tty)
 	c.tty = 0
+
+	c.cleanResourceMappingDir()
 }
