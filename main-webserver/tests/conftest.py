@@ -152,7 +152,7 @@ def container(cluster, user, deployment_stage):
     """
 
     @contextmanager
-    def _container(initial_state="CREATING", is_assigned=False):
+    def _container(initial_state="CREATING"):
         """Create a dummy container for testing.
 
         Arguments:
@@ -175,7 +175,6 @@ def container(cluster, user, deployment_stage):
             port_32273=randbits(16),
             cluster=cluster.cluster,
             secret_key=os.urandom(16).hex(),
-            is_assigned=is_assigned,
         )
 
         db.session.add(c)
@@ -203,8 +202,7 @@ def bulk_container(cluster, user, deployment_stage):
         """Create a dummy container for testing.
 
         Arguments:
-            initial_state: The initial value with which the new row's state
-                column should be populated.
+            is_assigned: Whether to create the container as prewarmed or assigned
 
         Yields:
             An instance of the UserContainer model.
