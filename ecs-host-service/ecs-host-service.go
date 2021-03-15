@@ -246,57 +246,6 @@ func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
 	return err
 }
 
-// When container disconnects, re-sync the user config back to S3
-// and delete the folder.
-// Takes fractalID (fractal id for the container) as an argument.
-func saveUserConfig(fractalID string) {
-	appName, ok := containerAppNames[fractalID]
-	if !ok {
-		logger.Infof("No app name found for FractalID %v", fractalID)
-		return
-	}
-
-	userID, ok := containerUserIDs[fractalID]
-	if !ok {
-		logger.Infof("No user ID found for FractalID %v", fractalID)
-		return
-	}
-
-	// Save app config back to s3 - first tar, then upload
-	configPath := fractalDir + fractalID + "/" + userConfigs
-	s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + string(appName) + "/"
-
-	// Only tar and save the config back to S3 if the user ID is set
-	if userID != "" {
-		tarPath := configPath + "fractal-app-config.tar.gz"
-
-		tarConfigCmd := exec.Command("/usr/bin/tar", "-C", configPath, "-czf", tarPath, "--exclude=fractal-app-config.tar.gz", ".")
-		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
-		// tar is only fatal when exit status is 2 -
-		//    exit status 1 just means that some files have changed while tarring,
-		//    which is an ignorable error
-		if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
-			logger.Errorf("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
-		} else {
-			logger.Infof("Tar config directory output: %s", tarConfigOutput)
-		}
-
-		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
-		saveConfigOutput, err := saveConfigCmd.CombinedOutput()
-		if err != nil {
-			logger.Errorf("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
-		} else {
-			logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
-		}
-	}
-
-	// remove app name mapping for container on fractalID
-	delete(containerAppNames, fractalID)
-
-	// clear contents of config directory
-	os.RemoveAll(configPath)
-}
-
 // Creates a file containing the DPI assigned to a specific container, and make
 // it accessible to that container. Also take the received User ID and retrieve
 // the user's app configs if the User ID is set.

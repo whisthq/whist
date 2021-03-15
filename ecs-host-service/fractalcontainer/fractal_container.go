@@ -74,16 +74,22 @@ type FractalContainer interface {
 	// container. These data are special because they are computed and written
 	// when the container is created.
 	WriteResourcesForProtocol() error
-	// WriteStartValues() writes files containing the DPI, ContainerARN, and UserID assigned to a
-	// directory accessible to only this container. These data are only known
-	// once a container is assigned to a user and are provided by the fractal
-	// webserver.
+	// WriteStartValues() writes files containing the DPI, ContainerARN, and
+	// UserID assigned to a directory accessible to only this container. These
+	// data are only known once a container is assigned to a user and are
+	// provided by the fractal webserver.
 	WriteStartValues(dpi int, containerARN string) error
 	// MarkReady tells the protocol inside the container that it is ready to
 	// start and accept connections.
 	MarkReady() error
 
+	// Populate the config folder under the container's FractalID for the
+	// container's assigned user and running application.
 	PopulateUserConfigs() error
+	// When container disconnects, re-sync the user config back to S3 and delete
+	// the folder.  Takes fractalID (fractal id for the container) as an
+	// argument.
+	BackupUserConfigs() error
 
 	Close()
 }
