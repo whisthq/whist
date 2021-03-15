@@ -569,6 +569,7 @@ jobs:
                   import re
 
                   from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import update_region
 
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
@@ -589,35 +590,12 @@ jobs:
                   data = json.load(fp)
                   fp.close()
                   print(data)
-                  os.sys.exit(1)
                   new_ami_ids = data["builds"][0]["artifact_id"]
-                  # new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+                  region_ami_pairs = new_ami_ids.split(",")
 
-                  for artifact in new_ami_ids:
-                    ami_match = re.search("ami-[0-9a-z]+", artifact)
-                    assert ami_match is not None
-                    ami_id = ami_match.group(0)
-
-                    region_match = re.search("[0-9a-z-]+:", artifact)
-                    assert region_match is not None
-                    region_name = region_match.group(0)
-
-                  # loop through each region, replace comma with space for delimiting
-                  for artifact in ${new_ami_ids//,/ }
-                  do 
-                    ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
-                    region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
-
-                    # use a python script to update webserver AMIs
-                    python \
-                      main-webserver/scripts/maintenance_scripts.py \
-                      --web_url $WEBSERVER_URL \
-                      --script update_region \
-                      --admin_token $TOKEN \
-                      --region_name $region \
-                      --ami $ami_id
-
-                  done
+                  for region_ami_pair in region_ami_pairs:
+                    region_name, ami = region_ami_pair.split(":")
+                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
