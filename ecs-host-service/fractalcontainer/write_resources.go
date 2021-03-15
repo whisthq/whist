@@ -3,8 +3,9 @@ package fractalcontainer
 
 import (
 	"os"
+	"os/exec"
+	"strings"
 
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
@@ -14,7 +15,7 @@ func (c *containerData) WriteResourcesForProtocol() error {
 	var err error
 
 	// Write identifying host port
-	p, err := c.getIdentifyingHostPort()
+	p, err := c.GetIdentifyingHostPort()
 	if err != nil {
 		return logger.MakeError("Couldn't write start values: %s", err)
 	}
@@ -50,19 +51,54 @@ func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
 	return nil
 }
 
-func (c *containerData) MarkReady() error {
-	return writeDataToFile(c.getResourceMappingDir()+".ready", ".ready")
-}
-
-func (c *containerData) getIdentifyingHostPort() (uint16, error) {
-	binds := c.GetPortBindings()
-	for _, b := range binds {
-		if b.Protocol == portbindings.TransportProtocolTCP && b.ContainerPort == 32262 {
-			return b.HostPort, nil
-		}
+// Populate the config folder under the container's FractalID for the
+// container's assigned user and running application.
+func (c *containerData) PopulateUserConfigs() error {
+	// Make directory for user configs
+	configDir := logger.Sprintf("/fractal/%s/userConfigs/", c.fractalID)
+	if err := os.MkdirAll(configDir, 0777); err != nil {
+		return logger.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	return 0, logger.MakeError("Couldn't getIdentifyingHostPort() for container with FractalID %s", c.GetFractalID())
+	// TODO: makeFractalDirectoriesFreeForAll() ?
+
+	// If userID is not set, then we don't retrieve configs from s3
+	if len(c.userID) == 0 {
+		return nil
+	}
+
+	// Retrieve config from s3
+	s3ConfigPath := logger.Sprintf("s3://fractal-user-app-configs/%s/%s/fractal-app-config.tar.gz", c.userID, c.appName)
+	getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configDir)
+	getConfigOutput, err := getConfigCmd.CombinedOutput()
+	// If aws s3 cp errors out due to the file not existing, don't log an error because
+	//    this means that it's the user's first run and they don't have any settings
+	//    stored for this application yet.
+	if err != nil {
+		if strings.Contains(string(getConfigOutput), "does not exist") {
+			logger.Infof("Ran \"aws s3 cp\" and config does not exist")
+			return nil
+		}
+		return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+	}
+
+	logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
+
+	// Extract the config archive to the user config directory
+	tarPath := configPath + "fractal-app-config.tar.gz"
+	untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configPath)
+	untarConfigOutput, err := untarConfigCmd.CombinedOutput()
+	if err != nil {
+		logger.Errorf("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
+	} else {
+		logger.Infof("Untar config directory output: %s", untarConfigOutput)
+	}
+
+	return nil
+}
+
+func (c *containerData) MarkReady() error {
+	return writeDataToFile(c.getResourceMappingDir()+".ready", ".ready")
 }
 
 func (c *containerData) getResourceMappingDir() string {
