@@ -297,61 +297,6 @@ func saveUserConfig(fractalID string) {
 	os.RemoveAll(configPath)
 }
 
-// Populate the config folder under the container's FractalID for the
-// container's attached user and running application.
-// Takes the request to the `set_container_start_values` endpoint as
-// and argument and returns nil if no errors, and error object if error.
-func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
-	// Get needed vars and create path for config
-	userID := req.UserID
-	containerID := containerIDs[(uint16)(req.HostPort)]
-	fractalID := fractalIDs[containerID]
-	appName := containerAppNames[fractalID]
-	configPath := fractalDir + fractalID + "/" + userConfigs
-
-	// Make directory to move configs to
-	err := os.MkdirAll(configPath, 0777)
-	if err != nil {
-		return logger.MakeError("Could not mkdir path %s. Error: %s", configPath, err)
-	}
-	logger.Infof("Created directory %s", configPath)
-
-	makeFractalDirectoriesFreeForAll()
-
-	// Store app name and user ID in maps
-	containerUserIDs[fractalID] = string(userID)
-
-	// If userID is not set, we don't want to try to retrieve configs from S3
-	if userID != "" {
-		s3ConfigPath := "s3://fractal-user-app-configs/" + userID + "/" + appName + "/fractal-app-config.tar.gz"
-		// Retrieve app config from S3
-		getConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", s3ConfigPath, configPath)
-		getConfigOutput, err := getConfigCmd.CombinedOutput()
-		// If aws s3 cp errors out due to the file not existing, don't log an error because
-		//    this means that it's the user's first run and they don't have any settings
-		//    stored for this application yet.
-		if err != nil {
-			if strings.Contains(string(getConfigOutput), "does not exist") {
-				logger.Infof("Ran \"aws s3 cp\" and config does not exist")
-				return nil
-			}
-			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
-		}
-		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
-
-		// Extract the config archive to the user config directory
-		tarPath := configPath + "fractal-app-config.tar.gz"
-		untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configPath)
-		untarConfigOutput, err := untarConfigCmd.CombinedOutput()
-		if err != nil {
-			logger.Errorf("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
-		} else {
-			logger.Infof("Untar config directory output: %s", untarConfigOutput)
-		}
-	}
-	return nil
-}
-
 // Creates a file containing the DPI assigned to a specific container, and make
 // it accessible to that container. Also take the received User ID and retrieve
 // the user's app configs if the User ID is set.
@@ -368,13 +313,12 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
 	}
 
+	// TODO: AssignToUser()
+
 	// TODO: call WriteStartValues() for the relevant container
 
 	// Populate the user config folder for the container's app
-	err = getUserConfig(req)
-	if err != nil {
-		logger.Error(err)
-	}
+	// TODO: PopulateUserConfig()
 
 	// TODO: call MarkReady() for the relevant container
 

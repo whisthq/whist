@@ -40,7 +40,11 @@ type CloudStorageDir string
 
 type FractalContainer interface {
 	GetFractalID() FractalID
+
+	AssignToUser(UserID)
 	GetUserID() UserID
+
+	GetIdentifyingHostPort() (uint16, error)
 
 	InitializeTTY() error
 	GetTTY() ttys.TTY
@@ -78,6 +82,8 @@ type FractalContainer interface {
 	// MarkReady tells the protocol inside the container that it is ready to
 	// start and accept connections.
 	MarkReady() error
+
+	PopulateUserConfigs() error
 
 	Close()
 }
@@ -117,10 +123,28 @@ func (c *containerData) GetFractalID() FractalID {
 	return c.fractalID
 }
 
+func (c *containerData) AssignToUser(u UserID) {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+	c.userID = u
+}
+
 func (c *containerData) GetUserID() UserID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.userID
+}
+
+// TODO: fix locking
+func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
+	binds := c.GetPortBindings()
+	for _, b := range binds {
+		if b.Protocol == portbindings.TransportProtocolTCP && b.ContainerPort == 32262 {
+			return b.HostPort, nil
+		}
+	}
+
+	return 0, logger.MakeError("Couldn't getIdentifyingHostPort() for container with FractalID %s", c.GetFractalID())
 }
 
 func (c *containerData) InitializeTTY() error {
