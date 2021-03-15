@@ -17,6 +17,7 @@ from app.constants.http_codes import WEBSERVER_MAINTENANCE
 from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
+# global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
 _WEB_REQUESTS_LOCK = threading.Lock()
 
@@ -30,7 +31,7 @@ def set_web_requests_status(enabled: bool) -> bool:
     Returns:
         True iff _WEB_REQUESTS_ENABLED was set to enabled.
     """
-    global _WEB_REQUESTS_ENABLED
+    global _WEB_REQUESTS_ENABLED  # pylint: disable=global-statement
     has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
     if not has_lock:
         # this should not happen and means our lock contention is bad
@@ -45,6 +46,13 @@ def set_web_requests_status(enabled: bool) -> bool:
 
 
 def can_process_requests() -> bool:
+    """
+    Get state of _WEB_REQUESTS_ENABLED in thread-safe manner.
+
+    Returns:
+        True iff _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
+        or acquiring lock failed.
+    """
     has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
     if not has_lock:
         # this should not happen and means our lock contention is bad
