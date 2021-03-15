@@ -44,9 +44,20 @@ type FractalContainer interface {
 	GetAppName() AppName
 	GetUserID() UserID
 
+	// RegisterCreation is used by the ecs-agent (built into the host service, in
+	// package `ecsagent`) to tell us the mapping between Docker container IDs,
+	// AppNames, and FractalIDs (which are used to track containers before they
+	// are actually started, and therefore assigned a Docker runtime ID).
+	// FractalIDs are also used to dynamically provide each container with a
+	// directory that only that container has access to).
 	RegisterCreation(FractalID, DockerID, AppName) error
 
 	GetPortBindings() []portbindings.PortBinding
+
+	// AssignPortBindings is used by the ecs-agent (built into the host service,
+	// in package `ecsagent`) to request port bindings on the host for
+	// containers. We allocate the host ports to be bound so the docker runtime
+	// can actually bind them into the container.
 	AssignPortBindings([]portbindings.PortBinding) error
 	FreePortBindings()
 
