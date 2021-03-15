@@ -546,23 +546,7 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
     FractalTimeData time_data = fmsg.time_data;
 
     // Handle time
-#ifdef _WIN32
-    if (time_data.use_win_name) {
-        LOG_INFO("Setting time from windows time zone %s", time_data.win_tz_name);
-        set_timezone_from_windows_name(time_data.win_tz_name);
-    } else {
-        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
-        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
-    }
-#else
-    if (time_data.use_linux_name) {
-        LOG_INFO("Setting time from IANA time zone %s", time_data.win_tz_name);
-        set_timezone_from_iana_name(time_data.win_tz_name);
-    } else {
-        LOG_INFO("Setting time from UTC offset %d", time_data.win_tz_name);
-        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
-    }
-#endif
+    set_time_data(time_data);
 
     // Handle init email email
     if (using_sentry) {

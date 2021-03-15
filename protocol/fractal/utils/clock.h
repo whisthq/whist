@@ -95,23 +95,13 @@ clock create_clock(int timeout_ms);
 char* current_time_str();
 
 /**
- * @brief                          Returns the current UTC offset as a string
- * @return                         int of current utc offset
+ * @brief                          Gets a FractalTimeData object representing the current timezone
  */
-int get_utc_offset();
-
-/**
- * @brief                          Returns a flag for whether DST is on or off
- * @return                         Positive int for on 0 for off.
- */
-int get_dst();
-
 int get_time_data(FractalTimeData* time_data);
 
-void set_timezone_from_iana_name(char* linux_tz_name);
-
-void set_timezone_from_windows_name(char* win_tz_name);
-
-void set_timezone_from_utc(int utc, int dst_flag);
+/**
+ * @brief                          Sets the current timezone based on a FractalTimeData object
+ */
+void set_time_data(FractalTimeData* time_data);
 
 #endif
