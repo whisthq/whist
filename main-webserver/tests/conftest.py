@@ -150,9 +150,10 @@ def container(cluster, user, deployment_stage):
         A context manager that populates the user_containers table with a test
         row whose state column is set to initial_state.
     """
+    containers = []
 
     @contextmanager
-    def _container(initial_state="CREATING", is_assigned=False):
+    def _container(initial_state="CREATING", is_assigned=False, delete_quick=True):
         """Create a dummy container for testing.
 
         Arguments:
@@ -183,10 +184,18 @@ def container(cluster, user, deployment_stage):
 
         yield c
 
-        db.session.delete(c)
-        db.session.commit()
+        if delete_quick:
+            db.session.delete(c)
+            db.session.commit()
+        else:
+            containers.append(c)
 
-    return _container
+    yield _container
+
+    for container in containers:
+        db.session.delete(container)
+
+    db.session.commit()
 
 
 @pytest.fixture(scope="session")
