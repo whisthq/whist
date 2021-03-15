@@ -368,28 +368,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
 	}
 
-	// Get the fractalID and use it to compute the right resource mapping directory
-	fractalID, ok := fractalIDs[id]
-	if !ok {
-		// This is actually an error, since we received a DPI request.
-		return logger.MakeError("handleDPIRequest(): couldn't find FractalID mapping for container with DockerID %s", id)
-	}
-	datadir := fractalDir + fractalID + "/" + containerResourceMappings
-
-	// Actually write DPI information to file
-	strdpi := logger.Sprintf("%v", req.DPI)
-	filename := datadir + "DPI"
-	err := writeAssignmentToFile(filename, strdpi)
-	if err != nil {
-		return logger.MakeError("Could not write value %v to DPI file %v. Error: %s", strdpi, filename, err)
-	}
-
-	// Actually write Container ARN information to file
-	idFilename := datadir + "ContainerARN"
-	err = writeAssignmentToFile(idFilename, req.ContainerARN)
-	if err != nil {
-		return logger.MakeError("Could not write value %v to ID file %v. Error: %s", req.ContainerARN, filename, err)
-	}
+	// TODO: call WriteStartValues() for the relevant container
 
 	// Populate the user config folder for the container's app
 	err = getUserConfig(req)
@@ -397,13 +376,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		logger.Error(err)
 	}
 
-	// Indicate that we are ready for the container to read the data back
-	// (see comment at the end of containerStartHandler)
-	err = writeAssignmentToFile(datadir+".ready", ".ready")
-	if err != nil {
-		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
-		return err
-	}
+	// TODO: call MarkReady() for the relevant container
 
 	return nil
 }
