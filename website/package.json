@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "start": "snowpack dev",
-    "build": "snowpack build"
+    "build": "snowpack build",
+    "postinstall": "cd node_modules/@fractal/core-ts && npm install && npm run build"
   },
   "dependencies": {
     "@sentry/react": "^6.2.2",
@@ -24,6 +25,7 @@
     "reactjs-popup": "^2.0.4"
   },
   "devDependencies": {
+    "@fractal/core-ts": "file:../core-ts",
     "@snowpack/plugin-dotenv": "^2.0.5",
     "@snowpack/plugin-postcss": "^1.1.0",
     "@snowpack/plugin-react-refresh": "^2.4.0",
