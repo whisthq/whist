@@ -356,7 +356,7 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 // it accessible to that container. Also take the received User ID and retrieve
 // the user's app configs if the User ID is set.
 // Takes the request to the `set_container_start_values` endpoint as
-// and argument and returns nil if no errors, and error object if error.
+// an argument and returns nil if no errors, and error object if error.
 func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
 	// Compute container-specific directory to write start value data to
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
@@ -418,21 +418,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		return
 	}
 
-	// Delete the container-specific data directory we used
-	datadir := fractalDir + fractalID + "/" + containerResourceMappings
-	err := os.RemoveAll(datadir)
-	if err != nil {
-		logger.Errorf("containerDieHandler(): Failed to delete container-specific directory %s", datadir)
-		// Do not return here, since we still want to de-allocate the TTY if it exists
-	}
-	logger.Info("containerDieHandler(): Successfully deleted (possibly non-existent) container-specific directory %s\n", datadir)
-
-	// Free tty internal state
-	for tty := range ttyState {
-		if ttyState[tty] == id {
-			ttyState[tty] = ""
-		}
-	}
+	// TODO: call close() on the relevant container
 
 	// Make sure the container is removed from the `containerIDs` map
 	// Note that we cannot parse the hostPort the same way we do in
@@ -455,7 +441,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	// Delete user config and resave to S3
 	saveUserConfig(fractalID)
 
-	resourcetrackers.FreePortBindings(fractalID)
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
@@ -466,17 +451,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 			unmountCloudStorageDir(hostPort, k)
 		}
 	}
-
-	// Delete associated devices and remove them from the map
-	uinputDevices, ok := devices[fractalID]
-	if !ok {
-		logger.Infof("containerDieHandler(): Couldn't find uinput devices mapping for container with fractalID %s", fractalID)
-		return
-	}
-	uinputDevices.absmouse.Close()
-	uinputDevices.relmouse.Close()
-	uinputDevices.keyboard.Close()
-	delete(devices, fractalID)
 }
 
 // ---------------------------

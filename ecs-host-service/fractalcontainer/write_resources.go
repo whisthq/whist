@@ -57,6 +57,21 @@ func (c *containerData) getResourceMappingDir() string {
 	return logger.Sprintf("/fractal/%s/containerResourceMappings/", c.GetFractalID())
 }
 
+func (c *containerData) createResourceMappingDir() error {
+	err := os.MkdirAll(c.getResourceMappingDir(), 0777)
+	if err != nil {
+		return logger.MakeError("Failed to create dir %s. Error: %s", c.getResourceMappingDir(), err)
+	}
+	return nil
+}
+
+func (c *containerData) cleanResourceMappingDir() {
+	err := os.RemoveAll(c.getResourceMappingDir())
+	if err != nil {
+		logger.Errorf("Failed to remove dir %s. Error: %s", c.getResourceMappingDir(), err)
+	}
+}
+
 func writeDataToFile(filename, data string) (err error) {
 	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
