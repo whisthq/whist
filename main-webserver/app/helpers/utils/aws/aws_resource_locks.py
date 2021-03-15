@@ -12,7 +12,7 @@ from app.models import db, UserContainer
 from app.exceptions import ContainerNotFoundException
 
 
-def lock_container_and_update(container_name, state, wait):  # , lock, temporary_lock):
+def lock_container_and_update(container_name, state):  # , lock, temporary_lock):
     """Change the state, lock, and temporary lock of a Container
 
     Args:
@@ -46,16 +46,9 @@ def lock_container_and_update(container_name, state, wait):  # , lock, temporary
         ),
         extra={"label": get_container_user(container_name)},
     )
-    container = UserContainer.query.with_for_update().filter_by(
+    container = UserContainer.query.filter_by(
         container_id=container_name
-    )  # lock using with_for_update()
-    db.session.refresh(container)
-    time.sleep(wait)
-
-    # with db.session.get_bind().connect() as con:
-    #     rs = con.execute("SELECT relation::regclass AS relname, * FROM pg_locks;")
-    #     for row in rs:
-    #         print(row)
+    ).with_for_update()  # lock using with_for_update()
 
     fractal_sql_commit(db, lambda _, x: x.update(new_params), container)
 
