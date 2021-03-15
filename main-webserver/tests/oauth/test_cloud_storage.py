@@ -57,7 +57,6 @@ def test_successful_handle_status(app, container, make_credential, provider, use
     """Handle both successful and unsuccessful responses from the host service."""
 
     response = Object()
-
     monkeypatch.setattr(requests, "post", function(returns=response))
     monkeypatch.setattr(response, "ok", True)
     monkeypatch.setattr(response, "text", "response text")
