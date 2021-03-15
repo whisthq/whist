@@ -1,9 +1,8 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
-from app.helpers.blueprint_helpers.auth.account_get import verified_helper
 from app.helpers.blueprint_helpers.auth.account_post import (
     delete_helper,
     login_helper,
@@ -101,18 +100,5 @@ def account_post(action, **kwargs):
         username, password = body["username"], body["password"]
 
         output = verify_password_helper(username, password)
-
-        return jsonify(output), output["status"]
-
-
-@account_bp.route("/account/<action>", methods=["GET"])
-@limiter.limit(RATE_LIMIT_PER_MINUTE)
-@fractal_pre_process
-def account_get_no_auth(action, **kwargs):  # pylint: disable=unused-argument
-    if action == "verified":
-        # Check if the user's email has been verified
-        username = request.args.get("username")
-
-        output = verified_helper(username)
 
         return jsonify(output), output["status"]
