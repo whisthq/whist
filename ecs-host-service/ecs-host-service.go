@@ -863,9 +863,9 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		return
 	}
 
-	// Delete user config and resave to S3
+	// Resave config to S3 and delete from filesystem
 	saveUserConfig(fractalID)
-        delete(containerAppNames, fractalID)
+	delete(containerAppNames, fractalID)
 	delete(containerUserIDs, fractalID)
 	delete(containerUserAccessTokens, fractalID)
 
