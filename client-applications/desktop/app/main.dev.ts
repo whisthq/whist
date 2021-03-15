@@ -61,18 +61,18 @@ process.on("uncaughtException", (err) => {
 export const launchWindow = async (
     mainWindow: BrowserWindow | null = null,
     customURL: string | null = null,
-    updating: boolean,
     showMainWindow: boolean
 ) => {
     mainWindow = await createWindow(mainWindow)
 
+    // this needs to be in main.dev.ts, having the file elswhere causes bugs when loading app.html
     setTimeout(() => {
         mainWindow?.loadURL(`file://${__dirname}/app.html`)
     }, 2000)
     // mainWindow.webContents.openDevTools()
+    updating = initiateAutoUpdateListeners(mainWindow, updating)
 
     initiateWindowListeners(mainWindow, customURL, showMainWindow, updating)
-    updating = initiateAutoUpdateListeners(mainWindow, updating)
 
     return mainWindow
 }
@@ -98,12 +98,7 @@ if (!gotTheLock) {
     app.allowRendererProcessReuse = true
 
     app.on("ready", async () => {
-        mainWindow = await launchWindow(
-            mainWindow,
-            customURL,
-            updating,
-            showMainWindow
-        )
+        mainWindow = await launchWindow(mainWindow, customURL, showMainWindow)
         initiateFractalIPCListeners(mainWindow, showMainWindow)
     })
 
@@ -114,7 +109,6 @@ if (!gotTheLock) {
             mainWindow = await launchWindow(
                 mainWindow,
                 customURL,
-                updating,
                 showMainWindow
             )
     })
@@ -137,62 +131,3 @@ app.on("open-url", (event, data) => {
         }
     }
 })
-
-// Autoupdater listeners, will fire if S3 app version is greater than current version
-// autoUpdater.autoDownload = false
-
-// autoUpdater.on("update-available", () => {
-//     console.log("UPDATE AVAILABLE")
-//     updating = true
-//     if (mainWindow) {
-//         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-//     }
-//     autoUpdater.downloadUpdate()
-// })
-
-// autoUpdater.on("update-not-available", () => {
-//     console.log("UPDATE NOT AVAILABLE")
-//     updating = false
-//     if (mainWindow) {
-//         mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-//     }
-// })
-
-// // autoUpdater.on("error", (_ev, err) => {
-// //     updating = false
-// //     if(mainWindow) {
-// //         mainWindow.webContents.send("error", err)
-// //     }
-
-// // })
-
-// autoUpdater.on("download-progress", (progressObj) => {
-//     console.log("DOWNLOAD IN PROGRESS")
-//     if (mainWindow) {
-//         mainWindow.webContents.send(
-//             FractalIPC.DOWNLOAD_SPEED,
-//             progressObj.bytesPerSecond
-//         )
-//         mainWindow.webContents.send(
-//             FractalIPC.PERCENT_DOWNLOADED,
-//             progressObj.percent
-//         )
-//         mainWindow.webContents.send(
-//             FractalIPC.PERCENT_TRANSFERRED,
-//             progressObj.transferred
-//         )
-//         mainWindow.webContents.send(
-//             FractalIPC.TOTAL_DOWNLOADED,
-//             progressObj.total
-//         )
-//     }
-// })
-
-// autoUpdater.on("update-downloaded", () => {
-//     console.log("UPDATE DOWNLOADED")
-//     if (mainWindow) {
-//         mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
-//     }
-//     autoUpdater.quitAndInstall()
-//     updating = false
-// })

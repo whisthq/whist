@@ -113,7 +113,7 @@ export const initiateWindowListeners = (
                 mainWindow.maximize()
             }
         }
-        // mainWindow.webContents.send(FractalIPC.UPDATE, updating)
+        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
     })
 
     mainWindow.on("close", (event) => {

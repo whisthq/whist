@@ -1,3 +1,4 @@
+
 #!/bin/bash
 
 # Exit on subcommand errors
@@ -65,20 +66,25 @@ else
     cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
     cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
-    # Sign each FractalClient binary
-    for filename in protocol-build/client/*.dylib; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
-
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/FractalClient
-
     # Copy loading images to a temp folder (will be moved in afterSign script)
     rm -rf loadingtemp
     cp -r ../../protocol/client/build64/Darwin/loading loadingtemp
-    for filename in loadingtemp/*; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
+    
+    if [[ $publish == "true" ]] 
+    then
+        # Sign each FractalClient binary
+        for filename in protocol-build/client/*.dylib; do
+            codesign -f -v -s "Fractal Computers, Inc." $filename
+        done
+
+        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
+        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/FractalClient
+
+        for filename in loadingtemp/*; do
+            codesign -f -v -s "Fractal Computers, Inc." $filename
+        done
+    fi
+
 
     # Initialize yarn first
     yarn -i
