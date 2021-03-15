@@ -106,6 +106,9 @@ var containerAppNames map[string]string = make(map[string]string)
 // keep track of the mapping from FractalID to UserID
 var containerUserIDs map[string]string = make(map[string]string)
 
+// keep track of the mapping from FractalID to user access token
+var containerUserAccessTokens map[string]string = make(map[string]string)
+
 // keep track of the mapping from FractalID to user config encryption token
 var configEncryptionTokens map[string]string = make(map[string]string)
 
@@ -586,22 +589,27 @@ func getUserConfig(fractalID string) error {
 }
 
 // If the user ID is not set for the given fractalID yet, that means that both necessary tasks have not
-// been completed yet before setting the container as ready : these tasks are handleSetConfigEncryptionTokenRequest 
-// and handleStartValuesRequest. If both tasks have completed, then get the user's config and set
-// the container as ready.
-func completeContainerSetup(fractalID string, userID string) error {
+// been completed yet before setting the container as ready: these tasks are
+// handleSetConfigEncryptionTokenRequest and handleStartValuesRequest. If both tasks have completed,
+// then get the user's config and set the container as ready.
+func completeContainerSetup(fractalID string, userID string, userAccessToken string) error {
 	// If the user ID has not been set yet, then set it and return because
 	// that means that both required functions have not been run yet.
 	_, userIDExists := containerUserIDs[fractalID]
 	if !userIDExists {
 		containerUserIDs[fractalID] = userID
+		containerUserAccessTokens[fractalID] = userAccessToken
 		return nil
 	}
 
-	// Populate the user config folder for the container's app
-	err := getUserConfig(fractalID)
-	if err != nil {
-		logger.Error(err)
+	err := nil
+	// Populate the user config folder for the container's app ONLY if both the client app
+	//     and webserver have passed the same user access token to the host service
+	if (userAccessToken == containerUserAccessTokens[fractalID]) {
+		err = getUserConfig(fractalID)
+		if err != nil {
+			logger.Error(err)
+		}
 	}
 
 	// Indicate that we are ready for the container to read the data back
@@ -642,7 +650,8 @@ func handleSetConfigEncryptionTokenRequest(req *httpserver.SetConfigEncryptionTo
 	configEncryptionTokens[fractalID] = string(req.ConfigEncryptionToken)
 
 	userID := string(req.UserID)
-	return completeContainerSetup(fractalID, userID)
+	userAccessToken := string(req.UserAccessToken)
+	return completeContainerSetup(fractalID, userID, userAccessToken)
 }
 
 // Creates a file containing the DPI assigned to a specific container, and make
@@ -684,7 +693,8 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	userID := string(req.UserID)
-	return completeContainerSetup(fractalID, userID)
+	userAccessToken := string(reqs.UserAccessToken)
+	return completeContainerSetup(fractalID, userID, userAccessToken)
 }
 
 // Helper function to write data to a file
