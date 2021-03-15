@@ -5,10 +5,10 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 // host service packages.
 
 import (
-	"io"
 	"sync"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
@@ -40,9 +40,10 @@ type CloudStorageDir string
 
 type FractalContainer interface {
 	GetFractalID() FractalID
-	GetDockerID() DockerID
-	GetAppName() AppName
 	GetUserID() UserID
+
+	InitializeTTY() error
+	GetTTY() ttys.TTY
 
 	// RegisterCreation is used by the ecs-agent (built into the host service, in
 	// package `ecsagent`) to tell us the mapping between Docker container IDs,
@@ -51,21 +52,20 @@ type FractalContainer interface {
 	// FractalIDs are also used to dynamically provide each container with a
 	// directory that only that container has access to).
 	RegisterCreation(FractalID, DockerID, AppName) error
-
-	GetPortBindings() []portbindings.PortBinding
+	GetDockerID() DockerID
+	GetAppName() AppName
 
 	// AssignPortBindings is used by the ecs-agent (built into the host service,
 	// in package `ecsagent`) to request port bindings on the host for
 	// containers. We allocate the host ports to be bound so the docker runtime
 	// can actually bind them into the container.
 	AssignPortBindings([]portbindings.PortBinding) error
-	FreePortBindings()
+	GetPortBindings() []portbindings.PortBinding
 
 	GetDeviceMappings() []dockercontainer.DeviceMapping
 	InitializeUinputDevices() error
-	FreeUinputDevices()
 
-	io.Closer
+	Close()
 }
 
 func New(fid FractalID) FractalContainer {
@@ -82,6 +82,7 @@ type containerData struct {
 	dockerID  DockerID
 	appName   AppName
 	userID    UserID
+	tty       ttys.TTY
 
 	uinputDevices        *uinputdevices.UinputDevices
 	uinputDeviceMappings []dockercontainer.DeviceMapping
@@ -91,28 +92,37 @@ type containerData struct {
 	portBindings []portbindings.PortBinding
 }
 
+//TODO: reorder these functions according to order above
 func (c *containerData) GetFractalID() FractalID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.fractalID
 }
 
-func (c *containerData) GetDockerID() DockerID {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
-	return c.dockerID
-}
-
-func (c *containerData) GetAppName() AppName {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
-	return c.appName
-}
-
 func (c *containerData) GetUserID() UserID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
 	return c.userID
+}
+
+func (c *containerData) InitializeTTY() error {
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
+	tty, err := ttys.Allocate()
+	if err != nil {
+		return err
+	}
+
+	c.tty = tty
+	return nil
+}
+
+func (c *containerData) GetTTY() ttys.TTY {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+
+	return c.tty
 }
 
 func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) error {
@@ -129,10 +139,16 @@ func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) 
 	return nil
 }
 
-func (c *containerData) GetPortBindings() []portbindings.PortBinding {
+func (c *containerData) GetDockerID() DockerID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
-	return c.portBindings
+	return c.dockerID
+}
+
+func (c *containerData) GetAppName() AppName {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+	return c.appName
 }
 
 func (c *containerData) AssignPortBindings(desired []portbindings.PortBinding) error {
@@ -148,12 +164,10 @@ func (c *containerData) AssignPortBindings(desired []portbindings.PortBinding) e
 	return err
 }
 
-func (c *containerData) FreePortBindings() {
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
-
-	portbindings.Free(c.portBindings)
-	c.portBindings = nil
+func (c *containerData) GetPortBindings() []portbindings.PortBinding {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+	return c.portBindings
 }
 
 func (c *containerData) GetDeviceMappings() []dockercontainer.DeviceMapping {
@@ -186,18 +200,20 @@ func (c *containerData) InitializeUinputDevices() error {
 	return nil
 }
 
-func (c *containerData) FreeUinputDevices() {
+func (c *containerData) Close() {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
+
+	// Free port bindings
+	portbindings.Free(c.portBindings)
+	c.portBindings = nil
+
+	// Free uinput devices
 	c.uinputDevices.Close()
 	c.uinputDevices = nil
 	c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-}
 
-func (c *containerData) Close() error {
-	// Each constituent function locks, so we don't need to lock here.
-	c.FreePortBindings()
-	c.FreeUinputDevices()
-
-	return nil
+	// Free TTY
+	ttys.Free(c.tty)
+	c.tty = 0
 }
