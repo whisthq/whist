@@ -26,23 +26,3 @@ def fetch_user_helper(username):
         return {"user": output, "status": SUCCESS}
     else:
         return {"user": None, "status": BAD_REQUEST}
-
-
-def verified_helper(username):
-    """Checks if a user's email has been verified
-
-    Parameters:
-    username (str): The username
-
-    Returns:
-    json: Whether the email is verified
-    """
-
-    # Query database for user
-
-    user = User.query.get(username)
-
-    if not user:
-        return {"verified": False, "status": SUCCESS}
-    else:
-        return {"verified": user.verified, "status": SUCCESS}
