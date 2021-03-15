@@ -152,7 +152,7 @@ def container(cluster, user, deployment_stage):
     """
 
     @contextmanager
-    def _container(initial_state="CREATING", is_assigned=True):
+    def _container(initial_state="CREATING", is_assigned=False):
         """Create a dummy container for testing.
 
         Arguments:
