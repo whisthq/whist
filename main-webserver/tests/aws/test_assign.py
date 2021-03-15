@@ -75,15 +75,18 @@ def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
 
 
 def test_get_num_extra_empty(deployment_stage):
+    # tests the base case of _get_num_extra -- prewarm 1
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 1
 
 
 def test_get_num_extra_full(bulk_container, deployment_stage):
+    # tests the buffer filled case of _get_num_extra -- 1 already prewarmed
     _ = bulk_container(is_assigned=False)
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
 
 
 def test_get_num_extra_fractional(bulk_container, deployment_stage):
+    # tests the fractional case of _get_num_extra, ensure the ratio is right
     for _ in range(15):
         _ = bulk_container(is_assigned=True)
     preboot_num = (
@@ -100,6 +103,8 @@ def test_get_num_extra_fractional(bulk_container, deployment_stage):
 
 
 def test_get_num_extra_subtracts(bulk_container, deployment_stage):
+    # tests the total codepath set of _get_num_extra
+    # fractional reserve and buffer filling
     for _ in range(15):
         _ = bulk_container(is_assigned=True)
     _ = bulk_container(is_assigned=False)
