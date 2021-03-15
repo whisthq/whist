@@ -65,6 +65,20 @@ type FractalContainer interface {
 	GetDeviceMappings() []dockercontainer.DeviceMapping
 	InitializeUinputDevices() error
 
+	// Writes files containing the TTY assignment and host port corresponding to
+	// port 32262/tcp in the container, in a directory accessible only to this
+	// container. These data are special because they are computed and written
+	// when the container is created.
+	WriteResourcesForProtocol() error
+	// WriteStartValues() writes files containing the DPI, ContainerARN, and UserID assigned to a
+	// directory accessible to only this container. These data are only known
+	// once a container is assigned to a user and are provided by the fractal
+	// webserver.
+	WriteStartValues() error
+	// MarkReady tells the protocol inside the container that it is ready to
+	// start and accept connections.
+	MarkReady() error
+
 	Close()
 }
 
