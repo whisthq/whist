@@ -469,7 +469,7 @@ jobs:
 
             # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
             # defined as a formatted json array to be copied into ami_config.json directly
-            aws_additional_supported_regions: "[\\\"us-east-2\\\",\\\"us-west-1\\\",\\\"us-west-2\\\",\\\"ca-central-1\\\",\\\"eu-west-1\\\",\\\"eu-central-1\\\"]"
+            aws_additional_supported_regions: "[\\\"us-east-2\\\"]"
 
         steps:
             - name: Checkout Git Repository
@@ -556,11 +556,10 @@ jobs:
                   | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
                   | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
                   | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
+                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json
                   ami_config.json
-
-                  # | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
 
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
