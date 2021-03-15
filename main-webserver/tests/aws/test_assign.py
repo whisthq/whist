@@ -78,20 +78,20 @@ def test_get_num_extra_empty(deployment_stage):
 
 
 def test_get_num_extra_full(container, deployment_stage):
-    _ = container(is_assigned=False)
+    _ = container(delete_quick=False, is_assigned=False)
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
 
 
 def test_get_num_extra_fractional(container, deployment_stage):
     for _ in range(15):
-        _ = container(is_assigned=True)
+        _ = container(delete_quick=False, is_assigned=True)
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 3
 
 
 def test_get_num_extra_subtracts(container, deployment_stage):
     for _ in range(15):
-        _ = container(is_assigned=True)
-    _ = container(is_assigned=False)
+        _ = container(delete_quick=False, is_assigned=True)
+    _ = container(delete_quick=False, is_assigned=False)
     assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 2
 
 
