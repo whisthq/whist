@@ -37,9 +37,13 @@ user_id=${FRACTAL_USER_ID:-''}
 # ecs-agent, but we need to simulate it here.
 fractal_id="abcdefabcdefabcdefabcdefabcdef"
 
-# User config encryption token. This would normally be passed in by the webserver,
+# User config encryption token. This would normally be passed in by the client app,
 # but we'll use a fake key here.
 config_encryption_token="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd"
+
+# User access token. This would normally be passed in by the webserver and client app,
+# but we'll use a fake token here.
+user_access_token="xTt/D6bqW7wfRTCcA6dVKqROl0iadS5k"
 
 # Devices to pas into the container
 devices_arg=""
@@ -118,7 +122,8 @@ send_start_values_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "dpi": '"$2"',
-      "user_id": "'"$3"'"
+      "user_id": "'"$3"'",
+      "access_token": "'"$4"'"
     }') \
         || (print_error_and_kill_container $1 "container start values request to the host service failed!")
 
@@ -139,7 +144,8 @@ send_set_config_encryption_token_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "host_port": 32262,
       "user_id": "'"$2"'",
-      "config_encryption_token": "'"$3"'"
+      "config_encryption_token": "'"$3"'",
+      "access_token": "'"$4"'"
     }') \
         || (print_error_and_kill_container $1 "set config encryption token request to the host service failed!")
 
@@ -198,8 +204,8 @@ container_id=$(create_container $image)
 echo "Created container with ID: $container_id"
 send_register_docker_container_id_request $container_id $fractal_id $app_name
 docker start $container_id
-send_start_values_request $container_id $dpi "$user_id"
-send_set_config_encryption_token_request $container_id "$user_id" "$config_encryption_token"
+send_start_values_request $container_id $dpi "$user_id" "$user_access_token"
+send_set_config_encryption_token_request $container_id "$user_id" "$config_encryption_token" "$user_access_token"
 
 # Run the Docker container
 docker exec -it $container_id /bin/bash || true
