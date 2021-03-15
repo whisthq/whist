@@ -10,14 +10,12 @@
  */
 
 import { app, BrowserWindow } from "electron"
-import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
 import { createWindow, initiateWindowListeners } from "./main/launchWindow"
 import { initiateFractalIPCListeners } from "./main/initiateFractalIPCListeners"
 import { initiateAutoUpdateListeners } from "./main/initiateAutoUpdateListeners"
-import path from "path"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
