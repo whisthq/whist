@@ -518,6 +518,15 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
               working-directory: ecs-host-setup
               run: |
@@ -595,7 +604,8 @@ jobs:
 
                   for region_ami_pair in region_ami_pairs:
                     region_name, ami = region_ami_pair.split(":")
-                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
+                    print(region_name, ami)
+                    # update_region(WEBSERVER_URL, TOKEN, region_name, ami)
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
