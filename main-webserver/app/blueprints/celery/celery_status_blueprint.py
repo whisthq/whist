@@ -4,7 +4,7 @@ from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.celery.dummy import dummy_task
-from app.helpers.utils.general.auth import check_developer
+from app.helpers.utils.general.auth import check_developer, developer_required
 from app.constants.http_codes import (
     ACCEPTED,
     SUCCESS,
@@ -70,6 +70,8 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
 
 @celery_status_bp.route("/dummy", methods=["GET"])
 @fractal_pre_process
+@jwt_required()
+@developer_required
 def celery_dummy(**kwargs):  # pylint: disable=unused-argument
     task = dummy_task.apply_async([])
 
