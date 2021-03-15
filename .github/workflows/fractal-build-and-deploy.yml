@@ -269,7 +269,7 @@ jobs:
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
                   from scripts.misc_scripts import login
-                  # Log in as Admin to get Bearer Token for Update Region API call
+                  # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   from scripts.maintenance_scripts import start_maintenance
@@ -454,10 +454,9 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs:
-            [
+        needs: [
                 fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
+                # fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
@@ -548,42 +547,64 @@ jobs:
                   | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
                   | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
                   | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
-                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
                   > ami_config_tmp.json
                   && mv ami_config_tmp.json
                   ami_config.json
+
+                  # | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
 
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              working-directory: ecs-host-setup
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append("../main-webserver")
+                  import os
+                  import subprocess
+                  import json
+                  import re
 
-                  # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(python \
-                    main-webserver/scripts/webserver_scripts.py \
-                    --web_url $WEBSERVER_URL \
-                    --script login \
-                    --username ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }} \
-                    --password ${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }} \
-                    | jq -r ".access_token")
+                  from scripts.misc_scripts import login
 
-                  # move into ecs-host-setup to run packer commands
-                  cd ecs-host-setup
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
                   packer -machine-readable build ami_config.json
 
-                  # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+                  # stdout will be shared with the subprocess
+                  subprocess.run("packer -machine-readable build ami_config.json", shell=True)
 
-                  # move back to monorepo root
-                  cd ..
+                  # if packer fails, manifest.json does not get created and the entire workflow fails here
+                  assert os.path.exists("manifest.json")
+                  fp = open("manifest.json")
+                  data = json.load(fp)
+                  fp.close()
+                  print(data)
+                  os.sys.exit(1)
+                  new_ami_ids = data["builds"][0]["artifact_id"]
+                  # new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+
+                  for artifact in new_ami_ids:
+                    ami_match = re.search("ami-[0-9a-z]+", artifact)
+                    assert ami_match is not None
+                    ami_id = ami_match.group(0)
+
+                    region_match = re.search("[0-9a-z-]+:", artifact)
+                    assert region_match is not None
+                    region_name = region_match.group(0)
 
                   # loop through each region, replace comma with space for delimiting
                   for artifact in ${new_ami_ids//,/ }
-                  do
+                  do 
                     ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
                     region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
 
@@ -1002,7 +1023,7 @@ jobs:
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
                   from scripts.misc_scripts import login
-                  # Log in as Admin to get Bearer Token for Update Region API call
+                  # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   from scripts.maintenance_scripts import end_maintenance
