@@ -47,6 +47,7 @@ class StartValueException(Exception):
     pass
 
 
+MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -706,7 +707,7 @@ def _assign_container(
         _pass_start_values_to_instance(base_container)  # not tested
         num_tries += 1
     except StartValueException:
-        if num_tries <= 3:
+        if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
             return _clean_tasks_and_create_new_container(
                 base_container,
                 webserver_url,
