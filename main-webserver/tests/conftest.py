@@ -166,7 +166,7 @@ def container(cluster, user, deployment_stage):
             container_id=f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
-            task_definition=f"fractal_{deployment_stage}_browsers_chrome",
+            task_definition=f"fractal-{deployment_stage}-browsers-chrome",
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
