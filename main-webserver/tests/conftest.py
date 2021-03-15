@@ -150,10 +150,9 @@ def container(cluster, user, deployment_stage):
         A context manager that populates the user_containers table with a test
         row whose state column is set to initial_state.
     """
-    containers = []
 
     @contextmanager
-    def _container(initial_state="CREATING", is_assigned=False, delete_quick=True):
+    def _container(initial_state="CREATING", is_assigned=False):
         """Create a dummy container for testing.
 
         Arguments:
@@ -184,11 +183,53 @@ def container(cluster, user, deployment_stage):
 
         yield c
 
-        if delete_quick:
-            db.session.delete(c)
-            db.session.commit()
-        else:
-            containers.append(c)
+        db.session.delete(c)
+        db.session.commit()
+
+    yield _container
+
+
+@pytest.fixture
+def bulk_container(cluster, user, deployment_stage):
+    """Add 1+ rows to the user_containers table for testing.
+
+    Returns:
+        A function that populates the user_containers table with a test
+        row whose state column is set to initial_state.
+    """
+    containers = []
+
+    def _container(is_assigned=False):
+        """Create a dummy container for testing.
+
+        Arguments:
+            initial_state: The initial value with which the new row's state
+                column should be populated.
+
+        Yields:
+            An instance of the UserContainer model.
+        """
+        c = UserContainer(
+            container_id=f"{os.urandom(16).hex()}",
+            ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
+            location="us-east-1",
+            task_definition=f"fractal-{deployment_stage}-browsers-chrome",
+            os="Linux",
+            state="CREATING",
+            user_id=user.user_id,
+            port_32262=randbits(16),
+            port_32263=randbits(16),
+            port_32273=randbits(16),
+            cluster=cluster.cluster,
+            secret_key=os.urandom(16).hex(),
+            is_assigned=is_assigned,
+        )
+
+        db.session.add(c)
+        db.session.commit()
+        containers.append(c)
+
+        return c
 
     yield _container
 
