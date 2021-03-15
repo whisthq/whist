@@ -69,7 +69,6 @@ export const launchWindow = async (
     }, 2000)
     // mainWindow.webContents.openDevTools()
     updating = initiateAutoUpdateListeners(mainWindow, updating)
-
     initiateWindowListeners(mainWindow, customURL, showMainWindow, updating)
 
     return mainWindow

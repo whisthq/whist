@@ -102,7 +102,7 @@
             ]
         },
         "publish": {
-            "bucket": "fractal-chromium-macos-staging",
+            "bucket": "fractal-chromium-macos-dev",
             "provider": "s3",
             "region": "us-east-1"
         },

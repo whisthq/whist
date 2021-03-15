@@ -131,4 +131,9 @@ export const initiateWindowListeners = (
     mainWindow.on("maximize", () => {})
 
     mainWindow.on("minimize", () => {})
+    if (process.env.NODE_ENV === "development") {
+        // Skip autoupdate check
+    } else {
+        autoUpdater.checkForUpdates()
+    }
 }

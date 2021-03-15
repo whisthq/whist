@@ -26,8 +26,6 @@ export const initiateAutoUpdateListeners = (
     })
 
     autoUpdater.on("update-not-available", () => {
-        console.log("UPDATE NOT AVAILABLE")
-
         updating = false
         if (mainWindow) {
             mainWindow.webContents.send(FractalIPC.UPDATE, updating)
