@@ -112,6 +112,11 @@ var containerUserAccessTokens map[string]string = make(map[string]string)
 // keep track of the mapping from FractalID to user config encryption token
 var configEncryptionTokens map[string]string = make(map[string]string)
 
+// keep track of which setup endpoint function was called first, to wait for the next one
+// NOTE: if more endpoints are added to call `completeContainerSetup`, then this will need
+//    to become a map of string lists that track which endpoints have been called so far.
+var calledSetupEndpoints map[string]string = make(map[string]string)
+
 // keys: hostPort, values: slice containing all cloud storage directories that are
 // mounted for that specific container
 var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
@@ -607,31 +612,49 @@ func getUserConfig(fractalID string) error {
 // been completed yet before setting the container as ready: these tasks are
 // handleSetConfigEncryptionTokenRequest and handleStartValuesRequest. If both tasks have completed,
 // then get the user's config and set the container as ready.
-func completeContainerSetup(fractalID string, userID string, userAccessToken string) error {
+func completeContainerSetup(fractalID string, userID string, userAccessToken string, callerFunction string) error {
 	// If the user ID has not been set yet, then set it and return because
 	// that means that both required functions have not been run yet.
 	_, userIDExists := containerUserIDs[fractalID]
 	if !userIDExists {
 		containerUserIDs[fractalID] = userID
 		containerUserAccessTokens[fractalID] = userAccessToken
+        calledSetupEndpoints[fractalID] = callerFunction
 		return nil
-	}
+	} else {
+        // If a malicious user is requesting the same endpoint multiple times, they won't get past
+        //     the first call because a different endpoint needs to be called to proceed, and there
+        //     are only two endpoints that can lead to this point.
+        // NOTE: if more endpoints are added to call `completeContainerSetup`, then please view the
+        //    note above the declaration of `calledSetupEndpoints`.
+        alreadyCalledEndpoint, ok := calledSetupEndpoints[fractalID]
+        if !ok || alreadyCalledEndpoint == callerFunction {
+            return nil
+        }
+        delete(calledSetupEndpoints, fractalID)
+    }
 
 	var err error
 	// Populate the user config folder for the container's app ONLY if both the client app
 	//     and webserver have passed the same user access token to the host service
 	storedUserAccessToken := containerUserAccessTokens[fractalID]
-	if (userAccessToken == storedUserAccessToken) {
+	if userAccessToken == storedUserAccessToken {
 		err = getUserConfig(fractalID)
 		if err != nil {
 			logger.Error(err)
 		}
-	}
+	} else {
+        // If the access tokens are not the same, then remove the user ID and config encryption
+        //     tokens from the map and log an error. This will allow the container to still run,
+        //     but without any app config to save at the end of the session.
+        delete(containerUserIDs, fractalID)
+        delete(configEncryptionTokens, fractalID)
+    }
 
 	// Indicate that we are ready for the container to read the data back
 	// (see comment at the end of containerStartHandler)
 	datadir := fractalDir + fractalID + "/" + containerResourceMappings
-	err = writeAssignmentToFile(datadir+".ready", ".ready")
+	err = writeAssignmentToFile(datadir + ".ready", ".ready")
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
@@ -667,7 +690,7 @@ func handleSetConfigEncryptionTokenRequest(req *httpserver.SetConfigEncryptionTo
 
 	userID := string(req.UserID)
 	userAccessToken := string(req.UserAccessToken)
-	return completeContainerSetup(fractalID, userID, userAccessToken)
+	return completeContainerSetup(fractalID, userID, userAccessToken, "handleSetConfigEncryptionTokenRequest")
 }
 
 // Creates a file containing the DPI assigned to a specific container, and make
@@ -710,7 +733,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 
 	userID := string(req.UserID)
 	userAccessToken := string(req.UserAccessToken)
-	return completeContainerSetup(fractalID, userID, userAccessToken)
+	return completeContainerSetup(fractalID, userID, userAccessToken, "handleStartValuesRequest")
 }
 
 // Helper function to write data to a file
