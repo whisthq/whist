@@ -46,7 +46,6 @@ func init() {
 const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
 const fractalTempDir = fractalDir + "temp/"
-const userConfigs = "userConfigs/"
 
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
@@ -284,6 +283,8 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		return
 	}
 
+	// TODO: BackupUserConfigs()
+
 	// TODO: call close() on the relevant container
 
 	// Make sure the container is removed from the `containerIDs` map
@@ -303,9 +304,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 		logger.Infof("containerDieHandler(): Could not find a hostPort mapping for container %s", id)
 		return
 	}
-
-	// Delete user config and resave to S3
-	saveUserConfig(fractalID)
 
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)

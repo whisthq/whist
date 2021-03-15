@@ -51,8 +51,6 @@ func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
 	return nil
 }
 
-// Populate the config folder under the container's FractalID for the
-// container's assigned user and running application.
 func (c *containerData) PopulateUserConfigs() error {
 	// Make directory for user configs
 	configDir := c.getUserConfigDir()
@@ -98,9 +96,6 @@ func (c *containerData) PopulateUserConfigs() error {
 }
 
 func (c *containerData) BackupUserConfigs() error {
-	// Clear contents of config directory at the end of the function
-	defer c.cleanUserConfigDir()
-
 	if len(c.userID) == 0 {
 		return logger.MakeError("Cannot save user configs for FractalID %s since UserID is empty.", c.fractalID)
 	}
