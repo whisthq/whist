@@ -11,4 +11,9 @@ export enum FractalIPC {
     DOWNLOAD_ERROR = "error",
     PERCENT_TRANSFERRED = "transferred",
     DOWNLOADED = "downloaded",
+    LAUNCH_PROTOCOL = "launchProtocol",
+    SEND_CONTAINER = "sendContainer",
+    KILL_PROTOCOL = "killProtocol",
+    PENDING_PROTOCOL = "pendingProtocol",
+    SET_USERID = "setUserID",
 }

@@ -13,7 +13,7 @@
         "artifactName": "Fractal.${ext}",
         "asar": true,
         "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
-        "copyright": "Copyright � Fractal Computers, Inc.",
+        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -102,7 +102,7 @@
             ]
         },
         "publish": {
-            "bucket": "PLACEHOLDER",
+            "bucket": "fractal-chromium-macos-dev",
             "provider": "s3",
             "region": "us-east-1"
         },

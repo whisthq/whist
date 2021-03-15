@@ -1,6 +1,7 @@
-import { OperatingSystem, FractalDirectory } from "shared/types/client"
+import { OperatingSystem, FractalDirectory } from "../../types/client"
 import { ChildProcess } from "child_process"
 
+// TODO: REVERT ALL EXEUTABLE CHANGES TO MATCH
 export const execPromise = (
     command: string,
     path: string,
@@ -9,12 +10,10 @@ export const execPromise = (
     /*
     Description:
         Executes a shell command on target operating systems
-
     Arguments:
         command (string) : Shell command (e.g. echo "Hello world")
         path (string) : Absolute path for working directory in which to run shell command
         targetOS (OperatingSystem[]) : Operating systems on which to run this command
-
     Returns:
         promise : Promise
     */
@@ -42,17 +41,14 @@ const getExecutableName = (): string => {
     Description:
         Helper function for launchProtocol(). Gets the Fractal client protocol executable name
         depending on the user's operating system
-
     Arguments: none
-
     Returns:
         (string) name of executable to run
-
     */
     const currentOS = require("os").platform()
 
     if (currentOS === OperatingSystem.MAC) {
-        return "./Fractal"
+        return "./FractalClient"
     }
     if (currentOS === OperatingSystem.WINDOWS) {
         return "Fractal.exe"
@@ -60,31 +56,37 @@ const getExecutableName = (): string => {
     return ""
 }
 
+/**
+ * Launches the protocol
+ * @param protocolOnStart function called right before protocol starts
+ * @param protocolOnExit function called right after protocl exits
+ * @param userID userID for logging
+ * @param protocolLaunched protoclLaunched timestamp for logging
+ * @param createContainerRequestSent container request timestamp for logging
+ *
+ * Returns: child process object created by spawn
+ */
 export const launchProtocol = async (
-    protocolOnStart: () => void,
-    protocolOnExit: () => void
+    protocolOnStart: (userID: string) => void,
+    protocolOnExit: (
+        protocolLaunched: number,
+        createContainerRequestSent: number,
+        userID: string,
+        code: number,
+        signal: string
+    ) => void,
+    userID: string,
+    protocolLaunched: number,
+    createContainerRequestSent: number
 ) => {
-    /*
-    Description:
-        Function to launch the protocol
-
-    Arguments:
-        container: Container from Redux store
-        protocolOnStart (function): Callback function fired right before protocol starts
-        protocolOnExit (function): Callback function fired right after protocol exits
-
-    Returns:
-        Child process object created by spawn()
-    */
-
     // spawn launches an executable in a separate thread
     const spawn = require("child_process").spawn
     // Get the path and name of the protocol in the packaged app
+    // TODO: add conditino for mac os path directory
     const protocolPath = require("path").join(
         FractalDirectory.getRootDirectory(),
-        require("os").platform() === OperatingSystem.MAC
-            ? "MacOS"
-            : "protocol-build/client"
+
+        "protocol-build/client"
     )
     const iconPath = require("path").join(
         FractalDirectory.getRootDirectory(),
@@ -92,9 +94,9 @@ export const launchProtocol = async (
     )
 
     const executable = getExecutableName()
-
+    console.log(protocolPath)
     // On Mac, run chmod to allow the protocol to run
-    await execPromise("chmod +x Fractal", protocolPath, [
+    await execPromise("chmod +x FractalClient", protocolPath, [
         OperatingSystem.MAC,
         OperatingSystem.LINUX,
     ])
@@ -114,7 +116,7 @@ export const launchProtocol = async (
     ]
 
     // Starts the protocol
-    protocolOnStart()
+    protocolOnStart(userID)
     const protocol = spawn(executable, protocolArguments, {
         cwd: protocolPath,
         detached: false,
@@ -122,13 +124,19 @@ export const launchProtocol = async (
     })
 
     // On protocol exit logic, fired only when protocol stops running
-    protocol.on("close", () => {
-        protocolOnExit()
+    protocol.on("close", (code: number, signal: string) => {
+        console.log("Protocol exited with code: ", code, "Signal: ", signal)
+        protocolOnExit(
+            protocolLaunched,
+            createContainerRequestSent,
+            userID,
+            code,
+            signal
+        )
     })
 
     return protocol
 }
-
 export const writeStream = (
     process: ChildProcess | undefined,
     message: string
