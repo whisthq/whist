@@ -543,10 +543,8 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
 
     FractalDiscoveryRequestMessage fmsg = cfmsg->discoveryRequest;
 
-    FractalTimeData time_data = fmsg.time_data;
-
     // Handle time
-    set_time_data(time_data);
+    set_time_data(&fmsg.time_data);
 
     // Handle init email email
     if (using_sentry) {

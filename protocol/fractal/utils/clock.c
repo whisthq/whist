@@ -178,26 +178,6 @@ int get_time_data(FractalTimeData* time_data) {
 #endif
 }
 
-void set_time_data(FractalTimeData* time_data) {
-#ifdef _WIN32
-    if (time_data.use_win_name) {
-        LOG_INFO("Setting time from windows time zone %s", time_data.win_tz_name);
-        set_timezone_from_windows_name(time_data.win_tz_name);
-    } else {
-        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
-        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
-    }
-#else
-    if (time_data.use_linux_name) {
-        LOG_INFO("Setting time from IANA time zone %s", time_data.linux_tz_name);
-        set_timezone_from_iana_name(time_data.linux_tz_name);
-    } else {
-        LOG_INFO("Setting time from UTC offset %d", time_data.utc_offset);
-        set_timezone_from_utc(time_data.utc_offset, time_data.dst_flag);
-    }
-#endif
-}
-
 void set_timezone_from_iana_name(char* linux_tz_name) {
 #ifdef _WIN32
     LOG_ERROR("Unimplemented on Windows!");
@@ -313,5 +293,25 @@ void set_timezone_from_utc(int utc, int dst_flag) {
     // https://www.reddit.com/r/java/comments/5i3zd1/timezoneid_etcgmt2_is_actually_gmt2/
     snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT%d", -utc);
     runcmd(cmd, NULL);
+#endif
+}
+
+void set_time_data(FractalTimeData* time_data) {
+#ifdef _WIN32
+    if (time_data->use_win_name) {
+        LOG_INFO("Setting time from windows time zone %s", time_data->win_tz_name);
+        set_timezone_from_windows_name(time_data->win_tz_name);
+    } else {
+        LOG_INFO("Setting time from UTC offset %d", time_data->utc_offset);
+        set_timezone_from_utc(time_data->utc_offset, time_data->dst_flag);
+    }
+#else
+    if (time_data->use_linux_name) {
+        LOG_INFO("Setting time from IANA time zone %s", time_data->linux_tz_name);
+        set_timezone_from_iana_name(time_data->linux_tz_name);
+    } else {
+        LOG_INFO("Setting time from UTC offset %d", time_data->utc_offset);
+        set_timezone_from_utc(time_data->utc_offset, time_data->dst_flag);
+    }
 #endif
 }
