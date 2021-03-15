@@ -587,9 +587,6 @@ jobs:
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
-                  packer -machine-readable build ami_config.json
-
                   # stdout will be shared with the subprocess
                   subprocess.run("packer -machine-readable build ami_config.json", shell=True)
 
