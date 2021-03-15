@@ -404,9 +404,8 @@ RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 RUN systemctl disable sshd
 
-# Set ProtectHostname=no for the systemd process (Needed for pre-systemd 246)
-COPY config/no-hostname.conf /etc/systemd/system/systemd-logind.service.d/override.conf
-# Remove ProtestHostname=yes lines from timesync and timedate
+# Remove ProtestHostname=yes lines from logind and timedate system
+RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
 
