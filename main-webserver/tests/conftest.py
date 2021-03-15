@@ -143,7 +143,7 @@ def cluster():
 
 
 @pytest.fixture
-def container(cluster, user):
+def container(cluster, user, deployment_stage):
     """Add a row to the user_containers table for testing.
 
     Returns:
@@ -152,7 +152,7 @@ def container(cluster, user):
     """
 
     @contextmanager
-    def _container(initial_state="CREATING"):
+    def _container(initial_state="CREATING", is_assigned=True):
         """Create a dummy container for testing.
 
         Arguments:
@@ -162,11 +162,11 @@ def container(cluster, user):
         Yields:
             An instance of the UserContainer model.
         """
-
         c = UserContainer(
             container_id=f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
+            task_definition=f"fractal_{deployment_stage}_browsers_chrome",
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
@@ -175,6 +175,7 @@ def container(cluster, user):
             port_32273=randbits(16),
             cluster=cluster.cluster,
             secret_key=os.urandom(16).hex(),
+            is_assigned=is_assigned,
         )
 
         db.session.add(c)
