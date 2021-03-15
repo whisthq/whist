@@ -9,7 +9,7 @@ import pytest
 import time
 
 
-from app.celery.aws_ecs_creation import assign_container
+from app.celery.aws_ecs_creation import assign_container, _get_num_extra
 from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.serializers.public import UserSchema
@@ -71,6 +71,28 @@ def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+def test_get_num_extra_empty(deployment_stage):
+    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 1
+
+
+def test_get_num_extra_full(container, deployment_stage):
+    _ = container(is_assigned=False)
+    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 0
+
+
+def test_get_num_extra_fractional(container, deployment_stage):
+    for _ in range(30):
+        _ = container(is_assigned=True)
+    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 3
+
+
+def test_get_num_extra_subtracts(container, deployment_stage):
+    for _ in range(30):
+        _ = container(is_assigned=True)
+    _ = container(is_assigned=False)
+    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 2
 
 
 @pytest.fixture
