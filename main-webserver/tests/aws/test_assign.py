@@ -74,25 +74,25 @@ def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
 
 
 def test_get_num_extra_empty(deployment_stage):
-    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 1
+    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 1
 
 
 def test_get_num_extra_full(container, deployment_stage):
     _ = container(is_assigned=False)
-    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 0
+    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
 
 
 def test_get_num_extra_fractional(container, deployment_stage):
     for _ in range(15):
         _ = container(is_assigned=True)
-    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 3
+    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 3
 
 
 def test_get_num_extra_subtracts(container, deployment_stage):
     for _ in range(15):
         _ = container(is_assigned=True)
     _ = container(is_assigned=False)
-    assert _get_num_extra(f"fractal_{deployment_stage}_browsers_chrome", "us-east-1") == 2
+    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 2
 
 
 @pytest.fixture
