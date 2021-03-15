@@ -30,6 +30,7 @@ def set_web_requests_status(enabled: bool) -> bool:
     Returns:
         True iff _WEB_REQUESTS_ENABLED was set to enabled.
     """
+    global _WEB_REQUESTS_ENABLED
     has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
     if not has_lock:
         # this should not happen and means our lock contention is bad

@@ -3,6 +3,7 @@ import uuid
 
 from contextlib import contextmanager
 from random import getrandbits as randbits
+import platform
 
 import pytest
 
@@ -14,6 +15,9 @@ from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 import app.constants.env_names as env_names
 from app.helpers.utils.general.limiter import limiter
+from app import set_web_requests_status
+from app.signals import SignalHandler
+from app.helpers.utils.general.logs import fractal_logger
 
 
 @pytest.fixture
@@ -62,7 +66,18 @@ def app():
     """
 
     _app = create_app(testing=True)
-    maintenance_init_redis_conn(_app.config["REDIS_URL"])
+
+    # enable web requests
+    if not set_web_requests_status(True):
+        fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
+
+    # enable the web signal handler. This should work on OSX and Linux.
+    if "windows" in platform.platform().lower():
+        fractal_logger.warning(
+            "signal handler is not supported on windows. skipping enabling them."
+        )
+    else:
+        SignalHandler()
 
     return _app
 

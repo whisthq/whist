@@ -25,7 +25,7 @@ class SignalHandler:
         SIGKILL follows 30 seconds from now, so this is our chance to clean-up resources cleanly.
         Specifically, we do the following:
         1. Flip a flag to stop incoming webserver requests, thereby making sure a webserver request
-        is not interrupted.
+        is not interrupted. We don't kill webserver now because a web request might be ongoing.
         """
         # 1. disallow web requests
         if not set_web_requests_status(False):

@@ -3,6 +3,9 @@
 import re
 import time
 import concurrent.futures
+import platform
+import os
+import signal
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -11,11 +14,13 @@ from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
 from app.config import _callback_webserver_hostname
+from app import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, RegionToAmi
+from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 
 
 def test_callback_webserver_hostname_localhost():
@@ -39,6 +44,36 @@ def test_callback_webserver_hostname_localhost_with_port():
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
+
+
+# this test cannot be run on windows, as it uses POSIX signals.
+# note that this is not the best test; third party libs like waitress can override signal handlers
+# this test runs in a flask context, so it might appear to work.
+# it has been independently verified that waitress does not override our SIGTERM handler.
+@pytest.mark.skipif(
+    "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
+)
+def test_webserver_sigterm(client):
+    # this is a dummy endpoint that we hit to make sure web requests are ok
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == SUCCESS
+
+    self_pid = os.getpid()
+    os.kill(self_pid, signal.SIGTERM)
+
+    # we need to wait for SIGTERM to come
+    for _ in range(100):
+        if not can_process_requests():
+            break
+        time.sleep(0.5)
+    assert not can_process_requests()
+
+    # web requests should be rejected
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+
+    # re-enable web requests
+    assert set_web_requests_status(True)
 
 
 @pytest.mark.parametrize(

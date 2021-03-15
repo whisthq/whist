@@ -10,6 +10,8 @@ instantiated in this module (e.g. `FLASK_ENV=entry`). Read more about Flask appl
 here: https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#application-discovery
 """
 
+import platform
+
 from app.factory import create_app
 from app.celery_utils import make_celery
 from app import set_web_requests_status
@@ -26,8 +28,11 @@ celery.set_default()
 if not set_web_requests_status(True):
     fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
 
-# enable the web signal handler
-SignalHandler()
+# enable the web signal handler. This should work on OSX and Linux.
+if "windows" in platform.platform().lower():
+    fractal_logger.warning("signal handler is not supported on windows. skipping enabling them.")
+else:
+    SignalHandler()
 
 # initialize redis connection for maintenance package
 maintenance_init_redis_conn(app.config["REDIS_URL"])
