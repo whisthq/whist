@@ -662,19 +662,6 @@ func containerStartHandler(ctx context.Context, cli *dockerclient.Client, id str
 		return err
 	}
 
-	// Assign an unused tty
-	assignedTty := -1
-	for tty := range ttyState {
-		if ttyState[tty] == "" {
-			assignedTty = tty
-			ttyState[assignedTty] = id
-			break
-		}
-	}
-	if assignedTty == -1 {
-		return logger.MakeError("Was not able to assign a free tty to container id %s", id)
-	}
-
 	// Write the tty assignment to a file
 	err = writeAssignmentToFile(datadir+"tty", logger.Sprintf("%d", assignedTty))
 	if err != nil {

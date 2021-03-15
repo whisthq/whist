@@ -96,7 +96,7 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 		for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
 			numTries++
 			if numTries >= 100 {
-				return desiredBind, logger.MakeError("Tried %v times to allocate a random host port for container port %v/%v. Breaking out after %v tries to avoid spinning for too long.", numTries, desiredBind.HostPort, desiredBind.Protocol, numTries)
+				return desiredBind, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", numTries, desiredBind.HostPort, desiredBind.Protocol)
 			}
 		}
 
