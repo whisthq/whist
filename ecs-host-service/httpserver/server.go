@@ -124,12 +124,12 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
 type SetContainerStartValuesRequest struct {
-    HostPort                int         `json:"host_port"`               // Port on the host to whose container the start values correspond
-    DPI                     int         `json:"dpi"`                     // DPI to set for the container
-    UserID                  string      `json:"user_id"`                 // User ID of the container user
-    UserAccessToken         string      `json:"access_token"`            // User access token for client app verification
-    ContainerARN            string      `json:"container_ARN"`           // AWS ID of the container
-    resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
+	HostPort        int                `json:"host_port"`     // Port on the host to whose container the start values correspond
+	DPI             int                `json:"dpi"`           // DPI to set for the container
+	UserID          string             `json:"user_id"`       // User ID of the container user
+	UserAccessToken string             `json:"access_token"`  // User access token for client app verification
+	ContainerARN    string             `json:"container_ARN"` // AWS ID of the container
+	resultChan      chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -167,48 +167,48 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	res.send(w)
 }
 
-// SetConfigEncryptionTokenRequest
+// SetConfigEncryptionTokenRequest defines the (unauthenticated) set config encryption token endpoint
 type SetConfigEncryptionTokenRequest struct {
-    HostPort                int         `json:"host_port"`               // Port on the host to whose container this user corresponds
-    UserID                  string      `json:"user_id"`                 // User to whom token belongs
-    ConfigEncryptionToken   string      `json:"config_encryption_token"` // User-specific private encryption token
-    UserAccessToken         string      `json:"access_token"`            // User access token for client app verification
-    resultChan   chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
+	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
+	UserID                string             `json:"user_id"`                 // User to whom token belongs
+	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
+	UserAccessToken       string             `json:"access_token"`            // User access token for client app verification
+	resultChan            chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
 func (s *SetConfigEncryptionTokenRequest) ReturnResult(result string, err error) {
-    s.resultChan <- requestResult{result, err}
+	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass config encryption token setting request
 // result back to the HTTP request handler via ReturnResult
 func (s *SetConfigEncryptionTokenRequest) createResultChan() {
-    if s.resultChan == nil {
-        s.resultChan = make(chan requestResult)
-    }
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
 }
 
 // Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
 func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-    // Verify that it is an PUT request
-    if verifyRequestType(w, r, http.MethodPut) != nil {
-        return
-    }
+	// Verify that it is an PUT request
+	if verifyRequestType(w, r, http.MethodPut) != nil {
+		return
+	}
 
-    // Verify authorization and unmarshal into the right object type
-    var reqdata SetConfigEncryptionTokenRequest
-    if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
-        logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-        return
-    }
+	// Verify authorization and unmarshal into the right object type
+	var reqdata SetConfigEncryptionTokenRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
 
-    // Send request to queue, then wait for result
-    queue <- &reqdata
-    res := <-reqdata.resultChan
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
 
-    res.send(w)
+	res.send(w)
 }
 
 // RegisterDockerContainerIDRequest defines the (unauthenticated)

@@ -482,7 +482,7 @@ func saveUserConfig(fractalID string) {
 
 		tarConfigCmd := exec.Command(
 			"/usr/bin/tar", "-I", "lz4", "-C", configPath, "-cf", decTarPath,
-			"--exclude=" + encTarPath, "--exclude=" + decTarPath,
+			"--exclude="+encTarPath, "--exclude="+decTarPath,
 			".")
 		tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 		// tar is only fatal when exit status is 2 -
@@ -500,15 +500,14 @@ func saveUserConfig(fractalID string) {
 			"/usr/bin/openssl", "aes-256-cbc", "-e",
 			"-in", decTarPath,
 			"-out", encTarPath,
-			"-pass", "pass:" + configEncryptionToken, "-pbkdf2")
+			"-pass", "pass:"+configEncryptionToken, "-pbkdf2")
 		encryptConfigOutput, err := encryptConfigCmd.CombinedOutput()
 		if err != nil {
 			// If the config could not be encrypted, don't upload
 			logger.Errorf("Could not encrypt config: %s. Output: %s", err, encryptConfigOutput)
 			return
-		} else {
-			logger.Infof("Encrypted config to %s", encTarPath)
 		}
+		logger.Infof("Encrypted config to %s", encTarPath)
 
 		saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", encTarPath, s3ConfigPath)
 		saveConfigOutput, err := saveConfigCmd.CombinedOutput()
@@ -575,13 +574,12 @@ func getUserConfig(fractalID string) error {
 			"/usr/bin/openssl", "aes-256-cbc", "-d",
 			"-in", encTarPath,
 			"-out", decTarPath,
-			"-pass", "pass:" + configEncryptionToken, "-pbkdf2")
+			"-pass", "pass:"+configEncryptionToken, "-pbkdf2")
 		decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 		if err != nil {
 			return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
-		} else {
-			logger.Infof("Decrypted config to %s", decTarPath)
 		}
+		logger.Infof("Decrypted config to %s", decTarPath)
 
 		// Delete original encrypted config
 		err = os.Remove(encTarPath)
@@ -618,21 +616,20 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 	alreadyCalledEndpoint, alreadyCalledEndpointExists := calledSetupEndpoints[fractalID]
 	if !alreadyCalledEndpointExists {
 		containerUserAccessTokens[fractalID] = userAccessToken
-                calledSetupEndpoints[fractalID] = callerFunction
+		calledSetupEndpoints[fractalID] = callerFunction
 		return nil
-	} else {
-        // If a malicious user is requesting the same endpoint multiple times, they won't get past
-        //     the first call because a different endpoint needs to be called to proceed, and there
-        //     are only two endpoints that can lead to this point.
-        // NOTE: if more endpoints are added to call `completeContainerSetup`, then please view the
-        //    note above the declaration of `calledSetupEndpoints`.
-        if alreadyCalledEndpoint == callerFunction {
-            logger.Errorf("Same container setup endpoint called multiple times for user %s", userID)
-            return nil
-        }
-        delete(calledSetupEndpoints, fractalID)
+	}
+	// If a malicious user is requesting the same endpoint multiple times, they won't get past
+	//     the first call because a different endpoint needs to be called to proceed, and there
+	//     are only two endpoints that can lead to this point.
+	// NOTE: if more endpoints are added to call `completeContainerSetup`, then please view the
+	//    note above the declaration of `calledSetupEndpoints`.
+	if alreadyCalledEndpoint == callerFunction {
+		logger.Errorf("Same container setup endpoint called multiple times for user %s", userID)
+		return nil
+	}
+	delete(calledSetupEndpoints, fractalID)
 	containerUserIDs[fractalID] = userID
-    }
 
 	var err error
 	// Populate the user config folder for the container's app ONLY if both the client app
@@ -644,17 +641,17 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 			logger.Error(err)
 		}
 	} else {
-        // If the access tokens are not the same, then remove the user ID from the map and 
-	//     log an error. This will allow the container to still run, but prevent any 
-	//     app config from saving at the end of the session.
-        logger.Errorf("User access tokens for user %s did not match - not retrieving config", userID)
-        delete(containerUserIDs, fractalID)
-    }
+		// If the access tokens are not the same, then remove the user ID from the map and
+		//     log an error. This will allow the container to still run, but prevent any
+		//     app config from saving at the end of the session.
+		logger.Errorf("User access tokens for user %s did not match - not retrieving config", userID)
+		delete(containerUserIDs, fractalID)
+	}
 
 	// Indicate that we are ready for the container to read the data back
 	// (see comment at the end of containerStartHandler)
 	datadir := fractalDir + fractalID + "/" + containerResourceMappings
-	err = writeAssignmentToFile(datadir + ".ready", ".ready")
+	err = writeAssignmentToFile(datadir+".ready", ".ready")
 	if err != nil {
 		// Don't need to wrap err here because writeAssignmentToFile already contains the relevant info
 		return err
@@ -891,7 +888,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	delete(containerAppNames, fractalID)
 	delete(containerUserIDs, fractalID)
 	delete(containerUserAccessTokens, fractalID)
-        delete(calledSetupEndpoints, fractalID)
+	delete(calledSetupEndpoints, fractalID)
 
 	resourcetrackers.FreePortBindings(fractalID)
 	delete(containerIDs, hostPort)
