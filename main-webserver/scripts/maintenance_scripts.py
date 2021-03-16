@@ -121,6 +121,6 @@ def update_region(web_url: str, admin_token: str, region_name: str, ami: str):
     # TODO: just dump a list in `update_region` and parse here.
     # This is for backcompat with old bash scripts.
     subtasks = subtasks.split(" ")
-    for subtask in subtasks:
+    for subtask_id in subtasks:
         # will error out if task failed
-        poll_celery_task(web_url, admin_token, subtask)
+        poll_celery_task(web_url, subtask_id, admin_token)
