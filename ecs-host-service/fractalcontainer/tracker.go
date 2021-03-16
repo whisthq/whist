@@ -23,7 +23,7 @@ func untrackContainer(fc FractalContainer) {
 	delete(tracker, fc.GetFractalID())
 }
 
-func LookUp(IdentifyingHostPort uint16) (FractalContainer, error) {
+func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, error) {
 	for _, v := range tracker {
 		p, _ := v.GetIdentifyingHostPort()
 		if p == IdentifyingHostPort {
@@ -31,4 +31,14 @@ func LookUp(IdentifyingHostPort uint16) (FractalContainer, error) {
 		}
 	}
 	return nil, logger.MakeError("Couldn't find FractalContainer with IdentifyingHostPort %v", IdentifyingHostPort)
+}
+
+func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
+	for _, v := range tracker {
+		d := v.GetDockerID()
+		if d == DockerID {
+			return v, nil
+		}
+	}
+	return nil, logger.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
 }
