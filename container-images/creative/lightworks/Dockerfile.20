@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 # Download Lightworks installer
 # Note that this is NOT the latest version of Lightworks -- it is an older version which works on Ubuntu 20.04
 # It would be ideal to get the latest version to work, but it may not be possible for some time
-RUN wget https://downloads.lwks.com/v14-5/lightworks-14.5.0-amd64.deb -O "lightworks.deb"
+RUN wget https://downloads.lwks.com/v14-5/lightworks-14.5.0-amd64.deb -qO "lightworks.deb"
 
 # Install Lightworks
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
