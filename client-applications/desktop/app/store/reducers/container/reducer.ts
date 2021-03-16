@@ -13,7 +13,7 @@ export default (
         Description:
             Reducer for container actions
         Arguments:
-            body (Task | Container ): Action body 
+            body (Task | Container): Action body 
             type (string): Action type
     */
 
