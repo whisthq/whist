@@ -261,7 +261,8 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 
-	// TODO: Unmount all cloud-storage folders
+	// Unmount all cloud-storage folders and clean up all container-related resources
+	fractalcontainer.CloseAll()
 }
 
 func main() {
