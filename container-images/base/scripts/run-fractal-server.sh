@@ -76,6 +76,9 @@ done
 find $USER_CONFIGS_DIR -xtype l -delete
 
 # To assist the tar tool's "exclude" option, create a dummy tar file if it does not already exist
+#     tar is really pleb: it won't exclude the file unless it exists when it starts tarring, so
+#     since we're tarring within the directory, tar gets confused about the new tar archive and
+#     doesn't exclude it from its archive process. Hence the dummy file!
 tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
 if [ ! -f "$tarFile" ]; then
     touch $tarFile
