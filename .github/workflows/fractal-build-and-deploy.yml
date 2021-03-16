@@ -584,7 +584,7 @@ jobs:
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  # stdout will be shared with the subprocess
+                  # stdout will be shared with the subprocess so we can see what is happening
                   subprocess.run("packer -machine-readable build ami_config.json", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
