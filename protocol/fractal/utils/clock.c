@@ -99,8 +99,17 @@ char* current_time_str() {
 
 int get_utc_offset() {
 #if defined(_WIN32)
-    LOG_ERROR("Unimplemented on Windows!");
-    return 0;
+    char* utc_offset_str;
+    runcmd("powershell.exe \"Get-Date -UFormat \\\"%Z\\\"\"", &utc_offset_str);
+    if (strlen(utc_offset_str) >= 3) {
+        utc_offset_str[3] = '\0';
+    }
+
+    int utc_offset = atoi(utc_offset_str);
+
+    free(utc_offset_str);
+
+    return utc_offset;
 #else
     time_t t = time(NULL);
     struct tm lt = {0};
@@ -112,7 +121,7 @@ int get_utc_offset() {
 
 int get_dst() {
 #if defined(_WIN32)
-    LOG_ERROR("Unimplemented on Windows!");
+    // TODO: Implement DST on Windows if it makes sense
     return 0;
 #else
     time_t t = time(NULL);
@@ -122,57 +131,53 @@ int get_dst() {
 #endif
 }
 
-char* get_timezone_from_windows_name() {
+int get_time_data(FractalTimeData* time_data) {
+    time_data->use_utc_offset = 1;
+
+    time_data->utc_offset = get_utc_offset();
+    time_data->dst_flag = get_dst();
+    LOG_INFO("Getting UTC offset %d (DST: %d)", time_data->utc_offset, time_data->dst_flag);
+
+#ifdef _WIN32
+    time_data->use_win_name = 1;
+    time_data->use_linux_name = 0;
+
     char* win_tz_name = NULL;
     runcmd("powershell.exe \"$tz = Get-TimeZone; $tz.Id\" ", &win_tz_name);
     LOG_DEBUG("Getting Windows TimeZone %s", win_tz_name);
-    win_tz_name[strlen(win_tz_name) - 1] = '\0';
-    return win_tz_name;
-}
-
-int get_time_data(FractalTimeData* time_data) {
-#ifdef _WIN32
-    time_data->use_win_name = 0;
-    time_data->use_linux_name = 0;
-
-    char* utc_offset_str;
-    runcmd("powershell.exe \"Get-Date -UFormat \\\"\%Z\\\"\"", &utc_offset_str);
-
-    time_data->utc_offset = atoi(utc_offset_str);
-    time_data->dst_flag = 0;
-
-    free(utc_offset_str);
+    if (strlen(win_tz_name) >= 1) {
+        win_tz_name[strlen(win_tz_name) - 1] = '\0';
+    }
+    safe_strncpy(time_data->win_tz_name, win_tz_name, min(sizeof(time_data->win_tz_name), strlen(win_tz_name)+1));
+    free(win_tz_name);
 
     return 0;
 #elif __APPLE__
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
 
-    time_data->utc_offset = get_utc_offset();
-    LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
-    time_data->dst_flag = get_dst();
-
-    char* response = NULL;
+    char* linux_tz_name = NULL;
     runcmd(
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
-        &response);
-    safe_strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
-    free(response);
+        &linux_tz_name);
+    safe_strncpy(time_data->linux_tz_name, linux_tz_name, min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name)+1));
+    free(linux_tz_name);
 
     return 0;
 #else
     time_data->use_win_name = 0;
     time_data->use_linux_name = 1;
+    time_data->use_utc_offset = 1;
 
     time_data->utc_offset = get_utc_offset();
     LOG_INFO("Sending UTC offset %d", time_data->utc_offset);
     time_data->dst_flag = get_dst();
 
-    char* response = NULL;
-    runcmd("cat /etc/timezone", &response);
-    safe_strncpy(time_data->linux_tz_name, response, sizeof(time_data->linux_tz_name));
-    free(response);
+    char* linux_tz_name = NULL;
+    runcmd("cat /etc/timezone", &linux_tz_name);
+    safe_strncpy(time_data->linux_tz_name, linux_tz_name, min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name)+1));
+    free(linux_tz_name);
 
     return 0;
 #endif
