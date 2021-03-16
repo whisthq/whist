@@ -83,43 +83,6 @@ def test_webserver_sigterm(client):
     assert resp.status_code == SUCCESS
 
 
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("authorized")
-def test_celery_sigterm(client, authorized):
-    resp = client.get("/dummy")
-    assert resp.status_code == ACCEPTED
-
-    started = False
-    status_id = resp.json["ID"]
-    for _ in range(10):
-        task_result = current_celery_app.AsyncResult(status_id)
-        if task_result.state == "STARTED":
-            started = True
-            break
-        time.sleep(1)  # wait for task to become available
-    assert started is True, f"Got unexpected task state {task_result.state}."
-
-    self_pid = os.getpid()
-    os.kill(self_pid, signal.SIGTERM)
-
-    revoked = False
-    for _ in range(10):
-        task_result = current_celery_app.AsyncResult(status_id)
-        if task_result.state == "REVOKED":
-            revoked = True
-            break
-        time.sleep(1)  # wait for task to become available
-    assert revoked is True, f"Got unexpected task state {task_result.state}."
-
-    # re-enable web requests
-    assert set_web_requests_status(True)
-
-    # should be ok
-    resp = client.post("/newsletter/post")
-    assert resp.status_code == SUCCESS
-
-
 @pytest.mark.parametrize(
     "username, is_developer",
     (
