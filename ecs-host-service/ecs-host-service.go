@@ -518,8 +518,13 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
 		//    this means that it's the user's first run and they don't have any settings
 		//    stored for this application yet.
-		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
-			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+		if err != nil {
+			if !strings.Contains(string(getConfigOutput), "does not exist") {
+				return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
+			} else {
+				logger.Infof("Ran \"aws s3 cp\" and config does not exist")
+				return nil
+			}
 		}
 		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 
