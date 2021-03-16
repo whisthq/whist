@@ -321,7 +321,7 @@ def test_update_region(client, monkeypatch):
     assert resp.status_code == BAD_REQUEST
 
     # then, we put server into maintenance mode
-    resp = client.post("/aws_container/start_maintenance", json={"region_name": "us-east-1"})
+    resp = client.post("/aws_container/start_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -340,7 +340,7 @@ def test_update_region(client, monkeypatch):
         assert False
 
     # finally, we end maintenance mode
-    resp = client.post("/aws_container/end_maintenance", json={"region_name": "us-east-1"})
+    resp = client.post("/aws_container/end_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
     # -- webserver requests end -- #
@@ -396,7 +396,66 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 # this test does not need AWS resources or any cluster/container setup
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_task_defs(client, authorized, monkeypatch):
+def test_update_single_task_defs(client, authorized, monkeypatch):
+    # mock describe_task so we don't unnecesarily call AWS API
+    # this also stops races between someone running tests and task definition updates that
+    # are incompatible with the AMIs that the test suite started with.
+    fake_aws_response = {"taskDefinition": {"revision": -1}}
+    monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
+
+    app_id = "Blender"
+    # cache the current task defs
+    db.session.expire_all()
+    all_app_data = SupportedAppImages.query.all()
+    app_id_to_taskdef = {app_data.app_id: app_data.task_definition for app_data in all_app_data}
+
+    # -- actual webserver requests start -- #
+    # this should fail cause server is not in maintenance mode
+    resp = client.post("/aws_container/update_taskdefs")
+    assert resp.status_code == BAD_REQUEST
+
+    # then, we put server into maintenance mode
+    resp = client.post("/aws_container/start_maintenance")
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+
+    # now we try again
+    resp = client.post("/aws_container/update_taskdefs", json={"app_id": app_id})
+    task = queryStatus(client, resp, timeout=2)
+    if task["status"] < 1:
+        fractal_logger.error(f"task timed out with output {task['output']}")
+        assert False
+
+    # finally, we end maintenance mode
+    resp = client.post("/aws_container/end_maintenance")
+    assert resp.status_code == SUCCESS
+    assert resp.json["success"] is True
+    # -- webserver requests end -- #
+
+    # refresh db objects
+    db.session.expire_all()
+    all_app_data = SupportedAppImages.query.all()
+    for app_data in all_app_data:
+        if app_data.app_id == app_id:
+            # this should change to have revision -1
+            # grab the task def name without revision
+            task_name = app_id_to_taskdef[app_data.app_id].split(":")[0]
+            assert app_data.task_definition == f"{task_name}:-1"
+        else:
+            # everything else should be the same as cached
+            assert app_data.task_definition == app_id_to_taskdef[app_data.app_id]
+
+    # restore db to old state
+    db.session.expire_all()
+    app_data = SupportedAppImages.query.get(app_id)
+    app_data.task_definition = app_id_to_taskdef[app_data.app_id]
+    db.session.commit()
+
+
+# this test does not need AWS resources or any cluster/container setup
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_update_all_task_defs(client, authorized, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
@@ -414,7 +473,7 @@ def test_update_task_defs(client, authorized, monkeypatch):
     assert resp.status_code == BAD_REQUEST
 
     # then, we put server into maintenance mode
-    resp = client.post("/aws_container/start_maintenance", json={"region_name": "us-east-1"})
+    resp = client.post("/aws_container/start_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
 
@@ -426,7 +485,7 @@ def test_update_task_defs(client, authorized, monkeypatch):
         assert False
 
     # finally, we end maintenance mode
-    resp = client.post("/aws_container/end_maintenance", json={"region_name": "us-east-1"})
+    resp = client.post("/aws_container/end_maintenance")
     assert resp.status_code == SUCCESS
     assert resp.json["success"] is True
     # -- webserver requests end -- #
