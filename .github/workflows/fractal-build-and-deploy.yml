@@ -467,10 +467,6 @@ jobs:
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
 
-            # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-            # defined as a formatted json array to be copied into ami_config.json directly
-            aws_additional_supported_regions: "[\\\"us-east-2\\\"]"
-
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -518,15 +514,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Upgrade pip and install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
-
             - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
               working-directory: ecs-host-setup
               run: |
@@ -546,21 +533,29 @@ jobs:
             # in-place via jq.
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
+              shell: python3 {0}
               run: >
-                  cat ami_config.json
-                  | jq -c ".builders[0].secret_key = \"${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}\""
-                  | jq -c ".builders[0].access_key = \"${{ secrets.AWS_EC2_ACCESS_KEY_ID }}\""
-                  | jq -c ".builders[0].ami_name = \"fractal-ecs-host-ami-${{ env.commit_sha }}-$(date +"%y%m%d%H%M%S")\""
-                  | jq -c ".builders[0].region = \"${{ env.aws_new_ami_source_region }}\""
-                  | jq -c ".builders[0].instance_type = \"${{ env.aws_new_ami_instance_type }}\""
-                  | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
-                  | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
-                  | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
-                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
-                  > ami_config_tmp.json
-                  && mv ami_config_tmp.json
-                  ami_config.json
+                  import json
+                  fp = open("ami_config.json", "r")
+                  data = json.load(fp)
+                  fp.close()
 
+                  data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  data["builders"][0]["ami_name"] = "fractal-ecs-host-ami-${{ env.commit_sha }}-$(date +"%y%m%d%H%M%S")"
+                  data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["builders"][0]["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["builders"][0]["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["builders"][0]["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+                  # defined as a formatted json array to be copied into ami_config.json directly
+                  data["builders"][0]["ami_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
+
+                  fp = open("ami_config.json", "w")
+                  json.dump(data, fp)
+                  fp.close()
+                  
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
@@ -591,7 +586,7 @@ jobs:
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
-                  fp = open("manifest.json")
+                  fp = open("manifest.json", "r")
                   data = json.load(fp)
                   fp.close()
                   print(data)
