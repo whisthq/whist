@@ -1,20 +1,17 @@
 package main
 
 import (
-	"bytes"
 	"math"
 
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via Sentry. Instead, use the
 	// fractallogger package imported below as `logger`
 	"context"
-	"encoding/json"
 	"io"
 	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -45,7 +42,6 @@ func init() {
 // delete the entire `fractal` directory on exit.
 const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
-const fractalTempDir = fractalDir + "temp/"
 
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
@@ -80,170 +76,6 @@ func startECSAgent() {
 // ------------------------------------
 // Container state manangement/mappings
 // ------------------------------------
-
-// keys: hostPort, values: slice containing all cloud storage directories that are
-// mounted for that specific container
-var cloudStorageDirs map[uint16]map[string]interface{} = make(map[uint16]map[string]interface{})
-
-// Unmounts a cloud storage directory mounted on hostPort
-func unmountCloudStorageDir(hostPort uint16, path string) {
-	// Unmount lazily, i.e. will unmount as soon as the directory is not busy
-	cmd := exec.Command("fusermount", "-u", "-z", path)
-	res, err := cmd.CombinedOutput()
-	if err != nil {
-		logger.Errorf("Command \"%s\" returned an error code. Output: %s", cmd, res)
-	} else {
-		logger.Infof("Successfully unmounted cloud storage directory %s", path)
-	}
-
-	// Remove it from the state
-	_, ok := cloudStorageDirs[hostPort]
-	if !ok {
-		logger.Infof("No cloud storage dirs found for hostPort %v", hostPort)
-		return
-	}
-	delete(cloudStorageDirs[hostPort], path)
-}
-
-// Mounts the cloud storage directory and waits around to clean it up once it's unmounted.
-func mountCloudStorageDir(req *httpserver.MountCloudStorageRequest) error {
-	var rcloneType string
-	var dirName string
-
-	switch req.Provider {
-	case "google_drive":
-		rcloneType = "drive"
-		dirName = "Google Drive"
-	case "dropbox":
-		rcloneType = "dropbox"
-		dirName = "Dropbox"
-	default:
-		return logger.MakeError("Unrecognized cloud storage provider: req.Provider=%s", req.Provider)
-	}
-
-	// Compute the directory to mount the cloud storage folder in
-	dockerID, ok := containerIDs[uint16(req.HostPort)]
-	if !ok {
-		return logger.MakeError("mountCloudStoragedir: couldn't find DockerID for hostPort %v", req.HostPort)
-	}
-	fractalID, ok := fractalIDs[dockerID]
-	if !ok {
-		return logger.MakeError("mountCloudStoragedir: couldn't find FractalID for hostPort %v", req.HostPort)
-	}
-
-	// Don't forget the trailing slash
-	path := logger.Sprintf("%s%s/%s/", cloudStorageDir, fractalID, dirName)
-	configName := fractalID + rcloneType
-
-	buf, err := json.Marshal(
-		struct {
-			AccessToken  string `json:"access_token"`
-			TokenType    string `json:"token_type"`
-			RefreshToken string `json:"refresh_token"`
-			Expiry       string `json:"expiry"`
-		}{
-			req.AccessToken,
-			req.TokenType,
-			req.RefreshToken,
-			req.Expiry,
-		},
-	)
-	if err != nil {
-		return logger.MakeError("Error creating token for rclone: %s", err)
-	}
-	token := logger.Sprintf("'%s'", buf)
-
-	// Make directory to mount in
-	err = os.MkdirAll(path, 0777)
-	if err != nil {
-		return logger.MakeError("Could not mkdir path %s. Error: %s", path, err)
-	}
-	logger.Infof("Created directory %s", path)
-	makeFractalDirectoriesFreeForAll()
-
-	// We mount in foreground mode, and wait for the result to clean up the
-	// directory created for this purpose. That way we know that we aren't
-	// accidentally removing files from the user's cloud storage drive.
-	// cmd := exec.Command(
-	strcmd := strings.Join(
-		[]string{
-			"/usr/bin/rclone", "config", "create", configName, rcloneType,
-			"config_is_local", "false",
-			"config_refresh_token", "false",
-			"token", token,
-			"client_id", req.ClientID,
-			"client_secret", req.ClientSecret,
-		}, " ")
-	// )
-	scriptpath := fractalTempDir + "config-create-" + configName + ".sh"
-	f, _ := os.Create(scriptpath)
-	_, _ = f.WriteString(logger.Sprintf("#!/bin/sh\n\n"))
-	_, _ = f.WriteString(strcmd)
-	os.Chmod(scriptpath, 0700)
-	f.Close()
-	defer os.RemoveAll(scriptpath)
-	cmd := exec.Command(scriptpath)
-
-	logger.Info("Rclone config create command: %v", cmd)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return logger.MakeError("Could not run \"rclone config create\" command: %s. Output: %s", err, output)
-	}
-	logger.Info("Ran \"rclone config create\" command with output: %s", output)
-
-	// Mount in separate goroutine so we don't block the main goroutine.
-	// Synchronize using errorchan.
-	errorchan := make(chan error)
-	go func() {
-		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path, "--allow-other", "--vfs-cache-mode", "writes")
-		cmd.Env = os.Environ()
-		logger.Info("Rclone mount command: [  %v  ]", cmd)
-		stderr, _ := cmd.StderrPipe()
-
-		if _, ok := cloudStorageDirs[uint16(req.HostPort)]; !ok {
-			cloudStorageDirs[uint16(req.HostPort)] = make(map[string]interface{}, 0)
-		}
-		cloudStorageDirs[uint16(req.HostPort)][path] = nil
-
-		err = cmd.Start()
-		if err != nil {
-			errorchan <- logger.MakeError("Could not start \"rclone mount %s\" command: %s", configName+":/", err)
-			close(errorchan)
-			return
-		}
-
-		// We close errorchan after `timeout` so the enclosing function can return an
-		// error if the `rclone mount` command failed immediately, or return nil if
-		// it didn't.
-		timeout := time.Second * 15
-		timer := time.AfterFunc(timeout, func() { close(errorchan) })
-		logger.Infof("Attempting to mount storage directory %s", path)
-
-		errbuf := new(bytes.Buffer)
-		errbuf.ReadFrom(stderr)
-
-		err = cmd.Wait()
-		if err != nil {
-			errorchanStillOpen := timer.Stop()
-			if errorchanStillOpen {
-				errorchan <- logger.MakeError("Mounting of cloud storage directory %s returned an error: %s. Output: %s", path, err, errbuf)
-				close(errorchan)
-			} else {
-				logger.Errorf("Mounting of cloud storage directory %s failed after more than timeout %v and was therefore not reported as a failure to the webserver. Error: %s. Output: %s", path, timeout, err, errbuf)
-			}
-		}
-
-		// Remove the now-unnecessary directory we created
-		err = os.Remove(path)
-		if err != nil {
-			logger.Errorf("Error removing cloud storage directory %s: %s", path, err)
-		}
-	}()
-
-	err = <-errorchan
-	return err
-}
 
 // Creates a file containing the DPI assigned to a specific container, and make
 // it accessible to that container. Also take the received User ID and retrieve
@@ -308,13 +140,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	delete(containerIDs, hostPort)
 	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
 
-	// Unmount cloud storage directories
-	storageDirs, exists := cloudStorageDirs[hostPort]
-	if exists {
-		for k := range storageDirs {
-			unmountCloudStorageDir(hostPort, k)
-		}
-	}
+	// TODO: Unmount cloud storage directories
 }
 
 // ---------------------------
@@ -396,6 +222,12 @@ func initializeFilesystem() {
 		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
 	}
 
+	// Create fractal temp directory
+	err = os.MkdirAll("/fractal/temp/", 0777)
+	if err != nil {
+		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
+	}
+
 	makeFractalDirectoriesFreeForAll()
 }
 
@@ -417,12 +249,7 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 
-	// Unmount all cloud-storage folders
-	for port, dirs := range cloudStorageDirs {
-		for k := range dirs {
-			unmountCloudStorageDir(port, k)
-		}
-	}
+	// TODO: Unmount all cloud-storage folders
 }
 
 func main() {
