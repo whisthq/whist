@@ -15,10 +15,15 @@ export const getContainerInfo = (taskID: string) => {
     }
 }
 
-export const setHostServiceConfigToken = (ip: string, port: number) => {
+export const setHostServiceConfigToken = (
+    ip: string,
+    port: number,
+    clientAppAuthSecret: string
+) => {
     return {
         type: SET_HOST_SERVICE_CONFIG_TOKEN,
         ip,
         port,
+        clientAppAuthSecret,
     }
 }
