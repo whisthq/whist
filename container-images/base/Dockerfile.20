@@ -404,7 +404,7 @@ RUN systemctl mask NetworkManager-wait-online
 RUN systemctl mask nvidia-persistenced
 RUN systemctl disable sshd
 
-# Remove ProtestHostname=yes lines from logind and timedate system
+# Remove ProtectHostname=yes lines from logind and timedate systemd services
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-logind.service
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timesyncd.service
 RUN sed -i "/^ProtectHostname=yes$/d" /usr/lib/systemd/system/systemd-timedated.service
