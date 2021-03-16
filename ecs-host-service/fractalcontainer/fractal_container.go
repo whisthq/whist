@@ -108,6 +108,8 @@ func New(fid FractalID) FractalContainer {
 
 	c.createResourceMappingDir()
 
+	trackContainer(c)
+
 	return c
 }
 
@@ -278,4 +280,8 @@ func (c *containerData) Close() {
 
 	// Clean up user configs
 	c.cleanUserConfigDir()
+
+	// TODO: clean up cloud storage
+
+	untrackContainer(c)
 }
