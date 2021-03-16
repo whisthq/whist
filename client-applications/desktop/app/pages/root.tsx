@@ -21,7 +21,7 @@ import TitleBar from "shared/components/titleBar"
 import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 
-const Root = (props: { loginToken: string }) => {
+const Root = (props: { loginToken: string, accessToken: string }) => {
     /*
         Highest level component, containers React Router and title bar
 
@@ -29,7 +29,7 @@ const Root = (props: { loginToken: string }) => {
             loginToken: one time use token for retrieving the user access token
     */
 
-    const { loginToken } = props
+    const { loginToken, accessToken } = props
 
     // Set up Apollo GraphQL provider for https and wss (websocket)
     const createApolloClient = (tempLoginToken: string) => {
@@ -44,6 +44,7 @@ const Root = (props: { loginToken: string }) => {
                 connectionParams: {
                     headers: {
                         "X-Hasura-Login-Token": tempLoginToken,
+                        Authorization: `Bearer ${accessToken}`,
                     },
                 },
             },
@@ -95,10 +96,11 @@ const Root = (props: { loginToken: string }) => {
 
 // Keeping here for future use
 const mapStateToProps = (state: {
-    AuthReducer: { authFlow: { loginToken: string } }
+    AuthReducer: { authFlow: { loginToken: string }, user: { accessToken: string } }
 }) => {
     return {
         loginToken: state.AuthReducer.authFlow.loginToken,
+        accessToken: state.AuthReducer.user.accessToken,
     }
 }
 
