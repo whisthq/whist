@@ -31,7 +31,7 @@ Store.initRenderer()
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
-let updating = {
+global.updatingStatus = {
     status: false,
 }
 // Detects whether fractal:// has been typed into a browser
@@ -58,7 +58,7 @@ process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
 })
 
-export const launchWindow = async (
+const launchWindow = async (
     mainWindow: BrowserWindow | null = null,
     customURL: string | null = null,
     showMainWindow: boolean
@@ -71,9 +71,9 @@ export const launchWindow = async (
     }, 2000)
 
     // mainWindow.webContents.openDevTools()
-    initiateWindowListeners(mainWindow, customURL, showMainWindow, updating)
+    initiateAutoUpdateListeners(mainWindow)
+    initiateWindowListeners(mainWindow, customURL, showMainWindow)
     initiateFractalIPCListeners(mainWindow, showMainWindow)
-    initiateAutoUpdateListeners(mainWindow, updating)
 
     return mainWindow
 }

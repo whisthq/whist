@@ -8,8 +8,7 @@ import { FractalIPC } from "../shared/types/ipc"
  * @param updating
  */
 export const initiateAutoUpdateListeners = (
-    mainWindow: BrowserWindow | null = null,
-    updating: { status: boolean }
+    mainWindow: BrowserWindow | null = null
 ) => {
     // Autoupdater listeners, will fire if S3 app version is greater than current version
     const { dialog } = require("electron")
@@ -21,23 +20,29 @@ export const initiateAutoUpdateListeners = (
     autoUpdater.autoDownload = false
 
     autoUpdater.on("update-available", () => {
-        updating.status = true
+        global.updatingStatus.status = true
 
         if (mainWindow) {
-            options.message = `UPDATE AVAILABLE IN LISTENER`
+            options.message = `UPDATE AVAILABLE IN LISTENER ${global.updatingStatus.status}`
 
             dialog.showMessageBox(null, options, (response) => {
                 console.log(response)
             })
-            mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
+            mainWindow.webContents.send(
+                FractalIPC.UPDATE,
+                global.updatingStatus.status
+            )
         }
         autoUpdater.downloadUpdate()
     })
 
     autoUpdater.on("update-not-available", () => {
-        updating.status = false
+        global.updatingStatus.status = false
         if (mainWindow) {
-            mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
+            mainWindow.webContents.send(
+                FractalIPC.UPDATE,
+                global.updatingStatus.status
+            )
         }
     })
 
@@ -75,8 +80,6 @@ export const initiateAutoUpdateListeners = (
             mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
         }
         autoUpdater.quitAndInstall()
-        updating.status = false
+        global.updatingStatus.status = false
     })
-
-    return updating
 }

@@ -70,8 +70,7 @@ export const createWindow = async (mainWindow: BrowserWindow | null = null) => {
 export const initiateWindowListeners = (
     mainWindow: BrowserWindow,
     customURL: string | null = null,
-    showMainWindow: boolean,
-    updating: { status: boolean }
+    showMainWindow: boolean
 ) => {
     const os = require("os")
     const { dialog } = require("electron")
@@ -115,13 +114,17 @@ export const initiateWindowListeners = (
             }
         }
         const options = {
-            message: `updating status in web listener ${updating.status}`,
+            message: `updating status in web listener ${global.updatingStatus.status}`,
         }
 
         dialog.showMessageBox(null, options, (response) =>
             console.log(response)
         )
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
+        console.log(global.updatingStatus)
+        mainWindow.webContents.send(
+            FractalIPC.UPDATE,
+            global.updatingStatus.status
+        )
     })
 
     mainWindow.on("close", (event) => {
