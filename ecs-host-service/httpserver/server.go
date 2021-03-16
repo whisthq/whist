@@ -1,4 +1,4 @@
-package httpserver
+package httpserver // import "github.com/fractal/fractal/ecs-host-service/httpserver"
 
 import (
 	"crypto/subtle"

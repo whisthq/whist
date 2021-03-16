@@ -1,4 +1,4 @@
-package ttys
+package ttys // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 
 import (
 	"math/rand"
