@@ -312,7 +312,7 @@ def _get_num_extra(taskdef, location):
                 task_definition=taskdef, location=location, is_assigned=False
             )
         )
-        return max(0, num_needed_running - num_currently_running)
+        return max(0, int(num_needed_running - num_currently_running))
     return 0
 
 
