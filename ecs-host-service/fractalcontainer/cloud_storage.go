@@ -1,4 +1,4 @@
-package fractalcontainer
+package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 
 import (
 	"bytes"
