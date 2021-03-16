@@ -135,5 +135,6 @@ class UserContainerState(db.Model):
     user_id = db.Column(db.ForeignKey("users.user_id"), primary_key=True, nullable=False)
     state = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250))
+    host_service_auth_secret = db.Column(db.String(250))
     port = db.Column(db.Integer)
     task_id = db.Column(db.String(250), nullable=False)
