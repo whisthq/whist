@@ -9,8 +9,7 @@ export const generateHashedPassword = (password: string): string => {
     */
     const token = crypto.pbkdf2Sync(
         password,
-        "8mtVk2LAE54UigkYJ9GX6",
-        //process.env.SHA_SECRET_KEY,
+        process.env.SHA_SECRET_KEY,
         100000,
         16,
         "sha256"

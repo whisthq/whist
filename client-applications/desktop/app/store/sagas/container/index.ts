@@ -116,6 +116,7 @@ function* getContainerInfo(action: { taskID: string; type: string }) {
 function* setHostServiceConfigToken(action: {
     ip: string
     port: number
+    clientAppAuthSecret: string
     type: string
 }) {
     /*
@@ -124,12 +125,12 @@ function* setHostServiceConfigToken(action: {
 
     Arguments:
         ip (string): IP address to host service
-        port (number): port to pass to the host service // is this correct?
+        port (number): port to pass to the host service
         type (string): identifier for this side effect
+        clientAppAuthSecret: unique generated auth secret from the db to authenticate the host service request
     */
     const state = yield select()
     const userID = state.AuthReducer.user.userID
-    const accessToken = state.AuthReducer.user.access_token
 
     const body = {
         user_id: userID /* eslint-disable-line @typescript-eslint/camelcase */,
@@ -138,7 +139,8 @@ function* setHostServiceConfigToken(action: {
         config_encryption_token:
             state.AuthReducer.user
                 .configToken /* eslint-disable-line @typescript-eslint/camelcase */,
-        access_token: accessToken /* eslint-disable-line @typescript-eslint/camelcase */,
+        client_app_auth_secret:
+            action.clientAppAuthSecret /* eslint-disable-line @typescript-eslint/camelcase */,
     }
 
     const { success } = yield call(
