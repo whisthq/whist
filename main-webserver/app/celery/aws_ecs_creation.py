@@ -112,7 +112,7 @@ def _mount_cloud_storage(user, container):
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, host_service_auth_secret):
+def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, client_app_auth_secret):
     """
     Send the instance start values to the host service.
 
@@ -122,7 +122,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, host_se
         port: The port on the instance to which port 32262 within the container has been mapped.
         dpi: The DPI of the client display.
         user_id: The container's assigned user's user ID
-        host_service_auth_secret: the auth secret the client app should use
+        client_app_auth_secret: the auth secret the client app should use
     """
 
     try:
@@ -133,7 +133,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id, host_se
                 "container_ARN": container_id,
                 "dpi": dpi,
                 "user_id": user_id,
-                "client_app_auth_secret": host_service_auth_secret,
+                "client_app_auth_secret": client_app_auth_secret,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -364,7 +364,7 @@ def _assign_container(
     dpi=96,
     webserver_url=None,
 ):
-    host_service_auth_secret = os.urandom(16).hex()
+    client_app_auth_secret = os.urandom(16).hex()
     """
     See assign_container. This is helpful to mock.
     """
@@ -568,7 +568,7 @@ def _assign_container(
         base_container.port_32262,
         base_container.dpi,
         user.user_id,
-        host_service_auth_secret,
+        client_app_auth_secret,
     )
     # give the host service time to process the req before telling the client about it
     time.sleep(1)
@@ -579,7 +579,7 @@ def _assign_container(
         task_id=self.request.id,
         state=PENDING,
         ip=base_container.ip,
-        host_service_auth_secret=host_service_auth_secret,
+        client_app_auth_secret=client_app_auth_secret,
         port=base_container.port_32262,
         force=True,  # necessary since check will fail otherwise
     )
