@@ -1,4 +1,4 @@
-package fractallogger
+package fractallogger // import "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 import (
 	"fmt"

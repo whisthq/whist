@@ -1,5 +1,4 @@
-// TODO: mark all packages with the import URL
-package fractalcontainer
+package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 
 import (
 	"os"

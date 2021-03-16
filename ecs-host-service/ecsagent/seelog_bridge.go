@@ -1,4 +1,4 @@
-package ecsagent
+package ecsagent // import "github.com/fractal/fractal/ecs-host-service/ecsagent"
 
 import (
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"

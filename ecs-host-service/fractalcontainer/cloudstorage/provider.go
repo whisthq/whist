@@ -1,4 +1,4 @@
-package cloudstorage
+package cloudstorage // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
 
 import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"

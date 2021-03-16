@@ -1,4 +1,4 @@
-package fractalwebserver
+package fractalwebserver // import "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
 
 import (
 	"bytes"
