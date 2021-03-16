@@ -116,15 +116,15 @@ export const initiateWindowListeners = (
     })
 
     mainWindow.on("close", (event) => {
-        // mainWindow?.destroy()
+        mainWindow?.destroy()
         if (!showMainWindow) {
             event.preventDefault()
         }
     })
 
     mainWindow.on("closed", () => {
-        mainWindow?.destroy()
-        // mainWindow = null
+        // mainWindow?.destroy()
+        mainWindow = null
     })
 
     mainWindow.on("maximize", () => {})

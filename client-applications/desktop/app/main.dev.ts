@@ -43,7 +43,7 @@ global.updateStatus = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = false
+const showMainWindow = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -70,11 +70,7 @@ process.on("uncaughtException", (err) => {
  * @param customURL
  * @param showMainWindow
  */
-const launchWindow = async (
-    mainWindow: BrowserWindow | null = null,
-    customURL: string | null = null,
-    showMainWindow: boolean
-) => {
+const launchWindow = async () => {
     mainWindow = await createWindow(mainWindow)
 
     // this needs to be in main.dev.ts, having the file elswhere causes bugs when loading app.html
@@ -86,8 +82,6 @@ const launchWindow = async (
     initiateAutoUpdateListeners(mainWindow)
     initiateWindowListeners(mainWindow, customURL, showMainWindow)
     initiateFractalIPCListeners(mainWindow, showMainWindow)
-
-    return mainWindow
 }
 
 // Calls the create window above, conditional on the app not already running (single instance lock)
@@ -111,18 +105,13 @@ if (!gotTheLock) {
     app.allowRendererProcessReuse = true
 
     app.on("ready", async () => {
-        mainWindow = await launchWindow(mainWindow, customURL, showMainWindow)
+        await launchWindow()
     })
 
     app.on("activate", async () => {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
-        if (mainWindow === null)
-            mainWindow = await launchWindow(
-                mainWindow,
-                customURL,
-                showMainWindow
-            )
+        if (mainWindow === null) await launchWindow()
     })
 }
 

@@ -248,7 +248,7 @@ export const Launcher = (props: {
     useEffect(() => {
         if (error) {
             logger.logError(
-                `User container subscription errored: ${error}`,
+                `User container subscription errored: ${JSON.stringify(error)}`,
                 userID
             )
             setTaskState(FractalAppState.FAILURE)
