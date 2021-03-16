@@ -27,8 +27,6 @@ import {
 } from "store/actions/container/sideEffects"
 import { FractalIPC } from "shared/types/ipc"
 import { AWSRegion } from "shared/types/aws"
-import { FractalDirectory } from "shared/types/client"
-import { uploadToS3 } from "shared/utils/files/aws"
 
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
@@ -79,7 +77,6 @@ export const Launcher = (props: {
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
     const [protocol, setProtocol] = useState(false)
     const [protocolLock, setProtocolLock] = useState(false)
-    const [disconnected, setDisconnected] = useState(false)
     const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
     const [killSignalsReceived, setKillSignalsReceived] = useState(0)
@@ -177,10 +174,10 @@ export const Launcher = (props: {
     }, [timedOut])
 
     useEffect(() => {
-        if (shouldForceQuit && disconnected) {
+        if (shouldForceQuit) {
             forceQuit()
         }
-    }, [shouldForceQuit, disconnected])
+    }, [shouldForceQuit])
 
     useEffect(() => {
         if (
