@@ -11,7 +11,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Download Blockbench installer
-RUN wget https://github.com/JannisX11/blockbench/releases/download/v3.6.6/Blockbench_3.6.6.deb -O Blockbench_3.6.6.deb
+RUN wget https://github.com/JannisX11/blockbench/releases/download/v3.6.6/Blockbench_3.6.6.deb -qO Blockbench_3.6.6.deb
 
 # Install Blockbench
 RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends -y \
