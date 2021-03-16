@@ -19,6 +19,7 @@ import (
 	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this impoted package as well.
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
@@ -75,7 +76,7 @@ func startECSAgent() {
 }
 
 // ------------------------------------
-// Container state manangement/mappings
+// Container event handlers
 // ------------------------------------
 
 // Creates a file containing the DPI assigned to a specific container, and make
@@ -84,7 +85,7 @@ func startECSAgent() {
 // Takes the request to the `set_container_start_values` endpoint as
 // an argument and returns nil if no errors, and error object if error.
 func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
-	// Compute container-specific directory to write start value data to
+	// Verify identifying hostPort value
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
 		return logger.MakeError("Invalid HostPort for start values request: %v", req.HostPort)
 	}
@@ -114,6 +115,27 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	return nil
+}
+
+func handleCloudStorageRequest(req *httpserver.MountCloudStorageRequest) error {
+	// Verify identifying hostPort value
+	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
+		return logger.MakeError("Invalid HostPort for cloud storage request: %v", req.HostPort)
+	}
+	hostPort := uint16(req.HostPort)
+
+	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
+	if err != nil {
+		return logger.MakeError("handleCloudStorageRequest(): %s", err)
+	}
+
+	provider, err := cloudstorage.GetProvider(req.Provider)
+	if err != nil {
+		return logger.MakeError("handleCloudStorageRequest(): Unable to parse provider: %s", err)
+	}
+
+	err = fc.AddCloudStorage(provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
+	return err
 }
 
 // Handle tasks to be completed when a container dies
@@ -366,7 +388,7 @@ eventLoop:
 				serverevent.ReturnResult("", err)
 
 			case *httpserver.MountCloudStorageRequest:
-				err := mountCloudStorageDir(serverevent.(*httpserver.MountCloudStorageRequest))
+				err := handleCloudStorageRequest(serverevent.(*httpserver.MountCloudStorageRequest))
 				if err != nil {
 					logger.Error(err)
 				}
