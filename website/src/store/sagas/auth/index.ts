@@ -31,11 +31,17 @@ function* emailLogin(action: {
     const { json } = yield call(api.loginEmail, action.email, action.password)
 
     if (json && json.access_token) {
-        const encryptedConfigToken = json.encrypted_config_token
-        const configToken = decryptConfigToken(
-            encryptedConfigToken,
-            action.password
-        )
+        let configToken: string | undefined
+        if (json.encrypted_config_token) {
+            const encryptedConfigToken = json.encrypted_config_token
+            configToken = decryptConfigToken(
+                encryptedConfigToken,
+                action.password
+            )
+        } else {
+            configToken = yield generateRandomString(32)
+        }
+
         yield put(
             updateUser({
                 userID: action.email,
@@ -47,6 +53,12 @@ function* emailLogin(action: {
                 emailVerificationToken: json.verification_token,
             })
         )
+        if (!json.encrypted_config_token) {
+            yield call(updatePassword, {
+                currentPassword: action.password,
+                newPassword: action.password,
+            })
+        }
 
         yield put(
             updateStripeInfo({
@@ -420,11 +432,7 @@ export function* resetPassword(action: {
     }
 }
 
-export function* updatePassword(action: {
-    currentPassword: string
-    newPassword: string
-    type: string
-}): any {
+export function* updatePassword(action: any): any {
     /*
         Function that calls the /account/verify_password endpoint to verify that the currently logged-in user is valid,
         then uses the /account/update endpoint on the webserver to try and change the existing user's password. Assumes that the user 
