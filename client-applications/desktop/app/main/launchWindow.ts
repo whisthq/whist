@@ -72,7 +72,6 @@ export const initiateWindowListeners = (
     showMainWindow: boolean
 ) => {
     const os = require("os")
-    const { dialog } = require("electron")
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -112,13 +111,7 @@ export const initiateWindowListeners = (
                 mainWindow.maximize()
             }
         }
-        const options = {
-            message: `updating status in web listener ${global.updateStatus}`,
-        }
 
-        dialog.showMessageBox(null, options, (response) =>
-            console.log(response)
-        )
         mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
     })
 

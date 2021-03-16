@@ -11,10 +11,6 @@ export const initiateAutoUpdateListeners = (
     mainWindow: BrowserWindow | null = null
 ) => {
     // Autoupdater listeners, will fire if S3 app version is greater than current version
-    const { dialog } = require("electron")
-    let options = {
-        message: "",
-    }
 
     autoUpdater.autoDownload = false
 
@@ -22,11 +18,6 @@ export const initiateAutoUpdateListeners = (
         global.updateStatus = true
 
         if (mainWindow) {
-            options.message = `UPDATE AVAILABLE IN LISTENER ${global.updateStatus}`
-
-            dialog.showMessageBox(null, options, (response) => {
-                console.log(response)
-            })
             mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
         }
         autoUpdater.downloadUpdate()
