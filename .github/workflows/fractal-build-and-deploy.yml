@@ -542,7 +542,7 @@ jobs:
 
                   data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-                  data["builders"][0]["ami_name"] = "fractal-ecs-host-ami-${{ env.commit_sha }}-$(date +"%y%m%d%H%M%S")"
+                  data["builders"][0]["ami_name"] = 'fractal-ecs-host-ami-${{ env.commit_sha }}-$(date + "%y%m%d%H%M%S")'
                   data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
                   data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
                   data["builders"][0]["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
