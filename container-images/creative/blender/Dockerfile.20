@@ -31,7 +31,7 @@ RUN su - fractal -c "mkdir -p /home/fractal/.config/blender"
 COPY userpref.blend /home/fractal/.config/blender/${BLENDER_VERSION}/userpref.blend
 
 # Install Blender Add-Ons - Blender Cloud
-RUN wget -P /usr/local/ https://cloud.blender.org/r/downloads/blender_cloud-latest-addon.zip && unzip /usr/local/blender_cloud-latest-addon.zip
+RUN wget -qP /usr/local/ https://cloud.blender.org/r/downloads/blender_cloud-latest-addon.zip && unzip /usr/local/blender_cloud-latest-addon.zip
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/local/blender/blender /usr/bin/fractal-application

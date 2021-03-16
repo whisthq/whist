@@ -60,10 +60,10 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Electron version
-COPY --from=figma-1 electron.v .
+COPY --from=figma-1 electron.v /
 
 # Copy figma-font-bindings subfolder
-COPY figma-font-bindings figma-font-bindings
+COPY figma-font-bindings /figma-font-bindings
 
 # Build bindings.node
 RUN ELECTRON_V="$(cat electron.v)" \
@@ -88,7 +88,7 @@ FROM figma-1 as figma-2
 SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
 
 # Copy bindings.node from bindings-builder stage into Figma directory
-COPY --from=bindings-builder bindings.node tmp/build/build/Release/bindings.node
+COPY --from=bindings-builder bindings.node /tmp/build/build/Release/bindings.node
 
 # Install Figma into /opt/figma
 RUN mv tmp/build /opt/figma \
