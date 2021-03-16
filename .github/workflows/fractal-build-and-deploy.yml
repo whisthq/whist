@@ -573,7 +573,6 @@ jobs:
                   import os
                   import subprocess
                   import json
-                  import re
 
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import update_region
@@ -599,8 +598,8 @@ jobs:
 
                   for region_ami_pair in region_ami_pairs:
                     region_name, ami = region_ami_pair.split(":")
-                    print(region_name, ami)
-                    # update_region(WEBSERVER_URL, TOKEN, region_name, ami)
+                    print(f"Region: {region_name}, AMI: {ami}")
+                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
