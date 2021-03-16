@@ -403,7 +403,6 @@ export const mapStateToProps = (state: {
         shouldLaunchProtocol: state.ContainerReducer.task.shouldLaunchProtocol,
         protocolKillSignal: state.ContainerReducer.task.protocolKillSignal,
         container: state.ContainerReducer.container,
-
         region: state.ClientReducer.computerInfo.region,
         timer: state.ClientReducer.timer,
     }
