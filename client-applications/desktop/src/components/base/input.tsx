@@ -9,8 +9,8 @@ export const BaseInput = (props: {
     onChange?: (_: any) => void
 }) => (
     <input type={props.type}
-           className={classNames("text-lg rounded-md px-2 py-1.5 align-middle",
-                                 "outline-none font-body",
+           className={classNames("text-md rounded px-4 py-4 align-middle",
+                                 "outline-none font-body border border-gray",
                                  props.className)}
         value={props.value}
         placeholder={props.placeholder} onChange={props.onChange}>

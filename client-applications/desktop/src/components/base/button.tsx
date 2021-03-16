@@ -7,10 +7,10 @@ export const BaseButton = (props: {
     placeholder?: string;
     onClick?: (_: any) => void
 }): JSX.Element => (
-    <button className={classNames("text-lg h-10 rounded-md focus:outline-none",
-                                  "hover:bg-gray-500", "transition-colors",
+    <button className={classNames("text-md rounded bg-blue text-white duration-500 focus:outline-none py-4",
+                                  "hover:bg-mint hover:text-gray", "transition-colors",
                                   props.className)}
         onClick={props.onClick}>
-        <h5 className="transform font-body translate-y-0.5">{props.label}</h5>
+        <h5 className="transform font-body translate-y-0.5 font-semibold">{props.label}</h5>
     </button>
 )
