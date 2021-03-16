@@ -13,8 +13,8 @@ on:
             - dev
         paths:
             - "container-images/**"
-            - ".github/workflows/container-images-build-images.yml"
             - "!container-images/README.md"
+            - ".github/workflows/container-images-check-pr.yml"
             - "!container-images/helper-scripts/run_container_image.sh"
             - "!container-images/run_local_container_image.sh"
             - "!container-images/run_remote_container_image.sh"
