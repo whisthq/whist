@@ -115,7 +115,7 @@ echo "================================================"
 echo "Installing Other Utilities..."
 echo "================================================"
 
-sudo apt-get install -y lsof jq
+sudo apt-get install -y lsof jq tar lz4
 
 echo "================================================"
 echo "Installing Uinput Config Files..."
