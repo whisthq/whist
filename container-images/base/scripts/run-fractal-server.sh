@@ -46,12 +46,6 @@ fi
 # Create a google_drive folder in the user's home
 ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 
-# This tar file, if it exists, has been retrieved from S3 and must be extracted
-tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
-if [ -f "$tarFile" ]; then
-    tar -xzf $tarFile -C $USER_CONFIGS_DIR
-fi
-
 # While perhaps counterintuitive, "source" is the path in the userConfigs directory
 #   and "destination" is the original location of the config file/folder.
 #   This is because when creating symlinks, the userConfig path is the source
@@ -82,6 +76,7 @@ done
 find $USER_CONFIGS_DIR -xtype l -delete
 
 # To assist the tar tool's "exclude" option, create a dummy tar file if it does not already exist
+tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.gz
 if [ ! -f "$tarFile" ]; then
     touch $tarFile
 fi

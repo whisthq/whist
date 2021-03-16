@@ -185,7 +185,8 @@ RUN apt-get install --allow-downgrades --no-install-recommends -y \
     libcurl4 \
     curl \
     jq \
-    && apt-get autoremove -y \
+    lz4 \
+	&& apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 

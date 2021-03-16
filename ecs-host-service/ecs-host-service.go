@@ -522,6 +522,14 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
 		}
 		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
+
+		// Extract the config archive to the user config directory
+		tarPath := configPath + "fractal-app-config.tar.gz"
+		untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configPath)
+		untarConfigOutput, err := untarConfigCmd.CombinedOutput()
+		if err != nil {
+			logger.Errorf("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
+		}
 	}
 	return nil
 }
