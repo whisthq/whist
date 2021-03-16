@@ -534,7 +534,7 @@ jobs:
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
-              run: >
+              run: |
                   import json
                   fp = open("ami_config.json", "r")
                   data = json.load(fp)
@@ -555,7 +555,7 @@ jobs:
                   fp = open("ami_config.json", "w")
                   json.dump(data, fp)
                   fp.close()
-                  
+
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
