@@ -22,6 +22,7 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	webserver "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 
@@ -88,59 +89,48 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 		return logger.MakeError("Invalid HostPort for start values request: %v", req.HostPort)
 	}
 	hostPort := uint16(req.HostPort)
-	id, exists := containerIDs[hostPort]
-	if !exists {
-		return logger.MakeError("Could not find currently-starting container with hostPort %v", hostPort)
+
+	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
+	if err != nil {
+		return logger.MakeError("handleStartValuesRequest(): %s", err)
 	}
 
-	// TODO: AssignToUser()
+	fc.AssignToUser(fractalcontainer.UserID(req.UserID))
 
-	// TODO: call WriteStartValues() for the relevant container
+	err = fc.WriteStartValues(req.DPI, req.ContainerARN)
+	if err != nil {
+		return logger.MakeError("handleStartValuesRequest(): %s", err)
+	}
 
 	// Populate the user config folder for the container's app
-	// TODO: PopulateUserConfig()
+	err = fc.PopulateUserConfigs()
+	if err != nil {
+		return logger.MakeError("handleStartValuesRequest(): %s", err)
+	}
 
-	// TODO: call MarkReady() for the relevant container
+	err = fc.MarkReady()
+	if err != nil {
+		return logger.MakeError("handleStartValuesRequest(): %s", err)
+	}
 
 	return nil
 }
 
 // Handle tasks to be completed when a container dies
 func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
-	// Get the fractalID and use it to compute the right data directory. Also,
-	// exit if we are not dealing with a Fractal container.
-	fractalID, ok := fractalIDs[id]
-	if !ok {
-		logger.Infof("containerDieHandler(): couldn't find FractalID mapping for container with DockerID %s", id)
+	// Exit if we are not dealing with a Fractal container.
+	fc, err := fractalcontainer.LookUpByDockerID(fractalcontainer.DockerID(id))
+	if err != nil {
+		logger.Infof("containerDieHandler(): %s", err)
 		return
 	}
 
-	// TODO: BackupUserConfigs()
-
-	// TODO: call close() on the relevant container
-
-	// Make sure the container is removed from the `containerIDs` map
-	// Note that we cannot parse the hostPort the same way we do in
-	// containerStartHandler, since now the hostPort does not appear in the
-	// container's data! Therefore, we have to find it by id.
-	var hostPort uint16
-	foundHostPort := false
-	for k, v := range containerIDs {
-		if v == id {
-			foundHostPort = true
-			hostPort = k
-			break
-		}
-	}
-	if !foundHostPort {
-		logger.Infof("containerDieHandler(): Could not find a hostPort mapping for container %s", id)
-		return
+	err = fc.BackupUserConfigs()
+	if err != nil {
+		logger.Errorf("Couldn't back up user configs for container with FractalID %s: %s", fc.GetFractalID(), err)
 	}
 
-	delete(containerIDs, hostPort)
-	logger.Infof("containerDieHandler(): Deleted mapping from hostPort %v to container ID %v", hostPort, id)
-
-	// TODO: Unmount cloud storage directories
+	fc.Close()
 }
 
 // ---------------------------
