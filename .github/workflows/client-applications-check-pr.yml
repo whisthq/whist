@@ -14,7 +14,7 @@ on:
         paths:
             - "client-applications/**"
             - "!client-applications/README.md"
-            - ".github/workflows/client-applications-linting.yml"
+            - ".github/workflows/client-applications-check-pr.yml"
             - "core-ts/**"
             - "!core-ts/README.md"
             - ".github/workflows/core-ts-check-pr.yml"
