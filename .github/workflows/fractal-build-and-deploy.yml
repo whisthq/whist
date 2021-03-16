@@ -263,16 +263,17 @@ jobs:
                   # this allows us to import from `scripts`
                   import sys
                   sys.path.append(".")
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import start_maintenance
 
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-
-                  from scripts.maintenance_scripts import start_maintenance
+                  
+                  # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
                   start_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack success
@@ -456,7 +457,7 @@ jobs:
         runs-on: ubuntu-20.04
         needs: [
                 fractal-publish-build-config,
-                # fractal-start-webserver-maintenance-mode,
+                fractal-start-webserver-maintenance-mode,
             ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
@@ -544,7 +545,6 @@ jobs:
                   data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  print("DATE", date_str)
                   data["builders"][0]["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
                   data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
                   data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
@@ -999,16 +999,17 @@ jobs:
                   # this allows us to import from `scripts`
                   import sys
                   sys.path.append(".")
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import end_maintenance
 
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  from scripts.misc_scripts import login
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  from scripts.maintenance_scripts import end_maintenance
+                  # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
                   end_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
