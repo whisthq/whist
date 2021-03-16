@@ -99,7 +99,6 @@ export const Launcher = (props: {
 
     const [loginClosed, setLoginClosed] = useState(false)
     const [configTokenRetrieved, setConfigTokenRetrieved] = useState(false)
-    const [configTokenSent, setConfigTokenSent] = useState(false)
 
     const {
         data: stateData,
@@ -222,20 +221,19 @@ export const Launcher = (props: {
         } else if (hostServiceLoading) {
             logger.logInfo(`Subscription for host and ip loading`, userID)
         } else {
-            const { ip, port } =
+            const { ip, port, client_app_auth_secret } = /* eslint-disable-line @typescript-eslint/camelcase */
                 hostServiceData &&
                 hostServiceData.hardware_user_app_state &&
                 hostServiceData.hardware_user_app_state[0]
                     ? hostServiceData.hardware_user_app_state[0]
-                    : { ip: null, port: null }
+                    : { ip: null, port: null, client_app_auth_secret: null }
 
             logger.logInfo(
-                `Host service IP is ${ip} and port is ${port}`,
+                `Host service IP is ${ip}, port is ${port}, and client_app_auth_secret is ${client_app_auth_secret}`,
                 userID
             )
-            if (ip && port) {
-                dispatch(setHostServiceConfigToken(ip, port))
-                setConfigTokenSent(true)
+            if (ip && port && client_app_auth_secret) {
+                dispatch(setHostServiceConfigToken(ip, port, client_app_auth_secret))
             }
         }
     }, [hostServiceData, hostServiceLoading, hostServiceError])
@@ -297,12 +295,12 @@ export const Launcher = (props: {
             protocol &&
             taskState === FractalAppState.NO_TASK &&
             region &&
-            configTokenSent
+            configTokenRetrieved
         ) {
             setTaskState(FractalAppState.PENDING)
             dispatch(createContainer())
         }
-    }, [protocol, region, taskState, configTokenSent])
+    }, [protocol, region, taskState, configTokenRetrieved])
 
     // Listen to container creation task state
     useEffect(() => {

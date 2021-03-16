@@ -13,6 +13,7 @@ export const SUBSCRIBE_USER_HOST_SERVICE = gql`
         hardware_user_app_state(where: { user_id: { _eq: $userID } }) {
             ip
             port
+            client_app_auth_secret
             user_id
         }
     }
