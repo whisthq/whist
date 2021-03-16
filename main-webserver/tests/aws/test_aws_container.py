@@ -66,7 +66,7 @@ def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
-def test_assign_container(client, deployment_stage, authorized, monkeypatch):
+def test_assign_container(client, task_def_env, authorized, monkeypatch):
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
     fractal_logger.info("Starting to assign container in cluster {}".format(pytest.cluster_name))
 
@@ -76,7 +76,7 @@ def test_assign_container(client, deployment_stage, authorized, monkeypatch):
             username=authorized.user_id,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
-            task_definition_arn="fractal-{}-browsers-chrome".format(deployment_stage),
+            task_definition_arn="fractal-{}-browsers-chrome".format(task_def_env),
         ),
     )
 
