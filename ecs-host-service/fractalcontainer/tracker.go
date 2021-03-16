@@ -12,7 +12,8 @@ import (
 // only be created using New(), since the underlying datatype is not exported.
 
 // We optimize for the eventual case of needing to look up containers by
-// `fractalID` _only_, not IdentifyingHostPort
+// `fractalID` _only_, not IdentifyingHostPort. Note: we don't need to lock
+// `tracker`, since FractalIDs will (probabilistically) never overlap.
 var tracker map[FractalID]FractalContainer = make(map[FractalID]FractalContainer)
 
 func trackContainer(fc FractalContainer) {
@@ -41,4 +42,10 @@ func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 		}
 	}
 	return nil, logger.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
+}
+
+func CloseAll() {
+	for _, v := range tracker {
+		v.Close()
+	}
 }
