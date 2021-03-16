@@ -70,7 +70,7 @@ export const signupEmail = async (
         feedback,
         encrypted_config_token: encryptedConfigToken,
     }
-    post({
+    return post({
         endpoint: "/account/register",
         body,
     })

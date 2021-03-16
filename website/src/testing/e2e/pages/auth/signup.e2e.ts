@@ -34,6 +34,7 @@ afterAll(async () => {
         password: "",
         name: "",
         feedback: "",
+        configToken: "",
         stripeCustomerID: "",
         verified: true,
     }
