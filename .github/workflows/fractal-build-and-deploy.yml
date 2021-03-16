@@ -247,22 +247,34 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: Put webserver into maintenance mode
               working-directory: main-webserver
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append(".")
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import start_maintenance
 
-                  # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(curl -X POST \
-                        -H "Content-Type: application/json" \
-                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN start
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  # we only get here if previous step has exit code 0
-                  echo "Put webserver at $WEBSERVER_URL into maintenance mode"
+                  # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
+                  start_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack success
               run: |
@@ -457,13 +469,18 @@ jobs:
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
 
-            # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-            # defined as a formatted json array to be copied into ami_config.json directly
-            aws_additional_supported_regions: "[\\\"us-east-2\\\",\\\"us-west-1\\\",\\\"us-west-2\\\",\\\"ca-central-1\\\",\\\"eu-west-1\\\",\\\"eu-central-1\\\"]"
-
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
 
             ######################## Building ECS Host Service ########################
 
@@ -499,24 +516,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
                   aws-region: ${{ env.aws_new_ami_source_region }}
 
-            - name: Set Appropriate GraphQL URL and Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
-              run: |
-                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
-
-                  if [ "$BRANCH_NAME" == "master" ]; then
-                    echo "graphql_db_url=https://prod-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://prod-server.fractal.co/" >> $GITHUB_ENV
-                  elif [ "$BRANCH_NAME" == "staging" ]; then
-                    echo "graphql_db_url=https://staging-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://staging-server.fractal.co/" >> $GITHUB_ENV
-                  else
-                    echo "graphql_db_url=https://dev-database.fractal.co/v1/graphql" >> $GITHUB_ENV
-                    echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}" >> $GITHUB_ENV
-                    echo "webserver_url=https://dev-server.fractal.co/" >> $GITHUB_ENV
-                  fi
-
             - name: Set ECS Host Service APP_ENV based on Git Branch (File gets read by ecs-host-service.service)
               working-directory: ecs-host-setup
               run: |
@@ -536,71 +535,71 @@ jobs:
             # in-place via jq.
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
-              run: >
-                  cat ami_config.json
-                  | jq -c ".builders[0].secret_key = \"${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}\""
-                  | jq -c ".builders[0].access_key = \"${{ secrets.AWS_EC2_ACCESS_KEY_ID }}\""
-                  | jq -c ".builders[0].ami_name = \"fractal-ecs-host-ami-${{ env.commit_sha }}-$(date +"%y%m%d%H%M%S")\""
-                  | jq -c ".builders[0].region = \"${{ env.aws_new_ami_source_region }}\""
-                  | jq -c ".builders[0].instance_type = \"${{ env.aws_new_ami_instance_type }}\""
-                  | jq -c ".builders[0].subnet_id = \"${{ env.aws_new_ami_subnet_id }}\""
-                  | jq -c ".builders[0].vpc_id = \"${{ env.aws_new_ami_vpc_id }}\""
-                  | jq -c ".builders[0].source_ami = \"${{ env.aws_source_ami_id }}\""
-                  | jq -c ".builders[0].ami_regions = ${{ env.aws_additional_supported_regions }}"
-                  > ami_config_tmp.json
-                  && mv ami_config_tmp.json
-                  ami_config.json
+              shell: python3 {0}
+              run: |
+                  import json
+                  import datetime
+                  fp = open("ami_config.json", "r")
+                  data = json.load(fp)
+                  fp.close()
+
+                  data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+                  data["builders"][0]["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+                  data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["builders"][0]["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["builders"][0]["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["builders"][0]["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+                  # defined as a formatted json array to be copied into ami_config.json directly
+                  data["builders"][0]["ami_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
+
+                  fp = open("ami_config.json", "w")
+                  json.dump(data, fp)
+                  fp.close()
 
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               working-directory: ecs-host-setup
+              shell: python3 {0}
               run: |
-                  # Log in as Admin to get Bearer Token for Update Region API call
-                  token=$(curl -X POST \
-                    -H "Content-Type: application/json" \
-                    --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                    "${{ env.webserver_url }}admin/login" | jq -r ".access_token")
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append("../main-webserver")
+                  import os
+                  import subprocess
+                  import json
 
-                  # create the new AMI in aws_new_ami_source_region (region set in previous step) and copy to supported regions
-                  packer -machine-readable build ami_config.json
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import update_region
+
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  # stdout will be shared with the subprocess so we can see what is happening
+                  subprocess.run("packer -machine-readable build ami_config.json", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
-                  new_ami_ids=$(cat manifest.json | jq ".builds[0].artifact_id")
+                  assert os.path.exists("manifest.json")
+                  fp = open("manifest.json", "r")
+                  data = json.load(fp)
+                  fp.close()
+                  print(data)
+                  new_ami_ids = data["builds"][0]["artifact_id"]
+                  region_ami_pairs = new_ami_ids.split(",")
 
-                  # loop through each region, replace comma with space for delimiting
-                  for artifact in ${new_ami_ids//,/ }
-                  do
-                    ami_id=$(echo ${artifact} | grep -oE 'ami-[0-9a-z]+')
-                    region=$(echo ${artifact} | grep -oE '[0-9a-z-]+:'| sed 's/.$//')
-
-                    # update appropriate database with new AMI IDs
-                    curl -X POST \
-                    -H "Content-Type: application/json" \
-                    -H "X-Hasura-Admin-Secret: ${{ env.hasura_graphql_access_key }}" \
-                    --data "{ \"query\": \"mutation { update_hardware_region_to_ami(_set: { ami_id: \\\"${ami_id}\\\" }, where: { region_name: { _eq: \\\"${region}\\\" } }) { returning { ami_id } } }\" }" \
-                    ${{ env.graphql_db_url }}
-
-                    # run update_region on each region
-                    celery_task_output_id=$(curl -X POST \
-                      -H "Content-Type: application/json" \
-                      -H "Authorization: Bearer ${token}" \
-                      --data "{\"region_name\": \"${region}\"}" \
-                      "${{ env.webserver_url }}aws_container/update_region" | jq -er ".ID") # the -e option makes jq return with error code 1 if element not found
-
-                    # ensures update_region was called successfully
-                    if [[ $? =~ 1 ]]; then
-                      echo "Failed to update $region" && false
-                    fi
-
-                    # poll for update_region and its subtasks
-                    ../.github/workflows/helpers/ecs-host-setup/poll_webserver_update_region_celery.sh ${{ env.webserver_url}} ${celery_task_output_id} ${token}
-                    if [[ $? =~ 1 ]]; then
-                      echo "Failed to update $region" && false
-                    fi
-
-                  done
+                  for region_ami_pair in region_ami_pairs:
+                    region_name, ami = region_ami_pair.split(":")
+                    print(f"Region: {region_name}, AMI: {ami}")
+                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
@@ -984,24 +983,34 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: End webserver maintenance mode
               working-directory: main-webserver
+              shell: python3 {0}
               run: |
-                  # this only runs if there are no failures in the workflow so far
-                  # if there are, the webserver stays in maintenance mode
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append(".")
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import end_maintenance
 
-                  # Log in as Admin to get Bearer Token for Update Region API call
-                  TOKEN=$(curl -X POST \
-                        -H "Content-Type: application/json" \
-                        --data "{ \"username\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}\", \"password\": \"${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}\" }" \
-                        "$WEBSERVER_URL/admin/login" | jq -r ".access_token")
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  # use a bash script to start update and poll for success
-                  bash scripts/poll_maintenance.sh $WEBSERVER_URL $TOKEN end
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  # we only get here if previous step has exit code 0
-                  echo "Webserver at $WEBSERVER_URL exited maintenance mode"
+                  # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
+                  end_maintenance(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
               run: |
