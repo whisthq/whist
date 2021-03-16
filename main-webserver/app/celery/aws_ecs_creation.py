@@ -53,7 +53,17 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
-def _clean_tasks_and_create_new_container(container, webserver_url, num_tries):
+def _clean_tasks_and_create_new_container(container, task_version, webserver_url, num_tries):
+    """Clean tasks and create a new container when pass_start_values() and mount_cloud_storage() fail
+
+    Arguments:
+        container: An instance of the UserContainer model.
+        webserver_url: the webserver originating the initial assign_container request
+        num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
+
+    Returns:
+        None
+    """
     # stop base container task if it is running
     ecs_client = ECSClient(
         base_cluster=container.cluster, region_name=container.location, grab_logs=False
@@ -89,6 +99,7 @@ def _clean_tasks_and_create_new_container(container, webserver_url, num_tries):
     return assign_container(
         container.user_id,
         container.task_definition,
+        task_version,
         container.location,
         container.cluster,
         container.dpi,
@@ -454,6 +465,7 @@ def assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: str = "fractal-dev-server.herokuapp.com",
+    num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
     """
     Assigns a running container to a user, or creates one if none exists
@@ -466,6 +478,7 @@ def assign_container(
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
+    :param num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
     :return: the generated container, in json form
 
     We directly call _assign_container because it can easily be mocked. The __code__ attribute
@@ -480,11 +493,11 @@ def assign_container(
         cluster_name,
         dpi,
         webserver_url,
+        num_tries,
     )
 
 
 def _assign_container(
-<<<<<<< HEAD
     self: Task,
     username: str,
     task_definition_arn: str,
@@ -493,18 +506,8 @@ def _assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: str = "fractal-dev-server.herokuapp.com",
+    num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
-=======
-    self,
-    username,
-    task_definition_arn,
-    region_name="us-east-1",
-    cluster_name=None,
-    dpi=96,
-    webserver_url=None,
-    num_tries=0,
-):
->>>>>>> 7afccbd3e... fixed tests, added max tries of 3
     """
     See assign_container. This is helpful to mock.
     """
