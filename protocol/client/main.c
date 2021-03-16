@@ -740,6 +740,17 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    int ret = parse_args(argc, argv);
+    if (ret == -1) {
+        // invalid usage
+        free_parsed_args();
+        return -1;
+    } else if (ret == 1) {
+        // --help or --version
+        free_parsed_args();
+        return 0;
+    }
+
     init_logger(log_dir);
     free(log_dir);
 
@@ -751,17 +762,6 @@ int main(int argc, char* argv[]) {
 
     if (alloc_parsed_args() != 0) {
         return -1;
-    }
-
-    int ret = parse_args(argc, argv);
-    if (ret == -1) {
-        // invalid usage
-        free_parsed_args();
-        return -1;
-    } else if (ret == 1) {
-        // --help or --version
-        free_parsed_args();
-        return 0;
     }
 
     // Initialize the SDL window
