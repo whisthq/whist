@@ -1,4 +1,4 @@
-@import "~app.global.css";
+@import '~app.global.css';
 
 .updateWrapper {
     background: var(--text-background-color);

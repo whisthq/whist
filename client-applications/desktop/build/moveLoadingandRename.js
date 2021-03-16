@@ -1,9 +1,9 @@
-require("dotenv").config()
-const fs = require("fs")
+require('dotenv').config()
+const fs = require('fs')
 
 exports.default = function moveLoadingandRename(context) {
     const { electronPlatformName, appOutDir } = context
-    if (electronPlatformName !== "darwin") {
+    if (electronPlatformName !== 'darwin') {
         return
     }
 

@@ -1,10 +1,10 @@
-require("dotenv").config()
-const { notarize } = require("electron-notarize")
-import { moveLoadingandRename } from "./moveLoadingandRename"
+require('dotenv').config()
+const { notarize } = require('electron-notarize')
+import { moveLoadingandRename } from './moveLoadingandRename'
 
 exports.default = async function notarizing(context) {
     const { electronPlatformName, appOutDir } = context
-    if (electronPlatformName !== "darwin") {
+    if (electronPlatformName !== 'darwin') {
         return
     }
 
@@ -14,7 +14,7 @@ exports.default = async function notarizing(context) {
     moveLoadingandRename(context)
 
     return await notarize({
-        appBundleId: "com.fractalcomputers.fractal",
+        appBundleId: 'com.fractalcomputers.fractal',
         appPath: `${appOutDir}/${appName}.app`,
         appleId: `phil@fractal.co`,
         appleIdPassword: `seoy-fnou-zjro-xicr`,
