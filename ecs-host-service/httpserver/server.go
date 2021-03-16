@@ -124,12 +124,12 @@ func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, que
 
 // SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
 type SetContainerStartValuesRequest struct {
-	HostPort        int                `json:"host_port"`     // Port on the host to whose container the start values correspond
-	DPI             int                `json:"dpi"`           // DPI to set for the container
-	UserID          string             `json:"user_id"`       // User ID of the container user
-	UserAccessToken string             `json:"access_token"`  // User access token for client app verification
-	ContainerARN    string             `json:"container_ARN"` // AWS ID of the container
-	resultChan      chan requestResult // Channel to pass the start values setting result between goroutines
+	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
+	DPI                  int                `json:"dpi"`                    // DPI to set for the container
+	UserID               string             `json:"user_id"`                // User ID of the container user
+	ClientAppAccessToken string             `json:"client_app_auth_secret"` // User access token for client app verification
+	ContainerARN         string             `json:"container_ARN"`          // AWS ID of the container
+	resultChan           chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
@@ -172,7 +172,7 @@ type SetConfigEncryptionTokenRequest struct {
 	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
 	UserID                string             `json:"user_id"`                 // User to whom token belongs
 	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
-	UserAccessToken       string             `json:"access_token"`            // User access token for client app verification
+	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
 	resultChan            chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
 }
 
