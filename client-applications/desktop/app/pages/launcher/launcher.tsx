@@ -173,11 +173,11 @@ export const Launcher = (props: {
         }
     }, [timedOut])
 
-    useEffect(() => {
-        if (shouldForceQuit) {
-            forceQuit()
-        }
-    }, [shouldForceQuit])
+    // useEffect(() => {
+    //     if (shouldForceQuit) {
+    //         forceQuit()
+    //     }
+    // }, [shouldForceQuit])
 
     useEffect(() => {
         if (
