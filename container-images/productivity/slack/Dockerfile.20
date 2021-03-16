@@ -25,7 +25,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install Slack
-RUN wget --quiet https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb -O /tmp/slack-desktop-4.0.2-amd64.deb \
+RUN wget https://downloads.slack-edge.com/linux_releases/slack-desktop-4.0.2-amd64.deb -qO /tmp/slack-desktop-4.0.2-amd64.deb \
     && cd /tmp/ \
     && dpkg -i slack-desktop-4.0.2-amd64.deb \
     && rm -rf /tmp/slack-desktop*.deb
