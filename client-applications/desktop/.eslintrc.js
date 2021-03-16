@@ -9,12 +9,7 @@ module.exports = {
         "@typescript-eslint/camelcase": ["error", { ignoreImports: true }],
         // disable the below checks
         "@typescript-eslint/no-explicit-any": 0,
-        "import/no-useless-path-segments": [
-            "error",
-            {
-                noUselessIndex: true,
-            },
-        ],
+        "import/no-useless-path-segments": "off",
         "global-require": 0,
         "no-param-reassign": 0,
         "object-shorthand": 0,
