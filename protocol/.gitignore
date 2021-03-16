@@ -27,8 +27,7 @@ tags
 *.exp
 *.ilk
 *.user
-**/log.txt
-**/log_prev.txt
+**/log*.txt
 
 # macOS
 .DS_Store
@@ -41,8 +40,8 @@ sentry-native
 version
 **/build32
 **/build64
-client/log.txt
-server/log.txt
+client/log*.txt
+server/log*.txt
 share/
 client/external_utils/Windows/ssh.exe
 *.v

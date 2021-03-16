@@ -82,7 +82,8 @@ clock mprintf_timer;
 FILE* mprintf_log_file = NULL;
 FILE* mprintf_log_connection_file = NULL;
 int log_connection_log_id;
-char* log_directory = NULL;
+char *log_directory = NULL;
+char log_env[FRACTAL_ENVIRONMENT_MAXLEN] = "";
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
@@ -123,16 +124,16 @@ void init_logger(char* log_dir) {
         log_directory[dir_len] = '/';
 #endif
         log_directory[dir_len + 1] = '\0';
-        strcat(f, log_directory);
-        
+
         if (strcmp(sentry_environment, "production") == 0) {
-            strcat(f, "log-prod.txt");
+            // do nothing
         }
-        else if strcmp(sentry_environment, "staging") == 0) {
-            strcat(f, "log-staging.txt");
+        else if (strcmp(sentry_environment, "staging") == 0) {
+            safe_strncpy(log_env, "-staging", FRACTAL_ENVIRONMENT_MAXLEN + 1);
         } else {
-            strcat(f, "log-dev.txt");
+            safe_strncpy(log_env, "-dev", FRACTAL_ENVIRONMENT_MAXLEN + 1);
         }
+        snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env,".txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
@@ -323,11 +324,11 @@ int multi_threaded_printf(void* opaque) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
-                strcat(f, log_directory);
-                strcat(f, "log.txt");
+                snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env,".txt");
+
                 char fp[1000] = "";
-                strcat(fp, log_directory);
-                strcat(fp, "log_prev.txt");
+                snprintf(fp, 1000, "%s%s%s%s", log_directory, "log", log_env,"_prev.txt");
+
 #if defined(_WIN32)
                 WCHAR wf[1000];
                 WCHAR wfp[1000];

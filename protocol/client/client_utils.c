@@ -735,7 +735,7 @@ int configure_cache(void) {
 #ifndef _WIN32
     runcmd("mkdir -p ~/.fractal", NULL);
     runcmd("chmod 0755 ~/.fractal", NULL);
-    runcmd("rm -f ~/.fractal/log.txt", NULL);
+    runcmd("rm -f ~/.fractal/log*", NULL);
     runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
 #endif
     return 0;
