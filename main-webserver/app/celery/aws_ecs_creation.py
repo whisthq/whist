@@ -62,7 +62,7 @@ def _clean_tasks_and_create_new_container(container, task_version, webserver_url
         num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
 
     Returns:
-        None
+        Result of recursive call to assign_container
     """
     # stop base container task if it is running
     ecs_client = ECSClient(
