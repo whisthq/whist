@@ -106,8 +106,8 @@ var containerAppNames map[string]string = make(map[string]string)
 // keep track of the mapping from FractalID to UserID
 var containerUserIDs map[string]string = make(map[string]string)
 
-// keep track of the mapping from FractalID to user access token
-var containerUserAccessTokens map[string]string = make(map[string]string)
+// keep track of the mapping from FractalID to client app access token
+var containerClientAppAccessTokens map[string]string = make(map[string]string)
 
 // keep track of the mapping from FractalID to user config encryption token
 var configEncryptionTokens map[string]string = make(map[string]string)
@@ -610,12 +610,12 @@ func getUserConfig(fractalID string) error {
 // been completed yet before setting the container as ready: these tasks are
 // handleSetConfigEncryptionTokenRequest and handleStartValuesRequest. If both tasks have completed,
 // then get the user's config and set the container as ready.
-func completeContainerSetup(fractalID string, userID string, userAccessToken string, callerFunction string) error {
+func completeContainerSetup(fractalID string, userID string, clientAppAccessToken string, callerFunction string) error {
 	// If this function hasn't been called yet, then set the caller and return because
 	// that means that both required functions have not been run yet.
 	alreadyCalledEndpoint, alreadyCalledEndpointExists := calledSetupEndpoints[fractalID]
 	if !alreadyCalledEndpointExists {
-		containerUserAccessTokens[fractalID] = userAccessToken
+		containerClientAppAccessTokens[fractalID] = clientAppAccessToken
 		calledSetupEndpoints[fractalID] = callerFunction
 		return nil
 	}
@@ -633,9 +633,9 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 
 	var err error
 	// Populate the user config folder for the container's app ONLY if both the client app
-	//     and webserver have passed the same user access token to the host service
-	storedUserAccessToken := containerUserAccessTokens[fractalID]
-	if userAccessToken == storedUserAccessToken {
+	//     and webserver have passed the same client app access token to the host service
+	storedClientAppAccessToken := containerClientAppAccessTokens[fractalID]
+	if clientAppAccessToken == storedClientAppAccessToken {
 		err = getUserConfig(fractalID)
 		if err != nil {
 			logger.Error(err)
@@ -644,7 +644,7 @@ func completeContainerSetup(fractalID string, userID string, userAccessToken str
 		// If the access tokens are not the same, then remove the user ID from the map and
 		//     log an error. This will allow the container to still run, but prevent any
 		//     app config from saving at the end of the session.
-		logger.Errorf("User access tokens for user %s did not match - not retrieving config", userID)
+		logger.Errorf("Client app access tokens for user %s did not match - not retrieving config", userID)
 		delete(containerUserIDs, fractalID)
 	}
 
@@ -686,8 +686,8 @@ func handleSetConfigEncryptionTokenRequest(req *httpserver.SetConfigEncryptionTo
 	configEncryptionTokens[fractalID] = string(req.ConfigEncryptionToken)
 
 	userID := string(req.UserID)
-	userAccessToken := string(req.UserAccessToken)
-	return completeContainerSetup(fractalID, userID, userAccessToken, "handleSetConfigEncryptionTokenRequest")
+	clientAppAccessToken := string(req.ClientAppAccessToken)
+	return completeContainerSetup(fractalID, userID, clientAppAccessToken, "handleSetConfigEncryptionTokenRequest")
 }
 
 // Creates a file containing the DPI assigned to a specific container, and make
@@ -729,8 +729,8 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	userID := string(req.UserID)
-	userAccessToken := string(req.UserAccessToken)
-	return completeContainerSetup(fractalID, userID, userAccessToken, "handleStartValuesRequest")
+	clientAppAccessToken := string(req.ClientAppAccessToken)
+	return completeContainerSetup(fractalID, userID, clientAppAccessToken, "handleStartValuesRequest")
 }
 
 // Helper function to write data to a file
@@ -887,7 +887,7 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 	saveUserConfig(fractalID)
 	delete(containerAppNames, fractalID)
 	delete(containerUserIDs, fractalID)
-	delete(containerUserAccessTokens, fractalID)
+	delete(containerClientAppAccessTokens, fractalID)
 	delete(calledSetupEndpoints, fractalID)
 
 	resourcetrackers.FreePortBindings(fractalID)
