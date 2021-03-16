@@ -57,7 +57,7 @@ type heartbeatRequest struct {
 var authToken string
 var numBeats uint64 = 0
 var httpClient = http.Client{
-	Timeout: 10 * time.Second,
+	Timeout: 30 * time.Second,
 }
 
 // Get the appropriate webserverHost based on whether we're running in
