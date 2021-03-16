@@ -131,7 +131,6 @@ type containerData struct {
 	portBindings []portbindings.PortBinding
 }
 
-//TODO: reorder these functions according to order above
 func (c *containerData) GetFractalID() FractalID {
 	c.rwlock.RLock()
 	defer c.rwlock.RUnlock()
@@ -281,7 +280,8 @@ func (c *containerData) Close() {
 	// Clean up user configs
 	c.cleanUserConfigDir()
 
-	// TODO: clean up cloud storage
+	// Clean up cloud storage
+	c.RemoveAllCloudStorage()
 
 	untrackContainer(c)
 
