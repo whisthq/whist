@@ -148,7 +148,8 @@ int get_time_data(FractalTimeData* time_data) {
     if (strlen(win_tz_name) >= 1) {
         win_tz_name[strlen(win_tz_name) - 1] = '\0';
     }
-    safe_strncpy(time_data->win_tz_name, win_tz_name, min(sizeof(time_data->win_tz_name), strlen(win_tz_name)+1));
+    safe_strncpy(time_data->win_tz_name, win_tz_name,
+                 min(sizeof(time_data->win_tz_name), strlen(win_tz_name) + 1));
     free(win_tz_name);
 
     return 0;
@@ -161,7 +162,8 @@ int get_time_data(FractalTimeData* time_data) {
         "path=$(readlink /etc/localtime); echo "
         "${path#\"/var/db/timezone/zoneinfo\"}",
         &linux_tz_name);
-    safe_strncpy(time_data->linux_tz_name, linux_tz_name, min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name)+1));
+    safe_strncpy(time_data->linux_tz_name, linux_tz_name,
+                 min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name) + 1));
     free(linux_tz_name);
 
     return 0;
@@ -176,7 +178,8 @@ int get_time_data(FractalTimeData* time_data) {
 
     char* linux_tz_name = NULL;
     runcmd("cat /etc/timezone", &linux_tz_name);
-    safe_strncpy(time_data->linux_tz_name, linux_tz_name, min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name)+1));
+    safe_strncpy(time_data->linux_tz_name, linux_tz_name,
+                 min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name) + 1));
     free(linux_tz_name);
 
     return 0;
@@ -229,11 +232,11 @@ void set_timezone_from_windows_name(char* win_tz_name) {
 }
 
 void set_timezone_from_utc(int utc, int dst_flag) {
-#ifdef _WIN32
     if (dst_flag > 0) {
         LOG_INFO("DST active");
         utc = utc - 1;
     }
+#ifdef _WIN32
     char* timezone = "";
     switch (utc) {
         case -12:
@@ -294,9 +297,14 @@ void set_timezone_from_utc(int utc, int dst_flag) {
     set_timezone_from_windows_name(timezone);
 #else
     char cmd[512];
-    // -utc because of
-    // https://www.reddit.com/r/java/comments/5i3zd1/timezoneid_etcgmt2_is_actually_gmt2/
-    snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT%d", -utc);
+    if (utc == 0) {
+        snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT");
+    } else {
+        // -utc because of
+        // https://www.reddit.com/r/java/comments/5i3zd1/timezoneid_etcgmt2_is_actually_gmt2/
+        snprintf(cmd, sizeof(cmd), "timedatectl set-timezone Etc/GMT%s%d", -utc > 0 ? "+" : "",
+                 -utc);
+    }
     runcmd(cmd, NULL);
 #endif
 }
@@ -306,17 +314,23 @@ void set_time_data(FractalTimeData* time_data) {
     if (time_data->use_win_name) {
         LOG_INFO("Setting time from windows time zone %s", time_data->win_tz_name);
         set_timezone_from_windows_name(time_data->win_tz_name);
-    } else {
+    } else if (time_data->use_utc_offset) {
         LOG_INFO("Setting time from UTC offset %d", time_data->utc_offset);
         set_timezone_from_utc(time_data->utc_offset, time_data->dst_flag);
+    } else {
+        LOG_ERROR("Could not set time (%d, %d, %d)", time_data->use_win_name,
+                  time_data->use_linux_name, time_data->utc_offset);
     }
 #else
     if (time_data->use_linux_name) {
         LOG_INFO("Setting time from IANA time zone %s", time_data->linux_tz_name);
         set_timezone_from_iana_name(time_data->linux_tz_name);
-    } else {
+    } else if (time_data->use_utc_offset) {
         LOG_INFO("Setting time from UTC offset %d", time_data->utc_offset);
         set_timezone_from_utc(time_data->utc_offset, time_data->dst_flag);
+    } else {
+        LOG_ERROR("Could not set time (%d, %d, %d)", time_data->use_win_name,
+                  time_data->use_linux_name, time_data->utc_offset);
     }
 #endif
 }
