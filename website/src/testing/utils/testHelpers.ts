@@ -172,7 +172,7 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
     Description:
         Insert a test user into the database
 
-    Arguments:
+    Arguments: 
         user (TestUser): TestUser object
         hasuraToken (string): Hasura admin token
 */
@@ -180,7 +180,13 @@ export const insertUserDB = async (user: TestUser, hasuraToken: string) => {
         hasuraToken = loadHasuraToken()
     }
 
-    await signupEmail(user.userID, user.password, user.name, user.feedback)
+    await signupEmail(
+        user.userID,
+        user.password,
+        user.name,
+        user.feedback,
+        user.configToken
+    )
 
     const output = await graphQLPost(
         UPDATE_USER,
