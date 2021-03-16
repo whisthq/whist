@@ -42,6 +42,7 @@ func init() {
 // mounts and container resource allocations. Note that we keep the cloud
 // storage in its own directory, not in the fractalDir, so that we can safely
 // delete the entire `fractal` directory on exit.
+// TODO: fix all references to these
 const fractalDir = "/fractal/"
 const cloudStorageDir = "/fractalCloudStorage/"
 
@@ -202,19 +203,10 @@ func initializeFilesystem() {
 		}
 	}
 
-	// Create the resource mapping directory
+	// Create the fractal directory
 	err := os.MkdirAll(fractalDir, 0777)
 	if err != nil {
 		logger.Panicf("Failed to create directory %s: error: %s\n", fractalDir, err)
-	}
-
-	// Same check as above, but for fractal-private directory
-	if _, err := os.Lstat(httpserver.FractalPrivatePath); !os.IsNotExist(err) {
-		if err == nil {
-			logger.Panicf("Directory %s already exists!", httpserver.FractalPrivatePath)
-		} else {
-			logger.Panicf("Could not make directory %s because of error %v", httpserver.FractalPrivatePath, err)
-		}
 	}
 
 	// Create fractal-private directory
@@ -237,7 +229,7 @@ func initializeFilesystem() {
 	// Create fractal temp directory
 	err = os.MkdirAll("/fractal/temp/", 0777)
 	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
+		logger.Panicf("Could not mkdir path %s. Error: %s", "/fractal/temp", err)
 	}
 
 	makeFractalDirectoriesFreeForAll()
