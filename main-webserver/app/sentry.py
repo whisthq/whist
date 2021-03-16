@@ -16,8 +16,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     the return is the ID of the message.
 
     Args:
-        env: Acquired from HEROKU_APP_NAME env var. One of
-            ["fractal-prod-server", "fractal-staging-server"]
+        env: A valid value from app.constants.env_names
         sentry_dsn: Acquired from SENTRY_DSN env var. Points to external sentry resource.
 
     Return:
@@ -27,7 +26,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
         dsn=sentry_dsn,
         integrations=[FlaskIntegration(), CeleryIntegration()],
         environment=env,
-        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),
+        release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
     )
     # Docs:
     # https://getsentry.github.io/sentry-python/api.html?highlight=capture_message#sentry_sdk.capture_message
