@@ -198,6 +198,7 @@ def reset_password_helper(username, password, encrypted_config_token):
     Args:
         username (str): The user to update the password for
         password (str): The new password
+        encrypted_config_token(str):  the new encrypted config token to store
     """
     user = User.query.get(username)
 
@@ -245,7 +246,9 @@ def update_user_helper(body):
                 to_email=user.user_id, email_id="EMAIL_VERIFICATION", jinja_args={"url": url}
             )
         if "password" in body:
-            result_dict = reset_password_helper(body["username"], body["password"], body["encrypted_config_token"])
+            result_dict = reset_password_helper(
+                body["username"], body["password"], body["encrypted_config_token"]
+            )
             if result_dict["status"] == SUCCESS:
                 result_dict["msg"] = "Password updated successfully"
             else:
