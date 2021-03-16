@@ -62,8 +62,6 @@ var httpClient = http.Client{
 
 // Get the appropriate webserverHost based on whether we're running in
 // production, staging or development
-// TODO(djsavvy): Only communicate with webserver in dev environment, not localdev
-// (https://github.com/fractal/fractal/issues/1127)
 func getWebserverHost() string {
 	switch logger.GetAppEnvironment() {
 	case logger.EnvStaging:
@@ -82,6 +80,12 @@ func getWebserverHost() string {
 
 // InitializeHeartbeat starts the heartbeat goroutine
 func InitializeHeartbeat() error {
+	if logger.GetAppEnvironment() == logger.EnvLocalDev {
+		logger.Infof("Skipping initializing webserver heartbeats since running in LocalDev environment.")
+	} else {
+		logger.Infof("Initializing webserver heartbeats.")
+	}
+
 	resp, err := handshake()
 	if err != nil {
 		return logger.MakeError("Error handshaking with webserver: %v", err)
