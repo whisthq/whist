@@ -272,7 +272,7 @@ jobs:
 
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-                  
+
                   # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
                   start_maintenance(WEBSERVER_URL, TOKEN)
 
@@ -455,7 +455,8 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: [
+        needs:
+            [
                 fractal-publish-build-config,
                 fractal-start-webserver-maintenance-mode,
             ]
