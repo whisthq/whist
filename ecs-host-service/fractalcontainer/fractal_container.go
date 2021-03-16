@@ -284,4 +284,6 @@ func (c *containerData) Close() {
 	// TODO: clean up cloud storage
 
 	untrackContainer(c)
+
+	logger.Infof("Closed FractalContainer %s", c.fractalID)
 }
