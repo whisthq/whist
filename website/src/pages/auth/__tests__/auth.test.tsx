@@ -358,6 +358,8 @@ describe("<Auth />", () => {
                                 can_login: true,
                                 is_user: true,
                                 name: null,
+                                encrypted_config_token:
+                                    "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
                                 refresh_token: "refreshToken",
                                 verification_token: "verificationToken",
                                 verified: false,
