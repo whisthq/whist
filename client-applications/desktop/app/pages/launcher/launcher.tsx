@@ -227,6 +227,7 @@ export const Launcher = (props: {
             )
 
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
+            logger.logInfo("Launching protocol", userID)
             ipc.sendSync(FractalIPC.LAUNCH_PROTOCOL, true)
             setShouldForceQuit(true)
             setProtocol(true)

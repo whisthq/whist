@@ -71,9 +71,10 @@ export const initiateWindowListeners = (
     mainWindow: BrowserWindow,
     customURL: string | null = null,
     showMainWindow: boolean,
-    updating: boolean
+    updating: { status: boolean }
 ) => {
     const os = require("os")
+    const { dialog } = require("electron")
 
     // @TODO: Use 'ready-to-show' event
     //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
@@ -113,19 +114,26 @@ export const initiateWindowListeners = (
                 mainWindow.maximize()
             }
         }
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
+        const options = {
+            message: `updating status in web listener ${updating.status}`,
+        }
+
+        dialog.showMessageBox(null, options, (response) =>
+            console.log(response)
+        )
+        mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
     })
 
     mainWindow.on("close", (event) => {
-        mainWindow?.destroy()
+        // mainWindow?.destroy()
         if (!showMainWindow) {
             event.preventDefault()
         }
     })
 
     mainWindow.on("closed", () => {
-        mainWindow?.destroy()
-        // mainWindow = null
+        // mainWindow?.destroy()
+        mainWindow = null
     })
 
     mainWindow.on("maximize", () => {})

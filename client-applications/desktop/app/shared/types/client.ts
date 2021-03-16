@@ -24,9 +24,9 @@ export class FractalDirectory {
     static DESKTOP = path.join(homeDir, "Desktop")
 
     static getRootDirectory = () => {
-        const remote = require("electron").remote
-        if (remote && remote.app) {
-            const appPath = remote.app.getAppPath()
+        const { app } = require("electron")
+        if (app) {
+            const appPath = app.getAppPath()
             if (process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT) {
                 return path.join(appPath, "..")
             }

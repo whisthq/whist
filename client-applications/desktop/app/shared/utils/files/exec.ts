@@ -48,7 +48,9 @@ const getExecutableName = (): string => {
     const currentOS = require("os").platform()
 
     if (currentOS === OperatingSystem.MAC) {
-        return "./FractalClient"
+        return process.env.NODE_ENV === "development"
+            ? "./FractalClient"
+            : "./Fractal"
     }
     if (currentOS === OperatingSystem.WINDOWS) {
         return "Fractal.exe"
@@ -81,22 +83,31 @@ export const launchProtocol = async (
 ) => {
     // spawn launches an executable in a separate thread
     const spawn = require("child_process").spawn
+
     // Get the path and name of the protocol in the packaged app
     // TODO: add conditino for mac os path directory
+
     const protocolPath = require("path").join(
         FractalDirectory.getRootDirectory(),
-
-        "protocol-build/client"
+        require("os").platform() === OperatingSystem.MAC &&
+            process.env.NODE_ENV !== "development"
+            ? "MacOS"
+            : "protocol-build/client"
     )
+    console.log(protocolPath)
+
     const iconPath = require("path").join(
         FractalDirectory.getRootDirectory(),
         "build/icon64.png"
     )
 
     const executable = getExecutableName()
-    console.log(protocolPath)
+    const command =
+        process.env.NODE_ENV === "development"
+            ? "chmod +x FractalClient"
+            : "chmod +x Fractal"
     // On Mac, run chmod to allow the protocol to run
-    await execPromise("chmod +x FractalClient", protocolPath, [
+    await execPromise(command, protocolPath, [
         OperatingSystem.MAC,
         OperatingSystem.LINUX,
     ])
@@ -117,6 +128,7 @@ export const launchProtocol = async (
 
     // Starts the protocol
     protocolOnStart(userID)
+
     const protocol = spawn(executable, protocolArguments, {
         cwd: protocolPath,
         detached: false,

@@ -31,7 +31,9 @@ Store.initRenderer()
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
-let updating = false
+let updating = {
+    status: false,
+}
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
@@ -67,9 +69,11 @@ export const launchWindow = async (
     setTimeout(() => {
         mainWindow?.loadURL(`file://${__dirname}/app.html`)
     }, 2000)
+
     // mainWindow.webContents.openDevTools()
-    updating = initiateAutoUpdateListeners(mainWindow, updating)
     initiateWindowListeners(mainWindow, customURL, showMainWindow, updating)
+    initiateFractalIPCListeners(mainWindow, showMainWindow)
+    initiateAutoUpdateListeners(mainWindow, updating)
 
     return mainWindow
 }
@@ -96,7 +100,6 @@ if (!gotTheLock) {
 
     app.on("ready", async () => {
         mainWindow = await launchWindow(mainWindow, customURL, showMainWindow)
-        initiateFractalIPCListeners(mainWindow, showMainWindow)
     })
 
     app.on("activate", async () => {

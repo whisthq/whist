@@ -9,26 +9,35 @@ import { FractalIPC } from "../shared/types/ipc"
  */
 export const initiateAutoUpdateListeners = (
     mainWindow: BrowserWindow | null = null,
-    updating: boolean
+    updating: { status: boolean }
 ) => {
     // Autoupdater listeners, will fire if S3 app version is greater than current version
     const { dialog } = require("electron")
+    let options = {
+        message: "",
+    }
 
     console.log("INITIATING AUTO LISTENERS")
     autoUpdater.autoDownload = false
 
     autoUpdater.on("update-available", () => {
-        updating = true
+        updating.status = true
+
         if (mainWindow) {
-            mainWindow.webContents.send(FractalIPC.UPDATE, updating)
+            options.message = `UPDATE AVAILABLE IN LISTENER`
+
+            dialog.showMessageBox(null, options, (response) => {
+                console.log(response)
+            })
+            mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
         }
         autoUpdater.downloadUpdate()
     })
 
     autoUpdater.on("update-not-available", () => {
-        updating = false
+        updating.status = false
         if (mainWindow) {
-            mainWindow.webContents.send(FractalIPC.UPDATE, updating)
+            mainWindow.webContents.send(FractalIPC.UPDATE, updating.status)
         }
     })
 
@@ -66,7 +75,7 @@ export const initiateAutoUpdateListeners = (
             mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
         }
         autoUpdater.quitAndInstall()
-        updating = false
+        updating.status = false
     })
 
     return updating
