@@ -19,16 +19,16 @@ func (c *containerData) WriteResourcesForProtocol() error {
 	if err != nil {
 		return logger.MakeError("Couldn't write start values: %s", err)
 	}
-	err = writeDataToFile(c.getResourceMappingDir()+"hostPort_for_my_32262_tcp", logger.Sprintf("%d", p))
+	err = c.writeResourceMappingToFile("hostPort_for_my_32262_tcp", logger.Sprintf("%d", p))
 	if err != nil {
-		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
 
 	// Write TTY
-	err = writeDataToFile(c.getResourceMappingDir()+"tty", logger.Sprintf("%d", c.GetTTY()))
+	err = c.writeResourceMappingToFile("tty", logger.Sprintf("%d", c.GetTTY()))
 	if err != nil {
-		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
 
@@ -37,14 +37,14 @@ func (c *containerData) WriteResourcesForProtocol() error {
 
 func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
 	// Write DPI
-	if err := writeDataToFile(c.getResourceMappingDir()+"DPI", logger.Sprintf("%v", dpi)); err != nil {
-		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+	if err := c.writeResourceMappingToFile("DPI", logger.Sprintf("%v", dpi)); err != nil {
+		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
 
 	// Write ContainerARN
-	if err := writeDataToFile(c.getResourceMappingDir()+"ContainerARN", containerARN); err != nil {
-		// Don't need to wrap err here because writeDataToFile already contains the relevant info
+	if err := c.writeResourceMappingToFile("ContainerARN", containerARN); err != nil {
+		// Don't need to wrap err here because it already contains the relevant info
 		return err
 	}
 
@@ -142,7 +142,7 @@ func (c *containerData) getS3ConfigPath() string {
 }
 
 func (c *containerData) MarkReady() error {
-	return writeDataToFile(c.getResourceMappingDir()+".ready", ".ready")
+	return c.writeResourceMappingToFile(".ready", ".ready")
 }
 
 func (c *containerData) getResourceMappingDir() string {
@@ -164,9 +164,8 @@ func (c *containerData) cleanResourceMappingDir() {
 	}
 }
 
-// TODO: refactor out all the `c.getResourceMappingDir() calls`
-func writeDataToFile(filename, data string) (err error) {
-	file, err := os.OpenFile(filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
+func (c *containerData) writeResourceMappingToFile(filename, data string) (err error) {
+	file, err := os.OpenFile(c.getResourceMappingDir()+filename, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0777)
 	if err != nil {
 		return logger.MakeError("Unable to create file %s to store resource assignment. Error: %v", filename, err)
 	}
