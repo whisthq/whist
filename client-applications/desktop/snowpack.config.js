@@ -19,6 +19,6 @@ module.exports = {
         open: "none"
     },
     packageOptions: {
-        polyfillNode: false
+        polyfillNode: true
     }
 }
