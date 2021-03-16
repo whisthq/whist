@@ -64,7 +64,7 @@ def app():
     Returns:
         An instance of the Flask application for testing.
     """
-
+    # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
 
     # enable web requests
@@ -78,6 +78,9 @@ def app():
         )
     else:
         SignalHandler()
+
+    # initialize redis connection for maintenance package
+    maintenance_init_redis_conn(app.config["REDIS_URL"])
 
     return _app
 

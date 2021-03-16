@@ -75,6 +75,10 @@ def test_webserver_sigterm(client):
     # re-enable web requests
     assert set_web_requests_status(True)
 
+    # should be ok
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == SUCCESS
+
 
 @pytest.mark.parametrize(
     "username, is_developer",
