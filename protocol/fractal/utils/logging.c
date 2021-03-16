@@ -124,7 +124,15 @@ void init_logger(char* log_dir) {
 #endif
         log_directory[dir_len + 1] = '\0';
         strcat(f, log_directory);
-        strcat(f, "log.txt");
+        
+        if (strcmp(sentry_environment, "production") == 0) {
+            strcat(f, "log-prod.txt");
+        }
+        else if strcmp(sentry_environment, "staging") == 0) {
+            strcat(f, "log-staging.txt");
+        } else {
+            strcat(f, "log-dev.txt");
+        }
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
