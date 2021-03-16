@@ -52,7 +52,15 @@ def can_update_container_state(user, task_id, obj=None):
 
 
 def set_container_state(
-    keyuser, keytask, user_id=None, state=None, task_id=None, ip=None, port=None, force=False
+    keyuser,
+    keytask,
+    user_id=None,
+    state=None,
+    task_id=None,
+    ip=None,
+    port=None,
+    host_service_auth_secret=None,
+    force=False,
 ):
     """Set a container state in the UserContinerState (user_app_state) table. We
     require a keyuser (and potentially keytask) to set it. You can null out keytask only if
@@ -68,6 +76,8 @@ def set_container_state(
         user_id (str, optional): The user_id we want to set. Defaults to None.
         state (str, optional): The state we want to set. Defaults to None.
         ip (str, optional): which IP we want to set. Defaults to None.
+        host_service_auth_secret(str, optional): what the host service auth secret is.
+                                                Defaults to None
         port (int, optional): which port we want to set. Defaults to None.
         task_id (str, optional): The task id we want to set. Defaults to None.
         force (bool, optional): Whether to update with a check for validity or not.
@@ -85,6 +95,8 @@ def set_container_state(
                 obj.state = state
             if ip:
                 obj.ip = ip
+            if host_service_auth_secret:
+                obj.host_service_auth_secret = host_service_auth_secret
             if port:
                 obj.port = port
             if user_id:
@@ -93,16 +105,27 @@ def set_container_state(
         else:
             if not state:
                 state = PENDING
-            create_container_state(keyuser, keytask, state=state, ip=ip)
+            create_container_state(
+                keyuser,
+                keytask,
+                state=state,
+                ip=ip,
+                port=port,
+                host_service_auth_secret=host_service_auth_secret,
+            )
 
 
-def create_container_state(user_id, task_id, state=PENDING, ip=None, port=None):
+def create_container_state(
+    user_id, task_id, state=PENDING, ip=None, port=None, host_service_auth_secret=None
+):
     """Creates a new entry into the app_info table.
 
     Args:
         user_id (str): The username of the user for whom'stdv this entry belongs.
         task_id (str): The task id of the task that's creating this.
         ip (str, optional): the IP of this container (none if none assigned)
+        host_service_auth_secret (str, optional): the host service auth secret of this container
+                                                (none if none assigned)
         port (int, optional): the port mapping of this container (none if none assigned)
         state (str, optional): The state that we want to write to the table for this
         new object. Defaults to PENDING.
@@ -110,7 +133,14 @@ def create_container_state(user_id, task_id, state=PENDING, ip=None, port=None):
     Raises:
         Exception: if it fails to commit the creation somehow.
     """
-    obj = UserContainerState(user_id=user_id, task_id=task_id, state=state, ip=ip, port=port)
+    obj = UserContainerState(
+        user_id=user_id,
+        task_id=task_id,
+        state=state,
+        ip=ip,
+        port=port,
+        host_service_auth_secret=host_service_auth_secret,
+    )
     sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), obj)
 
     if not sql:
