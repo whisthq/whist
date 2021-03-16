@@ -18,6 +18,7 @@ from app.helpers.utils.general.limiter import limiter
 from app import set_web_requests_status
 from app.signals import SignalHandler
 from app.helpers.utils.general.logs import fractal_logger
+from app.helpers.utils.general.limiter import limiter
 
 
 @pytest.fixture
@@ -80,7 +81,7 @@ def app():
         SignalHandler()
 
     # initialize redis connection for maintenance package
-    maintenance_init_redis_conn(app.config["REDIS_URL"])
+    maintenance_init_redis_conn(_app.config["REDIS_URL"])
 
     return _app
 
