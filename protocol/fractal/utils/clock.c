@@ -160,7 +160,7 @@ int get_time_data(FractalTimeData* time_data) {
     char* linux_tz_name = NULL;
     runcmd(
         "path=$(readlink /etc/localtime); echo "
-        "${path#\"/var/db/timezone/zoneinfo\"}",
+        "${path#\"/var/db/timezone/zoneinfo/\"}",
         &linux_tz_name);
     safe_strncpy(time_data->linux_tz_name, linux_tz_name,
                  min(sizeof(time_data->linux_tz_name), strlen(linux_tz_name) + 1));
