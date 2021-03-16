@@ -43,7 +43,7 @@ global.updateStatus = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = true
+let showMainWindow = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -64,6 +64,12 @@ process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
 })
 
+/**
+ * Launches window and protocol through ipc listeners
+ * @param mainWindow mainWindow
+ * @param customURL
+ * @param showMainWindow
+ */
 const launchWindow = async (
     mainWindow: BrowserWindow | null = null,
     customURL: string | null = null,

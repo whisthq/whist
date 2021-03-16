@@ -61,11 +61,10 @@ export const createWindow = async (mainWindow: BrowserWindow | null = null) => {
 }
 
 /**
- *
+ * fires up any window listeners
  * @param mainWindow
  * @param customURL
  * @param showMainWindow
- * @param updating
  */
 export const initiateWindowListeners = (
     mainWindow: BrowserWindow,
@@ -120,7 +119,6 @@ export const initiateWindowListeners = (
         dialog.showMessageBox(null, options, (response) =>
             console.log(response)
         )
-        console.log(global.updateStatus)
         mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
     })
 
@@ -132,8 +130,8 @@ export const initiateWindowListeners = (
     })
 
     mainWindow.on("closed", () => {
-        // mainWindow?.destroy()
-        mainWindow = null
+        mainWindow?.destroy()
+        // mainWindow = null
     })
 
     mainWindow.on("maximize", () => {})

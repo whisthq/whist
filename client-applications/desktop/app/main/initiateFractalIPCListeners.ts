@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow, IpcMainEvent } from "electron"
 import { ChildProcess } from "child_process"
 import { FractalIPC } from "../shared/types/ipc"
 import { launchProtocol, writeStream } from "../shared/utils/files/exec"
@@ -22,7 +22,7 @@ export const initiateFractalIPCListeners = (
     let protocolLaunched: number
     let createContainerRequestSent: number
 
-    ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
+    ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event: IpcMainEvent, argv: any) => {
         showMainWindow = argv
         if (showMainWindow && mainWindow) {
             mainWindow.maximize()
@@ -41,7 +41,7 @@ export const initiateFractalIPCListeners = (
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
+    ipc.on(FractalIPC.LOAD_BROWSER, (event: IpcMainEvent, argv: any) => {
         const url = argv
         const win = new BrowserWindow({ width: 800, height: 600 })
         win.on("close", () => {
@@ -54,7 +54,7 @@ export const initiateFractalIPCListeners = (
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event, argv) => {
+    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event: IpcMainEvent, argv: any) => {
         BrowserWindow.getAllWindows().forEach((win) => {
             if (win.id !== 1) {
                 win.close()
@@ -69,14 +69,12 @@ export const initiateFractalIPCListeners = (
         app.quit()
     })
 
-    ipc.on(FractalIPC.SET_USERID, (event, argv) => {
+    ipc.on(FractalIPC.SET_USERID, (event: IpcMainEvent, argv: any) => {
         userID = argv
-        console.log("USER ID:", userID)
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.LAUNCH_PROTOCOL, (event, argv) => {
-        console.log("LAUNCHIGN PROTOCOL")
+    ipc.on(FractalIPC.LAUNCH_PROTOCOL, (event: IpcMainEvent, argv: any) => {
         const launchThread = async () => {
             protocol = await launchProtocol(
                 protocolOnStart,
@@ -91,7 +89,7 @@ export const initiateFractalIPCListeners = (
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.SEND_CONTAINER, (event, argv) => {
+    ipc.on(FractalIPC.SEND_CONTAINER, (event: IpcMainEvent, argv: any) => {
         let container = argv
         const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
         writeStream(protocol, `ports?${portInfo}`)
@@ -103,12 +101,12 @@ export const initiateFractalIPCListeners = (
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.PENDING_PROTOCOL, (event, argv) => {
+    ipc.on(FractalIPC.PENDING_PROTOCOL, (event: IpcMainEvent, argv: any) => {
         writeStream(protocol, `loading?${LoadingMessage.PENDING}`)
         event.returnValue = argv
     })
 
-    ipc.on(FractalIPC.KILL_PROTOCOL, (event, argv) => {
+    ipc.on(FractalIPC.KILL_PROTOCOL, (event: IpcMainEvent, argv: any) => {
         writeStream(protocol, "kill?0")
         protocol.kill("SIGINT")
         event.returnValue = argv

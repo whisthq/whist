@@ -94,7 +94,6 @@ export const launchProtocol = async (
             ? "MacOS"
             : "protocol-build/client"
     )
-    console.log(protocolPath)
 
     const iconPath = require("path").join(
         FractalDirectory.getRootDirectory(),
@@ -137,7 +136,6 @@ export const launchProtocol = async (
 
     // On protocol exit logic, fired only when protocol stops running
     protocol.on("close", (code: number, signal: string) => {
-        console.log("Protocol exited with code: ", code, "Signal: ", signal)
         protocolOnExit(
             protocolLaunched,
             createContainerRequestSent,

@@ -16,7 +16,6 @@ export const initiateAutoUpdateListeners = (
         message: "",
     }
 
-    console.log("INITIATING AUTO LISTENERS")
     autoUpdater.autoDownload = false
 
     autoUpdater.on("update-available", () => {
