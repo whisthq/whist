@@ -1,44 +1,20 @@
 {
+    "include": ["src"],
     "compilerOptions": {
-        "baseUrl": "./app",
-        "target": "ES2018",
-        "module": "CommonJS",
-        "lib": ["dom", "esnext"],
-        "declaration": true,
-        "declarationMap": true,
-        "noEmit": true,
-        "jsx": "react",
-        "strict": true,
-        "pretty": true,
-        "sourceMap": true,
-        /* Additional Checks */
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        /* Module Resolution Options */
+        "module": "esnext",
+        "target": "esnext",
         "moduleResolution": "node",
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
+        "jsx": "react-jsx",
+        "baseUrl": "./",
+        "paths": { "@app/assets/*": ["public/assets/*"],
+                   "@app/*": ["src/*"] },
+        "noEmit": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
-        "allowJs": true,
-        "paths": {
-            "shared/*": ["shared/*"],
-            "types/*": ["types/*"],
-            "pages/*": ["pages/*"]
-        }
-    },
-    "exclude": [
-        "release",
-        "app/main.prod.js",
-        "app/main.prod.js.map",
-        "app/renderer.prod.js",
-        "app/renderer.prod.js.map",
-        "app/style.css",
-        "app/style.css.map",
-        "app/dist",
-        "dll",
-        "app/main.js",
-        "app/main.js.map"
-    ]
+        "allowSyntheticDefaultImports": true,
+        "importsNotUsedAsValues": "error",
+        "typeRoots": ["./src/@types", "./node_modules/@types"]
+    }
 }
