@@ -1,7 +1,7 @@
 import { createLogger, format, transports, config } from "winston"
+import Logzio from "winston-logzio"
 import { FractalNodeEnvironment } from "../../types/config"
 import { config as FractalConfig } from "../../constants/config"
-import Logzio from "winston-logzio"
 
 const { combine, timestamp, json } = format
 

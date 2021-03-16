@@ -1,5 +1,5 @@
-import { OperatingSystem, FractalDirectory } from "../../types/client"
 import { ChildProcess } from "child_process"
+import { OperatingSystem, FractalDirectory } from "../../types/client"
 
 // TODO: REVERT ALL EXEUTABLE CHANGES TO MATCH
 export const execPromise = (

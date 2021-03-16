@@ -1,3 +1,4 @@
+import fetch from "node-fetch"
 import { config, webservers } from "../../constants/config"
 import { debugLog } from "../../utils/general/logging"
 import {
@@ -6,7 +7,6 @@ import {
     FractalHTTPCode,
 } from "../../../shared/types/api"
 import { fractalBackoff } from "../../../shared/utils/general/helpers"
-import fetch from "node-fetch"
 
 const checkResponse = (response: { status: number }): boolean => {
     /*
