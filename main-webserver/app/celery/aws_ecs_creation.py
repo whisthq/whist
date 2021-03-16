@@ -191,13 +191,13 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(container: UserContainer, host_service_auth_secret: str = "") -> None:
+def _pass_start_values_to_instance(container: UserContainer, client_app_auth_secret: str = "") -> None
     """
     Send the instance start values to the host service.
 
     Arguments:
         container: An instance of the UserContainer model.
-        host_service_auth_secret: the auth secret the client app should use
+         client_app_auth_secret: the auth secret the client app should use
 
     Returns:
         None
@@ -218,7 +218,7 @@ def _pass_start_values_to_instance(container: UserContainer, host_service_auth_s
                 "container_ARN": container.container_id,
                 "dpi": container.dpi,
                 "user_id": container.user_id,
-                "client_app_auth_secret": host_service_auth_secret,
+                "client_app_auth_secret": client_app_auth_secret,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -528,7 +528,7 @@ def _assign_container(
     webserver_url: str = "fractal-dev-server.herokuapp.com",
     num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
-    host_service_auth_secret = os.urandom(16).hex()
+    client_app_auth_secret = os.urandom(16).hex()
     """
     See assign_container. This is helpful to mock.
     """
@@ -728,7 +728,7 @@ def _assign_container(
 
     try:
         _mount_cloud_storage(user, base_container)
-        _pass_start_values_to_instance(base_container, host_service_auth_secret)
+        _pass_start_values_to_instance(base_container, client_app_auth_secret)
     except StartValueException:
         num_tries += 1
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
@@ -747,7 +747,7 @@ def _assign_container(
         task_id=self.request.id,
         state=PENDING,
         ip=base_container.ip,
-        host_service_auth_secret=host_service_auth_secret,
+        client_app_auth_secret=client_app_auth_secret,
         port=base_container.port_32262,
         force=True,  # necessary since check will fail otherwise
     )
