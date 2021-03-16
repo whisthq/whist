@@ -39,6 +39,9 @@ from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.models import ClusterInfo, RegionToAmi
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+
+
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
@@ -437,5 +440,16 @@ def aws_container_stun(**kwargs):
     else:
         status = set_stun(user, container_id, using_stun)
         response = jsonify({"status": status}), status
+
+    return response
+
+
+@aws_container_bp.route("/container/name", methods=["POST"])
+@fractal_pre_process
+def get_name(**kwargs):
+    body = kwargs["body"]
+    name = ECSClient.generate_name("cluster")
+
+    response = jsonify({"name": name}), ACCEPTED
 
     return response

@@ -15,6 +15,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make sure current directory is `main-webserver/docker`
 cd "$DIR"
 
+
+
 # Allow passing `--down` to spin down the docker-compose stack, instead of
 # having to cd into this directory and manually run the command.
 if [[ $* =~ [:space:]*--down[:space:]* ]]; then
@@ -22,6 +24,12 @@ if [[ $* =~ [:space:]*--down[:space:]* ]]; then
     docker-compose down
     exit 0
 fi
+
+BRANCH=$(git branch --show-current)
+echo $BRANCH
+
+COMMIT=$(git rev-parse --short HEAD)
+echo $COMMIT
 
 USE_DEV_DB=false
 # Allow passing `--use-dev-db` to use the dev database

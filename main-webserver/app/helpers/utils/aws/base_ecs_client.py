@@ -159,6 +159,12 @@ class ECSClient:
         )
         return clients
 
+        # def get_active_branch_name(self):
+
+    #     repo = Repo(os.getcwd())
+    #     branch = repo.active_branch
+    #     return branch
+
     def generate_name(self, starter_name=""):
         """
         Helper function for generating a name with a random UUID
