@@ -74,35 +74,34 @@ def test_no_region(client, authorized, monkeypatch, set_valid_subscription):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_get_num_extra_empty(deployment_stage):
+def test_get_num_extra_empty(task_def_env):
     # tests the base case of _get_num_extra -- prewarm 1
-    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 1
+    assert _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == 1
 
 
-def test_get_num_extra_full(bulk_container, deployment_stage):
+def test_get_num_extra_full(bulk_container, task_def_env):
     # tests the buffer filled case of _get_num_extra -- 1 already prewarmed
     _ = bulk_container(is_assigned=False)
-    assert _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1") == 0
+    assert _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == 0
 
 
-def test_get_num_extra_fractional(bulk_container, deployment_stage):
+def test_get_num_extra_fractional(bulk_container, task_def_env):
     # tests the fractional case of _get_num_extra, ensure the ratio is right
     for _ in range(15):
         _ = bulk_container(is_assigned=True)
     preboot_num = (
         SupportedAppImages.query.filter_by(
-            task_definition=f"fractal-{deployment_stage}-browsers-chrome"
+            task_definition=f"fractal-{task_def_env}-browsers-chrome"
         )
         .first()
         .preboot_number
     )
     assert (
-        _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1")
-        == 15.0 * preboot_num
+        _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == 15.0 * preboot_num
     )
 
 
-def test_get_num_extra_subtracts(bulk_container, deployment_stage):
+def test_get_num_extra_subtracts(bulk_container, task_def_env):
     # tests the total codepath set of _get_num_extra
     # fractional reserve and buffer filling
     for _ in range(15):
@@ -110,13 +109,13 @@ def test_get_num_extra_subtracts(bulk_container, deployment_stage):
     _ = bulk_container(is_assigned=False)
     preboot_num = (
         SupportedAppImages.query.filter_by(
-            task_definition=f"fractal-{deployment_stage}-browsers-chrome"
+            task_definition=f"fractal-{task_def_env}-browsers-chrome"
         )
         .first()
         .preboot_number
     )
     assert (
-        _get_num_extra(f"fractal-{deployment_stage}-browsers-chrome", "us-east-1")
+        _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1")
         == (15.0 * preboot_num) - 1
     )
 

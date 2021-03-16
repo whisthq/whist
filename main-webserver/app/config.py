@@ -12,6 +12,7 @@ instantiated and the Flask application is configured by flask.Config.from_object
 
 import json
 import os
+from typing import Any
 
 from collections import namedtuple
 
@@ -19,6 +20,9 @@ from dotenv import load_dotenv
 from flask import request
 from sqlalchemy import create_engine
 from sqlalchemy.orm.session import Session
+
+import app.constants.env_names as env_names
+import app.constants.config_table_names as config_table_names
 
 # A _ConfigMatrix instance is a two-dimensional object that resembles a 2x2 matrix and is used to
 # look up Flask application configuration objects. The first dimension maps the strings "deployed"
@@ -178,42 +182,53 @@ class DeploymentConfig:
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
     @property
+    def ENVIRONMENT(self) -> str:  # pylint: disable=invalid-name
+        """Which environment (production, staging, development, local) is the application
+        running in?
+
+        Many other values are derived off of this, such as which task_definitions to use.
+
+        NOTE: As a fallback, the "ENVIRONMENT" key can set to an environment name to
+        override the automatically calculated environment. If set, the value of ENVIRONMENT
+        will be returned as is.
+
+        NOTE: This assumes the app is running on Heroku. Local configs should override
+        this property. If a heroku environment is not being used, this method will fail
+        (unless ENVIRONMENT is set).
+
+            * If Heroku is being used, but the app name is unrecognized, this will default to
+            development since it's assumed that a review app is being used (which is effectively a
+            development deployment).
+
+            * If Heroku is being used, and the app is in a test environment, then development
+            will be returned as the environment.
+
+        Returns:
+            @see app.constants.env_names
+        """
+
+        if (override_env := os.environ.get("ENVIRONMENT")) is not None:
+            return override_env
+
+        if "HEROKU_TEST_RUN_ID" in os.environ:
+            return env_names.TESTING
+
+        heroku_app_name = os.environ["HEROKU_APP_NAME"]
+        if heroku_app_name == "fractal-prod-server":
+            return env_names.PRODUCTION
+        elif heroku_app_name == "fractal-staging-server":
+            return env_names.STAGING
+
+        return env_names.DEVELOPMENT
+
+    @property
     def config_table(self):
         """Determine which config database table fallback configuration values should be read.
 
         Returns:
-            Either "dev", "production", or "staging".
+            @see app.constants.config_table_names
         """
-
-        config_tables = {
-            "production": "production",
-            "staging": "staging",
-            "development": "dev",
-        }
-
-        return config_tables[self.DEPLOYMENT_STAGE]
-
-    @property
-    def DEPLOYMENT_STAGE(self):  # pylint: disable=invalid-name
-        """Determine whether we are running our code in dev mode, staging mode or production mode.
-
-        We need to know what deployment stage our code is in so we can choose the correct family
-        of task definitions to deploy to our clusters.
-
-        Returns:
-            Either "production", "staging", "development".
-        """
-
-        app_name = os.environ.get("HEROKU_APP_NAME")
-
-        if app_name == "fractal-prod-server":
-            stage = "production"
-        elif app_name == "fractal-staging-server":
-            stage = "staging"
-        else:
-            stage = "development"
-
-        return stage
+        return config_table_names.from_env(self.ENVIRONMENT)
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
@@ -240,6 +255,23 @@ class DeploymentConfig:
         return os.environ.get("REDIS_TLS_URL") or os.environ["REDIS_URL"]
 
 
+def try_parent_property_or(parent_cls: Any, prop_name: str, default: str) -> property:
+    """Attempt to retrieve the property from the parent object. If an exception is thrown while
+    doing so, then return the default value instead.
+
+    Usage:
+        some_prop = try_parent_property_or(ParentClass, "some_prop", "default_value")
+    """
+
+    def try_parent(self):
+        try:
+            return super(parent_cls, self)[prop_name]  # pylint: disable=unsubscriptable-object
+        except:
+            return default
+
+    return property(try_parent)
+
+
 class LocalConfig(DeploymentConfig):
     """Application configuration for applications running on local development machines.
 
@@ -251,7 +283,10 @@ class LocalConfig(DeploymentConfig):
         load_dotenv(dotenv_path=os.path.join(os.getcwd(), "docker/.env"), verbose=True)
         super().__init__()
 
-    config_table = "dev"
+    # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
+    # Attempt to load parent property so that any ENVIRONMENT overrides from os.environ are
+    # correctly honored.
+    ENVIRONMENT = try_parent_property_or(DeploymentConfig, "ENVIRONMENT", env_names.LOCAL)  # type: ignore # pylint: disable=line-too-long
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
     MAILSLURP_API_KEY = property(
@@ -261,7 +296,8 @@ class LocalConfig(DeploymentConfig):
             fetch=False,
         )
     )
-    SENTRY_DSN = ""
+    # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
+    SENTRY_DSN = ""  # type: ignore
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
@@ -294,7 +330,7 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
     class TestConfig(BaseConfig):  # pylint: disable=invalid-name
         """Place the application in testing mode."""
 
-        config_table = "dev"
+        config_table = config_table_names.DEVELOPMENT
 
         DROPBOX_APP_KEY = "dropbox-client-id"
         DROPBOX_APP_SECRET = "dropbox-client-secret"

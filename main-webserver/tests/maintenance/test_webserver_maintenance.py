@@ -116,7 +116,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
         resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
     elif endpoint_type == "te_ac":
-        deploy_env = request.getfixturevalue("deployment_stage")
+        task_def_env = request.getfixturevalue("task_def_env")
 
         # test_endpoint assign_container
         assign_container_body = dict(
@@ -124,7 +124,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
             cluster_name="maintenance-test",
             region_name=region_name,
             region=region_name,
-            task_definition_arn="fractal-{}-browsers-chrome".format(deploy_env),
+            task_definition_arn="fractal-{}-browsers-chrome".format(task_def_env),
         )
         resp = client.post("/aws_container/assign_container", json=assign_container_body)
 

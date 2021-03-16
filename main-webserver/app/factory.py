@@ -6,8 +6,10 @@ from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
 
+from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
+import app.constants.env_names as env_names
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -31,13 +33,16 @@ def create_app(testing=False):
     # We want to look up CONFIG_MATRIX.location.action
     action = "test" if testing else "serve"
     location = "deployment" if "DYNO" in os.environ else "local"
-    config = getattr(getattr(CONFIG_MATRIX, location), action)
+    config_factory = getattr(getattr(CONFIG_MATRIX, location), action)
+    config = config_factory()
+    fractal_logger.info("config_table = {}".format(config.config_table))
 
-    app.config.from_object(config())
+    app.config.from_object(config)
+    fractal_logger.info("environment = {}".format(app.config["ENVIRONMENT"]))
 
     # Only set up a connection to a Sentry event ingestion endpoint in production and staging.
-    if app.config["DEPLOYMENT_STAGE"] in ("production", "staging"):
-        init_and_ensure_sentry_connection(app.config["DEPLOYMENT_STAGE"], app.config["SENTRY_DSN"])
+    if app.config["ENVIRONMENT"] in (env_names.PRODUCTION, env_names.STAGING):
+        init_and_ensure_sentry_connection(app.config["ENVIRONMENT"], app.config["SENTRY_DSN"])
 
     from .models import db
     from .helpers.utils.general.limiter import limiter

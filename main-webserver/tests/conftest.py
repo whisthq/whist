@@ -13,6 +13,7 @@ from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
+import app.constants.env_names as env_names
 
 
 @pytest.fixture
@@ -143,7 +144,7 @@ def cluster():
 
 
 @pytest.fixture
-def container(cluster, user, deployment_stage):
+def container(cluster, user, task_def_env):
     """Add a row to the user_containers table for testing.
 
     Returns:
@@ -166,7 +167,7 @@ def container(cluster, user, deployment_stage):
             container_id=f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
-            task_definition=f"fractal-{deployment_stage}-browsers-chrome",
+            task_definition=f"fractal-{task_def_env}-browsers-chrome",
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
@@ -189,7 +190,7 @@ def container(cluster, user, deployment_stage):
 
 
 @pytest.fixture
-def bulk_container(cluster, user, deployment_stage):
+def bulk_container(cluster, user, task_def_env):
     """Add 1+ rows to the user_containers table for testing.
 
     Returns:
@@ -211,7 +212,7 @@ def bulk_container(cluster, user, deployment_stage):
             container_id=f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
-            task_definition=f"fractal-{deployment_stage}-browsers-chrome",
+            task_definition=f"fractal-{task_def_env}-browsers-chrome",
             os="Linux",
             state="CREATING",
             user_id=user.user_id,
@@ -238,8 +239,8 @@ def bulk_container(cluster, user, deployment_stage):
 
 
 @pytest.fixture(scope="session")
-def deployment_stage(app):
-    """Select the environment in which we should run our tests.
+def task_def_env(app):
+    """Determine what the environment portion of the task_definition IDs should be set to.
 
     Tests for production code are run against "prod" AWS resources. Tests for staging code are run
     against "staging" AWS resources. Tests for "dev" code and local code are run against "dev" AWS
@@ -249,13 +250,15 @@ def deployment_stage(app):
         Either "dev", "staging", or "prod".
     """
 
-    deployment_stages = {
-        "production": "prod",
-        "staging": "staging",
-        "development": "dev",
+    task_def_envs = {
+        env_names.PRODUCTION: "prod",
+        env_names.STAGING: "staging",
+        env_names.DEVELOPMENT: "dev",
+        env_names.TESTING: "dev",
+        env_names.LOCAL: "dev",
     }
 
-    return deployment_stages[app.config["DEPLOYMENT_STAGE"]]
+    return task_def_envs[app.config["ENVIRONMENT"]]
 
 
 @pytest.fixture
