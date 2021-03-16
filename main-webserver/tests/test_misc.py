@@ -13,6 +13,8 @@ from sqlalchemy.exc import OperationalError
 from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
+from celery import current_app as current_celery_app
+
 from app.config import _callback_webserver_hostname
 from app import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.auth import check_developer
@@ -21,6 +23,7 @@ from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, RegionToAmi
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
+from app.constants.http_codes import SUCCESS, ACCEPTED, WEBSERVER_MAINTENANCE
 
 
 def test_callback_webserver_hostname_localhost():
@@ -61,16 +64,53 @@ def test_webserver_sigterm(client):
     self_pid = os.getpid()
     os.kill(self_pid, signal.SIGTERM)
 
-    # we need to wait for SIGTERM to come
-    for _ in range(100):
-        if not can_process_requests():
-            break
-        time.sleep(0.5)
+    # # we need to wait for SIGTERM to come
+    # for _ in range(100):
+    #     if not can_process_requests():
+    #         break
+    #     time.sleep(0.5)
     assert not can_process_requests()
 
     # web requests should be rejected
     resp = client.post("/newsletter/post")
     assert resp.status_code == WEBSERVER_MAINTENANCE
+
+    # re-enable web requests
+    assert set_web_requests_status(True)
+
+    # should be ok
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == SUCCESS
+
+
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+@pytest.mark.usefixtures("authorized")
+def test_celery_sigterm(client, authorized):
+    resp = client.get("/dummy")
+    assert resp.status_code == ACCEPTED
+
+    started = False
+    status_id = resp.json["ID"]
+    for _ in range(10):
+        task_result = current_celery_app.AsyncResult(status_id)
+        if task_result.state == "STARTED":
+            started = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert started is True, f"Got unexpected task state {task_result.state}."
+
+    self_pid = os.getpid()
+    os.kill(self_pid, signal.SIGTERM)
+
+    revoked = False
+    for _ in range(10):
+        task_result = current_celery_app.AsyncResult(status_id)
+        if task_result.state == "REVOKED":
+            revoked = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert revoked is True, f"Got unexpected task state {task_result.state}."
 
     # re-enable web requests
     assert set_web_requests_status(True)
@@ -189,15 +229,11 @@ def test_retry_timeout():
 
 
 def test_rate_limiter(client):
-<<<<<<< HEAD
     """
     Test the rate limiter decorator. The first 10 requests should succeed,
     but the 11th should error out with 429.
     """
     for i in range(10):
-=======
-    for i in range(20):
->>>>>>> c67746fed (brought back rate limit test and reset after each test)
         resp = client.post("/newsletter/post")
         assert resp.status_code == 200
         g._rate_limiting_complete = False

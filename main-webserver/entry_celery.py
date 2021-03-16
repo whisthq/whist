@@ -8,10 +8,10 @@ application instances from being created when they are not needed (e.g. during t
 from app.factory import create_app
 from app.celery_utils import make_celery
 
+# this registers all the celery signal handling functions. we don't need to do anything more.
+import app.signals
+
 app = create_app()
 celery = make_celery(app)
 
 celery.set_default()
-
-# we do not install any signal handlers for celery. It already handles SIGTERM/SIGINT
-# by stopping the worker from consuming new tasks.

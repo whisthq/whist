@@ -16,7 +16,7 @@ from app.factory import create_app
 from app.celery_utils import make_celery
 from app import set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
-from app.signals import SignalHandler
+from app.signals import WebSignalHandler
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 
 app = create_app()
@@ -32,7 +32,7 @@ if not set_web_requests_status(True):
 if "windows" in platform.platform().lower():
     fractal_logger.warning("signal handler is not supported on windows. skipping enabling them.")
 else:
-    SignalHandler()
+    WebSignalHandler()
 
 # initialize redis connection for maintenance package
 maintenance_init_redis_conn(app.config["REDIS_URL"])
