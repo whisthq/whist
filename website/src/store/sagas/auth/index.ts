@@ -4,7 +4,7 @@ import history from "shared/utils/history"
 import {
     decryptConfigToken,
     encryptConfigToken,
-    generateConfigToken,
+    generateRandomString,
 } from "shared/utils/helpers"
 import { updateUser, updateAuthFlow } from "store/actions/auth/pure"
 import { updateStripeInfo } from "store/actions/dashboard/payment/pure"
@@ -136,13 +136,7 @@ export function* googleLogin(action: {
     }
 }
 
-function* emailSignup(action: {
-    email: string
-    password: string
-    rememberMe?: boolean
-    type: string
-    name: string
-}) {
+function* emailSignup(action: any) {
     /*
         Function that calls the /account/register endpoint on the webserver to try and register a new user.
         It also processes the returned json and updates the state of the application as necessary.
@@ -154,8 +148,9 @@ function* emailSignup(action: {
             type (string): identifier for this side effect
             name (string): name of the user
     */
-    const configToken = yield call(generateConfigToken())
-    const encryptedConfigToken = encryptConfigToken(
+
+    const configToken: string = yield generateRandomString(32)
+    const encryptedConfigToken: string = yield encryptConfigToken(
         configToken,
         action.password
     )
@@ -392,8 +387,8 @@ export function* resetPassword(action: {
             token (string): user's access token
             type (string): identifier for this side effect
     */
-    const configToken = yield call(generateConfigToken())
-    const encryptedConfigToken = encryptConfigToken(
+    const configToken: string = yield generateRandomString(32)
+    const encryptedConfigToken: string = yield encryptConfigToken(
         configToken,
         action.password
     )
@@ -460,7 +455,7 @@ export function* updatePassword(action: {
             )
 
             const configToken = state.AuthReducer.user.configToken
-            const encryptedConfigToken = encryptConfigToken(
+            const encryptedConfigToken: string = yield encryptConfigToken(
                 configToken,
                 action.newPassword
             )
