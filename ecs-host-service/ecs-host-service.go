@@ -298,7 +298,7 @@ func main() {
 	// Initialize webserver heartbeat
 	err := webserver.InitializeHeartbeat()
 	if err != nil {
-		logger.Panicf("Unable to initialize webserver. Error: %s", err)
+		logger.Panicf("Unable to initialize webserver heartbeats. Error: %s", err)
 	}
 
 	// Start the HTTP server and listen for events
