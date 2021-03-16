@@ -276,8 +276,6 @@ func main() {
 	// webserver upon our death.
 	defer shutdownHostService()
 
-	rand.Seed(time.Now().UnixNano())
-
 	// Note that we defer uninitialization so that in case of panic elsewhere, we
 	// still clean up
 	initializeFilesystem()
