@@ -5,6 +5,7 @@ export type TestUser = {
     password: string
     name: string
     feedback: string
+    configToken: string
     stripeCustomerID: string
     verified: boolean
     accessGranted?: boolean
@@ -16,6 +17,8 @@ export const payingUser: TestUser = {
     password: "Test123!",
     name: "Paying User",
     feedback: "Test feedback",
+    configToken:
+        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
     stripeCustomerID: "cus_IjbkVL7Ce50J5E",
     verified: true,
     accessGranted: true,
@@ -27,6 +30,8 @@ export const verifiedUser: TestUser = {
     password: "Test123!",
     name: "Test Name",
     feedback: "Test feedback",
+    configToken:
+        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
     stripeCustomerID: "",
     verified: true,
     accessGranted: true,
@@ -38,6 +43,8 @@ export const unverifiedUser: TestUser = {
     password: "Test123!",
     name: "Test Name",
     feedback: "Test feedback",
+    configToken:
+        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
     stripeCustomerID: "",
     verified: false,
     accessGranted: false,
@@ -63,7 +70,8 @@ export const validUserCanLogin = {
     userID: "userID@fractal.co",
     name: "Valid User",
     accessToken: "accessToken",
-    configToken: "configToken",
+    configToken:
+        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
     emailVerificationToken: "emailVerificationToken",
     emailVerified: true,
 }
