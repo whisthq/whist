@@ -1,5 +1,5 @@
 import path from "path"
-import { app, BrowserWindow } from "electron"
+import { BrowserWindow } from "electron"
 import { autoUpdater } from "electron-updater"
 
 import { FractalIPC } from "../shared/types/ipc"
@@ -114,17 +114,14 @@ export const initiateWindowListeners = (
             }
         }
         const options = {
-            message: `updating status in web listener ${global.updatingStatus.status}`,
+            message: `updating status in web listener ${global.updateStatus}`,
         }
 
         dialog.showMessageBox(null, options, (response) =>
             console.log(response)
         )
-        console.log(global.updatingStatus)
-        mainWindow.webContents.send(
-            FractalIPC.UPDATE,
-            global.updatingStatus.status
-        )
+        console.log(global.updateStatus)
+        mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
     })
 
     mainWindow.on("close", (event) => {

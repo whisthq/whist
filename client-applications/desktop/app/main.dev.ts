@@ -31,9 +31,15 @@ Store.initRenderer()
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
-global.updatingStatus = {
-    status: false,
+
+declare global {
+    namespace NodeJS {
+        interface Global {
+            updateStatus: boolean
+        }
+    }
 }
+global.updateStatus = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window

@@ -20,29 +20,23 @@ export const initiateAutoUpdateListeners = (
     autoUpdater.autoDownload = false
 
     autoUpdater.on("update-available", () => {
-        global.updatingStatus.status = true
+        global.updateStatus = true
 
         if (mainWindow) {
-            options.message = `UPDATE AVAILABLE IN LISTENER ${global.updatingStatus.status}`
+            options.message = `UPDATE AVAILABLE IN LISTENER ${global.updateStatus}`
 
             dialog.showMessageBox(null, options, (response) => {
                 console.log(response)
             })
-            mainWindow.webContents.send(
-                FractalIPC.UPDATE,
-                global.updatingStatus.status
-            )
+            mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
         }
         autoUpdater.downloadUpdate()
     })
 
     autoUpdater.on("update-not-available", () => {
-        global.updatingStatus.status = false
+        global.updateStatus = false
         if (mainWindow) {
-            mainWindow.webContents.send(
-                FractalIPC.UPDATE,
-                global.updatingStatus.status
-            )
+            mainWindow.webContents.send(FractalIPC.UPDATE, global.updateStatus)
         }
     })
 
@@ -80,6 +74,6 @@ export const initiateAutoUpdateListeners = (
             mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
         }
         autoUpdater.quitAndInstall()
-        global.updatingStatus.status = false
+        global.updateStatus = false
     })
 }
