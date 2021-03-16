@@ -7,6 +7,7 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 import (
 	"sync"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
@@ -91,14 +92,18 @@ type FractalContainer interface {
 	// argument.
 	BackupUserConfigs() error
 
+	AddCloudStorage(Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
+	RemoveAllCloudStorage()
+
 	Close()
 }
 
 func New(fid FractalID) FractalContainer {
 	c := &containerData{
-		fractalID:            fid,
-		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
-		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
+		fractalID:               fid,
+		uinputDeviceMappings:    []dockercontainer.DeviceMapping{},
+		otherDeviceMappings:     []dockercontainer.DeviceMapping{},
+		cloudStorageDirectories: []string{},
 	}
 
 	c.createResourceMappingDir()
@@ -118,6 +123,8 @@ type containerData struct {
 	uinputDeviceMappings []dockercontainer.DeviceMapping
 	// Not currently needed --- this is just here for extensibility
 	otherDeviceMappings []dockercontainer.DeviceMapping
+
+	cloudStorageDirectories []string
 
 	portBindings []portbindings.PortBinding
 }
