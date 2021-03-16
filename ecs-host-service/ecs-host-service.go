@@ -44,7 +44,6 @@ func init() {
 // delete the entire `fractal` directory on exit.
 // TODO: fix all references to these
 const fractalDir = "/fractal/"
-const cloudStorageDir = "/fractalCloudStorage/"
 
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
@@ -54,9 +53,9 @@ func makeFractalDirectoriesFreeForAll() {
 	cmd.Run()
 	cmd = exec.Command("chmod", "-R", "777", fractalDir)
 	cmd.Run()
-	cmd = exec.Command("chown", "-R", "ubuntu", cloudStorageDir)
+	cmd = exec.Command("chown", "-R", "ubuntu", fractalcontainer.FractalCloudStorageDir)
 	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "777", cloudStorageDir)
+	cmd = exec.Command("chmod", "-R", "777", fractalcontainer.FractalCloudStorageDir)
 	cmd.Run()
 }
 
@@ -221,9 +220,9 @@ func initializeFilesystem() {
 	// storage drives.)
 
 	// Create cloud storage directory
-	err = os.MkdirAll(cloudStorageDir, 0777)
+	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0777)
 	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", cloudStorageDir, err)
+		logger.Panicf("Could not mkdir path %s. Error: %s", fractalcontainer.FractalCloudStorageDir, err)
 	}
 
 	// Create fractal temp directory

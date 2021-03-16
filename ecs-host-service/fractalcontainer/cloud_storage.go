@@ -10,7 +10,7 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
-const fractalCloudStorageDir = "/fractalCloudStorage/"
+const FractalCloudStorageDir = "/fractalCloudStorage/"
 
 // Mounts the cloud storage directory and waits around to clean it up once it's
 // unmounted.
@@ -38,7 +38,7 @@ func (c *containerData) AddCloudStorage(Provider cloudstorage.Provider, AccessTo
 	}
 
 	// Don't forget the trailing slash
-	path := logger.Sprintf("%s%s/%s/", fractalCloudStorageDir, c.fractalID, providerPrettyName)
+	path := logger.Sprintf("%s%s/%s/", FractalCloudStorageDir, c.fractalID, providerPrettyName)
 
 	// Make directory to mount in
 	err = os.MkdirAll(path, 0777)
@@ -50,9 +50,9 @@ func (c *containerData) AddCloudStorage(Provider cloudstorage.Provider, AccessTo
 	// Fix cloud storage directory permissions
 	// TODO: this could probably be made more efficient, but we will revisit this
 	// once we're actually using cloud storage.
-	cmd := exec.Command("chown", "-R", "ubuntu", fractalCloudStorageDir)
+	cmd := exec.Command("chown", "-R", "ubuntu", FractalCloudStorageDir)
 	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "666", fractalCloudStorageDir)
+	cmd = exec.Command("chmod", "-R", "666", FractalCloudStorageDir)
 	cmd.Run()
 
 	// Mount in separate goroutine so we don't block the main goroutine.
