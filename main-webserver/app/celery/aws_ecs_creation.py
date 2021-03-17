@@ -5,7 +5,7 @@ from typing import Optional, List, Tuple
 
 import requests
 
-from celery import Celery, shared_task
+from celery import Task, shared_task
 from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
@@ -326,7 +326,7 @@ def _get_num_extra(taskdef: str, location: str) -> int:
 @shared_task(bind=True)
 @maintenance_track_task
 def assign_container(
-    self: Celery,
+    self: Task,
     username: str,
     task_definition_arn: str,
     region_name: Optional[str] = "us-east-1",
@@ -355,7 +355,7 @@ def assign_container(
 
 
 def _assign_container(
-    self: Celery,
+    self: Task,
     username: str,
     task_definition_arn: str,
     region_name: Optional[str] = "us-east-1",
@@ -625,7 +625,7 @@ def _assign_container(
 @shared_task(bind=True)
 @maintenance_track_task
 def prewarm_new_container(
-    self: Celery,
+    self: Task,
     task_definition_arn: str,
     cluster_name: Optional[str] = None,
     region_name: Optional[str] = "us-east-1",
@@ -757,7 +757,7 @@ def prewarm_new_container(
 @shared_task(bind=True)
 @maintenance_track_task
 def create_new_cluster(
-    self: Celery,
+    self: Task,
     cluster_name: Optional[str] = None,
     instance_type: Optional[str] = "g3.4xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
@@ -795,7 +795,7 @@ def create_new_cluster(
 
 
 def _create_new_cluster(
-    self: Celery,
+    self: Task,
     cluster_name: Optional[str] = None,
     instance_type: Optional[str] = "g3.4xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",

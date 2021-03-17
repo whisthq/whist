@@ -2,7 +2,7 @@ import time
 
 from typing import Union
 
-from celery import Celery, shared_task
+from celery import Task, shared_task
 from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster
@@ -26,7 +26,7 @@ from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
 
 @shared_task(bind=True)
-def delete_container(self: Celery, container_name: str, aes_key: str) -> None:
+def delete_container(self: Task, container_name: str, aes_key: str) -> None:
     """Delete a container.
 
     Args:
