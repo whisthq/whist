@@ -1,8 +1,11 @@
 import os
 import time
+
+from typing import Optional, List, Tuple
+
 import requests
 
-from celery import shared_task
+from celery import Celery, shared_task
 from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
@@ -43,7 +46,7 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
-def _mount_cloud_storage(user, container):
+def _mount_cloud_storage(user: User, container: UserContainer) -> None:
     """Send a request to the ECS host service to mount a cloud storage folder to the container.
 
     Arguments:
@@ -112,7 +115,9 @@ def _mount_cloud_storage(user, container):
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
+def _pass_start_values_to_instance(
+    ip: str, container_id: str, port: int, dpi: int, user_id: int
+) -> None:
     """
     Send the instance start values to the host service.
 
@@ -152,7 +157,7 @@ def _pass_start_values_to_instance(ip, container_id, port, dpi, user_id):
             )
 
 
-def _poll(container_id):
+def _poll(container_id: str) -> bool:
     """Poll the database until the web server receives its first ping from the new container.
 
     Time out after 20 seconds. This may be an appropriate use case for Hasura subscriptions.
@@ -183,7 +188,7 @@ def _poll(container_id):
     return result
 
 
-def select_cluster(region_name):
+def select_cluster(region_name: str) -> str:
     """
     Selects the best cluster for task placement in a given region, creating new clusters as
     necessary.
@@ -223,7 +228,9 @@ def select_cluster(region_name):
     return cluster_name
 
 
-def start_container(webserver_url, region_name, cluster_name, task_definition_arn):
+def start_container(
+    webserver_url: str, region_name: str, cluster_name: str, task_definition_arn: str
+) -> Tuple[str, int, int, str]:
     """
     This helper function configures and starts a container running
 
@@ -270,7 +277,7 @@ def start_container(webserver_url, region_name, cluster_name, task_definition_ar
     return task_id, curr_ip, curr_network_binding, aeskey
 
 
-def _get_num_extra(taskdef, location):
+def _get_num_extra(taskdef: str, location: str) -> int:
     """
     Function determining how many containers to preboot based on type
 
@@ -319,14 +326,14 @@ def _get_num_extra(taskdef, location):
 @shared_task(bind=True)
 @maintenance_track_task
 def assign_container(
-    self,
-    username,
-    task_definition_arn,
-    region_name="us-east-1",
-    cluster_name=None,
-    dpi=96,
-    webserver_url=None,
-):
+    self: Celery,
+    username: str,
+    task_definition_arn: str,
+    region_name: Optional[str] = "us-east-1",
+    cluster_name: Optional[str] = None,
+    dpi: Optional[int] = 96,
+    webserver_url: Optional[str] = None,
+) -> str:
     """
     Assigns a running container to a user, or creates one if none exists
 
@@ -348,14 +355,14 @@ def assign_container(
 
 
 def _assign_container(
-    self,
-    username,
-    task_definition_arn,
-    region_name="us-east-1",
-    cluster_name=None,
-    dpi=96,
-    webserver_url=None,
-):
+    self: Celery,
+    username: str,
+    task_definition_arn: str,
+    region_name: Optional[str] = "us-east-1",
+    cluster_name: Optional[str] = None,
+    dpi: Optional[int] = 96,
+    webserver_url: Optional[str] = None,
+) -> str:
     """
     See assign_container. This is helpful to mock.
     """
@@ -618,12 +625,12 @@ def _assign_container(
 @shared_task(bind=True)
 @maintenance_track_task
 def prewarm_new_container(
-    self,
-    task_definition_arn,
-    cluster_name=None,
-    region_name="us-east-1",
-    webserver_url=None,
-):
+    self: Celery,
+    task_definition_arn: str,
+    cluster_name: Optional[str] = None,
+    region_name: Optional[str] = "us-east-1",
+    webserver_url: Optional[str] = None,
+) -> str:
     """Prewarm a new ECS container running a particular task.
 
     Arguments:
@@ -750,15 +757,15 @@ def prewarm_new_container(
 @shared_task(bind=True)
 @maintenance_track_task
 def create_new_cluster(
-    self,
-    cluster_name=None,
-    instance_type="g3.4xlarge",
-    ami="ami-0decb4a089d867dc1",
-    region_name="us-east-1",
-    min_size=0,
-    max_size=10,
-    availability_zones=None,
-):
+    self: Celery,
+    cluster_name: Optional[str] = None,
+    instance_type: Optional[str] = "g3.4xlarge",
+    ami: Optional[str] = "ami-0decb4a089d867dc1",
+    region_name: Optional[str] = "us-east-1",
+    min_size: Optional[int] = 0,
+    max_size: Optional[int] = 10,
+    availability_zones: Optional[List[str]] = None,
+) -> str:
     """
     Create a new cluster.
 
@@ -767,6 +774,7 @@ def create_new_cluster(
 
     Args:
         self: the celery instance running the task
+        cluster_name (Optional[str]): the name of the created cluster
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults
             to t2.small
         ami (Optional[str]): AMI to use for the instances created in auto scaling group, defaults
@@ -787,8 +795,15 @@ def create_new_cluster(
 
 
 def _create_new_cluster(
-    self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
-):
+    self: Celery,
+    cluster_name: Optional[str] = None,
+    instance_type: Optional[str] = "g3.4xlarge",
+    ami: Optional[str] = "ami-0decb4a089d867dc1",
+    region_name: Optional[str] = "us-east-1",
+    min_size: Optional[int] = 0,
+    max_size: Optional[int] = 10,
+    availability_zones: Optional[List[str]] = None,
+) -> str:
     """
     See create_new_cluster. This is helpful to mock.
     """
@@ -854,7 +869,7 @@ def _create_new_cluster(
                     )
                 },
             )
-            return None
+            raise Ignore
     except Exception as error:
         fractal_logger.error(
             f"Encountered error: {error}",
