@@ -2,7 +2,7 @@
     "name": "fractal",
     "version": "1.0.0",
     "license": "MIT",
-    "main": "dist/index.js",
+    "main": "build/dist/main/index.js",
     "build": {
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
@@ -33,9 +33,8 @@
             "protocol-build/"
         ],
         "files": [
-            "dist/**/*",
+            "build/**/*",
             "node_modules/",
-            "public/index.html",
             "package.json"
         ],
         "mac": {
@@ -84,12 +83,11 @@
         }
     },
     "scripts": {
-        "compile-main": "sh ./scripts/compile-main.sh",
-        "compile-both": "sh ./scripts/compile-both.sh",
         "start": "sh ./scripts/start.sh",
         "build": "sh ./scripts/build.sh",
-        "postinstall": "sh scripts/postinstall.sh",
-        "package": "electron-builder build --publish never"
+        "package": "sh ./scripts/package.sh",
+        "tailwind": "sh scripts/tailwind.sh",
+        "postinstall": "sh scripts/postinstall.sh"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^1.2.35",
