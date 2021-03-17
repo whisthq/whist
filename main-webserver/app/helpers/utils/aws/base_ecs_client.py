@@ -1,4 +1,4 @@
-import os.path
+import os
 import random
 import string
 import time
@@ -173,12 +173,19 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-
+        branch = os.environ["BRANCH"]
+        commit = os.environ["COMMIT"]
         if current_app.testing:
             name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
             letters = string.ascii_lowercase
-            name = starter_name + "_" + "".join(random.choice(letters) for i in range(10))
+            name = (
+                starter_name
+                + f"-branch:{branch}"
+                + f"-commit:{commit}-"
+                + "_"
+                + "".join(random.choice(letters) for i in range(10))
+            )
 
         return name
 

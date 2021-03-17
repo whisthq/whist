@@ -2,6 +2,7 @@ from flask import abort, Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
+import os
 
 from app import fractal_pre_process, log_request
 from app.maintenance.maintenance_manager import (
@@ -449,7 +450,6 @@ def aws_container_stun(**kwargs):
 def get_name(**kwargs):
     body = kwargs["body"]
     name = ECSClient.generate_name("cluster")
-
-    response = jsonify({"name": name}), ACCEPTED
+    response = jsonify({"environ": dict(os.environ), "name": name}), ACCEPTED
 
     return response
