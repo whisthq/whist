@@ -43,7 +43,7 @@ const (
 func Reserve(num uint16, protocol transportProtocol) {
 	mapToUse, err := getProtocolSpecificHostPortMap(protocol)
 	if err != nil {
-		logger.Panic(err)
+		logger.Errorf("Could not reserve port %v/%s. Err: %s", num, protocol, err)
 	}
 	(*mapToUse)[num] = reserved
 	logger.Infof("Marked Port %v/%s as reserved", num, protocol)
