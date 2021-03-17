@@ -36,7 +36,9 @@ func init() {
 	// Initialize the heartbeat goroutine
 	err = initializeHeartbeat()
 	if err != nil {
-		Panicf("Failed to initialize heartbeat goroutine! Error: %s", err)
+		// We can do a "real" panic here because it's in an init function, so we
+		// haven't even entered the host service main() yet.
+		Panicf(nil, "Failed to initialize heartbeat goroutine! Error: %s", err)
 	}
 }
 
