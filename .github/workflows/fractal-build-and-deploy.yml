@@ -452,10 +452,6 @@ jobs:
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
 
-            # No quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list.
-            # Also, we write to a temp json file and move to the right one
-            # because the current syntax doesn't permit modifying the same file
-            # in-place via jq.
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
