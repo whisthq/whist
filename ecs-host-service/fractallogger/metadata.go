@@ -17,22 +17,31 @@ import (
 // `fractallogger.go`.
 func initializeMetadata() {
 	cachedEnvironment = func() EnvironmentType {
-		env := os.Getenv("APP_ENV")
+		env := strings.ToLower(os.Getenv("APP_ENV"))
 		switch env {
-		case "development", "dev", "DEVELOPMENT", "DEV":
+		case "development", "dev":
 			return EnvDev
-		case "staging", "STAGING":
+		case "staging":
 			return EnvStaging
-		case "production", "prod", "PRODUCTION", "PROD":
+		case "production", "prod":
 			return EnvProd
 		default:
 			return EnvLocalDev
 		}
 	}()
 
+	// Honor `USE_PROD_LOGGING` variable if it is set to a valid value. Else,
+	// check that the app environment is dev, staging, or prod.
 	cachedUseProdLogging = func() bool {
-		strProd := os.Getenv("USE_PROD_LOGGING")
-		return (strProd == "1") || (strings.ToLower(strProd) == "yes") || (strings.ToLower(strProd) == "true") || (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
+		strProd := strings.ToLower(os.Getenv("USE_PROD_LOGGING"))
+		switch strProd {
+		case "1", "yes", "true":
+			return true
+		case "0", "no", "false":
+			return false
+		default:
+			return (GetAppEnvironment() == EnvProd) || (GetAppEnvironment() == EnvStaging) || (GetAppEnvironment() == EnvDev)
+		}
 	}()
 }
 
