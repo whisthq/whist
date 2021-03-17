@@ -7,7 +7,7 @@ import (
 )
 
 func init() {
-	initMetadata()
+	initializeMetadata()
 
 	// We declare error separately to avoid shadowing logzioSender.
 	var err error
@@ -30,6 +30,12 @@ func init() {
 	sentryTransport, err = initializeSentry()
 	if err != nil {
 		Errorf("Failed to initialize Sentry! Error: %s", err)
+	}
+
+	// Initialize the heartbeat goroutine
+	err = initializeHeartbeat()
+	if err != nil {
+		Panicf("Failed to initialize heartbeat goroutine! Error: %s", err)
 	}
 }
 
