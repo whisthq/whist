@@ -7,10 +7,6 @@ from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
-from app.helpers.utils.aws.aws_resource_locks import (
-    lock_container_and_update,
-    spin_lock,
-)
 from app.helpers.utils.general.logs import fractal_logger
 from app.models import (
     db,
@@ -19,6 +15,7 @@ from app.models import (
     UserContainer,
     SupportedAppImages,
 )
+from app.models import db, ClusterInfo, RegionToAmi, UserContainer
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.celery.aws_celery_exceptions import (
     InvalidArguments,
@@ -60,22 +57,14 @@ def update_cluster(
         f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"
     )
 
-    # We must delete every unassigned container in the cluster.
-    unassigned_containers = UserContainer.query.filter_by(cluster=cluster_name, user_id=None).all()
+    # We must delete every unassigned container in the cluster. Locks using with_for_update()
+    unassigned_containers = (
+        UserContainer.query.with_for_update()
+        .filter_by(cluster=cluster_name, is_assigned=False)
+        .all()
+    )
     for container in unassigned_containers:
         container_name = container.container_id
-
-        # # Lock the container in the database for a short amount of time.
-        # # This is to make sure that the container is not assigned while we are trying to delete it.
-        # if spin_lock(container_name) < 0:
-        #     fractal_log(
-        #         function="update_cluster",
-        #         label=container_name,
-        #         logs="spin_lock took too long.",
-        #         level=logging.ERROR,
-        #     )
-
-        #     raise Exception("Failed to acquire resource lock.")
 
         fractal_logger.info(
             "Beginning to delete unassigned container {container_name}. Goodbye!".format(
@@ -83,12 +72,6 @@ def update_cluster(
             ),
             extra={"label": str(container_name)},
         )
-
-        # # Set the container state to "DELETING".
-        # # Lock it for 10 minutes (again, spin_lock is only a temporary lock.)
-        # lock_container_and_update(
-        #     container_name=container_name, state="DELETING", lock=True, temporary_lock=10
-        # )
 
         container = ensure_container_exists(container)
         if not container:
@@ -119,9 +102,11 @@ def update_cluster(
                     )
                 },
             )
-
         # Delete the row for this container from the database.
-        fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+        db.session.delete(container)
+
+    # commit after all unassigned containers are deleted (release lock)
+    db.session.commit()
 
     # Check if a cluster does not exist.
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
