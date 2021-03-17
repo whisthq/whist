@@ -175,14 +175,7 @@ func shutdownHostService() {
 		logger.Infof("Shutting down host service after caught panic: %v", r)
 	}
 
-	// Flush buffered logging events before the program terminates.
-	logger.Info("Flushing Sentry...")
-	logger.FlushSentry()
-	logger.Info("Flushing Logzio...")
-	logger.StopAndDrainLogzio()
-
-	logger.Info("Sending final heartbeat...")
-	// TODO: webserver.SendGracefulShutdownNotice()
+	logger.Close()
 
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)

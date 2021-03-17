@@ -39,6 +39,19 @@ func init() {
 	}
 }
 
+// Close flushes all production logging (i.e. Sentry and Logzio) and sends the
+// final, dying heartbeat to the fractal webserver.
+func Close() {
+	Info("Sending final heartbeat...")
+	sendGracefulShutdownNotice()
+
+	// Flush buffered logging events before the program terminates.
+	Info("Flushing Sentry...")
+	flushSentry()
+	Info("Flushing Logzio...")
+	stopAndDrainLogzio()
+}
+
 // MakeError creates an error from format string and args.
 func MakeError(format string, v ...interface{}) error {
 	return fmt.Errorf(format, v...)
