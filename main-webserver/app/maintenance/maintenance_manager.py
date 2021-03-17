@@ -7,7 +7,7 @@ and critical database updates (in Region2AMI, for example) that are MUCH easier 
 guarantee correctness when we know no one is creating new clusters/containers during
 these updates. This file implements a distributed lock system using Redis that
 tracks problematic tasks (create_cluster, assign_container). The webserver cannot be
-put into maintenance mode while a problematic task is running. Also vice versa - 
+put into maintenance mode while a problematic task is running. Also vice versa -
 when the webserver is in maintenance mode, no problematic task can be run.
 
 Any user of this module generally cares about the following functions:
@@ -16,25 +16,23 @@ Any user of this module generally cares about the following functions:
 - maintenance_track_task (decorator on celery functions that need to be tracked)
 """
 
-import logging
 import time
 from functools import wraps
 import inspect
 import random
-from typing import Callable, Tuple
+from typing import Any, Callable, Tuple
 import ssl
 
 import redis
 
 from app.helpers.utils.general.logs import fractal_logger
-from app.models import RegionToAmi
 
 
 _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_MAINTENANCE_KEY = "WEBSERVER_MAINTENANCE_MODE"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS"
 
-_REDIS_CONN = None
+_REDIS_CONN: Any = None
 
 
 def maintenance_init_redis_conn(redis_uri: str):
@@ -98,7 +96,7 @@ def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
     return False
 
 
-def _release_lock():
+def _release_lock() -> None:
     """
     Release the lock
     """
@@ -164,7 +162,7 @@ def try_start_maintenance() -> Tuple[bool, str]:
     return success, return_msg
 
 
-def try_end_maintenance() -> bool:
+def try_end_maintenance() -> Tuple[bool, str]:
     """
     Try to end maintenance mode. Steps:
         1. Grab the lock
@@ -274,7 +272,7 @@ def get_arg_number(func: Callable, desired_arg: str) -> int:
     return -1
 
 
-def maintenance_track_task(func: Callable):
+def maintenance_track_task(func: Callable) -> Callable:
     """
     Decorator to do three things:
         1. check if there is no maintenance going on. if so error out and never call the celery task.
