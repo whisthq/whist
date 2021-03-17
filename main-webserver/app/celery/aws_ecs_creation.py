@@ -329,7 +329,7 @@ def assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
-    region_name: Optional[str] = "us-east-1",
+    region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: Optional[str] = None,
@@ -382,6 +382,8 @@ def _assign_container(
 
     assert user
 
+    existing_container: Optional[UserContainer] = None
+
     # if a cluster is passed in, we're in testing mode:
     if cluster_name is None:
         if enable_reconnect:
@@ -407,6 +409,7 @@ def _assign_container(
                     return user_container_schema.dump(existing_container)
 
         # otherwise, we see if there's an unassigned container
+        base_container: Optional[UserContainer] = None
         try:
             base_container = ensure_container_exists(
                 UserContainer.query.filter_by(
@@ -420,13 +423,13 @@ def _assign_container(
         except Exception:
             # If the `filter_by` gave us `None`, that is okay, we handle that below.
             # Simply set the output appropriately.
-            base_container = None
+            pass
 
         num_extra = _get_num_extra(task_definition_arn, region_name)
     else:
         num_extra = 0
-        base_container = False
-    if base_container:
+        base_container = None
+    if base_container is not None:
         base_container.is_assigned = True
         base_container.user_id = username
         base_container.dpi = dpi
