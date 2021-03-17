@@ -73,6 +73,11 @@ var heartbeatHttpClient = http.Client{
 	Timeout: 30 * time.Second,
 }
 
+// As long as this channel is blocking, we should keep sending "alive"
+// heartbeats. As soon as the channel is closed, we should send a "dying"
+// heartbeat and no longer send any more heartbeats.
+var heartbeatKeepAlive = make(chan interface{}, 1)
+
 // initializeHeartbeat starts the heartbeat goroutine
 func initializeHeartbeat() error {
 	if GetAppEnvironment() == EnvLocalDev {
@@ -99,17 +104,32 @@ func initializeHeartbeat() error {
 // webserver. Note also that we don't have to do any error handling here
 // because sendHeartbeat() does not return or panic.
 func heartbeatGoroutine() {
+	timerChan := make(chan interface{})
+
 	for {
-		sendHeartbeat(false)
 		sleepTime := 65000 - rand.Intn(10001)
-		time.Sleep(time.Duration(sleepTime) * time.Millisecond)
+		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- nil })
+
+		select {
+		case _, _ = <-heartbeatKeepAlive:
+			// If we hit this case, that means that `heartbeatKeepAlive` was either
+			// closed or written to (it should not be written to), but either way,
+			// it's time to die.
+			timer.Stop()
+			sendHeartbeat(true)
+			return
+		case _ = <-timerChan:
+			// There's just no time to die
+			sendHeartbeat(false)
+			timer = time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- nil })
+		}
+		sendHeartbeat(false)
 	}
 }
 
 // sendGracefulShutdownNotice sends a heartbeat with IsDyingHeartbeat set to true
 func sendGracefulShutdownNotice() {
-	// TODO: avoid sending a non-dying heartbeat after a dying one (probably just make an unexported channel that "closes" all logging)
-	sendHeartbeat(true)
+	close(heartbeatKeepAlive)
 }
 
 // Talk to the auth endpoint for the host service startup (to authenticate all
