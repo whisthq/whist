@@ -14,6 +14,8 @@ function createWindow(): void {
     win.webContents.on("did-finish-load", function () {
         win.show()
     })
+
+    win.webContents.openDevTools({ mode: "undocked" })
 }
 
 // This method will be called when Electron has finished
