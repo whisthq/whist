@@ -85,8 +85,6 @@ export const launchProtocol = async (
     const spawn = require("child_process").spawn
 
     // Get the path and name of the protocol in the packaged app
-    // TODO: add conditino for mac os path directory
-
     const protocolPath = require("path").join(
         FractalDirectory.getRootDirectory(),
         require("os").platform() === OperatingSystem.MAC &&

@@ -134,13 +134,6 @@ export const Launcher = (props: {
         }, TIMEOUT)
     }
 
-    // TODO
-    // const forceQuit = () => {
-    //     setTimeout(() => {
-    //         ipc.sendSync(FractalIPC.FORCE_QUIT)
-    //     }, 1000)
-    // }
-
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)

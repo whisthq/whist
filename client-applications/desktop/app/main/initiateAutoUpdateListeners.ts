@@ -30,14 +30,6 @@ export const initiateAutoUpdateListeners = (
         }
     })
 
-    // autoUpdater.on("error", (_ev, err) => {
-    //     updating = false
-    //     if(mainWindow) {
-    //         mainWindow.webContents.send("error", err)
-    //     }
-
-    // })
-
     autoUpdater.on("download-progress", (progressObj) => {
         if (mainWindow) {
             mainWindow.webContents.send(

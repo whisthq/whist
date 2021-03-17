@@ -90,15 +90,7 @@ export const initiateWindowListeners = (
         } else if (customURL && mainWindow) {
             mainWindow.webContents.send(FractalIPC.CUSTOM_URL, customURL)
         }
-        // Open dev tools in development
-        if (
-            process.env.NODE_ENV === "development" ||
-            process.env.DEBUG_PROD === "true"
-        ) {
-            if (mainWindow) {
-                // mainWindow.webContents.openDevTools()
-            }
-        }
+
         if (!mainWindow) {
             throw new Error('"mainWindow" is not defined')
         }

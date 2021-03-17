@@ -31,7 +31,6 @@ Store.initRenderer()
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
-// eslint-disable-next-line @typescript-eslint/no-namespace
 declare global {
     namespace NodeJS {
         interface Global {
