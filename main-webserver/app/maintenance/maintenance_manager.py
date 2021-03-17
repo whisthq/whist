@@ -20,7 +20,7 @@ import time
 from functools import wraps
 import inspect
 import random
-from typing import Any, Callable, Tuple, Optional
+from typing import Callable, Tuple, Optional
 import ssl
 
 import redis
