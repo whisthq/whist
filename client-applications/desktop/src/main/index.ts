@@ -1,9 +1,16 @@
+import path from "path"
 import { app, BrowserWindow } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 
 function createWindow(): void {
     // Create the browser window.
-    const win = new BrowserWindow({ ...windowThinSm, show: false })
+    const win = new BrowserWindow({
+        ...windowThinSm,
+        show: false,
+        webPreferences: {
+            preload: path.join(process.cwd(), "public/preload.js"),
+        },
+    })
 
     if (process.env.NODE_ENV === "production") {
         win.loadFile("./public/index.html")
