@@ -342,7 +342,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │           └── stripe_client.py --> helpers for stripe
 │   ├── maintenance
 │   │   └── maintenance_manager.py --> helpers for webserver maintenance mode
-│   ├── models --> Python classes corresponding to our DB tables
+│   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
 │   │   ├── logs.py -->  tables in our logs schema
