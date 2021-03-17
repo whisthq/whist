@@ -75,7 +75,12 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
-		ecsagent.Main(globalCtx, globalCancel, goroutineTracker)
+		exitCode := ecsagent.Main(globalCtx, globalCancel, goroutineTracker)
+
+		// If we got here, then that means that the ecsagent has exited for some
+		// reason (that means the context we passed in was cancelled, or there was
+		// some initialization error). Regardless, we "panic" and cancel the context.
+		logger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
 	}()
 }
 
