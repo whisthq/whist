@@ -10,4 +10,5 @@ desktop/node_modules/
 yarn-error.log
 
 # build
+build/
 dist/
