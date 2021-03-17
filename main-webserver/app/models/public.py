@@ -1,5 +1,6 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
+from sqlalchemy.sql.expression import func
 from sqlalchemy.types import Text
 
 from ._meta import db
@@ -21,6 +22,8 @@ class User(db.Model):
         stripe_customer_id (String): A pointer to a customer record on Fractal's Stripe account.
         reason_for_signup (String): How users heard about Fractal
         verified (Boolean): True/false email verified
+        created_at (datetime): The timezone-aware date and time at which the user record was
+            created.
     """
 
     __tablename__ = "users"
@@ -30,9 +33,11 @@ class User(db.Model):
     token = db.Column(db.String(250))
     password = db.Column(db.String(250), nullable=False)
     stripe_customer_id = db.Column(db.String(250))
-    created_timestamp = db.Column(db.Integer)
     reason_for_signup = db.Column(Text)
     verified = db.Column(db.Boolean, default=text("false"))
+    created_at = db.Column(
+        db.DateTime(timezone=True), nullable=False, server_default=func.current_timestamp()
+    )
 
     # Setting passive_deletes causes SQLAlchemy to defer to the database to
     # handle, e.g., cascade deletes. Setting the value to "all" may work as
