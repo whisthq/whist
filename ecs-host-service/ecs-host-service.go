@@ -24,7 +24,6 @@ import (
 
 	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
-	webserver "github.com/fractal/fractal/ecs-host-service/fractalwebserver"
 	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -183,7 +182,7 @@ func shutdownHostService() {
 	logger.StopAndDrainLogzio()
 
 	logger.Info("Sending final heartbeat...")
-	webserver.SendGracefulShutdownNotice()
+	// TODO: webserver.SendGracefulShutdownNotice()
 
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
@@ -285,22 +284,14 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", logger.GetGitCommit())
 
-	// Initialize webserver heartbeat
-	err := webserver.InitializeHeartbeat()
-	if err != nil {
-		logger.Panicf("Unable to initialize webserver heartbeats. Error: %s", err)
-	}
-
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := httpserver.StartHTTPSServer()
 	if err != nil {
 		logger.Panic(err)
 	}
 
-	// Start Docker Daemon and ECS Agent. Notably, this needs to happen after the
-	// webserver handshake above. This prevents AWS from assigning any task
-	// definitions to our container before the webserver knows about it.
 	startDockerDaemon()
+
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
 	if logger.GetAppEnvironment() != logger.EnvLocalDev {
