@@ -101,6 +101,7 @@ func initializeHeartbeat() error {
 // webserver. Note also that we don't have to do any error handling here
 // because sendHeartbeat() does not return or panic.
 func heartbeatGoroutine() {
+	defer Infof("Finished heartbeat goroutine.")
 	timerChan := make(chan interface{})
 
 	// Send initial heartbeat right away
@@ -131,7 +132,6 @@ func heartbeatGoroutine() {
 	}
 }
 
-// sendGracefulShutdownNotice sends a heartbeat with IsDyingHeartbeat set to true
 func sendGracefulShutdownNotice() {
 	close(heartbeatKeepAlive)
 }
