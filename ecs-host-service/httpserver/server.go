@@ -1,11 +1,14 @@
 package httpserver // import "github.com/fractal/fractal/ecs-host-service/httpserver"
 
 import (
+	"context"
 	"crypto/subtle"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"os/exec"
+	"sync"
+	"time"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
@@ -255,8 +258,8 @@ func authenticateAndParseRequest(w http.ResponseWriter, r *http.Request, s Serve
 	return nil
 }
 
-// StartHTTPSServer returns a channel of events from the webserver as its first return value
-func StartHTTPSServer() (<-chan ServerRequest, error) {
+// Start returns a channel of events from the webserver as its first return value
+func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) (<-chan ServerRequest, error) {
 	logger.Info("Setting up HTTP server.")
 
 	// Select the correct environment (dev, staging, prod)
@@ -286,13 +289,48 @@ func StartHTTPSServer() (<-chan ServerRequest, error) {
 		}
 	}
 
-	http.Handle("/", http.NotFoundHandler())
-	http.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
-	http.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
+	// Create a custom HTTP Request Multiplexer
+	mux := http.NewServeMux()
+	mux.Handle("/", http.NotFoundHandler())
+	mux.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
+	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
+
+	// Create the server itself
+	server := &http.Server{
+		Addr:    logger.Sprintf("0.0.0.0:%v", PortToListen),
+		Handler: mux,
+	}
+
+	// Start goroutine that shuts down `server` if the global context gets
+	// cancelled.
+	goroutineTracker.Add(1)
 	go func() {
-		// TODO: defer things correctly so that a panic here is actually caught and resolved
-		// https://github.com/fractal/fractal/issues/1128
-		logger.Panicf("HTTP Server Error: %v", http.ListenAndServeTLS("0.0.0.0:"+logger.Sprintf("%v", PortToListen), certPath, privatekeyPath, nil))
+		defer goroutineTracker.Done()
+
+		// Start goroutine that actually listens for requests
+		goroutineTracker.Add(1)
+		go func() {
+			defer goroutineTracker.Done()
+
+			if err := server.ListenAndServeTLS(certPath, privatekeyPath); err != nil {
+				close(events)
+				logger.Errorf("Error listening and serving in httpserver: %s", err)
+				globalCancel()
+			}
+		}()
+
+		// Listen for global context cancellation
+		<-globalCtx.Done()
+		logger.Infof("Shutting down httpserver...")
+		shutdownCtx, shutdownCancel := context.WithTimeout(globalCtx, 5*time.Second)
+		defer shutdownCancel()
+
+		err := server.Shutdown(shutdownCtx)
+		if err != nil {
+			logger.Errorf("Shut down httpserver with error %s", err)
+		} else {
+			logger.Info("Gracefully shut down httpserver.")
+		}
 	}()
 
 	return events, nil

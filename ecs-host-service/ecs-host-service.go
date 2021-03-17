@@ -245,8 +245,8 @@ func main() {
 	// recovering from, and cleans up after the entire host service. After
 	// the permissions check, the creation of this context and WaitGroup, and the
 	// following defer must be the first statements in main().
-	ctx, cancel := context.WithCancel(context.Background())
-	wg := sync.WaitGroup{}
+	globalCtx, globalCancel := context.WithCancel(context.Background())
+	goroutineTracker := sync.WaitGroup{}
 	defer func() {
 		// This function cleanly shuts down the Fractal ECS host service. Note that
 		// besides the host machine itself shutting down, this deferred function
@@ -269,11 +269,11 @@ func main() {
 		}
 
 		// Cancel the global context, if it hasn't already been cancelled.
-		cancel()
+		globalCancel()
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
 		// process.
-		wg.Wait()
+		goroutineTracker.Wait()
 
 		// Shut down the logging infrastructure.
 		logger.Close()
@@ -287,6 +287,14 @@ func main() {
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", logger.GetGitCommit())
 
+	// Now we start all the goroutines that actually do work.
+
+	// Start the HTTP server and listen for events
+	httpServerEvents, err := httpserver.Start(globalCtx, globalCancel, &goroutineTracker)
+	if err != nil {
+		logger.Panic(err)
+	}
+
 	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
@@ -298,17 +306,12 @@ func main() {
 	select {
 	case <-sigChan:
 		logger.Infof("Got an interrupt or SIGTERM")
-	case <-ctx.Done():
+	case <-globalCtx.Done():
 		logger.Errorf("Global context cancelled!")
 	}
 }
 
 func oldmain() {
-	// Start the HTTP server and listen for events
-	httpServerEvents, err := httpserver.Start()
-	if err != nil {
-		logger.Panic(err)
-	}
 
 	startDockerDaemon()
 
