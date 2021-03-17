@@ -1,6 +1,7 @@
 package fractallogger // import "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"runtime/debug"
@@ -74,8 +75,15 @@ func Error(err error) {
 	}
 }
 
-// Panic panics on an error and sends it to Sentry.
-func Panic(err error) {
+// Panic sends an error to Sentry and "pretends" to panic on it by printing the
+// stack trace and calling the provided global context-cancelling function.
+// This causes all the goroutines in the program to kill themselves (cleanly).
+// This function should not be used except to initiate termination of the
+// entire host service. Note that passing in a nil first argument would cause
+// this function to _actually_ panic, and if we're gonna panic we might as well
+// do so in a useful way. Therefore, passing in a nil `globalCancel` parameter
+// will just panic on `err` instead.
+func Panic(globalCancel context.CancelFunc, err error) {
 	errstr := fmt.Sprintf("PANIC: %s", err)
 	if logzioTransport != nil {
 		logzioTransport.send(errstr, logzioTypeError)
@@ -84,7 +92,13 @@ func Panic(err error) {
 		sentryTransport.send(err)
 	}
 	PrintStackTrace()
-	log.Panic(err)
+
+	if globalCancel != nil {
+		Error(err)
+		globalCancel()
+	} else {
+		log.Panicf(errstr)
+	}
 }
 
 // Info logs some some info, but does not send it to Sentry.
@@ -104,8 +118,8 @@ func Errorf(format string, v ...interface{}) {
 
 // Panicf is like Panic, but it respects printf syntax, i.e. takes in a format
 // string and arguments, for convenience.
-func Panicf(format string, v ...interface{}) {
-	Panic(MakeError(format, v...))
+func Panicf(globalCancel context.CancelFunc, format string, v ...interface{}) {
+	Panic(globalCancel, MakeError(format, v...))
 }
 
 // Infof is identical to Info, since Info already respects printf syntax. We
