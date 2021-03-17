@@ -16,7 +16,6 @@ from app.constants.http_codes import (
     WEBSERVER_MAINTENANCE,
 )
 from tests.helpers.general.progress import queryStatus
-from tests.aws.test_assign import set_valid_subscription
 
 
 def mock_create_cluster(*args, **kwargs):
@@ -144,7 +143,6 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
 def test_maintenance_mode(
     client,
     make_authorized_user,
-    set_valid_subscription,
     request,
 ):
     """
@@ -167,8 +165,7 @@ def test_maintenance_mode(
     from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
-    authorized = make_authorized_user(stripe_customer_id="random1234")
-    set_valid_subscription(True)
+    authorized = make_authorized_user()
 
     # wipe db for a fresh start
     _REDIS_CONN.flushall()

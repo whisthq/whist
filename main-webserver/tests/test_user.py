@@ -1,6 +1,11 @@
 """Unit tests for the User model and its serializer."""
 
+import pytest
+import stripe
+
 from app.serializers.public import UserSchema
+
+from tests.patches import function
 
 
 def test_serialize(make_user):
@@ -16,3 +21,34 @@ def test_serialize(make_user):
 
     assert "created_at" not in user_dict
     assert type(user_dict["created_timestamp"]) == int
+
+
+def test_no_stripe_customer_id(make_user):
+    """Report that a user with no recorded Stripe customer ID should not receive service."""
+
+    user = make_user()
+
+    assert not user.subscribed
+
+
+@pytest.mark.parametrize(
+    "subscription_status, should_receive_service",
+    (
+        ("active", True),
+        ("canceled", False),
+        ("incomplete", False),
+        ("incomplete_expired", False),
+        ("past_due", False),
+        ("trialing", True),
+        ("unpaid", False),
+    ),
+)
+def test_stripe_customer_id(make_user, monkeypatch, should_receive_service, subscription_status):
+    """Report that a user with an active Stripe subscription should receive service."""
+
+    customer = {"subscriptions": {"data": [{"status": subscription_status}]}}
+    user = make_user(stripe_customer_id="garbage")
+
+    monkeypatch.setattr(stripe.Customer, "retrieve", function(returns=customer))
+
+    assert user.subscribed == should_receive_service

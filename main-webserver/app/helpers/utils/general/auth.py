@@ -1,16 +1,14 @@
 import json
 
-from datetime import datetime, timedelta, timezone
 from functools import wraps
 
-from flask import current_app, jsonify, request
+from flask import abort, current_app, jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
 from app.models import User
 
 from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.payment.stripe_client import StripeClient
 
 
 def fractal_auth(func):
@@ -152,31 +150,23 @@ def payment_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
+        user = User.query.get(get_jwt_identity())
 
-        current_user = get_jwt_identity()
+        if user is None:
+            abort(UNAUTHORIZED)
 
         # admin/developer override
-        if not check_developer():
+        if not check_developer() and not user.subscribed:
+            fractal_logger.warning(f"{user.user_id} must pay to access {request.path}.")
 
-            user = User.query.get(current_user)
-            stripe_client = StripeClient(current_app.config["STRIPE_SECRET"])
-
-            assert user
-
-            customer = stripe_client.user_schema.dump(user)
-            stripe_customer_id = customer["stripe_customer_id"]
-            on_free_trial = datetime.now(timezone.utc) - user.created_at <= timedelta(weeks=1)
-            subscriptions = stripe_client.get_subscriptions(stripe_customer_id)
-
-            if not on_free_trial and (not stripe_customer_id or not subscriptions):
-                return (
-                    jsonify(
-                        {
-                            "error": ("User is not a valid paying user."),
-                        }
-                    ),
-                    PAYMENT_REQUIRED,
-                )
+            return (
+                jsonify(
+                    {
+                        "error": ("User is not a valid paying user."),
+                    }
+                ),
+                PAYMENT_REQUIRED,
+            )
 
         return func(*args, **kwargs)
 
