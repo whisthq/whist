@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, KeyboardEvent } from "react"
+import React, { useState, KeyboardEvent } from "react"
 
 import { Logo } from "@app/components/custom/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
@@ -13,8 +13,6 @@ import {
 import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/utils/api"
 import { fractalLoginWarning } from "@app/renderer/pages/auth/pages/login/shared/utils/constants"
 
-import FractalKey from "@app/@types/input"
-
 const Login = (props: { onLogin: (json: object) => void }) => {
     const { onLogin } = props
 
@@ -27,7 +25,6 @@ const Login = (props: { onLogin: (json: object) => void }) => {
         if (loginEnabled(email, password)) {
             setProcessing(true)
             emailLogin(email, password).then(({ json }) => {
-                console.log(json)
                 if (json && json.access_token) {
                     setLoginWarning(fractalLoginWarning.NONE)
                     onLogin(json)
@@ -55,26 +52,6 @@ const Login = (props: { onLogin: (json: object) => void }) => {
         }
     }
 
-    // Handles the ENTER key
-    const onKeyPress = (evt: KeyboardEvent) => {
-        if (evt.key === FractalKey.ENTER) {
-            setProcessing(true)
-            login()
-        }
-    }
-
-    // Handles email form keystrokes
-    const changeEmail = (evt: ChangeEvent<HTMLInputElement>) => {
-        evt.persist()
-        setEmail(evt.target.value)
-    }
-
-    // Handles password form keystrokes
-    const changePassword = (evt: ChangeEvent<HTMLInputElement>) => {
-        evt.persist()
-        setPassword(evt.target.value)
-    }
-
     return (
         <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
             <div className="w-full max-w-xs m-auto">
@@ -89,8 +66,8 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                 <FractalInput
                     type="email"
                     placeholder="Email"
-                    onChange={changeEmail}
-                    onKeyPress={onKeyPress}
+                    onChange={(email: string) => setEmail(email)}
+                    onEnterKey={login}
                     value={email}
                     state={
                         checkEmail(email)
@@ -105,8 +82,8 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                 <FractalInput
                     type="password"
                     placeholder="Password"
-                    onChange={changePassword}
-                    onKeyPress={onKeyPress}
+                    onChange={(password: string) => setPassword(password)}
+                    onEnterKey={login}
                     value={password}
                     state={
                         checkPassword(password)

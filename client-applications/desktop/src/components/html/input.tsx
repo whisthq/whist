@@ -1,6 +1,8 @@
 import React, { FC, ChangeEvent, KeyboardEvent } from "react"
 import classNames from "classnames"
 
+import FractalKey from "@app/@types/input"
+
 export enum FractalInputState {
     DEFAULT,
     WARNING,
@@ -11,8 +13,8 @@ interface BaseInputProps {
     value?: string
     type?: string
     placeholder?: string
-    onChange?: (_: any) => void
-    onKeyPress?: (_: any) => void
+    onChange?: (_: string) => void
+    onEnterKey?: () => void
     className?: string
 }
 
@@ -20,19 +22,37 @@ interface FractalInputProps extends BaseInputProps {
     state: FractalInputState
 }
 
-export const BaseInput: FC<BaseInputProps> = (props: BaseInputProps) => (
-    <input
-        type={props.type}
-        className={classNames(
-            "text-md rounded px-4 py-4 align-middle w-full outline-none font-body border border-gray",
-            props.className
-        )}
-        value={props.value}
-        placeholder={props.placeholder}
-        onChange={props.onChange}
-        onKeyPress={props.onKeyPress}
-    ></input>
-)
+export const BaseInput: FC<BaseInputProps> = (props: BaseInputProps) => {
+    const handleChange = (evt: ChangeEvent<HTMLInputElement>) => {
+        evt.persist()
+        if (props.onChange) {
+            props.onChange(evt.target.value)
+        }
+    }
+
+    // Handles the ENTER key
+    const handleKeyPress = (evt: KeyboardEvent) => {
+        if (evt.key === FractalKey.ENTER && props.onEnterKey) {
+            props.onEnterKey()
+        }
+    }
+
+    return (
+        <>
+            <input
+                type={props.type}
+                className={classNames(
+                    "text-md rounded px-4 py-4 align-middle w-full outline-none font-body border border-gray",
+                    props.className
+                )}
+                value={props.value}
+                placeholder={props.placeholder}
+                onChange={handleChange}
+                onKeyPress={handleKeyPress}
+            ></input>
+        </>
+    )
+}
 
 export const FractalInput: FC<FractalInputProps> = (
     props: FractalInputProps
