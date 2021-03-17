@@ -405,10 +405,6 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip and install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
-
             ######################## Building ECS Host Service ########################
 
             # To build ECS Host Service
@@ -495,22 +491,9 @@ jobs:
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append("../main-webserver")
                   import os
                   import subprocess
                   import json
-
-                  from scripts.misc_scripts import login
-                  from scripts.maintenance_scripts import update_region
-
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # stdout will be shared with the subprocess so we can see what is happening
                   subprocess.run("packer -machine-readable build ami_config.json", shell=True)
@@ -530,12 +513,6 @@ jobs:
                     region_name, ami = region_ami_pair.split(":")
                     REGION_NAMES.append(region_name)
                     AMIS.append(ami)
-
-                  # TODO: remove
-                  # for region_ami_pair in region_ami_pairs:
-                  #   region_name, ami = region_ami_pair.split(":")
-                  #   print(f"Region: {region_name}, AMI: {ami}")
-                  #   update_region(WEBSERVER_URL, TOKEN, region_name, ami)
 
                   # export region and ami arrays
                   # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
@@ -613,6 +590,15 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip and install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: Put webserver into maintenance mode
               id: start-maintenance-mode
               working-directory: main-webserver
@@ -634,7 +620,7 @@ jobs:
                   # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
                   start_maintenance(WEBSERVER_URL, TOKEN)
 
-            - name: Notify Slack starting maintenance mode
+            - name: Notify Slack started maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'success'
               run: |
                   curl -X POST \
@@ -696,7 +682,7 @@ jobs:
               run: |
                   # this allows us to import from `scripts`
                   import sys
-                  sys.path.append("../main-webserver")
+                  sys.path.append(".")
                   import json
 
                   from scripts.misc_scripts import login
