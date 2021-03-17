@@ -1,15 +1,12 @@
 """Tests for the /container/assign endpoint."""
 
-import datetime
-
-from datetime import timedelta, datetime as dt
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 
 import pytest
 
 
 from app.celery.aws_ecs_creation import assign_container, _get_num_extra
-from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.models import SupportedAppImages
 from app.serializers.public import UserSchema
@@ -136,15 +133,13 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
             # create a user with a time stamp less than 7 days ago
             authorized = make_authorized_user(
                 stripe_customer_id="random1234",
-                created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
                 domain="gmail.com",
             )
         else:
             # create a user with a timestamp of more than 7 days ago
             authorized = make_authorized_user(
                 stripe_customer_id="random1234",
-                created_timestamp=dt.now(datetime.timezone.utc).timestamp()
-                - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
+                created_at=datetime.now(timezone.utc) - timedelta(weeks=1),
                 domain="gmail.com",
             )
 
@@ -180,15 +175,13 @@ def test_payment_dev(client, make_authorized_user, monkeypatch, set_valid_subscr
             # create a user with a time stamp less than 7 days ago
             authorized = make_authorized_user(
                 stripe_customer_id="random1234",
-                created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
                 domain="fractal.co",
             )
         else:
             # create a user with a timestamp of more than 7 days ago
             authorized = make_authorized_user(
                 stripe_customer_id="random1234",
-                created_timestamp=dt.now(datetime.timezone.utc).timestamp()
-                - 7 * SECONDS_IN_MINUTE * MINUTES_IN_HOUR * HOURS_IN_DAY,
+                created_at=datetime.now(timezone.utc) - timedelta(weeks=1),
                 domain="fractal.co",
             )
 

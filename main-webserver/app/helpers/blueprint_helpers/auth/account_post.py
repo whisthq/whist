@@ -1,6 +1,3 @@
-import datetime
-
-from datetime import datetime as dt
 from flask import current_app, jsonify
 
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
@@ -70,7 +67,7 @@ def login_helper(email, password):
         "refresh_token": refresh_token,
         "verification_token": user.token,
         "name": user.name,
-        "created_timestamp": user.created_timestamp,
+        "created_timestamp": user.created_at.timestamp(),
     }
 
 
@@ -101,15 +98,12 @@ def register_helper(username, password, name, reason_for_signup):
     pwd_token = hash_value(password)
 
     # Add the user to the database
-    created_timestamp = round(dt.now(datetime.timezone.utc).timestamp())
-
     new_user = User(
         user_id=username,
         password=pwd_token,
         token=token,
         name=name,
         reason_for_signup=reason_for_signup,
-        created_timestamp=created_timestamp,
     )
 
     status = SUCCESS
@@ -130,7 +124,7 @@ def register_helper(username, password, name, reason_for_signup):
         "verification_token": new_user.token if status == SUCCESS else None,  # TODO: Issue 519
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "created_timestamp": created_timestamp if status == SUCCESS else None,
+        "created_timestamp": new_user.created_at.timestamp() if status == SUCCESS else None,
     }
 
 

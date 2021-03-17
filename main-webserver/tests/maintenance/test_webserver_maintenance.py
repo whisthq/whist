@@ -1,6 +1,4 @@
 import time
-import datetime
-from datetime import timedelta, datetime as dt
 
 import pytest
 
@@ -169,10 +167,7 @@ def test_maintenance_mode(
     from app.maintenance.maintenance_manager import _REDIS_CONN
 
     # this is a free-trial user
-    authorized = make_authorized_user(
-        stripe_customer_id="random1234",
-        created_timestamp=dt.now(datetime.timezone.utc).timestamp(),
-    )
+    authorized = make_authorized_user(stripe_customer_id="random1234")
     set_valid_subscription(True)
 
     # wipe db for a fresh start

@@ -1,9 +1,6 @@
 import json
-import datetime
 
-
-from datetime import datetime as dt
-
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import current_app, jsonify, request
@@ -12,7 +9,6 @@ from flask_jwt_extended import get_jwt_identity
 from app.models import User
 
 from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
-from app.constants.time import SECONDS_IN_MINUTE, MINUTES_IN_HOUR, HOURS_IN_DAY
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.payment.stripe_client import StripeClient
 
@@ -169,14 +165,10 @@ def payment_required(func):
 
             customer = stripe_client.user_schema.dump(user)
             stripe_customer_id = customer["stripe_customer_id"]
-
-            time_diff = round(dt.now(datetime.timezone.utc).timestamp()) - user.created_timestamp
-            days_since_account_created = (
-                time_diff / SECONDS_IN_MINUTE / MINUTES_IN_HOUR / HOURS_IN_DAY
-            )
+            on_free_trial = datetime.now(timezone.utc) - user.created_at <= timedelta(weeks=1)
             subscriptions = stripe_client.get_subscriptions(stripe_customer_id)
 
-            if days_since_account_created >= 7 and (not stripe_customer_id or not subscriptions):
+            if not on_free_trial and (not stripe_customer_id or not subscriptions):
                 return (
                     jsonify(
                         {

@@ -1094,9 +1094,9 @@ CREATE TABLE public.users (
     name character varying(250),
     password character varying(250) NOT NULL,
     stripe_customer_id character varying(250),
-    created_timestamp integer,
     reason_for_signup text,
-    verified boolean DEFAULT false
+    verified boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
 
