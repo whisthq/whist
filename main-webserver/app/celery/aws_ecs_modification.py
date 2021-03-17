@@ -10,8 +10,18 @@ from app.helpers.utils.aws.aws_resource_locks import (
     spin_lock,
 )
 from app.helpers.utils.general.logs import fractal_logger
-from app.models import db, ClusterInfo, RegionToAmi, UserContainer
+from app.models import (
+    db,
+    ClusterInfo,
+    RegionToAmi,
+    UserContainer,
+    SupportedAppImages,
+)
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
+from app.celery.aws_celery_exceptions import (
+    InvalidAppId,
+    InvalidTaskDefinition,
+)
 
 
 @shared_task(bind=True)
@@ -192,6 +202,57 @@ def update_region(self, region_name="us-east-1", ami=None):
         state="SUCCESS",
         meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
     )
+
+
+@shared_task
+def update_task_definitions(app_id: str = None, task_definition_arn: str = None):
+    """
+    Updates task definitions for `app_id` to `task_definition_arn`.
+    If `app_id`=None, we update all app ids to their latest version. `task_definition_arn` ignored.
+    If `task_definition_arn`=None, we use the latest revision in ECS.
+    Parallelizing this function could help reduce task time, but the AWS API responds
+    in usually under a tenth of a second. We'd also need to coordinate that with
+    Github workflows to make sure all tasks finish. It's much simpler to have just one task here.
+
+    Args:
+        app_id: which app id to update. If None, we update all in SupportedAppImages. We ignore
+            the paramater `task_definition_arn` and just use the AWS API.
+        task_definition_arn: new task definition, of the form <task_def>:<revision>. If None, we
+            use the AWS API to get the latest version of the task definition that's stored
+            in SupportedAppImages.
+    """
+    if app_id is None:
+        # iterate through all apps and update their task definitions
+        all_app_data = SupportedAppImages.query.all()
+        # we must cast to python objects because the recursive call to update_task_definitions
+        # does a db.session.commit, which invalidates existing objects. that causes the
+        # second iteration of the for-loop to fail.
+        all_app_ids = [app_data.app_id for app_data in all_app_data]
+        for _app_id in all_app_ids:  # name is _app_id to not override app_id function arg
+            update_task_definitions(app_id=_app_id)
+        return
+
+    app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
+    if app_data is None:
+        raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")
+    if task_definition_arn is None:
+        # this gets the task definition without the version number
+        current_task_def = app_data.task_definition.split(":")[0]
+        ecs_client = ECSClient()
+        ecs_client.set_task_definition_arn(current_task_def)
+        task_info = ecs_client.describe_task()
+        latest_revision = task_info["taskDefinition"]["revision"]
+        task_definition_arn = f"{current_task_def}:{latest_revision}"
+
+    # make sure the provided task definition has the form <task_def>:<revision>
+    if len(task_definition_arn.split(":")) != 2:
+        error_msg = f"Task def {task_definition_arn}. Must have a : to indicate revision."
+        fractal_logger.error(error_msg)
+        raise InvalidTaskDefinition(error_msg)
+
+    fractal_logger.info(f"App {app_data.app_id} has new task def: {task_definition_arn}")
+    app_data.task_definition = task_definition_arn
+    fractal_sql_commit(db)
 
 
 @shared_task(bind=True)
