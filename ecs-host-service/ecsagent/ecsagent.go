@@ -17,7 +17,7 @@ import (
 
 // Main is the function that actually starts the ecsagent. It also contains the
 // main function from fractal/ecs-agent.
-func Main(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+func Main(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) int {
 	// If we don't make this directory, the ecs-agent crashes.
 	err := os.MkdirAll("/var/lib/ecs/data/", 0755)
 	if err != nil {
@@ -75,13 +75,12 @@ func Main(globalCtx context.Context, globalCancel context.CancelFunc, goroutineT
 	}
 
 	// Below is (a heavily modified version of) the original main() body from the
-	// ECS agent itself. Note that we modify `ecsapp.Run()` to take no arguments
-	// instead of reading in `os.Args[1:]`.
+	// ECS agent itself. Note that we modify `ecsapp.Run()` to no longer take its
+	// original arguments (or read from os.Args), but pass it the global context
+	// and cancel so that any exits in the host service properly propagate. Note
+	// that we don't pass it the goroutineTracker, since we let the ecsagent
+	// track its own goroutines however it likes, since I believe it looks after
+	// itself pretty well.
 	ecslogger.InitSeelog(seelogBridge)
-	exitCode := ecsapp.Run([]string{})
-
-	// TODO: pass in the context and cancel functions into the actual ecsapp.Run() command
-
-	// If we got here, then that means that the ecsagent has exited for some reason.
-	fractallogger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
+	return ecsapp.Run(globalCtx, globalCancel)
 }
