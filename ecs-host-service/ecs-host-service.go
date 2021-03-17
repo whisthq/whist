@@ -292,7 +292,7 @@ func main() {
 	// Start the HTTP server and listen for events
 	httpServerEvents, err := httpserver.Start(globalCtx, globalCancel, &goroutineTracker)
 	if err != nil {
-		logger.Panic(err)
+		logger.Panic(globalCancel, err)
 	}
 
 	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
