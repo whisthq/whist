@@ -132,7 +132,7 @@ func heartbeatGoroutine() {
 	}
 }
 
-func sendGracefulShutdownNotice() {
+func stopHeartbeats() {
 	close(heartbeatKeepAlive)
 }
 
