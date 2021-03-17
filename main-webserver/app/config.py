@@ -284,9 +284,7 @@ class LocalConfig(DeploymentConfig):
         super().__init__()
 
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
-    # Attempt to load parent property so that any ENVIRONMENT overrides from os.environ are
-    # correctly honored.
-    ENVIRONMENT = try_parent_property_or(DeploymentConfig, "ENVIRONMENT", env_names.LOCAL)  # type: ignore # pylint: disable=line-too-long
+    ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
     MAILSLURP_API_KEY = property(
