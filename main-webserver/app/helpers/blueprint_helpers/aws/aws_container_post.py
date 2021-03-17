@@ -95,16 +95,12 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
         lock_container_and_update(
             container_name=container_info.container_id,
             state="RUNNING_UNAVAILABLE",
-            lock=False,
-            temporary_lock=0,
         )
 
     if container_info.state not in intermediate_states and available:
         lock_container_and_update(
             container_name=container_info.container_id,
             state="RUNNING_AVAILABLE",
-            lock=False,
-            temporary_lock=0,
         )
 
     return {"status": "OK"}, SUCCESS

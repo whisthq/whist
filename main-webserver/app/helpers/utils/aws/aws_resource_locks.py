@@ -38,13 +38,12 @@ def lock_container_and_update(container_name, state, wait=0):
 
     # lock using with_for_update()
     container = UserContainer.query.with_for_update().filter_by(container_id=container_name).first()
-    container = ensure_container_exists(container)
-    if container:
-        # optional wait time for testing
-        time.sleep(wait)
 
-        container.state = state
-        db.session.commit()
+    # optional wait time for testing
+    time.sleep(wait)
+
+    container.state = state
+    db.session.commit()
 
 
 def lock_cluster_and_update(*args, **kwargs):
