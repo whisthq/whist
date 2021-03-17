@@ -133,7 +133,7 @@ def delete_container(self: Celery, container_name: str, aes_key: str) -> None:
     manual_scale_cluster.delay(container_cluster, container_location)
 
     if not current_app.testing:
-        task_time_taken = time.time() - task_start_time
+        task_time_taken = int(time.time() - task_start_time)
         try:
             logged_event_container_deleted(
                 container_name, container_user, container_cluster, time_taken=task_time_taken
