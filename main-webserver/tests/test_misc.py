@@ -90,7 +90,7 @@ def test_celery_sigterm(client, authorized, fractal_celery_app, fractal_celery_p
 
     started = False
     status_id = resp.json["ID"]
-    for _ in range(30):  # try 30 times because process needs to start which has some delay
+    for _ in range(60):  # try 60 times because process needs to start which has some delay
         task_result = fractal_celery_app.AsyncResult(status_id)
         if task_result.state == "STARTED":
             started = True
