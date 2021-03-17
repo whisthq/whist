@@ -52,17 +52,14 @@ type heartbeatRequest struct {
 func getFractalWebserver() string {
 	switch GetAppEnvironment() {
 	case EnvStaging:
-		Infof("Running in staging, communicating with %s", stagingFractalWebserver)
 		return stagingFractalWebserver
 	case EnvProd:
-		Infof("Running in production, communicating with %s", prodFractalWebserver)
 		return prodFractalWebserver
 	case EnvDev:
 		fallthrough
 	case EnvLocalDev:
 		fallthrough
 	default:
-		Infof("Running in development, communicating with %s", devFractalWebserver)
 		return devFractalWebserver
 	}
 }
@@ -84,7 +81,7 @@ func initializeHeartbeat() error {
 		Infof("Skipping initializing webserver heartbeats since running in LocalDev environment.")
 		return nil
 	} else {
-		Infof("Initializing webserver heartbeats.")
+		Infof("Initializing webserver heartbeats, communicating with webserver at %s", getFractalWebserver())
 	}
 
 	resp, err := handshake()
@@ -106,6 +103,9 @@ func initializeHeartbeat() error {
 func heartbeatGoroutine() {
 	timerChan := make(chan interface{})
 
+	// Send initial heartbeat right away
+	sendHeartbeat(false)
+
 	for {
 		sleepTime := 65000 - rand.Intn(10001)
 		timer := time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- nil })
@@ -115,15 +115,19 @@ func heartbeatGoroutine() {
 			// If we hit this case, that means that `heartbeatKeepAlive` was either
 			// closed or written to (it should not be written to), but either way,
 			// it's time to die.
-			timer.Stop()
 			sendHeartbeat(true)
+
+			// Stop timer to avoid leaking a goroutine (not that it matters if we're
+			// shutting down, but still).
+			if !timer.Stop() {
+				<-timer.C
+			}
 			return
+
 		case _ = <-timerChan:
 			// There's just no time to die
 			sendHeartbeat(false)
-			timer = time.AfterFunc(time.Duration(sleepTime)*time.Millisecond, func() { timerChan <- nil })
 		}
-		sendHeartbeat(false)
 	}
 }
 
