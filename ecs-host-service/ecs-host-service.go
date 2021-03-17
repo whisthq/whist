@@ -60,11 +60,11 @@ func makeFractalDirectoriesFreeForAll() {
 }
 
 // Start the Docker daemon ourselves, to have control over all Docker containers spun
-func startDockerDaemon() {
+func startDockerDaemon(globalCancel context.CancelFunc) {
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
 	err := cmd.Run()
 	if err != nil {
-		logger.Panicf("Unable to start Docker daemon. Error: %v", err)
+		logger.Panicf(globalCancel, "Unable to start Docker daemon. Error: %v", err)
 	} else {
 		logger.Info("Successfully started the Docker daemon ourselves.")
 	}
@@ -295,6 +295,8 @@ func main() {
 		logger.Panic(globalCancel, err)
 	}
 
+	startDockerDaemon(globalCancel)
+
 	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
@@ -312,9 +314,6 @@ func main() {
 }
 
 func oldmain() {
-
-	startDockerDaemon()
-
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
 	if logger.GetAppEnvironment() != logger.EnvLocalDev {
