@@ -314,8 +314,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 
 			if err := server.ListenAndServeTLS(certPath, privatekeyPath); err != nil {
 				close(events)
-				logger.Errorf("Error listening and serving in httpserver: %s", err)
-				globalCancel()
+				logger.Panicf(globalCancel, "Error listening and serving in httpserver: %s", err)
 			}
 		}()
 
