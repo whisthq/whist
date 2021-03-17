@@ -1,6 +1,8 @@
 import math
 
-from celery import shared_task
+from typing import Optional
+
+from celery import Task, shared_task
 from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
@@ -25,14 +27,23 @@ from app.celery.aws_celery_exceptions import (
 
 
 @shared_task(bind=True)
-def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
+def update_cluster(
+    self: Task,
+    region_name: Optional[str] = "us-east-1",
+    cluster_name: Optional[str] = None,
+    ami: Optional[str] = None,
+) -> None:
     """
     Updates a specific cluster to use a new AMI
-    :param self (CeleryInstance): the celery instance running the task
-    :param region_name (str): which region the cluster is in
-    :param cluster_name (str): which cluster to update
-    :param ami (str): which AMI to use
-    :return: which cluster was updated
+
+    Args:
+        self (CeleryInstance): the celery instance running the task
+        region_name (Optional[str]): which region the cluster is in
+        cluster_name (Optional[str]): which cluster to update
+        ami (Optional[str]): which AMI to use
+
+    Returns:
+        None, though cluster update info stored in state
     """
     all_regions = RegionToAmi.query.all()
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
@@ -137,14 +148,18 @@ def update_cluster(self, region_name="us-east-1", cluster_name=None, ami=None):
 
 
 @shared_task(bind=True)
-def update_region(self, region_name="us-east-1", ami=None):
+def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
     """
     Updates all clusters in a region to use a new AMI
     calls update_cluster under the hood
-    :param self (CeleryInstance): the celery instance running the task
-    :param region_name (str): which region the cluster is in
-    :param ami (str): which AMI to use
-    :return: which cluster was updated
+
+    Args:
+        self (CeleryInstance): the celery instance running the task
+        region_name (Optional[str]): which region the cluster is in
+        ami (Optional[str]): which AMI to use
+
+    Returns:
+         None, though which cluster was updated is in celery state
     """
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
