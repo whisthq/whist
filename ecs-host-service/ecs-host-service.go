@@ -161,39 +161,39 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 
 // Create the directory used to store the container resource allocations
 // (e.g. TTYs and cloud storage folders) on disk
-func initializeFilesystem() {
+func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/fractal" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
 	if _, err := os.Lstat(fractalDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf("Directory %s already exists!", fractalDir)
+			logger.Panicf(globalCancel, "Directory %s already exists!", fractalDir)
 		} else {
-			logger.Panicf("Could not make directory %s because of error %v", fractalDir, err)
+			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", fractalDir, err)
 		}
 	}
 
 	// Create the fractal directory
 	err := os.MkdirAll(fractalDir, 0777)
 	if err != nil {
-		logger.Panicf("Failed to create directory %s: error: %s\n", fractalDir, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", fractalDir, err)
 	}
 
 	// Create fractal-private directory
 	err = os.MkdirAll(httpserver.FractalPrivatePath, 0777)
 	if err != nil {
-		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
 
 	// Create cloud storage directory
 	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0777)
 	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", fractalcontainer.FractalCloudStorageDir, err)
+		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", fractalcontainer.FractalCloudStorageDir, err)
 	}
 
 	// Create fractal temp directory
 	err = os.MkdirAll("/fractal/temp/", 0777)
 	if err != nil {
-		logger.Panicf("Could not mkdir path %s. Error: %s", "/fractal/temp", err)
+		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", "/fractal/temp", err)
 	}
 
 	makeFractalDirectoriesFreeForAll()
@@ -286,6 +286,8 @@ func main() {
 
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", logger.GetGitCommit())
+
+	initializeFilesystem(globalCancel)
 
 	// Now we start all the goroutines that actually do work.
 
