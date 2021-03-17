@@ -461,6 +461,8 @@ def fractal_celery_proc(app):
         shell=True,
     )
 
+    fractal_logger.info(f"Started celery process with pid {proc.pid}")
+
     # this is the pid of the shell that launches celery. See:
     # https://stackoverflow.com/questions/31039972/python-subprocess-popen-pid-return-the-pid-of-the-parent-script
     yield proc.pid

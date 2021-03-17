@@ -5,13 +5,17 @@ the web server is deployed. No other modules should import this one in order to 
 application instances from being created when they are not needed (e.g. during testing).
 """
 
+import os
+
 from app.factory import create_app
 from app.celery_utils import make_celery
 
 # this registers all the celery signal handling functions. we don't need to do anything more.
 import app.signals
 
-app = create_app()
+# if testing, TESTING env var should be set. Default is False
+is_testing = os.environ.get("TESTING", "False") in ("True", "true")
+app = create_app(testing=is_testing)
 celery = make_celery(app)
 
 celery.set_default()
