@@ -230,7 +230,7 @@ def select_cluster(region_name: str) -> str:
 
 def start_container(
     webserver_url: str, region_name: str, cluster_name: str, task_definition_arn: str
-) -> Tuple[str, int, int, str]:
+) -> Tuple[str, int, Dict[int, int], str]:
     """
     This helper function configures and starts a container running
 
@@ -240,7 +240,7 @@ def start_container(
         cluster_name: which cluster to run the container in
         task_definition_arn: which taskdef to use
 
-    Returns: the task_id, IP, port, and aeskey of the container once running
+    Returns: the task_id, IP, port bindings, and aeskey of the container once running
 
     """
     aeskey = os.urandom(16).hex()
@@ -332,7 +332,7 @@ def assign_container(
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
-    webserver_url: Optional[str] = None,
+    webserver_url: str = "fractal-dev-server.herokuapp.com",
 ) -> Dict[str, Any]:
     """
     Assigns a running container to a user, or creates one if none exists
@@ -358,10 +358,10 @@ def _assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
-    region_name: Optional[str] = "us-east-1",
+    region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
-    webserver_url: Optional[str] = None,
+    webserver_url: str = "fractal-dev-server.herokuapp.com",
 ) -> Dict[str, Any]:
     """
     See assign_container. This is helpful to mock.
@@ -631,8 +631,8 @@ def prewarm_new_container(
     self: Task,
     task_definition_arn: str,
     cluster_name: Optional[str] = None,
-    region_name: Optional[str] = "us-east-1",
-    webserver_url: Optional[str] = None,
+    region_name: str = "us-east-1",
+    webserver_url: str = "fractal-dev-server.herokuapp.com",
 ) -> Dict[str, Any]:
     """Prewarm a new ECS container running a particular task.
 
@@ -881,3 +881,4 @@ def _create_new_cluster(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
+        raise Ignore
