@@ -31,7 +31,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wget -O - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
+RUN wget -qO - https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | apt-key add -
 RUN apt-add-repository 'deb https://apt.kitware.com/ubuntu/ focal main'
 
 RUN apt-get update \

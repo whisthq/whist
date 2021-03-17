@@ -518,10 +518,24 @@ func getUserConfig(req *httpserver.SetContainerStartValuesRequest) error {
 		// If aws s3 cp errors out due to the file not existing, don't log an error because
 		//    this means that it's the user's first run and they don't have any settings
 		//    stored for this application yet.
-		if err != nil && !strings.Contains(string(getConfigOutput), "does not exist") {
+		if err != nil {
+			if strings.Contains(string(getConfigOutput), "does not exist") {
+				logger.Infof("Ran \"aws s3 cp\" and config does not exist")
+				return nil
+			}
 			return logger.MakeError("Could not run \"aws s3 cp\" get config command: %s. Output: %s", err, getConfigOutput)
 		}
 		logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
+
+		// Extract the config archive to the user config directory
+		tarPath := configPath + "fractal-app-config.tar.gz"
+		untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configPath)
+		untarConfigOutput, err := untarConfigCmd.CombinedOutput()
+		if err != nil {
+			logger.Errorf("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
+		} else {
+			logger.Infof("Untar config directory output: %s", untarConfigOutput)
+		}
 	}
 	return nil
 }
