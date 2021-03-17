@@ -6,7 +6,6 @@ from datetime import timedelta, datetime as dt
 from http import HTTPStatus
 
 import pytest
-import time
 
 
 from app.celery.aws_ecs_creation import assign_container, _get_num_extra
@@ -47,7 +46,8 @@ def test_bad_app(client, authorized, monkeypatch, set_valid_subscription):
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_username(client, authorized, set_valid_subscription):
+@pytest.mark.usefixtures("authorized")
+def test_no_username(client, set_valid_subscription):
     set_valid_subscription(True)
 
     response = client.post("/container/assign", json=dict(app="VSCode"))
@@ -125,8 +125,6 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
     """Generates a function to get the response of the /container/assign endpoint
     given a valid user's payment information"""
 
-    task = Object()
-
     def _test_payment(onFreeTrial, isStripeValid):
         """Gets the response of the /container/assign endpoint given whether
         the user is on a free trial or has valid Stripe information
@@ -170,8 +168,6 @@ def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscripti
 def test_payment_dev(client, make_authorized_user, monkeypatch, set_valid_subscription):
     """Generates a function to get the response of the /container/assign
     endpoint given a valid user's payment information"""
-
-    task = Object()
 
     def _test_payment(onFreeTrial, isStripeValid):
         """Gets the response of the /container/assign endpoint given whether

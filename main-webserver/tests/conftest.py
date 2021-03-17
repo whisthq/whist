@@ -28,8 +28,6 @@ def _retrieve_user():
     user.
     """
 
-    pass
-
 
 @pytest.fixture
 def _save_user():
@@ -42,8 +40,6 @@ def _save_user():
     user's user_id to the global pytest object instead of deleting the user
     during teardown.
     """
-
-    pass
 
 
 @pytest.fixture(scope="session")
