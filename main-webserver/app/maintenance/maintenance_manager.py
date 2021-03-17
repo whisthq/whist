@@ -20,7 +20,7 @@ import time
 from functools import wraps
 import inspect
 import random
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Tuple, Optional
 import ssl
 
 import redis
@@ -32,7 +32,7 @@ _REDIS_LOCK_KEY = "WEBSERVER_REDIS_LOCK"
 _REDIS_MAINTENANCE_KEY = "WEBSERVER_MAINTENANCE_MODE"
 _REDIS_TASKS_KEY = "WEBSERVER_TASKS"
 
-_REDIS_CONN: Any = None
+_REDIS_CONN: Optional[redis.Redis] = None
 
 
 def maintenance_init_redis_conn(redis_uri: str):
