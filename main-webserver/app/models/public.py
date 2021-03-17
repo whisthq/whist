@@ -1,3 +1,5 @@
+import stripe
+
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import text
 from sqlalchemy.sql.expression import func
@@ -50,3 +52,27 @@ class User(db.Model):
     history = relationship(
         "LoginHistory", back_populates="user", lazy="dynamic", passive_deletes=True
     )
+
+    @property
+    def subscribed(self) -> bool:
+        """Determine whether or not the user should receive service.
+
+        Query the Stripe API to retrieve the user's subscription status.
+
+        Returns:
+            True iff the user has paid their monthly subscription fee or is benefitting from a free
+            trial.
+        """
+
+        # The user won't have a stripe_customer_id until they have at least started a free trial.
+        if self.stripe_customer_id is None:
+            return False
+
+        customer = stripe.Customer.retrieve(self.stripe_customer_id, expand=("subscriptions",))
+
+        # The user should receive service as long as one of their Stripe subscriptions is active.
+        for subscription in customer["subscriptions"]["data"]:
+            if subscription["status"] in ("active", "trialing"):
+                return True
+
+        return False
