@@ -26,7 +26,7 @@
                     "y": 220
                 }
             ],
-            "icon": "build/icon.png",
+            "icon": "public/icon.png",
             "sign": false
         },
         "extraFiles": [
@@ -34,7 +34,6 @@
         ],
         "files": [
             "dist/**/*",
-            "build/**/*",
             "node_modules/",
             "public/index.html",
             "package.json"
@@ -42,8 +41,8 @@
         "mac": {
             "category": "public.app-category.productivity",
             "darkModeSupport": true,
-            "entitlements": "build/entitlements.mac.plist",
-            "entitlementsInherit": "build/entitlements.mac.plist",
+            "entitlements": "public/entitlements.mac.plist",
+            "entitlementsInherit": "public/entitlements.mac.plist",
             "extendInfo": {
                 "NSHighResolutionCapable": true
             },
@@ -55,7 +54,7 @@
             ],
             "gatekeeperAssess": false,
             "hardenedRuntime": true,
-            "icon": "build/icon.png",
+            "icon": "public/icon.png",
             "minimumSystemVersion": "10.13.0",
             "signIgnore": [
                 "MacOS/protocol-build*"
@@ -78,7 +77,7 @@
             "region": "us-east-1"
         },
         "win": {
-            "icon": "build/icon.ico",
+            "icon": "public/icon.ico",
             "target": [
                 "nsis"
             ]
