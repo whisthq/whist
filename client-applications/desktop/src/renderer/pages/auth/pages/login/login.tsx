@@ -1,16 +1,17 @@
 import React, { useState, ChangeEvent, KeyboardEvent } from "react"
 
-import { Logo } from "@app/components/logo"
-import { BaseInput, AuthInput } from "@app/components/html/input"
+import { Logo } from "@app/components/custom/logo"
+import { FractalInput, FractalInputState } from "@app/components/html/input"
 import { AuthWarning } from "@app/components/custom/warning"
-import { BaseButton } from "@app/components/html/button"
+import { FractalButton, FractalButtonState } from "@app/components/html/button"
 
 import {
     loginEnabled,
     checkEmail,
     checkPassword,
 } from "@app/renderer/pages/auth/shared/helpers/authHelpers"
-import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/helpers/api"
+import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/utils/api"
+import { fractalLoginWarning } from "@app/renderer/pages/auth/pages/login/shared/utils/constants"
 
 import FractalKey from "@app/@types/input"
 
@@ -26,21 +27,35 @@ const Login = (props: { onLogin: (json: object) => void }) => {
         if (loginEnabled(email, password)) {
             setProcessing(true)
             emailLogin(email, password).then(({ json }) => {
+                console.log(json)
                 if (json && json.access_token) {
+                    setLoginWarning(fractalLoginWarning.NONE)
                     onLogin(json)
                 } else {
-                    setLoginWarning("Invalid email or password provided.")
+                    setLoginWarning(fractalLoginWarning.INVALID)
+                    setPassword("")
                 }
                 setProcessing(false)
             })
         } else {
-            setLoginWarning("Invalid email or password provided.")
+            setLoginWarning(fractalLoginWarning.INVALID)
             setProcessing(false)
         }
     }
 
+    const buttonState = () => {
+        if (processing) {
+            return FractalButtonState.PROCESSING
+        } else {
+            if (loginEnabled(email, password)) {
+                return FractalButtonState.DEFAULT
+            } else {
+                return FractalButtonState.DISABLED
+            }
+        }
+    }
+
     // Handles the ENTER key
-    // TODO: Wrap this logic in a function
     const onKeyPress = (evt: KeyboardEvent) => {
         if (evt.key === FractalKey.ENTER) {
             setProcessing(true)
@@ -61,38 +76,52 @@ const Login = (props: { onLogin: (json: object) => void }) => {
     }
 
     return (
-        <div className="flex flex-col justify-center items-center bg-white h-screen px-8">
-            <Logo />
-            <h5 className="font-body mt-6 text-xl">
-                Please log in into your account
-            </h5>
-            <AuthWarning warning={loginWarning} />
-            <AuthInput
-                text="Email"
-                type="email"
-                placeholder="Email"
-                onChange={changeEmail}
-                onKeyPress={onKeyPress}
-                value={email}
-                valid={checkEmail(email)}
-                className="mt-7"
-            />
-            <AuthInput
-                text="Password"
-                type="password"
-                placeholder="Password"
-                onChange={changePassword}
-                onKeyPress={onKeyPress}
-                value={password}
-                valid={checkPassword(password)}
-                className="mt-4"
-            />
-            <BaseButton
-                label="Sign In"
-                className="mt-5 w-full"
-                processing={processing}
-                onClick={login}
-            />
+        <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
+            <div className="w-full max-w-xs m-auto">
+                <Logo />
+                <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
+                    Log in to your account
+                </h5>
+                <AuthWarning warning={loginWarning} />
+                <h5 className="font-body text-left font-semibold mt-7 text-sm">
+                    Email
+                </h5>
+                <FractalInput
+                    type="email"
+                    placeholder="Email"
+                    onChange={changeEmail}
+                    onKeyPress={onKeyPress}
+                    value={email}
+                    state={
+                        checkEmail(email)
+                            ? FractalInputState.SUCCESS
+                            : FractalInputState.DEFAULT
+                    }
+                    className="mt-1"
+                />
+                <h5 className="font-body text-left font-semibold mt-4 text-sm">
+                    Password
+                </h5>
+                <FractalInput
+                    type="password"
+                    placeholder="Password"
+                    onChange={changePassword}
+                    onKeyPress={onKeyPress}
+                    value={password}
+                    state={
+                        checkPassword(password)
+                            ? FractalInputState.SUCCESS
+                            : FractalInputState.DEFAULT
+                    }
+                    className="mt-1"
+                />
+                <FractalButton
+                    contents="Sign In"
+                    className="mt-4 w-full"
+                    state={buttonState()}
+                    onClick={login}
+                />
+            </div>
         </div>
     )
 }

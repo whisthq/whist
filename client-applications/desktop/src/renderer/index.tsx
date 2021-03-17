@@ -5,11 +5,10 @@ import ReactDOM from "react-dom"
 
 import Auth from "@app/renderer/pages/auth/auth"
 
-import {browserHistory} from "@app/utils/history"
+import { browserHistory } from "@app/utils/history"
 
 import "@app/styles/global.module.css"
 import "@app/styles/tailwind.css"
-
 
 const RootComponent = () => (
     <>

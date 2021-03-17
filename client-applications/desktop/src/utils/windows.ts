@@ -31,6 +31,6 @@ const h3Xl = { height: 16 * 96 }
 
 export const windowThinSm = {
     ...base,
-    ...wXs,
-    ...hSm,
+    ...wSm,
+    ...hMd,
 } as BrowserWindowConstructorOptions
