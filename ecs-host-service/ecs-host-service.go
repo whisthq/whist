@@ -177,6 +177,8 @@ func shutdownHostService() {
 
 	logger.Close()
 
+	time.Sleep(2 * time.Second)
+
 	logger.Info("Finished host service shutdown procedure. Finally exiting...")
 	os.Exit(0)
 }
