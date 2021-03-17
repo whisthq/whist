@@ -43,7 +43,7 @@ func init() {
 // final, dying heartbeat to the fractal webserver.
 func Close() {
 	Info("Sending final heartbeat...")
-	sendGracefulShutdownNotice()
+	stopHeartbeats()
 
 	// Flush buffered logging events before the program terminates.
 	Info("Flushing Sentry...")
