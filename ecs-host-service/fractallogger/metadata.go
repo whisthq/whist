@@ -12,10 +12,10 @@ import (
 	"time"
 )
 
-// initMetadata() pre-computes and caches the results for GetAppEnvironment()
+// initializeMetadata() pre-computes and caches the results for GetAppEnvironment()
 // and UseProdLogging(). It is called in an init function in
 // `fractallogger.go`.
-func initMetadata() {
+func initializeMetadata() {
 	cachedEnvironment = func() EnvironmentType {
 		env := os.Getenv("APP_ENV")
 		switch env {
