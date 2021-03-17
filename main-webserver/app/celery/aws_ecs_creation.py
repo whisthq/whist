@@ -881,4 +881,4 @@ def _create_new_cluster(
             state="FAILURE",
             meta={"msg": f"Encountered error: {error}"},
         )
-        raise Ignore
+        raise Ignore from error
