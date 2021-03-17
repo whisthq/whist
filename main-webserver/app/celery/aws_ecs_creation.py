@@ -1,7 +1,7 @@
 import os
 import time
 
-from typing import Optional, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
@@ -333,7 +333,7 @@ def assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: Optional[str] = None,
-) -> str:
+) -> Dict[str, Any]:
     """
     Assigns a running container to a user, or creates one if none exists
 
@@ -362,7 +362,7 @@ def _assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: Optional[str] = None,
-) -> str:
+) -> Dict[str, Any]:
     """
     See assign_container. This is helpful to mock.
     """
@@ -630,7 +630,7 @@ def prewarm_new_container(
     cluster_name: Optional[str] = None,
     region_name: Optional[str] = "us-east-1",
     webserver_url: Optional[str] = None,
-) -> str:
+) -> Dict[str, Any]:
     """Prewarm a new ECS container running a particular task.
 
     Arguments:
@@ -765,7 +765,7 @@ def create_new_cluster(
     min_size: Optional[int] = 0,
     max_size: Optional[int] = 10,
     availability_zones: Optional[List[str]] = None,
-) -> str:
+) -> Dict[str, Any]:
     """
     Create a new cluster.
 
@@ -803,7 +803,7 @@ def _create_new_cluster(
     min_size: Optional[int] = 0,
     max_size: Optional[int] = 10,
     availability_zones: Optional[List[str]] = None,
-) -> str:
+) -> Dict[str, Any]:
     """
     See create_new_cluster. This is helpful to mock.
     """

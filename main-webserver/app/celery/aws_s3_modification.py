@@ -1,4 +1,7 @@
 import time
+
+from typing import Dict
+
 import boto3
 
 from celery import shared_task
@@ -21,7 +24,7 @@ class BadSenderError(Exception):
 
 
 @shared_task
-def upload_logs_to_s3(sender, container_id, aes_key, message):
+def upload_logs_to_s3(sender: str, container_id: str, aes_key: str, message: str) -> Dict[str, int]:
     """Upload logs to S3.
 
     Arguments:
@@ -33,7 +36,7 @@ def upload_logs_to_s3(sender, container_id, aes_key, message):
         message (str): The log message to save to S3.
 
     Returns:
-        None
+        Dict indicating success
     """
 
     source = sender.upper()

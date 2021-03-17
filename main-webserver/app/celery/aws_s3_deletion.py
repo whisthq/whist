@@ -1,3 +1,5 @@
+from typing import Optional, Dict
+
 import boto3
 from celery import shared_task
 
@@ -5,12 +7,15 @@ from app.constants.http_codes import SUCCESS
 from app.helpers.utils.general.logs import fractal_logger
 
 
-@shared_task(bind=True)
-def delete_logs_from_s3(file_name, bucket="fractal-protocol-logs"):
+@shared_task
+def delete_logs_from_s3(
+    file_name: str, bucket: Optional[str] = "fractal-protocol-logs"
+) -> Dict[str, int]:
     """Delete logs from S3
 
     Args:
-        file_name (String): name of file to delete in S3
+        file_name (str): name of file to delete in S3
+        bucket (Optional[str]: what bucket the file is in
 
     Returns:
         json:
