@@ -1,7 +1,8 @@
 import time
-import typing
 
-from celery import shared_task
+from typing import Union
+
+from celery import Celery, shared_task
 from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster
@@ -25,10 +26,11 @@ from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
 
 @shared_task(bind=True)
-def delete_container(self, container_name, aes_key):
+def delete_container(self: Celery, container_name: str, aes_key: str) -> None:
     """Delete a container.
 
     Args:
+        self: the Celery instance executing the task
         container_name (str): The ARN of the running container.
         aes_key (str): The 32-character AES key that the container uses to
             verify its identity.
@@ -141,7 +143,7 @@ def delete_container(self, container_name, aes_key):
 
 
 @shared_task(throws=(ClusterNotIdle,))
-def delete_cluster(cluster: typing.Union[ClusterInfo, SortedClusters], *, force: bool) -> None:
+def delete_cluster(cluster: Union[ClusterInfo, SortedClusters], *, force: bool) -> None:
     """Tear down the specified cluster's cloud infrastructure and remove it from the database.
 
     This Celery task is responsible for updating the cluster pointer in the database appropriately.
