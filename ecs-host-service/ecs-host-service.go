@@ -12,19 +12,20 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	// We use this package instead of the standard library log so that we never
 	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
-	// functionality in this impoted package as well.
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
+	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	ecsagent "github.com/fractal/fractal/ecs-host-service/ecsagent"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
-	httpserver "github.com/fractal/fractal/ecs-host-service/httpserver"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
+	"github.com/fractal/fractal/ecs-host-service/httpserver"
 
 	dockertypes "github.com/docker/docker/api/types"
 	dockerevents "github.com/docker/docker/api/types/events"
@@ -158,31 +159,6 @@ func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id strin
 // Service shutdown and initialization
 // ---------------------------
 
-// Terminates the Fractal ECS host service
-func shutdownHostService() {
-	// Catch any panics in the calling goroutine. Note that besides the host
-	// machine itself shutting down, this method should be the _only_ way that
-	// this host service exits. In particular, we use panic() as a control flow
-	// primitive --- panics in main(), its child functions, or any other calling
-	// goroutines (such as the Ctrl+C signal handler) will be recovered here and
-	// used as signals to exit. Therefore, panics should only be used	in the case
-	// of an irrecoverable failure that mandates that the host machine accept no
-	// new connections.
-	r := recover()
-	if r == nil {
-		logger.Info("Beginning host service shutdown procedure.")
-	} else {
-		logger.Infof("Shutting down host service after caught panic: %v", r)
-	}
-
-	logger.Close()
-
-	time.Sleep(2 * time.Second)
-
-	logger.Info("Finished host service shutdown procedure. Finally exiting...")
-	os.Exit(0)
-}
-
 // Create the directory used to store the container resource allocations
 // (e.g. TTYs and cloud storage folders) on disk
 func initializeFilesystem() {
@@ -208,11 +184,6 @@ func initializeFilesystem() {
 		logger.Panicf("Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
 
-	// Don't check for cloud storage directory, since that makes
-	// testing/debugging a lot easier and safer (we don't want to delete the
-	// directory on exit, since that might delete files from people's cloud
-	// storage drives.)
-
 	// Create cloud storage directory
 	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0777)
 	if err != nil {
@@ -230,57 +201,111 @@ func initializeFilesystem() {
 
 // Delete the directory used to store the container resource allocations (e.g.
 // TTYs and cloud storage folders) on disk, as well as the directory used to
-// store the SSL certificate we use for the httpserver.
+// store the SSL certificate we use for the httpserver, and our temporary
+// directory.
 func uninitializeFilesystem() {
 	err := os.RemoveAll(fractalDir)
 	if err != nil {
-		logger.Panicf("Failed to delete directory %s: error: %v\n", fractalDir, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", fractalDir, err)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", fractalDir)
 	}
 
 	err = os.RemoveAll(httpserver.FractalPrivatePath)
 	if err != nil {
-		logger.Panicf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", httpserver.FractalPrivatePath, err)
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 
-	// Unmount all cloud-storage folders and clean up all container-related resources
+	err = os.RemoveAll("/fractal/temp/")
+	if err != nil {
+		logger.Errorf("Failed to delete directory %s: error: %v\n", "/fractal/temp/", err)
+	} else {
+		logger.Infof("Successfully deleted directory %s\n", "/fractal/temp/")
+	}
+
+	// Unmount all cloud-storage folders and clean up all container-related
+	// resources.
 	fractalcontainer.CloseAll()
+
+	// We don't want to delete the cloud storage directory on exit, since that
+	// might delete files from people's cloud storage drives.
 }
 
 func main() {
 	// The host service needs root permissions.
 	logger.RequireRootPermissions()
 
-	// After the permissions check, this needs to be the first statement in
-	// main(). This deferred function allows us to catch any panics in the main
-	// goroutine and therefore execute code on shutdown of the host service. In
-	// particular, we want to send a message to Sentry and/or the fractal
-	// webserver upon our death.
-	defer shutdownHostService()
+	// We create a global context (i.e. for the entire host service) that can be
+	// cancelled if the entire program needs to terminate. We also create a
+	// WaitGroup for all goroutines to tell us when they've stopped (if the
+	// context gets cancelled). Finally, we defer a function which
+	// cancels the global context if necessary, logs any panic we might be
+	// recovering from, and cleans up after the entire host service. After
+	// the permissions check, the creation of this context and WaitGroup, and the
+	// following defer must be the first statements in main().
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := sync.WaitGroup{}
+	defer func() {
+		// This function cleanly shuts down the Fractal ECS host service. Note that
+		// besides the host machine itself shutting down, this deferred function
+		// from main() should be the _only_ way that the host service exits. In
+		// particular, it should be as a result of a panic() in main, the global
+		// context being cancelled, or a Ctrl+C interrupt.
 
-	// Note that we defer uninitialization so that in case of panic elsewhere, we
-	// still clean up
-	initializeFilesystem()
-	defer uninitializeFilesystem()
+		// Note that this function, while nontrivial, has intentionally been left
+		// as part of main() for the following reasons:
+		//   1. To prevent it being called from anywhere else accidentally
+		//   2. To keep the entire program control flow clearly in main().
 
-	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
-	sigChan := make(chan os.Signal, 2)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		defer shutdownHostService()
-		<-sigChan
-		logger.Info("Got an interrupt or SIGTERM --- calling uninitializeFilesystem() and initiating host shutdown process...")
+		// Catch any panics that might have originated in main() or one of its
+		// direct children.
+		r := recover()
+		if r != nil {
+			logger.Infof("Shutting down host service after caught panic in main(): %v", r)
+		} else {
+			logger.Infof("Beginning host service shutdown procedure...")
+		}
+
+		// Cancel the global context, if it hasn't already been cancelled.
+		cancel()
+
+		// Wait for all goroutines to stop, so we can run the rest of the cleanup
+		// process.
+		wg.Wait()
+
+		// Shut down the logging infrastructure.
+		logger.Close()
+
 		uninitializeFilesystem()
+
+		logger.Info("Finished host service shutdown procedure. Finally exiting...")
+		os.Exit(0)
 	}()
 
 	// Log the Git commit of the running executable
 	logger.Info("Host Service Version: %s", logger.GetGitCommit())
 
+	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
+
+	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
+	sigChan := make(chan os.Signal, 2)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+
+	// Wait for either the global context to get cancelled by a worker goroutine,
+	// or for us to receive an interrupt. This needs to be the end of main().
+	select {
+	case <-sigChan:
+		logger.Infof("Got an interrupt or SIGTERM")
+	case <-ctx.Done():
+		logger.Errorf("Global context cancelled!")
+	}
+}
+
+func oldmain() {
 	// Start the HTTP server and listen for events
-	httpServerEvents, err := httpserver.StartHTTPSServer()
+	httpServerEvents, err := httpserver.Start()
 	if err != nil {
 		logger.Panic(err)
 	}
