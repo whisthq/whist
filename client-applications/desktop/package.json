@@ -1,55 +1,139 @@
 {
-  "name": "website",
-  "version": "1.0.0",
-  "license": "MIT",
-  "scripts": {
-    "compile-main": "sh ./scripts/compile-main.sh",
-    "compile-both": "sh ./scripts/compile-both.sh",
-    "start": "sh ./scripts/start.sh",
-    "build": "sh ./scripts/build.sh",
-    "postinstall": "sh scripts/postinstall.sh"
-  },
-  "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.35",
-    "@fortawesome/free-solid-svg-icons": "^5.15.3",
-    "@fortawesome/react-fontawesome": "^0.1.14",
-    "@fractal/core-ts": "file:../../core-ts",
-    "@types/node-fetch": "^2.5.8",
-    "@types/react-router": "^5.1.12",
-    "@types/react-router-dom": "^5.1.7",
-    "classnames": "^2.2.6",
-    "history": "^5.0.0",
-    "lodash": "^4.17.21",
-    "prop-types": "^15.7.2",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
-    "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0"
-  },
-  "devDependencies": {
-    "@snowpack/plugin-build-script": "^2.1.0",
-    "@snowpack/plugin-dotenv": "^2.0.5",
-    "@snowpack/plugin-react-refresh": "^2.4.0",
-    "@snowpack/plugin-run-script": "^2.3.0",
-    "@snowpack/plugin-typescript": "^1.2.1",
-    "@types/classnames": "^2.2.11",
-    "@types/lodash": "^4.14.168",
-    "@types/node": "^14.14.34",
-    "@types/react": "^17.0.3",
-    "@types/react-dom": "^17.0.2",
-    "@types/snowpack-env": "^2.3.3",
-    "@typescript-eslint/parser": "^4.17.0",
-    "autoprefixer": "^10.2.5",
-    "concurrently": "^6.0.0",
-    "electron": "^12.0.1",
-    "esbuild": "^0.9.2",
-    "eslint": "^7.21.0",
-    "eslint-plugin-react": "^7.22.0",
-    "nodemon": "^2.0.7",
-    "postcss": "^8.2.8",
-    "prettier": "^2.2.1",
-    "snowpack": "^3.1.0-pre.12",
-    "tailwindcss": "^2.0.3",
-    "typescript": "^4.2.3"
-  }
+    "name": "fractal",
+    "version": "1.0.0",
+    "license": "MIT",
+    "main": "dist/index.js",
+    "build": {
+        "appId": "com.fractalcomputers.fractal",
+        "artifactName": "Fractal.${ext}",
+        "asar": true,
+        "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
+        "copyright": "Copyright � Fractal Computers, Inc.",
+        "directories": {
+            "buildResources": "resources",
+            "output": "release"
+        },
+        "dmg": {
+            "contents": [
+                {
+                    "x": 130,
+                    "y": 220
+                },
+                {
+                    "path": "/Applications",
+                    "type": "link",
+                    "x": 410,
+                    "y": 220
+                }
+            ],
+            "icon": "build/icon.png",
+            "sign": false
+        },
+        "extraFiles": [
+            "protocol-build/"
+        ],
+        "files": [
+            "dist/**/*",
+            "build/**/*",
+            "node_modules/",
+            "public/index.html",
+            "package.json"
+        ],
+        "mac": {
+            "category": "public.app-category.productivity",
+            "darkModeSupport": true,
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist",
+            "extendInfo": {
+                "NSHighResolutionCapable": true
+            },
+            "extraFiles": [
+                {
+                    "from": "protocol-build/client/",
+                    "to": "MacOS/"
+                }
+            ],
+            "gatekeeperAssess": false,
+            "hardenedRuntime": true,
+            "icon": "build/icon.png",
+            "minimumSystemVersion": "10.13.0",
+            "signIgnore": [
+                "MacOS/protocol-build*"
+            ],
+            "target": [
+                "dmg"
+            ],
+            "type": "distribution"
+        },
+        "productName": "Fractal",
+        "protocols": {
+            "name": "fractal-protocol",
+            "schemes": [
+                "fractal"
+            ]
+        },
+        "publish": {
+            "bucket": "PLACEHOLDER",
+            "provider": "s3",
+            "region": "us-east-1"
+        },
+        "win": {
+            "icon": "build/icon.ico",
+            "target": [
+                "nsis"
+            ]
+        }
+    },
+    "scripts": {
+        "compile-main": "sh ./scripts/compile-main.sh",
+        "compile-both": "sh ./scripts/compile-both.sh",
+        "start": "sh ./scripts/start.sh",
+        "build": "sh ./scripts/build.sh",
+        "postinstall": "sh scripts/postinstall.sh",
+        "package": "electron-builder build --publish never"
+    },
+    "dependencies": {
+        "@fortawesome/fontawesome-svg-core": "^1.2.35",
+        "@fortawesome/free-solid-svg-icons": "^5.15.3",
+        "@fortawesome/react-fontawesome": "^0.1.14",
+        "@fractal/core-ts": "file:../../core-ts",
+        "@types/node-fetch": "^2.5.8",
+        "@types/react-router": "^5.1.12",
+        "@types/react-router-dom": "^5.1.7",
+        "classnames": "^2.2.6",
+        "history": "^4.10.1",
+        "lodash": "^4.17.21",
+        "prop-types": "^15.7.2",
+        "react": "^17.0.1",
+        "react-dom": "^17.0.1",
+        "react-router": "^5.2.0",
+        "react-router-dom": "^5.2.0"
+    },
+    "devDependencies": {
+        "@snowpack/plugin-build-script": "^2.1.0",
+        "@snowpack/plugin-dotenv": "^2.0.5",
+        "@snowpack/plugin-react-refresh": "^2.4.0",
+        "@snowpack/plugin-run-script": "^2.3.0",
+        "@snowpack/plugin-typescript": "^1.2.1",
+        "@types/classnames": "^2.2.11",
+        "@types/lodash": "^4.14.168",
+        "@types/node": "^14.14.34",
+        "@types/react": "^17.0.3",
+        "@types/react-dom": "^17.0.2",
+        "@types/snowpack-env": "^2.3.3",
+        "@typescript-eslint/parser": "^4.17.0",
+        "autoprefixer": "^10.2.5",
+        "concurrently": "^6.0.0",
+        "electron": "^12.0.1",
+        "electron-builder": "^22.10.5",
+        "esbuild": "^0.9.2",
+        "eslint": "^7.21.0",
+        "eslint-plugin-react": "^7.22.0",
+        "nodemon": "^2.0.7",
+        "postcss": "^8.2.8",
+        "prettier": "^2.2.1",
+        "snowpack": "^3.1.0-pre.12",
+        "tailwindcss": "^2.0.3",
+        "typescript": "^4.2.3"
+    }
 }
