@@ -2,7 +2,6 @@ import os
 import uuid
 
 from contextlib import contextmanager
-from datetime import datetime, timezone
 from random import getrandbits as randbits
 
 import pytest
@@ -269,7 +268,6 @@ def user(request):
         u = User(
             user_id=f"test-user+{uuid.uuid4()}@fractal.co",
             password="",
-            created_timestamp=1000000000,
         )
 
         db.session.add(u)
@@ -292,9 +290,10 @@ def make_user():
 
     Args:
         stripe_customer_id: Optional. The test user's Stripe customer ID.
-        created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
-            a timezone-aware time stamp. Defaults to the current time.
         domain (Optional[str]): Which domain the user email address should be in.
+        kwargs: Optional. Additional keyword arguments that will be forwarded directly to the User
+            constructor. The user_id and password keyword arguments will be ignored if they are
+            provided.
 
     Returns:
         An instance of the User model.
@@ -304,15 +303,10 @@ def make_user():
     # can be deleted during this fixture's teardown phase.
     users = []
 
-    def _user(
-        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
-    ):
-        user = User(
-            user_id=f"test-user+{uuid.uuid4()}@{domain}",
-            password="",
-            created_timestamp=created_timestamp,
-            stripe_customer_id=stripe_customer_id,
-        )
+    def _user(stripe_customer_id=None, domain="fractal.co", **kwargs):
+        kwargs["user_id"] = f"test-user-{uuid.uuid4()}@{domain}"
+        kwargs["password"] = ""
+        user = User(stripe_customer_id=stripe_customer_id, **kwargs)
 
         db.session.add(user)
         db.session.commit()
@@ -335,22 +329,17 @@ def make_authorized_user(client, make_user, monkeypatch):
 
     Args:
         stripe_customer_id: Optional. The test user's Stripe customer ID.
-        created_timestamp: Optional. An arbitrary time at which the new user was created. Should be
-            a timezone-aware time stamp. Defaults to the current time.
         domain (Optional[str]): Which domain the user email address should be in.
+        kwargs: Optional. Additional keyword arguments that will be forwarded directly to the User
+            constructor. The user_id and password keyword arguments will be ignored if they are
+            provided.
 
     Returns:
         An instance of the User model representing the authorized user.
     """
 
-    def _authorized_user(
-        stripe_customer_id=None, created_timestamp=datetime.now(timezone.utc), domain="fractal.co"
-    ):
-        user = make_user(
-            stripe_customer_id=stripe_customer_id,
-            created_timestamp=created_timestamp,
-            domain=domain,
-        )
+    def _authorized_user(stripe_customer_id=None, domain="fractal.co", **kwargs):
+        user = make_user(stripe_customer_id=stripe_customer_id, domain=domain, **kwargs)
         access_token = create_access_token(identity=user.user_id)
 
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
