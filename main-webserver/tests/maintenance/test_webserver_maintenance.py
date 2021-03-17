@@ -1,7 +1,6 @@
 import time
 import datetime
 from datetime import timedelta, datetime as dt
-import os
 
 import pytest
 
@@ -17,11 +16,6 @@ from app.constants.http_codes import (
     ACCEPTED,
     SUCCESS,
     WEBSERVER_MAINTENANCE,
-)
-from app.constants.time import (
-    SECONDS_IN_MINUTE,
-    MINUTES_IN_HOUR,
-    HOURS_IN_DAY,
 )
 from tests.helpers.general.progress import queryStatus
 from tests.aws.test_assign import set_valid_subscription
@@ -148,11 +142,11 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
+@pytest.mark.usefixtures("mock_endpoints")
 def test_maintenance_mode(
     client,
     make_authorized_user,
     set_valid_subscription,
-    mock_endpoints,
     request,
 ):
     """
