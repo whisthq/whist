@@ -71,8 +71,12 @@ func startDockerDaemon(globalCancel context.CancelFunc) {
 }
 
 // We take ownership of the ECS agent ourselves
-func startECSAgent() {
-	go ecsagent.Main()
+func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+		ecsagent.Main(globalCtx, globalCancel, goroutineTracker)
+	}()
 }
 
 // ------------------------------------
@@ -299,6 +303,15 @@ func main() {
 
 	startDockerDaemon(globalCancel)
 
+	// Only start the ECS Agent if we are talking to a dev, staging, or
+	// production webserver.
+	if logger.GetAppEnvironment() != logger.EnvLocalDev {
+		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
+		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
+	} else {
+		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
+	}
+
 	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
@@ -316,15 +329,6 @@ func main() {
 }
 
 func oldmain() {
-	// Only start the ECS Agent if we are talking to a dev, staging, or
-	// production webserver.
-	if logger.GetAppEnvironment() != logger.EnvLocalDev {
-		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
-		startECSAgent()
-	} else {
-		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
-	}
-
 	ctx := context.Background()
 	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
 	if err != nil {
