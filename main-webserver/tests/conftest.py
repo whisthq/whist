@@ -4,6 +4,8 @@ import uuid
 from contextlib import contextmanager
 from random import getrandbits as randbits
 import platform
+import subprocess
+import signal
 
 import pytest
 
@@ -19,6 +21,7 @@ from app import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
+from app.celery_utils import make_celery
 
 
 @pytest.fixture
@@ -424,6 +427,47 @@ def make_authorized_user(client, make_user, monkeypatch):
         return user
 
     return _authorized_user
+
+
+@pytest.fixture
+def fractal_celery_app(app):
+    """
+    Initialize celery like we do in entry_web.py. This is different than the built-in
+    celery_app fixture and works hand-in-hand with fractal_celery_proc.
+    """
+    celery_app = make_celery(app)
+    celery_app.set_default()
+    yield celery_app
+
+
+@pytest.fixture
+def fractal_celery_proc(app):
+    """
+    Run a celery worker like we do in Procfile/stem-cell.sh
+    No monkeypatched code will apply to this worker.
+    """
+    # this gets the webserver root no matter where this file is called from.
+    webserver_root = os.path.join(os.getcwd(), os.path.dirname(__file__), "..")
+
+    cmd = (
+        f"cd {webserver_root} &&"
+        " celery --app entry_celery.celery worker --pool gevent --concurrency 10 --loglevel INFO"
+    )
+
+    # stdout is shared but the process is run independently
+    proc = subprocess.Popen(
+        cmd,
+        start_new_session=True,
+        shell=True,
+    )
+
+    # this is the pid of the shell that launches celery. See:
+    # https://stackoverflow.com/questions/31039972/python-subprocess-popen-pid-return-the-pid-of-the-parent-script
+    yield proc.pid
+
+    # we need to kill the process group because a new shell was launched which then launched celery
+    fractal_logger.info(f"Killing celery process with pid {proc.pid}")
+    os.killpg(proc.pid, signal.SIGKILL)
 
 
 @pytest.fixture(autouse=True)

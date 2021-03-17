@@ -3,6 +3,7 @@ import time
 from celery import shared_task
 
 from app.constants.http_codes import SUCCESS
+from app.helpers.utils.general.logs import fractal_logger
 
 
 @shared_task(bind=True)
@@ -14,6 +15,7 @@ def dummy_task(self):
             "progress": 10,
         },
     )
+    fractal_logger.info("Running dummy_task...")
 
     time.sleep(10)
 

@@ -83,6 +83,34 @@ def test_webserver_sigterm(client):
     assert resp.status_code == SUCCESS
 
 
+@pytest.mark.usefixtures("authorized")
+def test_celery_sigterm(client, authorized, fractal_celery_app, fractal_celery_proc):
+    resp = client.get("/dummy")
+    assert resp.status_code == ACCEPTED
+
+    started = False
+    status_id = resp.json["ID"]
+    for _ in range(30):  # try 30 times because process needs to start which has some delay
+        task_result = fractal_celery_app.AsyncResult(status_id)
+        if task_result.state == "STARTED":
+            started = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert started is True, f"Got unexpected task state {task_result.state}."
+
+    # send SIGTERM to the process group
+    os.killpg(fractal_celery_proc, signal.SIGTERM)
+
+    revoked = False
+    for _ in range(10):
+        task_result = fractal_celery_app.AsyncResult(status_id)
+        if task_result.state == "REVOKED":
+            revoked = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert revoked is True, f"Got unexpected task state {task_result.state}."
+
+
 @pytest.mark.parametrize(
     "username, is_developer",
     (
