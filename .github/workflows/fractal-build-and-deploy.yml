@@ -386,8 +386,8 @@ jobs:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
+        # if: >
+        #     contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
             aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
