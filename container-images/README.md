@@ -50,8 +50,6 @@ A tree structure is provided below:
 │   ├── blender
 │   │   ├── Dockerfile.20 <- Container image for Blender
 │   │   └── userpref.blend <- Fractal-provided default Blender user settings
-│   ├── blockbench
-│   │   └── Dockerfile.20 <- Container image for Blockbench
 │   ├── figma
 │   │   ├── Dockerfile.20 <- Container image for the Figma desktop application
 │   │   ├── figma-app.desktop <- Desktop shortcut file associated with the Figma desktop application
@@ -70,20 +68,12 @@ A tree structure is provided below:
 │   ├── gimp
 │   │   ├── Dockerfile.20 <- Container image for Gimp
 │   │   └── gimprc <- Fractal Gimp configuration file
-│   ├── godot
-│   │   └── Dockerfile.20 <- Container image for Godot Game Engine
-│   └── lightworks
-│       └── Dockerfile.20 <- Container image for Lightworks Video Editor
 ├── helper-scripts
 │   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
 │   └── run_container_image.sh <- Helper script to run a build container image
 ├── productivity
-│   ├── notion
-│   │   ├── Dockerfile.20 <- Container image for the Notion desktop application
-│   │   ├── notion-app.desktop <- Desktop shortcut file associated with the Notion desktop application
-│   │   └── run-notion.sh <- Helper script to start Notion with the right parameters
 │   └── slack
 │       ├── Dockerfile.20 <- Container image for Slack
 │       └── run-slack.sh <- Helper script to start Slack with the right parameters
