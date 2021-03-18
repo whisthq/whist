@@ -1,7 +1,6 @@
-#!/usr/bin/env bash
-# bin/detect <build-dir>
+#!/bin/bash
 
-# used for inline heroku buildpack
+# detect
 
-echo "My Subdir buildpack"
+echo "Fractal"
 exit 0
