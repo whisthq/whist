@@ -1,7 +1,0 @@
-[Desktop Entry]
-Exec=/opt/notion-app/notion-app %u
-Type=Application
-Name=Notion
-Categories=Utility;
-StartupNotify=true
-MimeType=x-scheme-handler/notion
