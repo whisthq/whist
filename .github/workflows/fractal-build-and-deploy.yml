@@ -673,7 +673,7 @@ jobs:
 
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
-              if: needs.ami-publish-ec2.status == 'success'
+              if: needs.ami-publish-ec2.outcome == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
