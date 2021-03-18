@@ -1,32 +1,36 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
 
-# compile
+# used for inline heroku buildpack
 
-# Read the CLIENT_SECRET_URI environment variable and download the file at that
-# URI to ~/client_secret.json.
+BUILD_DIR=${1:-}
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
 
-set -eo pipefail
+PROJECT_PATH=main-webserver
 
-BUILD_DIR=$1
-CACHE_DIR=$2
-ENV_DIR=$3
+echo "calling main webserver compile"
+bash $BUILD_DIR/main-webserver/bin/compile $BUILD_DIR $CACHE_DIR $ENV_DIR
+# the result is put into $BUILD_DIR but should bin in $BUILD_DIR/main-webserver/
+mv $BUILD_DIR/client_secret.json $BUILD_DIR/main-webserver/
 
-source "$(dirname $0)"/util.sh
+echo "-----> My Subdir buildpack: path is $PROJECT_PATH"
+echo "creating cache: $CACHE_DIR"
+mkdir -p $CACHE_DIR
+TMP_DIR=`mktemp -d $CACHE_DIR/subdirXXXXX`
+echo "created tmp dir: $TMP_DIR"
 
-CLIENT_SECRET_PATH="$ENV_DIR"/CLIENT_SECRET_URI
+echo "moving working dir: $PROJECT_PATH to $TMP_DIR"
+cp -R $BUILD_DIR/$PROJECT_PATH/. $TMP_DIR/
 
-[ -f "$CLIENT_SECRET_PATH" ] || \
-    { echo "       CLIENT_SECRET_URI is not set!" ; exit 1 ; }
-
-CLIENT_SECRET_URI=$(cat "$CLIENT_SECRET_PATH")
-
-echo "       Configuring AWS CLI from environment variables."
-
-export_env_dir "$ENV_DIR" "^AWS_"
-
-echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
-
-aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json
+echo "cleaning build dir $BUILD_DIR"
+rm -rf $BUILD_DIR
+echo "recreating $BUILD_DIR"
+mkdir -p $BUILD_DIR
+echo "copying work dir from cache $TMP_DIR to build dir $BUILD_DIR"
+cp -R $TMP_DIR/. $BUILD_DIR/
+echo "cleaning tmp dir $TMP_DIR"
+rm -rf $TMP_DIR
 
 echo "       Configuring git branch and commit hash to enviornment variables"
 BRANCH=$(git branch --show-current)
@@ -34,3 +38,5 @@ COMMIT=$(git rev-parse --short HEAD)
 
 heroku config:set BRANCH=$BRANCH
 heroku config:set COMMIT=$COMMIT
+
+exit 0
