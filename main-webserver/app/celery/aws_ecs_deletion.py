@@ -7,7 +7,6 @@ from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster
 from app.exceptions import ClusterNotIdle
-from app.exceptions import ContainerNotFoundException
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists

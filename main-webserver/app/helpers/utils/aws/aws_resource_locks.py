@@ -2,15 +2,7 @@ import time
 
 from app.helpers.utils.aws.aws_general import get_container_user
 from app.helpers.utils.general.logs import fractal_logger
-from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.helpers.utils.general.time import (
-    date_to_unix,
-    get_today,
-    shift_unix_by_minutes,
-)
 from app.models import db, UserContainer
-from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
-from app.exceptions import ContainerNotFoundException
 
 
 def lock_container_and_update(container_name, state, wait=0):

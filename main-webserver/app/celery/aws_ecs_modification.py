@@ -15,7 +15,6 @@ from app.models import (
     UserContainer,
     SupportedAppImages,
 )
-from app.models import db, ClusterInfo, RegionToAmi, UserContainer
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.celery.aws_celery_exceptions import (
     InvalidArguments,
