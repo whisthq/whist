@@ -175,6 +175,8 @@ class ECSClient:
         """
         branch = os.environ["BRANCH"]
         commit = os.environ["COMMIT"]
+        # branch = ""
+        # commit = ""
         if current_app.testing:
             name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
@@ -198,8 +200,8 @@ class ECSClient:
                 provided
         """
         # branch, commit = self.get_git_info()
-        branch = os.environ["BRANCH"]
-        commit = os.environ["COMMIT"]
+        # branch = os.environ["BRANCH"]
+        # commit = os.environ["COMMIT"]
 
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
