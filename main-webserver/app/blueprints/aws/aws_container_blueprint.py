@@ -356,7 +356,6 @@ def aws_container_assign(**kwargs):
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
-        config_encryption_token = body.get("encryptionToken", "")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)
@@ -381,7 +380,6 @@ def aws_container_assign(**kwargs):
             task = assign_container.delay(
                 user,
                 task_arn,
-                config_encryption_token,
                 region_name=region,
                 webserver_url=kwargs["webserver_url"],
                 dpi=dpi,
