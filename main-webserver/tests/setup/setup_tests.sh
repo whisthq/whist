@@ -21,7 +21,7 @@ fi
 # in this case, we simply need to apply the schema and data to the ephemeral db.
 DB_EXISTS=${DB_EXISTS:=false} # default: false
 if [ $DB_EXISTS == true ]; then
-    # use source db (dev, staging, master) db to fetch data
+    # use source db (dev, staging, prod) db to fetch data
     export POSTGRES_URI=$POSTGRES_SOURCE_URI
     bash ../../ephemeral_db_setup/fetch_db.sh
 

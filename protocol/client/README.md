@@ -37,7 +37,7 @@ The option flags are as follows:
                                   specified: h264 (default) or h265
   -u, --user                    Tell fractal the users email, optional defaults to None"
   -e, --environment             The environment the protocol is running
-                                in. e.g master, staging, dev. This is used
+                                in. e.g prod, staging, dev. This is used
                                 for sentry. Optional defaults to dev
   --help     display this help and exit"
   --version  output version information and exit;

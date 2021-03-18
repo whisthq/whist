@@ -8,7 +8,7 @@ name: "Website: Check PR"
 on:
     pull_request:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths:
@@ -93,9 +93,9 @@ jobs:
               working-directory: website
               run: npm run build --if-present
 
-            - name: Set GraphQL Access Key (prod, staging, dev) Based on Git Branch (master, staging, dev)
+            - name: Set GraphQL Access Key (prod, staging, dev) Based on Git Branch (prod, staging, dev)
               run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  if [ "${GITHUB_REF##*/}" == "prod" ]; then
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" >> $GITHUB_ENV
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                     echo "hasura_graphql_access_key=${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}" >> $GITHUB_ENV

@@ -8,7 +8,7 @@ This repository contains the end-to-end code for the Fractal Application Streami
   - [Repository Structure](#repository-structure)
 - [Development](#introduction)
   - [Branch Conventions](#branches-convention)
-    - [`master` is for releases only; `staging` is "almost `master`"](#master-is-for-releases-only-staging-is-almost-master)
+    - [`prod` is for releases only; `staging` is "almost `prod`"](#prod-is-for-releases-only-staging-is-almost-prod)
     - [`dev` is for development](#dev-is-for-development)
     - [Your branch is yours; our branches are _ours_](#your-branch-is-yours-our-branches-are-ours)
   - [Git Best Practices](#git-best-practices)
@@ -64,21 +64,21 @@ To avoid pushing code that does not follow our coding guidelines, we recommend y
 
 ### Branch Conventions
 
-#### `master` is for Releases only; `staging` is "almost `master`"
+#### `prod` is for Releases only; `staging` is "almost `prod`"
 
-At Fractal, we maintain a `master` branch for releases only, and auto-tag every commit on `master` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
+At Fractal, we maintain a `prod` branch for releases only, and auto-tag every commit on `prod` with a release tag [[TODO]](https://github.com/fractal/fractal/issues/1139).
 
-We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `master`, except after a production release, when they will be even.
+We also maintain a `staging` branch for release candidates. Therefore, `staging` will always be ahead of `prod`, except after a production release, when they will be even.
 
 When we approach a release milestone, we:
 
 1. Fast-forward `staging` to match `dev`. This signifies a feature freeze for that release, and we only perform critical bug fixes.
 2. Perform extensive, end-to-end testing (in practice, this is accomplished by us dogfooding our own product).
 3. We hotfix bugs by forking a branch off `staging` and then fast-forward merging it into `staging` (having the same effect as committing directly to `staging`, but with a PR for review and CI).
-4. To release, we fast-forward `master` to match `staging` and create a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
+4. To release, we fast-forward `prod` to match `staging` and create a tagged release commit. This triggers our auto-deployment workflows, and we push to production.
 5. If changes were made to `staging` before release, we merge `staging` into `dev` as well (one of the rare instances that calls for a merge commit, to prevent rewriting history on `dev`).
 
-Note that we always try to maintain the invariant that `master` can be fast-forwarded to match `staging`, and `staging` can be fast-forwarded to match `dev`. The only exception is when we have to make hotfixes to `staging` or `prod`, and we always merge these changes back.
+Note that we always try to maintain the invariant that `prod` can be fast-forwarded to match `staging`, and `staging` can be fast-forwarded to match `dev`. The only exception is when we have to make hotfixes to `staging` or `prod`, and we always merge these changes back.
 
 ### `dev` is for development
 
@@ -148,17 +148,17 @@ Eventually, but hopefully rarely, production will be on fire, and we will need t
 
 Here's the workflow:
 
-1. Fork a branch with name starting with `hotfix/` off `master`. (This is important, as the CI will prevent merging in a non-`staging` branch that doesn't meet this criterion (TODO).)
-2. Make the fix on the hotfix branch, and PR it directly to `master`.
+1. Fork a branch with name starting with `hotfix/` off `prod`. (This is important, as the CI will prevent merging in a non-`staging` branch that doesn't meet this criterion (TODO).)
+2. Make the fix on the hotfix branch, and PR it directly to `prod`.
 3. Get as many eyeballs on the PR as possible, and approve it if it looks good.
-4. Wait for all CI checks and tests to pass. This is important --- we will **not** skip CI and force a hotfix PR through to master. The CI is our last line of defense, and the time saved by "skipping it" is not worth the increased chance of pushing another bad commit to production.
-5. Merge the hotfix into `master`.
-6. Once the fix is confirmed to work, merge `master` back into `staging`, and `staging` back into `dev`.
+4. Wait for all CI checks and tests to pass. This is important --- we will **not** skip CI and force a hotfix PR through to prod. The CI is our last line of defense, and the time saved by "skipping it" is not worth the increased chance of pushing another bad commit to production.
+5. Merge the hotfix into `prod`.
+6. Once the fix is confirmed to work, merge `prod` back into `staging`, and `staging` back into `dev`.
 7. Write a regression test to make sure the same issue never occurs again, and add it to CI.
 
 ## Publishing
 
-We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `master`, `dev`, and `staging`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
+We have developed a complex continuous deployment pipeline via GitHub Actions, which enables us to automatically deploy all subrepositories of this monorepositories in the right order when pushing to `prod`, `dev`, and `staging`. See `.github/workflows/fractal-build-and-deploy.yml` to see how we deploy, which AWS regions and which streamed applications get deployed, and more. If something goes wrong in the continuous deployment pipeline and a specific job fails, it is possible to manually trigger a specific job of the `fractal-publish-build.yml` workflow via the GitHub Actions console.
 
 ## Styling
 
