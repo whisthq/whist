@@ -30,7 +30,10 @@ def setup_branch():
     ret = subprocess.run("git push", shell=True)
     assert ret.returncode == 0
 
-    print("Go to the Heroku UI and create a review app under the 'Pipeline' tab in fractal-server")
+    print(
+        "Success! Go to the Heroku UI and create a review app under the 'Pipeline' tab"
+        "in fractal-server. Make sure to enable the celery dyno manually."
+    )
 
 
 def setup_db():
