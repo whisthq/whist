@@ -576,8 +576,8 @@ jobs:
         name: "Update Fractal Services using Main Webserver"
         needs: [
                 fractal-publish-build-config,
-                ami-publish-ec2,
                 # ecs-task-definitions-deploy-task-definitions-ecs,
+                ami-publish-ec2,
             ]
         if: >
             always() &&
