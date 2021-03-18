@@ -576,7 +576,7 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                ecs-task-definitions-deploy-task-definitions-ecs,
+                # ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
         if: always() &&
