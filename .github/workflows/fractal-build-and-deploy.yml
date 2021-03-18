@@ -581,6 +581,7 @@ jobs:
         if: always() &&
             ((needs.ecs-task-definitions-deploy-task-definitions-ecs.status == 'success') ||
             (needs.ami-publish-ec2.status == 'success'))
+        runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
