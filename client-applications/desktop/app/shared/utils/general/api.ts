@@ -7,6 +7,7 @@ import {
 } from "shared/types/api"
 import { fractalBackoff } from "shared/utils/general/helpers"
 import fetch from "node-fetch"
+import https from "https"
 
 const checkResponse = (response: { status: number }): boolean => {
     /*
@@ -230,7 +231,8 @@ export const graphQLPost = async (
 export const apiPut = async (
     endpoint: string,
     body: Record<string, any>,
-    server: string | undefined
+    server: string | undefined,
+    ignoreCertificate: boolean
 ) => {
     /*
     Description:
@@ -245,20 +247,49 @@ export const apiPut = async (
         { json, success, response } (JSON) : Returned JSON of POST request, success True/False, and HTTP response
     */
     if (server) {
+        var httpsAgent: https.Agent | undefined = new https.Agent({
+              rejectUnauthorized: false,
+            });
+        if (ignoreCertificate) {
+            httpsAgent = new https.Agent({
+              rejectUnauthorized: false,
+            });
+        }
+
+        console.log(httpsAgent)
+
         try {
+            let retVal;
             const fullUrl = `${server}${endpoint}`
-            const response = await fractalBackoff(() =>
-                fetch(fullUrl, {
-                    method: FractalHTTPRequest.PUT,
-                    headers: {
-                        "Content-Type": FractalHTTPContent.JSON,
-                    },
-                    body: JSON.stringify(body),
+            // const response =
+                // await fetch(fullUrl, {
+                //     method: FractalHTTPRequest.PUT,
+                //     headers: {
+                //         "Content-Type": FractalHTTPContent.JSON,
+                //     },
+                //     body: JSON.stringify(body),
+                //     agent: httpsAgent
+                // })
+            const request = https.request("https://34.203.191.146:4678/set_config_encryption_token", {
+                method: 'PUT',
+                headers: {
+                    "Content-Type": FractalHTTPContent.JSON,
+                },
+                rejectUnauthorized: false
+            }, (res) => {
+                res.setEncoding('utf8');
+                console.dir(res)
+                res.on('data', (data) => {
+                    console.log(data)
                 })
-            )
-            const json = await response.json()
-            const success = checkJSON(json) && checkResponse(response)
-            return { json, success, response }
+            })
+            request.write(JSON.stringify(body))
+            request.end()
+
+            // console.dir(response)
+            // const json = await response.json()
+            // const success = checkJSON(json) && checkResponse(response)
+            // return { json, success, response }
         } catch (err) {
             debugLog(err)
             return err

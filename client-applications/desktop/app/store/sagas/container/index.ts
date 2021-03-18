@@ -71,7 +71,7 @@ function* getContainerInfo(action: { taskID: string; type: string }) {
     Description:
         Sends GET request to retrieve Celery task status (for container creation)
 
-    Arguments: 
+    Arguments:
         action (Record): Redux action with Celery task ID
         type (string): identifier for this side effect
     */
@@ -147,7 +147,8 @@ function* setHostServiceConfigToken(action: {
         apiPut,
         FractalAPI.HOST_SERVICE.SET_CONFIG_TOKEN,
         body,
-        `https://${action.ip}:${HOST_SERVICE_PORT}`
+        `https://${action.ip}:${HOST_SERVICE_PORT}`,
+        true
     )
 
     if (!success) {
