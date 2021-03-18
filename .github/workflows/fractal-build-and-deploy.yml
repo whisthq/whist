@@ -581,7 +581,7 @@ jobs:
                 ami-publish-ec2,
             ]
         if: >
-            always() && needs.ami-publish-ec2.status == 'success'
+            always()
 
         runs-on: ubuntu-20.04
         steps:
