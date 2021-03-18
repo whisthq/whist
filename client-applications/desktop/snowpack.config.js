@@ -32,6 +32,7 @@ module.exports = {
         "@snowpack/plugin-react-refresh",
         "@snowpack/plugin-dotenv",
         "@snowpack/plugin-typescript",
+        "./scripts/snowpack-proxy.js",
         [
             "@snowpack/plugin-run-script",
             { name: "electron", cmd: cmdMainCompile, watch: cmdMainWatch },
