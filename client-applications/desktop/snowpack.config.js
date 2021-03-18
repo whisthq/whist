@@ -9,17 +9,18 @@ const cmdMainCompile = [
     "--external:electron",
 ].join(" ")
 
+const cmdElectron = [
+    cmdMainCompile,
+    "&&",
+    "electron build/dist/main"
+].join(" ")
+
 const cmdMainWatch = [
     "nodemon",
     "--watch ./src/main",
     "--watch ./src/utils",
     "--ext js,jsx,ts,tsx",
-    "--exec '" + cmdMainCompile + "'",
-].join(" ")
-
-const cmdElectron = [
-    "electron",
-    "build/dist/main"
+    "--exec '" + cmdElectron + "'",
 ].join(" ")
 
 
@@ -39,11 +40,7 @@ module.exports = {
         "@snowpack/plugin-typescript",
         [
             "@snowpack/plugin-run-script",
-            { cmd: cmdMainCompile, watch: cmdMainWatch },
-        ],
-        [
-            "@snowpack/plugin-run-script",
-            { cmd: ":", watch: cmdElectron },
+            { name: "electron", cmd: cmdMainCompile, watch: cmdMainWatch },
         ]
     ],
     devOptions: {

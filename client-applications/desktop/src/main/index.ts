@@ -2,13 +2,22 @@ import path from "path"
 import { app, BrowserWindow } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 
+console.log("env", process.env.NODE_ENV)
+
+const buildRoot =
+    process.env.NODE_ENV === "production"
+        ? path.resolve("../../")
+        : path.resolve("public")
+
+console.log("root", buildRoot)
+
 function createWindow(): void {
     // Create the browser window.
     const win = new BrowserWindow({
         ...windowThinSm,
         show: false,
         webPreferences: {
-            preload: path.join(process.cwd(), "public/preload.js"),
+            preload: path.join(buildRoot, "preload.js"),
         },
     })
 
