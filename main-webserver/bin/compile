@@ -27,3 +27,10 @@ export_env_dir "$ENV_DIR" "^AWS_"
 echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
 
 aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json
+
+echo "       Configuring git branch and commit hash to enviornment variables"
+BRANCH=$(git branch --show-current)
+COMMIT=$(git rev-parse --short HEAD)
+
+heroku config:set GIT_BRANCH=$BRANCH
+heroku config:set GIT_COMMIT=$COMMIT
