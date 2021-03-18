@@ -12,6 +12,12 @@ MONOREPO_ROOT = os.path.join(WEBSERVER_ROOT, "..")
 
 
 def setup_branch():
+    """
+    Add files needed for review apps. Specifically:
+    1. add bin/ and app.json
+    2. add new files and commit changes
+    3. push changes
+    """
     print("Adding bin/ and app.json to monorepo root")
     shutil.copytree(os.path.join(CURRENT_DIR, "bin"), os.path.join(MONOREPO_ROOT, "bin"))
     shutil.copy(os.path.join(WEBSERVER_ROOT, "app.json"), MONOREPO_ROOT)
@@ -37,13 +43,7 @@ def setup_branch():
     )
 
     print(
-        "To do this,"
-        " open the created review app's UI, click 'Resources' and use the pencil button"
-        " on the celery dyno to enable it."
-    )
-
-    print(
-        "It is also recommended to disable automatic deploys. To do this, navigate to the "
+        "It is recommended to disable automatic deploys. To do this, navigate to the "
         " 'Deploy' tab on the review app UI and disable automatic deploys. To make changes "
         " to webserver source, commit and push to this branch as you normally would. Then"
         " manually redeploy using the 'Manual deploy' feature under the 'Deploy' tab."
@@ -51,6 +51,17 @@ def setup_branch():
 
 
 def setup_review_app():
+    """
+    Setup the review app. Extra args:
+    --app_name REVIEW_APP_NAME: given by Heroku when making a review app in the UI
+    --use_dev_db: optionally provide to use the dev db with the review app
+
+    Then do the following:
+    1. Start the celery worker (disabled by default)
+    2. Fetch the ephemeral db URL from the review app
+    3. Setup the ephemeral db
+    4. Make the review app use the ephemeral db
+    """
     setup_review_app_parser = argparse.ArgumentParser(description="Setup the review app.")
     setup_review_app_parser.add_argument(
         "--app_name",
@@ -114,8 +125,15 @@ def setup_review_app():
 
 
 def clean_branch():
-    # shutil.rmtree(os.path.join(MONOREPO_ROOT, "bin"))
-    # os.remove(os.path.join(MONOREPO_ROOT, "app.json"))
+    """
+    Clean the branch of files added for review apps. Specifically:
+    1. remove bin/ and app.json
+    2. add and commit changes
+    3. push changes
+    """
+    print("Removing bin/ and app.json to monorepo root")
+    shutil.rmtree(os.path.join(MONOREPO_ROOT, "bin"))
+    os.remove(os.path.join(MONOREPO_ROOT, "app.json"))
 
     ret = subprocess.run(
         "git add -u",
