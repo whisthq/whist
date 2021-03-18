@@ -3,10 +3,9 @@ import url from "url"
 import { app, BrowserWindow, dialog } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 
-const buildRoot =
-    process.env.NODE_ENV === "production"
-        ? path.resolve(".")
-        : path.resolve("public")
+const buildRoot = app.isPackaged
+    ? path.join(app.getAppPath(), "build")
+    : path.resolve("public")
 
 function createWindow(): void {
     // Create the browser window.
@@ -14,7 +13,7 @@ function createWindow(): void {
         ...windowThinSm,
         show: false,
         webPreferences: {
-            preload: `file://${__dirname}/preload.js`.replace("dist/main/", ""),
+            preload: path.join(buildRoot, "preload.js"),
         },
     })
 

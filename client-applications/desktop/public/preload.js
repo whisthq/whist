@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld(
     "ipcRenderer",
     {
         on: ipcRenderer.on,
-        send: ipcRenderer.send
+        send: ipcRenderer.send,
         removeListener: ipcRenderer.removeListener
     }
 )
