@@ -475,27 +475,10 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     return 0;
 }
 
-int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
-    LOG_INFO("SCROLL: x=%d y=%d", x, y);
-    // We may need a multiplier to calibrate the scroll speed.
-    // See https://xpra.org/trac/browser/xpra/trunk/src/xpra/x11/uinput_device.py.
-    int multiplier = 1;
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
+int emit_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES, x);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
-
-    // There seems to be a bug with precision scrolling on GTK apps, where the first mouse wheel
-    // click after mouse movement is not registered. I tried setting GDK_CORE_DEVICE_EVENTS=1 as
-    // suggested but it didn't work. This is a hacky solution where we emit the event twice after
-    // mouse movement so it actually gets registered. This may cause issues for other apps like
-    // Blender, but I am not proficient enough at Blender to tell.
-    // See https://bbs.archlinux.org/viewtopic.php?id=223470.
-    if (input_device->mouse_has_moved) {
-        emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x * multiplier);
-        emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y * multiplier);
-        emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
-        input_device->mouse_has_moved = false;
-    }
     return 0;
 }
 
