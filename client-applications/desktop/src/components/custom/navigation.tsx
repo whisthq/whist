@@ -19,7 +19,6 @@ const BaseNavigation: FC<BaseNavigationProps> = (
 
     const onClick = (text: string) => {
         if (text === props.linkText) {
-            console.log(props.url)
             goTo(props.url)
         }
     }

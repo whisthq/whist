@@ -1,4 +1,5 @@
 import React, { useState, KeyboardEvent } from "react"
+import FadeIn from "react-fade-in"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
@@ -56,55 +57,57 @@ const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
     return (
         <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
             <div className="w-full max-w-xs m-auto">
-                <Logo />
-                <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
-                    Log in to your account
-                </h5>
-                <AuthWarning warning={loginWarning} />
-                <h5 className="font-body text-left font-semibold mt-7 text-sm">
-                    Email
-                </h5>
-                <FractalInput
-                    type="email"
-                    placeholder="Email"
-                    onChange={(email: string) => setEmail(email)}
-                    onEnterKey={login}
-                    value={email}
-                    state={
-                        checkEmail(email)
-                            ? FractalInputState.SUCCESS
-                            : FractalInputState.DEFAULT
-                    }
-                    className="mt-1"
-                />
-                <h5 className="font-body text-left font-semibold mt-4 text-sm">
-                    Password
-                </h5>
-                <FractalInput
-                    type="password"
-                    placeholder="Password"
-                    onChange={(password: string) => setPassword(password)}
-                    onEnterKey={login}
-                    value={password}
-                    state={
-                        checkPassword(password)
-                            ? FractalInputState.SUCCESS
-                            : FractalInputState.DEFAULT
-                    }
-                    className="mt-1"
-                />
-                <FractalButton
-                    contents="Log In"
-                    className="mt-4 w-full"
-                    state={buttonState()}
-                    onClick={login}
-                />
-                <FractalNavigation
-                    url="/auth/signup"
-                    text="Need an account? Sign up here."
-                    linkText="here"
-                    className="relative top-4"
-                />
+                <FadeIn>
+                    <Logo />
+                    <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
+                        Log in to your account
+                    </h5>
+                    <AuthWarning warning={loginWarning} />
+                    <h5 className="font-body text-left font-semibold mt-7 text-sm">
+                        Email
+                    </h5>
+                    <FractalInput
+                        type="email"
+                        placeholder="Email"
+                        onChange={(email: string) => setEmail(email)}
+                        onEnterKey={login}
+                        value={email}
+                        state={
+                            checkEmail(email)
+                                ? FractalInputState.SUCCESS
+                                : FractalInputState.DEFAULT
+                        }
+                        className="mt-1"
+                    />
+                    <h5 className="font-body text-left font-semibold mt-4 text-sm">
+                        Password
+                    </h5>
+                    <FractalInput
+                        type="password"
+                        placeholder="Password"
+                        onChange={(password: string) => setPassword(password)}
+                        onEnterKey={login}
+                        value={password}
+                        state={
+                            checkPassword(password)
+                                ? FractalInputState.SUCCESS
+                                : FractalInputState.DEFAULT
+                        }
+                        className="mt-1"
+                    />
+                    <FractalButton
+                        contents="Log In"
+                        className="mt-4 w-full"
+                        state={buttonState()}
+                        onClick={login}
+                    />
+                    <FractalNavigation
+                        url="/auth/signup"
+                        text="Need an account? Sign up here."
+                        linkText="here"
+                        className="relative top-4"
+                    />
+                </FadeIn>
             </div>
         </div>
     )
