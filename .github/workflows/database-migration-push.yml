@@ -92,8 +92,18 @@ jobs:
             - name: Install Python dependencies
               working-directory: main-webserver
               run: |
-                  pip install SQLAlchemy==1.3.23 docker migra pretty-errors \
-                  toolz rich psycopg2 requests stopit PyGithub packaging
+                  pip install \
+                  SQLAlchemy==1.3.23 \
+                  docker==4.4.4 \
+                  migra==3.0.1615968929 \
+                  pretty-errors==1.2.19 \
+                  toolz==0.11.1 \
+                  rich==9.13.0 \
+                  psycopg2==2.8.6 \
+                  requests==2.25.1 \
+                  stopit==1.1.2 \
+                  PyGithub==1.54.1 \
+                  packaging==20.9
 
             # Use the name of the branch to determine which database url
             # to use for the migration
