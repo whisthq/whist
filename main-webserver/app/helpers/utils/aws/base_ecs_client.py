@@ -159,11 +159,11 @@ class ECSClient:
         )
         return clients
 
-        # def get_active_branch_name(self):
+    def get_git_info(self):
+        branch = os.environ["BRANCH"]
+        commit = os.environ["COMMIT"]
 
-    #     repo = Repo(os.getcwd())
-    #     branch = repo.active_branch
-    #     return branch
+        return branch, commit
 
     def generate_name(self, starter_name=""):
         """
@@ -173,8 +173,7 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        branch = os.environ["BRANCH"]
-        commit = os.environ["COMMIT"]
+        branch, commit = self.get_git_info()
         if current_app.testing:
             name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
@@ -197,13 +196,17 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster, will be automatically generated if not
                 provided
         """
+        branch, commit = self.get_git_info()
+
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
         if not isinstance(capacity_providers, list):
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
+
         self.ecs_client.create_cluster(
             clusterName=cluster_name,
+            tags=[{"key": "branch_name", "value": branch}, {"key": "commit_hash", "value": commit}],
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
                 {
