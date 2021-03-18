@@ -4,6 +4,7 @@ import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import { AuthWarning } from "@app/components/custom/warning"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { FractalNavigation } from "@app/components/custom/navigation"
 
 import {
     loginEnabled,
@@ -97,6 +98,12 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                     className="mt-4 w-full"
                     state={buttonState()}
                     onClick={login}
+                />
+                <FractalNavigation
+                    url="/"
+                    text="Need an account? Sign up here."
+                    linkText="here"
+                    className="relative top-4"
                 />
             </div>
         </div>

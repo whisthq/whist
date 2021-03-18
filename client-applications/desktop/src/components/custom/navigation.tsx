@@ -1,17 +1,27 @@
 import React, { FC, useState, useEffect } from "react"
+import classNames from "classnames"
 
 import { goTo } from "@app/utils/history"
 
-interface FractalNavigationInterface {
+interface BaseNavigationProps {
     url: string
     text: string
     linkText?: string
+    className?: string
 }
 
-const BaseNavigation: FC<FractalNavigationInterface> = (
-    props: FractalNavigationInterface
+interface FractalNavigationProps extends BaseNavigationProps {}
+
+const BaseNavigation: FC<BaseNavigationProps> = (
+    props: BaseNavigationProps
 ) => {
     const [textList, setTextList] = useState([props.text])
+
+    const onClick = (text: string) => {
+        if (text === props.linkText) {
+            goTo(props.url)
+        }
+    }
 
     useEffect(() => {
         if (props.linkText) {
@@ -20,41 +30,37 @@ const BaseNavigation: FC<FractalNavigationInterface> = (
                     "prop linkText must be a substring of prop text"
                 )
             } else {
-                const textListTemp = props.text.split(props.linkText)
+                const textListTemp = props.text.split(
+                    new RegExp(`(${props.linkText})`)
+                )
                 setTextList(textListTemp)
             }
         }
     }, [props.linkText, props.text])
 
-    return <>{textList.map((text: string) => {})}</>
-}
-
-export const AuthNavigator = (props: {
-    link: string
-    redirect: string
-    beforeLink?: string
-    afterLink?: string
-    id?: string
-}) => {
-    const { link, redirect, beforeLink, afterLink, id } = props
-
-    const onClick = () => {
-        history.push(redirect)
-    }
-
     return (
-        <div className="text-center">
-            {beforeLink && `${beforeLink} `}
-            <span
-                className="text-blue font-medium cursor-pointer"
-                onClick={onClick}
-                id={id}
-            >
-                {link}
-            </span>
-            {afterLink && afterLink}
-        </div>
+        <>
+            {textList.map((text: string) => (
+                <>
+                    <span
+                        className={classNames(
+                            text === props.linkText
+                                ? "font-body text-blue font-medium cursor-pointer"
+                                : "font-body font-medium",
+                            props.className
+                        )}
+                        onClick={() => onClick(text)}
+                    >
+                        {text}
+                    </span>
+                </>
+            ))}
+        </>
     )
 }
 
-export default AuthNavigator
+export const FractalNavigation: FC<FractalNavigationProps> = (
+    props: FractalNavigationProps
+) => {
+    return <BaseNavigation {...props} />
+}
