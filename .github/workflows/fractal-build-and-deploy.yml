@@ -583,11 +583,7 @@ jobs:
                 ami-publish-ec2,
             ]
         if: >
-            always() && 
-            (
-              ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || 
-              ${{ needs.ami-publish-ec2.outcome }} == 'success'
-            )
+            always() && (${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || ${{ needs.ami-publish-ec2.outcome }} == 'success')
 
         runs-on: ubuntu-20.04
         steps:
