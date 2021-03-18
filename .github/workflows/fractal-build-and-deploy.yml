@@ -576,10 +576,11 @@ jobs:
         name: "Update Fractal Services using Main Webserver"
         needs: [
                 fractal-publish-build-config,
-                # ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
+                # ecs-task-definitions-deploy-task-definitions-ecs,
             ]
-        if: always() &&
+        if: >
+            always() &&
             ((needs.ecs-task-definitions-deploy-task-definitions-ecs.status == 'success') ||
             (needs.ami-publish-ec2.status == 'success'))
         runs-on: ubuntu-20.04
