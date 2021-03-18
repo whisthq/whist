@@ -41,11 +41,11 @@ If you've created new React components, please write unit and/or integration tes
 
 ## Publishing the Website
 
-The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/master), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
+The website auto-deploys from GitHub directly to Netlify, which is our web hosting provider. For every `push` to our main branches (dev/staging/prod), the code in that branch will be automatically built and deployed on Netlify. The Netlify dashboard is managed by the code owners.
 
 -   The branch `dev` deploys to https://dev.fractal.co.
 -   The branch `staging` deploys to https://staging.fractal.co.
--   The branch `master` deploys to https://fractal.co.
+-   The branch `prod` deploys to https://fractal.co.
 
 For `dev` and `staging`, the password is `><mc?@,>YF?v&p,e`.
 

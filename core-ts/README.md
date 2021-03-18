@@ -4,7 +4,7 @@
 
 This project is an internal Fractal library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within Fractal. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
 
-It's important to note that development in this repository works a little differently than the rest of the Fractal organization. In `core-ts`, we try and follow standard practices for `npm` package development. This means that we do not have `dev` and `staging` branches, and PRs are merged directly into `master`. This means that every push will trigger a new `npm` package release with an updated version number.
+It's important to note that development in this repository works a little differently than the rest of the Fractal organization. In `core-ts`, we try and follow standard practices for `npm` package development. This means that we do not have `dev` and `staging` branches, and PRs are merged directly into `prod`. This means that every push will trigger a new `npm` package release with an updated version number.
 
 If you have `core-ts` as a dependency in another `fractal` repository, you should "pin" your dependency version. This means your `package.json` dependencies should contain `@fractal/core-ts: 1.0.1`, not `@fractal/core-ts: ^1.0.1`. Install a specific version with `npm install @fractal/core-ts@1.0.1`, after following the authentication instructions below.
 
@@ -115,7 +115,7 @@ Regardless of how you develop for this library, your additions should be properl
 
 This project is now published to an **npm** registry using GitHub packages!
 
-We're using [Semantic Versioning](https://semver.org), and the [semantic-release](https://github.com/semantic-release) project to help us automate version numbers. Every push to `master` will trigger a new release if it contains a commit message with a matching "release type". To trigger a release, prefix your commit message with one of the following:
+We're using [Semantic Versioning](https://semver.org), and the [semantic-release](https://github.com/semantic-release) project to help us automate version numbers. Every push to `prod` will trigger a new release if it contains a commit message with a matching "release type". To trigger a release, prefix your commit message with one of the following:
 
 -   _fix:_ will create a _patch_ release, incrementing `1.0.0` to `1.0.1`
 -   _feat:_ will create a _minor_ release, incrementing `1.0.0` to `1.1.0`

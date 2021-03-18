@@ -8,7 +8,7 @@ name: "Fractal: Build & Deploy"
 on:
     push:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths-ignore:
@@ -66,8 +66,8 @@ jobs:
 
                   # If no workflow_dispatch input was received, then we use the git branch name
                   if [[ -z "$BRANCH_NAME" ]]; then
-                      if [[ ${{ github.ref }} =~ ^refs/heads/master$ ]]; then
-                          BRANCH_NAME=master
+                      if [[ ${{ github.ref }} =~ ^refs/heads/prod$ ]]; then
+                          BRANCH_NAME=prod
                       elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
                           BRANCH_NAME=staging
                       elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
@@ -76,8 +76,8 @@ jobs:
                   fi
 
                   # Verify that a valid branch name was set
-                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|master) ]]; then
-                      echo "branch name \"$BRANCH_NAME\" is an invalid branch name, only dev/staging/master is allowed"
+                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|prod) ]]; then
+                      echo "branch name \"$BRANCH_NAME\" is an invalid branch name, only dev/staging/prod is allowed"
                       exit 1
                   fi
 
@@ -90,7 +90,7 @@ jobs:
                   # Grab branch_name from detect-branch
                   BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
 
-                  if [ "$BRANCH_NAME" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "prod" ]; then
                       DEPLOY_ENVIRONMENT=prod
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                       DEPLOY_ENVIRONMENT=staging
@@ -110,7 +110,7 @@ jobs:
 
                   # on dev branch, we don't set Sentry environment as we don't want to
                   # log to Sentry in development
-                  if [ "$BRANCH_NAME" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "prod" ]; then
                       SENTRY_ENVIRONMENT=prod
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                       SENTRY_ENVIRONMENT=staging
@@ -120,12 +120,12 @@ jobs:
                   echo "sentry_environment is set to: $SENTRY_ENVIRONMENT"
                   echo "::set-output name=sentry_environment::$SENTRY_ENVIRONMENT"
 
-            - name: Set webserver URL based on Git Branch (master, staging, dev)
+            - name: Set webserver URL based on Git Branch (prod, staging, dev)
               id: set-webserver-url
               run: |
                   # Grab branch_name from detect-branch
                   BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
-                  if [ "$BRANCH_NAME" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "prod" ]; then
                     WEBSERVER_URL=https://prod-server.fractal.co
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                     WEBSERVER_URL=https://staging-server.fractal.co
@@ -143,8 +143,8 @@ jobs:
                   BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
 
                   if [[ "${{ github.event_name }}" == 'push' ]]; then
-                    if [[ "$BRANCH_NAME" =~ "(staging|master)" ]]; then
-                    # On push to staging/master, we want to run all jobs
+                    if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
+                    # On push to staging/prod, we want to run all jobs
                       JOB_NAME="all"
                     else
                     # On push to dev, we want to filter jobs
@@ -299,7 +299,7 @@ jobs:
 
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
-    # Runs if config succeeds and branch is in ["master", "staging", "dev"].
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"].
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
@@ -367,7 +367,7 @@ jobs:
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
-    # Runs if config succeeds and branch is in ["master", "staging", "dev"] and publish-images-ghcr succeeds.
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
@@ -451,7 +451,7 @@ jobs:
 
     # AMI: Build and Publish to AWS EC2
     # Build and publish the Fractal Linux AMI, containing the ECS Host Service, to all supported AWS EC2 regions.
-    # Runs if config succeeds and branch is in ["master", "staging", "dev"] and publish-images-ghcr succeeds.
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
@@ -521,7 +521,7 @@ jobs:
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
-                  if [ "$BRANCH_NAME" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "prod" ]; then
                     echo 'APP_ENV=PROD' > app_env.env
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                     echo 'APP_ENV=STAGING' > app_env.env
@@ -670,7 +670,7 @@ jobs:
                       HEROKU_APP_NAME=fractal-dev-server
                   elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == staging ]]; then
                       HEROKU_APP_NAME=fractal-staging-server
-                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == master ]]; then
+                  elif [[ ${{ needs.fractal-publish-build-config.outputs.branch }} == prod ]]; then
                       HEROKU_APP_NAME=fractal-prod-server
                   else
                       echo 'Error: Invalid branch' && false
@@ -705,7 +705,7 @@ jobs:
     # Client Applications: Build & Publish to AWS S3
     # Build and publish the client applications to their respective AWS S3 bucket,
     # from which Electron-Updater pulls them for auto-updating
-    # Runs if config succeeds and branch is in ["master", "staging", "dev"] and all previous publish jobs succeed
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and all previous publish jobs succeed
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
@@ -798,16 +798,16 @@ jobs:
                   # remove temporary JSON file
                   rm response.json
 
-                  echo "Current master version: $MAJOR.$MINOR.$MICRO"
+                  echo "Current prod version: $MAJOR.$MINOR.$MICRO"
                   echo "Current staging version: $MAJOR.$MINOR.$MICRO-staging-rc.$STAGING_RC"
                   echo "Current dev version: $MAJOR.$MINOR.$MICRO-dev-rc.$DEV_RC"
 
-                  # retrieve Git commit hash for the current branch (master, staging, or dev)
+                  # retrieve Git commit hash for the current branch (prod, staging, or dev)
                   echo "commit_hash=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
                   # if dev or staging, increment RC by 1, else increment micro by 1 and set RC to 0
-                  if [[ "$BRANCH_NAME" == "master" ]]; then
-                    echo 'Using master configuration...'
+                  if [[ "$BRANCH_NAME" == "prod" ]]; then
+                    echo 'Using prod configuration...'
                     # increment version by 0.0.1
                     NEW_MICRO=$(echo "print( ${MICRO} + 1)" | python)
 
@@ -853,7 +853,7 @@ jobs:
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
                   if [ "$RUNNER_OS" == "Linux" ]; then
-                    if [ "$BRANCH_NAME" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "prod" ]; then
                         echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
                     elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-ubuntu-staging" >> $GITHUB_ENV
@@ -861,7 +861,7 @@ jobs:
                         echo "s3_bucket=fractal-chromium-ubuntu-dev" >> $GITHUB_ENV
                     fi
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                    if [ "$BRANCH_NAME" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "prod" ]; then
                         echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
                     elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-windows-staging" >> $GITHUB_ENV
@@ -869,7 +869,7 @@ jobs:
                         echo "s3_bucket=fractal-chromium-windows-dev" >> $GITHUB_ENV
                     fi
                   else
-                    if [ "$BRANCH_NAME" == "master" ]; then
+                    if [ "$BRANCH_NAME" == "prod" ]; then
                         echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
                     elif [ "$BRANCH_NAME" == "staging" ]; then
                         echo "s3_bucket=fractal-chromium-macos-staging" >> $GITHUB_ENV
@@ -878,14 +878,14 @@ jobs:
                     fi
                   fi
 
-            # (builds the branch that it is run on automatically, so master if running on push to master)
+            # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: client-applications\desktop
               run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -env=${{ needs.fractal-publish-build-config.outputs.deploy_environment }} -publish=${{ needs.fractal-publish-build-config.outputs.publish }}
 
-            # (builds the branch that it is run on automatically, so master if running on push to master)
+            # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
               if: runner.os == 'macOS'
               env:
@@ -914,7 +914,7 @@ jobs:
                   ACCESS_KEY='${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_CONFIG }}'
 
                   # curl GraphQL API to set new micro/staging_rc/dev_rc version number and git commit hash in config database
-                  if [[ "$BRANCH_NAME" == "master" ]]; then
+                  if [[ "$BRANCH_NAME" == "prod" ]]; then
                     curl -X POST \
                     -H "Content-Type: application/json" \
                     -H "X-Hasura-Admin-Secret: $ACCESS_KEY" \
@@ -950,7 +950,7 @@ jobs:
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
 
                   # Retrieve Fractal website associated with current deployment
-                  if [ "$BRANCH_NAME" == "master" ]; then
+                  if [ "$BRANCH_NAME" == "prod" ]; then
                       WEBSITE_URL=https://fractal.co
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                       WEBSITE_URL=https://staging.fractal.co

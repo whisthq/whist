@@ -76,7 +76,7 @@ Below this, you can optionally specify input parameters. Then, navigate to the p
 
 ## Contributing
 
-Since we use `dev` as our head branch, there is usually no reason for workflows to be merged up to `master` prematurely. Simply create your workflow, test it manually via `workflow_dispatch` or via setting it to run on `push` to your feature branch, and then PR it to `dev` as usual.
+Since we use `dev` as our head branch, there is usually no reason for workflows to be merged up to `prod` prematurely. Simply create your workflow, test it manually via `workflow_dispatch` or via setting it to run on `push` to your feature branch, and then PR it to `dev` as usual.
 
 ## Documentation
 

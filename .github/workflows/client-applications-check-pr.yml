@@ -8,7 +8,7 @@ name: "Client Applications: Check PR"
 on:
     pull_request:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths:
@@ -116,7 +116,7 @@ jobs:
             - name: Set Deploy Environment Based on Git Branch
               shell: bash
               run: |
-                  if [ "${GITHUB_REF##*/}" == "master" ]; then
+                  if [ "${GITHUB_REF##*/}" == "prod" ]; then
                       echo "DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
                       echo "DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV

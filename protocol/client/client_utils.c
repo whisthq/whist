@@ -314,7 +314,7 @@ int parse_args(int argc, char *argv[]) {
         "                                  hexadecimal string\n"
         "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
-        "                                  e.g master, staging, dev. Default: none\n"
+        "                                  e.g prod, staging, dev. Default: none\n"
         "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
