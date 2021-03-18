@@ -15,7 +15,7 @@ const cmdMainWatch = [
     "nodemon",
     "--watch ./src/main",
     "--watch ./src/utils",
-    "--ext js,jsx,ts,tsx",
+    "--ext js,jsx,ts,tsx,svg",
     "--exec '" + cmdElectron + "'",
 ].join(" ")
 
@@ -26,7 +26,6 @@ module.exports = {
     },
     exclude: ["**/node_modules/**/*", "**/src/main/**/*"],
     alias: {
-        "@app/assets": "./public/assets",
         "@app": "./src",
     },
     plugins: [

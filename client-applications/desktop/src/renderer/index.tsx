@@ -10,12 +10,9 @@ import { browserHistory } from "@app/utils/history"
 // @ts-ignore
 const ipcRenderer = window.ipcRenderer
 
-const RootComponent = (props: { location?: any }) => {
-    console.log(props.location)
-
+const RootComponent = () => {
     return (
         <>
-            TEST TEST TEST
             <Router history={browserHistory}>
                 <Switch>
                     <Route exact path="/" component={Auth} />

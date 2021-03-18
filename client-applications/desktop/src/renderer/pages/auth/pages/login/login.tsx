@@ -1,6 +1,6 @@
 import React, { useState, KeyboardEvent } from "react"
 
-import { Logo } from "@app/components/custom/logo"
+import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import { AuthWarning } from "@app/components/custom/warning"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
