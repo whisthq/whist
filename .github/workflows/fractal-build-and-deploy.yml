@@ -523,8 +523,8 @@ jobs:
                   # {'key': "val'ue"}
                   # if I did not add the \, then the json library would get confused by trying to read this:
                   # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
-                  region_names_str = json.dumps(REGION_NAMES).replace('"', '\\"'))
-                  amis_str = json.dumps(AMIS).replace('"', '\\"'))
+                  region_names_str = json.dumps(REGION_NAMES).replace('"', '\\"')
+                  amis_str = json.dumps(AMIS).replace('"', '\\"')
 
                   print(f"Regions array is set to {region_names_str}")
                   print(f"::set-output name=region_names::{region_names_str}")
