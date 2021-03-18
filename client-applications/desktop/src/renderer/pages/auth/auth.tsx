@@ -2,6 +2,7 @@ import React from "react"
 import { Route } from "react-router-dom"
 
 import Login from "@app/renderer/pages/auth/pages/login/login"
+import Signup from "@app/renderer/pages/auth/pages/signup/signup"
 
 const Auth = () => {
     const onLogin = () => {
@@ -15,9 +16,16 @@ const Auth = () => {
     return (
         <>
             <Route exact path="/" render={() => <Login onLogin={onLogin} />} />
-            <Route path="/auth" render={() => <Login onLogin={onLogin} />} />
+            <Route
+                path="/auth/login"
+                render={() => <Login onLogin={onLogin} />}
+            />
+            <Route
+                path="/auth/signup"
+                render={() => <Signup onSignup={onSignup} />}
+            />
         </>
     )
 }
 
-export default Auth 
+export default Auth

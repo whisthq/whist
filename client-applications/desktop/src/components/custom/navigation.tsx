@@ -19,6 +19,7 @@ const BaseNavigation: FC<BaseNavigationProps> = (
 
     const onClick = (text: string) => {
         if (text === props.linkText) {
+            console.log(props.url)
             goTo(props.url)
         }
     }
@@ -40,8 +41,8 @@ const BaseNavigation: FC<BaseNavigationProps> = (
 
     return (
         <>
-            {textList.map((text: string) => (
-                <>
+            {textList.map((text: string, index: number) => (
+                <div key={`${index.toString()}`} className="inline">
                     <span
                         className={classNames(
                             text === props.linkText
@@ -53,7 +54,7 @@ const BaseNavigation: FC<BaseNavigationProps> = (
                     >
                         {text}
                     </span>
-                </>
+                </div>
             ))}
         </>
     )

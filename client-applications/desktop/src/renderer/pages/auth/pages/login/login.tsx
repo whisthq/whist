@@ -14,7 +14,7 @@ import {
 import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/utils/api"
 import { fractalLoginWarning } from "@app/renderer/pages/auth/pages/login/shared/utils/constants"
 
-const Login = (props: { onLogin: (json: object) => void }) => {
+const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
     const { onLogin } = props
 
     const [email, setEmail] = useState("")
@@ -94,13 +94,13 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                     className="mt-1"
                 />
                 <FractalButton
-                    contents="Sign In"
+                    contents="Log In"
                     className="mt-4 w-full"
                     state={buttonState()}
                     onClick={login}
                 />
                 <FractalNavigation
-                    url="/"
+                    url="/auth/signup"
                     text="Need an account? Sign up here."
                     linkText="here"
                     className="relative top-4"
