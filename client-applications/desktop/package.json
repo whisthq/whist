@@ -8,7 +8,7 @@
         "extends browserslist-config-erb"
     ],
     "build": {
-        "afterSign": "build/moveLoadingandRename.js",
+        "afterSign": "build/afterSign.js",
         "appId": "com.fractalcomputers.fractal",
         "artifactName": "Fractal.${ext}",
         "asar": true,

@@ -14,9 +14,6 @@ f.close()
 data = json.loads(raw_data)
 data["build"]["publish"]["bucket"] = bucket
 
-# Set afterSign script
-data["build"]["afterSign"] = "build/afterSign.js"
-
 json_data = json.dumps(data)
 
 f = open("package.json", "w")
