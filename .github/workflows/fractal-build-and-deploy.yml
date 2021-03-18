@@ -576,12 +576,9 @@ jobs:
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
-        needs: [
-                fractal-publish-build-config,
-                ami-publish-ec2,
-            ]
+        needs: [fractal-publish-build-config, ami-publish-ec2]
         if: >
-            always()
+            always() && needs.ami-publish-ec2.outcome == 'success'
 
         runs-on: ubuntu-20.04
         steps:
@@ -621,6 +618,8 @@ jobs:
             - name: Notify Slack started maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'success'
               run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
                   curl -X POST \
                   --data-urlencode \
                     "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
@@ -738,6 +737,15 @@ jobs:
 
                   # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
                   end_maintenance(WEBSERVER_URL, TOKEN)
+
+            - name: Notify Slack ended maintenance mode
+              if: always() && steps.end-maintenance-mode.outcome == 'success'
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure to end maintenance mode
               if: always() && steps.end-maintenance-mode.outcome == 'failure'
