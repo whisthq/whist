@@ -4,10 +4,10 @@ import { FractalEnvironment, FractalConfig } from "shared/types/config"
 const environment: FractalEnvironment = {
     local: {
         url: {
-            WEBSERVER_URL: "http://127.0.0.1:7730",
+            WEBSERVER_URL: "https://fractal-app-config-security.herokuapp.com/",
             FRONTEND_URL: "http://localhost:3000",
-            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_HTTP_URL: "https://app-config-security-hasura.herokuapp.com/v1/graphql",
+            GRAPHQL_WS_URL: "wss://app-config-security-hasura.herokuapp.com/v1/graphql",
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
@@ -27,10 +27,10 @@ const environment: FractalEnvironment = {
     },
     development: {
         url: {
-            WEBSERVER_URL: "https://dev-server.fractal.co",
-            FRONTEND_URL: "https://dev.fractal.co",
-            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
+            WEBSERVER_URL: "https://fractal-app-config-security.herokuapp.com/",
+            FRONTEND_URL: "http://localhost:3000",
+            GRAPHQL_HTTP_URL: "https://app-config-security-hasura.herokuapp.com/v1/graphql",
+            GRAPHQL_WS_URL: "wss://app-config-security-hasura.herokuapp.com/v1/graphql",
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {

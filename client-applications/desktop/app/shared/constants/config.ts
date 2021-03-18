@@ -13,7 +13,7 @@ export const HOST_SERVICE_PORT = "4678"
     Webserver URLs
 */
 export const webservers: { [key: string]: string } = {
-    local: "http://127.0.0.1:7730",
+    local: "https://fractal-app-config-security.herokuapp.com/",
     dev: "http://dev-server.fractal.co",
     staging: "https://staging-server.fractal.co",
     production: "https://prod-server.fractal.co",
@@ -27,8 +27,8 @@ const environment: FractalEnvironment = {
         url: {
             WEBSERVER_URL: webservers.local,
             FRONTEND_URL: "http://localhost:3000",
-            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
-            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_HTTP_URL: "https://app-config-security-hasura.herokuapp.com/v1/graphql",
+            GRAPHQL_WS_URL: "wss://app-config-security-hasura.herokuapp.com/v1/graphql",
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {

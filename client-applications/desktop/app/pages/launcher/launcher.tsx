@@ -176,6 +176,7 @@ export const Launcher = (props: {
         // IPC sends boolean to the main thread to hide the Electron browser Window
         logger.logInfo("Protocol started, callback fired", userID)
         dispatch(updateTimer({ protocolLaunched: Date.now() }))
+        setHostServiceConfigToken("a", 1, "a")
     }
 
     // Callback function meant to be fired when protocol exits
@@ -261,7 +262,7 @@ export const Launcher = (props: {
     useEffect(() => {
         if (hostServiceError) {
             logger.logError(
-                `Subscription for host and ip failed: ${hostServiceError}`,
+                `Subscription for host and ip failed: ${hostServiceError.message}`,
                 userID
             )
         } else if (hostServiceLoading) {
