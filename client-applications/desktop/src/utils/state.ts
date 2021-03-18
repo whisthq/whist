@@ -15,22 +15,26 @@ const ipcError = [
     "'send' methods for them to be exposed.",
 ].join(" ")
 
-export const useMainState = (ipcRenderer: IpcRenderer) => {
+export const useMainState = () => {
+    // the window type doesn't have ipcRenderer, but we've manually
+    // added that in preload.js with electron.contextBridge
+    // so we ignore the type error in the next line
+    //@ts-ignore
     const ipc = window.ipcRenderer
-    if (!(ipc && ipc.on && ipc.send)) throw new Error("Y")
+    if (!(ipc && ipc.on && ipc.send)) throw new Error(ipcError)
 
     const [mainState, setState] = useState(null)
 
     useEffect(() => {
         const listener = (_: IpcRendererEvent, state: State) => setState(state)
-        ipcRenderer.on(StateChannel, listener)
+        ipc.on(StateChannel, listener)
         return () => {
-            ipcRenderer.removeListener(StateChannel, listener)
+            ipc.removeListener && ipc.removeListener(StateChannel, listener)
         }
     }, [])
 
     const setMainState = (state: State) => {
-        ipcRenderer.send(StateChannel, state)
+        ipc.send(StateChannel, state)
     }
 
     return [mainState, setMainState]
