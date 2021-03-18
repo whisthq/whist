@@ -72,7 +72,7 @@ process.on("uncaughtException", (err) => {
 const launchWindow = async () => {
     mainWindow = await createWindow(mainWindow)
 
-    // this needs to be in main.dev.ts, having the file elswhere causes bugs when loading app.html
+    // this needs to be in main.dev.ts, having the file elsewhere causes bugs when loading app.html
     setTimeout(() => {
         mainWindow?.loadURL(`file://${__dirname}/app.html`)
     }, 2000)
