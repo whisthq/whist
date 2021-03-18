@@ -5,7 +5,6 @@ import subprocess
 
 # move to directory where this file is written no matter where this is called from
 CURRENT_DIR = os.path.join(os.getcwd(), os.path.dirname(__file__))
-os.chdir(CURRENT_DIR)
 
 WEBSERVER_ROOT = os.path.join(CURRENT_DIR, "../..")
 
@@ -13,7 +12,7 @@ MONOREPO_ROOT = os.path.join(WEBSERVER_ROOT, "..")
 
 
 def setup_branch():
-    shutil.copytree("bin", MONOREPO_ROOT)
+    shutil.copytree(os.path.join(CURRENT_DIR, "bin"), os.path.join(MONOREPO_ROOT, "bin"))
     shutil.copy(os.path.join(WEBSERVER_ROOT, "app.json"), MONOREPO_ROOT)
 
     # waits for process to finish, stdout is shared
