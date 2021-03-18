@@ -17,16 +17,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Make sure we are always running this script with working directory `main-webserver/db_setup`
 cd "$DIR"
 
-# echo "ENV:"
-# env
-
-echo "HEREE---"
-echo $DB_EXISTS
-
 # check if the user is already initialized. this happens in CI and during review apps.
 # if so, POSTGRES_URI should be provided
 DB_EXISTS=${DB_EXISTS:=false} # default: false
-
 if [ $DB_EXISTS == true ]; then
     # copy schema
     psql -d $POSTGRES_URI -f ../db_migration/schema.sql
