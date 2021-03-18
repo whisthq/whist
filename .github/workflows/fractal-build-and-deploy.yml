@@ -537,7 +537,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # AMI: Kill "Packer Builder" Instances
@@ -622,7 +622,7 @@ jobs:
               run: |
                   curl -X POST \
                   --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure to start maintenance mode
@@ -634,7 +634,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Update webserver task definitions if new ones were published
@@ -668,7 +668,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Update webserver AMIs if new ones were built
@@ -714,7 +714,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: end-maintenance-mode
@@ -747,7 +747,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
