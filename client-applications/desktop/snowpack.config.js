@@ -43,7 +43,7 @@ module.exports = {
         ],
         [
             "@snowpack/plugin-run-script",
-            { cmd: "", watch: cmdElectron },
+            { cmd: ":", watch: cmdElectron },
         ]
     ],
     devOptions: {
