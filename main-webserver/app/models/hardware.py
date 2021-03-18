@@ -25,7 +25,7 @@ class UserContainer(db.Model):
     cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
     parent_cluster = relationship("ClusterInfo", back_populates="containers")
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
-    branch = db.Column(db.String(250), nullable=False, default="master")
+    branch = db.Column(db.String(250), nullable=False, default="prod")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     temporary_lock = db.Column(db.Integer)
     dpi = db.Column(db.Integer)

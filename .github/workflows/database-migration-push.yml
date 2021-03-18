@@ -10,7 +10,7 @@ name: "Database Migration Push"
 on:
     push:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths:
@@ -33,7 +33,7 @@ jobs:
             HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
             SERVER_DEV: "fractal-dev-server"
             SERVER_STAGING: "fractal-staging-server"
-            SERVER_MASTER: "fractal-prod-server"
+            SERVER_PROD: "fractal-prod-server"
             SCRIPT_DIFF: "main-webserver/db_migration/schema_diff.py"
             PATH_HELPERS: ".github/workflows/helpers"
             PATH_SCRIPTS: "main-webserver/db_migration"
@@ -122,7 +122,7 @@ jobs:
                   appnames = {
                       "dev":     os.environ["SERVER_DEV"],
                       "staging": os.environ["SERVER_STAGING"],
-                      "master":  os.environ["SERVER_MASTER"]
+                      "prod":  os.environ["SERVER_PROD"]
                   }
                   app = appnames.get(base_ref, "dev")
 

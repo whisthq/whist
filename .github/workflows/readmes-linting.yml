@@ -8,7 +8,7 @@ name: "READMEs: Linting"
 on:
     pull_request:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths:

@@ -959,7 +959,7 @@ int parse_args(int argc, char* argv[]) {
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
         "  -e, --environment=ENV         The sentry environment the protocol is running in,\n"
-        "                                  e.g master, staging. Default: none\n"
+        "                                  e.g prod, staging. Default: none\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
         // special options should be indented further to the left

@@ -8,7 +8,7 @@ name: "Main Webserver: Check PR"
 on:
     pull_request:
         branches:
-            - master
+            - prod
             - staging
             - dev
         paths:
