@@ -10,17 +10,15 @@ import { browserHistory } from "@app/utils/history"
 // @ts-ignore
 const ipcRenderer = window.ipcRenderer
 
-const RootComponent = () => {
-    return (
-        <>
-            <Router history={browserHistory}>
-                <Switch>
-                    <Route exact path="/" component={Auth} />
-                    <Route path="/auth" component={Auth} />
-                </Switch>
-            </Router>
-        </>
-    )
-}
+const RootComponent = () => (
+    <>
+        <Router history={browserHistory}>
+            <Switch>
+                <Route exact path="/" component={Auth} />
+                <Route path="/auth" component={Auth} />
+            </Switch>
+        </Router>
+    </>
+)
 
 ReactDOM.render(<RootComponent />, document.getElementById("root"))
