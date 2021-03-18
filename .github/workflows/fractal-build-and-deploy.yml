@@ -576,9 +576,18 @@ jobs:
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
-        needs: [fractal-publish-build-config, ami-publish-ec2]
+        needs:
+            [
+                fractal-publish-build-config,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                ami-publish-ec2,
+            ]
         if: >
-            always() && (${{ needs.ami-publish-ec2.outcome }} == 'success')
+            always() && 
+            (
+              ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || 
+              ${{ needs.ami-publish-ec2.outcome }} == 'success'
+            )
 
         runs-on: ubuntu-20.04
         steps:
@@ -639,7 +648,7 @@ jobs:
 
             - name: Update webserver task definitions if new ones were published
               id: update-webserver-taskdefs
-              if: needs.ecs-task-definitions-deploy-task-definitions-ecs.status == 'success'
+              if: ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -673,7 +682,7 @@ jobs:
 
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
-              if: needs.ami-publish-ec2.outcome == 'success'
+              if: ${{ needs.ami-publish-ec2.outcome }} == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -744,7 +753,7 @@ jobs:
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure to end maintenance mode
