@@ -16,16 +16,15 @@ const ipcError = [
     "'send' methods for them to be exposed.",
 ].join(" ")
 
-export const useMainState = () => {
+export const useMainState = (): [State, (s: State) => void] | never => {
     // the window type doesn't have ipcRenderer, but we've manually
     // added that in preload.js with electron.contextBridge
     // so we ignore the type error in the next line
     //@ts-ignore
     const ipc = window.ipcRenderer
-    console.log(ipc)
     if (!(ipc && ipc.on && ipc.send)) throw new Error(ipcError)
 
-    const [mainState, setState] = useState(null)
+    const [mainState, setState] = useState({})
 
     useEffect(() => {
         const listener = (_: IpcRendererEvent, state: State) => setState(state)
@@ -49,4 +48,5 @@ export const initState = (init: State, events: Event[], effects: Effect[]) => {
         for (let effect of effects) effect({ ...state })
     }
     events.map((e) => e(setState))
+    setState(state)
 }

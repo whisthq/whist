@@ -1,7 +1,10 @@
 import path from "path"
 import url from "url"
-import { app, BrowserWindow, dialog } from "electron"
+import { app, BrowserWindow } from "electron"
 import { windowThinSm } from "@app/utils/windows"
+import { initState } from "@app/utils/state"
+import * as events from "@app/main/events"
+import * as effects from "@app/main/effects"
 
 const buildRoot = app.isPackaged
     ? path.join(app.getAppPath(), "build")
@@ -30,10 +33,17 @@ function createWindow(): void {
     win.webContents.openDevTools({ mode: "undocked" })
 }
 
+function init(): void {
+    const init = {
+        test: "hello!",
+    }
+    initState(init, [events.listenState], [effects.broadcastState])
+}
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(createWindow)
+app.whenReady().then(createWindow).then(init)
 
 // Quit when all windows are closed.
 app.on("window-all-closed", () => {
