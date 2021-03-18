@@ -573,8 +573,7 @@ jobs:
     # 2. new AMIs if new AMIs have been built
     main-webserver-update-fractal-services:
         name: "Update Fractal Services using Main Webserver"
-        needs:
-            [
+        needs: [
                 fractal-publish-build-config,
                 # ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
