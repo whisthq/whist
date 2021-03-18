@@ -1,5 +1,6 @@
 import path from "path"
-import { app, BrowserWindow } from "electron"
+import url from "url"
+import { app, BrowserWindow, dialog } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 
 const buildRoot =
@@ -13,14 +14,14 @@ function createWindow(): void {
         ...windowThinSm,
         show: false,
         webPreferences: {
-            preload: path.join(buildRoot, "preload.js"),
+            preload: `file://${__dirname}/preload.js`.replace("dist/main/", ""),
         },
     })
 
-    if (process.env.NODE_ENV === "production") {
-        win.loadFile(path.join(buildRoot, "index.html"))
-    } else {
+    if (process.env.NODE_ENV === "development") {
         win.loadURL("http://localhost:8080")
+    } else {
+        win.loadFile("build/index.html")
     }
 
     win.webContents.on("did-finish-load", function () {
