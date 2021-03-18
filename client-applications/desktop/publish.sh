@@ -46,8 +46,10 @@ else
     done
 
     # Only notarize, when publish=true
-    notarize=$publish
-    python3 setVersion.gyp $bucket $version $notarize
+    if [[ "$publish" == "false" ]]; then
+        export CSC_IDENTITY_AUTO_DISCOVERY=false
+    fi
+    python3 setVersion.gyp $bucket $version
 
     # Make FractalClient and create its app bundle
     cd ../../protocol

@@ -4,7 +4,6 @@ import json, sys
 
 bucket = sys.argv[1]
 version = sys.argv[2]
-notarize = sys.argv[3]
 
 # Set package.json bucket
 
@@ -15,17 +14,12 @@ f.close()
 data = json.loads(raw_data)
 data["build"]["publish"]["bucket"] = bucket
 
-# on macOS, we need to notarize the client application before
-# publishing, so that users can properly install it on their
-# machines -- this is not needed if we're not publishing
-if notarize == "false":
-  data["build"]["afterSign"] = "build/moveLoadingandRename.js"
-else:
-  data["build"]["afterSign"] = "build/notarize.js"
+# Set afterSign script
+data["build"]["afterSign"] = "build/afterSign.js"
 
 json_data = json.dumps(data)
 
-f = open("package.json","w")
+f = open("package.json", "w")
 f.write(json.dumps(json.loads(json_data), indent=4, sort_keys=True))
 f.close()
 
@@ -39,6 +33,6 @@ data = json.loads(raw_data)
 data["version"] = version
 json_data = json.dumps(data)
 
-f = open("app/package.json","w")
+f = open("app/package.json", "w")
 f.write(json.dumps(json.loads(json_data), indent=4, sort_keys=True))
 f.close()
