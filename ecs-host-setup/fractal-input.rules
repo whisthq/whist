@@ -1,8 +1,5 @@
-# device rules for /etc/udev/rules.d/
-
-# Setting the mouse wheel click angle/count is a hack to emulate precise scrolling.
-# See https://lists.x.org/archives/xorg-devel/2017-August/054315.html
-ACTION=="add|change", SUBSYSTEM=="input", ATTRS{name}=="Fractal Virtual Relative Input", ENV{MOUSE_WHEEL_CLICK_ANGLE}="1", ENV{MOUSE_WHEEL_CLICK_COUNT}="360"
+# Fractal uinput device rules.
+# To be placed in "/etc/udev/rules.d".
 
 # Udev assumes the device is a tablet because it only generates abs x/y events,
 # but we want the libinput driver to treat it as a mouse so it moves the pointer.
