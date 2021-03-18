@@ -35,7 +35,8 @@ rm -rf $TMP_DIR
 echo "       Configuring git branch and commit hash to enviornment variables"
 BRANCH=$(git branch --show-current)
 COMMIT=$(git rev-parse --short HEAD)
-
+echo $BRANCH
+echo $COMMIT
 heroku config:set BRANCH=$BRANCH
 heroku config:set COMMIT=$COMMIT
 exit 0
