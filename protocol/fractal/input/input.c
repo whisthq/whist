@@ -91,7 +91,8 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
                                           fmsg->mouseButton.pressed);
             break;
         case MESSAGE_MOUSE_WHEEL:
-            ret = emit_mouse_wheel_event(input_device, fmsg->mouseWheel.x, fmsg->mouseWheel.y);
+            ret = emit_mouse_wheel_event(input_device, fmsg->mouseWheel.precise_x,
+                                         fmsg->mouseWheel.precise_y);
             break;
         case MESSAGE_MULTIGESTURE:
             LOG_WARNING("Multi-touch support not added yet!");

@@ -141,6 +141,6 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y);
+int emit_mouse_wheel_event(InputDevice* input_device, float x, float y);
 
 #endif  // INPUT_DRIVER_H
