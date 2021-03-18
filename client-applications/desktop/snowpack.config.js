@@ -17,6 +17,12 @@ const cmdMainWatch = [
     "--exec '" + cmdMainCompile + "'",
 ].join(" ")
 
+const cmdElectron = [
+    "electron",
+    "build/dist/main"
+].join(" ")
+
+
 module.exports = {
     mount: {
         public: { url: "/", static: true },
@@ -35,6 +41,10 @@ module.exports = {
             "@snowpack/plugin-run-script",
             { cmd: cmdMainCompile, watch: cmdMainWatch },
         ],
+        [
+            "@snowpack/plugin-run-script",
+            { cmd: "", watch: cmdElectron },
+        ]
     ],
     devOptions: {
         open: "none",

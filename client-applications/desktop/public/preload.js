@@ -1,8 +1,9 @@
 const { contextBridge, ipcRenderer } = require("electron")
 
-console.log(ipcRenderer)
-
 contextBridge.exposeInMainWorld(
     "ipcRenderer",
-    ipcRenderer
+    {
+        on: ipcRenderer.on,
+        send: ipcRenderer.send
+    }
 )
