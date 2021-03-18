@@ -2,14 +2,10 @@ import path from "path"
 import { app, BrowserWindow } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 
-console.log("env", process.env.NODE_ENV)
-
 const buildRoot =
     process.env.NODE_ENV === "production"
-        ? path.resolve("../../")
+        ? path.resolve(".")
         : path.resolve("public")
-
-console.log("root", buildRoot)
 
 function createWindow(): void {
     // Create the browser window.
@@ -22,7 +18,7 @@ function createWindow(): void {
     })
 
     if (process.env.NODE_ENV === "production") {
-        win.loadFile("./public/index.html")
+        win.loadFile(path.join(buildRoot, "index.html"))
     } else {
         win.loadURL("http://localhost:8080")
     }

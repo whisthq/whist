@@ -7,5 +7,3 @@ contextBridge.exposeInMainWorld(
         send: ipcRenderer.send
     }
 )
-
-console.log("preload")
