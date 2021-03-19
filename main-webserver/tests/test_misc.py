@@ -145,7 +145,11 @@ def test_retry_timeout():
 
 
 def test_rate_limiter(client):
-    for i in range(20):
+    """
+    Test the rate limiter decorator. The first 10 requests should succeed,
+    but the 11th should error out with 429.
+    """
+    for i in range(10):
         resp = client.post("/newsletter/post")
         assert resp.status_code == 200
         g._rate_limiting_complete = False

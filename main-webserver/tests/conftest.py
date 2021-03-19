@@ -366,6 +366,8 @@ def make_authorized_user(client, make_user, monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def run_around_tests():
-    # reset limiter after each test
+def reset_limiter():
+    """
+    Reset the rate limiter after every test.
+    """
     limiter.reset()
