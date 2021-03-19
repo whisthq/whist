@@ -67,7 +67,6 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 include(cmake/clang-format.cmake)
 # A small module which sets the default build type to debug if a .git is present and release otherwise.
 include(cmake/default-build.cmake)
-include(cmake/version-info.cmake)
 
 # For debug builds log every thing, for release builds log warnings or higher
 if (${CMAKE_BUILD_TYPE} MATCHES Debug)
@@ -312,6 +311,7 @@ endif()
 # Tell CMake where to look for includes
 include_directories(include)
 include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_BINARY_DIR}/include)
 include_directories(sentry-native/include)
 
 # Here is where we tell cmake to look in subdirectories for further CMakeLists.txt
