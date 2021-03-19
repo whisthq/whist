@@ -232,7 +232,7 @@ export const apiPut = async (
     endpoint: string,
     body: Record<string, any>,
     server: string | undefined,
-    ignoreCertificate: boolean
+    ignoreCertificate: boolean = false
 ) => {
     /*
     Description:
@@ -247,7 +247,9 @@ export const apiPut = async (
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         body (JSON) : PUT request body
         server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
-        ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed)
+        ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed).
+            This is `false` by default because we only want to not `rejectUnauthorized` when we are certain
+            about the host's certificate being self-signed or trusted.
 
     Returns:
         { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
