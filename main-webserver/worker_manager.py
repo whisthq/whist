@@ -65,7 +65,8 @@ def run_worker_manager(num_workers: int, pool: str, worker_concurrency: int):
             bad_exit_code = True
             fractal_logger.error(f"Child with pid {child.pid} exited with {child.returncode}")
 
-    assert bad_exit_code is False, "A child failed so WorkerManager is exiting with error..."
+    if bad_exit_code:
+        fractal_logger.fatal("A child failed so WorkerManager is exiting with error...")
 
     fractal_logger.info("All children have exited successfully. WorkerManager is exiting...")
 
