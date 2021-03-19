@@ -37,6 +37,20 @@ endif()
 #set default compiler flags
 include(cmake/CompilerOptions.cmake)
 
+# Add rpath to look for shared libraries on linux
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH $ORIGIN)
+endif()
+
+# Add rpath to look for shared libraries on mac
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH @executable_path)
+endif()
+
 set(META_PROJECT_NAME        "Protocol")
 set(META_PROJECT_DESCRIPTION "CMake Project for the Fractal client protocol clients on mac, linux and windows
                               and servers on windows and linux.")
