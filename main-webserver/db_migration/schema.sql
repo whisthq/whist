@@ -325,7 +325,6 @@ CREATE TABLE hardware.user_containers (
     location character varying NOT NULL,
     os character varying NOT NULL,
     state character varying NOT NULL,
-    lock boolean NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,
     last_pinged bigint,
