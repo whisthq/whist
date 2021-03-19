@@ -198,7 +198,6 @@ def select_cluster(region_name):
 
     all_clusters = list(
         SortedClusters.query.filter_by(location=region_name)
-        .filter(UserContainer.cluster.notlike("%test%"))
         .all()
     )
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
