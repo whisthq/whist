@@ -1,0 +1,4 @@
+#!/bin/bash
+
+cd ./client/build64
+./FractalClient $@

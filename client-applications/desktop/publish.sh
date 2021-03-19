@@ -60,12 +60,12 @@ else
     mkdir -p protocol-build/client
 
     # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/FractalClient
-    cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
+    cp ../../protocol/client/build64/FractalClient protocol-build/client/FractalClient
+    cp ../../protocol/client/build64/crashpad_handler protocol-build/client/crashpad_handler
 
     # Copy over the FFmpeg dylibs
-    cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
-    cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
+    cp ../../protocol/lib/64/ffmpeg/*.dylib protocol-build/client
+    cp ../../protocol/client/build64/*.dylib protocol-build/client
 
     # Sign each FractalClient binary
     for filename in protocol-build/client/*.dylib; do
@@ -77,7 +77,7 @@ else
 
     # Copy loading images to a temp folder (will be moved in afterSign script)
     rm -rf loadingtemp
-    cp -r ../../protocol/client/build64/Darwin/loading loadingtemp
+    cp -r ../../protocol/client/build64/loading loadingtemp
     for filename in loadingtemp/*; do
         codesign -f -v -s "Fractal Computers, Inc." $filename
     done
