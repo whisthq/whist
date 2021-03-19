@@ -259,7 +259,7 @@ export const apiPut = async (
 
             const returnDict = await fractalBackoff(() => {
                 return new Promise((resolve, reject) => {
-                    // If we want to ignore the host certificate, then `rejectUnauthorized` should be true
+                    // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
                     const request = https.request(
                         fullUrl,
                         {
