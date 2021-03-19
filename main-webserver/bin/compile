@@ -35,11 +35,11 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 echo $DIR
 BRANCH=$(git branch --show-current)
 echo $BRANCH
-echo $BRANCH > "${DIR}/../.profile.d/git_info.txt"
+echo $BRANCH > "git_info.txt"
 
 COMMIT=$(git rev-parse --short HEAD)
 echo $COMMIT
-echo $COMMIT >> "${DIR}/../.profile.d/git_info.txt"
+echo $COMMIT >> "git_info.txt"
 
 # echo "-----> Configuring git branch and commit hash to enviornment variables"
 # export BRANCH=$(git branch --show-current)
