@@ -212,21 +212,25 @@ def test_endpoint(action, **kwargs):
 
     if action == "assign_container":
         try:
-            (username, cluster_name, region_name, task_definition_arn) = (
+            # TODO: make this interface conform with assign_container or get values from db
+            # right now we rely on task_version=-1 being handled for backcompat
+            (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
                 kwargs["body"]["task_definition_arn"],
+                kwargs["body"].get("task_version", None),
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
         task = assign_container.delay(
-            username,
-            task_definition_arn,
-            region_name,
-            cluster_name,
+            username=username,
+            task_definition_arn=task_definition_arn,
+            task_version=task_version,
+            region_name=region_name,
+            cluster_name=cluster_name,
             webserver_url=kwargs["webserver_url"],
         )
 
