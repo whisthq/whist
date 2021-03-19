@@ -270,6 +270,7 @@ def user(request):
         u = User(
             user_id=f"test-user+{uuid.uuid4()}@fractal.co",
             password="",
+            encrypted_config_token="",
             created_timestamp=1000000000,
         )
 
@@ -311,6 +312,7 @@ def make_user():
         user = User(
             user_id=f"test-user+{uuid.uuid4()}@{domain}",
             password="",
+            encrypted_config_token="",
             created_timestamp=created_timestamp,
             stripe_customer_id=stripe_customer_id,
         )
