@@ -265,9 +265,10 @@ def start_container(
 
     ecs_client.set_cluster(cluster_name)
     if task_version == -1:
-        # the default is -1, so for tasks that don't have a pinned version we run just pass
+        # the default is -1, so for tasks that don't have a pinned version we just pass
         # the task_definition_arn, which AWS interprets to mean run the latest version
         # this solves backcompat to pre-version pinning days
+        fractal_logger.warning(f"Please pin the version for task {task_definition_arn}")
         ecs_client.set_task_definition_arn(task_definition_arn)
     else:
         # concatenating in this format runs the specific version of the task def
@@ -679,7 +680,8 @@ def prewarm_new_container(
     task_start_time = time.time()
 
     message = (
-        f"Deploying {task_definition_arn}:{task_version} to {cluster_name or 'next available cluster'} in "
+        f"Deploying {task_definition_arn}:{task_version} to "
+        f"{cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
 
