@@ -33,8 +33,8 @@ const environment = {
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
@@ -58,8 +58,8 @@ const environment = {
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
@@ -83,8 +83,8 @@ const environment = {
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
@@ -108,8 +108,8 @@ const environment = {
             GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
+            // GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
@@ -148,10 +148,13 @@ const getProductionEnv = () => {
     }
 }
 
-export const config =
-    import.meta.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-        ? getDevelopmentEnv()
-        : getProductionEnv()
+// export const config =
+//     import.meta.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+//         ? getDevelopmentEnv()
+//         : getProductionEnv()
+//
+
+export const config = environment.DEVELOPMENT
 
 // default export until we have multiple exports
 export default config

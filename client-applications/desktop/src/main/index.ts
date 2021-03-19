@@ -1,8 +1,8 @@
 import path from "path"
-import url from "url"
 import { app, BrowserWindow } from "electron"
 import { windowThinSm } from "@app/utils/windows"
 import { initState } from "@app/utils/state"
+// import * as handlers from "@app/main/handlers"
 import * as events from "@app/main/events"
 import * as effects from "@app/main/effects"
 
@@ -20,10 +20,10 @@ function createWindow(): void {
         },
     })
 
-    if (process.env.NODE_ENV === "development") {
-        win.loadURL("http://localhost:8080")
-    } else {
+    if (app.isPackaged) {
         win.loadFile("build/index.html")
+    } else {
+        win.loadURL("http://localhost:8080")
     }
 
     win.webContents.on("did-finish-load", function () {
@@ -35,9 +35,13 @@ function createWindow(): void {
 
 function init(): void {
     const init = {
-        test: "hello!",
+        hello: "world",
+        email: "neil@fractal.co",
+        password: "Password1234",
+        loginRequested: true,
     }
-    initState(init, [events.listenState], [effects.broadcastState])
+
+    initState(init, [], [effects.handleLogin, effects.logState])
 }
 
 // This method will be called when Electron has finished

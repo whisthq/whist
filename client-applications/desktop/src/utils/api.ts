@@ -23,10 +23,16 @@ import { goTo } from "@app/utils/history"
 
 const httpConfig = {
     server: config.url.WEBSERVER_URL,
-    handleAuth: (_: any) => goTo("/auth"),
+    // handleAuth: (_: any) => goTo("/auth"),
     endpointRefreshToken: "/token/refresh",
 }
 
 export const get = configGet(httpConfig)
 
 export const post = configPost(httpConfig)
+
+export const emailLogin = async (username: string, password: string) =>
+    post({ endpoint: "/account/login", body: { username, password } })
+
+export const tokenValidate = async (accessToken: string) =>
+    get({ endpoint: "/token/validate", accessToken })

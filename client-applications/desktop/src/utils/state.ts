@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react"
 import { IpcRenderer, IpcRendererEvent } from "electron"
+import { isEqual, merge } from "lodash"
 
 export type State = any
 export type Event = (setState: (state: Partial<State>) => void) => void
-export type Effect = (state: State) => void
+export type Effect = (state: State) => Partial<State> | Promise<Partial<State>>
+// export type Handler = (
+//     state: Partial<State>,
+//     setState: (s: Partial<State>) => void
+// ) => void
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const ipcError = [
     "Before you call useMainState(),",
@@ -41,12 +48,37 @@ export const useMainState = (): [State, (s: State) => void] | never => {
     return [mainState, setMainState]
 }
 
-export const initState = (init: State, events: Event[], effects: Effect[]) => {
+export const initState = async (
+    init: State,
+    events: Event[],
+    effects: Effect[]
+) => {
+    let cached = {}
     let state = { ...init }
-    const setState = (newState: Partial<State>) => {
-        state = { ...state, ...newState }
-        for (let effect of effects) effect({ ...state })
+
+    const setState = async (now: Partial<State> | Promise<Partial<State>>) => {
+        merge(state, await now)
     }
-    events.map((e) => e(setState))
-    setState(state)
+    for (let event of events) event(setState)
+
+    while (true) {
+        await sleep(100)
+        if (!isEqual(cached, state)) {
+            for (let effect of effects) setState(effect({ ...state }))
+            cached = { ...state }
+        }
+    }
 }
+
+// //
+// export const initState = (init: State, ...handlers: Handler[]) => {
+//     let state = { initialized: false }
+//     const setState = (newState: Partial<State>): void => {
+//         if (!isEqual(state, { ...state, newState })) {
+//             state = { ...state, ...newState }
+//             for (let handler of handlers)
+//                 handler({ ...state, initialized: true }, setState)
+//         }
+//     }
+//     setState({ ...state, ...init })
+// }
