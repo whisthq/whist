@@ -10,8 +10,6 @@ echo $(ls)
 
 echo "-----> trying to get git info "
 
-cd /app
-
 echo $(ls)
 exec 6< "git_info.txt"
 read BRANCH <&6
