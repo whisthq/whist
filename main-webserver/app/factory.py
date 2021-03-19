@@ -47,12 +47,6 @@ def create_app(testing=False):
     from .models import db
     from .helpers.utils.general.limiter import limiter
 
-    # we don't want rate limits in test apps
-    if testing:
-        from .helpers.utils.general import limiter as lim
-
-        lim.RATE_LIMIT_PER_MINUTE = "20 per minute"
-
     limiter.init_app(app)
     db.init_app(app)
     jwtManager.init_app(app)

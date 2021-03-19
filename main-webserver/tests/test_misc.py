@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-from flask import current_app
+from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
 from app.config import _callback_webserver_hostname
@@ -142,3 +142,17 @@ def test_retry_timeout():
 
     assert counter["count"] == 4  # The function is called four times in total.
     assert int(end - start) == 5
+
+
+def test_rate_limiter(client):
+    """
+    Test the rate limiter decorator. The first 10 requests should succeed,
+    but the 11th should error out with 429.
+    """
+    for i in range(10):
+        resp = client.post("/newsletter/post")
+        assert resp.status_code == 200
+        g._rate_limiting_complete = False
+
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == 429
