@@ -28,11 +28,8 @@ echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
 
 aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json
 
-echo "-----> Configuring git branch and commit hash to enviornment variables"
+echo "-----> Configuring git branch and commit hash to txt file"
 
-# DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-
-# echo $DIR
 BRANCH=$(git branch --show-current)
 echo $BRANCH
 echo $BRANCH > "git_info.txt"
@@ -40,11 +37,3 @@ echo $BRANCH > "git_info.txt"
 COMMIT=$(git rev-parse --short HEAD)
 echo $COMMIT
 echo $COMMIT >> "git_info.txt"
-
-# echo "-----> Configuring git branch and commit hash to enviornment variables"
-# export BRANCH=$(git branch --show-current)
-# export COMMIT=$(git rev-parse --short HEAD)
-
-# echo $BRANCH
-# echo $COMMIT
-

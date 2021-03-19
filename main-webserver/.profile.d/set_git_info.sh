@@ -1,14 +1,7 @@
 #!/bin/bash
 
 
-echo $(ls)
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-
-echo $PWD
-echo $DIR
-echo $(ls)
-
-echo "-----> trying to get git info "
+echo "-----> Reading git branch and commit info from txt file "
 
 echo $(ls)
 exec 6< "git_info.txt"
