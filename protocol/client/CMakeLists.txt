@@ -22,14 +22,14 @@ endif()
 
 # set the build directory
 set_target_properties(FractalClient PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}/${CMAKE_SYSTEM_NAME})
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/client/build${arch})
 
 # copy the sentry shared library to the build folder after the build
 add_custom_command(
         TARGET FractalClient POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_BINARY_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
         $<TARGET_FILE_DIR:FractalClient>)
 
 # MacOS and Windows default to crashpad for Sentry, and crashpad_handler needs to be in
@@ -38,14 +38,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
+            ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
             $<TARGET_FILE_DIR:FractalClient>)
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalClient POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
+            ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
             $<TARGET_FILE_DIR:FractalClient>)
 endif()
 

@@ -18,7 +18,7 @@ set_target_properties(FractalServer PROPERTIES
 add_custom_command(
         TARGET FractalServer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
-        ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
+        ${CMAKE_BINARY_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
         $<TARGET_FILE_DIR:FractalServer>)
 
 # MacOS and Windows default to crashpad for Sentry, and crashpad_handler needs to be in
@@ -27,14 +27,14 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
+            ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
             $<TARGET_FILE_DIR:FractalServer>)
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
+            ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
             $<TARGET_FILE_DIR:FractalServer>)
 endif()
 
