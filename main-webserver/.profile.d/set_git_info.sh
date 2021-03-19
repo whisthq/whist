@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 echo $DIR
-GIT_DIR="${DIR}/../../bin"
+echo ls
 
 echo "-----> fuck you leonard"
 

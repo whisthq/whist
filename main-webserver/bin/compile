@@ -30,13 +30,16 @@ aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.jso
 
 echo "-----> Configuring git branch and commit hash to enviornment variables"
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+echo DIR
 BRANCH=$(git branch --show-current)
 echo $BRANCH
-echo $BRANCH > git_info.txt
+echo $BRANCH > "${DIR}/../.profile.d/git_info.txt"
 
 COMMIT=$(git rev-parse --short HEAD)
 echo $COMMIT
-echo $COMMIT >> git_info.txt
+echo $COMMIT >> "${DIR}/../.profile.d/git_info.txt"
 
 # echo "-----> Configuring git branch and commit hash to enviornment variables"
 # export BRANCH=$(git branch --show-current)
