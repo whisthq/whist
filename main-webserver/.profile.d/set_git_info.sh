@@ -10,9 +10,9 @@ echo $(ls)
 
 echo "-----> trying to get git info "
 
+cd /bin
 
-
-exec 6< "${DIR}/../../bin/git_info.txt"
+exec 6< "git_info.txt"
 read BRANCH <&6
 read COMMIT <&6
 
