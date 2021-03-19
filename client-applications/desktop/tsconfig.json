@@ -2,6 +2,7 @@
     "include": ["src"],
     "compilerOptions": {
         "module": "esnext",
+        "sourceMap": true,
         "target": "esnext",
         "moduleResolution": "node",
         "jsx": "react-jsx",
