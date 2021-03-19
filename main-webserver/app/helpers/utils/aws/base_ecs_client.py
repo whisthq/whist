@@ -173,8 +173,7 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        branch = os.environ["BRANCH"]
-        commit = os.environ["COMMIT"]
+        branch, commit = self.get_git_info()
         # branch = ""
         # commit = ""
         if current_app.testing:
