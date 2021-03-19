@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Flipped, Flipper } from "react-flip-toolkit"
+import { FaExclamationTriangle } from "react-icons/fa"
 import FadeIn from "react-fade-in"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
-import { AuthWarning, InputWarning } from "@app/components/custom/warning"
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import {
-    checkEmailVerbose,
+    FractalWarning,
+    FractalWarningType,
+} from "@app/components/custom/warning"
+import { FractalButton, FractalButtonState } from "@app/components/html/button"
+import { FractalNavigation } from "@app/components/custom/navigation"
+
+import {
     signupEnabled,
     checkEmail,
     checkPassword,
+    checkPasswordVerbose,
+    checkConfirmPassword,
+    checkConfirmPasswordVerbose,
 } from "@app/renderer/pages/auth/shared/helpers/authHelpers"
 import { emailSignup } from "@app/renderer/pages/auth/pages/signup/shared/utils/api"
 
@@ -29,7 +37,6 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
     const { onSignup } = props
 
     const [email, setEmail] = useState("")
-    const [name, setName] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
@@ -38,37 +45,30 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
 
     // Dispatches signup API call
     const signup = () => {
-        if (signupEnabled(email, name, password, confirmPassword)) {
+        if (signupEnabled(email, password, confirmPassword)) {
             setProcessing(true)
-            emailSignup(email, password, name, "").then(
-                ({ json, response }) => {
-                    if (json && response.status === 200) {
-                        setSignupWarning(fractalSignupWarning.NONE)
-                        onSignup(json)
-                    } else {
-                        setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
-                        setEmail("")
-                        setPassword("")
-                        setName("")
-                        setConfirmPassword("")
-                    }
-                    setProcessing(false)
+            setSignupWarning(fractalSignupWarning.NONE)
+            emailSignup(email, password, "", "").then(({ json, response }) => {
+                if (json && response.status === 200) {
+                    onSignup(json)
+                } else {
+                    setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
+                    setEmail("")
+                    setPassword("")
+                    setConfirmPassword("")
                 }
-            )
+                setProcessing(false)
+            })
         } else {
             setProcessing(false)
         }
-    }
-
-    const checkName = (n: string): boolean => {
-        return n.length > 0
     }
 
     const buttonState = () => {
         if (processing) {
             return FractalButtonState.PROCESSING
         } else {
-            if (signupEnabled(email, name, password, confirmPassword)) {
+            if (signupEnabled(email, password, confirmPassword)) {
                 return FractalButtonState.DEFAULT
             } else {
                 return FractalButtonState.DISABLED
@@ -84,8 +84,11 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                     <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
                         Sign up to get started
                     </h5>
-                    <InputWarning warning={checkEmailVerbose(email)} />
-                    <AuthWarning warning={signupWarning} />
+                    <FractalWarning
+                        type={FractalWarningType.DEFAULT}
+                        warning={signupWarning}
+                        className="mt-4"
+                    />
                     <Flipper
                         flipKey={checkPassword(password).toString()}
                         spring="stiff"
@@ -112,6 +115,11 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                         className="mt-1"
                                     />
                                 </div>
+                                <FractalWarning
+                                    type={FractalWarningType.SMALL}
+                                    warning={checkPasswordVerbose(password)}
+                                    className="mt-3 float-right font-semibold"
+                                />
                                 <div key="password">
                                     <h5 className="font-body text-left font-semibold mt-4 text-sm">
                                         Password
@@ -132,6 +140,14 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                         className="mt-1"
                                     />
                                 </div>
+                                <FractalWarning
+                                    type={FractalWarningType.SMALL}
+                                    warning={checkConfirmPasswordVerbose(
+                                        password,
+                                        confirmPassword
+                                    )}
+                                    className="mt-3 float-right font-semibold"
+                                />
                                 <div key="confirm-password">
                                     {checkPassword(password) && (
                                         <>
@@ -147,7 +163,10 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                                 onEnterKey={signup}
                                                 value={confirmPassword}
                                                 state={
-                                                    checkPassword(password)
+                                                    checkConfirmPassword(
+                                                        password,
+                                                        confirmPassword
+                                                    )
                                                         ? FractalInputState.SUCCESS
                                                         : FractalInputState.DEFAULT
                                                 }

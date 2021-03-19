@@ -106,6 +106,7 @@
         "react-dom": "^17.0.1",
         "react-fade-in": "^2.0.1",
         "react-flip-toolkit": "^7.0.13",
+        "react-icons": "^4.2.0",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0"
     },

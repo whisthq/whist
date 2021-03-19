@@ -3,7 +3,10 @@ import FadeIn from "react-fade-in"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
-import { AuthWarning } from "@app/components/custom/warning"
+import {
+    FractalWarning,
+    FractalWarningType,
+} from "@app/components/custom/warning"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import { FractalNavigation } from "@app/components/custom/navigation"
 
@@ -26,9 +29,9 @@ const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
     const login = () => {
         if (loginEnabled(email, password)) {
             setProcessing(true)
+            setLoginWarning(fractalLoginWarning.NONE)
             emailLogin(email, password).then(({ json }) => {
                 if (json && json.access_token) {
-                    setLoginWarning(fractalLoginWarning.NONE)
                     onLogin(json)
                 } else {
                     setLoginWarning(fractalLoginWarning.INVALID)
@@ -62,7 +65,11 @@ const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
                     <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
                         Log in to your account
                     </h5>
-                    <AuthWarning warning={loginWarning} />
+                    <FractalWarning
+                        type={FractalWarningType.DEFAULT}
+                        warning={loginWarning}
+                        className="mt-4"
+                    />
                     <h5 className="font-body text-left font-semibold mt-7 text-sm">
                         Email
                     </h5>
