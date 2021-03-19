@@ -8,7 +8,9 @@ echo $PWD
 echo $DIR
 echo $(ls)
 
-echo "-----> fuck you leonard"
+cd /bin
+
+echo "-----> trying to get git info "
 
 
 
