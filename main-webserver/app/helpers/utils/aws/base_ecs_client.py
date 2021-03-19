@@ -173,9 +173,9 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        branch, commit = self.get_git_info()
-        # branch = ""
-        # commit = ""
+        # branch, commit = self.get_git_info()
+        branch = os.environ["BRANCH"]
+        commit = os.environ["COMMIT"]
         if current_app.testing:
             name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
@@ -199,8 +199,6 @@ class ECSClient:
                 provided
         """
         # branch, commit = self.get_git_info()
-        # branch = os.environ["BRANCH"]
-        # commit = os.environ["COMMIT"]
 
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
