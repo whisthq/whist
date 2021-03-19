@@ -1097,7 +1097,7 @@ CREATE TABLE public.tokens (
 
 CREATE TABLE public.users (
     user_id character varying(250) NOT NULL,
-    encrypted_config_token character varying(255),
+    encrypted_config_token character varying(256) NOT NULL DEFAULT ''::character varying,
     token character varying(250),
     name character varying(250),
     password character varying(250) NOT NULL,

@@ -326,6 +326,7 @@ def user(request):
         u = User(
             user_id=f"test-user+{uuid.uuid4()}@fractal.co",
             password="",
+            encrypted_config_token="",
         )
 
         db.session.add(u)
@@ -350,8 +351,8 @@ def make_user():
         stripe_customer_id: Optional. The test user's Stripe customer ID.
         domain (Optional[str]): Which domain the user email address should be in.
         kwargs: Optional. Additional keyword arguments that will be forwarded directly to the User
-            constructor. The user_id and password keyword arguments will be ignored if they are
-            provided.
+            constructor. If provided, the user_id, password, and encrypted_config_token keyword
+            arguments will be ignored.
 
     Returns:
         An instance of the User model.
@@ -363,7 +364,7 @@ def make_user():
 
     def _user(stripe_customer_id=None, domain="fractal.co", **kwargs):
         kwargs["user_id"] = f"test-user-{uuid.uuid4()}@{domain}"
-        kwargs["password"] = ""
+        kwargs["password"] = kwargs["encrypted_config_token"] = ""
         user = User(stripe_customer_id=stripe_customer_id, **kwargs)
 
         db.session.add(user)
