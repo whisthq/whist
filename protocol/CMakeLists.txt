@@ -125,6 +125,8 @@ option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
+    set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client ${CMAKE_BINARY_DIR}/server ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
+
     if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         MESSAGE(STATUS "Downloading binaries from AWS S3")
         # Find git
@@ -135,7 +137,7 @@ if (DOWNLOAD_BINARIES)
         # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
         find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
         # Call download-binaries.sh from gitbash
-        execute_process(COMMAND ${BASH} "download-binaries.sh"
+        execute_process(COMMAND ${BASH} "download-binaries.sh" ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download_res)
         if (NOT ${download_res} EQUAL "0")
@@ -143,7 +145,7 @@ if (DOWNLOAD_BINARIES)
         endif()
     else()
         MESSAGE(STATUS "Downloading binaries from AWS S3")
-        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh
+        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
                         WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                         RESULT_VARIABLE download)
         if (NOT ${download} EQUAL "0")
@@ -275,8 +277,8 @@ add_subdirectory(sentry-native)
 
 # set a standard location for the sentry shared lib so we can copy it into client/server build folders as a post build step
 set_target_properties(sentry PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/sentry-native
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sentry-native
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/sentry-native
         )
 
 #Set OSX compiler and SDK globally
