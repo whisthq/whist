@@ -14,17 +14,12 @@ MONOREPO_ROOT = os.path.join(WEBSERVER_ROOT, "..")
 def setup_branch():
     """
     Add files needed for review apps. Specifically:
-    1. add bin/ and app.json
-    2. add new files and commit changes
+    1. add app.json to monorepo root
+    2. track file and commit
     3. push changes
     """
-    print("Adding bin/ and app.json to monorepo root")
-    shutil.copytree(os.path.join(CURRENT_DIR, "bin"), os.path.join(MONOREPO_ROOT, "bin"))
+    print("Adding app.json to monorepo root")
     shutil.copy(os.path.join(WEBSERVER_ROOT, "app.json"), MONOREPO_ROOT)
-
-    # waits for process to finish, stdout is shared
-    ret = subprocess.run(f"git add {os.path.join(MONOREPO_ROOT, 'bin')}", shell=True)
-    assert ret.returncode == 0
 
     ret = subprocess.run(f"git add {os.path.join(MONOREPO_ROOT, 'app.json')}", shell=True)
     assert ret.returncode == 0
@@ -127,12 +122,11 @@ def setup_review_app():
 def clean_branch():
     """
     Clean the branch of files added for review apps. Specifically:
-    1. remove bin/ and app.json
+    1. remove app.json from monorepo root
     2. add and commit changes
     3. push changes
     """
-    print("Removing bin/ and app.json to monorepo root")
-    shutil.rmtree(os.path.join(MONOREPO_ROOT, "bin"))
+    print("Removing app.json from monorepo root")
     os.remove(os.path.join(MONOREPO_ROOT, "app.json"))
 
     ret = subprocess.run(
