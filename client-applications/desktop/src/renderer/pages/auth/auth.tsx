@@ -1,8 +1,8 @@
 import React from "react"
 import { Route } from "react-router-dom"
 
-import Login from "@app/renderer/pages/auth/pages/login/login"
-import Signup from "@app/renderer/pages/auth/pages/signup/signup"
+import Login from "@app/renderer/pages/auth/login"
+import Signup from "@app/renderer/pages/auth/signup"
 
 const Auth = () => {
     /*

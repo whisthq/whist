@@ -36,3 +36,14 @@ export const emailLogin = async (username: string, password: string) =>
 
 export const tokenValidate = async (accessToken: string) =>
     get({ endpoint: "/token/validate", accessToken })
+
+export const emailSignup = async (
+    username: string,
+    password: string,
+    name: string,
+    feedback: string
+) =>
+    post({
+        endpoint: "/account/register",
+        body: { username, password, name, feedback },
+    })

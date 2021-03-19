@@ -71,15 +71,13 @@ export const checkEmailVerbose = (email: string): string => {
 
 export const signupEnabled = (
     email: string,
-    name: string,
     password: string,
     confirmPassword: string
 ): boolean => {
     return (
         checkEmail(email) &&
         checkPassword(password) &&
-        password === confirmPassword &&
-        name.length > 0
+        password === confirmPassword
     )
 }
 
@@ -87,11 +85,25 @@ export const loginEnabled = (email: string, password: string): boolean => {
     return checkEmail(email) && checkPassword(password)
 }
 
-export const checkConfirmPasswordVerbose = (password: string, confirmPassword: string) => {
-    if(confirmPassword.length === 0) {
+export const checkConfirmPassword = (
+    password: string,
+    confirmPassword: string
+) => {
+    const valid =
+        confirmPassword === password &&
+        password.length > 0 &&
+        confirmPassword.length > 0
+    return valid
+}
+
+export const checkConfirmPasswordVerbose = (
+    password: string,
+    confirmPassword: string
+) => {
+    if (confirmPassword.length === 0) {
         return ""
-    } 
-    
-    const valid = (confirmPassword === password && password.length > 0 && confirmPassword.length > 0)
-    return valid ? "" : "Doesn't match"
+    }
+    return checkConfirmPassword(password, confirmPassword)
+        ? ""
+        : "Doesn't match"
 }

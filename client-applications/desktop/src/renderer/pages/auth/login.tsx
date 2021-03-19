@@ -1,7 +1,7 @@
 import React, { useState } from "react"
 
 import { FractalFadeIn } from "@app/components/custom/fade"
-import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
+import { Logo } from "@app/components/html/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import {
     FractalWarning,
@@ -14,9 +14,9 @@ import {
     loginEnabled,
     checkEmail,
     checkPassword,
-} from "@app/renderer/pages/auth/shared/helpers/authHelpers"
-import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/utils/api"
-import { fractalLoginWarning } from "@app/renderer/pages/auth/pages/login/shared/utils/constants"
+} from "@app/utils/auth"
+import { emailLogin } from "@app/utils/api"
+import { fractalLoginWarning } from "@app/utils/constants"
 
 const Login = (props: { onLogin: (json: object) => void }) => {
     /*

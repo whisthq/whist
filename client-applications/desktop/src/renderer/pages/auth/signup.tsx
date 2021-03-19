@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import { Flipped, Flipper } from "react-flip-toolkit"
 
 import { FractalFadeIn } from "@app/components/custom/fade"
-import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
+import { Logo } from "@app/components/html/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import {
     FractalWarning,
@@ -18,10 +18,10 @@ import {
     checkPasswordVerbose,
     checkConfirmPassword,
     checkConfirmPasswordVerbose,
-} from "@app/renderer/pages/auth/shared/helpers/authHelpers"
-import { emailSignup } from "@app/renderer/pages/auth/pages/signup/shared/utils/api"
+} from "@app/utils/auth"
+import { emailSignup } from "@app/utils/api"
 
-import { fractalSignupWarning } from "@app/renderer/pages/auth/pages/signup/shared/utils/constants"
+import { fractalSignupWarning } from "@app/utils/constants"
 
 const Signup = (props: { onSignup: (json: object) => void }) => {
     /*
