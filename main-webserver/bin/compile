@@ -28,6 +28,8 @@ echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
 
 aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.json
 
+echo "-----> Configuring git branch and commit hash to enviornment variables"
+
 BRANCH=$(git branch --show-current)
 echo $BRANCH > git_info.txt
 
