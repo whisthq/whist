@@ -169,7 +169,7 @@ if __name__ == "__main__":
     # only one can be true
     assert (
         args.setup_branch + args.setup_review_app + args.clean_branch == 1
-    ), "Only one of setup_branch, setup_review_app, clean_branch can be passed."
+    ), "Exactly one of --setup_branch, --setup_review_app, --clean_branch can be passed."
 
     if args.setup_branch:
         setup_branch()
