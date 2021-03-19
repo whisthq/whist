@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react"
-import { IpcRenderer, IpcRendererEvent } from "electron"
+import { IpcRendererEvent } from "electron"
 import { isEqual, merge } from "lodash"
 
-export type State = any
+export type State = {
+    accessToken: string | ""
+    appWindowRequested: boolean | false
+}
 export type Event = (setState: (state: Partial<State>) => void) => void
-export type Effect = (state: State) => Partial<State> | Promise<Partial<State>>
-// export type Handler = (
-//     state: Partial<State>,
-//     setState: (s: Partial<State>) => void
-// ) => void
+export type Effect = (
+    state: Partial<State>
+) => Partial<State> | Promise<Partial<State>>
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 
@@ -23,7 +24,9 @@ const ipcError = [
     "'send' methods for them to be exposed.",
 ].join(" ")
 
-export const useMainState = (): [State, (s: State) => void] | never => {
+export const useMainState = ():
+    | [Partial<State>, (s: Partial<State>) => void]
+    | never => {
     // the window type doesn't have ipcRenderer, but we've manually
     // added that in preload.js with electron.contextBridge
     // so we ignore the type error in the next line
@@ -31,17 +34,18 @@ export const useMainState = (): [State, (s: State) => void] | never => {
     const ipc = window.ipcRenderer
     if (!(ipc && ipc.on && ipc.send)) throw new Error(ipcError)
 
-    const [mainState, setState] = useState({})
+    const [mainState, setState] = useState({} as Partial<State>)
 
     useEffect(() => {
-        const listener = (_: IpcRendererEvent, state: State) => setState(state)
+        const listener = (_: IpcRendererEvent, state: Partial<State>) =>
+            setState(state)
         ipc.on(StateChannel, listener)
         return () => {
             ipc.removeListener && ipc.removeListener(StateChannel, listener)
         }
     }, [])
 
-    const setMainState = (state: State) => {
+    const setMainState = (state: Partial<State>) => {
         ipc.send(StateChannel, state)
     }
 
@@ -49,36 +53,30 @@ export const useMainState = (): [State, (s: State) => void] | never => {
 }
 
 export const initState = async (
-    init: State,
+    init: Partial<State>,
     events: Event[],
     effects: Effect[]
 ) => {
     let cached = {}
     let state = { ...init }
 
-    const setState = async (now: Partial<State> | Promise<Partial<State>>) => {
-        merge(state, await now)
+    const setState = (newState: Partial<State>) => {
+        merge(state, newState)
     }
+
+    const reduceEffects = async (effs: Effect[], newState: Partial<State>) => {
+        for (let eff of effs) newState = await eff(newState)
+        return newState
+    }
+
     for (let event of events) event(setState)
 
     while (true) {
         await sleep(100)
         if (!isEqual(cached, state)) {
-            for (let effect of effects) setState(effect({ ...state }))
+            console.log({ ...state })
+            setState(await reduceEffects(effects, { ...state }))
             cached = { ...state }
         }
     }
 }
-
-// //
-// export const initState = (init: State, ...handlers: Handler[]) => {
-//     let state = { initialized: false }
-//     const setState = (newState: Partial<State>): void => {
-//         if (!isEqual(state, { ...state, newState })) {
-//             state = { ...state, ...newState }
-//             for (let handler of handlers)
-//                 handler({ ...state, initialized: true }, setState)
-//         }
-//     }
-//     setState({ ...state, ...init })
-// }
