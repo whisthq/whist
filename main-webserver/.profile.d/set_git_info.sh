@@ -10,7 +10,7 @@ echo $(ls)
 
 echo "-----> trying to get git info "
 
-cd /bin
+cd /app
 
 echo $(ls)
 exec 6< "git_info.txt"
