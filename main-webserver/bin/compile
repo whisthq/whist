@@ -32,7 +32,7 @@ echo "-----> Configuring git branch and commit hash to enviornment variables"
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-echo DIR
+echo $DIR
 BRANCH=$(git branch --show-current)
 echo $BRANCH
 echo $BRANCH > "${DIR}/../.profile.d/git_info.txt"
