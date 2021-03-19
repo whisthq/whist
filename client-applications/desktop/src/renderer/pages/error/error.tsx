@@ -1,11 +1,12 @@
 import React from "react"
 
 const Error = () => {
-    return(
-        <>
-            An unexpected error has occured.
-        </>
-    )
+    /*
+        Description:
+            Router for error pages
+    */
+
+    return <>An unexpected error has occured.</>
 }
 
-export default Error 
+export default Error

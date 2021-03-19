@@ -3,6 +3,10 @@ import classNames from "classnames"
 
 import { goTo } from "@app/utils/history"
 
+/*
+    Prop declarations
+*/
+
 interface BaseNavigationProps {
     url: string
     text: string
@@ -12,9 +16,24 @@ interface BaseNavigationProps {
 
 interface FractalNavigationProps extends BaseNavigationProps {}
 
+/*
+    Components
+*/
+
 const BaseNavigation: FC<BaseNavigationProps> = (
     props: BaseNavigationProps
 ) => {
+    /*
+        Description:
+            Returns a hyperlink component with custom text and URL
+
+        Arguments:
+            url(string): Path to navigate to (e.g. "/auth/login")
+            text(string): Text to display in link
+            linkText(string): Subtext that should be highlighted and clickable
+            className(string): Optional additional Tailwind styling
+    */
+
     const [textList, setTextList] = useState([props.text])
 
     const onClick = (text: string) => {
@@ -62,5 +81,16 @@ const BaseNavigation: FC<BaseNavigationProps> = (
 export const FractalNavigation: FC<FractalNavigationProps> = (
     props: FractalNavigationProps
 ) => {
+    /*
+        Description:
+            Returns a hyperlink component with custom text and URL
+
+        Arguments:
+            url(string): Path to navigate to (e.g. "/auth/login")
+            text(string): Text to display in link
+            linkText(string): Subtext that should be highlighted and clickable
+            className(string): Optional additional Tailwind styling
+    */
+
     return <BaseNavigation {...props} />
 }

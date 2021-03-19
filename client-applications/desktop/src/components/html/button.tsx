@@ -3,6 +3,10 @@ import classNames from "classnames"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faCircleNotch } from "@fortawesome/free-solid-svg-icons"
 
+/*
+    Prop declarations
+*/
+
 export enum FractalButtonState {
     DEFAULT,
     DISABLED,
@@ -20,7 +24,22 @@ interface FractalButtonProps extends BaseButtonProps {
     state: FractalButtonState
 }
 
+/*
+    Components
+*/
+
 const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
+    /*
+        Description:
+            Base button component with custom text
+
+        Arguments:
+            contents(string|JSX.Element): Text to display, can be string or component
+            onClick(() = void): Callback function for button click
+            className(string): Optional additional Tailwind styling
+            disabled(boolean): If true, button cannot be clicked
+    */
+
     <button
         className={classNames(
             "text-md rounded bg-blue text-white duration-500 focus:outline-none py-4 font-body font-semibold",
@@ -37,6 +56,18 @@ const BaseButton: FC<BaseButtonProps> = (props: BaseButtonProps) => (
 export const FractalButton: FC<FractalButtonProps> = (
     props: FractalButtonProps
 ): JSX.Element => {
+    /*
+        Description:
+            Returns a button component with custom text
+
+        Arguments:
+            contents(string|JSX.Element): Text to display, can be string or component
+            onClick(() = void): Callback function for button click
+            className(string): Optional additional Tailwind styling
+            disabled(boolean): If true, button cannot be clicked
+            state(FractalButtonType): Button state (defaults to FractalButtonState.DEFAULT)
+    */
+
     const { state, ...baseButtonProps } = props
 
     const doNothing = () => {}

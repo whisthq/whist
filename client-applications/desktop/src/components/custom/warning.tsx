@@ -1,6 +1,10 @@
 import React, { FC } from "react"
 import classNames from "classnames"
 
+/*
+    Prop declarations
+*/
+
 export enum FractalWarningType {
     DEFAULT,
     SMALL,
@@ -15,7 +19,20 @@ interface FractalWarningProps extends BaseWarningProps {
     type: FractalWarningType
 }
 
+/*
+    Components
+*/
+
 export const BaseWarning: FC<BaseWarningProps> = (props: BaseWarningProps) => {
+    /*
+        Description:
+            Base warning component with custom text
+
+        Arguments:
+            warning(string|null|undefined|JSX.Element): Warning text, can be a string or component
+            className(string): Optional additional Tailwind styling
+    */
+
     const { warning } = props
 
     if (!warning) {
@@ -32,6 +49,16 @@ export const BaseWarning: FC<BaseWarningProps> = (props: BaseWarningProps) => {
 export const FractalWarning: FC<FractalWarningProps> = (
     props: FractalWarningProps
 ) => {
+    /*
+        Description:
+            Returns a warning component with custom text
+
+        Arguments:
+            warning(string|null|undefined|JSX.Element): Warning text, can be a string or component
+            className(string): Optional additional Tailwind styling
+            type(FractalWarningType): Type of warning, defaults to FractalWarningType.DEFAULT
+    */
+
     const { type, ...baseWarningProps } = props
 
     const smallClassName = classNames(

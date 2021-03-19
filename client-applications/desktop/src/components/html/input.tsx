@@ -3,6 +3,10 @@ import classNames from "classnames"
 
 import FractalKey from "@app/@types/input"
 
+/*
+    Prop declarations
+*/
+
 export enum FractalInputState {
     DEFAULT,
     WARNING,
@@ -22,7 +26,24 @@ interface FractalInputProps extends BaseInputProps {
     state: FractalInputState
 }
 
+/*
+    Components
+*/
+
 export const BaseInput: FC<BaseInputProps> = (props: BaseInputProps) => {
+    /*
+        Description:
+            Base input component
+
+        Arguments:
+            value(string): Value of input component (what is typed in)
+            type(string): Type of input (e.g. "text", "password")
+            placeholder(string): Placeholder for input (e.g. "Enter your password")
+            onChange((_: string) => void): Callback for when new text is typed
+            onEnterKey(() =<> void): Callback for when enter key is pressed
+            className(string): Optional additional CSS styling
+    */
+
     const handleChange = (evt: ChangeEvent<HTMLInputElement>) => {
         evt.persist()
         if (props.onChange) {
@@ -57,6 +78,20 @@ export const BaseInput: FC<BaseInputProps> = (props: BaseInputProps) => {
 export const FractalInput: FC<FractalInputProps> = (
     props: FractalInputProps
 ) => {
+    /*
+        Description:
+            Base input component
+
+        Arguments:
+            value(string): Value of input component (what is typed in)
+            type(string): Type of input (e.g. "text", "password")
+            placeholder(string): Placeholder for input (e.g. "Enter your password")
+            onChange((_: string) => void): Callback for when new text is typed
+            onEnterKey(() =<> void): Callback for when enter key is pressed
+            className(string): Optional additional CSS styling
+            state(FractalInputState): State of input element (defaults to FractalInputState.DEFAULT)
+    */
+
     const { state, ...baseInputProps } = props
 
     const warningClassName = classNames(props.className, "border border-red")

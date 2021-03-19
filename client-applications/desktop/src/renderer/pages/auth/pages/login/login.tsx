@@ -18,7 +18,18 @@ import {
 import { emailLogin } from "@app/renderer/pages/auth/pages/login/shared/utils/api"
 import { fractalLoginWarning } from "@app/renderer/pages/auth/pages/login/shared/utils/constants"
 
-const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
+const Login = (props: { onLogin: (json: object) => void }) => {
+    /*
+        Description:
+            Component for logging in. Contains the login form UI and 
+            dispatches login API call
+
+        Arguments:
+            onLogin((json) => void): 
+                Callback function fired when login API call is sent, body of response
+                is passed in as argument
+    */
+
     const { onLogin } = props
 
     const [email, setEmail] = useState("")

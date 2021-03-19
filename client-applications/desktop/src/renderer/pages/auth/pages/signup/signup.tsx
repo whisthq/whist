@@ -25,12 +25,16 @@ import { fractalSignupWarning } from "@app/renderer/pages/auth/pages/signup/shar
 
 const Signup = (props: { onSignup: (json: object) => void }) => {
     /*
-        Component for signing up for Fractal
-        Contains the form to signup, and also dispatches an API request to
-        the server to authenticate the user.
+        Description:
+            Component for signing up for Fractal. Contains the signup form UI and 
+            dispatches signup API call
+
         Arguments:
-            onSignup((json) => void): Callback function fired when signup API call is sent
+            onSignup((json) => void): 
+                Callback function fired when signup API call is sent, body of response
+                is passed in as argument
     */
+
     const { onSignup } = props
 
     const [email, setEmail] = useState("")

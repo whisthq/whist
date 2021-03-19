@@ -5,6 +5,11 @@ import Login from "@app/renderer/pages/auth/pages/login/login"
 import Signup from "@app/renderer/pages/auth/pages/signup/signup"
 
 const Auth = () => {
+    /*
+        Description:
+            Router for auth-related pages (e.g. login and signup)
+    */
+
     const onLogin = () => {
         console.log("Logged in!")
     }
