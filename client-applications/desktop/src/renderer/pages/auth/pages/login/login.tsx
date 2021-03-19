@@ -1,6 +1,6 @@
 import React, { useState } from "react"
-import FadeIn from "react-fade-in"
 
+import { FractalFadeIn } from "@app/components/custom/fade"
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import {
@@ -60,7 +60,7 @@ const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
     return (
         <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
             <div className="w-full max-w-xs m-auto">
-                <FadeIn>
+                <FractalFadeIn>
                     <Logo />
                     <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
                         Log in to your account
@@ -114,7 +114,7 @@ const Login = (props: { onLogin: (json: object) => void }, location?: any) => {
                         linkText="here"
                         className="relative top-4"
                     />
-                </FadeIn>
+                </FractalFadeIn>
             </div>
         </div>
     )

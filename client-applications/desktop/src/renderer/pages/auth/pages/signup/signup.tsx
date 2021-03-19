@@ -1,8 +1,7 @@
 import React, { useState } from "react"
 import { Flipped, Flipper } from "react-flip-toolkit"
-import { FaExclamationTriangle } from "react-icons/fa"
-import FadeIn from "react-fade-in"
 
+import { FractalFadeIn } from "@app/components/custom/fade"
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
 import {
@@ -30,9 +29,7 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
         Contains the form to signup, and also dispatches an API request to
         the server to authenticate the user.
         Arguments:
-            dispatch (Dispatch<any>): Action dispatcher
-            user (User): User from Redux state
-            authFlow (AuthFlow): AuthFlow from Redux state
+            onSignup((json) => void): Callback function fired when signup API call is sent
     */
     const { onSignup } = props
 
@@ -79,7 +76,7 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
     return (
         <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
             <div className="w-full max-w-xs m-auto">
-                <FadeIn>
+                <FractalFadeIn>
                     <Logo />
                     <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
                         Sign up to get started
@@ -190,7 +187,7 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                         linkText="here"
                         className="relative top-4"
                     />
-                </FadeIn>
+                </FractalFadeIn>
             </div>
         </div>
     )
