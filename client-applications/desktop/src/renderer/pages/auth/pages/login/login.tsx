@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react"
+import React, { useState } from "react"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
