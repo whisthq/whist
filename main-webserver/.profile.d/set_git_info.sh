@@ -1,7 +1,7 @@
 #!/bin/bash
 
 
-echo $PWD
+echo $(ls)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 echo $PWD
