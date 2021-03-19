@@ -1,14 +1,12 @@
-// const remToPx = (fontSize: number, rem: number) => rem * fontSize
-// const toPx = (rem: number) => remToPx(16, rem)
-import type { BrowserWindowConstructorOptions } from "electron"
+import path from "path"
+import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 
-const titleStyle =
-    process.platform === "darwin"
-        ? { titleBarStyle: "hidden" }
-        : { frame: false }
+const buildRoot = app.isPackaged
+    ? path.join(app.getAppPath(), "build")
+    : path.resolve("public")
 
 const base = {
-    webPreferences: { contextIsolation: true },
+    webPreferences: { preload: path.join(buildRoot, "preload.js") },
     resizable: false,
     titleBarStyle: "hidden",
 }
@@ -29,8 +27,20 @@ const hXl = { height: 16 * 64 }
 const h2Xl = { height: 16 * 80 }
 const h3Xl = { height: 16 * 96 }
 
-export const windowThinSm = {
-    ...base,
-    ...wSm,
-    ...hMd,
-} as BrowserWindowConstructorOptions
+export const createAuthWindow = () => {
+    const win = new BrowserWindow({
+        ...base,
+        ...wSm,
+        ...hMd,
+        show: false,
+    } as BrowserWindowConstructorOptions)
+
+    if (app.isPackaged) {
+        win.loadFile("build/index.html")
+    } else {
+        win.loadURL("http://localhost:8080")
+        win.webContents.openDevTools({ mode: "undocked" })
+    }
+
+    win.webContents.on("did-finish-load", () => win.show())
+}
