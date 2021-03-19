@@ -11,6 +11,7 @@ on:
             - prod
             - staging
             - dev
+            - mia/extend-heroku-ci-testing # TODO: REMOVE ME
         paths:
             - "main-webserver/**"
             - "!main-webserver/README.md"
@@ -67,8 +68,22 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
+            # - name: Authenticate Heroku
+            #   run: |
+            #       cat > ~/.netrc << EOF
+            #       machine api.heroku.com
+            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+            #       machine git.heroku.com
+            #         login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+            #         password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+            #       EOF
+
             - name: Run Tests on Heroku
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               working-directory: main-webserver
-              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              run: |
+                bash docker/retrieve_config.sh
+                bash docker/local_deploy.sh
+                heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
