@@ -32,19 +32,6 @@ case "$1" in
         else
             waitress-serve --port="$PORT" --url-scheme=https entry:app
         fi ;;
-    # "celery")
-    #     # The two containers share the same requirements.txt file, but we only
-    #     # want the watchmedo utility to be installed in the Celery container.
-    #     $([ -n "$HOT_RELOAD" ] && \
-    #         (pip install watchdog[watchmedo] >&2 echo "watchmedo auto-restart -R -d . --")) \
-    #         celery \
-    #         --app entry.celery \
-    #         worker \
-    #         --pool gevent \
-    #         --concurrency $NUM_WORKERS \
-    #         --loglevel INFO ;;
-    # *) echo "Specify either 'web' or 'celery' to determine what this" \
-    #         "instance will manifest as." ;;
     "celery")
         # The two containers share the same requirements.txt file, but we only
         # want the watchmedo utility to be installed in the Celery container.
