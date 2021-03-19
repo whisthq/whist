@@ -14,6 +14,7 @@ from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 import app.constants.env_names as env_names
+from app.helpers.utils.general.limiter import limiter
 
 
 @pytest.fixture
@@ -362,3 +363,9 @@ def make_authorized_user(client, make_user, monkeypatch):
         return user
 
     return _authorized_user
+
+
+@pytest.fixture(autouse=True)
+def run_around_tests():
+    # reset limiter after each test
+    limiter.reset()
