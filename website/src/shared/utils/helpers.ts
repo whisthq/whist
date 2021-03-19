@@ -3,13 +3,13 @@ const crypto = require("crypto")
 export const generateHashedPassword = (password: string): string => {
     /*
         Hash the user's plain-text password (to later use as encryption/decryption password for the config token)
-        
+
         Arguments:
             password (string): plaintext password to hash
     */
     const token = crypto.pbkdf2Sync(
         password,
-        process.env.SHA_SECRET_KEY,
+        process.env.REACT_APP_SHA_SECRET_KEY,
         100000,
         16,
         "sha256"
@@ -20,7 +20,7 @@ export const generateHashedPassword = (password: string): string => {
 export const generateRandomString = async (bytes: number) => {
     /*
         Generate a cryptographically secure random string
- 
+
         Arguments:
             bytes (number): number of bytes in the string
     */
@@ -44,10 +44,10 @@ export const encryptConfigToken = async (text: string, password: string) => {
         Arguments:
             text (string): text to encrypt
             password (string): plaintext password to encrypt with
-        
+
         Returns:
             (string): the encrypted text
-    
+
     */
     const configIV = await generateRandomString(48)
     const hashedPassword = generateHashedPassword(password)
@@ -67,7 +67,7 @@ export const decryptConfigToken = (text: string, password: string): string => {
         Arguments:
             text (string): text to decrypt
             password (string): plaintext password to decrypt with
-        
+
         Returns:
             (string): the decrypted text
     */
