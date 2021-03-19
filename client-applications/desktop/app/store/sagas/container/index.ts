@@ -132,16 +132,14 @@ function* setHostServiceConfigToken(action: {
     const state = yield select()
     const userID = state.AuthReducer.user.userID
 
+    /* eslint-disable @typescript-eslint/camelcase */
     const body = {
-        user_id: userID /* eslint-disable-line @typescript-eslint/camelcase */,
-        host_port:
-            action.port /* eslint-disable-line @typescript-eslint/camelcase */,
-        config_encryption_token:
-            state.AuthReducer.user
-                .configToken /* eslint-disable-line @typescript-eslint/camelcase */,
-        client_app_auth_secret:
-            action.clientAppAuthSecret /* eslint-disable-line @typescript-eslint/camelcase */,
+        user_id: userID,
+        host_port: action.port,
+        config_encryption_token: state.AuthReducer.user.configToken,
+        client_app_auth_secret: action.clientAppAuthSecret,
     }
+    /* eslint-enable @typescript-eslint/camelcase */
 
     const { success } = yield call(
         apiPut,

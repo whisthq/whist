@@ -267,7 +267,8 @@ export const Launcher = (props: {
         } else if (hostServiceLoading) {
             logger.logInfo(`Subscription for host and ip loading`, userID)
         } else {
-            const { ip, port, client_app_auth_secret } = /* eslint-disable-line @typescript-eslint/camelcase */
+            /* eslint-disable @typescript-eslint/camelcase */
+            const { ip, port, client_app_auth_secret } =
                 hostServiceData &&
                 hostServiceData.hardware_user_app_state &&
                 hostServiceData.hardware_user_app_state[0]
@@ -279,8 +280,11 @@ export const Launcher = (props: {
                 userID
             )
             if (ip && port && client_app_auth_secret) {
-                dispatch(setHostServiceConfigToken(ip, port, client_app_auth_secret))
+                dispatch(
+                    setHostServiceConfigToken(ip, port, client_app_auth_secret)
+                )
             }
+            /* eslint-enable @typescript-eslint/camelcase */
         }
     }, [hostServiceData, hostServiceLoading, hostServiceError])
 

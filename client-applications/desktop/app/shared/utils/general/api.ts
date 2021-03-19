@@ -232,7 +232,7 @@ export const apiPut = async (
     endpoint: string,
     body: Record<string, any>,
     server: string | undefined,
-    ignoreCertificate: boolean = false
+    ignoreCertificate = false
 ) => {
     /*
     Description:
@@ -277,18 +277,20 @@ export const apiPut = async (
                                 responseText += data
                             })
                             response.on("end", () => {
-                                const statusCode = response.statusCode ? response.statusCode : 400
+                                const statusCode = response.statusCode
+                                    ? response.statusCode
+                                    : 400
                                 const json = JSON.stringify(responseText)
-                                const success =
-                                    (!!json && statusCode === 202) || statusCode === 200
+                                const success = checkResponse({
+                                    status: statusCode,
+                                })
                                 resolve({ json, success, response: statusCode })
                             })
                         }
                     )
                     request.write(JSON.stringify(body))
                     request.on("error", (e) => {
-                        throw e
-                        reject({ json: null, success: false, response: null })
+                        reject(e)
                     })
                     request.end()
                 })
