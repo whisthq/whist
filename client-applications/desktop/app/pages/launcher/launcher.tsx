@@ -27,16 +27,12 @@ import {
 } from "store/actions/container/sideEffects"
 import { FractalIPC } from "shared/types/ipc"
 import { AWSRegion } from "shared/types/aws"
-import { FractalDirectory } from "shared/types/client"
-import { uploadToS3 } from "shared/utils/files/aws"
 
-import { launchProtocol, writeStream } from "shared/utils/files/exec"
 import Animation from "shared/components/loadingAnimation/loadingAnimation"
 import LoadingMessage from "pages/launcher/constants/loadingMessages"
 import ChromeBackground from "shared/components/chromeBackground/chromeBackground"
 
 import styles from "pages/launcher/launcher.css"
-import { ChildProcess } from "child_process"
 
 /*
     Amount of time passed before giving up on container/assign
@@ -79,10 +75,8 @@ export const Launcher = (props: {
     } = props
 
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
-    const [protocol, setProtocol] = useState<ChildProcess>()
+    const [protocol, setProtocol] = useState(false)
     const [protocolLock, setProtocolLock] = useState(false)
-    const [disconnected, setDisconnected] = useState(false)
-    const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
     const [killSignalsReceived, setKillSignalsReceived] = useState(0)
     const [loadingMessage, setLoadingMessage] = useState("")
@@ -139,52 +133,6 @@ export const Launcher = (props: {
         }, TIMEOUT)
     }
 
-    const forceQuit = () => {
-        setTimeout(() => {
-            ipc.sendSync(FractalIPC.FORCE_QUIT)
-        }, 1000)
-    }
-
-    // Callback function meant to be fired before protocol starts
-    const protocolOnStart = () => {
-        // IPC sends boolean to the main thread to hide the Electron browser Window
-        logger.logInfo("Protocol started, callback fired", userID)
-        dispatch(updateTimer({ protocolLaunched: Date.now() }))
-    }
-
-    // Callback function meant to be fired when protocol exits
-    const protocolOnExit = () => {
-        // Log timer analytics data
-        dispatch(updateTimer({ protocolClosed: Date.now() }))
-
-        // For S3 protocol client log upload
-        const logPath = require("path").join(
-            FractalDirectory.getRootDirectory(),
-            require("os").platform() === "darwin"
-                ? "MacOS/log.txt"
-                : "protocol-build/client/log.txt"
-        )
-
-        const s3FileName = `CLIENT_${userID}_${new Date().getTime()}.txt`
-
-        logger.logInfo(
-            `Protocol client logs: https://fractal-protocol-logs.s3.amazonaws.com/${s3FileName}`,
-            userID
-        )
-        // Clear the Redux state just in case
-        resetReduxforLaunch()
-
-        logger.logInfo(`Should force quit is ${shouldForceQuit}`, userID)
-
-        // Upload client logs to S3 and shut down Electron
-        uploadToS3(logPath, s3FileName, (s3Error: string) => {
-            if (s3Error) {
-                logger.logError(`Upload to S3 errored: ${s3Error}`, userID)
-            }
-            setDisconnected(true)
-        })
-    }
-
     useEffect(() => {
         setTimeout(() => {
             setTimedOut(true)
@@ -197,6 +145,12 @@ export const Launcher = (props: {
             setLoginClosed(true)
         }
     }, [loginClosed])
+
+    useEffect(() => {
+        if (userID) {
+            ipc.sendSync(FractalIPC.SET_USERID, userID)
+        }
+    }, [userID])
 
     useEffect(() => {
         if (timedOut) {
@@ -213,29 +167,20 @@ export const Launcher = (props: {
     }, [timedOut])
 
     useEffect(() => {
-        if (shouldForceQuit && disconnected) {
-            forceQuit()
-        }
-    }, [shouldForceQuit, disconnected])
-
-    useEffect(() => {
         if (
             taskState === FractalAppState.FAILURE ||
             protocolKillSignal > killSignalsReceived
         ) {
             // If the task failed or we manually kill the protocol due to a login
             // or payment issue, don't quit the entire Electron app
-            setShouldForceQuit(false)
-
             logger.logError(
                 "Task state is FAILURE, sending protocol kill",
                 userID
             )
             if (protocol) {
-                writeStream(protocol, "kill?0")
-                protocol.kill("SIGINT")
+                ipc.sendSync(FractalIPC.KILL_PROTOCOL, true)
                 setProtocolLock(false)
-                setProtocol(undefined)
+                setProtocol(false)
             }
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, true)
             setKillSignalsReceived(protocolKillSignal)
@@ -264,17 +209,9 @@ export const Launcher = (props: {
             )
 
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
-
-            const launchProtocolAsync = async () => {
-                const childProcess = await launchProtocol(
-                    protocolOnStart,
-                    protocolOnExit
-                )
-                setProtocol(childProcess)
-                setShouldForceQuit(true)
-            }
-
-            launchProtocolAsync()
+            logger.logInfo("Launching protocol", userID)
+            ipc.sendSync(FractalIPC.LAUNCH_PROTOCOL, true)
+            setProtocol(true)
 
             logger.logInfo("Dispatching create container action", userID)
             dispatch(updateTimer({ createContainerRequestSent: Date.now() }))
@@ -292,7 +229,7 @@ export const Launcher = (props: {
     useEffect(() => {
         if (error) {
             logger.logError(
-                `User container subscription errored: ${error}`,
+                `User container subscription errored: ${JSON.stringify(error)}`,
                 userID
             )
             setTaskState(FractalAppState.FAILURE)
@@ -310,10 +247,7 @@ export const Launcher = (props: {
                 setTaskState(currentState)
                 switch (currentState) {
                     case FractalAppState.PENDING:
-                        writeStream(
-                            protocol,
-                            `loading?${LoadingMessage.PENDING}`
-                        )
+                        ipc.sendSync(FractalIPC.PENDING_PROTOCOL, true)
                         break
                     case FractalAppState.SPINNING_UP_NEW:
                         setLoadingMessage(LoadingMessage.PENDING)
@@ -343,11 +277,7 @@ export const Launcher = (props: {
                 `Received container IP ${container.publicIP}, piping to protocol`,
                 userID
             )
-            const portInfo = `32262:${container.port32262}.32263:${container.port32263}.32273:${container.port32273}`
-            writeStream(protocol, `ports?${portInfo}`)
-            writeStream(protocol, `private-key?${container.secretKey}`)
-            writeStream(protocol, `ip?${container.publicIP}`)
-            writeStream(protocol, `finished?0`)
+            ipc.sendSync(FractalIPC.SEND_CONTAINER, container)
         }
     }, [container, protocol])
 

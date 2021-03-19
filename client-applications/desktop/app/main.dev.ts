@@ -9,12 +9,13 @@
  * `./app/main.prod.js` using webpack. This gives us some performance wins.
  */
 
-import path from "path"
 import { app, BrowserWindow } from "electron"
-import { autoUpdater } from "electron-updater"
 import * as Sentry from "@sentry/electron"
 import Store from "electron-store"
 import { FractalIPC } from "./shared/types/ipc"
+import { createWindow, initiateWindowListeners } from "./main/launchWindow"
+import { initiateFractalIPCListeners } from "./main/initiateFractalIPCListeners"
+import { initiateAutoUpdateListeners } from "./main/initiateAutoUpdateListeners"
 
 if (process.env.NODE_ENV === "production") {
     Sentry.init({
@@ -30,11 +31,18 @@ Store.initRenderer()
 // This is the window where the renderer thread will render our React app
 let mainWindow: BrowserWindow | null = null
 // Detects whether there's an auto-update
-let updating = false
+declare global {
+    namespace NodeJS {
+        interface Global {
+            updateStatus: boolean
+        }
+    }
+}
+global.updateStatus = false
 // Detects whether fractal:// has been typed into a browser
 let customURL: string | null = null
 // Toggles whether to show the Electron main window
-let showMainWindow = false
+const showMainWindow = false
 
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true"
 
@@ -55,170 +63,29 @@ process.on("uncaughtException", (err) => {
     console.log("UNCAUGHT EXCEPTION - keeping process alive:", err) // err.message is "foobar"
 })
 
-// Function to create the browser window
-const createWindow = async () => {
-    const os = require("os")
-    if (os.platform() === "win32") {
-        mainWindow = new BrowserWindow({
-            show: false,
-            frame: false,
-            center: true,
-            resizable: true,
-            webPreferences: {
-                nodeIntegration: true,
-                enableRemoteModule: true,
-                contextIsolation: false,
-            },
-        })
-    } else if (os.platform() === "darwin") {
-        mainWindow = new BrowserWindow({
-            show: false,
-            titleBarStyle: "hidden",
-            center: true,
-            resizable: true,
-            webPreferences: {
-                nodeIntegration: true,
-                enableRemoteModule: true,
-                contextIsolation: false,
-            },
-        })
-    } else {
-        // if (os.platform() === "linux") case
-        mainWindow = new BrowserWindow({
-            show: false,
-            titleBarStyle: "hidden",
-            center: true,
-            resizable: true,
-            maximizable: false,
-            webPreferences: {
-                nodeIntegration: true,
-                enableRemoteModule: true,
-                contextIsolation: false,
-            },
-            icon: path.join(__dirname, "/build/icon.png"),
-            transparent: true,
-        })
-    }
-    mainWindow.loadURL(`file://${__dirname}/app.html`)
+/**
+ * Launches window and protocol through ipc listeners
+ * @param mainWindow mainWindow
+ * @param customURL
+ * @param showMainWindow
+ */
+const launchWindow = async () => {
+    mainWindow = await createWindow(mainWindow)
+
+    // this needs to be in main.dev.ts, having the file elsewhere causes bugs when loading app.html
+    setTimeout(() => {
+        mainWindow?.loadURL(`file://${__dirname}/app.html`)
+    }, 2000)
+
     // mainWindow.webContents.openDevTools()
-
-    // @TODO: Use 'ready-to-show' event
-    //        https://github.com/electron/electron/blob/master/docs/api/browser-window.md#using-ready-to-show-event
-    mainWindow.webContents.on("did-frame-finish-load", () => {
-        // Checks if fractal:// was typed in, if it was, uses IPC to forward the URL
-        // to the renderer thread
-        if (os.platform() === "win32" && mainWindow) {
-            // Keep only command line / deep linked arguments
-            if (process.argv) {
-                const url = process.argv.slice(1)
-                mainWindow.webContents.send(
-                    FractalIPC.CUSTOM_URL,
-                    url.toString()
-                )
-            }
-        } else if (customURL && mainWindow) {
-            mainWindow.webContents.send(FractalIPC.CUSTOM_URL, customURL)
-        }
-        // Open dev tools in development
-        if (
-            process.env.NODE_ENV === "development" ||
-            process.env.DEBUG_PROD === "true"
-        ) {
-            if (mainWindow) {
-                // mainWindow.webContents.openDevTools()
-            }
-        }
-        if (!mainWindow) {
-            throw new Error('"mainWindow" is not defined')
-        }
-        if (showMainWindow) {
-            if (process.env.START_MINIMIZED) {
-                mainWindow.minimize()
-            } else {
-                mainWindow.show()
-                mainWindow.focus()
-                mainWindow.maximize()
-            }
-        }
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-    })
-
-    // Listener to detect if the protocol was launched to hide the
-    // app from the task tray
-    const electron = require("electron")
-    const ipc = electron.ipcMain
-
-    ipc.on(FractalIPC.SHOW_MAIN_WINDOW, (event, argv) => {
-        showMainWindow = argv
-        if (showMainWindow && mainWindow) {
-            mainWindow.maximize()
-            mainWindow.show()
-            mainWindow.focus()
-            mainWindow.restore()
-            if (app && app.dock) {
-                app.dock.show()
-            }
-        } else if (!showMainWindow && mainWindow) {
-            mainWindow.hide()
-            if (app && app.dock) {
-                app.dock.hide()
-            }
-        }
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
-        const url = argv
-        const win = new BrowserWindow({ width: 800, height: 600 })
-        win.on("close", () => {
-            if (win) {
-                event.preventDefault()
-            }
-        })
-        win.loadURL(url)
-        win.show()
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.CLOSE_OTHER_WINDOWS, (event, argv) => {
-        BrowserWindow.getAllWindows().forEach((win) => {
-            if (win.id !== 1) {
-                win.close()
-            }
-        })
-        event.returnValue = argv
-    })
-
-    ipc.on(FractalIPC.FORCE_QUIT, () => {
-        app.exit(0)
-        app.quit()
-    })
-
-    mainWindow.on("close", (event) => {
-        if (!showMainWindow) {
-            event.preventDefault()
-        }
-    })
-
-    mainWindow.on("closed", () => {
-        mainWindow = null
-    })
-
-    mainWindow.on("maximize", () => {})
-
-    mainWindow.on("minimize", () => {})
-
-    if (process.env.NODE_ENV === "development") {
-        // Skip autoupdate check
-    } else {
-        autoUpdater.checkForUpdates()
-    }
+    initiateAutoUpdateListeners(mainWindow)
+    initiateWindowListeners(mainWindow, customURL, showMainWindow)
+    initiateFractalIPCListeners(mainWindow, showMainWindow)
 }
 
 // Calls the create window above, conditional on the app not already running (single instance lock)
 
 const gotTheLock = app.requestSingleInstanceLock()
-
 if (!gotTheLock) {
     app.quit()
 } else {
@@ -236,22 +103,18 @@ if (!gotTheLock) {
 
     app.allowRendererProcessReuse = true
 
-    app.on("ready", createWindow)
+    app.on("ready", async () => {
+        await launchWindow()
+    })
 
-    app.on("activate", () => {
+    app.on("activate", async () => {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
-        if (mainWindow === null) createWindow()
+        if (mainWindow === null) await launchWindow()
     })
 }
 
 // Additional listeners for app launch, close, etc.
-
-app.on("window-all-closed", () => {
-    // Respect the OSX convention of having the application in memory even
-    // after all windows have been closed
-    app.quit()
-})
 
 app.setAsDefaultProtocolClient("fractal")
 
@@ -267,60 +130,4 @@ app.on("open-url", (event, data) => {
             mainWindow.restore()
         }
     }
-})
-
-// Autoupdater listeners, will fire if S3 app version is greater than current version
-
-autoUpdater.autoDownload = false
-
-autoUpdater.on("update-available", () => {
-    updating = true
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-    }
-    autoUpdater.downloadUpdate()
-})
-
-autoUpdater.on("update-not-available", () => {
-    updating = false
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.UPDATE, updating)
-    }
-})
-
-// autoUpdater.on("error", (_ev, err) => {
-//     updating = false
-//     if(mainWindow) {
-//         mainWindow.webContents.send("error", err)
-//     }
-
-// })
-
-autoUpdater.on("download-progress", (progressObj) => {
-    if (mainWindow) {
-        mainWindow.webContents.send(
-            FractalIPC.DOWNLOAD_SPEED,
-            progressObj.bytesPerSecond
-        )
-        mainWindow.webContents.send(
-            FractalIPC.PERCENT_DOWNLOADED,
-            progressObj.percent
-        )
-        mainWindow.webContents.send(
-            FractalIPC.PERCENT_TRANSFERRED,
-            progressObj.transferred
-        )
-        mainWindow.webContents.send(
-            FractalIPC.TOTAL_DOWNLOADED,
-            progressObj.total
-        )
-    }
-})
-
-autoUpdater.on("update-downloaded", () => {
-    if (mainWindow) {
-        mainWindow.webContents.send(FractalIPC.DOWNLOADED, true)
-    }
-    autoUpdater.quitAndInstall()
-    updating = false
 })

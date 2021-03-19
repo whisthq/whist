@@ -4,10 +4,14 @@ module.exports = {
         'no-console': 'off',
         // A temporary hack related to IDE not resolving correct package.json
         'import/no-extraneous-dependencies': 'off',
+        // for creating namespace for a global varialbe
+        '@typescript-eslint/no-namespace': 'off',
         // camelcase is a default typescript setting
         '@typescript-eslint/camelcase': ['error', { ignoreImports: true }],
         // disable the below checks
         '@typescript-eslint/no-explicit-any': 0,
+        // allows for traling imports, required since webpack is configured incorrectly
+        'import/no-useless-path-segments': 'off',
         'global-require': 0,
         'no-param-reassign': 0,
         'object-shorthand': 0,

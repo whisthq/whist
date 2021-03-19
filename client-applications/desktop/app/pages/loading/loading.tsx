@@ -60,7 +60,7 @@ export const Loading = (props: {
             setListenerCreated(true)
             ipc.on(FractalIPC.UPDATE, (_: any, update: boolean) => {
                 logger.logInfo(
-                    `IPC update received, needs update is ${false}`,
+                    `IPC update received, needs update is ${update}`,
                     userID
                 )
                 setNeedsUpdate(update)
