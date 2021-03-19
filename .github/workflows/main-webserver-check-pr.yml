@@ -72,7 +72,7 @@ jobs:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               working-directory: main-webserver
               run: |
-                bash docker/retrieve_config.sh
-                bash docker/local_deploy.sh
-                bash docker/local_deploy.sh --down
-                heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+                  bash docker/retrieve_config.sh
+                  bash docker/local_deploy.sh
+                  bash docker/local_deploy.sh --down
+                  heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
