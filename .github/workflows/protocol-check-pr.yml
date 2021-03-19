@@ -31,7 +31,7 @@ jobs:
                       os: windows-2019 # llvm, cmake, clang-tidy are pre-installed on windows-2019+ GHA machines
                       cuda: false # Set to true to CUDA-optimize the windows server executable. Note that CUDA takes 5-7min to install.
                     - name: "Build and Check Protocol on Linux Ubuntu (gcc)"
-                      os: ubuntu-18.04 # cmake is pre-installed on ubuntu-18.04+ machines
+                      os: ubuntu-20.04 # cmake is pre-installed on ubuntu-18.04+ machines
                     - name: "Build and Check Protocol on macOS (clang)"
                       os: macos-10.14 # cmake is pre-installed on macos-10.14+ machines
 
@@ -121,10 +121,14 @@ jobs:
                       ./setup-linux-build-environment.sh
 
                       # install clang-tidy, coreutils for realpath, and perl
-                      sudo apt-get install -y clang-tidy coreutils perl cppcheck
+                      # we must hardcode this version, else we will install the overaggressive recent version
+                      sudo apt-get install -y clang-tidy-6.0 coreutils perl cppcheck
+                      
+                      # we also need to symlink it so it can be called as clang-tidy
+                      sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      # llvm@7 is used so that clang-tidy reads "-p" argumet correctly on MacOS
+                      # llvm@7 is used so that clang-tidy reads "-p" argument correctly on MacOS
                       brew install llvm@7 coreutils perl
                       ln -s "/usr/local/opt/llvm@7/bin/clang-format" "/usr/local/bin/clang-format"
                       ln -s "/usr/local/opt/llvm@7/bin/clang-tidy" "/usr/local/bin/clang-tidy"
