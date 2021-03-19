@@ -53,8 +53,15 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
-def _clean_tasks_and_create_new_container(container, task_version, webserver_url, num_tries):
-    """Clean tasks and create a new container when pass_start_values() and mount_cloud_storage() fail
+def _clean_tasks_and_create_new_container(
+    container: UserContainer,
+    task_version: Optional[int] = None,
+    webserver_url: str = "fractal-dev-server.herokuapp.com",
+    num_tries: Optional[int] = 0,
+) -> Dict[str, Any]:
+    """
+    Clean tasks and create a new container when pass_start_values()
+    and mount_cloud_storage() fail
 
     Arguments:
         container: An instance of the UserContainer model.
