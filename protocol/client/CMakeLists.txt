@@ -40,6 +40,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
             $<TARGET_FILE_DIR:FractalClient>)
+    add_custom_command(
+            TARGET FractalClient POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/client/fclient
+            ${CMAKE_BINARY_DIR})
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
@@ -47,6 +52,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
             $<TARGET_FILE_DIR:FractalClient>)
+    add_custom_command(
+            TARGET FractalClient POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/client/fclient.bat
+            ${CMAKE_BINARY_DIR})
 endif()
 
 # move necessary files into the build directory

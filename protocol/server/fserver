@@ -4,6 +4,5 @@ systemctl --user stop fractal
 export DISPLAY=$(systemctl --user show-environment | awk -F = '/DISPLAY/{print $2}')
 export XAUTHORITY=$(systemctl --user show-environment | awk -F = '/XAUTHORITY/{print $2}')
 
-cd build64
+cd ./server/build64
 ./FractalServer ${@:1}
-cd ..

@@ -49,7 +49,7 @@ For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window 
 ./client 0.0.0.0 --width 800 --height 600
 ```
 
-Alternatively, if you want to run the executable directly, in the `/client/build64/[Windows/Darwin/Linux]` directory or `/client/build32/Windows`, run:
+Alternatively, if you want to run the executable directly, in the `/client/build64` directory, run:
 
 ```
 Windows:

@@ -29,6 +29,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
             $<TARGET_FILE_DIR:FractalServer>)
+    add_custom_command(
+            TARGET FractalServer POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/server/fserver
+            ${CMAKE_BINARY_DIR})
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
