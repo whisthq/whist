@@ -369,5 +369,16 @@ bool safe_strncpy(char* destination, const char* source, size_t num) {
     return false;
 }
 
-#include "fractal.v"
-char* fractal_git_revision() { return FRACTAL_GIT_REVISION; }
+// Include FRACTAL_GIT_REVISION
+#include <fractal.v>
+// Defines to stringize a macro
+#define xstr(s) str(s)
+#define str(s) #s
+// Return git revision as string, or "none" if no git revision found
+char* fractal_git_revision() {
+#ifdef FRACTAL_GIT_REVISION
+    return xstr(FRACTAL_GIT_REVISION);
+#else
+    return "none";
+#endif
+}

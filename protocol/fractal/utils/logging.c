@@ -48,7 +48,7 @@ format strings.
 #include "logging.h"
 #include <sentry.h>
 
-char *get_logger_history();
+char* get_logger_history();
 int get_logger_history_len();
 void init_backtrace_handler();
 
@@ -57,8 +57,8 @@ extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
 extern bool using_sentry;
 
 // logger Semaphores and Mutexes
-static volatile SDL_sem *logger_semaphore;
-static volatile SDL_mutex *logger_mutex;
+static volatile SDL_sem* logger_semaphore;
+static volatile SDL_mutex* logger_mutex;
 
 // logger queue
 
@@ -74,38 +74,38 @@ static volatile int logger_queue_size = 0;
 static volatile int logger_global_id = 0;
 
 // logger global variables
-SDL_Thread *mprintf_thread = NULL;
+SDL_Thread* mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
-int multi_threaded_printf(void *opaque);
-void mprintf(bool log, const char *fmt_str, va_list args);
+int multi_threaded_printf(void* opaque);
+void mprintf(bool log, const char* fmt_str, va_list args);
 clock mprintf_timer;
-FILE *mprintf_log_file = NULL;
-FILE *mprintf_log_connection_file = NULL;
+FILE* mprintf_log_file = NULL;
+FILE* mprintf_log_connection_file = NULL;
 int log_connection_log_id;
-char *log_directory = NULL;
+char* log_directory = NULL;
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
 char logger_history[LOG_CACHE_SIZE];
 int logger_history_len;
 
-char *get_logger_history() { return logger_history; }
+char* get_logger_history() { return logger_history; }
 int get_logger_history_len() { return logger_history_len; }
 
 void start_connection_log();
 
 // Initializes the logger and starts a connection log
-void init_logger(char *log_dir) {
+void init_logger(char* log_dir) {
     init_backtrace_handler();
 
     if (using_sentry) {
-        sentry_options_t *options = sentry_options_new();
+        sentry_options_t* options = sentry_options_new();
         // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
         sentry_options_set_dsn(options, SENTRY_DSN);
         // These are used by sentry to classify events and so we can keep track of version specific
         // issues.
         char release[200];
-        sprintf(release, "fractal-protocol@%s", fractal_git_revision());
+        snprintf(release, sizeof(release), "fractal-protocol@%s", fractal_git_revision());
         sentry_options_set_release(options, release);
         sentry_options_set_environment(options, sentry_environment);
         sentry_init(options);
@@ -115,7 +115,7 @@ void init_logger(char *log_dir) {
     char f[1000] = "";
     if (log_dir) {
         size_t dir_len = strlen(log_dir);
-        log_directory = (char *)safe_malloc(dir_len + 2);
+        log_directory = (char*)safe_malloc(dir_len + 2);
         strncpy(log_directory, log_dir, dir_len + 1);
 #if defined(_WIN32)
         log_directory[dir_len] = '\\';
@@ -149,7 +149,7 @@ void init_logger(char *log_dir) {
 
 // Sets up logs for a new connection, overwriting previous
 void start_connection_log() {
-    safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
 
     if (mprintf_log_connection_file) {
         fclose(mprintf_log_connection_file);
@@ -160,7 +160,7 @@ void start_connection_log() {
     mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
     log_connection_log_id = logger_global_id;
 
-    safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
 
     LOG_INFO("Beginning connection log");
 }
@@ -172,7 +172,7 @@ void destroy_logger() {
         sentry_shutdown();
     }
     run_multithreaded_printf = false;
-    SDL_SemPost((SDL_sem *)logger_semaphore);
+    SDL_SemPost((SDL_sem*)logger_semaphore);
 
     SDL_WaitThread(mprintf_thread, NULL);
     mprintf_thread = NULL;
@@ -189,7 +189,7 @@ void destroy_logger() {
     }
 }
 
-void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
+void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...) {
     if (!using_sentry) return;
 
         // in the current sentry-native beta version, breadcrumbs prevent sentry
@@ -208,7 +208,7 @@ void sentry_send_bread_crumb(char *tag, const char *fmt_str, ...) {
 #endif
 }
 
-void sentry_send_event(const char *fmt_str, ...) {
+void sentry_send_event(const char* fmt_str, ...) {
     if (!using_sentry) return;
 
     va_list args;
@@ -223,12 +223,12 @@ void sentry_send_event(const char *fmt_str, ...) {
     sentry_capture_event(event);
 }
 
-int multi_threaded_printf(void *opaque) {
+int multi_threaded_printf(void* opaque) {
     UNUSED(opaque);
 
     while (true) {
         // Wait until signaled by printf to begin running
-        SDL_SemWait((SDL_sem *)logger_semaphore);
+        SDL_SemWait((SDL_sem*)logger_semaphore);
 
         if (!run_multithreaded_printf) {
             break;
@@ -238,22 +238,22 @@ int multi_threaded_printf(void *opaque) {
 
         // Clear the queue into the cache,
         // And then let go of the mutex so that printf can continue accumulating
-        safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
+        safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
-            safe_strncpy((char *)logger_queue_cache[i].buf,
-                         (const char *)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
+            safe_strncpy((char*)logger_queue_cache[i].buf,
+                         (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
             logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
             logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
             logger_queue[logger_queue_index].buf[0] = '\0';
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
-                SDL_SemWait((SDL_sem *)logger_semaphore);
+                SDL_SemWait((SDL_sem*)logger_semaphore);
             }
         }
         logger_queue_size = 0;
-        safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+        safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
 
         // Print all of the data into the cache
         // int last_printf = -1;
@@ -342,8 +342,8 @@ int multi_threaded_printf(void *opaque) {
             if (sz > MAX_LOG_FILE_SIZE) {
                 long buf_len = MAX_LOG_FILE_SIZE / 2;
 
-                char *original_buf = safe_malloc(buf_len);
-                char *buf = original_buf;
+                char* original_buf = safe_malloc(buf_len);
+                char* buf = original_buf;
                 fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
                 fread(buf, buf_len, 1, mprintf_log_connection_file);
 
@@ -374,9 +374,9 @@ int multi_threaded_printf(void *opaque) {
  * @return the same string, but possible longer e.g "some json stuff
  * \\r\\n\\r\\n"
  */
-char *escape_string(char *old_string, bool escape_all) {
+char* escape_string(char* old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);
-    char *new_string = safe_malloc(2 * (old_string_len + 1));
+    char* new_string = safe_malloc(2 * (old_string_len + 1));
     int new_str_len = 0;
     for (size_t i = 0; i < old_string_len; i++) {
         switch (old_string[i]) {
@@ -427,7 +427,7 @@ char *escape_string(char *old_string, bool escape_all) {
 }
 
 // Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
-void internal_logging_printf(const char *fmt_str, ...) {
+void internal_logging_printf(const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
@@ -437,21 +437,21 @@ void internal_logging_printf(const char *fmt_str, ...) {
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
-void mprintf(bool log, const char *fmt_str, va_list args) {
+void mprintf(bool log, const char* fmt_str, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called! Printing below...\n");
         vprintf(fmt_str, args);
         return;
     }
 
-    safe_SDL_LockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
 
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-    char *buf = NULL;
+    char* buf = NULL;
     if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
         logger_queue[index].id = logger_global_id++;
-        buf = (char *)logger_queue[index].buf;
+        buf = (char*)logger_queue[index].buf;
 
         if (buf[0] != '\0') {
             char old_msg[LOGGER_BUF_SIZE];
@@ -463,7 +463,7 @@ void mprintf(bool log, const char *fmt_str, va_list args) {
                 buf[0] = '\0';
             }
             logger_queue_size++;
-            SDL_SemPost((SDL_sem *)logger_semaphore);
+            SDL_SemPost((SDL_sem*)logger_semaphore);
         } else {
             // Get the length of the formatted string with args replaced.
             // After calls to function which invoke VA args, the args are
@@ -473,22 +473,22 @@ void mprintf(bool log, const char *fmt_str, va_list args) {
             int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
 
             // print to a temp buf so we can split on \n
-            char *temp_buf = safe_malloc(sizeof(char) * (len + 1));
+            char* temp_buf = safe_malloc(sizeof(char) * (len + 1));
             vsnprintf(temp_buf, len, fmt_str, args_copy);
             // use strtok_r over strtok due to thread safety
-            char *strtok_context = NULL;  // strtok_r context var
+            char* strtok_context = NULL;  // strtok_r context var
             // Log the first line out of the loop because we log it with
             // the full log formatting time | type | file | log_msg
             // subsequent lines start with | followed by 4 spaces
-            char *line = strtok_r(temp_buf, "\n", &strtok_context);
-            char *san_line = escape_string(line, false);
+            char* line = strtok_r(temp_buf, "\n", &strtok_context);
+            char* san_line = escape_string(line, false);
             snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
             free(san_line);
             logger_queue_size++;
-            SDL_SemPost((SDL_sem *)logger_semaphore);
+            SDL_SemPost((SDL_sem*)logger_semaphore);
 
             index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-            buf = (char *)logger_queue[index].buf;
+            buf = (char*)logger_queue[index].buf;
             line = strtok_r(NULL, "\n", &strtok_context);
             while (line != NULL) {
                 san_line = escape_string(line, false);
@@ -497,9 +497,9 @@ void mprintf(bool log, const char *fmt_str, va_list args) {
                 logger_queue[index].log = log;
                 logger_queue[index].id = logger_global_id++;
                 logger_queue_size++;
-                SDL_SemPost((SDL_sem *)logger_semaphore);
+                SDL_SemPost((SDL_sem*)logger_semaphore);
                 index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
-                buf = (char *)logger_queue[index].buf;
+                buf = (char*)logger_queue[index].buf;
                 line = strtok_r(NULL, "\n", &strtok_context);
             }
 
@@ -507,28 +507,28 @@ void mprintf(bool log, const char *fmt_str, va_list args) {
         }
 
     } else if (logger_queue_size == LOGGER_QUEUE_SIZE - 2) {
-        buf = (char *)logger_queue[index].buf;
+        buf = (char*)logger_queue[index].buf;
         safe_strncpy(buf, "Buffer maxed out!!!\n", LOGGER_BUF_SIZE);
         logger_queue[index].log = log;
         logger_queue[index].id = logger_global_id++;
         logger_queue_size++;
-        SDL_SemPost((SDL_sem *)logger_semaphore);
+        SDL_SemPost((SDL_sem*)logger_semaphore);
     }
 
-    safe_SDL_UnlockMutex((SDL_mutex *)logger_mutex);
+    safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
 }
 
-SDL_mutex *crash_handler_mutex;
+SDL_mutex* crash_handler_mutex;
 
 void print_stacktrace() {
     safe_SDL_LockMutex(crash_handler_mutex);
 
 #ifdef _WIN32
     unsigned int i;
-    void *stack[100];
+    void* stack[100];
     unsigned short frames;
     char buf[sizeof(SYMBOL_INFO) + 256 * sizeof(char)];
-    SYMBOL_INFO *symbol = (SYMBOL_INFO *)buf;
+    SYMBOL_INFO* symbol = (SYMBOL_INFO*)buf;
     HANDLE process;
 
     process = GetCurrentProcess();
@@ -548,7 +548,7 @@ void print_stacktrace() {
 #else
 #define HANDLER_ARRAY_SIZE 100
 
-    void *array[HANDLER_ARRAY_SIZE];
+    void* array[HANDLER_ARRAY_SIZE];
     size_t size;
 
     // get void*'s for all entries on the stack
@@ -572,7 +572,7 @@ void print_stacktrace() {
 }
 
 #ifdef _WIN32
-LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS *ExceptionInfo) {  // NOLINT
+LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
     SDL_Delay(250);
     fprintf(stderr, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -668,21 +668,21 @@ void init_backtrace_handler() {
 #endif
 }
 
-char *get_version() {
-    static char *version = NULL;
+char* get_version() {
+    static char* version = NULL;
 
     if (version) {
         return version;
     }
 
 #ifdef _WIN32
-    char *version_filepath = "C:\\Program Files\\Fractal\\version";
+    char* version_filepath = "C:\\Program Files\\Fractal\\version";
 #else
-    char *version_filepath = "./version";
+    char* version_filepath = "./version";
 #endif
 
     size_t length;
-    FILE *f = fopen(version_filepath, "r");
+    FILE* f = fopen(version_filepath, "r");
 
     if (f) {
         fseek(f, 0, SEEK_END);
@@ -711,7 +711,7 @@ void save_connection_id(int connection_id_int) {
     char connection_id_filename[1000] = "";
     strcat(connection_id_filename, log_directory);
     strcat(connection_id_filename, "connection_id.txt");
-    FILE *connection_id_file = fopen(connection_id_filename, "wb");
+    FILE* connection_id_file = fopen(connection_id_filename, "wb");
     fprintf(connection_id_file, "%d", connection_id_int);
     fclose(connection_id_file);
 
@@ -725,13 +725,13 @@ void save_connection_id(int connection_id_int) {
 
 typedef struct UpdateStatusData {
     bool is_connected;
-    char *host;
-    char *identifier;
-    char *hex_aes_private_key;
+    char* host;
+    char* identifier;
+    char* hex_aes_private_key;
 } UpdateStatusData;
 
-int32_t multithreaded_update_server_status(void *data) {
-    UpdateStatusData *d = data;
+int32_t multithreaded_update_server_status(void* data) {
+    UpdateStatusData* d = data;
 
     char json[1000];
     snprintf(json, sizeof(json),
@@ -747,15 +747,15 @@ int32_t multithreaded_update_server_status(void *data) {
     return 0;
 }
 
-void update_server_status(bool is_connected, char *host, char *identifier,
-                          char *hex_aes_private_key) {
+void update_server_status(bool is_connected, char* host, char* identifier,
+                          char* hex_aes_private_key) {
     LOG_INFO("Update Status: %s", is_connected ? "Connected" : "Disconnected");
-    UpdateStatusData *d = safe_malloc(sizeof(UpdateStatusData));
+    UpdateStatusData* d = safe_malloc(sizeof(UpdateStatusData));
     d->is_connected = is_connected;
     d->host = host;
     d->identifier = identifier;
     d->hex_aes_private_key = hex_aes_private_key;
-    SDL_Thread *update_status =
+    SDL_Thread* update_status =
         SDL_CreateThread(multithreaded_update_server_status, "update_server_status", d);
     SDL_DetachThread(update_status);
 }
