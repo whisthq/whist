@@ -100,6 +100,8 @@ if (CPPCHECK AND ${CI} MATCHES "TRUE" AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             "--suppress=shiftTooManyBitsSigned"
             "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/clipboard/clipboard_osx.m" # suppress all warnings for clipboard_osx.m since cppcheck isn't supported on Objective-C
             "--suppress=*:*/sentry-native/*.c" # Ignore errors that occur in sentry-native c files. We shouldn't ignore errors in sentry-native h files
+            "--suppress=*:*/sentry-native/vendor/*" # However, we should ignore errors in the c and h files of sentry-native's build dependencies
+            "--suppress=*:${CMAKE_SOURCE_DIR}/fractal/utils/lodepng.*" # suppress all lodepng warnings, since this is an external library that we should not touch
             "-D__linux" # Needed for sentry.h to pass
             "--inline-suppr" # Allow cppcheck-suppress comments in code
             )
