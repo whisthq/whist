@@ -12,6 +12,7 @@ echo "-----> trying to get git info "
 
 cd /bin
 
+echo $(ls)
 exec 6< "git_info.txt"
 read BRANCH <&6
 read COMMIT <&6
