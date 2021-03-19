@@ -27,7 +27,7 @@ if "%1%" == "--help" (
     cd ..
 
     REM Rename FractalClient to Fractal for consistency with Electron app name, and move over to client-app
-    xcopy /s ..\..\protocol\client\build64\Windows protocol-build\client
+    xcopy /s ..\..\protocol\client\build64 protocol-build\client
     rename protocol-build\client\FractalClient.exe Fractal.exe
 
     REM Note: we no longer add the logo to the executable because the logo gets set

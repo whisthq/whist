@@ -19,6 +19,6 @@ GOTO loop1
 
 :after_loop
 
-cd build64/Windows
+cd client\build64
 FractalClient %RESTVAR%
-cd ../..
+cd ..\..
