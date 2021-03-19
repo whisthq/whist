@@ -13,9 +13,7 @@ def lock_container_and_update(container_name, state, wait=0):
         state (str): Desired state of Container
             [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE, DEALLOCATED, DEALLOCATING, STOPPED, STOPPING,
             DELETING, CREATING, RESTARTING, STARTING]
-        lock (bool): True if Container is locked, False otherwise
-        temporary_lock (int): Number of minutes, starting from now, to lock the Container (max is
-            10).
+        wait (int): delay between acquiring lock and committing the update (for testing)
 
     Returns:
         int: 1 = container is unlocked, -1 = giving up
@@ -34,6 +32,7 @@ def lock_container_and_update(container_name, state, wait=0):
     # optional wait time for testing
     time.sleep(wait)
 
+    # update state and commit
     container.state = state
     db.session.commit()
 
