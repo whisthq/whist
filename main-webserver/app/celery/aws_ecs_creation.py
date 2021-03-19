@@ -364,7 +364,6 @@ def _assign_container(
     dpi=96,
     webserver_url=None,
 ):
-    client_app_auth_secret = os.urandom(16).hex()
     """
     See assign_container. This is helpful to mock.
     """
@@ -378,6 +377,7 @@ def _assign_container(
         force=True,  # necessary since check will fail otherwise
     )
 
+    client_app_auth_secret = os.urandom(16).hex()
     enable_reconnect = False
     task_start_time = time.time()
     user = User.query.get(username)
