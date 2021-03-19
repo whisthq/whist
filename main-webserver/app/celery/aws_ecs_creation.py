@@ -225,7 +225,11 @@ def select_cluster(region_name: str) -> str:
 
 
 def start_container(
-    webserver_url: str, region_name: str, cluster_name: str, task_definition_arn: str
+    webserver_url: str,
+    region_name: str,
+    cluster_name: str,
+    task_definition_arn: str,
+    task_version: int,
 ) -> Tuple[str, int, Dict[int, int], str]:
     """
     This helper function configures and starts a container running
@@ -235,6 +239,7 @@ def start_container(
         region_name: which region to run the container in
         cluster_name: which cluster to run the container in
         task_definition_arn: which taskdef to use
+        task_version: which taskdef version to use
 
     Returns: the task_id, IP, port bindings, and aeskey of the container once running
 
@@ -259,7 +264,14 @@ def start_container(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     ecs_client.set_cluster(cluster_name)
-    ecs_client.set_task_definition_arn(task_definition_arn)
+    if task_version == -1:
+        # the default is -1, so for tasks that don't have a pinned version we run just pass
+        # the task_definition_arn, which AWS interprets to mean run the latest version
+        # this solves backcompat to pre-version pinning days
+        ecs_client.set_task_definition_arn(task_definition_arn)
+    else:
+        # concatenating in this format runs the specific version of the task def
+        ecs_client.set_task_definition_arn(f"{task_definition_arn}:{task_version}")
     ecs_client.run_task(False, **{k: v for k, v in kwargs.items() if v is not None})
 
     # 2 * 300 = 600 secs = 10 minutes max, but with AWS API latencies more like 11-12
@@ -325,6 +337,7 @@ def assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
+    task_version: int,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
@@ -336,6 +349,7 @@ def assign_container(
     :param self: the celery instance running the task
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
+    :param task_version: the version of the taskdef to use
     :param region_name: which region the user needs a container for
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
@@ -346,7 +360,14 @@ def assign_container(
     does not exist for functions with celery decorators like this one.
     """
     return _assign_container(
-        self, username, task_definition_arn, region_name, cluster_name, dpi, webserver_url
+        self,
+        username,
+        task_definition_arn,
+        task_version,
+        region_name,
+        cluster_name,
+        dpi,
+        webserver_url,
     )
 
 
@@ -354,6 +375,7 @@ def _assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
+    task_version: int,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
@@ -390,6 +412,7 @@ def _assign_container(
                         is_assigned=True,
                         user_id=username,
                         task_definition=task_definition_arn,
+                        task_version=task_version,
                         location=region_name,
                     )
                     .limit(1)
@@ -409,7 +432,10 @@ def _assign_container(
         try:
             base_container = ensure_container_exists(
                 UserContainer.query.filter_by(
-                    is_assigned=False, task_definition=task_definition_arn, location=region_name
+                    is_assigned=False,
+                    task_definition=task_definition_arn,
+                    task_version=task_version,
+                    location=region_name,
                 )
                 .filter(UserContainer.cluster.notlike("%test%"))
                 .with_for_update()
@@ -470,14 +496,20 @@ def _assign_container(
             )
             raise Ignore
 
-        message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+        message = (
+            f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
+        )
         self.update_state(
             state="PENDING",
             meta={"msg": message},
         )
         fractal_logger.info(message, extra={"label": username})
         task_id, curr_ip, curr_network_binding, aeskey = start_container(
-            webserver_url, region_name, cluster_name, task_definition_arn
+            webserver_url,
+            region_name,
+            cluster_name,
+            task_definition_arn,
+            task_version,
         )
         # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
@@ -511,6 +543,7 @@ def _assign_container(
             lock=False,
             secret_key=aeskey,
             task_definition=task_definition_arn,
+            task_version=task_version,
             dpi=dpi,
         )
         container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)
@@ -611,6 +644,7 @@ def _assign_container(
         for _ in range(num_extra):
             prewarm_new_container.delay(
                 task_definition_arn,
+                task_version,
                 region_name=region_name,
                 webserver_url=webserver_url,
             )
@@ -626,6 +660,7 @@ def _assign_container(
 def prewarm_new_container(
     self: Task,
     task_definition_arn: str,
+    task_version: int,
     cluster_name: Optional[str] = None,
     region_name: str = "us-east-1",
     webserver_url: str = "fractal-dev-server.herokuapp.com",
@@ -635,6 +670,7 @@ def prewarm_new_container(
     Arguments:
         self: The instance running the celery task
         task_definition_arn: The task definition to use identified by its ARN.
+        task_version: The version of the task def to use.
         region_name: The name of the region containing the cluster on which to
             run the container.
         cluster_name: The name of the cluster on which to run the container.
@@ -643,7 +679,7 @@ def prewarm_new_container(
     task_start_time = time.time()
 
     message = (
-        f"Deploying {task_definition_arn} to {cluster_name or 'next available cluster'} in "
+        f"Deploying {task_definition_arn}:{task_version} to {cluster_name or 'next available cluster'} in "
         f"{region_name}"
     )
 
@@ -670,14 +706,14 @@ def prewarm_new_container(
         self.update_state(state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"})
         raise Ignore
 
-    message = f"Deploying {task_definition_arn} to {cluster_name} in {region_name}"
+    message = f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
     self.update_state(
         state="PENDING",
         meta={"msg": message},
     )
     fractal_logger.info(message)
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
-        webserver_url, region_name, cluster_name, task_definition_arn
+        webserver_url, region_name, cluster_name, task_definition_arn, task_version
     )
     # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
@@ -708,6 +744,7 @@ def prewarm_new_container(
         lock=False,
         secret_key=aeskey,
         task_definition=task_definition_arn,
+        task_version=task_version,
         dpi=96,
     )
     container_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), container)

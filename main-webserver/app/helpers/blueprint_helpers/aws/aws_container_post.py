@@ -127,6 +127,7 @@ def preprocess_task_info(app):
     if app_data:
         return (
             app_data.task_definition,
+            app_data.task_version,
             "us-east-1",
             None,
         )

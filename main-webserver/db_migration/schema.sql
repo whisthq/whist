@@ -293,6 +293,7 @@ CREATE TABLE hardware.supported_app_images (
     app_id character varying NOT NULL,
     logo_url character varying,
     task_definition character varying,
+    task_version integer DEFAULT '-1'::integer NOT NULL,
     category character varying,
     description character varying,
     long_description character varying,
@@ -338,6 +339,7 @@ CREATE TABLE hardware.user_containers (
     secret_key text NOT NULL,
     is_assigned boolean,
     task_definition character varying,
+    task_version integer DEFAULT '-1'::integer NOT NULL,
     dpi integer DEFAULT 96
 );
 
