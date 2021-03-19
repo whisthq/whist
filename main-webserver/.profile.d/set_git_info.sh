@@ -2,9 +2,9 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-GIT_DIR="${DIR}/../bin"
+GIT_DIR="${DIR}/../../bin"
 
-echo "-----> Configuring git branch and commit hash to enviornment variables"
+echo "-----> fuck you leonard"
 
 exec 6< "${GIT_DIR}/git_info.txt"
 read BRANCH <&6
