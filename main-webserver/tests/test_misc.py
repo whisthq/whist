@@ -24,6 +24,7 @@ from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, RegionToAmi
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 from app.constants.http_codes import SUCCESS, ACCEPTED, WEBSERVER_MAINTENANCE
+from app.celery.dummy import dummy_task
 
 
 def test_callback_webserver_hostname_localhost():
@@ -87,13 +88,12 @@ def test_webserver_sigterm(client):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("authorized")
 def test_celery_sigterm(client, authorized, fractal_celery_app, fractal_celery_proc):
-    resp = client.get("/dummy")
-    assert resp.status_code == ACCEPTED
+    # start the dummy task and get the id
+    task_id = dummy_task.delay().id
 
     started = False
-    status_id = resp.json["ID"]
     for _ in range(60):  # try 60 times because process needs to start which has some delay
-        task_result = fractal_celery_app.AsyncResult(status_id)
+        task_result = fractal_celery_app.AsyncResult(task_id)
         if task_result.state == "STARTED":
             started = True
             break
@@ -105,7 +105,7 @@ def test_celery_sigterm(client, authorized, fractal_celery_app, fractal_celery_p
 
     revoked = False
     for _ in range(10):
-        task_result = fractal_celery_app.AsyncResult(status_id)
+        task_result = fractal_celery_app.AsyncResult(task_id)
         if task_result.state == "REVOKED":
             revoked = True
             break

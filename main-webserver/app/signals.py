@@ -21,7 +21,13 @@ _TASKS_LOCK = threading.Lock()
 
 
 class WebSignalHandler:
-    """Handles signals for the web dyno"""
+    """
+    Handles signals for the web dyno. Specifically:
+    - SIGTERM (`handle_sigterm`)
+
+    Initialize in webserver with:
+    >>> WebSignalHandler() # signals are now handled
+    """
 
     def __init__(self):
         signal.signal(signal.SIGTERM, self.handle_sigterm)
