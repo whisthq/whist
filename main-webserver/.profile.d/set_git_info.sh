@@ -17,6 +17,7 @@ exec 6< "git_info.txt"
 read BRANCH <&6
 read COMMIT <&6
 
+cd ..
 export BRANCH=$BRANCH
 export COMMIT=$COMMIT
 
