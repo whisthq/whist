@@ -528,7 +528,6 @@ def _assign_container(
     webserver_url: str = "fractal-dev-server.herokuapp.com",
     num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
-    client_app_auth_secret = os.urandom(16).hex()
     """
     See assign_container. This is helpful to mock.
     """
@@ -542,6 +541,7 @@ def _assign_container(
         force=True,  # necessary since check will fail otherwise
     )
 
+    client_app_auth_secret = os.urandom(16).hex()
     enable_reconnect = False
     task_start_time = time.time()
     user = User.query.get(username)
