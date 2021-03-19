@@ -68,6 +68,7 @@ jobs:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
             - name: Run Tests on Heroku
+              shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               working-directory: main-webserver
