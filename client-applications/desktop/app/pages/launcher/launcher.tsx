@@ -77,7 +77,6 @@ export const Launcher = (props: {
     const [taskState, setTaskState] = useState(FractalAppState.NO_TASK)
     const [protocol, setProtocol] = useState(false)
     const [protocolLock, setProtocolLock] = useState(false)
-    const [shouldForceQuit, setShouldForceQuit] = useState(false)
     const [timedOut, setTimedOut] = useState(false)
     const [killSignalsReceived, setKillSignalsReceived] = useState(0)
     const [loadingMessage, setLoadingMessage] = useState("")
@@ -168,20 +167,12 @@ export const Launcher = (props: {
     }, [timedOut])
 
     useEffect(() => {
-        if (shouldForceQuit) {
-            // forceQuit()
-        }
-    }, [shouldForceQuit])
-
-    useEffect(() => {
         if (
             taskState === FractalAppState.FAILURE ||
             protocolKillSignal > killSignalsReceived
         ) {
             // If the task failed or we manually kill the protocol due to a login
             // or payment issue, don't quit the entire Electron app
-            setShouldForceQuit(false)
-
             logger.logError(
                 "Task state is FAILURE, sending protocol kill",
                 userID
@@ -220,7 +211,6 @@ export const Launcher = (props: {
             ipc.sendSync(FractalIPC.SHOW_MAIN_WINDOW, false)
             logger.logInfo("Launching protocol", userID)
             ipc.sendSync(FractalIPC.LAUNCH_PROTOCOL, true)
-            setShouldForceQuit(true)
             setProtocol(true)
 
             logger.logInfo("Dispatching create container action", userID)
