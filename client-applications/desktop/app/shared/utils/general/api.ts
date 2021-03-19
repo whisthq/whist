@@ -1,4 +1,5 @@
 import fetch from "node-fetch"
+import https from "https"
 import { config, webservers } from "../../constants/config"
 import { debugLog } from "../../utils/general/logging"
 import {
@@ -230,35 +231,71 @@ export const graphQLPost = async (
 export const apiPut = async (
     endpoint: string,
     body: Record<string, any>,
-    server: string | undefined
+    server: string | undefined,
+    ignoreCertificate = false
 ) => {
     /*
     Description:
-        Sends an HTTP get request
+        Sends an HTTP put request.
+
+    NOTE: So far, we only make a PUT request when communicating with the host service, and the
+        host service uses a self-signed certificate. `fetch` with a custom agent doesn't seem to work
+        to `rejectUnauthorized`, so we use the lower-level `https` module and generate our own
+        Promise to handle the response from the host service.
 
     Arguments:
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         body (JSON) : PUT request body
         server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
+        ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed).
+            This is `false` by default because we only want to not `rejectUnauthorized` when we are certain
+            about the host's certificate being self-signed or trusted.
 
     Returns:
-        { json, success, response } (JSON) : Returned JSON of POST request, success True/False, and HTTP response
+        { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
     */
+
     if (server) {
         try {
             const fullUrl = `${server}${endpoint}`
-            const response = await fractalBackoff(() =>
-                fetch(fullUrl, {
-                    method: FractalHTTPRequest.PUT,
-                    headers: {
-                        "Content-Type": FractalHTTPContent.JSON,
-                    },
-                    body: JSON.stringify(body),
+
+            const returnDict = await fractalBackoff(() => {
+                return new Promise((resolve, reject) => {
+                    // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
+                    const request = https.request(
+                        fullUrl,
+                        {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": FractalHTTPContent.JSON,
+                            },
+                            rejectUnauthorized: !ignoreCertificate,
+                        },
+                        (response) => {
+                            let responseText = ""
+                            response.on("data", (data) => {
+                                responseText += data
+                            })
+                            response.on("end", () => {
+                                const statusCode = response.statusCode
+                                    ? response.statusCode
+                                    : 400
+                                const json = JSON.stringify(responseText)
+                                const success = checkResponse({
+                                    status: statusCode,
+                                })
+                                resolve({ json, success, response: statusCode })
+                            })
+                        }
+                    )
+                    request.write(JSON.stringify(body))
+                    request.on("error", (e) => {
+                        reject(e)
+                    })
+                    request.end()
                 })
-            )
-            const json = await response.json()
-            const success = checkJSON(json) && checkResponse(response)
-            return { json, success, response }
+            })
+            return returnDict
         } catch (err) {
             debugLog(err)
             return err

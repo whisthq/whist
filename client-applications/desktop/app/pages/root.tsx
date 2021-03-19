@@ -21,7 +21,7 @@ import TitleBar from "shared/components/titleBar"
 import { config } from "shared/constants/config"
 import { FractalRoute } from "shared/types/navigation"
 
-const Root = (props: { loginToken: string, accessToken: string }) => {
+const Root = (props: { loginToken: string; accessToken: string }) => {
     /*
         Highest level component, containers React Router and title bar
 
@@ -96,7 +96,10 @@ const Root = (props: { loginToken: string, accessToken: string }) => {
 
 // Keeping here for future use
 const mapStateToProps = (state: {
-    AuthReducer: { authFlow: { loginToken: string }, user: { accessToken: string } }
+    AuthReducer: {
+        authFlow: { loginToken: string }
+        user: { accessToken: string }
+    }
 }) => {
     return {
         loginToken: state.AuthReducer.authFlow.loginToken,
