@@ -16,13 +16,13 @@
       ],
       "buildpacks": [
         {
+          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
+        },
+        {
           "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
         },
         {
           "url": "https://github.com/heroku/heroku-buildpack-inline.git"
-        },
-        {
-          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
         },
         {
           "url": "heroku/python"
