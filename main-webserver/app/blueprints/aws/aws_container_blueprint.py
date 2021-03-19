@@ -219,7 +219,7 @@ def test_endpoint(action, **kwargs):
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
                 kwargs["body"]["task_definition_arn"],
-                kwargs["body"].get("task_version", None),
+                kwargs["body"].get("task_version", -1),
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
