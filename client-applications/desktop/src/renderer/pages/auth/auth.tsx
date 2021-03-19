@@ -3,6 +3,7 @@ import { Route } from "react-router-dom"
 
 import Login from "@app/renderer/pages/auth/login"
 import Signup from "@app/renderer/pages/auth/signup"
+import { useMainState } from "@app/utils/state"
 
 const Auth = () => {
     /*
@@ -10,8 +11,10 @@ const Auth = () => {
             Router for auth-related pages (e.g. login and signup)
     */
 
-    const onLogin = () => {
-        console.log("Logged in!")
+    const [_state, setState] = useMainState()
+
+    const onLogin = (json: any) => {
+        setState({ accessToken: json.access_token || ""})
     }
 
     const onSignup = () => {
