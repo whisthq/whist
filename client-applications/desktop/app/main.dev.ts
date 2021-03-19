@@ -68,7 +68,7 @@ const createWindow = async () => {
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
-            show: true,
+            show: false,
             frame: false,
             center: true,
             resizable: true,
@@ -80,7 +80,7 @@ const createWindow = async () => {
         })
     } else if (os.platform() === "darwin") {
         mainWindow = new BrowserWindow({
-            show: true,
+            show: false,
             titleBarStyle: "hidden",
             center: true,
             resizable: true,
