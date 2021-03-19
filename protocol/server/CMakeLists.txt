@@ -2,9 +2,6 @@
 ################## FractalServer ##################
 ]]
 
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH $ORIGIN)
 add_executable(FractalServer
         client.c
         main.c
@@ -13,12 +10,16 @@ add_executable(FractalServer
         webserver.c
         )
 
+set_target_properties(FractalServer PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch}
+        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/server/build${arch})
+
 # copy the sentry shared library to the build folder after the build
 add_custom_command(
         TARGET FractalServer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/sentry-native/${CMAKE_SHARED_LIBRARY_PREFIX}sentry${CMAKE_SHARED_LIBRARY_SUFFIX}
-        ${CMAKE_SOURCE_DIR}/server/build${arch})
+        $<TARGET_FILE_DIR:FractalServer>)
 
 # MacOS and Windows default to crashpad for Sentry, and crashpad_handler needs to be in
 #   the same folder as the executable
@@ -27,19 +28,15 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin" OR ${CMAKE_SYSTEM_NAME} MATCHES "Linux
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler
-            ${CMAKE_SOURCE_DIR}/server/build${arch})
+            $<TARGET_FILE_DIR:FractalServer>)
 endif()
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_custom_command(
             TARGET FractalServer POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_SOURCE_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
-            ${CMAKE_SOURCE_DIR}/server/build${arch})
+            $<TARGET_FILE_DIR:FractalServer>)
 endif()
-
-set_target_properties(FractalServer PROPERTIES
-        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch}
-        LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/server/build${arch})
 
 #Print out compile flags in verbose mode of CMake
 message(VERBOSE "c base flags ${CMAKE_C_FLAGS}")
