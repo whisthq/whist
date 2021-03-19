@@ -68,7 +68,7 @@ const createWindow = async () => {
     const os = require("os")
     if (os.platform() === "win32") {
         mainWindow = new BrowserWindow({
-            show: false,
+            show: true,
             frame: false,
             center: true,
             resizable: true,
@@ -167,10 +167,10 @@ const createWindow = async () => {
                 app.dock.show()
             }
         } else if (!showMainWindow && mainWindow) {
-            // mainWindow.hide()
-            // if (app && app.dock) {
-            //     app.dock.hide()
-            // }
+            mainWindow.hide()
+            if (app && app.dock) {
+                app.dock.hide()
+            }
         }
         event.returnValue = argv
     })

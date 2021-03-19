@@ -236,56 +236,62 @@ export const apiPut = async (
 ) => {
     /*
     Description:
-        Sends an HTTP get request
+        Sends an HTTP put request.
+
+    NOTE: So far, we only make a PUT request when communicating with the host service, and the
+        host service uses a self-signed certificate. `fetch` with a custom agent doesn't seem to work
+        to `rejectUnauthorized`, so we use the lower-level `https` module and generate our own
+        Promise to handle the response from the host service.
 
     Arguments:
         endpoint (string) : HTTP endpoint (e.g. /account/login)
         body (JSON) : PUT request body
         server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
+        ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed)
 
     Returns:
-        { json, success, response } (JSON) : Returned JSON of POST request, success True/False, and HTTP response
+        { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
     */
-    if (server) {
-        var httpsAgent: https.Agent | undefined = new https.Agent({
-            rejectUnauthorized: false,
-        })
-        if (ignoreCertificate) {
-            httpsAgent = new https.Agent({
-                rejectUnauthorized: false,
-            })
-        }
 
+    if (server) {
         try {
             const fullUrl = `${server}${endpoint}`
 
-            const request = https.request(
-                fullUrl,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": FractalHTTPContent.JSON,
-                    },
-                    rejectUnauthorized: false,
-                },
-                (res) => {
-                    let response = ""
-                    res.on("data", (data) => {
-                        response += data
+            const returnDict = await fractalBackoff(() => {
+                return new Promise((resolve, reject) => {
+                    // If we want to ignore the host certificate, then `rejectUnauthorized` should be true
+                    const request = https.request(
+                        fullUrl,
+                        {
+                            method: "PUT",
+                            headers: {
+                                "Content-Type": FractalHTTPContent.JSON,
+                            },
+                            rejectUnauthorized: !ignoreCertificate,
+                        },
+                        (response) => {
+                            let responseText = ""
+                            response.on("data", (data) => {
+                                responseText += data
+                            })
+                            response.on("end", () => {
+                                const statusCode = response.statusCode ? response.statusCode : 400
+                                const json = JSON.stringify(responseText)
+                                const success =
+                                    (!!json && statusCode === 202) || statusCode === 200
+                                resolve({ json, success, response: statusCode })
+                            })
+                        }
+                    )
+                    request.write(JSON.stringify(body))
+                    request.on("error", (e) => {
+                        throw e
+                        reject({ json: null, success: false, response: null })
                     })
-                    const statusCode = res.statusCode ? res.statusCode : 400
-                    const json = JSON.stringify(response)
-                    const success =
-                        (!!json && statusCode === 202) || statusCode === 200
-
-                    return { json, success, response: statusCode }
-                }
-            )
-            request.write(JSON.stringify(body))
-            request.on("error", (e) => {
-                throw e
+                    request.end()
+                })
             })
-            request.end()
+            return returnDict
         } catch (err) {
             debugLog(err)
             return err
