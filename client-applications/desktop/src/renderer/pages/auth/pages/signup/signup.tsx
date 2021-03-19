@@ -1,42 +1,79 @@
-import React, { useState } from "react"
-import { Flipper, Flipped } from "react-flip-toolkit"
+import React, { useState, useEffect } from "react"
+import { Flipped, Flipper } from "react-flip-toolkit"
 import FadeIn from "react-fade-in"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"
 import { FractalInput, FractalInputState } from "@app/components/html/input"
-import { AuthWarning } from "@app/components/custom/warning"
+import { AuthWarning, InputWarning } from "@app/components/custom/warning"
 import { FractalButton, FractalButtonState } from "@app/components/html/button"
-import { FractalNavigation } from "@app/components/custom/navigation"
-
 import {
-    loginEnabled,
+    checkEmailVerbose,
+    signupEnabled,
     checkEmail,
     checkPassword,
 } from "@app/renderer/pages/auth/shared/helpers/authHelpers"
+import { emailSignup } from "@app/renderer/pages/auth/pages/signup/shared/utils/api"
 
-const Login = (props: { onSignup: (json: object) => void }) => {
+import { fractalSignupWarning } from "@app/renderer/pages/auth/pages/signup/shared/utils/constants"
+
+const Signup = (props: { onSignup: (json: object) => void }) => {
+    /*
+        Component for signing up for Fractal
+        Contains the form to signup, and also dispatches an API request to
+        the server to authenticate the user.
+        Arguments:
+            dispatch (Dispatch<any>): Action dispatcher
+            user (User): User from Redux state
+            authFlow (AuthFlow): AuthFlow from Redux state
+    */
     const { onSignup } = props
 
     const [email, setEmail] = useState("")
+    const [name, setName] = useState("")
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
+
     const [processing, setProcessing] = useState(false)
     const [signupWarning, setSignupWarning] = useState("")
+
+    // Dispatches signup API call
+    const signup = () => {
+        if (signupEnabled(email, name, password, confirmPassword)) {
+            setProcessing(true)
+            emailSignup(email, password, name, "").then(
+                ({ json, response }) => {
+                    if (json && response.status === 200) {
+                        setSignupWarning(fractalSignupWarning.NONE)
+                        onSignup(json)
+                    } else {
+                        setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
+                        setEmail("")
+                        setPassword("")
+                        setName("")
+                        setConfirmPassword("")
+                    }
+                    setProcessing(false)
+                }
+            )
+        } else {
+            setProcessing(false)
+        }
+    }
+
+    const checkName = (n: string): boolean => {
+        return n.length > 0
+    }
 
     const buttonState = () => {
         if (processing) {
             return FractalButtonState.PROCESSING
         } else {
-            if (loginEnabled(email, password)) {
+            if (signupEnabled(email, name, password, confirmPassword)) {
                 return FractalButtonState.DEFAULT
             } else {
                 return FractalButtonState.DISABLED
             }
         }
-    }
-
-    const signup = () => {
-        // TODO: Signup API call
     }
 
     return (
@@ -47,6 +84,7 @@ const Login = (props: { onSignup: (json: object) => void }) => {
                     <h5 className="font-body mt-8 text-xl mb-6 font-semibold">
                         Sign up to get started
                     </h5>
+                    <InputWarning warning={checkEmailVerbose(email)} />
                     <AuthWarning warning={signupWarning} />
                     <Flipper
                         flipKey={checkPassword(password).toString()}
@@ -139,4 +177,4 @@ const Login = (props: { onSignup: (json: object) => void }) => {
     )
 }
 
-export default Login
+export default Signup

@@ -1,4 +1,4 @@
-import React, { useState, KeyboardEvent } from "react"
+import React, { useState } from "react"
 import FadeIn from "react-fade-in"
 
 import { Logo } from "@app/renderer/pages/auth/shared/components/logo"

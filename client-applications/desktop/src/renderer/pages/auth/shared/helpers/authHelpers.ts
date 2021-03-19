@@ -87,11 +87,17 @@ export const loginEnabled = (email: string, password: string): boolean => {
     return checkEmail(email) && checkPassword(password)
 }
 
-export const checkConfirmPasswordVerbose = (password: string, confirmPassword: string) => {
-    if(confirmPassword.length === 0) {
+export const checkConfirmPasswordVerbose = (
+    password: string,
+    confirmPassword: string
+) => {
+    if (confirmPassword.length === 0) {
         return ""
-    } 
-    
-    const valid = (confirmPassword === password && password.length > 0 && confirmPassword.length > 0)
+    }
+
+    const valid =
+        confirmPassword === password &&
+        password.length > 0 &&
+        confirmPassword.length > 0
     return valid ? "" : "Doesn't match"
 }
