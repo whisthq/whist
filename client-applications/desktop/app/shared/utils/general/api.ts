@@ -248,48 +248,44 @@ export const apiPut = async (
     */
     if (server) {
         var httpsAgent: https.Agent | undefined = new https.Agent({
-              rejectUnauthorized: false,
-            });
+            rejectUnauthorized: false,
+        })
         if (ignoreCertificate) {
             httpsAgent = new https.Agent({
-              rejectUnauthorized: false,
-            });
+                rejectUnauthorized: false,
+            })
         }
 
-        console.log(httpsAgent)
-
         try {
-            let retVal;
             const fullUrl = `${server}${endpoint}`
-            // const response =
-                // await fetch(fullUrl, {
-                //     method: FractalHTTPRequest.PUT,
-                //     headers: {
-                //         "Content-Type": FractalHTTPContent.JSON,
-                //     },
-                //     body: JSON.stringify(body),
-                //     agent: httpsAgent
-                // })
-            const request = https.request("https://34.203.191.146:4678/set_config_encryption_token", {
-                method: 'PUT',
-                headers: {
-                    "Content-Type": FractalHTTPContent.JSON,
-                },
-                rejectUnauthorized: false
-            }, (res) => {
-                res.setEncoding('utf8');
-                console.dir(res)
-                res.on('data', (data) => {
-                    console.log(data)
-                })
-            })
-            request.write(JSON.stringify(body))
-            request.end()
 
-            // console.dir(response)
-            // const json = await response.json()
-            // const success = checkJSON(json) && checkResponse(response)
-            // return { json, success, response }
+            const request = https.request(
+                fullUrl,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": FractalHTTPContent.JSON,
+                    },
+                    rejectUnauthorized: false,
+                },
+                (res) => {
+                    let response = ""
+                    res.on("data", (data) => {
+                        response += data
+                    })
+                    const statusCode = res.statusCode ? res.statusCode : 400
+                    const json = JSON.stringify(response)
+                    const success =
+                        (!!json && statusCode === 202) || statusCode === 200
+
+                    return { json, success, response: statusCode }
+                }
+            )
+            request.write(JSON.stringify(body))
+            request.on("error", (e) => {
+                throw e
+            })
+            request.end()
         } catch (err) {
             debugLog(err)
             return err
