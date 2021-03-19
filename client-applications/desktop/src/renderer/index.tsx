@@ -7,9 +7,6 @@ import Auth from "@app/renderer/pages/auth/auth"
 
 import { browserHistory } from "@app/utils/history"
 
-// @ts-ignore
-const ipcRenderer = window.ipcRenderer
-
 const RootComponent = () => (
     <>
         <Router history={browserHistory}>
