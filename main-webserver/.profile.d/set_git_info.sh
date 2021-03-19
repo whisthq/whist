@@ -8,13 +8,11 @@ echo $PWD
 echo $DIR
 echo $(ls)
 
-cd /bin
-
 echo "-----> trying to get git info "
 
 
 
-exec 6< "${DIR}/bin/git_info.txt"
+exec 6< "${DIR}/../../bin/git_info.txt"
 read BRANCH <&6
 read COMMIT <&6
 
