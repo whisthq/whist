@@ -1,0 +1,12 @@
+Package: xf86-input-libinput-fractal
+Version: 0.29.0-2
+Section: x11
+Priority: optional
+Architecture: all
+Depends: libinput-fractal
+Provides: xserver-xorg-input-libinput (= 9.99.9)
+Maintainer: Fractal (developers@fractal.co)
+Description: Fractal provides our own, patched
+ build of xf86-input-libinputlibinput. Please
+ contact us for more
+ details.
