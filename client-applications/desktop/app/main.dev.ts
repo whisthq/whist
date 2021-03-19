@@ -176,7 +176,7 @@ const createWindow = async () => {
     })
 
     ipc.on(FractalIPC.LOAD_BROWSER, (event, argv) => {
-        /* 
+        /*
             Listener to load in a browser url. Assigned to either paymentWindow or loginWindow (the only two windows we currently need)
             Arguments:
                 argv[0]: url to launch the browser window with
