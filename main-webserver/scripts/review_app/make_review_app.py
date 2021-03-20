@@ -49,7 +49,7 @@ def setup_review_app():
     # add DB_EXISTS=true and POSTGRES_URI=<eph_db_url> to env, then
     # run `ephemeral_db_setup/db_setup.sh`
     print(
-        f"Settup up ephemeral db at {eph_db_url}.\n"
+        f"Setting up ephemeral db at {eph_db_url}.\n"
         "This writes your local schema (db_migration/schema.sql) and "
         "data (ephemeral_db_setup/db_data.sql) to the db.\n"
         "Please make sure your data is up-to-date. If not, delete "
