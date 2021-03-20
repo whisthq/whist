@@ -27,6 +27,7 @@ from app.constants.http_codes import (
     SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
+from app.constants.aws_constants import USE_LATEST_TASK_VERSION
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     ping_helper,
@@ -219,7 +220,7 @@ def test_endpoint(action, **kwargs):
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
                 kwargs["body"]["task_definition_arn"],
-                kwargs["body"].get("task_version", -1),
+                kwargs["body"].get("task_version", USE_LATEST_TASK_VERSION),
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST

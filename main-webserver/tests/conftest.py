@@ -14,6 +14,7 @@ from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 import app.constants.env_names as env_names
 from app.helpers.utils.general.limiter import limiter
+from app.constants.aws_constants import USE_LATEST_TASK_VERSION
 
 
 @pytest.fixture
@@ -164,7 +165,7 @@ def container(cluster, user, task_def_env):
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
             task_definition=f"fractal-{task_def_env}-browsers-chrome",
-            task_version=-1,
+            task_version=USE_LATEST_TASK_VERSION,
             os="Linux",
             state=initial_state,
             user_id=user.user_id,
@@ -210,7 +211,7 @@ def bulk_container(cluster, user, task_def_env):
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
             location="us-east-1",
             task_definition=f"fractal-{task_def_env}-browsers-chrome",
-            task_version=-1,
+            task_version=USE_LATEST_TASK_VERSION,
             os="Linux",
             state="CREATING",
             user_id=user.user_id,

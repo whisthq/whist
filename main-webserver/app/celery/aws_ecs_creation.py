@@ -38,6 +38,7 @@ from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
+from app.constants.aws_constants import USE_LATEST_TASK_VERSION
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
@@ -264,7 +265,7 @@ def start_container(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     ecs_client.set_cluster(cluster_name)
-    if task_version == -1:
+    if task_version == USE_LATEST_TASK_VERSION:
         # the default is -1, so for tasks that don't have a pinned version we just pass
         # the task_definition_arn, which AWS interprets to mean run the latest version
         # this solves backcompat to pre-version pinning days
@@ -512,7 +513,6 @@ def _assign_container(
             task_definition_arn,
             task_version,
         )
-        # TODO:  Get this right
         if curr_ip == -1 or curr_network_binding == -1:
             set_container_state(
                 keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
@@ -717,7 +717,6 @@ def prewarm_new_container(
     task_id, curr_ip, curr_network_binding, aeskey = start_container(
         webserver_url, region_name, cluster_name, task_definition_arn, task_version
     )
-    # TODO:  Get this right
     if curr_ip == -1 or curr_network_binding == -1:
         fractal_logger.error("Error generating task with running IP", extra={"label": "prewarmed"})
         self.update_state(state="FAILURE", meta={"msg": "Error generating task with running IP"})
