@@ -57,12 +57,12 @@
         "linux": {
             "artifactName": "Fractal.${ext}",
             "category": "Productivity",
-            "description": "Fractal Chromium Desktop Application. ",
+            "description": "Fractal Desktop Application. ",
             "extraFiles": [
                 "protocol-build/"
             ],
             "icon": "build/icon.png",
-            "synopsis": "Fractal Chromium Desktop Application",
+            "synopsis": "Fractal Desktop Application",
             "target": [
                 "AppImage"
             ]

@@ -37,7 +37,7 @@ if "%1%" == "--help" (
     yarn -i
 
     REM Increase yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
-    yarn config set network-timeout 300000
+    yarn config set network-timeout 600000
 
     if "%publish%" == "true" (
         if "%env%" == "dev" (

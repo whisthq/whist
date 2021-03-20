@@ -67,13 +67,15 @@ else
     cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
     cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
-    # Sign each FractalClient binary
+    # Sign each external library binary
     for filename in protocol-build/client/*.dylib; do
         codesign -f -v -s "Fractal Computers, Inc." $filename
     done
 
+    # Sign the extra Sentry binary that we bundle in our macOS application
+    # Note: the Fractal protocol binary gets codesigned in build/AfterSign.js, since it needs
+    # to be renamed after building the client-app to avoid conflicts with the client-app name
     codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/FractalClient
 
     # Copy loading images to a temp folder (will be moved in afterSign script)
     rm -rf loadingtemp
@@ -86,7 +88,7 @@ else
     yarn -i
 
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
-    yarn config set network-timeout 300000
+    yarn config set network-timeout 600000
 
     if [[ "$publish" == "true" ]]
     then
