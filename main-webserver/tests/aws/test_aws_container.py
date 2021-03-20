@@ -501,7 +501,7 @@ def test_update_all_taskdefs(client, authorized, monkeypatch):
     for app_data in all_app_data:
         assert app_data.task_version == DUMMY_TASK_VERSION
         # the task version should be different than the cached
-        assert app_data.task_version != app_id_to_version[app_data.app]
+        assert app_data.task_version != app_id_to_version[app_data.app_id]
 
     # restore db to old state
     db.session.expire_all()
@@ -519,7 +519,7 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     to be a foreign key issue that errored out.
     """
 
-    app_data = SupportedAppImages.query.get("Google Chrome")
+    app_data = SupportedAppImages.query.get("Blender")
     _ = bulk_container(is_assigned=False)
 
     old_version = app_data.task_version
