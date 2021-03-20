@@ -228,11 +228,11 @@ def try_register_task(task_id: int) -> bool:
         success = False
     else:
         _REDIS_CONN.rpush(_REDIS_TASKS_KEY, task_id)
-        # this key will last at most 600 sec = 10 minutes before being deleted
+        # this key will last at most 900 sec = 15 minutes before being deleted
         # we need this because tasks have no guarantee of termination; this
         # stops us from tracking outdated tasks.
         # any existing expire time on a key is reset after this invocation.
-        _REDIS_CONN.expire(_REDIS_TASKS_KEY, 600)
+        _REDIS_CONN.expire(_REDIS_TASKS_KEY, 900)
         success = True
 
     _release_lock()
