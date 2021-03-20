@@ -218,6 +218,7 @@ def test_retry_timeout():
     end = time.time()
 
     assert counter["count"] == 4  # The function is called four times in total.
+    assert int(end - start) == 5
 
 
 def test_rate_limiter(client):
