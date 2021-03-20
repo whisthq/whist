@@ -443,7 +443,7 @@ def test_update_single_taskdef(client, authorized, monkeypatch):
         if app_data.app_id == app_id:
             assert app_data.task_version == DUMMY_TASK_VERSION
             # the task version should be different than the cached
-            assert app_data.task_version != app_id_to_version[app_data.app]
+            assert app_data.task_version != app_id_to_version[app_data.app_id]
         else:
             # everything else should be the same as cached
             assert app_data.task_version == app_id_to_version[app_data.app_id]
