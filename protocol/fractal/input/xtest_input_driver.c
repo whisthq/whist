@@ -370,7 +370,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     return 0;
 }
 
-int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     XLockDisplay(input_device->display);
 
     if (y > 0) {
@@ -395,6 +395,14 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     XSync(input_device->display, false);
     XUnlockDisplay(input_device->display);
     return 0;
+}
+
+int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+    UNUSED(input_device, x, y);
+    LOG_WARNING(
+        "High resolution scroll not implemented for the XTest driver! "
+        "Falling back to low-resolution scroll.");
+    return -1;
 }
 
 #endif  // INPUT_DRIVER == XTEST_INPUT_DRIVER
