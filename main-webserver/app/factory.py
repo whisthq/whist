@@ -9,6 +9,7 @@ from flask_sendgrid import SendGrid
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
+from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 import app.constants.env_names as env_names
 
 jwtManager = JWTManager()
@@ -52,6 +53,7 @@ def create_app(testing=False):
     jwtManager.init_app(app)
     ma.init_app(app)
     mail.init_app(app)
+    register_flask_view_metrics_monitor(app)
 
     CORS(app)
 
