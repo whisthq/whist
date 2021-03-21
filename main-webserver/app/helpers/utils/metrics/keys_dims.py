@@ -7,3 +7,8 @@ ENVIRONMENT = "environment"
 HOST_SERVER = "host_server"
 APP_GIT_COMMIT = "app_git_commit"
 APP_NAME = "app_name"
+
+CELERY_WORKER_ID = "celery_worker_id"
+CELERY_TASK_NAME = "celery_task_name"
+CELERY_TASK_ID = "celery_task_id"
+CELERY_TASK_STATUS = "celery_task_status"

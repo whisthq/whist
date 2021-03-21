@@ -24,6 +24,7 @@ from celery import Celery
 from celery.app.task import Task
 from hirefire.contrib.flask.blueprint import build_hirefire_blueprint
 from hirefire.procs.celery import CeleryProc
+from app.helpers.utils.metrics.celery import register_metrics_monitor_in_worker
 
 # Celery configuration options used to configure all Celery application instances. The WORKER is
 # the program that is started with
@@ -117,6 +118,8 @@ def make_celery(flask_app):
     """
 
     celery = Celery(flask_app.import_name, set_as_current=True, **celery_params(flask_app))
+
+    register_metrics_monitor_in_worker(flask_app)
 
     class SimpleCeleryProc(CeleryProc):
         queues = ("celery",)
