@@ -264,7 +264,7 @@ CREATE VIEW hardware.cluster_sorted AS
     cluster_info.status,
     cluster_info.location
    FROM hardware.cluster_info
-  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
+  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance"::double precision = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
   ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
 
 
