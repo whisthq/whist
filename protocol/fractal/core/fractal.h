@@ -407,9 +407,9 @@ typedef struct FractalMouseButtonMessage {
 /// @details Message from mouse wheel.
 typedef struct FractalMouseWheelMessage {
     int32_t x;        ///< Horizontal delta of mouse wheel rotation. Negative values
-                      ///< scroll left.
+                      ///< scroll left. Only used for Windows server.
     int32_t y;        ///< Vertical delta of mouse wheel rotation. Negative values
-                      ///< scroll up.
+                      ///< scroll up. Only used for Windows server.
     float precise_x;  ///< Horizontal floating delta of mouse wheel/trackpad scrolling.
     float precise_y;  ///< Vertical floating delta of mouse wheel/trackpad scrolling.
 } FractalMouseWheelMessage;

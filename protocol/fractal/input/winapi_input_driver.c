@@ -421,7 +421,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     return 0;
 }
 
-int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
     UNUSED(input_device);
 
     INPUT ip[2];  // vertical and horizontal are separate
@@ -448,6 +448,18 @@ int emit_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
 
     return 0;
 }
+
+int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+    UNUSED(input_device);
+    UNUSED(x);
+    UNUSED(y);
+
+    LOG_WARNING(
+        "High resolution scroll not implemented for Windows servers! "
+        "Falling back to low-resolution scroll.");
+    return -1;
+}
+
 void enter_win_string(enum FractalKeycode* keycodes, int len) {
     // get screen width and height for mouse cursor
     int i, index = 0;

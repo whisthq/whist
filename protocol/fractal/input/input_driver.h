@@ -131,7 +131,8 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
 int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed);
 
 /**
- * @brief                          Emit a mouse vertical or horizontal scroll event
+ * @brief                          Emit a low-resolution vertical or horizontal mouse
+ *                                 scroll event, for click-wheel mouse inputs.
  *
  * @param input_device             The initialized input device to write
  *
@@ -141,6 +142,20 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_mouse_wheel_event(InputDevice* input_device, float x, float y);
+int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y);
+
+/**
+ * @brief                          Emit a high-resolution vertical or horizontal mouse
+ *                                 scroll event, for trackpads or smooth mouse wheels
+ *
+ * @param input_device             The initialized input device to write
+ *
+ * @param x                        Horizontal scroll value as a float
+ *
+ * @param y                        Vertical scroll value as a float
+ *
+ * @returns                        0 on success, -1 on failure
+ */
+int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y);
 
 #endif  // INPUT_DRIVER_H

@@ -474,10 +474,22 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
+int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
+    emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    return 0;
+}
 
-int emit_mouse_wheel_event(InputDevice* input_device, float x, float y) {
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y);
-    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES, x);
+// Libinput expects high-resolution wheel data as fractions of 120; that is,
+// a value of 120 represents a single discrete wheel click in that direction,
+// and all smaller values represent high-resolution, smaller scrolls.
+#define LIBINPUT_WHEEL_DELTA 120
+
+int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y * LIBINPUT_WHEEL_DELTA);
+    emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES,
+                     x * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
