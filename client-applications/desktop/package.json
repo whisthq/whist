@@ -6,7 +6,8 @@
     "scripts": {
         "start": "sh ./scripts/start.sh",
         "build": "sh ./scripts/build.sh",
-        "package": "sh ./scripts/package.sh",
+        "package": "sh ./scripts/package.sh --publish never",
+        "package-ci": "sh ./scripts/package.sh --publish always",
         "tailwind": "sh scripts/tailwind.sh",
         "postinstall": "sh scripts/postinstall.sh"
     },
@@ -22,6 +23,7 @@
         "electron-store": "^7.0.2",
         "history": "^4.10.1",
         "lodash": "^4.17.21",
+        "path": "^0.12.7",
         "prop-types": "^15.7.2",
         "react": "^17.0.1",
         "react-dom": "^17.0.1",

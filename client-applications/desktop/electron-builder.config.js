@@ -10,8 +10,10 @@ const appDetails = {
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
 const bundleConfig = {
-    artifactName: "Fractal.${ext}",
+    afterSign: "build/afterSign.js",
 
+    artifactName: "Fractal.${ext}",
+    
     asar: true,
 
     directories: {
