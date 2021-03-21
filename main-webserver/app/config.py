@@ -181,6 +181,14 @@ class DeploymentConfig:
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
+    # If this is not set then metrics will not be shipped to logz
+    METRICS_SINK_LOGZ_TOKEN = property(getter("METRICS_SINK_LOGZ_TOKEN", raising=False))
+
+    # Set this to append metrics' JSON to a local file; intended for development + testing
+    METRICS_SINK_LOCAL_FILE = property(
+        getter("METRICS_SINK_LOCAL_FILE", fetch=False, raising=False)
+    )
+
     @property
     def ENVIRONMENT(self) -> str:  # pylint: disable=invalid-name
         """Which environment (production, staging, development, local) is the application
@@ -229,6 +237,50 @@ class DeploymentConfig:
             @see app.constants.config_table_names
         """
         return config_table_names.from_env(self.ENVIRONMENT)
+
+    @property
+    def APP_GIT_COMMIT(self):  # pylint: disable=invalid-name
+        """The git commit (i.e. sha) of the source code for this particular instance of the
+        application.
+
+        The current implementation assumes that Heroku is the execution environment. It should fail
+        if this is not the case (hence os.environ[] instead of os.environ.get()). It supports
+        standard heroku app environments as well as test environments.
+        """
+
+        # If need be, APP_GIT_COMMIT can be set in the environment to override any automated commit
+        # extraction from the environment. This is not recommended, though it's left as an escape
+        # hatch if the app is being run on a non-Heroku platform for dev purposes and it's not yet
+        # worth changing the source code to correctly extract the git commit information.
+        if (override_commit := os.environ.get("APP_GIT_COMMIT")) is not None:
+            return override_commit
+
+        # if running in a heroku test environment, such as via `heroku ci:run`
+        if (test_commit := os.environ.get("HEROKU_TEST_RUN_COMMIT_VERSION")) is not None:
+            return test_commit
+
+        return os.environ["HEROKU_SLUG_COMMIT"]  # requires heroku lab's runtime-dyno-metadata
+
+    @property
+    def HOST_SERVER(self):  # pylint: disable=invalid-name
+        """A unique identifier representing the server (ie. VM) that this instance of the
+        application is running on.
+
+        The current implementation assumes that Heroku is the execution environment. It should fail
+        if this is not the case (hence os.environ[] instead of os.environ.get()).
+        """
+
+        # If need be, HOST_SERVER can be set in the environment to override any automated server ID
+        # extraction from the environment. This is not recommended, though it's left as an escape
+        # hatch if the app is being run on a non-Heroku platform for dev purposes and it's not yet
+        # worth changing the source code to correctly extract the host server identifiers.
+        if (override_host := os.environ.get("HOST_SERVER")) is not None:
+            return override_host
+
+        if (test_dyno := os.environ.get("DYNO")) is not None:
+            return test_dyno
+
+        return "heroku-" + os.environ["HEROKU_DYNO_ID"]
 
     @property
     def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
@@ -285,6 +337,9 @@ class LocalConfig(DeploymentConfig):
 
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
+    APP_GIT_COMMIT = try_parent_property_or(DeploymentConfig, "APP_GIT_COMMIT", "unknown-local")
+    HOST_SERVER = try_parent_property_or(DeploymentConfig, "HOST_SERVER", "local-unknown")
+
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
     MAILSLURP_API_KEY = property(
