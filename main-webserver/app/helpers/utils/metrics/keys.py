@@ -6,3 +6,5 @@ metrics being recorded.
 CELERY__TASKS_PROCESSING__COUNT = "celery.tasks_processing.count"
 CELERY__TASK_DURATION__MS = "celery.task_duration.ms"
 CELERY__TASK_QUEUE_DURATION__MS = "celery.task_queue_duration.ms"
+
+WEB__REQUEST_DURATION__MS = "web.request_duration.ms"
