@@ -1,6 +1,7 @@
+from typing import Any, Callable, TypeVar, Tuple, cast
 import json
-
 from functools import wraps
+import logging
 
 from flask import current_app, request
 
@@ -10,19 +11,19 @@ from .config import _callback_webserver_hostname
 from .factory import create_app, jwtManager, ma, mail
 
 
-def fractal_pre_process(func):
-    """
-    Fractal's general endpoint preprocessing decorator. It parses the incoming request
-    and provides func with the following kwargs:
-        - body (if POST request, the JSON parsed data)
-        - recieved_from
-        - webserver_url
+# Taken from https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
+_F = TypeVar("F", bound=Callable[..., Any])
 
-    Args:
-        func: callback, endpoint function to be decorated
+
+def parse_request(view_func: _F) -> _F:
+    """
+    Parse the incoming request and provide view_func with the following kwargs:
+    - body (if POST request, the JSON parsed data)
+    - recieved_from
+    - webserver_url
     """
 
-    @wraps(func)
+    @wraps(view_func)
     def wrapper(*args, **kwargs):
         received_from = (
             request.headers.getlist("X-Forwarded-For")[0]
@@ -32,40 +33,80 @@ def fractal_pre_process(func):
 
         # If a post body is malformed, we should treat it as an empty dict
         # that way trying to pop from it raises a KeyError, which we have proper error handling for
-
         try:
             body = json.loads(request.data) if request.method == "POST" else dict()
         except Exception as e:
-            print(str(e))
+            fractal_logger.error(e)
             body = dict()
 
         kwargs["body"] = body
         kwargs["received_from"] = received_from
         kwargs["webserver_url"] = _callback_webserver_hostname()
 
-        silence = False
+        return view_func(*args, **kwargs)
 
-        for endpoint in current_app.config["SILENCED_ENDPOINTS"]:
-            if endpoint in request.url:
-                silence = True
-                break
+    return cast(_F, wrapper)
 
-        if not silence:
-            safe_body = ""
 
-            if body and request.method == "POST":
-                body = {k: str(v)[0 : min(len(str(v)), 500)] for k, v in dict(body).items()}
-                safe_body = str(
-                    {k: v for k, v in body.items() if "password" not in k and "key" not in k}
-                )
+def log_request(view_func: _F) -> _F:
+    """
+    Log information about the request, such as the method, URL, and body. This will no-op
+    if the logging level is set below INFO.
+    """
 
-            fractal_logger.info(
-                "{}. Body: {}".format(
-                    request.method + " request at " + request.url,
-                    safe_body,
-                )
-            )
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        # Don't let a logging failure kill the request processing
+        try:
+            # Check the log level before performing expensive computation (like stringifying the
+            # body) to avoid wasted computation if it won't be logged.
+            if fractal_logger.isEnabledFor(logging.INFO):
+                silence = False
 
-        return func(*args, **kwargs)
+                for endpoint in current_app.config["SILENCED_ENDPOINTS"]:
+                    if endpoint in request.url:
+                        silence = True
+                        break
 
-    return wrapper
+                if not silence:
+                    safe_body = ""
+                    body = kwargs.get("body")
+                    if body and request.method == "POST":
+                        trunc_body = {k: str(v)[:500] for k, v in dict(body).items()}
+                        safe_body = str(
+                            {
+                                k: v
+                                for k, v in trunc_body.items()
+                                if "password" not in k and "key" not in k
+                            }
+                        )
+
+                    fractal_logger.info(
+                        "{}. Body: {}".format(
+                            request.method + " request at " + request.url,
+                            safe_body,
+                        )
+                    )
+        except Exception as e:
+            fractal_logger.error(e)
+        return view_func(*args, **kwargs)
+
+    return cast(_F, wrapper)
+
+
+def fractal_pre_process(view_func: _F) -> _F:
+    """
+    Decorator bundling other decorators that should be set on all endpoints.
+
+    See:
+    - parse_request
+    - log_request
+    """
+
+    @parse_request
+    @log_request
+    @wraps(view_func)
+    def wrapper(*args, **kwargs):
+        return view_func(*args, **kwargs)
+
+    return cast(_F, wrapper)
