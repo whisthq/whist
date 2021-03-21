@@ -12,8 +12,10 @@ Flask-Limiter==1.4
 flask-marshmallow==0.14.0
 Flask-SendGrid==0.7.1
 Flask-SQLAlchemy==2.4.4
+gevent==21.1.2
 google-auth-oauthlib==0.4.3
 hirefire==1.0.0
+logzio-python-handler==3.0.0
 marshmallow-sqlalchemy==0.24.2
 psycopg2-binary==2.8.6
 python-dateutil==2.8.1
