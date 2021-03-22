@@ -110,7 +110,7 @@ def edit_comments_by(issue_number, func, body, create=False):
     Returns:
         None
     """
-    comments = get_comments_by(issue_number, func)
+    comments = list(get_comments_by(issue_number, func))
     for comment in comments:
         comment.edit(body)
     if create and not comments:
