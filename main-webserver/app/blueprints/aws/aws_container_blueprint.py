@@ -27,7 +27,6 @@ from app.constants.http_codes import (
     SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
-from app.constants.aws_constants import USE_LATEST_TASK_VERSION
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
     ping_helper,
@@ -213,14 +212,13 @@ def test_endpoint(action, **kwargs):
 
     if action == "assign_container":
         try:
-            # TODO: make this interface conform with assign_container or get values from db
-            # right now we rely on task_version=-1 being handled for backcompat
+            # TODO: make this interface conform with /container/assign
             (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
                 kwargs["body"]["task_definition_arn"],
-                kwargs["body"].get("task_version", USE_LATEST_TASK_VERSION),
+                kwargs["body"].get("task_version", None),
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST

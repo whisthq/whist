@@ -30,8 +30,6 @@ from ..patches import function
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
-from tests.constants.aws_constants import DUMMY_TASK_VERSION
-
 pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
 pytest.container_name = None
 
@@ -403,8 +401,7 @@ def test_update_single_taskdef(client, authorized, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
-    # for more, see docstring on DUMMY_TASK_VERSION
-    fake_aws_response = {"taskDefinition": {"revision": DUMMY_TASK_VERSION}}
+    fake_aws_response = {"taskDefinition": {"revision": -1}}
     monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
 
     app_id = "Blender"
@@ -441,7 +438,7 @@ def test_update_single_taskdef(client, authorized, monkeypatch):
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
         if app_data.app_id == app_id:
-            assert app_data.task_version == DUMMY_TASK_VERSION
+            assert app_data.task_version == -1
             # the task version should be different than the cached
             assert app_data.task_version != app_id_to_version[app_data.app_id]
         else:
@@ -463,8 +460,7 @@ def test_update_all_taskdefs(client, authorized, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
-    # see docstring on DUMMY_TASK_VERSION
-    fake_aws_response = {"taskDefinition": {"revision": DUMMY_TASK_VERSION}}
+    fake_aws_response = {"taskDefinition": {"revision": -1}}
     monkeypatch.setattr(ECSClient, "describe_task", function(returns=fake_aws_response))
 
     # cache the current task defs
@@ -499,7 +495,7 @@ def test_update_all_taskdefs(client, authorized, monkeypatch):
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
-        assert app_data.task_version == DUMMY_TASK_VERSION
+        assert app_data.task_version == -1
         # the task version should be different than the cached
         assert app_data.task_version != app_id_to_version[app_data.app_id]
 
@@ -523,8 +519,8 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     _ = bulk_container(is_assigned=False)
 
     old_version = app_data.task_version
-    assert old_version != DUMMY_TASK_VERSION  # sanity check
-    app_data.task_version = DUMMY_TASK_VERSION
+    assert old_version != -1  # sanity check
+    app_data.task_version = -1
 
     # this should cause no problems. We now have a db where UserContainers has a
     # user running an old taskdef and SupportedAppImages has upgraded to a new version

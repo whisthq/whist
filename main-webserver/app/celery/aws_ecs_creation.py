@@ -38,7 +38,6 @@ from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
-from app.constants.aws_constants import USE_LATEST_TASK_VERSION
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
@@ -230,7 +229,7 @@ def start_container(
     region_name: str,
     cluster_name: str,
     task_definition_arn: str,
-    task_version: int,
+    task_version: Optional[int] = None,
 ) -> Tuple[str, int, Dict[int, int], str]:
     """
     This helper function configures and starts a container running
@@ -240,7 +239,7 @@ def start_container(
         region_name: which region to run the container in
         cluster_name: which cluster to run the container in
         task_definition_arn: which taskdef to use
-        task_version: which taskdef version to use
+        task_version: which taskdef version to use. If None, uses the latest task version.
 
     Returns: the task_id, IP, port bindings, and aeskey of the container once running
 
@@ -265,7 +264,7 @@ def start_container(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     ecs_client.set_cluster(cluster_name)
-    if task_version == USE_LATEST_TASK_VERSION:
+    if task_version is None:
         # the default is -1, so for tasks that don't have a pinned version we just pass
         # the task_definition_arn, which AWS interprets to mean run the latest version
         # this solves backcompat to pre-version pinning days
@@ -339,7 +338,7 @@ def assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
-    task_version: int,
+    task_version: Optional[int] = None,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
@@ -351,7 +350,7 @@ def assign_container(
     :param self: the celery instance running the task
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
-    :param task_version: the version of the taskdef to use
+    :param task_version: the version of the taskdef to use. If None, uses latest in db.
     :param region_name: which region the user needs a container for
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
@@ -377,7 +376,7 @@ def _assign_container(
     self: Task,
     username: str,
     task_definition_arn: str,
-    task_version: int,
+    task_version: Optional[int] = None,
     region_name: str = "us-east-1",
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
