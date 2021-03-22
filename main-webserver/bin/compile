@@ -39,3 +39,4 @@ echo $(git show HEAD)
 COMMIT=$(git rev-parse --short=8 HEAD)
 echo $COMMIT
 echo $COMMIT >> "${BUILD_DIR}/main-webserver/git_info.txt"
+printnev

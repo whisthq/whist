@@ -4,7 +4,7 @@
 echo "-----> Reading git branch and commit info from txt file "
 
 echo $(ls)
-
+printenv
 # cd bin 
 
 # echo $(ls)
