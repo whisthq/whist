@@ -37,10 +37,7 @@ case "$1" in
         # want the watchmedo utility to be installed in the Celery container.
         $([ -n "$HOT_RELOAD" ] && \
             (pip install watchdog[watchmedo] >&2 echo "watchmedo auto-restart -R -d . --")) \
-            python worker_manager.py \
-            --num_workers $NUM_WORKERS \
-            --pool gevent \
-            --worker_concurrency $WORKER_CONCURRENCY ;;
+            supervisord -c supervisor.conf ;;
     *) echo "Specify either 'web' or 'celery' to determine what this" \
             "instance will manifest as." ;;
 esac
