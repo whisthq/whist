@@ -75,7 +75,11 @@ export const createContainer = async (
 }
 
 // Still need to pass in portInfo and container
-export const signalProtocolInfo = (protocol: ChildProcess, info: { ports }) => {
+export const signalProtocolInfo = (
+    protocol: ChildProcess,
+    portInfo: string,
+    container: { secretKey: string; publicIP: string }
+) => {
     writeStream(protocol, `ports?${portInfo}`)
     writeStream(protocol, `private-key?${container.secretKey}`)
     writeStream(protocol, `ip?${container.publicIP}`)
