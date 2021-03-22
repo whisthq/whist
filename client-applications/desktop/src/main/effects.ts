@@ -2,7 +2,6 @@ import { webContents, BrowserWindow } from "electron"
 import { createAuthWindow } from "@app/utils/windows"
 import { Effect, State, StateChannel } from "@app/utils/state"
 import { store } from "@app/utils/persist"
-import { log } from "@app/utils/logging"
 
 export const launchAuthWindow: Effect = (state: any) => {
     if (state.accessToken) return state
@@ -32,7 +31,7 @@ export const broadcastState: Effect = (state: any) => {
 export const launchProtocol: Effect = async (state) => {
     if (!state.accessToken) return state
 
-    log.warn("LAUNCHING PROTOCOL WATCH OUT")
+    console.log("LAUNCHING PROTOCOL WATCH OUT")
     return state
 }
 
@@ -43,6 +42,6 @@ export const storeAccess: Effect = async (state) => {
 }
 
 export const logState: Effect = (state) => {
-    log.info(state)
+    console.log(state)
     return state
 }
