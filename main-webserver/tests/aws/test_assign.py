@@ -241,7 +241,7 @@ def test_sorted_normal_clusters(monkeypatch, bulk_cluster):
         bulk_cluster(
             cluster_name=cluster_name.format(i),
             maxContainers=10,
-            RunningTasksCount=i,
+            runningTasksCount=i,
             registeredContainerInstancesCount=1,
             maxMemoryRemainingPerInstance=10,
         )
