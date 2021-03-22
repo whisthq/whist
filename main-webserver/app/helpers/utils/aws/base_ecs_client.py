@@ -198,7 +198,7 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster, will be automatically generated if not
                 provided
         """
-        # branch, commit = self.get_git_info()
+        branch, commit = self.get_git_info()
 
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
