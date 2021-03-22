@@ -32,10 +32,10 @@ echo "-----> Setting git branch and commit hash to txt file"
 
 echo $(git branch -a)
 b=$(git branch --show-current)
-export $BRANCH=$b
+export BRANCH=$b
 # echo $BRANCH > "${BUILD_DIR}/main-webserver/git_info.txt"
 
 c=$(git rev-parse --short=8 HEAD)
-export $COMMIT=$c
+export COMMIT=$c
 # echo $COMMIT >> "${BUILD_DIR}/main-webserver/git_info.txt"
 printenv
