@@ -61,9 +61,7 @@ def update_cluster(
     )
 
     # We must delete every unassigned container in the cluster.
-    unassigned_containers = UserContainer.query.filter_by(
-        cluster=cluster_name, is_assigned=False
-    ).all()
+    unassigned_containers = UserContainer.query.filter_by(cluster=cluster_name, user_id=None).all()
     for container in unassigned_containers:
         container_name = container.container_id
 

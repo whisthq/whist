@@ -149,8 +149,10 @@ app = create_app()
 
 with app.app_context():
     base_container = (
-        UserContainer.query.filter_by(
-            is_assigned=False, task_definition="fractal-dev-browsers-chrome", location="us-east-1"
+        UserContainer.query.filter(
+            UserContainer.task_definition == "fractal-dev-browsers-chrome",
+            UserContainer.location == "us-east-1",
+            UserContainer.user_id is not None,
         )
         .filter(UserContainer.cluster.notlike("%test%"))
         .with_for_update()

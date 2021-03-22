@@ -170,6 +170,7 @@ def find_available_container(
 ) -> Optional[UserContainer]:
     """
     Function to find an unassigned container with the right taskdef
+    note that now UID=None means that a container is unassigned
     Args:
         region_name: which region to look for
         task_definition_arn: which taskdef to use
@@ -181,10 +182,10 @@ def find_available_container(
 
     available_container = (
         UserContainer.query.filter_by(
-            is_assigned=False,
             task_definition=task_definition_arn,
-            task_version=task_version,
             location=region_name,
+            user_id=None,
+            task_version=task_version,
         )
         .filter(UserContainer.cluster.notlike("%test%"))
         .with_for_update()
@@ -196,10 +197,10 @@ def find_available_container(
         for bundlable_region in bundled_region.get(region_name, []):
             available_container = (
                 UserContainer.query.filter_by(
-                    is_assigned=False,
                     task_definition=task_definition_arn,
-                    task_version=task_version,
                     location=bundlable_region,
+                    user_id=None,
+                    task_version=task_version,
                 )
                 .filter(UserContainer.cluster.notlike("%test%"))
                 .with_for_update()
@@ -368,8 +369,10 @@ def _get_num_extra(taskdef: str, location: str) -> int:
         # get the number we want prewarmed
         num_needed_running = float(
             _get_count_helper(
-                UserContainer.query.filter_by(
-                    task_definition=taskdef, location=location, is_assigned=True
+                UserContainer.query.filter(
+                    UserContainer.task_definition == taskdef,
+                    UserContainer.location == location,
+                    UserContainer.user_id is not None,
                 )
             )
         )
@@ -377,9 +380,7 @@ def _get_num_extra(taskdef: str, location: str) -> int:
         num_needed_running = max(1, num_needed_running * app_image_for_taskdef.preboot_number)
         # then see how many prewarmed are currently running
         num_currently_running = _get_count_helper(
-            UserContainer.query.filter_by(
-                task_definition=taskdef, location=location, is_assigned=False
-            )
+            UserContainer.query.filter_by(task_definition=taskdef, location=location, user_id=None)
         )
         return max(0, int(num_needed_running - num_currently_running))
     return 0
@@ -463,7 +464,6 @@ def _assign_container(
             try:
                 existing_container = ensure_container_exists(
                     UserContainer.query.filter_by(
-                        is_assigned=True,
                         user_id=username,
                         task_definition=task_definition_arn,
                         task_version=task_version,
@@ -497,7 +497,6 @@ def _assign_container(
         num_extra = 0
         base_container = None
     if base_container is not None:
-        base_container.is_assigned = True
         base_container.user_id = username
         base_container.dpi = dpi
         db.session.commit()
@@ -577,7 +576,6 @@ def _assign_container(
             user_id=username,
             cluster=cluster_name,
             ip=curr_ip,
-            is_assigned=True,
             port_32262=curr_network_binding[32262],
             port_32263=curr_network_binding[32263],
             port_32273=curr_network_binding[32273],
@@ -774,8 +772,7 @@ def prewarm_new_container(
 
     container = UserContainer(
         container_id=task_id,
-        user_id="Unassigned",
-        is_assigned=False,
+        user_id=None,
         cluster=cluster_name,
         ip=curr_ip,
         port_32262=curr_network_binding[32262],

@@ -516,7 +516,7 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     """
 
     app_data = SupportedAppImages.query.get("Blender")
-    _ = bulk_container(is_assigned=False)
+    _ = bulk_container(assigned_to=None)
 
     old_version = app_data.task_version
     assert old_version != -1  # sanity check. nothing in the db should have this value
