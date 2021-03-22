@@ -66,11 +66,6 @@ def test_webserver_sigterm(client):
     self_pid = os.getpid()
     os.kill(self_pid, signal.SIGTERM)
 
-    # # we need to wait for SIGTERM to come
-    # for _ in range(100):
-    #     if not can_process_requests():
-    #         break
-    #     time.sleep(0.5)
     assert not can_process_requests()
 
     # web requests should be rejected
