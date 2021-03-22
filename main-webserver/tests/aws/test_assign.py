@@ -140,7 +140,7 @@ def test_no_clusters(monkeypatch):
         """
         raise NoClusterFoundException
 
-    monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
     with pytest.raises(NoClusterFoundException):
         select_cluster("us-east-1")
 
@@ -158,7 +158,7 @@ def test_full_cluster(monkeypatch, bulk_cluster):
         raise NoClusterFoundException
 
     bulk_cluster()
-    monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
     with pytest.raises(NoClusterFoundException):
         select_cluster("us-east-1")
 
