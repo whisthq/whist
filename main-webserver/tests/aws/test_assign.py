@@ -85,14 +85,16 @@ def test_get_num_extra_empty(task_def_env):
 
 def test_get_num_extra_full(bulk_container, task_def_env):
     # tests the buffer filled case of _get_num_extra -- 1 already prewarmed
-    _ = bulk_container(is_assigned=False)
+    _ = bulk_container(assigned_to=None)
     assert _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == 0
 
 
-def test_get_num_extra_fractional(bulk_container, task_def_env):
+def test_get_num_extra_fractional(bulk_container, make_user, task_def_env):
     # tests the fractional case of _get_num_extra, ensure the ratio is right
+    user = make_user()
+
     for _ in range(15):
-        _ = bulk_container(is_assigned=True)
+        _ = bulk_container(assigned_to=user.user_id)
     preboot_num = (
         SupportedAppImages.query.filter_by(
             task_definition=f"fractal-{task_def_env}-browsers-chrome"
@@ -105,12 +107,14 @@ def test_get_num_extra_fractional(bulk_container, task_def_env):
     )
 
 
-def test_get_num_extra_subtracts(bulk_container, task_def_env):
+def test_get_num_extra_subtracts(bulk_container, make_user, task_def_env):
     # tests the total codepath set of _get_num_extra
     # fractional reserve and buffer filling
+    user = make_user()
+
     for _ in range(15):
-        _ = bulk_container(is_assigned=True)
-    _ = bulk_container(is_assigned=False)
+        _ = bulk_container(assigned_to=user.user_id)
+    _ = bulk_container(assigned_to=None)
     preboot_num = (
         SupportedAppImages.query.filter_by(
             task_definition=f"fractal-{task_def_env}-browsers-chrome"
@@ -326,37 +330,37 @@ def test_basic_find_unassigned(task_def_env):
 
 def test_find_unassigned(bulk_container, task_def_env):
     # ensures that find-available returns an available unassigned container
-    bulk_container(is_assigned=False, location="us-east-1")
+    bulk_container(assigned_to=None, location="us-east-1")
     assert (
         find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is not None
     )
 
 
-def test_dont_find_unassigned(bulk_container, task_def_env):
+def test_dont_find_unassigned(bulk_container, task_def_env, make_user):
     # ensures that find-available doesn't return an assigned container
-    bulk_container(is_assigned=True, location="us-east-1")
+    bulk_container(assigned_to=make_user().user_id, location="us-east-1")
     assert find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is None
 
 
 def test_find_unassigned_in_unbundled(bulk_container, task_def_env):
     # ensures that find-available returns an available unassigned container in a nonbundled region
-    bulk_container(is_assigned=False, location="ca-central-1")
+    bulk_container(assigned_to=None, location="ca-central-1")
     assert (
         find_available_container("ca-central-1", f"fractal-{task_def_env}-browsers-chrome")
         is not None
     )
 
 
-def test_dont_find_unassigned_in_unbundled(bulk_container, task_def_env):
+def test_dont_find_unassigned_in_unbundled(bulk_container, task_def_env, make_user):
     # ensures that find-available doesn't return an assigned container in a nonbundled region
-    bulk_container(is_assigned=True, location="ca-central-1")
+    bulk_container(assigned_to=make_user().user_id, location="ca-central-1")
     assert (
         find_available_container("ca-central-1", f"fractal-{task_def_env}-browsers-chrome") is None
     )
 
 
 @pytest.fixture
-def test_assignment_replacement_code(bulk_container, task_def_env):
+def test_assignment_replacement_code(bulk_container, task_def_env, make_user):
     """
     generates a function which, given a region, returns a multistage test
     of the unassigned container finding code
@@ -372,22 +376,22 @@ def test_assignment_replacement_code(bulk_container, task_def_env):
         these properties are tested in order
         """
         replacement_region = bundled_region[location][0]
-        bulk_container(is_assigned=True, location=location)
+        bulk_container(assigned_to=make_user().user_id, location=location)
         assert (
             find_available_container(location, f"fractal-{task_def_env}-browsers-chrome") is None
         ), f"we assigned an already assigned container in the main region, {location}"
-        bulk_container(is_assigned=True, location=replacement_region)
+        bulk_container(assigned_to=make_user().user_id, location=replacement_region)
         assert (
             find_available_container(location, f"fractal-{task_def_env}-browsers-chrome") is None
         ), f"we assigned an already assigned container in the secondary region, {replacement_region}"
         bulk_container(
-            is_assigned=False, location=replacement_region, container_id="replacement-container"
+            assigned_to=None, location=replacement_region, container_id="replacement-container"
         )
         assert (
             find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
             is not None
         ), f"we failed to find the unassigned container in the replacement region {replacement_region}"
-        bulk_container(is_assigned=False, location=location, container_id="main-container")
+        bulk_container(assigned_to=None, location=location, container_id="main-container")
         container = find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
         assert (
             container is not None and container.container_id == "main-container"

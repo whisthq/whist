@@ -230,8 +230,15 @@ def bulk_cluster():
 
 
 @pytest.fixture
-def bulk_container(bulk_cluster, user, task_def_env):
+def bulk_container(bulk_cluster, make_user, task_def_env):
     """Add 1+ rows to the user_containers table for testing.
+
+    In the absence of this fixture's explicit dependence on the make_user fixture (i.e. when
+    make_user is not present in this fixture's argument list), the make_user teardown code is run
+    before this fixture's teardown code, causing all containers assigned to users created with
+    make_user() to be CASCADE deleted. In order to prevent the user who owns a container created by
+    bulk_container() from being CASCADE deleted before this fixture's teardown code is run,
+    make_user has been added to this fixture's argument list.
 
     Returns:
         A function that populates the user_containers table with a test
@@ -239,11 +246,14 @@ def bulk_container(bulk_cluster, user, task_def_env):
     """
     containers = []
 
-    def _container(is_assigned=False, location="us-east-1", container_id=None):
+    def _container(*, assigned_to=None, location="us-east-1", container_id=None):
         """Create a dummy container for testing.
 
         Arguments:
-            is_assigned: Whether to create the container as prewarmed or assigned
+            assigned_to: A string representing the user ID of the user to whom the container should
+                be assigned. Dummy prewarmed containers may be created with
+                bulk_container(assigned_to=None)
+
             location:  which region to create the container in
             container_id:  the specific name we want the container to have
                            useful for testing which container object is retrieved
@@ -259,13 +269,12 @@ def bulk_container(bulk_cluster, user, task_def_env):
             task_version=None,
             os="Linux",
             state="CREATING",
-            user_id=user.user_id,
+            user_id=assigned_to,
             port_32262=randbits(16),
             port_32263=randbits(16),
             port_32273=randbits(16),
             cluster=cluster.cluster,
             secret_key=os.urandom(16).hex(),
-            is_assigned=is_assigned,
         )
 
         db.session.add(c)

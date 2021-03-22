@@ -337,7 +337,6 @@ CREATE TABLE hardware.user_containers (
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
     secret_key text NOT NULL,
-    is_assigned boolean,
     task_definition character varying,
     task_version integer DEFAULT NULL,
     dpi integer DEFAULT 96
@@ -1492,13 +1491,10 @@ CREATE INDEX ip_and_port ON hardware.user_containers USING btree (ip, port_32262
 
 
 --
--- Name: loc_taskdef_assignment; Type: INDEX; Schema: hardware; Owner: -
+-- Name: loc_taskdef_uid; Type: INDEX; Schema: hardware; Owner: -
 --
 
-CREATE INDEX loc_taskdef_assignment
-    ON hardware.user_containers USING btree
-    (location COLLATE pg_catalog."default" ASC NULLS LAST, task_definition COLLATE pg_catalog."default" ASC NULLS LAST, is_assigned ASC NULLS LAST)
-    TABLESPACE pg_default;
+CREATE INDEX loc_taskdef_uid ON hardware.user_containers USING btree (location, task_definition, user_id);
 
 
 --
