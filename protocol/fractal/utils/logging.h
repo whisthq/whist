@@ -145,6 +145,20 @@ void print_stacktrace();
 void init_logger(char* log_directory);
 
 /**
+ * @brief                          Initialize the sentry logger
+ *
+ *
+ */
+void init_sentry();
+
+/**
+ * @brief                          Rename the file that logs are being written to
+ *
+ *
+ */
+void rename_log_file();
+
+/**
  * @brief                          Log the given format string
  *                                 This is an internal function that shouldn't be used,
  *                                 please use LOG_INFO, LOG_WARNING, etc
