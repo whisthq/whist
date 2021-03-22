@@ -5,14 +5,14 @@ import json
 import multiprocessing as mp
 import time
 
-# this adds the webserver repo root to the python path no matter where
+# this adds the load_testing folder oot to the python path no matter where
 # this file is called from. We can now import from `scripts`.
-sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 import requests
 
-from scripts.load_testing.load_test_utils import poll_task_id
-from scripts.load_testing.load_test_setup import (
+from load_test_utils import poll_task_id
+from load_test_setup import (
     LOAD_TEST_CLUSTER_NAME,
     LOAD_TEST_CLUSTER_REGION,
     LOAD_TEST_USER_PREFIX,
@@ -79,7 +79,9 @@ def load_test_single_user(web_url, admin_token, user_num):
     if task_id is not None:
         try:
             start = time.time()
-            success = poll_task_id(task_id, web_url, status_codes, web_times)
+            success, new_status_codes, new_web_times = poll_task_id(task_id, web_url)
+            status_codes += new_status_codes
+            web_times += new_web_times
             assert success is True
             end = time.time()
             poll_container_time = end - start
@@ -169,7 +171,8 @@ if __name__ == "__main__":
     admin_token = args.admin_token
     outfile = args.outfile
 
-    # this variable is important in distributed contexts
+    # this variable is important in distributed contexts; it tells an invocation of
+    # `multicore_load_test` which user it should start with
     base_user_num = 0
     response = multicore_load_test(num_procs, num_reqs, web_url, admin_token, base_user_num)
 

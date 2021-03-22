@@ -1,12 +1,24 @@
+"""
+Setup a load test. Supports the following methods:
+- create_cluster with the name LOAD_TEST_CLUSTER_NAME
+- delete_cluster with the name LOAD_TEST_CLUSTER_NAME
+- make_load_test_user
+"""
+import sys
+import os
 import json
 import argparse
 
-import requests
+# this adds the load_testing folder oot to the python path no matter where
+# this file is called from. We can now import from `scripts`.
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 from load_test_utils import poll_task_id
 
+import requests
 
-LOAD_TEST_CLUSTER_NAME = "load-test-cluster"
+
+LOAD_TEST_CLUSTER_NAME = "load_test_cluster_stag"
 LOAD_TEST_CLUSTER_REGION = "us-east-1"
 LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 
@@ -30,7 +42,8 @@ def create_load_test_cluster(web_url, admin_token, cluster_name, cluster_region)
     assert resp.status_code == 202, f"Got bad response code {resp.status_code}, msg: {resp.content}"
 
     task_id = resp.json()["ID"]
-    success = poll_task_id(task_id, web_url, [], [])
+
+    success, _, _ = poll_task_id(task_id, web_url)
     assert success is True
 
 
@@ -50,7 +63,7 @@ def delete_load_test_cluster(web_url, admin_token, cluster_name, cluster_region)
     assert resp.status_code == 202, f"Got bad response code {resp.status_code}, msg: {resp.content}"
 
     task_id = resp.json()["ID"]
-    success = poll_task_id(task_id, web_url, [], [])
+    success, _, _ = poll_task_id(task_id, web_url)
     assert success is True
 
 
