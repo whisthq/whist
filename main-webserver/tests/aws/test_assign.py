@@ -5,8 +5,12 @@ from http import HTTPStatus
 
 import pytest
 
-
-from app.celery.aws_ecs_creation import assign_container, _get_num_extra
+from app.celery.aws_ecs_creation import (
+    assign_container,
+    create_new_cluster,
+    _get_num_extra,
+    select_cluster,
+)
 from app.helpers.utils.payment.stripe_client import StripeClient
 from app.models import SupportedAppImages
 from app.serializers.public import UserSchema
@@ -115,6 +119,44 @@ def test_get_num_extra_subtracts(bulk_container, task_def_env):
         _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1")
         == (15.0 * preboot_num) - 1
     )
+
+
+def test_no_clusters(monkeypatch):
+    """
+    tests that select_cluster calls create_new_cluster when called on an empty DB
+    """
+    is_called = False
+
+    def patched_create():
+        """
+        Just tells us that the function was called
+        """
+        nonlocal is_called
+        is_called = True
+
+    monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
+    select_cluster("us-east-1")
+    assert is_called
+
+
+def test_full_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster calls create_new_cluster when called on an DB with
+    only full clusters
+    """
+    is_called = False
+
+    def patched_create():
+        """
+        Just tells us that the function was called
+        """
+        nonlocal is_called
+        is_called = True
+
+    bulk_cluster()
+    monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
+    select_cluster("us-east-1")
+    assert is_called
 
 
 @pytest.fixture
