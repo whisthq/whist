@@ -163,6 +163,46 @@ def test_full_cluster(monkeypatch, bulk_cluster):
         select_cluster("us-east-1")
 
 
+def test_test_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster calls create_new_cluster when called on an DB with
+    only test clusters
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        raise NoClusterFoundException
+
+    bulk_cluster(cluster_name="test-cluster", maxContainers=10, registeredContainerInstancesCount=0)
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    with pytest.raises(NoClusterFoundException):
+        select_cluster("us-east-1")
+
+
+def test_single_normal_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster returns a fully normal/running cluster
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster"
+    bulk_cluster(
+        cluster_name=cluster_name,
+        maxContainers=10,
+        registeredContainerInstancesCount=1,
+        maxMemoryRemainingPerInstance=8500,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name
+
+
 @pytest.fixture
 def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscription):
     """Generates a function to get the response of the /container/assign endpoint
