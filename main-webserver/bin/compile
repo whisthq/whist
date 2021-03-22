@@ -22,7 +22,8 @@ CLIENT_SECRET_URI=$(cat "$CLIENT_SECRET_PATH")
 
 echo "       Configuring AWS CLI from environment variables."
 
-export_env_dir "$ENV_DIR" "^(AWS_|SOURCE_)"
+echo $ENV_DIR
+export_env_dir "$ENV_DIR" "^AWS_"
 
 echo "-----> Downloading Google client secret file from $CLIENT_SECRET_URI."
 
