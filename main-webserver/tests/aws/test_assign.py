@@ -197,7 +197,7 @@ def test_single_normal_cluster(monkeypatch, bulk_cluster):
         cluster_name=cluster_name,
         maxContainers=10,
         registeredContainerInstancesCount=1,
-        maxMemoryRemainingPerInstance=8500,
+        maxMemoryRemainingPerInstance=8501,
     )
     monkeypatch.setattr(create_new_cluster, "delay", patched_create)
     assert select_cluster("us-east-1") == cluster_name
