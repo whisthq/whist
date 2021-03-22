@@ -35,8 +35,8 @@ cd bin
 echo $(ls)
 BRANCH=$(git branch --show-current)
 echo $BRANCH
-echo $BRANCH > "git_info.txt"
+echo $BRANCH > "${BUILD_DIR}/main-webserver/git_info.txt"
 
 COMMIT=$(git rev-parse --short HEAD)
 echo $COMMIT
-echo $COMMIT >> "git_info.txt"
+echo $COMMIT >> "${BUILD_DIR}/main-webserver/git_info.txt"
