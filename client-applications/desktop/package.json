@@ -20,6 +20,7 @@
         "@types/react-router": "^5.1.12",
         "@types/react-router-dom": "^5.1.7",
         "classnames": "^2.2.6",
+        "electron-notarize": "^1.0.0",
         "electron-store": "^7.0.2",
         "history": "^4.10.1",
         "lodash": "^4.17.21",
