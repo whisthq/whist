@@ -121,22 +121,28 @@ def test_get_num_extra_subtracts(bulk_container, task_def_env):
     )
 
 
+class NoClusterFoundException(Exception):
+    """
+    Just using this to detect if create_new_cluster is called in the following tests
+    """
+
+    pass
+
+
 def test_no_clusters(monkeypatch):
     """
     tests that select_cluster calls create_new_cluster when called on an empty DB
     """
-    is_called = False
 
     def patched_create():
         """
         Just tells us that the function was called
         """
-        nonlocal is_called
-        is_called = True
+        raise NoClusterFoundException
 
     monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
-    select_cluster("us-east-1")
-    assert is_called
+    with pytest.raises(NoClusterFoundException):
+        select_cluster("us-east-1")
 
 
 def test_full_cluster(monkeypatch, bulk_cluster):
@@ -144,19 +150,17 @@ def test_full_cluster(monkeypatch, bulk_cluster):
     tests that select_cluster calls create_new_cluster when called on an DB with
     only full clusters
     """
-    is_called = False
 
     def patched_create():
         """
         Just tells us that the function was called
         """
-        nonlocal is_called
-        is_called = True
+        raise NoClusterFoundException
 
     bulk_cluster()
     monkeypatch.setattr(create_new_cluster, "apply_async", patched_create)
-    select_cluster("us-east-1")
-    assert is_called
+    with pytest.raises(NoClusterFoundException):
+        select_cluster("us-east-1")
 
 
 @pytest.fixture
