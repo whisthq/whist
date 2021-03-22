@@ -134,7 +134,7 @@ def test_no_clusters(monkeypatch):
     tests that select_cluster calls create_new_cluster when called on an empty DB
     """
 
-    def patched_create():
+    def patched_create(*args, **kwargs):
         """
         Just tells us that the function was called
         """
@@ -151,7 +151,7 @@ def test_full_cluster(monkeypatch, bulk_cluster):
     only full clusters
     """
 
-    def patched_create():
+    def patched_create(*args, **kwargs):
         """
         Just tells us that the function was called
         """
