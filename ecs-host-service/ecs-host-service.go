@@ -148,7 +148,7 @@ func handleCloudStorageRequest(req *httpserver.MountCloudStorageRequest) error {
 }
 
 // Handle tasks to be completed when a container dies
-func containerDieHandler(ctx context.Context, cli *dockerclient.Client, id string) {
+func containerDieHandler(id string) {
 	// Exit if we are not dealing with a Fractal container.
 	fc, err := fractalcontainer.LookUpByDockerID(fractalcontainer.DockerID(id))
 	if err != nil {
@@ -317,7 +317,8 @@ func main() {
 		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
 	}
 
-	// TODO: START ALL THE GOROUTINES THAT ACTUALLY DO WORK
+	// Start main event loop
+	startEventLoop(globalCtx, globalCancel, &goroutineTracker, httpServerEvents)
 
 	// Register a signal handler for Ctrl-C so that we cleanup if Ctrl-C is pressed.
 	sigChan := make(chan os.Signal, 2)
@@ -333,86 +334,91 @@ func main() {
 	}
 }
 
-func oldmain() {
-	ctx := context.Background()
-	cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
-	if err != nil {
-		logger.Panicf("Error creating new Docker client: %v", err)
-	}
+func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, httpServerEvents <-chan httpserver.ServerRequest) {
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
 
-	filters := dockerfilters.NewArgs()
-	filters.Add("type", dockerevents.ContainerEventType)
-	eventOptions := dockertypes.EventsOptions{
-		Filters: filters,
-	}
-
-	// In the following loop, this var determines whether to re-initialize the
-	// Docker event stream. This is necessary because the Docker event stream
-	// needs to be reopened after any error is sent over the error channel.
-	needToReinitDockerEventStream := false
-	dockerevents, dockererrs := cli.Events(context.Background(), eventOptions)
-	logger.Info("Initialized docker event stream.")
-	logger.Info("Entering event loop...")
-
-eventLoop:
-	for {
-		if needToReinitDockerEventStream {
-			dockerevents, dockererrs = cli.Events(context.Background(), eventOptions)
-			needToReinitDockerEventStream = false
-			logger.Info("Re-initialized docker event stream.")
+		// Create docker client
+		cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+		if err != nil {
+			logger.Panicf(globalCancel, "Error creating new Docker client: %v", err)
 		}
 
-		select {
-		case err := <-dockererrs:
-			needToReinitDockerEventStream = true
-			switch {
-			case err == nil:
-				logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
-				continue
-			case err == io.EOF:
-				logger.Panicf("Docker event stream has been completely read.")
-				break eventLoop
-			case dockerclient.IsErrConnectionFailed(err):
-				// This means "Cannot connect to the Docker daemon..."
-				logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
-				startDockerDaemon()
-				continue
-			default:
-				logger.Panicf("Got an unknown error from the Docker event stream: %v", err)
+		// Create filter for which docker events we care about
+		filters := dockerfilters.NewArgs()
+		filters.Add("type", dockerevents.ContainerEventType)
+		eventOptions := dockertypes.EventsOptions{
+			Filters: filters,
+		}
+
+		// In the following loop, this var determines whether to re-initialize the
+		// Docker event stream. This is necessary because the Docker event stream
+		// needs to be reopened after any error is sent over the error channel.
+		needToReinitDockerEventStream := false
+		dockerevents, dockererrs := cli.Events(globalCtx, eventOptions)
+		logger.Info("Initialized docker event stream.")
+		logger.Info("Entering event loop...")
+
+		// The actual event loop
+		for {
+			if needToReinitDockerEventStream {
+				dockerevents, dockererrs = cli.Events(globalCtx, eventOptions)
+				needToReinitDockerEventStream = false
+				logger.Info("Re-initialized docker event stream.")
 			}
 
-		case dockerevent := <-dockerevents:
-			if dockerevent.Action == "die" || dockerevent.Action == "start" {
-				logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
-			}
-			if dockerevent.Action == "die" {
-				// Since we want all steps in the die handler to be attempted,
-				// regardless of earlier errors, we let the containerDieHandler report
-				// its own errors, and return nothing to us.
-				containerDieHandler(ctx, cli, dockerevent.ID)
-			}
+			select {
+			case err := <-dockererrs:
+				needToReinitDockerEventStream = true
+				switch {
+				case err == nil:
+					logger.Info("We got a nil error over the Docker event stream. This might indicate an error inside the docker go library. Ignoring it and proceeding normally...")
+					continue
+				case err == io.EOF:
+					logger.Panicf(globalCancel, "Docker event stream has been completely read.")
+				case dockerclient.IsErrConnectionFailed(err):
+					// This means "Cannot connect to the Docker daemon..."
+					logger.Info("Got error \"%v\". Trying to start Docker daemon ourselves...", err)
+					startDockerDaemon(globalCancel)
+					continue
+				default:
+					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+				}
 
-		case serverevent := <-httpServerEvents:
-			switch serverevent.(type) {
-			case *httpserver.SetContainerStartValuesRequest:
-				err := handleStartValuesRequest(serverevent.(*httpserver.SetContainerStartValuesRequest))
-				if err != nil {
+			case dockerevent := <-dockerevents:
+				if dockerevent.Action == "die" || dockerevent.Action == "start" {
+					logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
+				}
+				if dockerevent.Action == "die" {
+					// Since we want all steps in the die handler to be attempted,
+					// regardless of earlier errors, we let the containerDieHandler report
+					// its own errors, and return nothing to us.
+					containerDieHandler(dockerevent.ID)
+				}
+
+			case serverevent := <-httpServerEvents:
+				switch serverevent.(type) {
+				case *httpserver.SetContainerStartValuesRequest:
+					err := handleStartValuesRequest(serverevent.(*httpserver.SetContainerStartValuesRequest))
+					if err != nil {
+						logger.Error(err)
+					}
+					serverevent.ReturnResult("", err)
+
+				case *httpserver.MountCloudStorageRequest:
+					err := handleCloudStorageRequest(serverevent.(*httpserver.MountCloudStorageRequest))
+					if err != nil {
+						logger.Error(err)
+					}
+					serverevent.ReturnResult("", err)
+
+				default:
+					err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+					serverevent.ReturnResult("", err)
 					logger.Error(err)
 				}
-				serverevent.ReturnResult("", err)
-
-			case *httpserver.MountCloudStorageRequest:
-				err := handleCloudStorageRequest(serverevent.(*httpserver.MountCloudStorageRequest))
-				if err != nil {
-					logger.Error(err)
-				}
-				serverevent.ReturnResult("", err)
-
-			default:
-				err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
-				serverevent.ReturnResult("", err)
-				logger.Error(err)
 			}
 		}
-	}
+	}()
 }
