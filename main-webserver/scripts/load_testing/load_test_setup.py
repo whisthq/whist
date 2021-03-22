@@ -8,7 +8,7 @@ from load_test_utils import poll_task_id
 
 LOAD_TEST_CLUSTER_NAME = "load-test-cluster"
 LOAD_TEST_CLUSTER_REGION = "us-east-1"
-LOAD_TEST_USER_PREFIX = "test_user_{user_num}"
+LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 
 
 def create_load_test_cluster(web_url, admin_token, cluster_name, cluster_region):

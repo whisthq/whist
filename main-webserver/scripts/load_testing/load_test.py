@@ -1,23 +1,30 @@
+import sys
+import os
 import argparse
 import json
 import multiprocessing as mp
 import time
-import os
+
+# this adds the webserver repo root to the python path no matter where
+# this file is called from. We can now import from `scripts`.
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
 import requests
 
-from load_test_utils import poll_task_id
-from load_test_setup import (
+from scripts.load_testing.load_test_utils import poll_task_id
+from scripts.load_testing.load_test_setup import (
     LOAD_TEST_CLUSTER_NAME,
     LOAD_TEST_CLUSTER_REGION,
     LOAD_TEST_USER_PREFIX,
 )
 
+OUTFOLDER = "load_test_dump"
+
 
 def make_request(web_url, admin_token, username, cluster, region, status_codes, web_times):
     url = f"{web_url}/aws_container/assign_container"
     payload = {
-        "task_definition_arn": "fractal-dev-browsers-chrome",
+        "task_definition_arn": "fractal-staging-browsers-chrome",
         "cluster_name": cluster,
         "username": username,
         "region_name": region,
@@ -166,9 +173,10 @@ if __name__ == "__main__":
     base_user_num = 0
     response = multicore_load_test(num_procs, num_reqs, web_url, admin_token, base_user_num)
 
-    if not os.path.exists(outfile):
-        os.makedirs(outfile)
-    fp = open(outfile, "w")
+    os.makedirs(OUTFOLDER, exist_ok=True)
+    outpath = os.path.join(OUTFOLDER, outfile)
+    print(f"Saving to {outpath}")
+    fp = open(outpath, "w")
     response_str = json.dumps(response, indent=4)
     fp.write(response_str)
     fp.close()

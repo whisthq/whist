@@ -2,10 +2,13 @@ import time
 
 import requests
 
+MAX_POLL_ITERATIONS = 1200
+
 
 def poll_task_id(task_id, web_url, status_codes, web_times):
     success = False
-    for _ in range(200):
+    # 1200 sec * 0.5 sec sleep time = 600 sec = 10 min of polling
+    for _ in range(MAX_POLL_ITERATIONS):
         url = f"{web_url}/status/{task_id}"
 
         start_req = time.time()
@@ -28,9 +31,6 @@ def poll_task_id(task_id, web_url, status_codes, web_times):
         elif resp.status_code == 400:
             resp_json = resp.json()
             raise ValueError(f"Task failed with output: {resp_json['output']}")
-        elif resp.status_code == 503:
-            # overloaded server
-            time.sleep(1.0)
         else:
             raise ValueError(
                 f"Unexpected exit code {resp.status_code}. Response content: {resp.content}."
