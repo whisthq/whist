@@ -182,8 +182,8 @@ class ECSClient:
             letters = string.ascii_lowercase
             name = (
                 starter_name
-                + f"-branch:{branch}"
-                + f"-commit:{commit}-"
+                + f"<branch:{branch}>"
+                + f"<commit:{commit}>"
                 + "_"
                 + "".join(random.choice(letters) for i in range(10))
             )
