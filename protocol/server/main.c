@@ -1017,6 +1017,7 @@ int parse_args(int argc, char* argv[]) {
                     }
                     sentry_set_tag("runner", "server");
                     using_sentry = true;
+                    init_sentry();
                 }
                 break;
             }
@@ -1058,6 +1059,13 @@ int parse_args(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
+
+#ifdef _WIN32
+    init_logger("C:\\ProgramData\\FractalCache");
+#else
+    init_logger(".");
+#endif
+
     int ret = parse_args(argc, argv);
     if (ret == -1) {
         // invalid usage
@@ -1066,7 +1074,7 @@ int main(int argc, char* argv[]) {
         // --help or --version
         return 0;
     }
-
+    rename_log_file();
     LOG_INFO("Server protocol started.");
 
     init_default_port_mappings();
@@ -1078,11 +1086,6 @@ int main(int argc, char* argv[]) {
 
     srand((unsigned int)time(NULL));
     connection_id = rand();
-#ifdef _WIN32
-    init_logger("C:\\ProgramData\\FractalCache");
-#else
-    init_logger(".");
-#endif
 
     if (using_sentry) {
         sentry_set_tag("protocol-type", "server");

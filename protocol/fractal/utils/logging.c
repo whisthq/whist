@@ -83,7 +83,8 @@ FILE* mprintf_log_file = NULL;
 FILE* mprintf_log_connection_file = NULL;
 int log_connection_log_id;
 char *log_directory = NULL;
-char log_env[FRACTAL_ENVIRONMENT_MAXLEN] = "";
+char *log_file_name = NULL;
+char log_env[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
@@ -99,24 +100,11 @@ void start_connection_log();
 void init_logger(char* log_dir) {
     init_backtrace_handler();
 
-    if (using_sentry) {
-        sentry_options_t* options = sentry_options_new();
-        // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
-        sentry_options_set_dsn(options, SENTRY_DSN);
-        // These are used by sentry to classify events and so we can keep track of version specific
-        // issues.
-        char release[200];
-        snprintf(release, sizeof(release), "fractal-protocol@%s", fractal_git_revision());
-        sentry_options_set_release(options, release);
-        sentry_options_set_environment(options, sentry_environment);
-        sentry_init(options);
-    }
-
     logger_history_len = 0;
-    char f[1000] = "";
     if (log_dir) {
         size_t dir_len = strlen(log_dir);
-        log_directory = (char*)safe_malloc(dir_len + 2);
+        log_directory = (char *)safe_malloc(dir_len + 2);
+        log_file_name = (char *)safe_malloc(dir_len + 22); // assuming the longest file name is {log_directory}log-staging_prev.txt
         strncpy(log_directory, log_dir, dir_len + 1);
 #if defined(_WIN32)
         log_directory[dir_len] = '\\';
@@ -125,23 +113,17 @@ void init_logger(char* log_dir) {
 #endif
         log_directory[dir_len + 1] = '\0';
 
-        if (strcmp(sentry_environment, "production") == 0) {
-            // do nothing
-        }
-        else if (strcmp(sentry_environment, "staging") == 0) {
-            safe_strncpy(log_env, "-staging", FRACTAL_ENVIRONMENT_MAXLEN + 1);
-        } else {
-            safe_strncpy(log_env, "-dev", FRACTAL_ENVIRONMENT_MAXLEN + 1);
-        }
-        snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env,".txt");
+        // name the initial log file before we know what environment we're in
+        safe_strncpy(log_env, "-init", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+        snprintf(log_file_name, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
 #else
         mkdir(log_directory, 0755);
 #endif
-        printf("Trying to open up %s \n", f);
-        mprintf_log_file = fopen(f, "ab");
+        printf("Trying to open up %s \n", log_file_name);
+        mprintf_log_file = fopen(log_file_name, "ab");
         if (mprintf_log_file == NULL) {
             printf("Couldn't open up logfile\n");
         }
@@ -152,8 +134,48 @@ void init_logger(char* log_dir) {
     logger_semaphore = SDL_CreateSemaphore(0);
     mprintf_thread =
         SDL_CreateThread((SDL_ThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
-    LOG_INFO("Writing logs to %s", f);
+    LOG_INFO("Writing logs to %s", log_file_name);
     //    start_timer(&mprintf_timer);
+}
+
+void init_sentry() {
+    sentry_options_t *options = sentry_options_new();
+    // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
+    sentry_options_set_dsn(options, SENTRY_DSN);
+    // These are used by sentry to classify events and so we can keep track of version specific
+    // issues.
+    char release[200];
+    sprintf(release, "fractal-protocol@%s", fractal_git_revision());
+    sentry_options_set_release(options, release);
+    sentry_options_set_environment(options, sentry_environment);
+    sentry_init(options);
+}
+
+void rename_log_file() {
+    if (mprintf_log_file) {
+        fclose(mprintf_log_file);
+    }
+    char new_log_file_name[1000] = "";
+    if (strcmp(sentry_environment, "production") == 0) {
+        safe_strncpy(log_env, "", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+    } else if (strcmp(sentry_environment, "staging") == 0) {
+        safe_strncpy(log_env, "-staging", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+    } else {
+        safe_strncpy(log_env, "-dev", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+    }
+    snprintf(new_log_file_name, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
+
+    printf("Trying to rename %s to %s \n", log_file_name, new_log_file_name);
+    
+    if (rename(log_file_name, new_log_file_name) != 0) {
+        printf("Couldn't rename logfile\n");
+    }
+    safe_strncpy(log_file_name, new_log_file_name, 1001);
+
+    mprintf_log_file = fopen(log_file_name, "ab");
+    if (mprintf_log_file == NULL) {
+        printf("Couldn't open up logfile\n");
+    }
 }
 
 // Sets up logs for a new connection, overwriting previous
@@ -196,24 +218,27 @@ void destroy_logger() {
     if (log_directory) {
         free(log_directory);
     }
+    if (log_file_name) {
+        free(log_file_name);
+    }
 }
 
 void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...) {
     if (!using_sentry) return;
-
         // in the current sentry-native beta version, breadcrumbs prevent sentry
         //  from sending Windows events to the dashboard, so we only log
         //  breadcrumbs for OSX and Linux
 #ifndef _WIN32
     va_list args;
     va_start(args, fmt_str);
-    char sentry_str[LOGGER_BUF_SIZE];
-    sprintf(sentry_str, fmt_str, args);
+    char *sentry_str = (char *)safe_malloc(LOGGER_BUF_SIZE);
+    snprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
-    sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
+    sentry_value_set_by_key(crumb, "level", sentry_value_new_string("WARNING")); // "WARNING" should ideally be tag, but I'm not sure why the definition isn't passing through
     sentry_add_breadcrumb(crumb);
     va_end(args);
+    // free(sentry_str); // should free this, but freeing it gives a seg fault
 #endif
 }
 
@@ -222,14 +247,15 @@ void sentry_send_event(const char* fmt_str, ...) {
 
     va_list args;
     va_start(args, fmt_str);
-    char sentry_str[LOGGER_BUF_SIZE];
-    sprintf(sentry_str, fmt_str, args);
+    char *sentry_str = (char *)safe_malloc(LOGGER_BUF_SIZE);
+    snprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
     va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
         /*   level */ SENTRY_LEVEL_ERROR,
         /*  logger */ "client-logs",
         /* message */ sentry_str);
     sentry_capture_event(event);
+    free(sentry_str);
 }
 
 int multi_threaded_printf(void* opaque) {
@@ -324,10 +350,10 @@ int multi_threaded_printf(void* opaque) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
-                snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env,".txt");
+                snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
 
                 char fp[1000] = "";
-                snprintf(fp, 1000, "%s%s%s%s", log_directory, "log", log_env,"_prev.txt");
+                snprintf(fp, 1000, "%s%s%s%s", log_directory, "log", log_env, "_prev.txt");
 
 #if defined(_WIN32)
                 WCHAR wf[1000];
