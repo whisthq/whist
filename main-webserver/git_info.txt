@@ -1,2 +1,0 @@
-steveli/aws-resource-tagging
-10a94d534
