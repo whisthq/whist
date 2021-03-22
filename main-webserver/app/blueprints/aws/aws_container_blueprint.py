@@ -449,10 +449,9 @@ def aws_container_stun(**kwargs):
 @fractal_pre_process
 def get_name(**kwargs):
     body = kwargs["body"]
-    name = ECSClient.generate_name("cluster")
+    # name = ECSClient.generate_name("cluster")
     response = (
-        jsonify({"branch": os.environ["BRANCH"], "commit": os.environ["COMMIT"], "name": name}),
-        ACCEPTED,
+        jsonify({"branch": dict(os.environ())),
     )
 
     return response

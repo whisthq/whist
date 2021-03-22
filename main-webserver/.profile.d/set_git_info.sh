@@ -8,14 +8,14 @@ echo $(ls)
 # cd bin 
 
 # echo $(ls)
-exec 6< "git_info.txt"
-read BRANCH <&6
-read COMMIT <&6
+# exec 6< "git_info.txt"
+# read BRANCH <&6
+# read COMMIT <&6
 
 
 
-export BRANCH=$BRANCH
-export COMMIT=$COMMIT
+# export BRANCH=$BRANCH
+# export COMMIT=$COMMIT
 
-echo $BRANCH
-echo $COMMIT
+# echo $BRANCH
+# echo $COMMIT
