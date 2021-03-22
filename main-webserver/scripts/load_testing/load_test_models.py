@@ -6,6 +6,12 @@ db = SQLAlchemy(engine_options={"pool_pre_ping": True})
 
 
 def initialize_db(db_uri: str):
+    """
+    Initialize the db at `db_uri` for reading/writing via SQLAlchemy ORM.
+
+    Args:
+        db_uri: URI of the db to reference
+    """
     dummy_flask_app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     dummy_flask_app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.init_app(dummy_flask_app)

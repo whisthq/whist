@@ -3,7 +3,7 @@ import os
 import json
 import subprocess
 import statistics
-from typing import List, Dict
+from typing import List, Dict, Union
 import argparse
 import math
 
@@ -46,22 +46,16 @@ def load_load_test_data(fp):
     return data
 
 
-def _setup_analysis():
-    app_name = "fractal-staging-server"
-    print(f"Getting DATABASE_URL from review app {app_name}...")
-    # capture stdout of this process so we get the db url
-    ret = subprocess.run(
-        f"heroku config:get DATABASE_URL --app {app_name}",
-        capture_output=True,
-        shell=True,
-    )
-    assert ret.returncode == 0
+def compute_stats(data: List[Union[int, float]]):
+    """
+    Extract data from a list of int/float numbers.
 
-    db_url = ret.stdout.decode("utf-8").strip()
-    initialize_db(db_url)
+    Args:
+        A list of int/float numbers
 
-
-def compute_stats(data: List[float]):
+    Returns:
+        A dict of the max, min, avg, and stdev of the numbers.
+    """
     stdev = 0
     if len(data) > 1:
         stdev = math.sqrt(statistics.variance(data))
@@ -74,17 +68,37 @@ def compute_stats(data: List[float]):
 
 
 def print_stats(stats: Dict[str, float]):
+    """
+    Print the dictionary created by compute_stats
+    """
     print(f"min: {stats['min']}")
     print(f"max: {stats['max']}")
     print(f"mean: {stats['avg']}")
     print(f"stdev: {stats['stdev']}")
 
 
-def analyze_load_test(run_id: str):
+def analyze_load_test(run_id: str = None, db_uri: str = None):
+    """
+    Analyze a load test by inspecting the files in OUTFOLDER. First we check for errors.
+    If there are some, we print them and error out. Otherwise, we compute the following stats:
+    - max web request time
+    - avg web request time
+    - std web request time
+    - max container time
+    - avg container time
+    - std container time
+
+    Args:
+        run_id: The id of this load testing run. In workflows, just use the workflow id. If None,
+            nothing will be saved to the db.
+        db_uri: Must be provided if `run_id` is not None. Allows the script to save the test
+            results at `db_uri`.
+    """
     if run_id is None:
         print("Warning. No run_id was passed, so results will not be saved to the db.")
     else:
-        _setup_analysis()
+        assert db_uri is not None, "run_id is not None so db_uri must be given"
+        initialize_db(db_uri)
 
     assert os.path.isdir(OUTFOLDER)
     files = os.listdir(OUTFOLDER)
@@ -93,7 +107,6 @@ def analyze_load_test(run_id: str):
         with open(os.path.join(OUTFOLDER, f)) as fp:
             # data will be a list of JSON outputs
             data = load_load_test_data(fp)
-            print(data)
             all_load_test_data += data
 
     # scan for errors
@@ -142,6 +155,7 @@ def analyze_load_test(run_id: str):
     with dummy_flask_app.app_context():
         db.session.add(new_lt_entry)
         db.session.commit()
+
     print(f"Saved new load testing entry for run {run_id}")
 
 

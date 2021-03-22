@@ -23,14 +23,24 @@ LOAD_TEST_CLUSTER_REGION = "us-east-1"
 LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 
 
-def create_load_test_cluster(web_url, admin_token, cluster_name, cluster_region):
+def create_load_test_cluster(web_url: str, admin_token: str):
+    """
+    Make the load testing cluster
+
+    Args:
+        web_url: URL of the webserver to load test
+        admin_token: needed to make the cluster
+
+    Returns:
+        None. Errors out if anything goes wrong.
+    """
     if web_url[-1] == "/":
         web_url = web_url[:-1]
     url = f"{web_url}/aws_container/create_cluster"
     payload = {
-        "cluster_name": cluster_name,
+        "cluster_name": LOAD_TEST_CLUSTER_NAME,
         "instance_type": "g3.4xlarge",
-        "region_name": cluster_region,
+        "region_name": LOAD_TEST_CLUSTER_REGION,
         "max_size": 10,
         "min_size": 1,
     }
@@ -47,13 +57,23 @@ def create_load_test_cluster(web_url, admin_token, cluster_name, cluster_region)
     assert success is True
 
 
-def delete_load_test_cluster(web_url, admin_token, cluster_name, cluster_region):
+def delete_load_test_cluster(web_url: str, admin_token: str):
+    """
+    Delete the load testing cluster.
+
+    Args:
+        web_url: URL of the webserver to load test
+        admin_token: needed to delete the cluster
+
+    Returns:
+        None. Errors out if anything goes wrong.
+    """
     if web_url[-1] == "/":
         web_url = web_url[:-1]
     url = f"{web_url}/aws_container/delete_cluster"
     payload = {
-        "cluster_name": cluster_name,
-        "region_name": cluster_region,
+        "cluster_name": LOAD_TEST_CLUSTER_NAME,
+        "region_name": LOAD_TEST_CLUSTER_REGION,
     }
     headers = {
         "Authorization": f"Bearer {admin_token}",
@@ -68,6 +88,17 @@ def delete_load_test_cluster(web_url, admin_token, cluster_name, cluster_region)
 
 
 def make_load_test_user(web_url, admin_token, username):
+    """
+    Add a user with `username` for load testing.
+
+    Args:
+        web_url: URL of the webserver to load test
+        admin_token: needed to delete the cluster
+        username: name of the user to create
+
+    Returns:
+        None. Errors out if anything goes wrong.
+    """
     url = f"{web_url}/account/register"
     payload = {"username": username, "password": username, "name": username, "feedback": username}
     headers = {
@@ -95,13 +126,9 @@ if __name__ == "__main__":
     assert action in ["create_cluster", "delete_cluster", "make_users"]
 
     if action == "create_cluster":
-        create_load_test_cluster(
-            web_url, admin_token, LOAD_TEST_CLUSTER_NAME, LOAD_TEST_CLUSTER_REGION
-        )
+        create_load_test_cluster(web_url, admin_token)
     elif action == "delete_cluster":
-        delete_load_test_cluster(
-            web_url, admin_token, LOAD_TEST_CLUSTER_NAME, LOAD_TEST_CLUSTER_REGION
-        )
+        delete_load_test_cluster(web_url, admin_token)
     elif action == "make_users":
         parser.add_argument("--num_users", type=int, help="Number of users to make", required=True)
         args = parser.parse_args()

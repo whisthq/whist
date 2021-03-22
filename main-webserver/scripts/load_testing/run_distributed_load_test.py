@@ -3,6 +3,7 @@ import os
 import subprocess
 import argparse
 import json
+import shutil
 
 # this adds the load_testing folder oot to the python path no matter where
 # this file is called from. We can now import from `scripts`.
@@ -12,6 +13,15 @@ from load_test import OUTFOLDER
 
 
 def invoke_load_test_lambda_func(web_url: str, admin_token: str, func_num: int):
+    """
+
+    Args:
+        web_url: URL of the webserver to load test
+        admin_token: needed to the scripts perform admin-level actions on the webserver.
+            See load_test.py:make_request for a full explanation.
+        func_num: unique identifier for this lambda function invocation. See
+            lambda_function.py:lambda_handler for details.
+    """
     savepath = os.path.join(OUTFOLDER, f"out_{func_num}.json")
     payload = {
         "NUM_PROCS": 2,
@@ -33,6 +43,19 @@ def invoke_load_test_lambda_func(web_url: str, admin_token: str, func_num: int):
 
 
 def run_distributed_load_test(num_invocations: int, web_url: str, admin_token: str):
+    """
+    Run a distributed load test using AWS lambda functions and the AWS CLI.
+    See invoke_load_test_lambda_func for details on running the lambda function.
+
+    Args:
+        num_invocations: number of invocations to invoke_load_test_lambda_func
+        web_url: URL of the webserver to load test
+        admin_token: needed to the scripts perform admin-level actions on the webserver.
+            See load_test.py:make_request for a full explanation.
+
+    Returns:
+        Nothing if success. Errors out if a child experiences an error.
+    """
     children = []
     for i in range(num_invocations):
         child = invoke_load_test_lambda_func(web_url, admin_token, i)
@@ -56,5 +79,10 @@ if __name__ == "__main__":
     parser.add_argument("--web_url", type=str, required=True, help="Webserver URL to query.")
     parser.add_argument("--admin_token", type=str, required=True, help="Admin token.")
     args = parser.parse_args()
+
+    if os.path.exists(OUTFOLDER):
+        print(f"Cleaning existing {OUTFOLDER}")
+        shutil.rmtree(OUTFOLDER)
+    os.makedirs(OUTFOLDER, exist_ok=False)
 
     run_distributed_load_test(args.num_invocations, args.web_url, args.admin_token)
