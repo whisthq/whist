@@ -8,11 +8,10 @@ echo $(ls)
 # cd bin 
 
 # echo $(ls)
-# exec 6< "bin/git_info.txt"
-# read BRANCH <&6
-# read COMMIT <&6
-BRANCH=$(git branch --show-current)
-COMMIT=$(git rev-parse --short HEAD)
+exec 6< "git_info.txt"
+read BRANCH <&6
+read COMMIT <&6
+
 
 
 export BRANCH=$BRANCH
