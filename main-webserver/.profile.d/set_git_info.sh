@@ -4,6 +4,10 @@
 echo "-----> Reading git branch and commit info from txt file "
 
 echo $(ls)
+
+cd bin 
+
+echo $(ls)
 exec 6< "bin/git_info.txt"
 read BRANCH <&6
 read COMMIT <&6
