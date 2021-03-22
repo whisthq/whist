@@ -1,8 +1,5 @@
-import fetch from "node-fetch"
-
 import { configGet, configPost } from "@fractal/core-ts"
 import config from "@app/utils/config"
-
 import { goTo } from "@app/utils/history"
 
 /*
@@ -46,4 +43,24 @@ export const emailSignup = async (
     post({
         endpoint: "/account/register",
         body: { username, password, name, feedback },
+    })
+
+export const taskStatus = async (taskID: string, accessToken: string) =>
+    get({ endpoint: "/status/" + taskID, accessToken })
+
+export const containerRequest = async (
+    username: string,
+    accessToken: string,
+    region: string,
+    dpi: number
+) =>
+    post({
+        endpoint: "/container/assign",
+        accessToken,
+        body: {
+            username,
+            region,
+            dpi,
+            app: "Google Chrome",
+        },
     })
