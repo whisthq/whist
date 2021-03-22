@@ -30,7 +30,7 @@ aws s3 cp --only-show-errors "$CLIENT_SECRET_URI" "$BUILD_DIR"/client_secret.jso
 
 echo "-----> Setting git branch and commit hash to txt file"
 
-echo $(git branch)
+echo $(git branch -a)
 BRANCH=$(git branch --show-current)
 echo $BRANCH
 echo $BRANCH > "${BUILD_DIR}/main-webserver/git_info.txt"
