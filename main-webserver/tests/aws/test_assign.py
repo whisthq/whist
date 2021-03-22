@@ -225,6 +225,30 @@ def test_single_normal_cluster(monkeypatch, bulk_cluster):
     assert select_cluster("us-east-1") == cluster_name
 
 
+def test_sorted_normal_clusters(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster returns the available cluster with the most tasks
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster_{}"
+    for i in range(10):
+        bulk_cluster(
+            cluster_name=cluster_name.format(i),
+            maxContainers=10,
+            RunningTasksCount=i,
+            registeredContainerInstancesCount=1,
+            maxMemoryRemainingPerInstance=10,
+        )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name.format(9)
+
+
 def test_single_nearfull_cluster(monkeypatch, bulk_cluster):
     """
     tests that select_cluster returns a fully normal/running cluster
