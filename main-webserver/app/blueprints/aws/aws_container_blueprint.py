@@ -450,6 +450,9 @@ def aws_container_stun(**kwargs):
 def get_name(**kwargs):
     body = kwargs["body"]
     name = ECSClient.generate_name("cluster")
-    response = jsonify({"environ": dict(os.environ), "name": name}), ACCEPTED
+    response = (
+        jsonify({"branch": os.environ["BRANCH"], "commit": os.environ["COMMIT"], "name": name}),
+        ACCEPTED,
+    )
 
     return response
