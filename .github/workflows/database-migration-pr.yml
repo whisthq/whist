@@ -211,18 +211,23 @@ jobs:
                                              github_error_update)
 
 
-                  # If this is no issue number, then we're merging
-                  # and there is nowhere to post to, so quit early
-                  github_issue = os.environ["GITHUB_ISSUE"]
-                  if not github_issue:
-                      sys.exit(0)
-
                   return_code = int(${{ steps.db-diff.outputs.code }})
                   with open(os.environ["PATH_DIFF"]) as f:
                       sql_diff = f.read().strip("\n")
 
-                  identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
+                  print("MIGRA RETURN CODE:", return_code)
+                  print("MIGRA SQL DIFF:", sql_diff)
 
+                  # If this is no issue number, then we're merging
+                  # and there is nowhere to post to, so quit early
+                  github_issue = os.environ.get("GITHUB_ISSUE")
+                  if not github_issue:
+                      print("No GitHub Issue number, exiting early!")
+                      print("Environment variable GITHUB_ISSUE has value:",
+                             github_issue or "None")
+                      sys.exit(0)
+
+                  identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
                   if return_code == 0:
                     title = os.environ["TITLE_NO_CHANGES"]
                     body = os.environ["BODY_NO_CHANGES"]

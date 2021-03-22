@@ -171,6 +171,8 @@ jobs:
             - name: Perform database migration
               if: success()
               run: |
+                  echo "MIGRA RETURN CODE: ${{ steps.db-diff.outputs.code }}"
+                  echo "MIGRA SQL DIFF: $(cat $PATH_DIFF)"
                   psql --single-transaction --file ${PATH_DIFF} \
                   ${{ steps.db-url.outputs.url }}
 
