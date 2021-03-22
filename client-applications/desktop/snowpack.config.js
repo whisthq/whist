@@ -43,6 +43,6 @@ module.exports = {
         output: "stream",
     },
     packageOptions: {
-        polyfillNode: true,
+        external: ["path", "child_process", "fs", "electron", "electron-store"],
     },
 }
