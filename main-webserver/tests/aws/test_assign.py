@@ -181,6 +181,28 @@ def test_test_cluster(monkeypatch, bulk_cluster):
         select_cluster("us-east-1")
 
 
+def test_too_full_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster calls create_new_cluster when called on an DB with
+    only clusters that're too full
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        raise NoClusterFoundException
+
+    bulk_cluster(
+        maxContainers=10,
+        registeredContainerInstancesCount=10,
+        maxMemoryRemainingPerInstance=10,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    with pytest.raises(NoClusterFoundException):
+        select_cluster("us-east-1")
+
+
 def test_single_normal_cluster(monkeypatch, bulk_cluster):
     """
     tests that select_cluster returns a fully normal/running cluster
@@ -197,7 +219,30 @@ def test_single_normal_cluster(monkeypatch, bulk_cluster):
         cluster_name=cluster_name,
         maxContainers=10,
         registeredContainerInstancesCount=1,
-        maxMemoryRemainingPerInstance=8501,
+        maxMemoryRemainingPerInstance=10,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name
+
+
+def test_single_nearfull_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster returns a fully normal/running cluster
+    that's almost full
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster"
+    bulk_cluster(
+        cluster_name=cluster_name,
+        maxContainers=10,
+        registeredContainerInstancesCount=10,
+        maxMemoryRemainingPerInstance=10000,
     )
     monkeypatch.setattr(create_new_cluster, "delay", patched_create)
     assert select_cluster("us-east-1") == cluster_name
