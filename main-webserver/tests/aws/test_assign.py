@@ -203,6 +203,72 @@ def test_single_normal_cluster(monkeypatch, bulk_cluster):
     assert select_cluster("us-east-1") == cluster_name
 
 
+def test_newly_created_empty_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster returns a newly created cluster
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster"
+    bulk_cluster(
+        cluster_name=cluster_name,
+        maxContainers=10,
+        registeredContainerInstancesCount=0,
+        maxMemoryRemainingPerInstance=0,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name
+
+
+def test_newly_created_present_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster returns a newly created cluster with a live instance
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster"
+    bulk_cluster(
+        cluster_name=cluster_name,
+        maxContainers=10,
+        registeredContainerInstancesCount=1,
+        maxMemoryRemainingPerInstance=0,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name
+
+
+def test_empty_cluster(monkeypatch, bulk_cluster):
+    """
+    tests that select_cluster doesn't return an overfull cluster
+    """
+
+    def patched_create(*args, **kwargs):
+        """
+        Just tells us that the function was called
+        """
+        return
+
+    cluster_name = "base_cluster"
+    bulk_cluster(
+        cluster_name=cluster_name,
+        maxContainers=10,
+        registeredContainerInstancesCount=1,
+        maxMemoryRemainingPerInstance=0,
+    )
+    monkeypatch.setattr(create_new_cluster, "delay", patched_create)
+    assert select_cluster("us-east-1") == cluster_name
+
+
 @pytest.fixture
 def test_payment(client, make_authorized_user, monkeypatch, set_valid_subscription):
     """Generates a function to get the response of the /container/assign endpoint
