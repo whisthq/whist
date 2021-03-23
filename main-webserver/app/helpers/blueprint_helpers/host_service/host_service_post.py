@@ -1,6 +1,6 @@
 import os
-from flask.json import jsonify
 from typing import Tuple
+from flask.json import jsonify
 
 from app.constants.http_codes import (
     BAD_REQUEST,
@@ -41,4 +41,3 @@ def instance_heartbeat_helper() -> Tuple[str, int]:
     """
     Scaffolding for the function that handles instance heartbeats
     """
-    pass

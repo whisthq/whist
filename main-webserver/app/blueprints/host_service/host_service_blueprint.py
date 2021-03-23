@@ -2,10 +2,9 @@ from flask import Blueprint
 from flask.json import jsonify
 
 from app import fractal_pre_process
-from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
+from app.constants.http_codes import ACCEPTED, BAD_REQUEST, FORBIDDEN
 from app.helpers.blueprint_helpers.host_service.host_service_post import (
     initial_instance_auth_helper,
-    instance_heartbeat_helper,
 )
 
 host_service_bp = Blueprint("host_service_bp", __name__)
