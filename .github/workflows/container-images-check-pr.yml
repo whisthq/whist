@@ -128,8 +128,8 @@ jobs:
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
                   RUN_ID = "${{ github.run_id }}"
                   # use heroku to get the database url for the current app
-                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app_name {HEROKU_APP_NAME}", capture_output=True, shell=True)
-                  assert ret.returncode == 0
+                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app {HEROKU_APP_NAME}", capture_output=True, shell=True)
+                  assert ret.returncode == 0, f"Heroku DATABASE_URL retrieval failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
                   DB_URI = ret.stdout.decode("utf-8").strip()
 
                   # Log in as Admin to get Bearer Token
