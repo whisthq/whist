@@ -30,9 +30,10 @@ from ..patches import function
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
-branch = os.environ["BRANCH"]
-commit = os.environ["COMMIT"]
-pytest.cluster_name = f"test-cluster-{branch}-{commit}"
+# print(os.environ)
+# branch = os.environ["BRANCH"]
+# commit = os.environ["COMMIT"]
+pytest.cluster_name = f"test-cluster"
 pytest.container_name = None
 
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
@@ -44,6 +45,8 @@ GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 @pytest.mark.usefixtures("_save_user")
 def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
     cluster_name = cluster_name or pytest.cluster_name
+    print(os.environ)
+
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
     resp = client.post(
