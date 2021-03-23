@@ -313,10 +313,11 @@ include_directories(sentry-native/include)
 add_subdirectory(fractal)
 add_subdirectory(client)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
+    set(SERV "FractalServer")
     add_subdirectory(server)
 endif()
 
 add_custom_target(clang-tidy
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
-    DEPENDS FractalServer FractalClient)
+    DEPENDS FractalClient ${SERV})
