@@ -721,15 +721,11 @@ class ECSClient:
             AvailabilityZones=availability_zones,
             Tags=[
                 {
-                    "ResourceId": auto_scaling_group_name,
-                    "ResourceType": "auto-scaling-group",
                     "Key": "git_branch",
                     "Value": branch,
                     "PropagateAtLaunch": True,
                 },
                 {
-                    "ResourceId": auto_scaling_group_name,
-                    "ResourceType": "auto-scaling-group",
                     "Key": "git_commit",
                     "Value": commit,
                     "PropagateAtLaunch": True,
