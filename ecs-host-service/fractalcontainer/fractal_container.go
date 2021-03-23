@@ -254,8 +254,9 @@ func (c *containerData) InitializeUinputDevices() error {
 	c.uinputDevices = devices
 	c.uinputDeviceMappings = mappings
 
+	// TODO: track this goroutine as well
 	go func() {
-		err := uinputdevices.SendDeviceFDsOverSocket(devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
 		if err != nil {
 			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
 		} else {
