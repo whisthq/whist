@@ -30,7 +30,9 @@ from ..patches import function
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
-pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
+branch = os.environ["BRANCH"]
+commit = os.environ["COMMIT"]
+pytest.cluster_name = f"test-cluster-{branch}-{commit}"
 pytest.container_name = None
 
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
