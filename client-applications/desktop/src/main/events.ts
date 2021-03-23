@@ -2,6 +2,7 @@ import { Event, State, StateChannel } from "@app/utils/state"
 import { ipcMain } from "electron"
 import { app, BrowserWindow } from "electron"
 import { store, persistClear } from "@app/utils/persist"
+import { tokenValidate } from "@app/utils/api"
 
 export const listenState: Event = (setState) => {
     ipcMain.on(StateChannel, (_, state: Partial<State>) => setState(state))
@@ -43,4 +44,16 @@ export const loadPersistOnStart: Event = (setState) => {
 
 export const clearPersistOnStart: Event = (_setState) => {
     persistClear()
+}
+
+export const verifyTokenOnStart: Event = async (setState) => {
+    const access = store.get("accessToken", "") as string
+    if (!access) return
+    const response = await tokenValidate(access)
+    if (response.response.status === 200)
+        return setState({
+            accessToken: response.json.user.access_token,
+            email: response.json.user.user_id,
+        })
+    setState({ accessToken: "", email: "", appWindowRequested: true })
 }
