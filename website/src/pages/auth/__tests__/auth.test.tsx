@@ -359,7 +359,7 @@ describe("<Auth />", () => {
                                 is_user: true,
                                 name: null,
                                 encrypted_config_token:
-                                    "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
+                                    "c4c81af5952028f2d8a7b98bfde26762a1df5db6f332efda7f32ca559fdd6f6bcd49f58a7e38d05f820e087897ab373ff0609654d3ba5383808049d1a96eed14447a28c4a73a679e2f556b2b22942d51a9b96d5e9e83152cdaf01e15c3808fdacd2eb91f56ec265fdc65547b600e31f657168cded759d38f6058aca2359fd5c1",
                                 refresh_token: "refreshToken",
                                 verification_token: "verificationToken",
                                 verified: false,
