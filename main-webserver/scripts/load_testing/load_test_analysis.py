@@ -1,3 +1,10 @@
+"""
+Analyze a load test. All JSONs saved to `OUTFOLDER`. Can handle
+both a local load test or a distributed load test. Main functions
+of interest:
+- analyze_load_test
+"""
+
 import sys
 import os
 import json

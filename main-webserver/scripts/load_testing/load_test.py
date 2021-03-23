@@ -1,3 +1,9 @@
+"""
+Run a load test. Main functions of interest:
+- run_distributed_load_test
+- run_local_load_test
+"""
+
 import sys
 import os
 import subprocess

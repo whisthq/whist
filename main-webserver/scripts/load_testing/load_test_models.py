@@ -1,3 +1,9 @@
+"""
+This file defines the SQLAlchemy Model for the LoadTesting table.
+It is used to save load test results in a Pythonic fashion via an ORM,
+like the rest of webserver code.
+"""
+
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 

@@ -1,6 +1,7 @@
 """
-This file contains the code needed to load test on a single machine, 
-either in local or in distributed (AWS lambda) contexts.
+This file contains the code needed to load test in both local and
+distributed (AWS lambda) contexts. It uses Python multiprocessing
+to make concurrent requests from multiple processes.
 """
 
 import sys
@@ -34,6 +35,29 @@ LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 OUTFOLDER = os.path.join(os.getcwd(), os.path.dirname(__file__), "load_test_dump")
 
 
+def get_task_definition_arn(web_url: str) -> str:
+    """
+    Get the task definition to run. Depending on the `web_url`, we
+    figure out whether we should run the `dev`, `staging`, or `prod`
+    chrome task definitions.
+
+    Args:
+        web_url: URL of the webserver to load test
+
+    Returns:
+        string of the form fractal-<stage>-browsers-chrome
+    """
+    if "dev" in web_url or "localhost" in web_url:
+        return "fractal-dev-browsers-chrome"
+    elif "staging" in web_url:
+        return "fractal-staging-browsers-chrome"
+    elif "prod" in web_url:
+        return "fractal-prod-browsers-chrome"
+    else:
+        # use staging by default
+        return "fractal-staging-browsers-chrome"
+
+
 def make_assign_request(
     web_url: str,
     admin_token: str,
@@ -61,7 +85,7 @@ def make_assign_request(
     """
     endpoint = "/aws_container/assign_container"
     payload = {
-        "task_definition_arn": "fractal-staging-browsers-chrome",
+        "task_definition_arn": get_task_definition_arn(web_url),
         "cluster_name": LOAD_TEST_CLUSTER_NAME,
         "username": LOAD_TEST_USER_PREFIX.format(user_num=user_num),
         "region_name": LOAD_TEST_CLUSTER_REGION,
