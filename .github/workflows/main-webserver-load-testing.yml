@@ -46,6 +46,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: Setup and run load test
               working-directory: main-webserver
               shell: python3 {0}
@@ -54,6 +58,7 @@ jobs:
                   import sys
                   sys.path.append(".")
                   import subprocess
+                  import time
 
                   from scripts.misc_scripts import login  
                   from scripts.load_testing.load_test_management import (
@@ -62,8 +67,8 @@ jobs:
                       upgrade_webserver,
                       downgrade_webserver,
                   )
-                  from scripts.load_testing.load_test import run_distributed_load_test
-                  from scripts.load_test_analysis import analyze_load_test
+                  from scripts.load_testing.load_test import run_distributed_load_test, run_local_load_test
+                  from scripts.load_testing.load_test_analysis import analyze_load_test
 
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
@@ -72,8 +77,8 @@ jobs:
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
                   RUN_ID = "${{ github.run_id }}"
                   # use heroku to get the database url for the current app
-                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app_name {HEROKU_APP_NAME}", capture_output=True, shell=True)
-                  assert ret.returncode == 0
+                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app {HEROKU_APP_NAME}", capture_output=True, shell=True)
+                  assert ret.returncode == 0, f"Heroku DATABASE_URL retrieval failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
                   DB_URI = ret.stdout.decode("utf-8").strip()
 
                   # Log in as Admin to get Bearer Token
@@ -81,21 +86,43 @@ jobs:
 
                   # --- Setup load test --- #
                   # Create the cluster used for load testing
-                  # create_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  create_load_test_cluster(WEBSERVER_URL, TOKEN)
 
                   # Upgrade the heroku app for prod-like use
-                  # upgrade_webserver(HEROKU_APP_NAME)
+                  upgrade_webserver(HEROKU_APP_NAME)
 
-                  # --- Run and analyze load test --- #
-                  # Use AWS lambda to run a distributed load test
-                  run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
+                  # wait 5 minutes for the ASGs/capacity providers to prepare
+                  # TODO: fix bug in calling run_task right after cluster is created
+                  # https://tryfractal.slack.com/archives/C01KLRUMYEL/p1616478131017600
+                  time.sleep(60 * 5)
 
-                  # Analyze the load test and save the results to the db
-                  analyze_load_test(RUN_ID, DB_URI)
+                  try:
+                    # Until we fix high initial task latency, we need to do one lambda invocation
+                    # to sidestep the first task's high latency issue
+                    run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
 
-                  # --- Cleanup load test --- #
-                  delete_load_test_cluster(WEBSERVER_URL, TOKEN)
-                  downgrade_webserver(HEROKU_APP_NAME)
+                    # --- Run and analyze load test --- #
+                    # Use AWS lambda to run a distributed load test
+                    run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
+
+                    # Analyze the load test and save the results to the db
+                    analyze_load_test(RUN_ID, DB_URI)
+
+                  except Exception as e:
+                    print(f"Load test failed with exception {e}")
+                    
+                  finally:
+                    # --- Cleanup load test --- #
+                    # run this always; restores webserver to its original state
+                    downgrade_webserver(HEROKU_APP_NAME)
+
+                  # run this only if load test succeeded, otherwise keep up for debugging
+                  try:
+                    time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
+                    # TODO: when delete_cluster is not broken on staging, remove this try/except
+                    delete_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  except Exception as e:
+                    print(f"delete_cluster got exception {e}")
 
             - name: Notify Slack on success
               run: |

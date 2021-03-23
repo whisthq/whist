@@ -21,176 +21,43 @@ on:
     workflow_dispatch:
 
 jobs:
-    # # Linting
-    # # Checks for formatting and Dockerfile standards using Hadolint.
-    # container-images-lint-dockerfiles:
-    #     name: Linting
-    #     runs-on: ubuntu-20.04
-    #     container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
-
-    #     steps:
-    #         - name: Checkout Git Repository
-    #           uses: actions/checkout@v2
-
-    #         # Start from top-level folder to use .hadolint.yaml config
-    #         - name: Check if Development Dockerfiles Follow Hadolint Standards
-    #           run: hadolint ./**/*Dockerfile
-
-    #         # Start from top-level folder to use .hadolint.yaml config
-    #         - name: Check if Container Images Dockerfiles Follow Hadolint Standards
-    #           run: |
-    #               hadolint ./container-images/*/Dockerfile.20
-    #               hadolint ./container-images/*/*/Dockerfile.20
-
-    # # Docker images building
-    # # Checks that the Docker images build successfully.
-    # container-images-build-images:
-    #     name: Building
-    #     runs-on: ubuntu-20.04
-
-    #     steps:
-    #         - name: Checkout Git Repository
-    #           uses: actions/checkout@v2
-
-    #         - name: Configure AWS CLI # To get and install GRID driver
-    #           uses: aws-actions/configure-aws-credentials@v1
-    #           with:
-    #               aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
-    #               aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
-    #               aws-region: us-east-1
-
-    #         - name: Build Container Images
-    #           run: ./container-images/build_container_image.sh --all
-
-    main-webserver-load-testing:
-        name: Main Webserver Load Testing
+    # Linting
+    # Checks for formatting and Dockerfile standards using Hadolint.
+    container-images-lint-dockerfiles:
+        name: Linting
         runs-on: ubuntu-20.04
-
-        env:
-            webserver_url: "https://staging-server.fractal.co"
-            heroku_app_name: "fractal-staging-server"
-            num_invocations: "1"
+        container: hadolint/hadolint:v1.23.0 # This version should be updated periodically to use latest Hadolint rules
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Configure AWS CLI
+            # Start from top-level folder to use .hadolint.yaml config
+            - name: Check if Development Dockerfiles Follow Hadolint Standards
+              run: hadolint ./**/*Dockerfile
+
+            # Start from top-level folder to use .hadolint.yaml config
+            - name: Check if Container Images Dockerfiles Follow Hadolint Standards
+              run: |
+                  hadolint ./container-images/*/Dockerfile.20
+                  hadolint ./container-images/*/*/Dockerfile.20
+
+    # Docker images building
+    # Checks that the Docker images build successfully.
+    container-images-build-images:
+        name: Building
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
               with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Authenticate Heroku
-              run: |
-                  cat > ~/.netrc << EOF
-                  machine api.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  machine git.heroku.com
-                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
-                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-                  EOF
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
-
-            - name: Setup and run load test
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
-                  import subprocess
-                  import time
-
-                  from scripts.misc_scripts import login  
-                  from scripts.load_testing.load_test_management import (
-                      create_load_test_cluster,
-                      delete_load_test_cluster,
-                      upgrade_webserver,
-                      downgrade_webserver,
-                  )
-                  from scripts.load_testing.load_test import run_distributed_load_test, run_local_load_test
-                  from scripts.load_testing.load_test_analysis import analyze_load_test
-
-                  WEBSERVER_URL = "${{ env.webserver_url }}"
-                  HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
-                  NUM_INVOCATIONS = int("${{ env.num_invocations }}")
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-                  RUN_ID = "${{ github.run_id }}"
-                  # use heroku to get the database url for the current app
-                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app {HEROKU_APP_NAME}", capture_output=True, shell=True)
-                  assert ret.returncode == 0, f"Heroku DATABASE_URL retrieval failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
-                  DB_URI = ret.stdout.decode("utf-8").strip()
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-
-                  # --- Setup load test --- #
-                  # Create the cluster used for load testing
-                  create_load_test_cluster(WEBSERVER_URL, TOKEN)
-
-                  # Upgrade the heroku app for prod-like use
-                  upgrade_webserver(HEROKU_APP_NAME)
-
-                  # wait 5 minutes for the ASGs/capacity providers to prepare
-                  # TODO: fix bug in calling run_task right after cluster is created
-                  # https://tryfractal.slack.com/archives/C01KLRUMYEL/p1616478131017600
-                  time.sleep(60 * 5)
-
-                  try:
-                    # Until we fix high initial task latency, we need to do one lambda invocation
-                    # to sidestep the first task's high latency issue
-                    run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
-
-                    # --- Run and analyze load test --- #
-                    # Use AWS lambda to run a distributed load test
-                    run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
-
-                    # Analyze the load test and save the results to the db
-                    analyze_load_test(RUN_ID, DB_URI)
-                  
-                  except Exception as e:
-                    print(f"Load test failed with exception {e}")
-                    
-                  finally:
-                    # --- Cleanup load test --- #
-                    # run this always; restores webserver to its original state
-                    downgrade_webserver(HEROKU_APP_NAME)
-                  
-                  # run this only if load test succeeded, otherwise keep up for debugging
-                  try:
-                    time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
-                    # TODO: when delete_cluster is not broken on staging, remove this try/except
-                    delete_load_test_cluster(WEBSERVER_URL, TOKEN)
-                  except Exception as e:
-                    print(f"delete_cluster got exception {e}")
-
-            - name: Notify Slack on success
-              run: |
-                  WEBSERVER_URL=${{ env.webserver_url }}
-
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-            - name: Notify Slack on failure
-              if: ${{ failure() }}
-              run: |
-                  WEBSERVER_URL=${{ env.webserver_url }}
-
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`. Investigate ASAP.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+            - name: Build Container Images
+              run: ./container-images/build_container_image.sh --all
