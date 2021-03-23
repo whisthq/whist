@@ -78,9 +78,9 @@ class InstanceInfo(db.Model):
     auth_token = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
-    CPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
-    GPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
-    memoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
+    CPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    GPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    memoryRemainingInInstance = db.Column(db.Float, nullable=False, default=2000.0)
     runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
     is_draining = db.Column(db.Boolean, nullable=False, default=True)
 
