@@ -36,7 +36,7 @@ def parse_request(view_func: _F) -> _F:
         try:
             body = json.loads(request.data) if request.method == "POST" else dict()
         except Exception as e:
-            fractal_logger.error(e)
+            fractal_logger.error("Failed to parse request", exc_info=True)
             body = dict()
 
         kwargs["body"] = body
@@ -88,7 +88,7 @@ def log_request(view_func: _F) -> _F:
                         )
                     )
         except Exception as e:
-            fractal_logger.error(e)
+            fractal_logger.error("Failed to log request", exc_info=True)
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)

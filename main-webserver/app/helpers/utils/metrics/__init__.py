@@ -19,6 +19,9 @@ def setup_metrics_logger(logz_token: str = None, local_file: str = None) -> logg
     If local_file is provided then metrics will be written as newline delimited
     JSON objects to the file. This is intended for development assistance.
     """
+    # we do not provide a configuration to this logger, so it will never actually print
+    # anything. This also avoids overriding fracta_logger's config. However, all
+    # the handlers are run so logzio/the file handler still handle the message.
     logger = logging.Logger("metrics")
     formatter = logging.Formatter(validate=False)
     if logz_token:
