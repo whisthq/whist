@@ -11,7 +11,7 @@ on:
 
 jobs:
     main-webserver-load-testing:
-        name: Main Webserver Hanging Resource Notification
+        name: Main Webserver Load Testing
         runs-on: ubuntu-20.04
 
         env:
