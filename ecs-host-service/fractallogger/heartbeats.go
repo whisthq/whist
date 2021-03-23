@@ -66,7 +66,7 @@ func getFractalWebserver() string {
 
 var authToken string
 var numBeats uint64 = 0
-var heartbeatHttpClient = http.Client{
+var heartbeatHTTPClient = http.Client{
 	Timeout: 30 * time.Second,
 }
 
@@ -80,9 +80,9 @@ func initializeHeartbeat() error {
 	if GetAppEnvironment() == EnvLocalDev {
 		Infof("Skipping initializing webserver heartbeats since running in LocalDev environment.")
 		return nil
-	} else {
-		Infof("Initializing webserver heartbeats, communicating with webserver at %s", getFractalWebserver())
 	}
+
+	Infof("Initializing webserver heartbeats, communicating with webserver at %s", getFractalWebserver())
 
 	resp, err := handshake()
 	if err != nil {
@@ -160,7 +160,7 @@ func handshake() (handshakeResponse, error) {
 	}
 
 	Infof("handshake(): Sending a POST request with body %s to URL %s", requestBody, requestURL)
-	httpResp, err := heartbeatHttpClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
+	httpResp, err := heartbeatHTTPClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		return resp, MakeError("handshake(): Got back an error from the webserver at URL %s. Error:  %v", requestURL, err)
 	}
@@ -224,7 +224,7 @@ func sendHeartbeat(isDying bool) {
 	}
 
 	Infof("Sending a heartbeat with body %s to URL %s", requestBody, requestURL)
-	_, err = heartbeatHttpClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
+	_, err = heartbeatHTTPClient.Post(requestURL, "application/json", bytes.NewReader(requestBody))
 	if err != nil {
 		Errorf("Error sending heartbeat: %s", err)
 	}

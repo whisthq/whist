@@ -7,7 +7,9 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
-// There isn't a fundamental restriction for us to stay below 256, but this should be plenty.
+// TTY is defined as a type so that the implementation can change without the
+// package API changing. Also, there isn't a fundamental restriction for us to
+// stay below 256, but this should be plenty (we can always change it later).
 type TTY uint8
 
 type ttyStatus byte
@@ -27,6 +29,7 @@ var ttymap map[TTY]ttyStatus = make(map[TTY]ttyStatus)
 // Lock to protect `ttymap`
 var ttymapLock = new(sync.Mutex)
 
+// Allocate allocates a free TTY.
 func Allocate() (TTY, error) {
 	ttymapLock.Lock()
 	defer ttymapLock.Unlock()
@@ -46,6 +49,7 @@ func Allocate() (TTY, error) {
 	return tty, nil
 }
 
+// Free marks the given TTY as free, if it is not reserved.
 func Free(tty TTY) {
 	ttymapLock.Lock()
 	defer ttymapLock.Unlock()

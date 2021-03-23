@@ -9,6 +9,8 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+// GenerateRcloneToken creates the configuration that is passed to `rclone
+// config create`.
 func GenerateRcloneToken(AccessToken string, RefreshToken string, Expiry string, TokenType string) ([]byte, error) {
 	buf, err := json.Marshal(
 		struct {
@@ -29,7 +31,9 @@ func GenerateRcloneToken(AccessToken string, RefreshToken string, Expiry string,
 	return buf, nil
 }
 
-// Does not sanitize configName or rcloneToken!
+// CreateRcloneConfig runs `rclone config create` to later be able to mount the
+// given cloud storage account.  NOTE: CreateRcloneConfig does not sanitize
+// configName or rcloneToken!
 func CreateRcloneConfig(configName string, provider Provider, rcloneToken []byte, clientID string, clientSecret string) error {
 	providerType, err := provider.RcloneInternalName()
 	if err != nil {

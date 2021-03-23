@@ -18,6 +18,8 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
 
+// A UinputDevices struct contains the keyboard and absolute/relative mice for
+// a given container.
 type UinputDevices struct {
 	absmouse uinput.TouchPad
 	relmouse uinput.Mouse
@@ -27,7 +29,7 @@ type UinputDevices struct {
 // Note: we don't need a lock in this package, since the operating system will
 // take care of that for us.
 
-// Allocate() allocates uinput devices atomically (i.e. either one succeeds, or
+// Allocate allocates uinput devices atomically (i.e. either all succeed, or
 // none of them do).
 func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMapping, reterr error) {
 	var absmouse uinput.TouchPad
@@ -112,6 +114,10 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 	return
 }
 
+// SendDeviceFDsOverSocket blocks until it can send the provided devices' file
+// descriptors over a socket at the provided path. If the given context is
+// cancelled, it also aborts (therefore letting us not leak goroutines if a
+// container dies or fails during creation after this function is called).
 func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.WaitGroup, devices *UinputDevices, socketPath string) error {
 	// Create our own context so we can safely cancel it.
 	ctx, cancel := context.WithCancel(baseCtx)
@@ -218,6 +224,7 @@ func linuxUIGetSysName(len uintptr) uintptr {
 	return linuxIoc(iocRead, uiIoctlBase, 44, len)
 }
 
+// Close calls Close() on each of the constituent devices.
 func (u *UinputDevices) Close() {
 	u.absmouse.Close()
 	u.relmouse.Close()

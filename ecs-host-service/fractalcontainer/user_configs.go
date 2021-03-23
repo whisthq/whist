@@ -68,18 +68,16 @@ func (c *containerData) BackupUserConfigs() error {
 	//    which is an ignorable error
 	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
 		return logger.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
-	} else {
-		logger.Infof("Tar config directory output: %s", tarConfigOutput)
 	}
+	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	saveConfigCmd := exec.Command("/usr/bin/aws", "s3", "cp", tarPath, s3ConfigPath)
 	saveConfigOutput, err := saveConfigCmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not run \"aws s3 cp\" save config command: %s. Output: %s", err, saveConfigOutput)
-	} else {
-		logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
 	}
 
+	logger.Infof("Ran \"aws s3 cp\" save config command with output: %s", saveConfigOutput)
 	return nil
 }
 
