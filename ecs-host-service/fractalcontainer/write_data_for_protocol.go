@@ -14,7 +14,7 @@ func (c *containerData) WriteResourcesForProtocol() error {
 	// Write identifying host port
 	p, err := c.GetIdentifyingHostPort()
 	if err != nil {
-		return logger.MakeError("Couldn't write start values: %s", err)
+		return logger.MakeError("Couldn't write resources for protocol: %s", err)
 	}
 	err = c.writeResourceMappingToFile("hostPort_for_my_32262_tcp", logger.Sprintf("%d", p))
 	if err != nil {
