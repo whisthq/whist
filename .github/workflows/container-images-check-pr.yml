@@ -97,7 +97,7 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: 3.8
-            
+
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
@@ -122,11 +122,6 @@ jobs:
                   from scripts.load_testing.load_test import run_distributed_load_test
                   from scripts.load_testing.load_test_analysis import analyze_load_test
 
-                  ac = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
-                  sk = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}"
-                  print("ACCESS", ac)
-                  print("SECRET", sk)
-
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
                   NUM_INVOCATIONS = int("${{ env.num_invocations }}")
@@ -143,10 +138,10 @@ jobs:
 
                   # --- Setup load test --- #
                   # Create the cluster used for load testing
-                  # create_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  create_load_test_cluster(WEBSERVER_URL, TOKEN)
 
                   # Upgrade the heroku app for prod-like use
-                  # upgrade_webserver(HEROKU_APP_NAME)
+                  upgrade_webserver(HEROKU_APP_NAME)
 
                   # --- Run and analyze load test --- #
                   # Use AWS lambda to run a distributed load test
@@ -157,8 +152,13 @@ jobs:
 
                   # --- Cleanup load test --- #
                   downgrade_webserver(HEROKU_APP_NAME)
-                  time.sleep(60 * 5) # sleep for 5 minutes so tasks auto-delete, then delete cluster
-                  delete_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
+
+                  try:
+                    # TODO: when delete_cluster is not broken on staging, remove this try/except
+                    delete_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  except Exception as e:
+                    print(f"delete_cluster got exception {e}")
 
             - name: Notify Slack on success
               run: |
