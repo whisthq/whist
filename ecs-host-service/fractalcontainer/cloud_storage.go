@@ -2,8 +2,10 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
+	"sync"
 	"time"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
@@ -12,9 +14,9 @@ import (
 
 const FractalCloudStorageDir = "/fractalCloudStorage/"
 
-// Mounts the cloud storage directory and waits around to clean it up once it's
-// unmounted.
-func (c *containerData) AddCloudStorage(Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error {
+// AddCloudStorage (at a very high level) launches a goroutine that mounts the
+// cloud storage directory and waits around to clean it up once it's unmounted.
+func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error {
 	rcloneToken, err := cloudstorage.GenerateRcloneToken(AccessToken, RefreshToken, Expiry, TokenType)
 	if err != nil {
 		return logger.MakeError("Couldn't add cloud storage: %s", err)
@@ -49,32 +51,94 @@ func (c *containerData) AddCloudStorage(Provider cloudstorage.Provider, AccessTo
 
 	// Fix cloud storage directory permissions
 	// TODO: this could probably be made more efficient, but we will revisit this
-	// once we're actually using cloud storage.
+	// once we're actually using cloud storage again.
 	cmd := exec.Command("chown", "-R", "ubuntu", FractalCloudStorageDir)
 	cmd.Run()
 	cmd = exec.Command("chmod", "-R", "666", FractalCloudStorageDir)
 	cmd.Run()
 
-	// Mount in separate goroutine so we don't block the main goroutine.
-	// Synchronize using errorchan.
-	errorchan := make(chan error)
+	// Here, we create a Context and CancelFunc for this specific cloud storage
+	// directory. During normal operation, when this context is cancelled, the
+	// cloud storage directory is (lazily) unmounted.
+	dirCtx, dirCancel := context.WithCancel(globalCtx)
+
+	// Now, we start a goroutine that kicks off the cloud storage mounting
+	// process (in yet another goroutine). We need a whole goroutine here, just
+	// to start another one, because we want to wait for some given amount of
+	// time without an error before assuming the mount command succeeded, but
+	// don't want to block the main thread. Once the  timeout period has elapsed,
+	// we return `nil` to indicate a (most likely) successful mount.
+
+	// We use resultChan to report the error or success of the mount command.
+	resultChan := make(chan error)
+
+	goroutineTracker.Add(1)
 	go func() {
-		// We mount in foreground mode, and wait for the result to clean up the
-		// directory created for this purpose. That way we know that we aren't
-		// accidentally removing files from the user's cloud storage drive.
-		cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path, "--allow-other", "--vfs-cache-mode", "writes")
-		cmd.Env = os.Environ()
-		logger.Info("Rclone mount command: [  %v  ]", cmd)
-		stderr, _ := cmd.StderrPipe()
+		defer goroutineTracker.Done()
+
+		// Now, we actually start the goroutine that runs the mount command. That
+		// goroutine is free to block on the mount command, and it does so,
+		// cleaning up once the mount command has exited. The inner goroutine
+		// communicates with the current goroutine using `innerChan`. Note that we
+		// cannot just use `resultChan` directly since we need to notify _both_
+		// parent goroutines, and we can't safely have both parents listening on
+		// one channel and guarantee that we "pop the stack" of goroutines in the
+		// correct order.
+		innerChan := make(chan error)
+
+		goroutineTracker.Add(1)
+		go func() {
+			defer goroutineTracker.Done()
+			defer close(innerChan)
+
+			// We mount in foreground mode, and wait for the result to clean up the
+			// directory created for this purpose. That way we know that we aren't
+			// accidentally removing files from the user's cloud storage drive. Note
+			// also that we are NOT using a `exec.CommandContext`, since if the
+			// context is cancelled the rclone mounting command would be killed,
+			// which may not actually be a good thing (TODO: test this out). Instead,
+			// we'd rather let the mounting finish and then run the unmounting. This
+			// can potentially slow down the host service shutdown process, but that
+			// is a small price to pay to avoid messing up users' cloud storage.
+			cmd = exec.Command("/usr/bin/rclone", "mount", configName+":/", path, "--allow-other", "--vfs-cache-mode", "writes")
+			cmd.Env = os.Environ()
+			logger.Info("Rclone mount command: [  %v  ]", cmd)
+			stderr, _ := cmd.StderrPipe()
+
+			// After the mount command returns (which means the cloud storage is no
+			// longer mounted), we remove the now-unnecessary directory we created.
+			// Note that we don't use `os.RemoveAll()` just in case there's something
+			// in the directory, since that would delete files from the user's cloud
+			// storage.
+			defer func() {
+				remerr = os.Remove(path)
+				if remerr != nil {
+					logger.Errorf("Error removing cloud storage directory %s: %s", path, err)
+				}
+			}()	
+
+			// Actually start the mount.
+			err = cmd.Start()
+			if err != nil {
+				innerChan <- logger.MakeError("Could not start \"rclone mount %s\" command: %s", configName+":/", err)
+			} 
+			// If there was no error, then innerChan gets closed without an error
+			// being sent.
+
+			// We have to call dirCancel() here in case the mount failed with an
+			// error *after* the enclosing goroutine's timeout already passed, so the
+			// AddCloudStorage() function reported a 
+			dirCancel()
+		}() 
+
+	}()
+
+	//
+
+	//
 
 		c.cloudStorageDirectories = append(c.cloudStorageDirectories, path)
 
-		err = cmd.Start()
-		if err != nil {
-			errorchan <- logger.MakeError("Could not start \"rclone mount %s\" command: %s", configName+":/", err)
-			close(errorchan)
-			return
-		}
 
 		// We close errorchan after `timeout` so the enclosing function can return
 		// an error if the `rclone mount` command failed immediately, or return nil
@@ -96,17 +160,8 @@ func (c *containerData) AddCloudStorage(Provider cloudstorage.Provider, AccessTo
 				logger.Errorf("Mounting of cloud storage directory %s failed after more than timeout %v and was therefore not reported as a failure to the webserver. Error: %s. Output: %s", path, timeout, err, errbuf)
 			}
 		}
+	}
 
-		// Remove the now-unnecessary directory we created. Note that we don't use
-		// `os.RemoveAll()` in case there's something in the directory.
-		err = os.Remove(path)
-		if err != nil {
-			logger.Errorf("Error removing cloud storage directory %s: %s", path, err)
-		}
-	}()
-
-	err = <-errorchan
-	return err
 }
 
 func (c *containerData) RemoveAllCloudStorage() {
