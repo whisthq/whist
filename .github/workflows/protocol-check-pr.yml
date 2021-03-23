@@ -179,8 +179,8 @@ jobs:
                   git diff-index --quiet HEAD --
 
             # Verify clang-tidy on all OS's
-            - name: Verify Builds with clang-tidy
-              shell: bash -e {0}
+            - name: Verify Builds with clang-tidy on Linux/MacOS
+              if: runner.os == 'Linux' || runner.os == 'macOS'
               working-directory: protocol
               run: |
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
@@ -188,6 +188,17 @@ jobs:
 
                   cd build
                   make clang-tidy -j
+
+            - name: Verify builds with clang-tidy on Windows
+              if: runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              working-directory: protocol
+              run: |
+                  # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
+                  echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
+
+                  cd build
+                  ninja clang-tidy || EXIT /B 1
 
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
