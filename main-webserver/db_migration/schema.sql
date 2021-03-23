@@ -250,7 +250,12 @@ CREATE TABLE hardware.cluster_info (
 
 --
 -- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
+-- NOTE:  the complex OR condition is to handle both clusters that are
+-- underloaded and clusters that have just been created
+-- since AWS default returns 0 for max memory for clusters
+-- early in their lifecycle
 --
+
 
 CREATE VIEW hardware.cluster_sorted AS
  SELECT cluster_info.cluster,
