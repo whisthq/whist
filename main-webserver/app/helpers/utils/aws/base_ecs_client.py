@@ -175,13 +175,13 @@ class ECSClient:
         """
         # branch, commit = self.get_git_info()
         branch, commit = self.get_git_info()
+        branch = branch.replace("/", "-")
         name = f"{starter_name}-<{branch}>-<{commit}>"
 
         # need a special case for capacity_provider and cluster
         # as they don't like special characters
         if starter_name in ["capacity_provider", "cluster"]:
             letters = string.ascii_lowercase
-            branch = branch.replace("/", "-")
             name = f"{starter_name}-{branch}-{commit}"
 
         if current_app.testing:
@@ -315,7 +315,7 @@ class ECSClient:
             capacityProviders=capacity_providers
         )["capacityProviders"]
         fractal_logger.info(f"capacity providers info: {capacity_providers_info}")
-
+        # THIS IS THE PROBLEM RIGHT HERE
         auto_scaling_groups = list(
             map(
                 lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
