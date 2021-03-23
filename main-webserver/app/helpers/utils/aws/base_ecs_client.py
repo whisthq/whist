@@ -310,15 +310,20 @@ class ECSClient:
         capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
             "capacityProviders"
         ]
+        fractal_logger.info(f"capacity providers: {capacity_providers}")
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
+        fractal_logger.info(f"capacity providers info: {capacity_providers_info}")
+
         auto_scaling_groups = list(
             map(
                 lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
                 capacity_providers_info,
             )
         )
+        fractal_logger.info(f"auto scaling groups: {auto_scaling_groups}")
+
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
         )["AutoScalingGroups"]
