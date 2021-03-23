@@ -7,19 +7,26 @@ function init(): void {
     const state = {
         appWindowRequested: true,
     }
-
+    // Use events.clearPersistOnStart for development/testing
+    // if you want the auth window to pop up. Otherwise, your credentials will
+    // be persisted and you'll launch the protocol right away.
+    //
+    //
+    // Use effects.logState to print out every state change to the main thread
+    // console.
     initState(
         state,
         [
+            // events.clearPersistOnStart,
+            events.loadPersistOnStart,
             events.listenState,
-            events.listenAccess,
             events.listenAppActivate,
             events.listenAppQuit,
         ],
         [
             effects.launchAuthWindow,
             effects.launchProtocol,
-            effects.storeAccess,
+            effects.persistState,
             effects.broadcastState,
             effects.closeAllWindows,
             // effects.logState,

@@ -1,10 +1,11 @@
 import { webContents, BrowserWindow } from "electron"
 import { createAuthWindow } from "@app/utils/windows"
-import { Effect, State, StateChannel } from "@app/utils/state"
-import { store } from "@app/utils/persist"
+import { Effect, StateChannel } from "@app/utils/state"
+import { persistKeys } from "@app/utils/persist"
+import * as proto from "@app/utils/protocol"
 
 export const launchAuthWindow: Effect = (state: any) => {
-    if (state.accessToken) return state
+    if (state.accessToken && state.email) return state
     if (!state.appWindowRequested) return state
     if (BrowserWindow.getAllWindows().length === 0) {
         createAuthWindow()
@@ -13,7 +14,7 @@ export const launchAuthWindow: Effect = (state: any) => {
 }
 
 export const closeAllWindows: Effect = (state: any) => {
-    if (!state.accessToken) return
+    if (!(state.accessToken && state.email)) return
     for (let win of BrowserWindow.getAllWindows()) win.close()
     return state
 }
@@ -29,15 +30,16 @@ export const broadcastState: Effect = (state: any) => {
 }
 
 export const launchProtocol: Effect = async (state) => {
-    if (!state.accessToken) return state
-
-    console.log("LAUNCHING PROTOCOL WATCH OUT")
+    if (!(state.accessToken && state.email)) return state
+    const taskID = await proto.createContainer(state.email, state.accessToken)
+    const protocol = proto.launchProtocol()
+    const info = await proto.waitUntilReady(taskID, state.accessToken)
+    proto.signalProtocolInfo(protocol, info)
     return state
 }
 
-export const storeAccess: Effect = async (state) => {
-    if (!state.accessToken) return state
-    store.set("accessToken", state)
+export const persistState: Effect = async (state) => {
+    persistKeys(state, "email", "accessToken")
     return state
 }
 
