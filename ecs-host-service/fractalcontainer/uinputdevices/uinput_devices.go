@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 
@@ -111,7 +112,7 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 	return
 }
 
-func SendDeviceFDsOverSocket(baseCtx context.Context, devices *UinputDevices, socketPath string) error {
+func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.WaitGroup, devices *UinputDevices, socketPath string) error {
 	// Create our own context so we can safely cancel it.
 	ctx, cancel := context.WithCancel(baseCtx)
 	defer cancel()
@@ -133,8 +134,9 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, devices *UinputDevices, so
 	// which will cause the following goroutine to always close `listener`.
 	// Normally, listener.Accept() blocks until the protocol connects. If the
 	// context is closed, though, we want to unblock.
-	// TODO: SYNC.WAITGROUP
+	goroutineTracker.Add(1)
 	go func() {
+		defer goroutineTracker.Done()
 		<-ctx.Done()
 		listener.Close()
 	}()
