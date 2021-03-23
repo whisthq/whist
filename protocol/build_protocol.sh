@@ -27,13 +27,13 @@ docker build . \
 # Mount entire ./fractal directory so that git works for git revision
 # Mount .aws directory so that awscli in download-binaries.sh works
 docker run \
-       --rm \
-       --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
-       --mount type=bind,source="$HOME/.aws",destination=/home/ubuntu/.aws,readonly \
-       --name fractal-protocol-builder-$(date +"%s") \
-       --user fractal-builder \
-       fractal/protocol-builder \
-       sh -c "\
+    --rm \
+    --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
+    --mount type=bind,source="$HOME/.aws",destination=/home/ubuntu/.aws,readonly \
+    --name fractal-protocol-builder-$(date +"%s") \
+    --user fractal-builder \
+    fractal/protocol-builder \
+    sh -c "\
     cd protocol &&                 \
     mkdir -p docker-build &&       \
     cd docker-build &&             \
