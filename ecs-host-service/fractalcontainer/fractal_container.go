@@ -148,6 +148,9 @@ func (c *containerData) GetUserID() UserID {
 
 // TODO: fix locking
 func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
+	c.rwlock.RLock()
+	defer c.rwlock.RUnlock()
+
 	binds := c.GetPortBindings()
 	for _, b := range binds {
 		if b.Protocol == portbindings.TransportProtocolTCP && b.ContainerPort == 32262 {
@@ -215,7 +218,7 @@ func (c *containerData) AssignPortBindings(desired []portbindings.PortBinding) e
 	defer c.rwlock.Unlock()
 
 	c.portBindings = result
-	return err
+	return nil
 }
 
 func (c *containerData) GetPortBindings() []portbindings.PortBinding {
