@@ -14,6 +14,8 @@ CLIENT_DIR="$2"
 SERVER_DIR="$3"
 SOURCE_DIR="$4"
 CACHE_DIR="$5"
+mkdir -p "$CLIENT_DIR"
+mkdir -p "$SERVER_DIR"
 mkdir -p "$CACHE_DIR"
 
 echo "Downloading Protocol Libraries"
@@ -42,26 +44,31 @@ function has_updated {
 }
 
 ###############################
-# Download Protocol Shared Libs
+# Download S3 Shared Libs
 ###############################
 
-LIB="shared-libs.tar.gz"
-if has_updated "$LIB"; then
-    SHARED_LIBS_DIR="$CACHE_DIR/shared-libs"
-    mkdir -p "$SHARED_LIBS_DIR"
-    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SHARED_LIBS_DIR"
+if [[ "$OS" =~ (Windows|Linux) ]]; then
+    LIB="shared-libs.tar.gz"
+    if has_updated "$LIB"; then
+        SHARED_LIBS_DIR="$CACHE_DIR/shared-libs"
+        mkdir -p "$SHARED_LIBS_DIR"
+        aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$SHARED_LIBS_DIR"
 
-    # Copy Windows files
-    if [[ "$OS" =~ "Windows" ]]; then
-        cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$CLIENT_DIR"
-        cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$SERVER_DIR"
+        # Copy Windows files
+        if [[ "$OS" =~ "Windows" ]]; then
+            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$CLIENT_DIR"
+            cp "$SHARED_LIBS_DIR/share/64/Windows"/* "$SERVER_DIR"
+        elif [[ "$OS" =~ "Linux" ]]; then
+            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$CLIENT_DIR"
+            cp "$SHARED_LIBS_DIR/share/64/Linux"/* "$SERVER_DIR"
+        fi
+
+        rm -r "$SHARED_LIBS_DIR"
     fi
-
-    rm -r "$SHARED_LIBS_DIR"
 fi
 
 ###############################
-# Copy shared libs
+# Copy repo shared libs (TODO: Move these dylibs to S3)
 ###############################
 
 # Copy macOS files
