@@ -450,6 +450,48 @@ def aws_container_stun(**kwargs):
 def get_name(**kwargs):
     body = kwargs["body"]
     # name = ECSClient.generate_name("cluster")
-    response = jsonify({"branch": dict(os.environ)})
+    region_name = "us-east-1"
+
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+    instance_type = "t3.small"
+    ami = "ami-0decb4a089d867dc1"
+    min_size = 0
+    max_size = 10
+
+    (
+        cluster_name,
+        launch_config_name,
+        auto_scaling_group_name,
+        _,
+    ) = ecs_client.create_auto_scaling_cluster(
+        cluster_name=None,
+        instance_type=instance_type,
+        ami=ami,
+        min_size=min_size,
+        max_size=max_size,
+        availability_zones=None,
+    )
+
+    response = jsonify(
+        {
+            "cluster name": cluster_name,
+            "launch_config_name": launch_config_name,
+            "asg name": auto_scaling_group_name,
+        }
+    )
 
     return response
+
+
+"""
+cluster_name=None,
+    instance_type="g3.4xlarge",
+    ami="ami-0decb4a089d867dc1",
+    region_name="us-east-1",
+    min_size=0,
+    max_size=10,
+    availability_zones=None,
+        ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+"""
