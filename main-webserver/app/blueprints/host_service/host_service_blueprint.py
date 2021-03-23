@@ -1,5 +1,3 @@
-import os
-
 from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
@@ -8,6 +6,10 @@ from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
 from app.constants.container_state_values import WAITING_FOR_CLIENT_APP
 from app.models import UserContainerState
+from app.helpers.blueprint_helpers.host_service.host_service_post import (
+    initial_instance_auth_helper,
+    instance_heartbeat_helper,
+)
 
 host_service_bp = Blueprint("host_service_bp", __name__)
 
@@ -41,7 +43,6 @@ def host_service(**kwargs):
 @host_service_bp.route("/host_service/auth", methods=("POST",))
 @fractal_pre_process
 def host_service_auth(**kwargs):
-    # pylint: disable=unused-variable
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")
 
@@ -50,16 +51,7 @@ def host_service_auth(**kwargs):
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    # TODO: replace with a real celery task taking in instance_id and ip address and eventually
-    # writing an entry to the db with pkey instance_id and an authentication token
-    # TODO: update ecs-host-service to wait for task success via /status/<task id> and then pull the
-    # authentication token from the response. Do this in a separate goroutine
-    auth_token = os.urandom(16).hex()
-    already_happened = False
-
-    if already_happened:
-        return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-    return jsonify({"AuthToken": auth_token}), SUCCESS
+    return initial_instance_auth_helper(address, instance_id)
 
 
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
