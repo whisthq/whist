@@ -9,17 +9,17 @@ import (
 // This block contains the two transport protocols (TCP and UDP) that we care
 // about in container port bindings.
 const (
-	TransportProtocolTCP transportProtocol = "tcp"
-	TransportProtocolUDP transportProtocol = "udp"
+	TransportProtocolTCP TransportProtocol = "tcp"
+	TransportProtocolUDP TransportProtocol = "udp"
 )
 
-// A transportProtocol is either TCP or UDP. It is used for port mappings of containers.
-type transportProtocol string
+// A TransportProtocol is either TCP or UDP. It is used for port mappings of containers.
+type TransportProtocol string
 
 // UnmarshalJSON for transportProtocol determines whether to use TCP or UDP,
 // setting TCP as the zero-value but treating other unrecognized values as
 // errors
-func (tp *transportProtocol) UnmarshalJSON(b []byte) error {
+func (tp *TransportProtocol) UnmarshalJSON(b []byte) error {
 	if strings.ToLower(string(b)) == "null" {
 		*tp = TransportProtocolTCP
 		logger.Errorf("Unmarshalled nil transportProtocol as TCP")
@@ -38,12 +38,12 @@ func (tp *transportProtocol) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalJSON overrides the logic for JSON-encoding the transportProtocol type
-func (tp transportProtocol) MarshalJSON() ([]byte, error) {
+func (tp TransportProtocol) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + string(tp) + `"`), nil
 }
 
 // NewTransportProtocol returns a transportProtocol from a string in the task
-func NewTransportProtocol(protocol string) (transportProtocol, error) {
+func NewTransportProtocol(protocol string) (TransportProtocol, error) {
 	switch protocol {
 	case string(TransportProtocolTCP):
 		return TransportProtocolTCP, nil
