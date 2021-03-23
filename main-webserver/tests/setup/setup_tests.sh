@@ -31,10 +31,7 @@ if [ $DB_EXISTS == true ]; then
     export DB_EXISTS=true
     bash ../../ephemeral_db_setup/db_setup.sh
 
-    BRANCH=$(git branch --show-current)
-    COMMIT=$(git rev-parse --short HEAD)
-    export BRANCH=$BRANCH
-    export COMMIT=$COMMIT
+    printenv
 
     exit 0
 fi
