@@ -181,10 +181,11 @@ class ECSClient:
         # as they don't like special characters
         if starter_name in ["capacity_provider", "cluster"]:
             letters = string.ascii_lowercase
-            name = f"{starter_name}-{branch.replace("/", "-")}-{commit}"
-        
+            branch = branch.replace("/", "-")
+            name = f"{starter_name}-{branch}-{commit}"
+
         if current_app.testing:
-            name=f"test-{name}"
+            name = f"test-{name}"
 
         return name
 
