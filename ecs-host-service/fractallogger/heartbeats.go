@@ -91,6 +91,11 @@ func initializeHeartbeat() error {
 
 	authToken = resp.AuthToken
 
+	// Note that this goroutine does not listen to the global context, and is not
+	// tracked by the global goroutineTracker. This is because we want the
+	// heartbeat goroutine to outlive the global context, and all other
+	// goroutines. Therefore, we have the explicit function `stopHeartbeats()`,
+	// which ends up finishing off the heartbeat goroutine.
 	go heartbeatGoroutine()
 
 	return nil
