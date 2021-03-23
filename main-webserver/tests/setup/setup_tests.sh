@@ -30,6 +30,12 @@ if [ $DB_EXISTS == true ]; then
     # db itself was already created by Heroku; we just need to apply schema and insert data
     export DB_EXISTS=true
     bash ../../ephemeral_db_setup/db_setup.sh
+
+    BRANCH=$(git branch --show-current)
+    COMMIT=$(git rev-parse --short HEAD)
+    export BRANCH=$BRANCH
+    export COMMIT=$COMMIT
+
     exit 0
 fi
 
