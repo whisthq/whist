@@ -40,8 +40,8 @@ func (c *containerData) PopulateUserConfigs() error {
 	logger.Infof("Ran \"aws s3 cp\" get config command with output: %s", getConfigOutput)
 
 	// Extract the config archive to the user config directory
-	tarPath := configPath + "fractal-app-config.tar.gz"
-	untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configPath)
+	tarPath := configDir + "fractal-app-config.tar.gz"
+	untarConfigCmd := exec.Command("/usr/bin/tar", "-xzf", tarPath, "-C", configDir)
 	untarConfigOutput, err := untarConfigCmd.CombinedOutput()
 	if err != nil {
 		logger.Errorf("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)

@@ -67,7 +67,7 @@ type FractalContainer interface {
 	GetPortBindings() []portbindings.PortBinding
 
 	GetDeviceMappings() []dockercontainer.DeviceMapping
-	InitializeUinputDevices() error
+	InitializeUinputDevices(*sync.WaitGroup) error
 
 	// Writes files containing the TTY assignment and host port corresponding to
 	// port 32262/tcp in the container, in a directory accessible only to this
