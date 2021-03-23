@@ -242,7 +242,7 @@ func (c *containerData) GetDeviceMappings() []dockercontainer.DeviceMapping {
 	return append(c.uinputDeviceMappings, c.otherDeviceMappings...)
 }
 
-func (c *containerData) InitializeUinputDevices() error {
+func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
@@ -254,9 +254,11 @@ func (c *containerData) InitializeUinputDevices() error {
 	c.uinputDevices = devices
 	c.uinputDeviceMappings = mappings
 
-	// TODO: track this goroutine as well
+	goroutineTracker.Add(1)
 	go func() {
-		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
+		defer goroutineTracker.Done()
+
+		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
 		if err != nil {
 			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
 		} else {
