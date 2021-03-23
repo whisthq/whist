@@ -163,7 +163,7 @@ class ECSClient:
         branch = os.environ["BRANCH"]
         commit = os.environ["COMMIT"]
 
-        return branch, commit
+        return branch, commit[0:7]
 
     def generate_name(self, starter_name=""):
         """
