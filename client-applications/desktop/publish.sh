@@ -62,8 +62,8 @@ else
     rm -rf protocol-build
     mkdir -p protocol-build/client
 
-    # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/publish-build/client/build64/* ./protocol-build/client
+    # Move FractalClient and related files over to client-app
+    cp -r ../../protocol/publish-build/client/build64/* ./protocol-build/client
 
     # Codesign everything in ./client directory
     find ./protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
