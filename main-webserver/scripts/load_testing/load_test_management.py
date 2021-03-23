@@ -80,7 +80,7 @@ def delete_load_test_cluster(web_url: str, admin_token: str):
     task_id = resp.json()["ID"]
 
     # errors out on failure
-    poll_celery_task(task_id, web_url)
+    poll_celery_task(web_url, task_id, admin_token=admin_token)
 
 
 def upgrade_webserver(app_name):
