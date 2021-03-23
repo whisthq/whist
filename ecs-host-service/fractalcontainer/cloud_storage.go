@@ -10,6 +10,8 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+// FractalCloudStorageDir is the directory on the host that contains all cloud
+// storage directories inside it.
 const FractalCloudStorageDir = "/fractalCloudStorage/"
 
 // AddCloudStorage mounts the cloud storage directory, and then launches a

@@ -89,26 +89,26 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 		(*mapToUse)[desiredBind.HostPort] = inUse
 		return desiredBind, nil
 
-	} else {
-		// Gotta allocate a port ourselves
-		randomPort := randomPortInAllowedRange()
-		numTries := 0
-		for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
-			numTries++
-			if numTries >= 100 {
-				return desiredBind, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", numTries, desiredBind.HostPort, desiredBind.Protocol)
-			}
-		}
-
-		// Mark it as allocated and return
-		(*mapToUse)[randomPort] = inUse
-		return PortBinding{
-			ContainerPort: desiredBind.ContainerPort,
-			HostPort:      randomPort,
-			Protocol:      desiredBind.Protocol,
-			BindIP:        desiredBind.BindIP,
-		}, nil
 	}
+
+	// Gotta allocate a port ourselves
+	randomPort := randomPortInAllowedRange()
+	numTries := 0
+	for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
+		numTries++
+		if numTries >= 100 {
+			return desiredBind, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", numTries, desiredBind.HostPort, desiredBind.Protocol)
+		}
+	}
+
+	// Mark it as allocated and return
+	(*mapToUse)[randomPort] = inUse
+	return PortBinding{
+		ContainerPort: desiredBind.ContainerPort,
+		HostPort:      randomPort,
+		Protocol:      desiredBind.Protocol,
+		BindIP:        desiredBind.BindIP,
+	}, nil
 }
 
 // freeSinglePort marks the given port as free in the correct `protocolSpecificHostPortMap`. If the given port is reserved, it logs an error. This function requires that `portMapsLock` is held throughout.
@@ -128,7 +128,7 @@ func freeSinglePort(bind PortBinding) {
 	}
 }
 
-// `Free` marks all provided and non-reserved host ports as free in `tcpPortMap`
+// Free marks all provided and non-reserved host ports as free in `tcpPortMap`
 // and `udpPortMap`.
 func Free(binds []PortBinding) {
 	if len(binds) == 0 {

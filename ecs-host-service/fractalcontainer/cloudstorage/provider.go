@@ -4,13 +4,20 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+// Provider represents a cloud storage provider that can be used with rlcone.
+// Note that Providers have several names --- a "canonical" name which is
+// stored in the underlying string, a "pretty" one which faces users, and a
+// "RcloneInternal" name, which is how `rclone` refers to that provider.
 type Provider string
 
+// This block contains all the cloud storage providers that Fractal currently
+// supports.
 const (
 	GoogleDrive Provider = "google_drive"
 	Dropbox     Provider = "dropbox"
 )
 
+// PrettyName returns the "pretty" name of a cloud storage provider.
 func (p Provider) PrettyName() (string, error) {
 	switch p {
 	case GoogleDrive:
@@ -22,6 +29,7 @@ func (p Provider) PrettyName() (string, error) {
 	}
 }
 
+// RcloneInternalName returns the "RcloneInternal" name of a cloud storage provider.
 func (p Provider) RcloneInternalName() (string, error) {
 	switch p {
 	case GoogleDrive:
@@ -33,6 +41,7 @@ func (p Provider) RcloneInternalName() (string, error) {
 	}
 }
 
+// GetProvider returns a Provider given its "canonical" name.
 func GetProvider(name string) (Provider, error) {
 	switch name {
 	case string(GoogleDrive):
