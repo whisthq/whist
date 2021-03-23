@@ -390,6 +390,10 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 			}
 
 			select {
+			case <-globalCtx.Done():
+				logger.Infof("Leaving main event loop...")
+				return
+
 			case err := <-dockererrs:
 				needToReinitDockerEventStream = true
 				switch {
@@ -435,6 +439,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					serverevent.ReturnResult("", err)
 					logger.Error(err)
 				}
+
 			}
 		}
 	}()
