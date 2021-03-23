@@ -110,6 +110,7 @@ jobs:
                   import sys
                   sys.path.append(".")
                   import subprocess
+                  import time
 
                   from scripts.misc_scripts import login  
                   from scripts.load_testing.load_test_management import (
@@ -155,8 +156,9 @@ jobs:
                   analyze_load_test(RUN_ID, DB_URI)
 
                   # --- Cleanup load test --- #
-                  delete_load_test_cluster(WEBSERVER_URL, TOKEN)
                   downgrade_webserver(HEROKU_APP_NAME)
+                  time.sleep(60 * 5) # sleep for 5 minutes so tasks auto-delete, then delete cluster
+                  delete_load_test_cluster(WEBSERVER_URL, TOKEN)
 
             - name: Notify Slack on success
               run: |
