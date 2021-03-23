@@ -29,7 +29,9 @@ LOAD_TEST_CLUSTER_NAME = "load_test_cluster"
 LOAD_TEST_CLUSTER_REGION = "us-east-1"
 LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 
-OUTFOLDER = "load_test_dump"
+# this will be located at load_test_dump (from the perspective of this file)
+# no matter where it is called from
+OUTFOLDER = os.path.join(os.getcwd(), os.path.dirname(__file__), "load_test_dump")
 
 
 def make_assign_request(
