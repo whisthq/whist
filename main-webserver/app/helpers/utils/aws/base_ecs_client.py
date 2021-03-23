@@ -470,7 +470,9 @@ class ECSClient:
 
         clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
+            fractal_logger.info(f"Cluster: {cluster}")
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
+            fractal_logger.info(f"Cluster info: {cluster_info}")
             containers = self.get_containers_in_cluster(cluster)
             auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
             max_resources = defaultdict(int)
@@ -498,6 +500,8 @@ class ECSClient:
             }
 
         print(clusters_usage)
+
+        fractal_logger.info(f"Cluster usage: {dict(clusters_usage)}")
         return clusters_usage
 
     def set_and_register_task(
