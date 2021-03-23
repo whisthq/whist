@@ -80,10 +80,10 @@ jobs:
 
                   # --- Setup load test --- #
                   # Create the cluster used for load testing
-                  create_load_test_cluster(WEBSERVER_URL, TOKEN)
+                  # create_load_test_cluster(WEBSERVER_URL, TOKEN)
 
                   # Upgrade the heroku app for prod-like use
-                  upgrade_webserver(HEROKU_APP_NAME)
+                  # upgrade_webserver(HEROKU_APP_NAME)
 
                   # --- Run and analyze load test --- #
                   # Use AWS lambda to run a distributed load test
