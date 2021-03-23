@@ -27,7 +27,7 @@ function printhelp {
     echo "                            defaults to false, options are true/false"
 }
 
-if [[ "$1" == "--help" ]]
+if [[ "${1-default}" == "--help" ]]
 then
     printhelp
 else
@@ -44,11 +44,6 @@ else
         fi
         shift
     done
-
-    # Only notarize, when publish=true
-    if [[ "$publish" == "false" ]]; then
-        export CSC_IDENTITY_AUTO_DISCOVERY=false
-    fi
     
     export BUILD_NUMBER=$version
 
@@ -61,27 +56,31 @@ else
     mkdir -p protocol-build/client
 
     # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/FractalClient
+    cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/Fractal
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
 
     # Copy over the FFmpeg dylibs
     cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
     cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
-    # Sign each FractalClient binary
-    for filename in protocol-build/client/*.dylib; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
-
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/FractalClient
-
     # Copy loading images to a temp folder (will be moved in afterSign script)
-    rm -rf loadingtemp
-    cp -r ../../protocol/client/build64/Darwin/loading loadingtemp
-    for filename in loadingtemp/*; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
+    cp -r ../../protocol/client/build64/Darwin/loading protocol-build/client
+
+    # Codesign if publishing, or don't codesign at all if not publishing
+    if [[ "$publish" == "false" ]]; then
+        export CSC_IDENTITY_AUTO_DISCOVERY=false
+    else
+        # Sign each FractalClient binary
+        for filename in protocol-build/client/*.dylib; do
+            codesign -f -v -s "Fractal Computers, Inc." $filename
+        done
+
+        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
+        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/Fractal
+        for filename in protocol-build/client/loading/*; do
+            codesign -f -v -s "Fractal Computers, Inc." $filename
+        done
+    fi
 
     # Initialize yarn first
     yarn -i
