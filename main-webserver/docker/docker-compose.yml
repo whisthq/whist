@@ -48,7 +48,8 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
-      NUM_WORKERS: 50
+      NUM_WORKERS: 2
+      WORKER_CONCURRENCY: 50
     volumes:
       - ..:/app
       - $HOME/.aws:/.aws
