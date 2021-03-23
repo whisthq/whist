@@ -1,14 +1,13 @@
 import { Event, State, StateChannel } from "@app/utils/state"
 import { ipcMain } from "electron"
 import { app, BrowserWindow } from "electron"
-import { store } from "@app/utils/persist"
+import { store, persistClear } from "@app/utils/persist"
 
 export const listenState: Event = (setState) => {
     ipcMain.on(StateChannel, (_, state: Partial<State>) => setState(state))
 }
 
 export const listenAccess: Event = (setState) => {
-    store.delete("accessToken")
     if (store.get("accessToken"))
         setState({ accessToken: store.get("accessToken", "") as string })
 
@@ -36,4 +35,12 @@ export const listenAppQuit: Event = (_setState) => {
             app.quit()
         }
     })
+}
+
+export const loadPersistOnStart: Event = (setState) => {
+    setState(store.store)
+}
+
+export const clearPersistOnStart: Event = (_setState) => {
+    persistClear()
 }
