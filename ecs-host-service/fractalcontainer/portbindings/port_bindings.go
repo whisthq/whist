@@ -23,7 +23,7 @@ type PortBinding struct {
 	// BindIP is the IP address to which the port is bound
 	BindIP string `json:"BindIp"`
 	// Protocol is the protocol of the port
-	Protocol transportProtocol
+	Protocol TransportProtocol
 }
 
 type portStatus byte
@@ -40,7 +40,7 @@ const (
 // Reserve lets us mark certain ports as "reserved" so they don't get
 // allocated for containers. This needs to be called at program initialization
 // (ideally in an `init` function), before any containers are started.
-func Reserve(num uint16, protocol transportProtocol) {
+func Reserve(num uint16, protocol TransportProtocol) {
 	mapToUse, err := getProtocolSpecificHostPortMap(protocol)
 	if err != nil {
 		logger.Errorf("Could not reserve port %v/%s. Err: %s", num, protocol, err)
@@ -186,7 +186,7 @@ func isInAllowedRange(p uint16) bool {
 // Helper function to check that a `fractaltypes.PortBinding` is valid (i.e.
 // either "tcp" or "udp"), and return a pointer to the correct map to
 // read/modify (i.e. either `tcpPorts` or `udpPorts`).
-func getProtocolSpecificHostPortMap(protocol transportProtocol) (*protocolSpecificHostPortMap, error) {
+func getProtocolSpecificHostPortMap(protocol TransportProtocol) (*protocolSpecificHostPortMap, error) {
 	switch protocol {
 	case TransportProtocolTCP:
 		return &tcpPortMap, nil
