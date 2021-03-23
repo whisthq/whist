@@ -3,6 +3,11 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+BUILD_DIR="$(pwd)"
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
+
 # This script runs clang-tidy to check for C coding standards and linting, and propose
 # edits if it finds areas for improvements.
 
@@ -42,7 +47,8 @@ declare -a includeFolders=(
 )
 
 # set clang-tidy-fixes file
-yamlFolder="fixes"
+yamlFolder="$BUILD_DIR/fixes"
+rm -r "$yamlFolder"
 mkdir $yamlFolder
 fixesFilename=clang-tidy-fixes.yaml
 
@@ -65,7 +71,7 @@ done
 # header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
 headerFilter="client/|fractal/|server/"
 
-clang-tidy --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
+clang-tidy -p="$BUILD_DIR" --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
 
 # ---- clean up yaml file before running replacements ----
 
@@ -119,4 +125,4 @@ else
 fi
 
 # cleanup
-rm -rf $yamlFolder
+rm -r $yamlFolder

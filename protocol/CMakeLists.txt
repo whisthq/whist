@@ -320,3 +320,8 @@ add_subdirectory(client)
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile on MacOS
     add_subdirectory(server)
 endif()
+
+add_custom_target(clang-tidy
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMAND ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
+    DEPENDS FractalServer FractalClient)

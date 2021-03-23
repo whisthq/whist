@@ -137,7 +137,9 @@ jobs:
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
               working-directory: protocol
               run: |
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
+                  mkdir build
+                  cd build
+                  cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE -G "Ninja" || EXIT /B 1
                   ninja FractalClient || EXIT /B 1
                   ninja FractalServer || EXIT /B 1
 
@@ -147,13 +149,16 @@ jobs:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode_12.2.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk" # Necessary for building on macOS
               working-directory: protocol
               run: |
-                  cmake . -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+                  mkdir build
+                  cd build
+                  cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
                   make FractalClient -j
 
             - name: Build Protocol Server on Linux
               if: runner.os == 'Linux'
               working-directory: protocol
               run: |
+                  cd build
                   make FractalServer -j
 
             # Verify clang-format on Linux
@@ -164,6 +169,7 @@ jobs:
                   # Clang-matcher for clang-format, added after the main build sequence so that clang doesn't match gcc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
+                  cd build
                   make clang-format -j
 
                   # Show diff in GitHub Actions logs
@@ -180,7 +186,8 @@ jobs:
                   # Clang-matcher for clang-tidy, added after the main build sequence so that clang doesn't match gcc/msvc errors
                   echo " ::add-matcher::${{ github.workspace }}/.github/workflows/helpers/protocol/clang_matcher.json"
 
-                  ./run-clang-tidy.sh -c
+                  cd build
+                  make clang-tidy -j
 
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
