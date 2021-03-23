@@ -307,17 +307,17 @@ class DeploymentConfig:
         return os.environ.get("REDIS_TLS_URL") or os.environ["REDIS_URL"]
 
 
-def try_parent_property_or(parent_cls: Any, prop_name: str, default: str) -> property:
+def try_property_or(cls: Any, prop_name: str, default: str) -> property:
     """Attempt to retrieve the property from the parent object. If an exception is thrown while
     doing so, then return the default value instead.
 
     Usage:
-        some_prop = try_parent_property_or(ParentClass, "some_prop", "default_value")
+        some_prop = try_property_or(ParentClass, "some_prop", "default_value")
     """
 
     def try_parent(self):
         try:
-            return super(parent_cls, self)[prop_name]  # pylint: disable=unsubscriptable-object
+            return super(cls, self)[prop_name]  # pylint: disable=unsubscriptable-object
         except:
             return default
 
@@ -337,8 +337,8 @@ class LocalConfig(DeploymentConfig):
 
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
-    APP_GIT_COMMIT = try_parent_property_or(DeploymentConfig, "APP_GIT_COMMIT", "unknown-local")
-    HOST_SERVER = try_parent_property_or(DeploymentConfig, "HOST_SERVER", "local-unknown")
+    APP_GIT_COMMIT = try_property_or(DeploymentConfig, "APP_GIT_COMMIT", "unknown-local")
+    HOST_SERVER = try_property_or(DeploymentConfig, "HOST_SERVER", "local-unknown")
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
