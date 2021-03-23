@@ -1,22 +1,22 @@
 import { useEffect, useState } from "react"
 import { IpcRendererEvent } from "electron"
 import { isEqual, merge } from "lodash"
+import { ChildProcess } from "child_process"
 
 export type State = {
-    email: string | ""
-    accessToken: string | ""
-    refreshToken: string | ""
-    appWindowRequested: boolean | false
-    containerPromise: Promise<any>
+    email: string
+    accessToken: string
+    refreshToken: string
+    protocolLoading: boolean
+    protocolProcess: ChildProcess
+    appWindowRequested: boolean
 }
 export type Event = (setState: (state: Partial<State>) => void) => void
 export type Effect = (
-    state: Partial<State>
-) => Partial<State> | Promise<Partial<State>>
+    s: State
+) => Generator<State, State> | AsyncGenerator<State, State>
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const ipcError = [
     "Before you call useMainState(),",
@@ -56,30 +56,29 @@ export const useMainState = ():
 }
 
 export const initState = async (
-    init: Partial<State>,
+    init: State,
     events: Event[],
     effects: Effect[]
 ) => {
-    let cached = {}
+    let cached = new Map()
     let state = { ...init }
 
-    const setState = (newState: Partial<State>) => {
-        merge(state, newState)
+    const consumeEffect = async (eff: Effect, set: Function) => {
+        const iter = eff(state) //start the generator
+        for await (let newState of iter) // update state with yield objects
+            set(newState) // use passed function to avoid mutual recursion
+        cached.delete(eff) // make effect available to run again
     }
 
-    const reduceEffects = async (effs: Effect[], newState: Partial<State>) => {
-        for (let eff of effs) newState = await eff(newState)
-        return newState
+    const setState = (newState: Partial<State>) => {
+        const prevState = { ...state }
+        merge(state, newState) // mutate state object with new changes
+        if (isEqual(prevState, state)) return
+        for (let eff of effects) // run each of the effects
+            if (!cached.has(eff))
+                // don't re-run running effects
+                cached.set(eff, consumeEffect(eff, setState))
     }
 
     for (let event of events) event(setState)
-
-    while (true) {
-        await sleep(100)
-        if (!isEqual(cached, state)) {
-            console.log({ ...state })
-            setState(await reduceEffects(effects, { ...state }))
-            cached = { ...state }
-        }
-    }
 }

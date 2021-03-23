@@ -5,6 +5,10 @@ import * as effects from "@app/main/effects"
 
 function init(): void {
     const state = {
+        email: "",
+        accessToken: "",
+        refreshToken: "",
+        protocolLoading: false,
         appWindowRequested: true,
     }
     // Use events.clearPersistOnStart for development/testing
@@ -19,6 +23,7 @@ function init(): void {
         [
             // events.clearPersistOnStart,
             events.loadPersistOnStart,
+            events.verifyTokenOnStart,
             events.listenState,
             events.listenAppActivate,
             events.listenAppQuit,
@@ -29,7 +34,7 @@ function init(): void {
             effects.persistState,
             effects.broadcastState,
             effects.closeAllWindows,
-            // effects.logState,
+            effects.logState,
         ]
     )
 }

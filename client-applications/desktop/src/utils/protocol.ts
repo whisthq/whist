@@ -1,5 +1,5 @@
 import path from "path"
-import { spawn, ChildProcess } from "child_process"
+import { spawn } from "child_process"
 import { app, screen } from "electron"
 import { containerRequest, taskStatus } from "@app/utils/api"
 
