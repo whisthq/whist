@@ -119,7 +119,7 @@ jobs:
                       downgrade_webserver,
                   )
                   from scripts.load_testing.load_test import run_distributed_load_test
-                  from scripts.load_test_analysis import analyze_load_test
+                  from scripts.load_testing.load_test_analysis import analyze_load_test
 
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
