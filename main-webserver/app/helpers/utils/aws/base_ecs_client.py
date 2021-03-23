@@ -177,10 +177,15 @@ class ECSClient:
         branch, commit = self.get_git_info()
 
         if current_app.testing:
-            name = f"test-{starter_name}-{branch}_{commit}-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
+            name = f"test-{starter_name}-<{branch}>-<{commit}>-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
             # letters = string.ascii_lowercase
-            name = f"{starter_name}-{branch}_{commit}"
+            name = f"{starter_name}-<{branch}>-<{commit}>"
+
+        # need a special case for capacity_provider as they don't like special characters
+        if starter_name == "capacity_provider":
+            letters = string.ascii_lowercase
+            name = starter_name + "_" + "".join(random.choice(letters) for i in range(10))
 
         return name
 
