@@ -179,10 +179,8 @@ class ECSClient:
         if current_app.testing:
             name = f"test-<{branch}><{commit}>-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
-            letters = string.ascii_lowercase
-            name = f"{starter_name}-<{branch}><{commit}>-".join(
-                random.choice(letters) for i in range(10)
-            )
+            # letters = string.ascii_lowercase
+            name = f"{starter_name}-<{branch}><{commit}>-"
 
         return name
 
