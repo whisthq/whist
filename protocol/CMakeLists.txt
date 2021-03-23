@@ -121,35 +121,30 @@ endif()
 # Windows option to add icon (used primarily for client app compilation pipeline)
 option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 
+# Get Bash on all OS's
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    # Find git
+    find_program(GIT git REQUIRED)
+    # Find git's path
+    get_filename_component(GIT_DIR ${GIT} DIRECTORY)
+    # Look for gitbash based on git's path
+    # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
+    find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
+else()
+    set(BASH "/bin/bash")
+endif()
+
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
     set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
 
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-        MESSAGE(STATUS "Downloading binaries from AWS S3")
-        # Find git
-        find_program(GIT git REQUIRED)
-        # Find git's path
-        get_filename_component(GIT_DIR ${GIT} DIRECTORY)
-        # Look for gitbash based on git's path
-        # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
-        find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
-        # Call download-binaries.sh from gitbash
-        execute_process(COMMAND ${BASH} "download-binaries.sh" ${download_args}
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE download_res)
-        if (NOT ${download_res} EQUAL "0")
-            message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_res}")
-        endif()
-    else()
-        MESSAGE(STATUS "Downloading binaries from AWS S3")
-        execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
-                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                        RESULT_VARIABLE download)
-        if (NOT ${download} EQUAL "0")
-            message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
-        endif()
+    message(STATUS "Downloading binaries from AWS S3")
+    execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                    RESULT_VARIABLE download_result)
+    if (NOT ${download_result} EQUAL "0")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
     endif()
 endif()
 
@@ -323,5 +318,5 @@ endif()
 
 add_custom_target(clang-tidy
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
+    COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
     DEPENDS FractalServer FractalClient)
