@@ -249,6 +249,25 @@ CREATE TABLE hardware.cluster_info (
 
 
 --
+-- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
+--
+
+CREATE TABLE hardware.instance_info (
+    instance_id character varying NOT NULL,
+    auth_token character varying NOT NULL,
+    "lastHeartbeated" double precision,
+    "memoryRemainingPerInstance" bigint,
+    "CPURemainingPerInstance" bigint,
+    "GPURemainingPerInstance" bigint,
+    "runningTasksCount" bigint,
+    ip character varying NOT NULL,
+    status character varying NOT NULL,
+    is_draining boolean DEFAULT false NOT NULL,
+    location character varying NOT NULL
+);
+
+
+--
 -- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
 -- NOTE:  the complex OR condition is to handle both clusters that are
 -- underloaded and clusters that have just been created

@@ -70,6 +70,22 @@ class SortedClusters(db.Model):
     status = db.Column(db.String(250), nullable=False)
 
 
+class InstanceInfo(db.Model):
+    __tablename__ = "instance_info"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    location = db.Column(db.String(250), nullable=False)
+    auth_token = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
+    ip = db.Column(db.String(250), nullable=False)
+    CPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    GPURemainingPerInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    memoryRemainingPerInstance = db.Column(db.Float, nullable=False, default=2000.0)
+    pendingTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    is_draining = db.Column(db.Boolean, nullable=False, default=True)
+
+
 class RegionToAmi(db.Model):
     """
     This class represents the region_to_ami table in hardware
