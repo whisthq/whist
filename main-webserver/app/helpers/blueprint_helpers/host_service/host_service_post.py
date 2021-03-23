@@ -4,6 +4,7 @@ from flask.json import jsonify
 
 from app.constants.http_codes import (
     BAD_REQUEST,
+    NOT_FOUND,
     SUCCESS,
 )
 from app.helpers.utils.general.logs import fractal_logger
@@ -37,7 +38,26 @@ def initial_instance_auth_helper(ip: str, instance_id: str) -> Tuple[str, int]:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
 
-def instance_heartbeat_helper() -> Tuple[str, int]:
+def instance_heartbeat_helper(
+    auth_token: str, instance_id: str, free_ram_kb: int, instance_type: str
+) -> Tuple[str, int]:
     """
-    Scaffolding for the function that handles instance heartbeats
+
+    Args:
+        auth_token (str): the auth token of the instance
+        instance_id (str): the AWS instance ID
+        free_ram_kb (int): how many KB of ram are available
+        instance_type (str): what type of instance (e.g. g4.xlarge) it is
+
+    Returns: request status
+
     """
+    instance = InstanceInfo.query.get(instance_id).one_or_none()
+    if instance is None:
+        return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    if instance.auth_token.lower() != auth_token.lower():
+        return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    instance.instance_type = instance_type
+    instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
+    db.session.commit()
+    return jsonify({"status": SUCCESS}), SUCCESS
