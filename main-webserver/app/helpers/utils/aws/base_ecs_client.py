@@ -183,7 +183,7 @@ class ECSClient:
             name = f"{starter_name}-<{branch}>-<{commit}>"
 
         # need a special case for capacity_provider as they don't like special characters
-        if starter_name == "capacity_provider":
+        if starter_name in ["capacity_provider", "cluster"]:
             letters = string.ascii_lowercase
             name = starter_name + "_" + "".join(random.choice(letters) for i in range(10))
 
