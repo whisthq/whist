@@ -31,7 +31,8 @@ if [ $DB_EXISTS == true ]; then
     export DB_EXISTS=true
     bash ../../ephemeral_db_setup/db_setup.sh
 
-    printenv
+    export BRANCH=$HEROKU_TEST_RUN_BRANCH
+    export COMMIT=$HEROKU_TEST_RUN_COMMIT_VERSION
 
     exit 0
 fi
