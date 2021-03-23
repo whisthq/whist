@@ -143,6 +143,11 @@ jobs:
                   # Upgrade the heroku app for prod-like use
                   upgrade_webserver(HEROKU_APP_NAME)
 
+                  # wait 5 minutes for the ASGs/capacity providers to prepare
+                  # TODO: fix bug in calling run_task right after cluster is created
+                  # https://tryfractal.slack.com/archives/C01KLRUMYEL/p1616478131017600
+                  time.sleep(60 * 5)
+
                   # Until we fix high initial task latency, we need to do one lambda invocation
                   # to sidestep the first task's high latency issue
                   run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
