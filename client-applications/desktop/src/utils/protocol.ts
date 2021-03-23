@@ -22,7 +22,7 @@ const getProtocolName = () => {
 // Temporarily pointing to the executable already installed in my applications
 // folder so that I have something to launch.
 // const protocolPath = path.join(app.getAppPath(), getProtocolName())
-const protocolPath = "/Applications/Fractal.app/Contents/MacOS/Fractal"
+const protocolPath = "./protocol-build/client/Fractal"
 
 const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 
@@ -39,27 +39,11 @@ const chooseRegion = () => {
     ][0]
 }
 
-export const writeStream = (process: ChildProcess, message: string) => {
-    process.stdin?.write("")
-    process.stdin?.write("\n")
-}
-
-export const endStream = (process: ChildProcess, message: string) => {
-    process.stdin?.end(message)
-}
-
-export const launchProtocol = () => {
-    if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
-
-    return spawn(
-        protocolPath,
-        ["--name", "Fractalized Chrome", "--icon", iconPath, "--read-pipe"],
-        {
-            detached: false,
-            stdio: ["pipe", process.stdout, process.stderr],
-        }
-    )
-}
+export const parseInfoPorts = (res: {
+    port_32262: number
+    port_32263: number
+    port_32273: number
+}) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
 
 export const createContainer = async (email: string, accessToken: string) => {
     const r = containerRequest(email, accessToken, chooseRegion(), getDPI())
@@ -90,34 +74,27 @@ export const waitUntilReady = async (taskID: string, accessToken: string) => {
     }
 }
 
-export const parseInfoPorts = async (res: {
+export const launchProtocol = (info: {
     port_32262: number
     port_32263: number
     port_32273: number
-}) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
+    secret_key: string
+    ip: string
+}) => {
+    if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
 
-// Still need to pass in portInfo and container
-export const signalProtocolInfo = (
-    protocol: ChildProcess,
-    info: {
-        port_32262: number
-        port_32263: number
-        port_32273: number
-        secret_key: string
-        ip: string
-    }
-) => {
-    writeStream(protocol, `ports?${parseInfoPorts(info)}`)
-    writeStream(protocol, `private-key?${info.secret_key}`)
-    writeStream(protocol, `ip?${info.ip}`)
-    writeStream(protocol, `finished?0`)
-}
-
-export const signalProtocolLoading = (protocol: ChildProcess) => {
-    writeStream(protocol, `loading?${messages.PENDING}`)
-}
-
-export const signalProtocolKill = (protocol: ChildProcess) => {
-    writeStream(protocol, "kill?0")
-    protocol.kill("SIGINT")
+    return spawn(
+        protocolPath,
+        [
+            "--ports",
+            parseInfoPorts(info),
+            "--private-key",
+            info.secret_key,
+            info.ip,
+        ],
+        {
+            detached: false,
+            stdio: ["pipe", process.stdout, process.stderr],
+        }
+    )
 }

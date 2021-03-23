@@ -32,9 +32,10 @@ export const broadcastState: Effect = (state: any) => {
 export const launchProtocol: Effect = async (state) => {
     if (!(state.accessToken && state.email)) return state
     const taskID = await proto.createContainer(state.email, state.accessToken)
-    const protocol = proto.launchProtocol()
     const info = await proto.waitUntilReady(taskID, state.accessToken)
-    proto.signalProtocolInfo(protocol, info)
+    const protocol = proto.launchProtocol(info.output)
+    // proto.signalProtocolInfo(protocol, info)
+    console.log(info)
     return state
 }
 
