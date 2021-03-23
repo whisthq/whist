@@ -121,6 +121,11 @@ jobs:
                   from scripts.load_testing.load_test import run_distributed_load_test
                   from scripts.load_testing.load_test_analysis import analyze_load_test
 
+                  ac = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  sk = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}"
+                  print("ACCESS", ac)
+                  print("SECRET", sk)
+
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
                   NUM_INVOCATIONS = int("${{ env.num_invocations }}")
