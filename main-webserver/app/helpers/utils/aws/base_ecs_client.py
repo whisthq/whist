@@ -185,7 +185,7 @@ class ECSClient:
             name = f"{starter_name}-{branch}-{commit}"
 
         if current_app.testing:
-            name = f"test-{name}"
+            name = f"test-{name}-{uuid.uuid4()}"
 
         return name
 
@@ -310,11 +310,9 @@ class ECSClient:
         capacity_providers = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0][
             "capacityProviders"
         ]
-        fractal_logger.info(f"capacity providers: {capacity_providers}")
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
-        fractal_logger.info(f"capacity providers info: {capacity_providers_info}")
         # THIS IS THE PROBLEM RIGHT HERE
         auto_scaling_groups = list(
             map(
@@ -322,7 +320,6 @@ class ECSClient:
                 capacity_providers_info,
             )
         )
-        fractal_logger.info(f"auto scaling groups: {auto_scaling_groups}")
 
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
@@ -475,13 +472,9 @@ class ECSClient:
 
         clusters, clusters_usage = clusters or self.get_all_clusters(), {}
         for cluster in clusters:
-            fractal_logger.info(f"Cluster: {cluster}")
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
-            fractal_logger.info(f"Cluster info: {cluster_info}")
             containers = self.get_containers_in_cluster(cluster)
-            fractal_logger.info(f"containers: {containers}")
             auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
-            fractal_logger.info(f"ASG info: {auto_scaling_group_info}")
             max_resources = defaultdict(int)
             for container in containers:
                 instance_info = self.ecs_client.describe_container_instances(

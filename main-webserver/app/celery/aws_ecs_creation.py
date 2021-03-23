@@ -1037,7 +1037,6 @@ def _create_new_cluster(
 
         cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
 
-        fractal_logger.info(f"Cluster info: {dict(cluster_usage)}")
         cluster_usage_info = ClusterInfo(
             cluster=cluster_name, location=region_name, **cluster_usage
         )
