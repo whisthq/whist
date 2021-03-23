@@ -1,6 +1,7 @@
 from app import ma
 from app.models import (
     ClusterInfo,
+    InstanceInfo,
     RegionToAmi,
     SupportedAppImages,
     UserContainer,
@@ -28,6 +29,11 @@ class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
 class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = RegionToAmi
+
+
+class InstanceInfoSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = InstanceInfo
 
 
 class UserContainerStateSchema(ma.SQLAlchemyAutoSchema):
