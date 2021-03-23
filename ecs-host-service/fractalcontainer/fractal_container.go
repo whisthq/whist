@@ -5,6 +5,7 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 // host service packages.
 
 import (
+	"context"
 	"sync"
 
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
@@ -36,8 +37,6 @@ type DockerID string
 type AppName string
 
 type UserID string
-
-type CloudStorageDir string
 
 type FractalContainer interface {
 	GetFractalID() FractalID
@@ -92,18 +91,16 @@ type FractalContainer interface {
 	// argument.
 	BackupUserConfigs() error
 
-	AddCloudStorage(Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
-	RemoveAllCloudStorage()
+	AddCloudStorage(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
 
 	Close()
 }
 
 func New(fid FractalID) FractalContainer {
 	c := &containerData{
-		fractalID:               fid,
-		uinputDeviceMappings:    []dockercontainer.DeviceMapping{},
-		otherDeviceMappings:     []dockercontainer.DeviceMapping{},
-		cloudStorageDirectories: []string{},
+		fractalID:            fid,
+		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
+		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
 	}
 
 	c.createResourceMappingDir()
@@ -126,7 +123,7 @@ type containerData struct {
 	// Not currently needed --- this is just here for extensibility
 	otherDeviceMappings []dockercontainer.DeviceMapping
 
-	cloudStorageDirectories []string
+	cloudStorageCancelFuncs []context.CancelFunc
 
 	portBindings []portbindings.PortBinding
 }
@@ -281,7 +278,7 @@ func (c *containerData) Close() {
 	c.cleanUserConfigDir()
 
 	// Clean up cloud storage
-	c.RemoveAllCloudStorage()
+	c.removeAllCloudStorage()
 
 	untrackContainer(c)
 
