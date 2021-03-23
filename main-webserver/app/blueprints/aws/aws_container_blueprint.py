@@ -463,7 +463,7 @@ def get_name(**kwargs):
         cluster_name,
         launch_config_name,
         auto_scaling_group_name,
-        _,
+        capacity_provider_name,
     ) = ecs_client.create_auto_scaling_cluster(
         cluster_name=None,
         instance_type=instance_type,
