@@ -32,16 +32,25 @@ function* emailLogin(action: {
 
     if (json && json.access_token) {
         let configToken: string | undefined
+        let validWebserverToken = true
+
         if (json.encrypted_config_token) {
             const encryptedConfigToken = json.encrypted_config_token
-            configToken = decryptConfigToken(
-                encryptedConfigToken,
-                action.password
-            )
+            try {
+                configToken = decryptConfigToken(
+                    encryptedConfigToken,
+                    action.password
+                )
+            } catch (err) {
+                validWebserverToken = false
+            }
         } else {
-            configToken = yield generateRandomString(32)
+            validWebserverToken = false
         }
 
+        if (!validWebserverToken) {
+            configToken = yield generateRandomString(32)
+        }
         yield put(
             updateUser({
                 userID: action.email,
@@ -53,7 +62,7 @@ function* emailLogin(action: {
                 emailVerificationToken: json.verification_token,
             })
         )
-        if (!json.encrypted_config_token) {
+        if (!validWebserverToken) {
             yield call(updatePassword, {
                 currentPassword: action.password,
                 newPassword: action.password,
