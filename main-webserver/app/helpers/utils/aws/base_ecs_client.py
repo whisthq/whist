@@ -177,10 +177,10 @@ class ECSClient:
         branch, commit = self.get_git_info()
 
         if current_app.testing:
-            name = f"test-<{branch}><{commit}>-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
+            name = f"test-{starter_name}-{branch}_{commit}-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
             # letters = string.ascii_lowercase
-            name = f"{starter_name}-<{branch}><{commit}>-"
+            name = f"{starter_name}-{branch}_{commit}"
 
         return name
 
