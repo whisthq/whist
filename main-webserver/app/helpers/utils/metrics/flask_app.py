@@ -5,21 +5,21 @@ application deployment stage and version) from the Flask current_app to be sent 
 any metrics.
 """
 import logging
-from typing import Mapping, Union, Any
+from typing import Mapping, Union
 
-from flask import current_app
+from flask import current_app, Flask
 import app.helpers.utils.metrics.keys_dims as dkey
 from . import setup_metrics_logger, record_metrics as record_metrics
 
 
-def _create_metrics_logger(flask_app: Any) -> logging.Logger:
+def _create_metrics_logger(flask_app: Flask) -> logging.Logger:
     return setup_metrics_logger(
         logz_token=flask_app.config["METRICS_SINK_LOGZ_TOKEN"],
         local_file=flask_app.config["METRICS_SINK_LOCAL_FILE"],
     )
 
 
-def _extract_default_dimensions(flask_app: Any) -> Mapping[str, str]:
+def _extract_default_dimensions(flask_app: Flask) -> Mapping[str, str]:
     return {
         dkey.ENVIRONMENT: str(flask_app.config["ENVIRONMENT"]),
         dkey.HOST_SERVER: str(flask_app.config["HOST_SERVER"]),
