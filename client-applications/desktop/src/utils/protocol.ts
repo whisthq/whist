@@ -3,6 +3,8 @@ import { spawn, ChildProcess } from "child_process"
 import { app, screen } from "electron"
 import { containerRequest, taskStatus } from "@app/utils/api"
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 const messages = {
     STARTING: "Initializing server connection.",
     PENDING: "Loading your browser.",
@@ -17,7 +19,10 @@ const getProtocolName = () => {
     return "./Fractal"
 }
 
-const protocolPath = path.join(app.getAppPath(), getProtocolName())
+// Temporarily pointing to the executable already installed in my applications
+// folder so that I have something to launch.
+// const protocolPath = path.join(app.getAppPath(), getProtocolName())
+const protocolPath = "/Applications/Fractal.app/Contents/MacOS/Fractal"
 
 const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 
@@ -44,10 +49,9 @@ export const endStream = (process: ChildProcess, message: string) => {
 }
 
 export const launchProtocol = () => {
-    if (process.platform === "darwin")
-        spawn("chmod", ["+x", app.isPackaged ? "Fractal" : "FractalClient"])
+    if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
 
-    spawn(
+    return spawn(
         protocolPath,
         ["--name", "Fractalized Chrome", "--icon", iconPath, "--read-pipe"],
         {
@@ -57,32 +61,55 @@ export const launchProtocol = () => {
     )
 }
 
+export const createContainer = async (email: string, accessToken: string) => {
+    const r = containerRequest(email, accessToken, chooseRegion(), getDPI())
+    const response = await r
+    if (!response.json.ID)
+        throw new Error(
+            "Could not create container! Received: " +
+                JSON.stringify(response, null, 4)
+        )
+    return response.json.ID
+}
+
 export const getContainerInfo = async (taskID: string, accessToken: string) => {
     const response = await taskStatus(taskID, accessToken)
     return response.json
 }
 
-export const createContainer = async (
-    username: string,
-    accessToken: string
-) => {
-    return await containerRequest(
-        username,
-        accessToken,
-        chooseRegion(),
-        getDPI()
-    )
+export const waitUntilReady = async (taskID: string, accessToken: string) => {
+    while (true) {
+        let info = await getContainerInfo(taskID, accessToken)
+        if (info.state === "SUCCESS") return info
+        if (!(info.state === "PENDING" || info.state === "STARTED"))
+            throw new Error(
+                "Container startup failed! Received: " +
+                    JSON.stringify(info, null, 4)
+            )
+        sleep(1000)
+    }
 }
+
+export const parseInfoPorts = async (res: {
+    port_32262: number
+    port_32263: number
+    port_32273: number
+}) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
 
 // Still need to pass in portInfo and container
 export const signalProtocolInfo = (
     protocol: ChildProcess,
-    portInfo: string,
-    container: { secretKey: string; publicIP: string }
+    info: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+        secret_key: string
+        ip: string
+    }
 ) => {
-    writeStream(protocol, `ports?${portInfo}`)
-    writeStream(protocol, `private-key?${container.secretKey}`)
-    writeStream(protocol, `ip?${container.publicIP}`)
+    writeStream(protocol, `ports?${parseInfoPorts(info)}`)
+    writeStream(protocol, `private-key?${info.secret_key}`)
+    writeStream(protocol, `ip?${info.ip}`)
     writeStream(protocol, `finished?0`)
 }
 
