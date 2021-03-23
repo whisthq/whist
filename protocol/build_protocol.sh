@@ -26,10 +26,15 @@ docker build . \
     -t fractal/protocol-builder
 # Mount entire ./fractal directory so that git works for git revision
 # Mount .aws directory so that awscli in download-binaries.sh works
+MOUNT_AWS=""
+if [[ -d "$HOME/.aws" ]]; then
+    MOUNT_AWS="--mount type=bind,source=$HOME/.aws,destination=/home/ubuntu/.aws,readonly"
+fi
 docker run \
     --rm \
+    --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
     --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
-    --mount type=bind,source="$HOME/.aws",destination=/home/ubuntu/.aws,readonly \
+    $MOUNT_AWS \
     --name fractal-protocol-builder-$(date +"%s") \
     --user fractal-builder \
     fractal/protocol-builder \
