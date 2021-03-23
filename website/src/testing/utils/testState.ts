@@ -18,7 +18,7 @@ export const payingUser: TestUser = {
     name: "Paying User",
     feedback: "Test feedback",
     configToken:
-        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
+        "3ee8f20ee2c06139b7b70a7a6ad7b49722e0d8e924c945d5792712ac3dbf6171",
     stripeCustomerID: "cus_IjbkVL7Ce50J5E",
     verified: true,
     accessGranted: true,
@@ -31,7 +31,7 @@ export const verifiedUser: TestUser = {
     name: "Test Name",
     feedback: "Test feedback",
     configToken:
-        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
+        "3ee8f20ee2c06139b7b70a7a6ad7b49722e0d8e924c945d5792712ac3dbf6171",
     stripeCustomerID: "",
     verified: true,
     accessGranted: true,
@@ -44,7 +44,7 @@ export const unverifiedUser: TestUser = {
     name: "Test Name",
     feedback: "Test feedback",
     configToken:
-        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
+        "3ee8f20ee2c06139b7b70a7a6ad7b49722e0d8e924c945d5792712ac3dbf6171",
     stripeCustomerID: "",
     verified: false,
     accessGranted: false,
@@ -71,7 +71,7 @@ export const validUserCanLogin = {
     name: "Valid User",
     accessToken: "accessToken",
     configToken:
-        "f279a50d85c6f514aa6f634f0345cf85f913279da804f41438bf7967c666db527b8b5df9bc07333699541d4be4bdfa8eba99e2ee699d7d82f1c5b51bd119fe698c80b0bedef32f1a3e9e99",
+        "3ee8f20ee2c06139b7b70a7a6ad7b49722e0d8e924c945d5792712ac3dbf6171",
     emailVerificationToken: "emailVerificationToken",
     emailVerified: true,
 }

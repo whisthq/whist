@@ -24,7 +24,7 @@ export const generateRandomString = async (bytes: number) => {
         Arguments:
             bytes (number): number of bytes in the string
     */
-    const configToken: Buffer = await new Promise((resolve, reject) => {
+    const randomString: Buffer = await new Promise((resolve, reject) => {
         crypto.randomBytes(bytes, (err: Error, buf: Buffer) => {
             if (err) {
                 reject(err)
@@ -32,7 +32,7 @@ export const generateRandomString = async (bytes: number) => {
             resolve(buf)
         })
     })
-    return configToken.toString("hex")
+    return randomString.toString("hex")
 }
 
 const algorithm = "aes-256-gcm"
