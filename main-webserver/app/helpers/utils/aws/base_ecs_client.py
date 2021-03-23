@@ -174,18 +174,14 @@ class ECSClient:
             str: the generated name
         """
         # branch, commit = self.get_git_info()
-        branch = os.environ["BRANCH"]
-        commit = os.environ["COMMIT"]
+        branch, commit = self.get_git_info()
+
         if current_app.testing:
-            name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
+            name = f"test-<branch:{branch}><commit:{commit}>-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
         else:
             letters = string.ascii_lowercase
-            name = (
-                starter_name
-                + f"<branch:{branch}>"
-                + f"<commit:{commit}>"
-                + "_"
-                + "".join(random.choice(letters) for i in range(10))
+            name = f"starter_name-<branch:{branch}><commit:{commit}>-".join(
+                random.choice(letters) for i in range(10)
             )
 
         return name
@@ -703,6 +699,7 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
+        branch, commit = self.get_git_info()
         availability_zones = availability_zones or [
             self.region_name + "a" if self.region_name != "us-east-1" else "us-east-1b"
         ]
@@ -719,6 +716,22 @@ class ECSClient:
             MaxSize=max_size,
             MinSize=min_size,
             AvailabilityZones=availability_zones,
+            Tags=[
+                {
+                    "ResourceId": auto_scaling_group_name,
+                    "ResourceType": "auto-scaling-group",
+                    "Key": "git_branch",
+                    "Value": branch,
+                    "PropagateAtLaunch": True,
+                },
+                {
+                    "ResourceId": auto_scaling_group_name,
+                    "ResourceType": "auto-scaling-group",
+                    "Key": "git_commit",
+                    "Value": commit,
+                    "PropagateAtLaunch": True,
+                },
+            ],
         )
 
         return auto_scaling_group_name
