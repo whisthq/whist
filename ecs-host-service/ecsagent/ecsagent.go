@@ -82,5 +82,5 @@ func Main(globalCtx context.Context, globalCancel context.CancelFunc, goroutineT
 	// track its own goroutines however it likes, since I believe it looks after
 	// itself pretty well.
 	ecslogger.InitSeelog(seelogBridge)
-	return ecsapp.Run(globalCtx, globalCancel)
+	return ecsapp.Run(globalCtx, globalCancel, goroutineTracker)
 }
