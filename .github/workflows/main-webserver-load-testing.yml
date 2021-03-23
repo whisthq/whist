@@ -7,6 +7,7 @@ name: "Main Webserver: Load Testing"
 on:
     schedule:
         - cron: "0 7 * * 0" # runs at 2:00am (EST/UTC+5) on Sunday
+    workflow_dispatch:
 
 jobs:
     main-webserver-load-testing:
