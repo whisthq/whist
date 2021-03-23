@@ -474,7 +474,9 @@ class ECSClient:
             cluster_info = self.ecs_client.describe_clusters(clusters=[cluster])["clusters"][0]
             fractal_logger.info(f"Cluster info: {cluster_info}")
             containers = self.get_containers_in_cluster(cluster)
+            fractal_logger.info(f"containers: {containers}")
             auto_scaling_group_info = self.describe_auto_scaling_groups_in_cluster(cluster)[0]
+            fractal_logger.info(f"ASG info: {auto_scaling_group_info}")
             max_resources = defaultdict(int)
             for container in containers:
                 instance_info = self.ecs_client.describe_container_instances(
