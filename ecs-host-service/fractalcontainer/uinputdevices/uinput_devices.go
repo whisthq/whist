@@ -2,6 +2,7 @@ package uinputdevices // import "github.com/fractal/fractal/ecs-host-service/fra
 
 import (
 	"bytes"
+	"context"
 	"net"
 	"os"
 	"path/filepath"
@@ -110,10 +111,10 @@ func Allocate() (devices *UinputDevices, mappings []dockercontainer.DeviceMappin
 	return
 }
 
-func SendDeviceFDsOverSocket(devices *UinputDevices, socketPath string) error {
-	// TODO: handle errors better
-	// TODO: exit goroutine if container dies
-	// (https://github.com/fractal/fractal/issues/1131)
+func SendDeviceFDsOverSocket(baseCtx context.Context, devices *UinputDevices, socketPath string) error {
+	// Create our own context so we can safely cancel it.
+	ctx, cancel := context.WithCancel(baseCtx)
+	defer cancel()
 
 	dir, err := filepath.Abs(filepath.Dir(socketPath))
 	if err != nil {
@@ -123,16 +124,25 @@ func SendDeviceFDsOverSocket(devices *UinputDevices, socketPath string) error {
 	os.MkdirAll(dir, 0777)
 	os.RemoveAll(socketPath)
 
-	server, err := net.Listen("unix", socketPath)
+	var lc net.ListenConfig
+	listener, err := lc.Listen(ctx, "unix", socketPath)
 	if err != nil {
 		return logger.MakeError("Could not create unix socket at %s: %s", socketPath, err)
 	}
-	defer server.Close()
+	// Instead of running `defer listener.Close()` we ran `defer cancel()` above,
+	// which will cause the following goroutine to always close `listener`.
+	// Normally, listener.Accept() blocks until the protocol connects. If the
+	// context is closed, though, we want to unblock.
+	// TODO: SYNC.WAITGROUP
+	go func() {
+		<-ctx.Done()
+		listener.Close()
+	}()
 
 	logger.Infof("Successfully created unix socket at: %s", socketPath)
 
-	// server.Accept() blocks until the protocol connects
-	client, err := server.Accept()
+	// listener.Accept() blocks until the protocol connects
+	client, err := listener.Accept()
 	if err != nil {
 		logger.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
 	}
