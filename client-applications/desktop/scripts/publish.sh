@@ -48,7 +48,7 @@ else
     export BUILD_NUMBER=$version
 
     # Make FractalClient and create its app bundle
-    cd ../../../protocol
+    cd ../../protocol
     cmake . -DCMAKE_BUILD_TYPE=Release
     make FractalClient
     cd ../client-applications/desktop
