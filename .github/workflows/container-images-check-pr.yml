@@ -97,6 +97,10 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: 3.8
+            
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
 
             - name: Setup and run load test
               working-directory: main-webserver
