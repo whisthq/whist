@@ -119,7 +119,7 @@ jobs:
                       upgrade_webserver,
                       downgrade_webserver,
                   )
-                  from scripts.load_testing.load_test import run_distributed_load_test
+                  from scripts.load_testing.load_test import run_distributed_load_test, run_local_load_test
                   from scripts.load_testing.load_test_analysis import analyze_load_test
 
                   WEBSERVER_URL = "${{ env.webserver_url }}"
@@ -142,6 +142,10 @@ jobs:
 
                   # Upgrade the heroku app for prod-like use
                   upgrade_webserver(HEROKU_APP_NAME)
+
+                  # Until we fix high initial task latency, we need to do one lambda invocation
+                  # to sidestep the first task's high latency issue
+                  run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
 
                   # --- Run and analyze load test --- #
                   # Use AWS lambda to run a distributed load test
