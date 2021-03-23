@@ -53,34 +53,20 @@ else
 
     # Make FractalClient and create its app bundle
     cd ../../protocol
-    cmake . -DCMAKE_BUILD_TYPE=Release
-    make FractalClient
+    mkdir -p publish-build
+    cd publish-build
+    cmake .. -DCMAKE_BUILD_TYPE=Release
+    make -j FractalClient
+    cd ..
     cd ../client-applications/desktop
     rm -rf protocol-build
     mkdir -p protocol-build/client
 
     # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/client/build64/FractalClient protocol-build/client/FractalClient
-    cp ../../protocol/client/build64/crashpad_handler protocol-build/client/crashpad_handler
+    cp ../../protocol/publish-build/client/build64/* ./protocol-build/client
 
-    # Copy over the FFmpeg dylibs
-    cp ../../protocol/lib/64/ffmpeg/*.dylib protocol-build/client
-    cp ../../protocol/client/build64/*.dylib protocol-build/client
-
-    # Sign each FractalClient binary
-    for filename in protocol-build/client/*.dylib; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
-
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-    codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/FractalClient
-
-    # Copy loading images to a temp folder (will be moved in afterSign script)
-    rm -rf loadingtemp
-    cp -r ../../protocol/client/build64/loading loadingtemp
-    for filename in loadingtemp/*; do
-        codesign -f -v -s "Fractal Computers, Inc." $filename
-    done
+    # Codesign everything in ./client directory
+    find ./protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
 
     # Initialize yarn first
     yarn -i

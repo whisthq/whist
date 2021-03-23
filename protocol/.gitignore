@@ -63,6 +63,7 @@ CMakeSettings.json
 cmake-build-*
 CMakeFiles/
 build/
+docker-build/
 CMakeCache.txt
 **/Makefile*
 **/makefile*

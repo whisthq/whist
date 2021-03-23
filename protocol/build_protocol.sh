@@ -9,6 +9,7 @@ set -Eeuo pipefail
 # Retrieve source directory of this script
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+cd "$DIR"
 
 # Set Cmake release flag
 if [[ ${1:-''} == release ]]; then
@@ -19,17 +20,26 @@ fi
 
 # Build protocol
 # Note: we clean build to prevent Cmake caching issues
-(cd "$DIR/.." && git clean -dfx -- protocol)
-(cd "$DIR" && ./download-binaries.sh)
-(cd "$DIR" && ./docker-create-builder.sh)
-(cd "$DIR" && ./docker-run-builder-shell.sh \
-        $(pwd)/.. \
-        "                              \
+docker build . \
+    --build-arg uid=$(id -u ${USER}) \
+    -f Dockerfile \
+    -t fractal/protocol-builder
+# Mount entire ./fractal directory so that git works for git revision
+# Mount .aws directory so that awscli in download-binaries.sh works
+docker run \
+       --rm \
+       --mount type=bind,source=$(cd ..; pwd),destination=/workdir \
+       --mount type=bind,source="$HOME/.aws",destination=/home/ubuntu/.aws,readonly \
+       --name fractal-protocol-builder-$(date +"%s") \
+       --user fractal-builder \
+       fractal/protocol-builder \
+       sh -c "\
     cd protocol &&                 \
+    mkdir -p docker-build &&       \
+    cd docker-build &&             \
     cmake                          \
-        -S .                       \
-        -D DOWNLOAD_BINARIES=OFF   \
+        -S ..                      \
+        -B .                       \
         ${release_tag} &&          \
     make -j FractalServer          \
-        "
-)
+    "

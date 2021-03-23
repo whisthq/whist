@@ -18,8 +18,8 @@ image=${1:-fractal/base:current-build}
 app_name=$(echo $image | sed 's/.*fractal\/\(.*\):.*/\1/')
 
 # Define the folder to mount the Fractal protocol server into the container
-if [[ ${2:-''} == mount ]]; then
-    mount_protocol="--mount type=bind,source=$(cd base/protocol/server/build64;pwd),destination=/usr/share/fractal/bin"
+if [[ "$2" == mount ]]; then
+    mount_protocol="--mount type=bind,source=$(cd ../protocol/docker-build/server/build64; pwd),destination=/usr/share/fractal/bin"
 else
     mount_protocol=""
 fi

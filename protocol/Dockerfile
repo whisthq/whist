@@ -51,6 +51,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
     cmake-data=3.18.4-0kitware1ubuntu20.04.1 \
     sudo \
     clang-format \
+    awscli \
     && apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
