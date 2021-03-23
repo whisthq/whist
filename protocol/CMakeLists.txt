@@ -124,7 +124,7 @@ option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
-    set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client ${CMAKE_BINARY_DIR}/server ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
+    set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
 
     if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         MESSAGE(STATUS "Downloading binaries from AWS S3")
