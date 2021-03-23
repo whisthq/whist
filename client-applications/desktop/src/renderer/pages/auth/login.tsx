@@ -43,7 +43,7 @@ const Login = (props: { onLogin: (json: object) => void }) => {
             setLoginWarning(fractalLoginWarning.NONE)
             emailLogin(email, password).then(({ json }) => {
                 if (json && json.access_token) {
-                    onLogin(json)
+                    onLogin({ ...json, email })
                 } else {
                     setLoginWarning(fractalLoginWarning.INVALID)
                     setPassword("")

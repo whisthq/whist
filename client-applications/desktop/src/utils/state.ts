@@ -3,8 +3,11 @@ import { IpcRendererEvent } from "electron"
 import { isEqual, merge } from "lodash"
 
 export type State = {
+    email: string | ""
     accessToken: string | ""
+    refreshToken: string | ""
     appWindowRequested: boolean | false
+    containerPromise: Promise<any>
 }
 export type Event = (setState: (state: Partial<State>) => void) => void
 export type Effect = (

@@ -14,7 +14,11 @@ const Auth = () => {
     const [_state, setState] = useMainState()
 
     const onLogin = (json: any) => {
-        setState({ accessToken: json.access_token || ""})
+        console.log(json)
+        setState({ accessToken: json.access_token || "",
+                   refreshToken: json.refresh_token || "",
+                   email: json.email || ""
+        })
     }
 
     const onSignup = () => {
