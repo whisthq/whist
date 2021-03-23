@@ -34,6 +34,12 @@ else
     # override POSTGRES_HOST and POSTGRES_PORT to be local
     export POSTGRES_HOST="localhost"
     export POSTGRES_PORT="9999"
+    
+    BRANCH=$(git branch --show-current)
+    COMMIT=$(git rev-parse --short HEAD)
+
+    export BRANCH=$BRANCH
+    export COMMIT=$COMMIT
 
     # we use the remote user and remote db to make ephemeral db look as close to dev as possible
     # but of course, host and port are local

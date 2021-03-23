@@ -50,8 +50,10 @@ fi
 export $(cat ../../docker/.env | xargs)
 
 bash ../../ephemeral_db_setup/fetch_db.sh
+BRANCH=$(git branch --show-current)
+COMMIT=$(git rev-parse --short HEAD)
 
-docker-compose up -d --build
+BRANCH=$BRANCH COMMIT=$COMMIT docker-compose up -d --build
 
 # local testing uses localhost db. override POSTGRES_HOST and set POSTGRES_PORT.
 export POSTGRES_HOST="localhost"
