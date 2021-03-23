@@ -2,7 +2,6 @@ package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/
 
 import (
 	"bytes"
-	"context"
 	"os"
 	"os/exec"
 	"sync"
@@ -14,9 +13,9 @@ import (
 const FractalCloudStorageDir = "/fractalCloudStorage/"
 
 // AddCloudStorage mounts the cloud storage directory, and then launches a
-// goroutine that waits for its context to be cancelled, at which point it
-// tries to unmount the directory.
-func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error {
+// goroutine that waits for the container's context to be cancelled, at which
+// point it tries to unmount the directory.
+func (c *containerData) AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error {
 	rcloneToken, err := cloudstorage.GenerateRcloneToken(AccessToken, RefreshToken, Expiry, TokenType)
 	if err != nil {
 		return logger.MakeError("Couldn't add cloud storage: %s", err)
@@ -57,19 +56,6 @@ func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel 
 	cmd = exec.Command("chmod", "-R", "666", FractalCloudStorageDir)
 	cmd.Run()
 
-	// Here, we create a Context for this specific cloud storage directory. When
-	// this context is cancelled, the cloud storage directory is unmounted. Note
-	// that for now, we cannot create a container-specific context (though that
-	// would be the ideal solution) because the `createContainer` method in the
-	// ecs agent does not have a context passed into it.
-	dirCtx, dirCancel := context.WithCancel(globalCtx)
-
-	// Instead, we store the cancelFunction in the underlying containerData so
-	// that it can be called when the container is being cleaned up.
-	c.rwlock.Lock()
-	c.cloudStorageCancelFuncs = append(c.cloudStorageCancelFuncs, dirCancel)
-	c.rwlock.Unlock()
-
 	// We mount in daemon mode. This gives us the advantage of always returning
 	// the correct status of whether the cloud storage was mounted, right away,
 	// to the webserver. The downside is that if the filesystem is busy when we
@@ -79,9 +65,9 @@ func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel 
 	// mounted. Unfortunately, that can take over a minute, and we want our
 	// container startup times to be a lot quicker than that. Note also that we
 	// use a CommandContext, which means that the mount command will be killed if
-	// the directory-specific context dies. This helps us never leak a cloud
+	// the container-specific context dies. This helps us never leak a cloud
 	// storage directory.
-	cmd = exec.CommandContext(dirCtx, "/usr/bin/rclone", "mount", configName+":/", path, "--daemon", "--allow-other", "--vfs-cache-mode", "writes")
+	cmd = exec.CommandContext(c.ctx, "/usr/bin/rclone", "mount", configName+":/", path, "--daemon", "--allow-other", "--vfs-cache-mode", "writes")
 	cmd.Env = os.Environ()
 	logger.Info("Rclone mount command: [  %v  ]", cmd)
 	stderr, _ := cmd.StderrPipe()
@@ -97,13 +83,13 @@ func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel 
 		return logger.MakeError("Mounting of cloud storage directory %s returned an error: %s. Output: %s", path, err, errbuf)
 	}
 
-	// We start a goroutine that waits for the directory-specific context to be
+	// We start a goroutine that waits for the container-specific context to be
 	// cancelled, and then (lazily) unmounts the directory.
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
 
-		<-dirCtx.Done()
+		<-c.ctx.Done()
 
 		// TODO: (long-term) Make this unmounting more robust. For instance, we
 		// could run `fusermount -u` (the non-lazy version) in a not-tight loop for
@@ -132,15 +118,4 @@ func (c *containerData) AddCloudStorage(globalCtx context.Context, globalCancel 
 	}()
 
 	return nil
-}
-
-// Assumes that `c` is already rw-locked.
-func (c *containerData) removeAllCloudStorage() {
-	for _, f := range c.cloudStorageCancelFuncs {
-		f()
-	}
-
-	// We don't bother deleting them, since this function should only be called
-	// once anyways, a single container should not have many cloud storage
-	// providers, and re-calling a cancel function is a no-op.
 }

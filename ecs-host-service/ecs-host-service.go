@@ -162,7 +162,7 @@ func handleCloudStorageRequest(globalCtx context.Context, globalCancel context.C
 	go func() {
 		defer goroutineTracker.Done()
 
-		errChan <- fc.AddCloudStorage(globalCtx, globalCancel, goroutineTracker, provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
+		errChan <- fc.AddCloudStorage(goroutineTracker, provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
 	}()
 
 	logAndReturnError((<-errChan).Error())

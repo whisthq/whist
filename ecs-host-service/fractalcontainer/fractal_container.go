@@ -91,13 +91,18 @@ type FractalContainer interface {
 	// argument.
 	BackupUserConfigs() error
 
-	AddCloudStorage(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
+	AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
 
 	Close()
 }
 
-func New(fid FractalID) FractalContainer {
+func New(baseCtx context.Context, fid FractalID) FractalContainer {
+	// We create a context for this container specifically.
+	ctx, cancel := context.WithCancel(baseCtx)
+
 	c := &containerData{
+		ctx:                  ctx,
+		cancel:               cancel,
 		fractalID:            fid,
 		uinputDeviceMappings: []dockercontainer.DeviceMapping{},
 		otherDeviceMappings:  []dockercontainer.DeviceMapping{},
@@ -111,6 +116,12 @@ func New(fid FractalID) FractalContainer {
 }
 
 type containerData struct {
+	// Note that while the Go language authors discourage storing a context in a
+	// struct, we need to do this to be able to call container methods from both
+	// the host service and ecsagent.
+	ctx    context.Context
+	cancel context.CancelFunc
+
 	rwlock    sync.RWMutex
 	fractalID FractalID
 	dockerID  DockerID
@@ -122,8 +133,6 @@ type containerData struct {
 	uinputDeviceMappings []dockercontainer.DeviceMapping
 	// Not currently needed --- this is just here for extensibility
 	otherDeviceMappings []dockercontainer.DeviceMapping
-
-	cloudStorageCancelFuncs []context.CancelFunc
 
 	portBindings []portbindings.PortBinding
 }
@@ -261,6 +270,10 @@ func (c *containerData) Close() {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
+	// Cancel context, thereby also freeing up resources like cloud storage
+	// directories.
+	c.cancel()
+
 	// Free port bindings
 	portbindings.Free(c.portBindings)
 	c.portBindings = nil
@@ -279,9 +292,6 @@ func (c *containerData) Close() {
 
 	// Clean up user configs
 	c.cleanUserConfigDir()
-
-	// Clean up cloud storage
-	c.removeAllCloudStorage()
 
 	untrackContainer(c)
 
