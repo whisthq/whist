@@ -6,6 +6,8 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
+// This block contains the two transport protocols (TCP and UDP) that we care
+// about in container port bindings.
 const (
 	TransportProtocolTCP transportProtocol = "tcp"
 	TransportProtocolUDP transportProtocol = "udp"

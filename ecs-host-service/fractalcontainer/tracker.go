@@ -13,7 +13,8 @@ import (
 
 // We optimize for the eventual case of needing to look up containers by
 // `fractalID` _only_, not IdentifyingHostPort. Note: we don't need to lock
-// `tracker`, since FractalIDs will (probabilistically) never overlap.
+// `tracker`, since FractalIDs will (with extremely high probability) never
+// overlap.
 var tracker map[FractalID]FractalContainer = make(map[FractalID]FractalContainer)
 
 func trackContainer(fc FractalContainer) {
@@ -24,6 +25,7 @@ func untrackContainer(fc FractalContainer) {
 	delete(tracker, fc.GetFractalID())
 }
 
+// LookUpByIdentifyingHostPort finds a container by the port 32262/tcp.
 func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, error) {
 	for _, v := range tracker {
 		p, _ := v.GetIdentifyingHostPort()
@@ -34,6 +36,7 @@ func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, 
 	return nil, logger.MakeError("Couldn't find FractalContainer with IdentifyingHostPort %v", IdentifyingHostPort)
 }
 
+// LookUpByDockerID finds a container by its Docker ID.
 func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 	for _, v := range tracker {
 		d := v.GetDockerID()
@@ -44,6 +47,7 @@ func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 	return nil, logger.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
 }
 
+// CloseAll calls Close() on all tracked FractalContainers.
 func CloseAll() {
 	for _, v := range tracker {
 		v.Close()

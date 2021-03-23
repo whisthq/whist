@@ -36,8 +36,13 @@ type DockerID string
 // that it is part of a limited set of values.
 type AppName string
 
+// UserID is defined as its own type as well so the compiler can check argument
+// orders, etc. more effectively.
 type UserID string
 
+// FractalContainer represents a container as it is kept track of in this
+// package. Both the ECS agent and higher layers of the host service use this
+// interface.
 type FractalContainer interface {
 	GetFractalID() FractalID
 
@@ -96,6 +101,7 @@ type FractalContainer interface {
 	Close()
 }
 
+// New creates a new FractalContainer given a parent context and a fractal ID.
 func New(baseCtx context.Context, fid FractalID) FractalContainer {
 	// We create a context for this container specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
@@ -195,7 +201,7 @@ func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) 
 	defer c.rwlock.Unlock()
 
 	if len(f) == 0 || len(d) == 0 || len(name) == 0 {
-		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s")
+		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s", f, d, name)
 	}
 
 	c.fractalID = f
