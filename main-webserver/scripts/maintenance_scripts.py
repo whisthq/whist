@@ -96,7 +96,7 @@ def update_region(web_url: str, admin_token: str, region_name: str, ami: str):
     resp_json = resp.json()
     task_id = resp_json["ID"]
     # will error out if task failed
-    output = poll_celery_task(web_url, task_id, admin_token)
+    output, _, _ = poll_celery_task(web_url, task_id, admin_token)
     subtasks = output["tasks"]
     if len(subtasks) == 0:
         # no subtasks

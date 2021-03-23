@@ -6,7 +6,7 @@ import json
 import os
 import subprocess
 
-from load_test import multicore_load_test
+from load_test_core import multicore_load_test
 
 
 def lambda_handler(event, context):
@@ -21,7 +21,7 @@ def lambda_handler(event, context):
             NUM_REQS: number of requests to do (total). This will be split up on the processes.
             WEB_URL: URL of the webserver to load test
             ADMIN_TOKEN: needed to the scripts perform admin-level actions on the webserver.
-                See load_test.py:make_request for a full explanation.
+                See load_test.py:load_test_single_user for a full explanation.
             FUNC_NUM: each lambda function handles `num_reqs` reqs. to properly distribute
                 the test users, we use this number to figure out which of the load_test_users
                 (already inserted in the database) we should make requests as.

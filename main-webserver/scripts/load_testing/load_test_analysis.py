@@ -11,7 +11,7 @@ import math
 # this file is called from. We can now import from `scripts`.
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-from load_test import OUTFOLDER
+from load_test_core import OUTFOLDER
 from load_test_models import initialize_db, dummy_flask_app, db, LoadTesting
 
 
@@ -24,7 +24,6 @@ def load_load_test_data(fp):
             'errors': [...],
             'status_codes': [...],
             'web_times': [...],
-            'request_container_time': float,
             'poll_container_time': float,
         },
         ...
@@ -125,9 +124,8 @@ def analyze_load_test(run_id: str = None, db_uri: str = None):
     for data in all_load_test_data:
         # TODO: use data["status_codes"]
         all_web_times += data["web_times"]  # this is a list of all web request times
-        rct = data["request_container_time"]
         pct = data["poll_container_time"]
-        all_container_times.append(rct + pct)  # container time = request time + poll time
+        all_container_times.append(pct)
 
     web_time_stats = compute_stats(all_web_times)
     container_time_stats = compute_stats(all_container_times)
@@ -138,7 +136,7 @@ def analyze_load_test(run_id: str = None, db_uri: str = None):
     print("\nContainer stats:\n------")
     print_stats(container_time_stats)
 
-    if args.run_id is None:
+    if run_id is None:
         return
 
     new_lt_entry = LoadTesting(
@@ -157,14 +155,3 @@ def analyze_load_test(run_id: str = None, db_uri: str = None):
         db.session.commit()
 
     print(f"Saved new load testing entry for run {run_id}")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Analyze a load test.")
-
-    parser.add_argument(
-        "--run_id", type=str, required=False, default=None, help="Unique load test run id."
-    )
-    args = parser.parse_args()
-
-    analyze_load_test(args.run_id)
