@@ -148,22 +148,29 @@ jobs:
                   # https://tryfractal.slack.com/archives/C01KLRUMYEL/p1616478131017600
                   time.sleep(60 * 5)
 
-                  # Until we fix high initial task latency, we need to do one lambda invocation
-                  # to sidestep the first task's high latency issue
-                  run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
-
-                  # --- Run and analyze load test --- #
-                  # Use AWS lambda to run a distributed load test
-                  run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
-
-                  # Analyze the load test and save the results to the db
-                  analyze_load_test(RUN_ID, DB_URI)
-
-                  # --- Cleanup load test --- #
-                  downgrade_webserver(HEROKU_APP_NAME)
-                  time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
-
                   try:
+                    # Until we fix high initial task latency, we need to do one lambda invocation
+                    # to sidestep the first task's high latency issue
+                    run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
+
+                    # --- Run and analyze load test --- #
+                    # Use AWS lambda to run a distributed load test
+                    run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
+
+                    # Analyze the load test and save the results to the db
+                    analyze_load_test(RUN_ID, DB_URI)
+                  
+                  except Exception as e:
+                    print(f"Load test failed with exception {e}")
+                    
+                  finally:
+                    # --- Cleanup load test --- #
+                    # run this always; restores webserver to its original state
+                    downgrade_webserver(HEROKU_APP_NAME)
+                  
+                  # run this only if load test succeeded, otherwise keep up for debugging
+                  try:
+                    time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
                     # TODO: when delete_cluster is not broken on staging, remove this try/except
                     delete_load_test_cluster(WEBSERVER_URL, TOKEN)
                   except Exception as e:
