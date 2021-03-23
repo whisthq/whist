@@ -22,7 +22,7 @@ const (
 )
 
 // If the key exists in this map, that TTY is either `reserved` or `inUse`.
-var ttymap map[TTY]ttyStatus
+var ttymap map[TTY]ttyStatus = make(map[TTY]ttyStatus)
 
 // Lock to protect `ttymap`
 var ttymapLock = new(sync.Mutex)
