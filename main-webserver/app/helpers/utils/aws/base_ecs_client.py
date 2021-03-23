@@ -160,12 +160,8 @@ class ECSClient:
         return clients
 
     def get_git_info(self):
-        if current_app.testing:
-            branch = os.environ["HEROKU_TEST_RUN_BRANCH"]
-            commit = os.environ["HEROKU_TEST_RUN_COMMIT_VERSION"]
-        else:
-            branch = os.environ["BRANCH"]
-            commit = os.environ["COMMIT"]
+        branch = os.environ["BRANCH"]
+        commit = os.environ["COMMIT"]
 
         return branch, commit[0:7]
 
