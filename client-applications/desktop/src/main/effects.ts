@@ -1,11 +1,11 @@
 import { webContents, BrowserWindow } from "electron"
 import { createAuthWindow } from "@app/utils/windows"
-import { Effect, StateChannel } from "@app/utils/state"
+import { Effect, StateChannel, isLoggedIn } from "@app/utils/state"
 import { persistKeys } from "@app/utils/persist"
 import * as proto from "@app/utils/protocol"
 
 export const launchAuthWindow: Effect = function* (state) {
-    if (state.accessToken && state.email) return state
+    if (isLoggedIn()) return state
     if (!state.appWindowRequested) return state
     if (BrowserWindow.getAllWindows().length === 0) {
         createAuthWindow()
@@ -14,7 +14,7 @@ export const launchAuthWindow: Effect = function* (state) {
 }
 
 export const closeAllWindows: Effect = function* (state) {
-    if (!(state.accessToken && state.email)) return state
+    if (!isLoggedIn()) return state
     for (let win of BrowserWindow.getAllWindows()) win.close()
     return state
 }
@@ -30,7 +30,7 @@ export const broadcastState: Effect = function* (state) {
 }
 
 export const launchProtocol: Effect = async function* (state) {
-    if (!(state.accessToken && state.email)) return state
+    if (!isLoggedIn()) return state
     yield { ...state, protocolLoading: true }
     const taskID = await proto.createContainer(state.email, state.accessToken)
     const info = await proto.waitUntilReady(taskID, state.accessToken)

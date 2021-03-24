@@ -84,3 +84,6 @@ export const initState = async (
     // initialize the state with default values
     setState(init)
 }
+
+export const isLoggedIn = (state: State): boolean =>
+    state.accessToken && state.email ? true : false
