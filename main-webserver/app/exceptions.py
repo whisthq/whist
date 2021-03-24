@@ -112,5 +112,3 @@ class StartValueException(Exception):
     or mount cloud storage.
     Args: None
     """
-
-    pass
