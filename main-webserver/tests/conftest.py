@@ -187,6 +187,49 @@ def container(cluster, user, task_def_env):
 
 
 @pytest.fixture
+def bulk_cluster():
+    """Add 1+ rows to the clusters table for testing.
+
+    Returns:
+        A function that populates the clusterInfo table with a test
+        row whose columns are set as arguments to the function.
+    """
+    clusters = []
+
+    def _cluster(cluster_name=None, location=None, **kwargs):
+        """Create a dummy cluster for testing.
+
+        Arguments:
+            cluster_name (Optional[str]): what to call the cluster
+                    defaults to random name
+            location (Optional[str]): what region to put the cluster in
+                    defaults to us-east-1
+
+        Yields:
+            An instance of the ClusterInfo model.
+        """
+        c = ClusterInfo(
+            cluster=cluster_name if cluster_name is not None else f"cluster-{os.urandom(16).hex()}",
+            location=location if location is not None else "us-east-1",
+            status="CREATED",
+            **kwargs,
+        )
+
+        db.session.add(c)
+        db.session.commit()
+        clusters.append(c)
+
+        return c
+
+    yield _cluster
+
+    for cluster in clusters:
+        db.session.delete(cluster)
+
+    db.session.commit()
+
+
+@pytest.fixture
 def bulk_container(bulk_cluster, user, task_def_env):
     """Add 1+ rows to the user_containers table for testing.
 
@@ -239,49 +282,6 @@ def bulk_container(bulk_cluster, user, task_def_env):
 
     for container in containers:
         db.session.delete(container)
-
-    db.session.commit()
-
-
-@pytest.fixture
-def bulk_cluster():
-    """Add 1+ rows to the clusters table for testing.
-
-    Returns:
-        A function that populates the clusterInfo table with a test
-        row whose columns are set as arguments to the function.
-    """
-    clusters = []
-
-    def _cluster(cluster_name=None, location=None, **kwargs):
-        """Create a dummy cluster for testing.
-
-        Arguments:
-            cluster_name (Optional[str]): what to call the cluster
-                    defaults to random name
-            location (Optional[str]): what region to put the cluster in
-                    defaults to us-east-1
-
-        Yields:
-            An instance of the ClusterInfo model.
-        """
-        c = ClusterInfo(
-            cluster=cluster_name if cluster_name is not None else f"cluster-{os.urandom(16).hex()}",
-            location=location if location is not None else "us-east-1",
-            status="CREATED",
-            **kwargs,
-        )
-
-        db.session.add(c)
-        db.session.commit()
-        clusters.append(c)
-
-        return c
-
-    yield _cluster
-
-    for cluster in clusters:
-        db.session.delete(cluster)
 
     db.session.commit()
 
