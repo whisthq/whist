@@ -181,7 +181,6 @@ class ECSClient:
         # need a special case for capacity_provider and cluster
         # as they don't like special characters
         if starter_name in ["capacity_provider", "cluster"]:
-            letters = string.ascii_lowercase
             name = f"{starter_name}-{branch}-{commit}"
 
         if current_app.testing:
@@ -207,7 +206,11 @@ class ECSClient:
 
         self.ecs_client.create_cluster(
             clusterName=cluster_name,
-            tags=[{"key": "git_branch", "value": branch}, {"key": "git_commit", "value": commit}],
+            tags=[
+                {"key": "git_branch", "value": branch},
+                {"key": "git_commit", "value": commit},
+                {"key": "created_on_test", "value": "True" if current_app.testing else "False"},
+            ],
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
                 {
@@ -732,6 +735,11 @@ class ECSClient:
                 {
                     "Key": "git_commit",
                     "Value": commit,
+                    "PropagateAtLaunch": True,
+                },
+                {
+                    "Key": "created_on_test",
+                    "Value": "True" if current_app.testing else "False",
                     "PropagateAtLaunch": True,
                 },
             ],
