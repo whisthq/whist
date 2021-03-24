@@ -50,12 +50,14 @@ func (c *containerData) AddCloudStorage(goroutineTracker *sync.WaitGroup, Provid
 	}
 	logger.Infof("Created directory %s", path)
 
-	// Fix cloud storage directory permissions
-	// TODO: this could probably be made more efficient, but we will revisit this
-	// once we're actually using cloud storage again.
+	// Fix cloud storage directory permissions. Note that we don't need to set
+	// the permissions to 0666, since we do that explicitly in the rclone mount
+	// command below.
+	//
+	// TODO: this could probably be made more efficient using the `uid`, `gid`,
+	// and `umask` options for `rclone`, but we will revisit this once we're
+	// actually using cloud storage again.
 	cmd := exec.Command("chown", "-R", "ubuntu", FractalCloudStorageDir)
-	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "666", FractalCloudStorageDir)
 	cmd.Run()
 
 	// We mount in daemon mode. This gives us the advantage of always returning
@@ -69,7 +71,15 @@ func (c *containerData) AddCloudStorage(goroutineTracker *sync.WaitGroup, Provid
 	// use a CommandContext, which means that the mount command will be killed if
 	// the container-specific context dies. This helps us never leak a cloud
 	// storage directory.
-	cmd = exec.CommandContext(c.ctx, "/usr/bin/rclone", "mount", configName+":/", path, "--daemon", "--allow-other", "--vfs-cache-mode", "writes")
+	cmd = exec.CommandContext(c.ctx,
+		"/usr/bin/rclone", "mount", configName+":/", path,
+		"--daemon",
+		"--allow-other",
+		"--vfs-cache-mode", "writes",
+		"--dir-perms", "0777",
+		"--file-perms", "0666",
+		"--umask", "0",
+	)
 	cmd.Env = os.Environ()
 	logger.Info("Rclone mount command: [  %v  ]", cmd)
 	stderr, _ := cmd.StderrPipe()
