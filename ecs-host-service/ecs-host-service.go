@@ -92,6 +92,7 @@ func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) er
 	}
 
 	// Populate the user config folder for the container's app
+	// TODO: do this in a separate goroutine to not slow down the event loop, much like we do with `handleCloudStorageRequest`
 	err = fc.PopulateUserConfigs()
 	if err != nil {
 		return logger.MakeError("handleStartValuesRequest(): %s", err)
@@ -417,7 +418,9 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 
 				default:
 					err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
-					serverevent.ReturnResult("", err)
+					if serverevent != nil {
+						serverevent.ReturnResult("", err)
+					}
 					logger.Error(err)
 				}
 
