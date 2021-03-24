@@ -18,7 +18,8 @@ const FractalCloudStorageDir = "/fractalCloudStorage/"
 
 // AddCloudStorage mounts the cloud storage directory, and then launches a
 // goroutine that waits for the container's context to be cancelled, at which
-// point it tries to unmount the directory.
+// point it tries to unmount the directory. Note that we don't need to lock `c`
+// because we do all our synchronization with contexts and goroutines.
 func (c *containerData) AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error {
 	rcloneToken, err := cloudstorage.GenerateRcloneToken(AccessToken, RefreshToken, Expiry, TokenType)
 	if err != nil {

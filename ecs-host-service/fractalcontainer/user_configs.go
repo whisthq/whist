@@ -9,6 +9,11 @@ import (
 )
 
 func (c *containerData) PopulateUserConfigs() error {
+	// We (write) lock here so that the resourceMappingDir doesn't get cleaned up
+	// from under us.
+	c.rwlock.Lock()
+	defer c.rwlock.Unlock()
+
 	// Make directory for user configs
 	configDir := c.getUserConfigDir()
 	if err := os.MkdirAll(configDir, 0777); err != nil {
@@ -61,7 +66,9 @@ func (c *containerData) PopulateUserConfigs() error {
 	return nil
 }
 
-func (c *containerData) BackupUserConfigs() error {
+// This function requires that `c.rwlock()` is locked. It backs up the user
+// config to s3.
+func (c *containerData) backupUserConfigs() error {
 	if len(c.userID) == 0 {
 		return logger.MakeError("Cannot save user configs for FractalID %s since UserID is empty.", c.fractalID)
 	}
@@ -90,7 +97,12 @@ func (c *containerData) BackupUserConfigs() error {
 	return nil
 }
 
+// This function requires that `c.rwlock()` is locked. It cleans up the user
+// config directory for a container.
 func (c *containerData) cleanUserConfigDir() {
+	c.rwlock.Lock()
+	c.rwlock.Unlock()
+
 	err := os.RemoveAll(c.getUserConfigDir())
 	if err != nil {
 		logger.Errorf("Failed to remove dir %s. Error: %s", c.getUserConfigDir(), err)

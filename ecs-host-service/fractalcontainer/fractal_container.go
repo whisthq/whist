@@ -91,10 +91,6 @@ type FractalContainer interface {
 	// Populate the config folder under the container's FractalID for the
 	// container's assigned user and running application.
 	PopulateUserConfigs() error
-	// When container disconnects, re-sync the user config back to S3 and delete
-	// the folder.  Takes fractalID (fractal id for the container) as an
-	// argument.
-	BackupUserConfigs() error
 
 	AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
 
@@ -128,6 +124,8 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalI
 
 		<-ctx.Done()
 
+		untrackContainer(c)
+
 		c.rwlock.Lock()
 		defer c.rwlock.Unlock()
 
@@ -147,10 +145,12 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalI
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
 
-		// Clean up user configs
+		// Backup and clean user config directory.
+		err := c.backupUserConfigs()
+		if err != nil {
+			logger.Errorf("Error backing up user configs for FractalID %s. Error: %s", c.fractalID, err)
+		}
 		c.cleanUserConfigDir()
-
-		untrackContainer(c)
 
 		logger.Infof("Cleaned up after FractalContainer %s", c.fractalID)
 	}()
@@ -180,9 +180,8 @@ type containerData struct {
 	portBindings []portbindings.PortBinding
 }
 
+// We do not lock here because the fractalID NEVER changes.
 func (c *containerData) GetFractalID() FractalID {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
 	return c.fractalID
 }
 
@@ -198,10 +197,8 @@ func (c *containerData) GetUserID() UserID {
 	return c.userID
 }
 
-// TODO: fix locking
 func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
-	c.rwlock.RLock()
-	defer c.rwlock.RUnlock()
+	// Don't lock ourselves, since `c.GetPortBindings()` will lock for us.
 
 	binds := c.GetPortBindings()
 	for _, b := range binds {
@@ -286,16 +283,15 @@ func (c *containerData) GetDeviceMappings() []dockercontainer.DeviceMapping {
 }
 
 func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup) error {
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
-
 	devices, mappings, err := uinputdevices.Allocate()
 	if err != nil {
 		return logger.MakeError("Couldn't allocate uinput devices: %s", err)
 	}
 
+	c.rwlock.Lock()
 	c.uinputDevices = devices
 	c.uinputDeviceMappings = mappings
+	defer c.rwlock.Unlock()
 
 	goroutineTracker.Add(1)
 	go func() {
