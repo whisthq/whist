@@ -306,17 +306,17 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config] # container-images-publish-images-ghcr]
-        strategy:
-            matrix:
-                app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
-                aws-region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
+        # strategy:
+        #     matrix:
+        #         app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
+        #         aws-region:
+        #             - us-east-1
+        #             - us-east-2
+        #             - us-west-1
+        #             - us-west-2
+        #             - ca-central-1
+        #             - eu-west-1
+        #             - eu-central-1
 
         steps:
             - name: Checkout Git Repository
