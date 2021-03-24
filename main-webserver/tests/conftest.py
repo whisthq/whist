@@ -187,7 +187,7 @@ def container(cluster, user, task_def_env):
 
 
 @pytest.fixture
-def bulk_container(cluster, user, task_def_env):
+def bulk_container(bulk_cluster, user, task_def_env):
     """Add 1+ rows to the user_containers table for testing.
 
     Returns:
@@ -211,6 +211,7 @@ def bulk_container(cluster, user, task_def_env):
         Yields:
             An instance of the UserContainer model.
         """
+        bulk_cluster(cluster_name=cluster_name, location=location)
         c = UserContainer(
             container_id=container_id if container_id is not None else f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
@@ -223,7 +224,7 @@ def bulk_container(cluster, user, task_def_env):
             port_32262=randbits(16),
             port_32263=randbits(16),
             port_32273=randbits(16),
-            cluster=cluster_name if cluster_name is not None else cluster.cluster,
+            cluster=cluster_name,
             secret_key=os.urandom(16).hex(),
             is_assigned=is_assigned,
         )
