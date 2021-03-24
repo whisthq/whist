@@ -579,11 +579,11 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                # ecs-task-definitions-deploy-task-definitions-ecs,
-                ami-publish-ec2,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                # ami-publish-ec2,
             ]
         if: >
-            always() && (${{ needs.ami-publish-ec2.outcome }} == 'success')
+            always() && (${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success')
 
         runs-on: ubuntu-20.04
         steps:
@@ -605,8 +605,7 @@ jobs:
               shell: python3 {0}
               run: |
                   # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
+                  import sys; sys.path.append(".")
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import start_maintenance
 
@@ -683,8 +682,7 @@ jobs:
               shell: python3 {0}
               run: |
                   # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
+                  import sys; sys.path.append(".")
                   import json
 
                   from scripts.misc_scripts import login
@@ -724,12 +722,13 @@ jobs:
 
             - name: end-maintenance-mode
               id: end-maintenance-mode
+              # always end maintenance mode if we started it
+              if: always() && steps.start-maintenance-mode.outcome == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
                   # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
+                  import sys; sys.path.append(".")
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import end_maintenance
 
