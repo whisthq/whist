@@ -27,12 +27,18 @@ const (
 )
 
 func (sender *logzioSender) send(payload string, msgType logzioMessageType) {
+	instanceID, _ := GetAwsInstanceID()
+
 	msg, err := json.Marshal(struct {
-		Message string `json:"message"`
-		Type    string `json:"type"`
+		AWSInstanceID string `json:"aws_instance_id"`
+		Environment   string `json:"environment"`
+		Message       string `json:"message"`
+		Type          string `json:"type"`
 	}{
-		Message: payload,
-		Type:    string(msgType),
+		AWSInstanceID: instanceID,
+		Environment:   string(GetAppEnvironment()),
+		Message:       payload,
+		Type:          string(msgType),
 	})
 
 	if err != nil {
