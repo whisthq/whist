@@ -157,6 +157,29 @@ def _pass_start_values_to_instance(
             )
 
 
+def find_available_container(region_name: str, task_definition_arn: str, task_version:Optional[int]) -> Optional[UserContainer]:
+    """
+    Function to find an unassigned container with the right taskdef
+    Args:
+        region_name: which region to look for
+        task_definition_arn: which taskdef to use
+        task_version: which version of the task to use
+
+    Returns: either a fitting container or None if no container is found
+
+    """
+    new_cont = (
+        UserContainer.query.filter_by(
+            is_assigned=False, task_definition=task_definition_arn, task_version=task_version, location=region_name
+        )
+        .filter(UserContainer.cluster.notlike("%test%"))
+        .with_for_update()
+        .limit(1)
+        .one_or_none()
+    )
+    return new_cont
+
+
 def _poll(container_id: str) -> bool:
     """Poll the database until the web server receives its first ping from the new container.
 
@@ -311,7 +334,6 @@ def _get_num_extra(taskdef: str, location: str) -> int:
 
     app_image_for_taskdef = SupportedAppImages.query.filter_by(task_definition=taskdef).first()
     if app_image_for_taskdef:
-
         # get the number we want prewarmed
         num_needed_running = float(
             _get_count_helper(
@@ -432,16 +454,7 @@ def _assign_container(
         base_container: Optional[UserContainer] = None
         try:
             base_container = ensure_container_exists(
-                UserContainer.query.filter_by(
-                    is_assigned=False,
-                    task_definition=task_definition_arn,
-                    task_version=task_version,
-                    location=region_name,
-                )
-                .filter(UserContainer.cluster.notlike("%test%"))
-                .with_for_update()
-                .limit(1)
-                .first()
+                find_available_container(region_name, task_definition_arn, task_version)
             )
         except Exception:
             # If the `filter_by` gave us `None`, that is okay, we handle that below.
@@ -602,7 +615,6 @@ def _assign_container(
     time.sleep(1)
 
     if not _poll(base_container.container_id):
-
         set_container_state(
             keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
         )
