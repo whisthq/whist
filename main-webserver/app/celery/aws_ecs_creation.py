@@ -166,7 +166,7 @@ bundled_region = {
 
 
 def find_available_container(
-    region_name: str, task_definition_arn: str, task_version: Optional[int]
+    region_name: str, task_definition_arn: str, task_version: Optional[int] = None
 ) -> Optional[UserContainer]:
     """
     Function to find an unassigned container with the right taskdef
