@@ -8,8 +8,8 @@ export type State = {
     accessToken: string
     refreshToken: string
     protocolLoading: boolean
-    protocolProcess: ChildProcess
     appWindowRequested: boolean
+    protocolProcess?: ChildProcess
 }
 export type Event = (setState: (state: Partial<State>) => void) => void
 export type Effect = (
@@ -61,10 +61,10 @@ export const initState = async (
     effects: Effect[]
 ) => {
     let cached = new Map()
-    let state = { ...init }
+    let state = {}
 
     const consumeEffect = async (eff: Effect, set: Function) => {
-        const iter = eff(state) //start the generator
+        const iter = eff(state as State) //start the generator
         for await (let newState of iter) // update state with yield objects
             set(newState) // use passed function to avoid mutual recursion
         cached.delete(eff) // make effect available to run again
@@ -81,4 +81,5 @@ export const initState = async (
     }
 
     for (let event of events) event(setState)
+    setState(init)
 }
