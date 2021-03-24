@@ -417,11 +417,11 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					handleCloudStorageRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.MountCloudStorageRequest))
 
 				default:
-					err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
 					if serverevent != nil {
+						err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
+						logger.Error(err)
 						serverevent.ReturnResult("", err)
 					}
-					logger.Error(err)
 				}
 
 			}
