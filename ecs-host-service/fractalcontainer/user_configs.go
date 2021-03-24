@@ -100,9 +100,6 @@ func (c *containerData) backupUserConfigs() error {
 // This function requires that `c.rwlock()` is locked. It cleans up the user
 // config directory for a container.
 func (c *containerData) cleanUserConfigDir() {
-	c.rwlock.Lock()
-	c.rwlock.Unlock()
-
 	err := os.RemoveAll(c.getUserConfigDir())
 	if err != nil {
 		logger.Errorf("Failed to remove dir %s. Error: %s", c.getUserConfigDir(), err)
