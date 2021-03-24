@@ -338,6 +338,23 @@ def test_dont_find_unassigned(bulk_container, task_def_env):
     assert find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is None
 
 
+def test_find_unassigned_in_unbundled(bulk_container, task_def_env):
+    # ensures that find-available returns an available unassigned container in a nonbundled region
+    bulk_container(is_assigned=False, location="ca-central-1")
+    assert (
+        find_available_container("ca-central-1", f"fractal-{task_def_env}-browsers-chrome")
+        is not None
+    )
+
+
+def test_dont_find_unassigned_in_unbundled(bulk_container, task_def_env):
+    # ensures that find-available doesn't return an assigned container in a nonbundled region
+    bulk_container(is_assigned=True, location="ca-central-1")
+    assert (
+        find_available_container("ca-central-1", f"fractal-{task_def_env}-browsers-chrome") is None
+    )
+
+
 @pytest.fixture
 def test_assignment_replacement_code(bulk_container, task_def_env):
     """
