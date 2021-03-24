@@ -1,6 +1,8 @@
 package fractalcontainer // import "github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 
 import (
+	"sync"
+
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
@@ -12,21 +14,29 @@ import (
 // only be created using New(), since the underlying datatype is not exported.
 
 // We optimize for the eventual case of needing to look up containers by
-// `fractalID` _only_, not IdentifyingHostPort. Note: we don't need to lock
-// `tracker`, since FractalIDs will (with extremely high probability) never
-// overlap.
+// `fractalID` _only_, not IdentifyingHostPort.
 var tracker map[FractalID]FractalContainer = make(map[FractalID]FractalContainer)
+var trackerLock sync.RWMutex
 
 func trackContainer(fc FractalContainer) {
+	trackerLock.Lock()
+	defer trackerLock.Unlock()
+
 	tracker[fc.GetFractalID()] = fc
 }
 
 func untrackContainer(fc FractalContainer) {
+	trackerLock.Lock()
+	defer trackerLock.Unlock()
+
 	delete(tracker, fc.GetFractalID())
 }
 
 // LookUpByIdentifyingHostPort finds a container by the port 32262/tcp.
 func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, error) {
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
 	for _, v := range tracker {
 		p, _ := v.GetIdentifyingHostPort()
 		if p == IdentifyingHostPort {
@@ -38,6 +48,9 @@ func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, 
 
 // LookUpByDockerID finds a container by its Docker ID.
 func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
+	trackerLock.RLock()
+	defer trackerLock.RUnlock()
+
 	for _, v := range tracker {
 		d := v.GetDockerID()
 		if d == DockerID {
@@ -45,11 +58,4 @@ func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 		}
 	}
 	return nil, logger.MakeError("Couldn't find FractalContainer with DockerID %s", DockerID)
-}
-
-// CloseAll calls Close() on all tracked FractalContainers.
-func CloseAll() {
-	for _, v := range tracker {
-		v.Close()
-	}
 }
