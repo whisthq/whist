@@ -58,8 +58,8 @@ def _clean_tasks_and_create_new_container(
     num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
     """
-    This function is called by _assign_container() upon failure of _pass_start_values() 
-    or _mount_cloud_storage(). It cleans resources associated with the container 
+    This function is called by _assign_container() upon failure of _pass_start_values()
+    or _mount_cloud_storage(). It cleans resources associated with the container
     that failed (stops and delete tasks), then retries _assign_container().
 
     Arguments:
