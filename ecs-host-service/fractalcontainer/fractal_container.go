@@ -102,7 +102,7 @@ type FractalContainer interface {
 }
 
 // New creates a new FractalContainer given a parent context and a fractal ID.
-func New(baseCtx context.Context, fid FractalID) FractalContainer {
+func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalID) FractalContainer {
 	// We create a context for this container specifically.
 	ctx, cancel := context.WithCancel(baseCtx)
 
@@ -117,6 +117,43 @@ func New(baseCtx context.Context, fid FractalID) FractalContainer {
 	c.createResourceMappingDir()
 
 	trackContainer(c)
+
+	// We start a goroutine that cleans up this FractalContainer as soon as its
+	// context is cancelled. This ensures that we automatically clean up when
+	// either `Close()` is called for this container, or the global context is
+	// cancelled.
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		<-ctx.Done()
+
+		c.rwlock.Lock()
+		defer c.rwlock.Unlock()
+
+		// Free port bindings
+		portbindings.Free(c.portBindings)
+		c.portBindings = nil
+
+		// Free uinput devices
+		c.uinputDevices.Close()
+		c.uinputDevices = nil
+		c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
+
+		// Free TTY
+		ttys.Free(c.tty)
+		c.tty = 0
+
+		// Clean resource mappings
+		c.cleanResourceMappingDir()
+
+		// Clean up user configs
+		c.cleanUserConfigDir()
+
+		untrackContainer(c)
+
+		logger.Infof("Cleaned up after FractalContainer %s", c.fractalID)
+	}()
 
 	return c
 }
@@ -276,33 +313,7 @@ func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 }
 
 func (c *containerData) Close() {
-	c.rwlock.Lock()
-	defer c.rwlock.Unlock()
-
-	// Cancel context, thereby also freeing up resources like cloud storage
-	// directories.
+	// Cancel context, triggering the freeing up of all resources, including
+	// tracked by goroutines (like cloud storage directories)
 	c.cancel()
-
-	// Free port bindings
-	portbindings.Free(c.portBindings)
-	c.portBindings = nil
-
-	// Free uinput devices
-	c.uinputDevices.Close()
-	c.uinputDevices = nil
-	c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
-
-	// Free TTY
-	ttys.Free(c.tty)
-	c.tty = 0
-
-	// Clean resource mappings
-	c.cleanResourceMappingDir()
-
-	// Clean up user configs
-	c.cleanUserConfigDir()
-
-	untrackContainer(c)
-
-	logger.Infof("Closed FractalContainer %s", c.fractalID)
 }
