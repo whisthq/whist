@@ -42,6 +42,6 @@ def poll_celery_task(web_url: str, task_id: str, admin_token: str = None) -> str
         else:
             # non-pending/started states should exit
             break
-    assert resp_json is not None
-    assert resp_json["state"] == "SUCCESS", f"got response: {resp_json}"
+    assert resp_json is not None, f"No JSON response for task {task_id}"
+    assert resp_json["state"] == "SUCCESS", f"Got response: {resp_json} for task {task_id}"
     return resp_json["output"]
