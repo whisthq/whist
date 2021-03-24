@@ -243,10 +243,6 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", logger.TempDir)
 	}
 
-	// Unmount all cloud-storage folders and clean up all container-related
-	// resources.
-	fractalcontainer.CloseAll()
-
 	// We don't want to delete the cloud storage directory on exit, since that
 	// might delete files from people's cloud storage drives.
 }
@@ -286,7 +282,8 @@ func main() {
 			logger.Infof("Beginning host service shutdown procedure...")
 		}
 
-		// Cancel the global context, if it hasn't already been cancelled.
+		// Cancel the global context, if it hasn't already been cancelled. Note
+		// that this also cleans up after every container.
 		globalCancel()
 
 		// Wait for all goroutines to stop, so we can run the rest of the cleanup
