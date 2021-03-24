@@ -1,10 +1,12 @@
+from typing import Optional
+
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.logs import fractal_logger
 from app.models import db, UserContainer
 
 
-def ensure_container_exists(container: UserContainer) -> UserContainer:
+def ensure_container_exists(container: Optional[UserContainer]) -> Optional[UserContainer]:
     """Determines whether a container in the database actually exists.
 
     Function determining whether a container in the database actually
