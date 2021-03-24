@@ -168,6 +168,12 @@ def find_available_container(region_name: str, task_definition_arn: str, task_ve
     Returns: either a fitting container or None if no container is found
 
     """
+    bundled_region = {
+        "us-east-1": ["us-east-2"],
+        "us-east-2": ["us-east-1"],
+        "us-west-1": ["us-west-2"],
+        "us-west-2": ["us-west-1"],
+    }
     new_cont = (
         UserContainer.query.filter_by(
             is_assigned=False, task_definition=task_definition_arn, task_version=task_version, location=region_name
@@ -177,6 +183,19 @@ def find_available_container(region_name: str, task_definition_arn: str, task_ve
         .limit(1)
         .one_or_none()
     )
+    if new_cont is None:
+        for equiv_region in bundled_region["region_name"]:
+            new_cont = (
+                UserContainer.query.filter_by(
+                    is_assigned=False, task_definition=task_definition_arn, location=equiv_region
+                )
+                .filter(UserContainer.cluster.notlike("%test%"))
+                .with_for_update()
+                .limit(1)
+                .one_or_none()
+            )
+            if new_cont is not None:
+                break
     return new_cont
 
 
