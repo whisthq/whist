@@ -152,13 +152,13 @@ func SendDeviceFDsOverSocket(baseCtx context.Context, goroutineTracker *sync.Wai
 	// listener.Accept() blocks until the protocol connects
 	client, err := listener.Accept()
 	if err != nil {
-		logger.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
+		return logger.MakeError("Could not connect to client over unix socket at %s: %s", socketPath, err)
 	}
 	defer client.Close()
 
 	connf, err := client.(*net.UnixConn).File()
 	if err != nil {
-		logger.Errorf("Could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
+		return logger.MakeError("Could not get file corresponding to client connection for unix socket at %s: %s", socketPath, err)
 	}
 	defer connf.Close()
 
