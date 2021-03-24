@@ -165,13 +165,15 @@ bundled_region = {
 }
 
 
-def find_available_container(region_name: str, task_definition_arn: str, task_version:Optional[int]) -> Optional[UserContainer]:
+def find_available_container(
+    region_name: str, task_definition_arn: str, task_version: Optional[int]
+) -> Optional[UserContainer]:
     """
     Function to find an unassigned container with the right taskdef
     Args:
         region_name: which region to look for
         task_definition_arn: which taskdef to use
-        task_version: which version of the task to use
+        task_version: which version of the task we need to find
 
     Returns: either a fitting container or None if no container is found
 
@@ -179,7 +181,10 @@ def find_available_container(region_name: str, task_definition_arn: str, task_ve
 
     new_cont = (
         UserContainer.query.filter_by(
-            is_assigned=False, task_definition=task_definition_arn, task_version=task_version, location=region_name
+            is_assigned=False,
+            task_definition=task_definition_arn,
+            task_version=task_version,
+            location=region_name,
         )
         .filter(UserContainer.cluster.notlike("%test%"))
         .with_for_update()
@@ -190,7 +195,10 @@ def find_available_container(region_name: str, task_definition_arn: str, task_ve
         for equiv_region in bundled_region.get(region_name, []):
             new_cont = (
                 UserContainer.query.filter_by(
-                    is_assigned=False, task_definition=task_definition_arn, task_version=task_version, location=equiv_region
+                    is_assigned=False,
+                    task_definition=task_definition_arn,
+                    task_version=task_version,
+                    location=equiv_region,
                 )
                 .filter(UserContainer.cluster.notlike("%test%"))
                 .with_for_update()
