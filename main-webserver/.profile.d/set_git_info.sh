@@ -10,6 +10,9 @@ if [ $IN_CI == false ]; then
 
   read COMMIT <&6
 
+  echo $COMMIT
+  echo $HEROKU_BRANCH
+
   export COMMIT=$COMMIT
   export BRANCH=$HEROKU_BRANCH
 fi
