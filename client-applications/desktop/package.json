@@ -9,6 +9,7 @@
         "package": "sh ./scripts/package.sh --publish never",
         "package-ci": "sh ./scripts/package.sh --publish always",
         "tailwind": "sh scripts/tailwind.sh",
+        "retrieve": "python3 scripts/retrieve.py",
         "postinstall": "sh scripts/postinstall.sh"
     },
     "dependencies": {
