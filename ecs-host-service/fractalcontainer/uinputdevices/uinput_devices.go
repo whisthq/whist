@@ -205,7 +205,10 @@ func getDeviceFilePath(fd *os.File) (string, error) {
 	return "", logger.MakeError("did not find file in %s with prefix 'event'", syspath)
 }
 
-// TODO: document this
+// In summary, this function computes the argument that gets passed to the
+// ioctl system call. For more details, and an explanation of the argument
+// names to linuxIoc, see:
+// https://www.kernel.org/doc/html/latest/driver-api/ioctl.html
 func linuxUIGetSysName(len uintptr) uintptr {
 	// from ioctl.h and uinput.h
 	const (
