@@ -305,8 +305,7 @@ jobs:
     ecs-task-definitions-deploy-task-definitions-ecs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+        needs: [fractal-publish-build-config] # container-images-publish-images-ghcr]
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
