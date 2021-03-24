@@ -42,9 +42,7 @@ from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNI
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
-
-class StartValueException(Exception):
-    pass
+from app.exceptions import StartValueException
 
 
 MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
@@ -69,13 +67,14 @@ def _clean_tasks_and_create_new_container(
         num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
 
     Returns:
-        Result of recursive call to assign_container
+        After cleaning resources, returns the result of recursive call to assign_container,
+        which is a generated container, in json form
     """
     # stop base container task if it is running
     ecs_client = ECSClient(
         base_cluster=container.cluster, region_name=container.location, grab_logs=False
     )
-    ecs_client.add_task(container)
+    ecs_client.add_task(container.task_definition)
 
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(
@@ -124,6 +123,9 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
 
     Returns:
         None
+
+    Raises:
+        StartValueException: When fails to connect to ECS host service or cloud storage folder fails to mount
     """
 
     schema = CredentialSchema()
@@ -193,6 +195,13 @@ def _pass_start_values_to_instance(container: UserContainer) -> None:
 
     Arguments:
         container: An instance of the UserContainer model.
+
+    Returns:
+        None
+
+    Raises:
+        StartValueException: When fails to connect to ECS host service or
+            when set-start-values generates a bad response
     """
 
     try:
@@ -714,7 +723,7 @@ def _assign_container(
 
     try:
         _mount_cloud_storage(user, base_container)
-        _pass_start_values_to_instance(base_container)  # not tested
+        _pass_start_values_to_instance(base_container)
         num_tries += 1
     except StartValueException:
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:

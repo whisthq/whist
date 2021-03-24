@@ -39,7 +39,7 @@ def test_oauth_not_configured(container, make_credential, provider, user, monkey
 
 
 def test_unsuccessful_handle_status(app, container, make_credential, provider, user, monkeypatch):
-    """Handle both successful and unsuccessful responses from the host service."""
+    """Handle unsuccessful responses from the host service."""
 
     response = Object()
 
@@ -54,7 +54,7 @@ def test_unsuccessful_handle_status(app, container, make_credential, provider, u
 
 
 def test_successful_handle_status(app, container, make_credential, provider, user, monkeypatch):
-    """Handle both successful and unsuccessful responses from the host service."""
+    """Handle successful responses from the host service."""
 
     response = Object()
     monkeypatch.setattr(requests, "post", function(returns=response))

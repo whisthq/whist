@@ -104,3 +104,13 @@ class SendGridException(_FractalError):
 
 class SentryInitializationError(Exception):
     pass
+
+
+class StartValueException(Exception):
+    """
+    Raised when a container fails to send start values (DPI, etc.)
+    or mount cloud storage.
+    Args: None
+    """
+
+    pass
