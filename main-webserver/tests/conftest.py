@@ -239,9 +239,7 @@ def bulk_container(bulk_cluster, user, task_def_env):
     """
     containers = []
 
-    def _container(
-        is_assigned=False, location="us-east-1", container_id=None, cluster_name="base-cluster"
-    ):
+    def _container(is_assigned=False, location="us-east-1", container_id=None):
         """Create a dummy container for testing.
 
         Arguments:
@@ -254,7 +252,7 @@ def bulk_container(bulk_cluster, user, task_def_env):
         Yields:
             An instance of the UserContainer model.
         """
-        bulk_cluster(cluster_name=cluster_name, location=location)
+        cluster = bulk_cluster(location=location)
         c = UserContainer(
             container_id=container_id if container_id is not None else f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
@@ -267,7 +265,7 @@ def bulk_container(bulk_cluster, user, task_def_env):
             port_32262=randbits(16),
             port_32263=randbits(16),
             port_32273=randbits(16),
-            cluster=cluster_name,
+            cluster=cluster.cluster,
             secret_key=os.urandom(16).hex(),
             is_assigned=is_assigned,
         )
