@@ -38,20 +38,13 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// The locations on disk where we store our data, including cloud storage
-// mounts and container resource allocations. Note that we keep the cloud
-// storage in its own directory, not in the fractalDir, so that we can safely
-// delete the entire `fractal` directory on exit.
-// TODO: fix all references to these
-const fractalDir = "/fractal/"
-
 // TODO: get rid of this security nemesis
 // (https://github.com/fractal/fractal/issues/643)
 // Opens all permissions on /fractal directory
 func makeFractalDirectoriesFreeForAll() {
-	cmd := exec.Command("chown", "-R", "ubuntu", fractalDir)
+	cmd := exec.Command("chown", "-R", "ubuntu", logger.FractalDir)
 	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "777", fractalDir)
+	cmd = exec.Command("chmod", "-R", "777", logger.FractalDir)
 	cmd.Run()
 	cmd = exec.Command("chown", "-R", "ubuntu", fractalcontainer.FractalCloudStorageDir)
 	cmd.Run()
@@ -194,18 +187,18 @@ func containerDieHandler(id string) {
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/fractal" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
-	if _, err := os.Lstat(fractalDir); !os.IsNotExist(err) {
+	if _, err := os.Lstat(logger.FractalDir); !os.IsNotExist(err) {
 		if err == nil {
-			logger.Panicf(globalCancel, "Directory %s already exists!", fractalDir)
+			logger.Panicf(globalCancel, "Directory %s already exists!", logger.FractalDir)
 		} else {
-			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", fractalDir, err)
+			logger.Panicf(globalCancel, "Could not make directory %s because of error %v", logger.FractalDir, err)
 		}
 	}
 
 	// Create the fractal directory
-	err := os.MkdirAll(fractalDir, 0777)
+	err := os.MkdirAll(logger.FractalDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", fractalDir, err)
+		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", logger.FractalDir, err)
 	}
 
 	// Create fractal-private directory
@@ -221,9 +214,9 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 	}
 
 	// Create fractal temp directory
-	err = os.MkdirAll("/fractal/temp/", 0777)
+	err = os.MkdirAll(logger.TempDir, 0777)
 	if err != nil {
-		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", "/fractal/temp", err)
+		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", logger.TempDir, err)
 	}
 
 	makeFractalDirectoriesFreeForAll()
@@ -234,11 +227,11 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 // store the SSL certificate we use for the httpserver, and our temporary
 // directory.
 func uninitializeFilesystem() {
-	err := os.RemoveAll(fractalDir)
+	err := os.RemoveAll(logger.FractalDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", fractalDir, err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", logger.FractalDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", fractalDir)
+		logger.Infof("Successfully deleted directory %s\n", logger.FractalDir)
 	}
 
 	err = os.RemoveAll(httpserver.FractalPrivatePath)
@@ -248,11 +241,11 @@ func uninitializeFilesystem() {
 		logger.Infof("Successfully deleted directory %s\n", httpserver.FractalPrivatePath)
 	}
 
-	err = os.RemoveAll("/fractal/temp/")
+	err = os.RemoveAll(logger.TempDir)
 	if err != nil {
-		logger.Errorf("Failed to delete directory %s: error: %v\n", "/fractal/temp/", err)
+		logger.Errorf("Failed to delete directory %s: error: %v\n", logger.TempDir, err)
 	} else {
-		logger.Infof("Successfully deleted directory %s\n", "/fractal/temp/")
+		logger.Infof("Successfully deleted directory %s\n", logger.TempDir)
 	}
 
 	// Unmount all cloud-storage folders and clean up all container-related

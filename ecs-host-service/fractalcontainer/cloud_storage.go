@@ -11,7 +11,9 @@ import (
 )
 
 // FractalCloudStorageDir is the directory on the host that contains all cloud
-// storage directories inside it.
+// storage directories inside it. Note that we keep the cloud storage in its
+// own directory, not in the logger.FractalDir, so that we can safely delete
+// the entire `fractal` directory on exit.
 const FractalCloudStorageDir = "/fractalCloudStorage/"
 
 // AddCloudStorage mounts the cloud storage directory, and then launches a

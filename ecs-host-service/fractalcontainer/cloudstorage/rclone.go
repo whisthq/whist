@@ -51,7 +51,7 @@ func CreateRcloneConfig(configName string, provider Provider, rcloneToken []byte
 			"client_secret", clientSecret,
 		}, " ")
 
-	scriptpath := logger.Sprintf("/fractal/temp/config-create-%s.sh", configName)
+	scriptpath := logger.Sprintf("%sconfig-create-%s.sh", logger.TempDir, configName)
 
 	f, err := os.Create(scriptpath)
 	if err != nil {

@@ -89,7 +89,7 @@ func (c *containerData) cleanUserConfigDir() {
 }
 
 func (c *containerData) getUserConfigDir() string {
-	return logger.Sprintf("/fractal/%s/userConfigs/", c.fractalID)
+	return logger.Sprintf("%s%s/userConfigs/", logger.FractalDir, c.fractalID)
 }
 
 func (c *containerData) getS3ConfigPath() string {
