@@ -125,7 +125,8 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
         None
 
     Raises:
-        StartValueException: When fails to connect to ECS host service or cloud storage folder fails to mount
+        StartValueException: When fails to connect to ECS host service
+            or cloud storage folder fails to mount
     """
 
     schema = CredentialSchema()
