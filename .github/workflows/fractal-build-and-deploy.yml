@@ -323,41 +323,41 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Configure AWS CLI
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
-                  aws-region: ${{ matrix.aws-region }}
+            # - name: Configure AWS CLI
+            #   uses: aws-actions/configure-aws-credentials@v1
+            #   with:
+            #       aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
+            #       aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
+            #       aws-region: ${{ matrix.aws-region }}
 
-            - name: Retrieve Branch HEAD Git Hash as Env Variable
-              run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+            # - name: Retrieve Branch HEAD Git Hash as Env Variable
+            #   run: echo "containers_gha_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
-            - name: Store GitHub Container Registry base URI as env variable
-              run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
+            # - name: Store GitHub Container Registry base URI as env variable
+            #   run: echo "ghcr_base_uri=ghcr.io" >> $GITHUB_ENV
 
-            - name: Store taskdef name as env variable
-              run: echo "taskdef_name=$(echo fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
+            # - name: Store taskdef name as env variable
+            #   run: echo "taskdef_name=$(echo fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }} | tr / -)" >> $GITHUB_ENV
 
-            - name: Generate taskdef and store JSON path to variable
-              working-directory: ecs-task-definitions
-              run: |
-                  taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name ${{ needs.fractal-publish-build-config.outputs.sentry_environment }})
-                  echo "taskdef_json=ecs-task-definitions/$taskdef_json_filename" >> $GITHUB_ENV
+            # - name: Generate taskdef and store JSON path to variable
+            #   working-directory: ecs-task-definitions
+            #   run: |
+            #       taskdef_json_filename=$(./generate-taskdef.sh $taskdef_name ${{ needs.fractal-publish-build-config.outputs.sentry_environment }})
+            #       echo "taskdef_json=ecs-task-definitions/$taskdef_json_filename" >> $GITHUB_ENV
 
-            - name: Render Amazon ECS task Definitions
-              id: render-web-container
-              uses: aws-actions/amazon-ecs-render-task-definition@v1
-              with:
-                  container-name: fractal-container
-                  task-definition: ${{ env.taskdef_json }}
-                  image: ${{ env.ghcr_base_uri }}/fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
+            # - name: Render Amazon ECS task Definitions
+            #   id: render-web-container
+            #   uses: aws-actions/amazon-ecs-render-task-definition@v1
+            #   with:
+            #       container-name: fractal-container
+            #       task-definition: ${{ env.taskdef_json }}
+            #       image: ${{ env.ghcr_base_uri }}/fractal/${{ needs.fractal-publish-build-config.outputs.deploy_environment }}/${{ matrix.app }}:${{ env.containers_gha_sha }}
 
-            - name: Deploy to Amazon ECS service
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-              with:
-                  task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+            # - name: Deploy to Amazon ECS service
+            #   if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+            #   uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+            #   with:
+            #       task-definition: ${{ steps.render-web-container.outputs.task-definition }}
 
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
