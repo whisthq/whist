@@ -92,13 +92,13 @@ else
     then
         if [[ "$env" == "dev" ]]
         then
-            node ./setProdEnv.js dev
+            node ./scripts/setProdEnv.js dev
     elif [[ "$env" == "staging" ]]
         then
-            node ./setProdEnv.js staging
+            node ./scripts/setProdEnv.js staging
     elif [[ "$env" == "prod" ]]
         then
-            node ./setProdEnv.js prod
+            node ./scripts/setProdEnv.js prod
         else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
             exit 1
