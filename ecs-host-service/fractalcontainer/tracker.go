@@ -32,7 +32,8 @@ func untrackContainer(fc FractalContainer) {
 	delete(tracker, fc.GetFractalID())
 }
 
-// LookUpByIdentifyingHostPort finds a container by the port 32262/tcp.
+// LookUpByIdentifyingHostPort finds a container by the port 32262/tcp. Note
+// that this function (sequentially) gets a lock on every single container.
 func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, error) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()
@@ -46,7 +47,8 @@ func LookUpByIdentifyingHostPort(IdentifyingHostPort uint16) (FractalContainer, 
 	return nil, logger.MakeError("Couldn't find FractalContainer with IdentifyingHostPort %v", IdentifyingHostPort)
 }
 
-// LookUpByDockerID finds a container by its Docker ID.
+// LookUpByDockerID finds a container by its Docker ID. Note that this function
+// (sequentially) gets a lock on every single container.
 func LookUpByDockerID(DockerID DockerID) (FractalContainer, error) {
 	trackerLock.RLock()
 	defer trackerLock.RUnlock()

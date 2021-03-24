@@ -6,8 +6,6 @@ import (
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
-// TODO: revamp locking here
-
 func (c *containerData) WriteResourcesForProtocol() error {
 	var err error
 
@@ -22,7 +20,8 @@ func (c *containerData) WriteResourcesForProtocol() error {
 		return err
 	}
 
-	// Write TTY
+	// Write TTY. Note that we use `c.GetTTY()` instead of `c.tty` for the
+	// locking.
 	err = c.writeResourceMappingToFile("tty", logger.Sprintf("%d", c.GetTTY()))
 	if err != nil {
 		// Don't need to wrap err here because it already contains the relevant info
@@ -53,7 +52,7 @@ func (c *containerData) MarkReady() error {
 }
 
 func (c *containerData) getResourceMappingDir() string {
-	return logger.Sprintf("%s%s/containerResourceMappings/", logger.FractalDir, c.GetFractalID())
+	return logger.Sprintf("%s%s/containerResourceMappings/", logger.FractalDir, c.fractalID)
 }
 
 func (c *containerData) createResourceMappingDir() error {
