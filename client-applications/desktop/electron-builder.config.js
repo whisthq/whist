@@ -10,6 +10,8 @@ const appDetails = {
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
 const bundleConfig = {
+    afterPack: "build/afterPack.js",
+
     afterSign: "build/afterSign.js",
 
     artifactName: "Fractal.${ext}",
@@ -24,8 +26,6 @@ const bundleConfig = {
     // The files we must wrap into our packaged application.
     files: ["build/**/*", "node_modules/", "package.json"],
     // We cannot bundle the protocol binaries -- they must remain separate.
-    extraFiles: ["protocol-build/"],
-
     // This registers the fractal:// URL protocol in the bundle installer.
     protocols: {
         name: "fractal-protocol",
@@ -35,25 +35,18 @@ const bundleConfig = {
     mac: {
         category: "public.app-category.productivity",
         darkModeSupport: true,
-        entitlements: "public/entitlements.mac.plist",
-        entitlementsInherit: "public/entitlements.mac.plist",
+        entitlements: "build/entitlements.mac.plist",
+        entitlementsInherit: "build/entitlements.mac.plist",
         extendInfo: {
             NSHighResolutionCapable: true,
         },
-        extraFiles: [
-            // This allows the protocol and client app to share a dock
-            // icon, by moving the former to the bundle's macOS folder.
-            {
-                from: "protocol-build/client/",
-                to: "MacOS/",
-            },
-        ],
         gatekeeperAssess: false,
         hardenedRuntime: true,
-        icon: "public/icon.png",
+        icon: "build/icon.png",
         minimumSystemVersion: "10.13.0",
         target: ["dmg"],
         type: "distribution",
+        extraFiles: ["protocol-build/"]
     },
 
     // This controls the positions of the Fractal application and
@@ -71,12 +64,12 @@ const bundleConfig = {
                 y: 220,
             },
         ],
-        icon: "public/icon.png",
+        icon: "build/icon.png",
         sign: false,
     },
 
     win: {
-        icon: "public/icon.ico",
+        icon: "build/icon.ico",
         target: ["nsis"],
     },
 }
