@@ -10,8 +10,6 @@ const appDetails = {
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
 const bundleConfig = {
-    afterPack: "build/afterPack.js",
-
     afterSign: "build/afterSign.js",
 
     artifactName: "Fractal.${ext}",
@@ -46,7 +44,10 @@ const bundleConfig = {
         minimumSystemVersion: "10.13.0",
         target: ["dmg"],
         type: "distribution",
-        extraFiles: ["protocol-build/"]
+        extraFiles: [{
+            from: "protocol-build/client/",
+            to: "MacOS/"
+        }]
     },
 
     // This controls the positions of the Fractal application and

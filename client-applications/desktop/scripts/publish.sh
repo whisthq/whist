@@ -32,7 +32,7 @@ then
     printhelp
 else
     version=${version:-1.0.0}
-    bucket=${bucket:-fractal-chromium-macos-dev}
+    bucket=${bucket:-PLACEHOLDER}
     env=${env:-dev}
     publish=${publish:-false}
 

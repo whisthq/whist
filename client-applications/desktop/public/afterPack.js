@@ -13,14 +13,6 @@ exports.default = function afterPack(context) {
 
     const appName = context.packager.appInfo.productFilename
 
-    // execSync(`find ${appOutDir}/${appName}.app/Contents/protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;`,
-    //     (error, stderr, stdout) => {
-    //         if(error) console.log("Error", error)
-    //         if(stderr) console.log("Stderr", stderr)
-    //         console.log("Stdout", stdout)
-    //     }
-    // )
-
     execSync(
         `mv ${appOutDir}/${appName}.app/Contents/protocol-build/client ${appOutDir}/${appName}.app/Contents/MacOS`,
         (error, stderr, stdout) => {
