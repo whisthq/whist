@@ -196,19 +196,22 @@ def bulk_container(cluster, user, task_def_env):
     """
     containers = []
 
-    def _container(is_assigned=False):
+    def _container(is_assigned=False, location="us-east-1", container_id=None):
         """Create a dummy container for testing.
 
         Arguments:
             is_assigned: Whether to create the container as prewarmed or assigned
+            location:  which region to create the container in
+            container_id:  the specific name we want the container to have
+                           useful for testing which container object is retrieved
 
         Yields:
             An instance of the UserContainer model.
         """
         c = UserContainer(
-            container_id=f"{os.urandom(16).hex()}",
+            container_id=container_id if container_id is not None else f"{os.urandom(16).hex()}",
             ip=f"{randbits(7)}.{randbits(7)}.{randbits(7)}.{randbits(7)}",
-            location="us-east-1",
+            location=location,
             task_definition=f"fractal-{task_def_env}-browsers-chrome",
             task_version=None,
             os="Linux",

@@ -5,9 +5,12 @@ from http import HTTPStatus
 
 import pytest
 
+
 from app.celery.aws_ecs_creation import (
     assign_container,
+    bundled_region,
     create_new_cluster,
+    find_available_container,
     _get_num_extra,
     select_cluster,
 )
@@ -314,6 +317,75 @@ def test_newly_created_present_cluster(monkeypatch, bulk_cluster):
     )
     monkeypatch.setattr(create_new_cluster, "delay", patched_create)
     assert select_cluster("us-east-1") == cluster_name
+
+
+def test_basic_find_unassigned(task_def_env):
+    # ensures that find-available returns None on an empty DB
+    assert find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is None
+
+
+def test_find_unassigned(bulk_container, task_def_env):
+    # ensures that find-available returns an available unassigned container
+    bulk_container(is_assigned=False, location="us-east-1")
+    assert (
+        find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is not None
+    )
+
+
+def test_dont_find_unassigned(bulk_container, task_def_env):
+    # ensures that find-available doesn't return an assigned container
+    bulk_container(is_assigned=True, location="us-east-1")
+    assert find_available_container("us-east-1", f"fractal-{task_def_env}-browsers-chrome") is None
+
+
+@pytest.fixture
+def test_assignment_replacement_code(bulk_container, task_def_env):
+    """
+    generates a function which, given a region, returns a multistage test
+    of the unassigned container finding code
+    """
+
+    def _test_find_unassigned(location):
+        """
+        tests 4 properties of our find unassigned algorithm:
+        1) we don't return an assigned container in the requested region
+        2) we don't return an assigned container in a replacement region
+        3) we return an unassigned container in a replacement region
+        4) if available, we use the requested region rather than a replacement one
+        these properties are tested in order
+        """
+        replacement_region = bundled_region[location][0]
+        bulk_container(is_assigned=True, location=location)
+        assert (
+            find_available_container(location, f"fractal-{task_def_env}-browsers-chrome") is None
+        ), f"we assigned an already assigned container in the main region, {location}"
+        bulk_container(is_assigned=True, location=replacement_region)
+        assert (
+            find_available_container(location, f"fractal-{task_def_env}-browsers-chrome") is None
+        ), f"we assigned an already assigned container in the secondary region, {bundled_region}"
+        bulk_container(
+            is_assigned=False, location=replacement_region, container_id="replacement-container"
+        )
+        assert (
+            find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
+            is not None
+        ), f"we failed to find the unassigned container in the replacement region {bundled_region}"
+        bulk_container(is_assigned=False, location=location, container_id="main-container")
+        container = find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
+        assert (
+            container is not None and container.container_id == "main-container"
+        ), f"we failed to find the unassigned container in the main region {location}"
+
+    return _test_find_unassigned
+
+
+@pytest.mark.parametrize(
+    "location",
+    bundled_region.keys(),
+)
+def test_assignment_logic(test_assignment_replacement_code, location):
+    # ensures that replacement will work for all regions
+    test_assignment_replacement_code(location)
 
 
 @pytest.fixture
