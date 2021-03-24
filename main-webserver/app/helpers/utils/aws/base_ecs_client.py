@@ -418,7 +418,7 @@ class ECSClient:
                 cluster=cluster, containerInstances=containers[start:end], status="DRAINING"
             )
             start = end
-            min(start + 10, len(containers))
+            end = min(start + 10, len(containers))
         return resp
 
     def terminate_containers_in_cluster(self, cluster):
