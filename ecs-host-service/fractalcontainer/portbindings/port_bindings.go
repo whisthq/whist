@@ -111,7 +111,9 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	}, nil
 }
 
-// freeSinglePort marks the given port as free in the correct `protocolSpecificHostPortMap`. If the given port is reserved, it logs an error. This function requires that `portMapsLock` is held throughout.
+// freeSinglePort marks the given port as free in the correct
+// `protocolSpecificHostPortMap`. If the given port is reserved, it logs an
+// error. This function requires that `portMapsLock` is held throughout.
 func freeSinglePort(bind PortBinding) {
 	mapToUse, err := getProtocolSpecificHostPortMap(bind.Protocol)
 	if err != nil {
@@ -128,8 +130,8 @@ func freeSinglePort(bind PortBinding) {
 	}
 }
 
-// Free marks all provided and non-reserved host ports as free in `tcpPortMap`
-// and `udpPortMap`.
+// Free marks all provided, non-reserved host ports as free in `tcpPortMap` and
+// `udpPortMap`.
 func Free(binds []PortBinding) {
 	if len(binds) == 0 {
 		return

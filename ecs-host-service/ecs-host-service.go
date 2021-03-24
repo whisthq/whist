@@ -149,16 +149,12 @@ func handleCloudStorageRequest(globalCtx context.Context, globalCancel context.C
 
 // Handle tasks to be completed when a container dies
 func containerDieHandler(id string) {
-	// Exit if we are not dealing with a Fractal container.
+	// Exit if we are not dealing with a Fractal container, or if it has already
+	// been closed (via a call to Close() or a context cancellation).
 	fc, err := fractalcontainer.LookUpByDockerID(fractalcontainer.DockerID(id))
 	if err != nil {
 		logger.Infof("containerDieHandler(): %s", err)
 		return
-	}
-
-	err = fc.BackupUserConfigs()
-	if err != nil {
-		logger.Errorf("Couldn't back up user configs for container with FractalID %s: %s", fc.GetFractalID(), err)
 	}
 
 	fc.Close()
