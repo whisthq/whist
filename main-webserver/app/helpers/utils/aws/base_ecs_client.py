@@ -207,7 +207,7 @@ class ECSClient:
 
         self.ecs_client.create_cluster(
             clusterName=cluster_name,
-            tags=[{"key": "branch_name", "value": branch}, {"key": "commit_hash", "value": commit}],
+            tags=[{"key": "git_branch", "value": branch}, {"key": "git_commit", "value": commit}],
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
                 {
