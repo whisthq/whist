@@ -264,7 +264,7 @@ func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, "/fractal/temp/"+string(c.fractalID)+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, logger.TempDir+string(c.fractalID)+"/sockets/uinput.sock")
 		if err != nil {
 			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
 		} else {

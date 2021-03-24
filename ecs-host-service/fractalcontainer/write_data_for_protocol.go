@@ -53,7 +53,7 @@ func (c *containerData) MarkReady() error {
 }
 
 func (c *containerData) getResourceMappingDir() string {
-	return logger.Sprintf("/fractal/%s/containerResourceMappings/", c.GetFractalID())
+	return logger.Sprintf("%s%s/containerResourceMappings/", logger.FractalDir, c.GetFractalID())
 }
 
 func (c *containerData) createResourceMappingDir() error {
