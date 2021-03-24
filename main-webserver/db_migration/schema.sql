@@ -332,7 +332,6 @@ CREATE TABLE hardware.user_containers (
     using_stun boolean DEFAULT false NOT NULL,
     allow_autoupdate boolean DEFAULT true NOT NULL,
     branch character varying(250) DEFAULT 'prod'::character varying NOT NULL,
-    temporary_lock bigint,
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
     secret_key text NOT NULL,
