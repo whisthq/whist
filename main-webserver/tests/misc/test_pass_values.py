@@ -3,10 +3,7 @@ import requests
 
 from requests import ConnectionError
 from app.exceptions import StartValueException
-from app.celery.aws_ecs_creation import (
-    _pass_start_values_to_instance,
-)
-
+from app.celery.aws_ecs_creation import _pass_start_values_to_instance
 from ..patches import function, Object
 
 
