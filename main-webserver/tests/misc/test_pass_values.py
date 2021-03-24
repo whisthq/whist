@@ -2,9 +2,9 @@ import pytest
 import requests
 
 from requests import ConnectionError
+from app.exceptions import StartValueException
 from app.celery.aws_ecs_creation import (
     _pass_start_values_to_instance,
-    StartValueException,
 )
 
 from ..patches import function, Object
