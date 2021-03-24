@@ -379,14 +379,14 @@ def test_assignment_replacement_code(bulk_container, task_def_env):
         bulk_container(is_assigned=True, location=replacement_region)
         assert (
             find_available_container(location, f"fractal-{task_def_env}-browsers-chrome") is None
-        ), f"we assigned an already assigned container in the secondary region, {bundled_region}"
+        ), f"we assigned an already assigned container in the secondary region, {replacement_region}"
         bulk_container(
             is_assigned=False, location=replacement_region, container_id="replacement-container"
         )
         assert (
             find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
             is not None
-        ), f"we failed to find the unassigned container in the replacement region {bundled_region}"
+        ), f"we failed to find the unassigned container in the replacement region {replacement_region}"
         bulk_container(is_assigned=False, location=location, container_id="main-container")
         container = find_available_container(location, f"fractal-{task_def_env}-browsers-chrome")
         assert (
