@@ -23,7 +23,7 @@ export const SupportLink = (props: { className: string }) => (
 export const CareersLink = (props: { className: string }) => (
     <a
         className={props.className}
-        href="mailto: careers@fractal.co"
+        href="https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
         id="careers"
     >
         Careers
