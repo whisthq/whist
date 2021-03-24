@@ -3,7 +3,7 @@
 import pytest
 import requests
 
-from app.celery.aws_ecs_creation import mount_cloud_storage
+from app.celery.aws_ecs_creation import _mount_cloud_storage
 from app.exceptions import StartValueException
 
 from ..patches import function, Object
