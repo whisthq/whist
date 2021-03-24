@@ -52,7 +52,6 @@ const bundleConfig = {
         hardenedRuntime: true,
         icon: "public/icon.png",
         minimumSystemVersion: "10.13.0",
-        signIgnore: ["MacOS/protocol-build*"],
         target: ["dmg"],
         type: "distribution",
     },

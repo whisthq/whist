@@ -69,17 +69,17 @@ else
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
         export CSC_IDENTITY_AUTO_DISCOVERY=false
-    else
-        # Sign each FractalClient binary
-        for filename in protocol-build/client/*.dylib; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
+    # else
+    #     # Sign each FractalClient binary
+    #     # for filename in protocol-build/client/*.dylib; do
+    #     #     codesign -f -v -s "Fractal Computers, Inc." $filename
+    #     # done
 
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/Fractal
-        for filename in protocol-build/client/loading/*; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
+    #     # codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
+    #     # codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/Fractal
+    #     # for filename in protocol-build/client/loading/*; do
+    #     #     codesign -f -v -s "Fractal Computers, Inc." $filename
+    #     # done
     fi
 
     # Initialize yarn first
@@ -92,13 +92,13 @@ else
     then
         if [[ "$env" == "dev" ]]
         then
-            node ./setProdEnv.js dev
+            node ./scripts/setProdEnv.js dev
     elif [[ "$env" == "staging" ]]
         then
-            node ./setProdEnv.js staging
+            node ./scripts/setProdEnv.js staging
     elif [[ "$env" == "prod" ]]
         then
-            node ./setProdEnv.js prod
+            node ./scripts/setProdEnv.js prod
         else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
             exit 1
