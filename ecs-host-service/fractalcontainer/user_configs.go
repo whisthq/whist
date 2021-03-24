@@ -15,7 +15,16 @@ func (c *containerData) PopulateUserConfigs() error {
 		return logger.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
-	// TODO: makeFractalDirectoriesFreeForAll() ?
+	// Once we've extracted everything, we open up permissions for the user
+	// config directory so it's accessible by the non-root user in the
+	// containers. We also are okay with setting executable bits here, since it's
+	// possible that some apps store executable scripts in their config.
+	defer func() {
+		cmd := exec.Command("chown", "-R", "ubuntu", configDir)
+		cmd.Run()
+		cmd = exec.Command("chmod", "-R", "777", configDir)
+		cmd.Run()
+	}()
 
 	// If userID is not set, then we don't retrieve configs from s3
 	if len(c.userID) == 0 {

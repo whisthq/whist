@@ -38,20 +38,6 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 }
 
-// TODO: get rid of this security nemesis
-// (https://github.com/fractal/fractal/issues/643)
-// Opens all permissions on /fractal directory
-func makeFractalDirectoriesFreeForAll() {
-	cmd := exec.Command("chown", "-R", "ubuntu", logger.FractalDir)
-	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "777", logger.FractalDir)
-	cmd.Run()
-	cmd = exec.Command("chown", "-R", "ubuntu", fractalcontainer.FractalCloudStorageDir)
-	cmd.Run()
-	cmd = exec.Command("chmod", "-R", "777", fractalcontainer.FractalCloudStorageDir)
-	cmd.Run()
-}
-
 // Start the Docker daemon ourselves, to have control over all Docker containers spun
 func startDockerDaemon(globalCancel context.CancelFunc) {
 	cmd := exec.Command("/usr/bin/systemctl", "start", "docker")
@@ -195,11 +181,18 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		}
 	}
 
-	// Create the fractal directory
+	// Create the fractal directory and make it non-root user owned so that
+	// non-root users in containers can access files within (especially user
+	// configs). We do this in a deferred function so that any subdirectories
+	// created later in this function are also covered.
 	err := os.MkdirAll(logger.FractalDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", logger.FractalDir, err)
 	}
+	defer func() {
+		cmd := exec.Command("chown", "-R", "ubuntu", logger.FractalDir)
+		cmd.Run()
+	}()
 
 	// Create fractal-private directory
 	err = os.MkdirAll(httpserver.FractalPrivatePath, 0777)
@@ -207,19 +200,21 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
 
-	// Create cloud storage directory
-	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0777)
+	// Create cloud storage directory and make it owned by a non-root user so
+	// it's accessible by a non-root user inside the container. Notably, we also
+	// disable the executable bit for this directory.
+	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0666)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", fractalcontainer.FractalCloudStorageDir, err)
 	}
+	cmd := exec.Command("chown", "-R", "ubuntu", fractalcontainer.FractalCloudStorageDir)
+	cmd.Run()
 
 	// Create fractal temp directory
 	err = os.MkdirAll(logger.TempDir, 0777)
 	if err != nil {
 		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", logger.TempDir, err)
 	}
-
-	makeFractalDirectoriesFreeForAll()
 }
 
 // Delete the directory used to store the container resource allocations (e.g.
