@@ -79,7 +79,8 @@ export const initState = async (
                 // don't re-run running effects
                 cached.set(eff, consumeEffect(eff, setState))
     }
-
+    // run event functions once on initialization
     for (let event of events) event(setState)
+    // initialize the state with default values
     setState(init)
 }
