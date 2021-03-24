@@ -407,9 +407,13 @@ class ECSClient:
         """
         if cluster is None:
             cluster = self.cluster
-        resp = self.ecs_client.update_container_instances_state(
-            cluster=cluster, containerInstances=containers, status="DRAINING"
-        )
+
+        for container in containers:
+            # it was discovered that at most 10 containers can be passed, otherwise this fails
+            # we just iterate through the list and update one at a time
+            resp = self.ecs_client.update_container_instances_state(
+                cluster=cluster, containerInstances=[container], status="DRAINING"
+            )
         return resp
 
     def terminate_containers_in_cluster(self, cluster):
