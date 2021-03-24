@@ -1,5 +1,6 @@
 require('dotenv').config()
 const { notarize } = require('electron-notarize')
+const { exec } = require("child_process")
 
 exports.default = async function afterSign(context) {
     const { electronPlatformName, appOutDir } = context
@@ -9,6 +10,21 @@ exports.default = async function afterSign(context) {
 
     const appName = context.packager.appInfo.productFilename
 
+    exec(
+        "codesign -f -v -s 'Fractal Computers, Inc.' \"${appOutDir}/${appName}.app/Contents/MacOS/FractalLauncher\"",
+        (error, stdout, stderr) => {
+            if (error) {
+                console.log(`error: ${error.message}`)
+                return
+            }
+            if (stderr) {
+                console.log(`stderr: ${stderr}`)
+                return
+            }
+            console.log(`stdout: ${stdout}`)
+        }
+    )
+    
     return await notarize({
         appBundleId: 'com.fractalcomputers.fractal',
         appPath: `${appOutDir}/${appName}.app`,
