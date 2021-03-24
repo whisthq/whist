@@ -3,6 +3,7 @@ import os
 import sentry_sdk
 from sentry_sdk.integrations.flask import FlaskIntegration
 from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.redis import RedisIntegration
 
 from app.exceptions import SentryInitializationError
 
@@ -24,7 +25,7 @@ def init_and_ensure_sentry_connection(env: str, sentry_dsn: str):
     """
     sentry_sdk.init(
         dsn=sentry_dsn,
-        integrations=[FlaskIntegration(), CeleryIntegration()],
+        integrations=[FlaskIntegration(), CeleryIntegration(), RedisIntegration()],
         environment=env,
         release="main-webserver@" + os.getenv("HEROKU_SLUG_COMMIT", "local"),  # FIXME no env usage
     )
