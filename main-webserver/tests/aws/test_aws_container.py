@@ -519,7 +519,7 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     _ = bulk_container(is_assigned=False)
 
     old_version = app_data.task_version
-    assert old_version != -1  # sanity check
+    assert old_version != -1  # sanity check. nothing in the db should have this value
     app_data.task_version = -1
 
     # this should cause no problems. We now have a db where UserContainers has a

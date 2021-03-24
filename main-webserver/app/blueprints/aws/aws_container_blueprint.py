@@ -212,7 +212,7 @@ def test_endpoint(action, **kwargs):
 
     if action == "assign_container":
         try:
-            # TODO: make this interface conform with /container/assign
+            # TODO: do request validation like in /container/assign
             (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],

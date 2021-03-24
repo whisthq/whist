@@ -265,8 +265,8 @@ def start_container(
 
     ecs_client.set_cluster(cluster_name)
     if task_version is None:
-        # the default is -1, so for tasks that don't have a pinned version we just pass
-        # the task_definition_arn, which AWS interprets to mean run the latest version
+        # if task_version is None, we just pass the task_definition_arn
+        # which AWS interprets to mean run the latest version.
         # this solves backcompat to pre-version pinning days
         fractal_logger.warning(f"Please pin the version for task {task_definition_arn}")
         ecs_client.set_task_definition_arn(task_definition_arn)
