@@ -482,16 +482,3 @@ def get_name(**kwargs):
     )
 
     return response
-
-
-"""
-cluster_name=None,
-    instance_type="g3.4xlarge",
-    ami="ami-0decb4a089d867dc1",
-    region_name="us-east-1",
-    min_size=0,
-    max_size=10,
-    availability_zones=None,
-        ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-
-"""
