@@ -179,7 +179,7 @@ def find_available_container(
 
     """
 
-    new_cont = (
+    available_container = (
         UserContainer.query.filter_by(
             is_assigned=False,
             task_definition=task_definition_arn,
@@ -191,23 +191,24 @@ def find_available_container(
         .limit(1)
         .one_or_none()
     )
-    if new_cont is None:
-        for equiv_region in bundled_region.get(region_name, []):
-            new_cont = (
+    if available_container is None:
+        # check each replacement region for available containers
+        for bundlable_region in bundled_region.get(region_name, []):
+            available_container = (
                 UserContainer.query.filter_by(
                     is_assigned=False,
                     task_definition=task_definition_arn,
                     task_version=task_version,
-                    location=equiv_region,
+                    location=bundlable_region,
                 )
                 .filter(UserContainer.cluster.notlike("%test%"))
                 .with_for_update()
                 .limit(1)
                 .one_or_none()
             )
-            if new_cont is not None:
+            if available_container is not None:
                 break
-    return new_cont
+    return available_container
 
 
 def _poll(container_id: str) -> bool:
