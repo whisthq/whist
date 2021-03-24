@@ -247,8 +247,6 @@ def bulk_container(bulk_cluster, user, task_def_env):
             location:  which region to create the container in
             container_id:  the specific name we want the container to have
                            useful for testing which container object is retrieved
-            cluster_name: which cluster the container should be on (useful for testing assignment)
-
         Yields:
             An instance of the UserContainer model.
         """
