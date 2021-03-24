@@ -8,7 +8,7 @@
         },
         {
           "plan": "heroku-postgresql:standard-0",
-          "as": "POSTGRES_EPHEMERAL_DB",
+          "as": "DATABASE",
           "options": {
             "version": "12"
           }
@@ -16,16 +16,23 @@
       ],
       "buildpacks": [
         {
-          "url": "https://github.com/heroku/heroku-buildpack-inline.git"
+          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
         },
         {
-          "url": "https://github.com/heroku/heroku-buildpack-awscli.git"
+          "url": "https://github.com/fractal/subdir-heroku-buildpack.git"
+        },
+        {
+          "url": "https://github.com/heroku/heroku-buildpack-inline.git"
         },
         {
           "url": "heroku/python"
         }
       ],
       "env": {
+        "PROJECT_PATH": {
+          "description": "Path of the webserver project relative to monorepo root.",
+          "value": "main-webserver"
+        },
         "OAUTHLIB_RELAX_TOKEN_SCOPE": {
           "description": "Don't raise an exception if the requested and granted scopes differ.",
           "value": "1"
