@@ -75,7 +75,7 @@ def _clean_tasks_and_create_new_container(
     ecs_client = ECSClient(
         base_cluster=container.cluster, region_name=container.location, grab_logs=False
     )
-    ecs_client.add_task(container.task_definition)
+    ecs_client.add_task(container.container_id)
 
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(
@@ -89,7 +89,7 @@ def _clean_tasks_and_create_new_container(
         ecs_client = ECSClient(
             base_cluster=task.cluster, region_name=task.location, grab_logs=False
         )
-        ecs_client.add_task(task)
+        ecs_client.add_task(task.container_id)
 
         if not ecs_client.check_if_done(offset=0):
             ecs_client.stop_task(
