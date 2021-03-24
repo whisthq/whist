@@ -125,6 +125,7 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalI
 		<-ctx.Done()
 
 		untrackContainer(c)
+		logger.Infof("Successfully untracked container %s", c.fractalID)
 
 		c.rwlock.Lock()
 		defer c.rwlock.Unlock()
@@ -132,23 +133,29 @@ func New(baseCtx context.Context, goroutineTracker *sync.WaitGroup, fid FractalI
 		// Free port bindings
 		portbindings.Free(c.portBindings)
 		c.portBindings = nil
+		logger.Infof("Successfully freed port bindings for container %s", c.fractalID)
 
 		// Free uinput devices
 		c.uinputDevices.Close()
 		c.uinputDevices = nil
 		c.uinputDeviceMappings = []dockercontainer.DeviceMapping{}
+		logger.Infof("Successfully freed uinput devices for container %s", c.fractalID)
 
 		// Free TTY
 		ttys.Free(c.tty)
+		logger.Infof("Successfully freed TTY %v for container %s", c.tty, c.fractalID)
 		c.tty = 0
 
 		// Clean resource mappings
 		c.cleanResourceMappingDir()
+		logger.Infof("Successfully cleaned resource mapping dir for container %s", c.fractalID)
 
 		// Backup and clean user config directory.
 		err := c.backupUserConfigs()
 		if err != nil {
 			logger.Errorf("Error backing up user configs for FractalID %s. Error: %s", c.fractalID, err)
+		} else {
+			logger.Infof("Successfully backed up user configs for FractalID %s", c.fractalID)
 		}
 		c.cleanUserConfigDir()
 
