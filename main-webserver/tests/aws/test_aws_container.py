@@ -394,9 +394,10 @@ def test_delete_cluster(client, cluster=pytest.cluster_name):
 
 
 # this test does not need AWS resources or any cluster/container setup
+@pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_single_task_defs(client, authorized, monkeypatch):
+def test_update_single_taskdef(client, authorized, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
@@ -407,7 +408,7 @@ def test_update_single_task_defs(client, authorized, monkeypatch):
     # cache the current task defs
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
-    app_id_to_taskdef = {app_data.app_id: app_data.task_definition for app_data in all_app_data}
+    app_id_to_version = {app_data.app_id: app_data.task_version for app_data in all_app_data}
 
     # -- actual webserver requests start -- #
     # this should fail cause server is not in maintenance mode
@@ -437,25 +438,25 @@ def test_update_single_task_defs(client, authorized, monkeypatch):
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
         if app_data.app_id == app_id:
-            # this should change to have revision -1
-            # grab the task def name without revision
-            task_name = app_id_to_taskdef[app_data.app_id].split(":")[0]
-            assert app_data.task_definition == f"{task_name}:-1"
+            assert app_data.task_version == -1
+            # the task version should be different than the cached
+            assert app_data.task_version != app_id_to_version[app_data.app_id]
         else:
             # everything else should be the same as cached
-            assert app_data.task_definition == app_id_to_taskdef[app_data.app_id]
+            assert app_data.task_version == app_id_to_version[app_data.app_id]
 
     # restore db to old state
     db.session.expire_all()
     app_data = SupportedAppImages.query.get(app_id)
-    app_data.task_definition = app_id_to_taskdef[app_data.app_id]
+    app_data.task_version = app_id_to_version[app_data.app_id]
     db.session.commit()
 
 
 # this test does not need AWS resources or any cluster/container setup
+@pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_all_task_defs(client, authorized, monkeypatch):
+def test_update_all_taskdefs(client, authorized, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
@@ -465,7 +466,7 @@ def test_update_all_task_defs(client, authorized, monkeypatch):
     # cache the current task defs
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
-    app_id_to_taskdef = {app_data.app_id: app_data.task_definition for app_data in all_app_data}
+    app_id_to_version = {app_data.app_id: app_data.task_version for app_data in all_app_data}
 
     # -- actual webserver requests start -- #
     # this should fail cause server is not in maintenance mode
@@ -494,11 +495,37 @@ def test_update_all_task_defs(client, authorized, monkeypatch):
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
-        assert app_data.task_definition.split(":")[1] == "-1"
+        assert app_data.task_version == -1
+        # the task version should be different than the cached
+        assert app_data.task_version != app_id_to_version[app_data.app_id]
 
     # restore db to old state
     db.session.expire_all()
     all_app_data = SupportedAppImages.query.all()
     for app_data in all_app_data:
-        app_data.task_definition = app_id_to_taskdef[app_data.app_id]
+        app_data.task_version = app_id_to_version[app_data.app_id]
+    db.session.commit()
+
+
+@pytest.mark.container_serial
+def test_update_taskdef_fk_regression(bulk_container, task_def_env):
+    """
+    A regression test to make sure task definitions versions can be updated
+    independent of user containers that use an old taskdef version. This used
+    to be a foreign key issue that errored out.
+    """
+
+    app_data = SupportedAppImages.query.get("Blender")
+    _ = bulk_container(is_assigned=False)
+
+    old_version = app_data.task_version
+    assert old_version != -1  # sanity check. nothing in the db should have this value
+    app_data.task_version = -1
+
+    # this should cause no problems. We now have a db where UserContainers has a
+    # user running an old taskdef and SupportedAppImages has upgraded to a new version
+    db.session.commit()
+
+    # undo changes
+    app_data.task_version = old_version
     db.session.commit()
