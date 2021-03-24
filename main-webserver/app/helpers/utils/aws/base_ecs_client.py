@@ -405,11 +405,20 @@ class ECSClient:
         Returns: the json returned by the API
 
         """
+        if len(containers) == 0:
+            return
         if cluster is None:
             cluster = self.cluster
-        resp = self.ecs_client.update_container_instances_state(
-            cluster=cluster, containerInstances=containers, status="DRAINING"
-        )
+
+        start = 0
+        end = min(start + 10, len(containers))
+        while start < len(containers):
+            # it was discovered that at most 10 containers can be passed, otherwise this fails
+            resp = self.ecs_client.update_container_instances_state(
+                cluster=cluster, containerInstances=containers[start:end], status="DRAINING"
+            )
+            start = end
+            end = min(start + 10, len(containers))
         return resp
 
     def terminate_containers_in_cluster(self, cluster):
