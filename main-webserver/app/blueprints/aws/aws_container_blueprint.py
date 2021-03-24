@@ -198,35 +198,38 @@ def test_endpoint(action, **kwargs):
 
     if action == "update_taskdefs":
         # update the task definition numbers for fractal's supported app images
-        # payload can optionally contain `app_id` and `task_definition_arn`.
+        # payload can optionally contain `app_id` and `task_version`.
         # see `update_task_definitions` for how these are used and the behavior
         # of this endpoint. returns a celery task ID.
-        app_id, task_definition_arn = (
+        app_id, task_version = (
             kwargs["body"].get("app_id", None),
-            kwargs["body"].get("task_definition_arn", None),
+            kwargs["body"].get("task_version", None),
         )
-        task = update_task_definitions.delay(app_id=app_id, task_definition_arn=task_definition_arn)
+        task = update_task_definitions.delay(app_id=app_id, task_version=task_version)
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "assign_container":
         try:
-            (username, cluster_name, region_name, task_definition_arn) = (
+            # TODO: do request validation like in /container/assign
+            (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
                 kwargs["body"]["task_definition_arn"],
+                kwargs["body"].get("task_version", None),
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
         region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
         task = assign_container.delay(
-            username,
-            task_definition_arn,
-            region_name,
-            cluster_name,
+            username=username,
+            task_definition_arn=task_definition_arn,
+            task_version=task_version,
+            region_name=region_name,
+            cluster_name=cluster_name,
             webserver_url=kwargs["webserver_url"],
         )
 
@@ -372,13 +375,14 @@ def aws_container_assign(**kwargs):
     else:
         # assign a container.
         try:
-            task_arn, _, _ = preprocess_task_info(app)
+            task_arn, task_version, _, _ = preprocess_task_info(app)
         except BadAppError:
             response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
         else:
             task = assign_container.delay(
                 user,
                 task_arn,
+                task_version,
                 region_name=region,
                 webserver_url=kwargs["webserver_url"],
                 dpi=dpi,

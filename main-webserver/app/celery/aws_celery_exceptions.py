@@ -7,9 +7,9 @@ class InvalidAppId(Exception):
     """
 
 
-class InvalidTaskDefinition(Exception):
+class InvalidArguments(Exception):
     """
-    Raised when the user provides an invalid task definition.
+    Raised when the user provides bad arguments to a celery task
     """
 
 

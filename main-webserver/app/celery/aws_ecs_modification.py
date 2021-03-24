@@ -21,8 +21,8 @@ from app.models import (
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.celery.aws_celery_exceptions import (
+    InvalidArguments,
     InvalidAppId,
-    InvalidTaskDefinition,
 )
 
 
@@ -220,22 +220,26 @@ def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Opt
 
 
 @shared_task
-def update_task_definitions(app_id: str = None, task_definition_arn: str = None):
+def update_task_definitions(app_id: str = None, task_version: int = None):
     """
-    Updates task definitions for `app_id` to `task_definition_arn`.
-    If `app_id`=None, we update all app ids to their latest version. `task_definition_arn` ignored.
-    If `task_definition_arn`=None, we use the latest revision in ECS.
+    Updates the task def for `app_id` to use version `task_version`.
+    - If `app_id`=None, we update all app ids to their latest task_version.
+    - If `app_id` is not None and `task_version` is not None, we simply write
+        the new task_version to the db.
+
     Parallelizing this function could help reduce task time, but the AWS API responds
     in usually under a tenth of a second. We'd also need to coordinate that with
     Github workflows to make sure all tasks finish. It's much simpler to have just one task here.
 
     Args:
-        app_id: which app id to update. If None, we update all in SupportedAppImages. We ignore
-            the paramater `task_definition_arn` and just use the AWS API.
-        task_definition_arn: new task definition, of the form <task_def>:<revision>. If None, we
-            use the AWS API to get the latest version of the task definition that's stored
-            in SupportedAppImages.
+        app_id: which app id to update. If None, we update all in SupportedAppImages to
+            their latest task_versions in AWS ECS.
+        task_version: specific task_version to pin the task def associated with app_id.
     """
+    # paramater validation
+    if app_id is None and task_version is not None:
+        raise InvalidArguments("Since app_id is None, task_version must be None")
+
     if app_id is None:
         # iterate through all apps and update their task definitions
         all_app_data = SupportedAppImages.query.all()
@@ -250,24 +254,22 @@ def update_task_definitions(app_id: str = None, task_definition_arn: str = None)
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
     if app_data is None:
         raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")
-    if task_definition_arn is None:
-        # this gets the task definition without the version number
-        current_task_def = app_data.task_definition.split(":")[0]
+    if task_version is None:
+        # use the task definition in the db, then get the latest task_version from AWS ECS.
         ecs_client = ECSClient()
-        ecs_client.set_task_definition_arn(current_task_def)
+        ecs_client.set_task_definition_arn(app_data.task_definition)
         task_info = ecs_client.describe_task()
-        latest_revision = task_info["taskDefinition"]["revision"]
-        task_definition_arn = f"{current_task_def}:{latest_revision}"
+        task_version = task_info["taskDefinition"]["revision"]
+        app_data.task_version = task_version
+    else:
+        # we are given a specific task_version; write to row directly
+        app_data.task_version = task_version
 
-    # make sure the provided task definition has the form <task_def>:<revision>
-    if len(task_definition_arn.split(":")) != 2:
-        error_msg = f"Task def {task_definition_arn}. Must have a : to indicate revision."
-        fractal_logger.error(error_msg)
-        raise InvalidTaskDefinition(error_msg)
-
-    fractal_logger.info(f"App {app_data.app_id} has new task def: {task_definition_arn}")
-    app_data.task_definition = task_definition_arn
+    # commit changes and log
     fractal_sql_commit(db)
+    fractal_logger.info(
+        f"App {app_data.app_id} has new task def: {app_data.task_definition}:{task_version}"
+    )
 
 
 @shared_task(bind=True)
