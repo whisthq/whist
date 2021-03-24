@@ -69,17 +69,17 @@ else
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
         export CSC_IDENTITY_AUTO_DISCOVERY=false
-    else
-        # Sign each FractalClient binary
-        for filename in protocol-build/client/*.dylib; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
+    # else
+    #     # Sign each FractalClient binary
+    #     # for filename in protocol-build/client/*.dylib; do
+    #     #     codesign -f -v -s "Fractal Computers, Inc." $filename
+    #     # done
 
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
-        codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/Fractal
-        for filename in protocol-build/client/loading/*; do
-            codesign -f -v -s "Fractal Computers, Inc." $filename
-        done
+    #     # codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/crashpad_handler
+    #     # codesign -f -v -s "Fractal Computers, Inc." protocol-build/client/Fractal
+    #     # for filename in protocol-build/client/loading/*; do
+    #     #     codesign -f -v -s "Fractal Computers, Inc." $filename
+    #     # done
     fi
 
     # Initialize yarn first
