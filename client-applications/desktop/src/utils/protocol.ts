@@ -48,7 +48,7 @@ export const parseInfoPorts = (res: {
 export const createContainer = async (email: string, accessToken: string) => {
     const r = containerRequest(email, accessToken, chooseRegion(), getDPI())
     const response = await r
-    if (!response.json.ID)
+    if (!response.json || !response.json.ID)
         throw new Error(
             "Could not create container! Received: " +
                 JSON.stringify(response, null, 4)

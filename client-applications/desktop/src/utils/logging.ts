@@ -12,3 +12,5 @@ export const logInfo = (logs: string, userID = "") => {
     log_file.write(util.format(logs) + "\n")
     log_stdout.write(util.format(logs) + "\n")
 }
+
+logInfo(`Logs can be found at ${__dirname}`)
