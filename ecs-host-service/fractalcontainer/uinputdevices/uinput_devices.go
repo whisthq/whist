@@ -229,7 +229,9 @@ func linuxUIGetSysName(len uintptr) uintptr {
 
 // Close calls Close() on each of the constituent devices.
 func (u *UinputDevices) Close() {
-	u.absmouse.Close()
-	u.relmouse.Close()
-	u.keyboard.Close()
+	if u != nil {
+		u.absmouse.Close()
+		u.relmouse.Close()
+		u.keyboard.Close()
+	}
 }
