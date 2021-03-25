@@ -70,6 +70,7 @@ def email():
         ("noreply@fractal.co", "Thank you for choosing Fractal", "", HTTPStatus.BAD_REQUEST),
     ],
 )
+@pytest.mark.usefixtures("authorized")
 def test_send_emails(mailslurp, email, client, from_email, subject, email_id, expected):
     """Tests sample emails to a valid email address"""
     api_instance = mailslurp_client.InboxControllerApi(mailslurp)
@@ -97,6 +98,7 @@ def test_send_emails(mailslurp, email, client, from_email, subject, email_id, ex
         assert email.subject == test_email["subject"]
 
 
+@pytest.mark.usefixtures("authorized")
 def test_send_to_bad_email(client):
     """Tests sending a sample email to an invalid email address"""
     response = client.post(

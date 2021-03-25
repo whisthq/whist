@@ -1,38 +1,37 @@
-import requests
-from jinja2 import Template
+"""The Fractal mail client.
 
+The MailClient class wraps the Python Sendgrid SDK to make it easy to send mail to users.
+
+Email templates are stored in the `sales.email_templates table of the database.
+MailClient.send_email looks up a template by its template ID, downloads it from the
+fractal-email-templates S3 bucket, renders it with the specified parameters, and sends it to the
+specified recipient.
+
+Example:
+    Suppose you've added an email template whose template ID is "HELLO" to the database. Let's
+    pretend it's a Jinja template string that can be rendered with a particular message.
+
+    The following lines of code can be used to render your template and send it to
+    recipient@example.com with the message "Hello".
+
+        mc = MailClient("...")
+        mc.send_email("HELLO", "recipient@example.com", jinja_args={"message": "Hello"})
+
+"""
+
+from jinja2 import Template
+from python_http_client.exceptions import BadRequestsError
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+
 from app.helpers.utils.general.logs import fractal_logger
+from app.exceptions import SendGridException, TemplateNotFound
 from app.models import User, EmailTemplates
-from app.exceptions import TemplateNotFound, SendGridException
 from app.helpers.utils.general.tokens import get_access_tokens
-
-# Welcome to the mail client. The mail client uses the Sendgrid API to
-# send emails to users.
-
-# Let's say you want to send an email to a user. Here's how to do it:
-
-# 1. Create an email template as a .html file and upload it to the fractal-email-templates
-#    bucket in S3. You can use Jinja formatting for variables. Make sure it's set to public.
-# 2. Add the email template to the sales.email_templates table in the SQL database.
-# 3. get_available_templates() will pull all the email templates from the
-#    SQL table, and MailClient.send_email will send any email template.
 
 
 class MailClient:
-    """A helper class that uses the Sendgrid API to send emails to users.
-
-    To use the MailClient class, follow these steps:
-    1. Create an email template as a .html file and upload it to the fractal-email-templates
-        bucket in S3. You can use Jinja formatting for variables. Make sure it's set to public.
-    2. Add the email template to the sales.email_templates table in the SQL database.
-    3. get_available_templates() will pull all the email templates from the
-        SQL table, and MailClient.send_email will send any email template.
-
-    Attributes:
-        api_key (str): Sendgrid api key that the MailClient uses to create the SendGridAPIClient
-    """
+    """A helper class that uses the Sendgrid API to send emails to users."""
 
     def __init__(self, api_key):
         """Initialize a reusable MailClient object.
@@ -44,68 +43,65 @@ class MailClient:
 
     def send_email(
         self,
+        email_id,
         to_email,
         from_email="noreply@fractal.co",
-        subject="",
-        html_file=None,
-        email_id=None,
         jinja_args=None,
     ):
-        """Sends an email via Sendgrid with a given subject and HTML file (for email body)
+        """Sends a rendered email template.
 
         Args:
-            from_email (str): Email address where the email is coming from
-            to_email (str): Email address to send to
-            subject (str): Email title
-            html_file (str): file of HTML content e.g. example.html
-            email_id (str): Email ID that maps to html_file, found in database.
-                NOTE: Either email_id or html_file must be provided. If both are provided,
-                    email_id is used.
-            jinja_args (dict): Dict of Jinja arguments to pass into render_template()
+            email_id (str): The database ID (i.e. the value of the sales.email_templates.id column)
+                of the email template to render.
+            to_email (str): The recipient's email address as a string.
+            from_email (str): Optional. The sender's email address as a string. Defaults to
+                "noreply@fractal.co".
+            jinja_args (dict): Optional. Keyword arguments forwarded to Jinja's Template.render().
+                Defaults to {}.
+
+        Returns:
+            None
 
         Raises:
-            NonexistentEmail: If any of from_email or to_emails does not exist
+            SendGridException: Sendgrid was not able to send an email. SendGridAPIClient.send()
+                has a tendency to raise cryptic errors. Any time SendGridException is raised, the
+                traceback will also include the traceback of the SendGridAPIClient.send() error
+                that directly triggered SendGridException.
+            TemplateNotFound: There does not exist a record in the database of an email template
+                whose ID matches email_id.
         """
-        if not html_file and not email_id:
+
+        template = EmailTemplates.query.get(email_id)
+
+        if template is None:
             raise TemplateNotFound(email_id)
 
-        if email_id:
-            templates = MailUtils.get_available_templates()
+        fractal_logger.info(f"Downloading {template.url} from Amazon S3...")
 
-            if not email_id in templates.keys():
-                raise TemplateNotFound(email_id)
+        template_string = template.download()
 
-            html_file_url = str(templates[email_id]["url"])
-            subject = str(templates[email_id]["title"])
+        fractal_logger.info("Sanitizing arguments...")
 
-            fractal_logger.info(
-                f"Sending {html_file_url} with subject {subject}", extra={"label": from_email}
-            )
-            try:
-                html_as_string = requests.get(html_file_url)
-            except Exception as e:
-                fractal_logger.error("", exc_info=True, extra={"label": from_email})
-                raise Exception from e
-            jinja_template = Template(html_as_string.text)
+        sanitized_args = MailUtils.sanitize_jinja_args(
+            to_email, jinja_args if jinja_args is not None else {}
+        )
 
-        elif html_file:
-            try:
-                jinja_template = Template(open(html_file).read())
-            except Exception as e:
-                fractal_logger.error("", exc_info=True, extra={"label": from_email})
-                raise IOError from e
+        fractal_logger.info(f"Rendering {template.id} with {sanitized_args}...")
+
+        jinja_template = Template(template_string)
+        message = Mail(
+            from_email=from_email,
+            to_emails=to_email,
+            subject=template.title,
+            html_content=jinja_template.render(**sanitized_args),
+        )
+
+        fractal_logger.info(f"Sending '{template.title}' from {from_email} to {to_email}...")
 
         try:
-            jinja_args = MailUtils.sanitize_jinja_args(to_email, jinja_args)
-            message = Mail(
-                from_email=from_email,
-                to_emails=to_email,
-                subject=subject,
-                html_content=jinja_template.render(**jinja_args),
-            )
             self.sendgrid_client.send(message)
-        except Exception as e:
-            fractal_logger.error("", exc_info=True, extra={"label": from_email})
+        except BadRequestsError as e:
+            # An invalid to_emails argument may have been passed to the Mail class constructor.
             raise SendGridException from e
 
 
@@ -113,22 +109,6 @@ class MailUtils:
     """
     Contains all static methods for MailClient (above)
     """
-
-    @staticmethod
-    def get_available_templates():
-        """Retrieves all available HTML email templates stored in S3
-
-        Args:
-            none
-
-        Returns:
-            dict: Dictionary mapping email template ID (string) to HTML url (string)
-        """
-
-        templates = EmailTemplates.query.all()
-        return {
-            template.id: {"url": template.url, "title": template.title} for template in templates
-        }
 
     @staticmethod
     def sanitize_jinja_args(to_email, jinja_args):
