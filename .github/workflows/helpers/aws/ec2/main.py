@@ -143,7 +143,7 @@ if __name__ == "__main__":
         message = flag_clusters(region, "asdf", "steveli/aws-resource-tagging")
 
     client = slack.WebClient(token=token)
-    blocks[1]["text"]["text"] = (
-        message if len(message) > 0 else "No Instances available"
-    )
-    client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
+    blocks[1]["text"]["text"] = message
+
+    if len(message) > 0:
+        client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
