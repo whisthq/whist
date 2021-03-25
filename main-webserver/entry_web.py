@@ -9,7 +9,7 @@ sure that the environment variable `FLASK_ENV` is set such that `flask` runs the
 instantiated in this module (e.g. `FLASK_ENV=entry`). Read more about Flask application discovery
 here: https://flask.palletsprojects.com/en/1.1.x/cli/?highlight=cli#application-discovery
 """
-
+import os
 import platform
 
 from app.factory import create_app
@@ -19,7 +19,9 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.signals import WebSignalHandler
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 
-app = create_app()
+# if testing, TESTING env var should be set. Default is False
+is_testing = os.environ.get("TESTING", "False") in ("True", "true")
+app = create_app(testing=is_testing)
 celery = make_celery(app)
 
 celery.set_default()

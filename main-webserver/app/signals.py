@@ -5,12 +5,10 @@ https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a
 for more details on when this happens and how we are solving it.
 """
 import signal
-import threading
 from typing import List
 
-from celery.signals import worker_shutting_down, task_received, task_postrun
+from celery.signals import worker_shutting_down
 from celery import current_app
-from celery.worker.request import Request
 import gevent
 
 from app.helpers.utils.general.logs import fractal_logger
@@ -69,6 +67,7 @@ def celery_signal_handler(sig, how, exitcode, **kwargs):  # pylint: disable=unus
     # this must be imported here as it will be defined after startup
     from celery.worker import state
 
+    # state.active_requests is a set of celery.worker.request.Request objects
     worker_task_ids = [req.id for req in state.active_requests]
     if len(worker_task_ids) > 0:
         # we cannot do the work in the signal handler because it is blocking (redis operations)
@@ -109,7 +108,7 @@ def mark_tasks_as_revoked(task_ids: List[str]):
     revoked_task_ids = []
     for task_id in task_ids:
         task_result = current_app.AsyncResult(task_id)
-        if task_result.state in ("PENDING", "STARTED"):
+        if not task_result.ready():
             # either of these states means the task did not start or did not finish
             # so we mark it as revoked.
             current_app.backend.store_result(task_id, None, "REVOKED")
