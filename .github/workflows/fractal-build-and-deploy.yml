@@ -677,10 +677,13 @@ jobs:
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
               # the second check is needed because a job being skipped on the "if" counts as a success for whatever reason
-              if: ${{ needs.ami-publish-ec2.outcome }} == 'success' && contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
+              if: ${{ needs.ami-publish-ec2.outcome }} == 'success' && contains(${{ needs.fractal-publish-build-config.outputs.jobs }}, '|ami-publish-ec2|')
               working-directory: main-webserver
               shell: python3 {0}
               run: |
+                  print("OUTCOME", "${{ needs.ami-publish-ec2.outcome }}")
+                  print("PUBLISH", "${{ needs.fractal-publish-build-config.outputs.jobs }}")
+
                   # this allows us to import from `scripts`
                   import sys; sys.path.append(".")
                   import json
