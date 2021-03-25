@@ -4,8 +4,7 @@
 set -Eeuo pipefail
 
 function printhelp {
-    echo "Usage: build [OPTION 1] [OPTION 2] ..."
-    echo ""
+    echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
     echo "Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu."
     echo ""
     echo "  --version VERSION         set the version number of the client app"
@@ -41,7 +40,7 @@ else
     while [ $# -gt 0 ]; do
         if [[ $1 == *"--"* ]]; then
             param="${1/--/}"
-            declare "$param"="$2"
+            declare $param="$2"
         fi
         shift
     done
@@ -50,7 +49,7 @@ else
     if [[ "$publish" == "false" ]]; then
         export CSC_IDENTITY_AUTO_DISCOVERY=false
     fi
-    python3 setVersion.gyp "$bucket" "$version"
+    python3 setVersion.gyp $bucket $version
 
     # Make FractalClient and create its app bundle
     cd ../../protocol
