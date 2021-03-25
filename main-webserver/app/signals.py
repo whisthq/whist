@@ -16,9 +16,6 @@ import gevent
 from app.helpers.utils.general.logs import fractal_logger
 from app import set_web_requests_status
 
-_TASKS_SET = set()
-_TASKS_LOCK = threading.Lock()
-
 
 class WebSignalHandler:
     """
@@ -47,60 +44,14 @@ class WebSignalHandler:
             fractal_logger.error("Could not disable web requests after SIGTERM.")
 
 
-@task_received.connect
-def handle_task_received(request: Request, **kwargs):  # pylint: disable=unused-argument
-    """
-    See https://docs.celeryproject.org/en/stable/userguide/signals.html#task-received.
-    Runs after a task is picked up by this worker.
-
-    Args:
-        request: contains info on task. Provided by celery.
-        kwargs: required by celery.
-    """
-    lock_acquired = _TASKS_LOCK.acquire(blocking=True, timeout=10)
-    if not lock_acquired:
-        fractal_logger.error(f"Failed to acquire tasks lock for task {request.id}")
-        return
-    try:
-        _TASKS_SET.add(request.id)
-    except:
-        fractal_logger.error(f"Could not add {request.id} to _TASKS_SET.", exc_info=True)
-    finally:
-        _TASKS_LOCK.release()
-
-
-@task_postrun.connect
-def handle_task_postrun(
-    task_id: str, task, retval: int, state: str, **kwargs
-):  # pylint: disable=unused-argument
-    """
-    See https://docs.celeryproject.org/en/stable/userguide/signals.html#task_postrun.
-    Runs after a task is finished by this worker.
-
-    Args:
-        task_id: Task ID that finished.
-        task: a tasks.inner object from celery
-        retval: return value of the task
-        state: return state of the task
-        kwargs: required by celery.
-    """
-    lock_acquired = _TASKS_LOCK.acquire(blocking=True, timeout=10)
-    if not lock_acquired:
-        fractal_logger.error(f"Failed to acquire tasks lock for task {task_id}")
-        return
-    try:
-        _TASKS_SET.remove(task_id)
-    except:
-        fractal_logger.error(f"Could not remove {task_id} from _TASKS_SET.", exc_info=True)
-    finally:
-        _TASKS_LOCK.release()
-
-
 @worker_shutting_down.connect
 def celery_signal_handler(sig, how, exitcode, **kwargs):  # pylint: disable=unused-argument
     """
     See https://docs.celeryproject.org/en/stable/userguide/signals.html#worker_shutting_down.
-    Runs after a signal occurs and celery runs its default handlers.
+    Runs after a signal occurs and celery runs its default handlers. This signal handler
+    only works with the gevent pooling option. For unknown reasons, `celery.worker.state`
+    has no requests is empty if we use prefork. Our tests make sure this works, so
+    we can have confidence this won't break silently.
 
     Args:
         sig: string indicating type of signal. Ex: SIGTERM, SIGINT
@@ -115,15 +66,16 @@ def celery_signal_handler(sig, how, exitcode, **kwargs):  # pylint: disable=unus
         return
 
     fractal_logger.info("Running SIGTERM handler")
-    # we don't need the lock because this runs in signal (syscall->userspace) context
-    # and celery with gevent is single-core, so the main program is not running
-    all_tasks = list(_TASKS_SET)
-    if len(all_tasks) > 0:
+    # this must be imported here as it will be defined after startup
+    from celery.worker import state
+
+    worker_task_ids = [req.id for req in state.active_requests]
+    if len(worker_task_ids) > 0:
         # we cannot do the work in the signal handler because it is blocking (redis operations)
         # gevent has monkeypatched all blocking libraries, so it would try to perform
         # a userspace context switch. we should not do that in a signal handler.
         # instead we give gevent a task to run later.
-        gevent.Greenlet.spawn(mark_tasks_as_revoked, all_tasks)
+        gevent.Greenlet.spawn(mark_tasks_as_revoked, worker_task_ids)
 
 
 def mark_tasks_as_revoked(task_ids: List[str]):
@@ -140,22 +92,26 @@ def mark_tasks_as_revoked(task_ids: List[str]):
     1.
         - Task succeeds
         - This function runs and marks it as revoked despite success
+
         We handle this by checking to see if the task status is one of PENDING
         or STARTED. Only in that case do we overwrite the result.
 
     2.
         - This function runs and marks a task as revoked
         - Task succeeds and overrides the revoked status (in the 30 seconds it has)
+
         There is not much we can do about this without much more work. Also this is
         an acceptable outcome because the task properly finished.
 
     Args:
         task_ids: List of task ids to revoke
     """
+    revoked_task_ids = []
     for task_id in task_ids:
         task_result = current_app.AsyncResult(task_id)
         if task_result.state in ("PENDING", "STARTED"):
             # either of these states means the task did not start or did not finish
             # so we mark it as revoked.
             current_app.backend.store_result(task_id, None, "REVOKED")
+            revoked_task_ids.append(task_id)
     fractal_logger.info(f"Marked the following tasks as revoked: {task_ids}")

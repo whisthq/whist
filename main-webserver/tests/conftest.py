@@ -449,9 +449,12 @@ def fractal_celery_proc(app):
     # this gets the webserver root no matter where this file is called from.
     webserver_root = os.path.join(os.getcwd(), os.path.dirname(__file__), "..")
 
+    # these are used by supervisord
+    os.environ["NUM_WORKERS"] = "2"
+    os.environ["WORKER_CONCURRENCY"] = "10"
     cmd = (
-        f"cd {webserver_root} &&"
-        " celery --app entry_celery.celery worker --pool gevent --concurrency 10 --loglevel INFO"
+        f"cd {webserver_root} && "
+        "bash stem-cell.sh celery"  # this is the command we use during local deploys
     )
 
     # stdout is shared but the process is run independently
