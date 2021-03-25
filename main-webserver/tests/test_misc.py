@@ -50,13 +50,18 @@ def test_callback_webserver_hostname_localhost_with_port():
 
 
 # this test cannot be run on windows, as it uses POSIX signals.
-# note that this is not the best test; third party libs like waitress can override signal handlers
-# this test runs in a flask context, so it might appear to work.
-# it has been independently verified that waitress does not override our SIGTERM handler.
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
 def test_webserver_sigterm(client):
+    """
+    Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
+    error out with code WEBSERVER_MAINTENANCE. For more info, see app/signals.py.
+
+    Note that this is not the perfect test; third party libs like waitress can override signal
+    handlers. Waitress is only used in deployments (local or in Procfile with Heroku), not during
+    tests. It has been independently verified that waitress does not override our SIGTERM handler.
+    """
     # this is a dummy endpoint that we hit to make sure web requests are ok
     resp = client.post("/newsletter/post")
     assert resp.status_code == SUCCESS
@@ -79,13 +84,16 @@ def test_webserver_sigterm(client):
 
 
 # this test cannot be run on windows, as it uses POSIX signals.
-# this is a very good test because it uses the exact entry command that we use in production
-# (see fractal_celery_proc fixture)
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
 @pytest.mark.usefixtures("authorized")
 def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
+    """
+    Make sure SIGTERM is properly handled by celery worker (and supervisord). After a SIGTERM, the
+    worker will pick up no new tasks and mark all existing tasks as REVOKED. For more info,
+    see app/signals.py.
+    """
     # start the dummy task and get the id
     task_id = dummy_task.delay().id
 
