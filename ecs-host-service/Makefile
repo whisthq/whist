@@ -98,7 +98,12 @@ run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with local dev (debug) configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
 	# handling for Ctrl+C does not work
-	sudo env PATH=$(PATH) APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env PATH=$(PATH) APP_ENV=localdev \
+		MOUNT_COMMAND=$(MOUNT_COMMAND) \
+		APP_NAME=$(APP_NAME) \
+		APP_IMAGE=$(APP_IMAGE) \
+		PRINT_DOCKER_CREATE_COMMAND=$(PRINT_DOCKER_CREATE_COMMAND) \
+		$(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
