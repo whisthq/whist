@@ -44,10 +44,12 @@ const bundleConfig = {
         minimumSystemVersion: "10.13.0",
         target: ["dmg"],
         type: "distribution",
-        extraFiles: [{
-            from: "protocol-build/client/",
-            to: "MacOS/"
-        }]
+        extraFiles: [
+            {
+                from: "protocol-build/client",
+                to: "MacOS/"
+            }
+        ]
     },
 
     // This controls the positions of the Fractal application and
