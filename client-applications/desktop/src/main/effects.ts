@@ -14,7 +14,8 @@ export const handleLogin: Effect = async function* (state) {
     const { json } = await emailLogin(state.email, state.password)
     const loginWarning =
         json && json.access_token ? "" : fractalLoginWarning.INVALID
-    if (loginWarning) return { loginLoading: false, loginWarning }
+    if (loginWarning)
+        return { loginLoading: false, loginRequest: false, loginWarning }
 
     return {
         password: "",
