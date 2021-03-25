@@ -53,7 +53,6 @@ def test_callback_webserver_hostname_localhost_with_port():
 # note that this is not the best test; third party libs like waitress can override signal handlers
 # this test runs in a flask context, so it might appear to work.
 # it has been independently verified that waitress does not override our SIGTERM handler.
-@pytest.mark.container_serial
 @pytest.mark.skipif(
     "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
 )
@@ -79,9 +78,14 @@ def test_webserver_sigterm(client):
     assert resp.status_code == SUCCESS
 
 
-@pytest.mark.container_serial
+# this test cannot be run on windows, as it uses POSIX signals.
+# this is a very good test because it uses the exact entry command that we use in production
+# (see fractal_celery_proc fixture)
+@pytest.mark.skipif(
+    "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
+)
 @pytest.mark.usefixtures("authorized")
-def test_celery_sigterm(client, authorized, fractal_celery_app, fractal_celery_proc):
+def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     # start the dummy task and get the id
     task_id = dummy_task.delay().id
 
