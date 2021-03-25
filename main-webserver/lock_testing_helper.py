@@ -7,37 +7,31 @@ import sys
 
 os.environ["REDIS_URL"] = "redis://"
 
+
 CONTAINER_ID = sys.argv[1]
-NEW_STATE = sys.argv[2]
-WAIT_BEFORE_LOCK = int(sys.argv[3])
-WAIT_BEFORE_COMMIT = int(sys.argv[4])
+WAIT_BEFORE_LOCK = int(sys.argv[2])
+WAIT_BEFORE_COMMIT = int(sys.argv[3])
+ACTION = sys.argv[4]
+if ACTION == "EDIT":
+    NEW_STATE = sys.argv[5]
 
 app = create_app()
 with app.app_context():
 
-    # actually modify state
-    start = time.time()
-
-    print("State", NEW_STATE, "waiting to lock for", WAIT_BEFORE_LOCK, "seconds")
+    print("waiting to lock for", WAIT_BEFORE_LOCK, "seconds")
     time.sleep(WAIT_BEFORE_LOCK)
 
     container = UserContainer.query.with_for_update().filter_by(container_id=CONTAINER_ID).first()
 
-    if container is None:
-        initialize_db()
-        container = (
-            UserContainer.query.with_for_update().filter_by(container_id=CONTAINER_ID).first()
-        )
-
-    print("State", NEW_STATE, "waiting to commit for", WAIT_BEFORE_COMMIT, "seconds")
+    print("waiting to commit for", WAIT_BEFORE_COMMIT, "seconds")
     time.sleep(WAIT_BEFORE_COMMIT)
 
-    # update state and commit
-    container.state = NEW_STATE
+    # make change
+    if ACTION == "DELETE":
+        db.session.delete(container)
+    elif ACTION == "EDIT":
+        container.state = NEW_STATE
     db.session.commit()
-
-    end = time.time()
-    print(end - start)
 
 
 # _______________________ TRASH ________________________
