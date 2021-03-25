@@ -30,6 +30,10 @@ const bundleConfig = {
         schemes: ["fractal"],
     },
 
+    extraFiles: [
+        "loading/"
+    ],
+
     mac: {
         category: "public.app-category.productivity",
         darkModeSupport: true,
