@@ -39,7 +39,7 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Configure AWS Credentials
+            - name: Configure AWS Credentials for EC2
               uses: aws-actions/configure-aws-credentials@v1
               with:
                   aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
@@ -67,53 +67,24 @@ jobs:
                   AWS_REGION: ${{ matrix.aws-region }}
                   AWS_RESOURCE: EC2
 
-            # - name: Notify Slack if error
-            #   if: ${{ failure() }}
-            #   run: |
-            #       curl -X POST \
-            #       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.aws-region }}\", \"icon_emoji\": \":fractal:\"}" \
-            #       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-    ecsinstance-check-status-main:
-        name: Scanning ECS Clusters
-        runs-on: ubuntu-20.04
-        strategy:
-            matrix:
-                aws-region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Configure AWS Credentials
+            - name: Configure AWS Credentials for ECS
               uses: aws-actions/configure-aws-credentials@v1
               with:
                   aws-access-key-id: ${{ secrets.AWS_ECS_ACCESS_KEY_ID }}
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ matrix.aws-region}}
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Upgrade pip
-              working-directory: .github/workflows/helpers/aws/ec2
-              run: pip install --upgrade pip
-
-            - name: Install Dependencies
-              working-directory: .github/workflows/helpers/aws/ec2
-              run: pip install -r requirements.txt
-
             - name: Run ec2 instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA $GITHUB_REF
+              run: python3 main.py $GITHUB_SHA $GITHUB_HEAD_REF
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
                   AWS_RESOURCE: ECS
+
+            # - name: Notify Slack if error
+            #   if: ${{ failure() }}
+            #   run: |
+            #       curl -X POST \
+            #       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.aws-region }}\", \"icon_emoji\": \":fractal:\"}" \
+            #       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
