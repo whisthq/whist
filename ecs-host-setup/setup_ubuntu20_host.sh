@@ -42,7 +42,7 @@ sudo apt-get install -y docker-ce docker-ce-cli containerd.io
 
 # Attempt to Add Docker group, but allow failure with "||:" in case it already exists
 sudo groupadd docker ||:
-sudo gpasswd -a $USER docker
+sudo gpasswd -a "$USER" docker
 
 echo "================================================"
 echo "Installing AWS CLI..."
@@ -57,7 +57,7 @@ echo "Installing NVIDIA drivers..."
 echo "================================================"
 
 # Install Linux headers
-sudo apt-get install -y gcc make linux-headers-$(uname -r)
+sudo apt-get install -y gcc make "linux-headers-$(uname -r)"
 
 # Blacklist some Linux kernel modules that would block NVIDIA drivers
 cat << EOF | sudo tee --append /etc/modprobe.d/blacklist.conf

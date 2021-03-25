@@ -26,7 +26,7 @@ if [ $DB_EXISTS == true ]; then
 
     # copy specifically chosen data
     echo "===             Putting data into db             ==="
-    psql -d $POSTGRES_URI -f db_data.sql
+    psql -d "$POSTGRES_URI" -f db_data.sql
 
     exit 0
 fi
@@ -40,14 +40,14 @@ echo "===            Initializing db                  ==="
 
 # make user. initially just "postgres" user exists
 cmds="CREATE ROLE $POSTGRES_USER WITH LOGIN CREATEDB;\q"
-psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U postgres -d postgres <<< $cmds
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U postgres -d postgres <<< $cmds
 
 cmds="CREATE DATABASE $POSTGRES_DB;\q"
-psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d postgres <<< $cmds
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d postgres <<< $cmds
 
 # copy schema
-psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -f ../db_migration/schema.sql
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f ../db_migration/schema.sql
 
 # copy specifically chosen data
 echo "===             Putting data into db             ==="
-psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -f db_data.sql
+psql -h "$POSTGRES_HOST" -p "$POSTGRES_PORT" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f db_data.sql
