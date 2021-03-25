@@ -581,8 +581,7 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        # (${{ needs.ami-publish-ec2.outcome }} == 'success'))
-        if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' )
+        if: always() && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || needs.ami-publish-ec2.outcome }} == 'success' )
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -677,7 +676,8 @@ jobs:
 
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
-              if: ${{ needs.ami-publish-ec2.outcome }} == 'success'
+              # the second check is needed because a job being skipped on the "if" counts as a success for whatever reason
+              if: ${{ needs.ami-publish-ec2.outcome }} == 'success' && contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
               working-directory: main-webserver
               shell: python3 {0}
               run: |
