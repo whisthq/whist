@@ -7,6 +7,7 @@ import { Effect, StateIPC, StateChannel, isLoggedIn } from "@app/utils/state"
 import { persistKeys } from "@app/utils/persist"
 import * as proto from "@app/utils/protocol"
 import { streamProtocolInfo } from "../utils/protocol"
+import { logInfo } from "@app/utils/logging"
 
 export const handleLogin: Effect = async function* (state) {
     // Only run if a login has been requested,
@@ -117,6 +118,6 @@ export const persistState: Effect = function* (state) {
 }
 
 export const logState: Effect = function* (state) {
-    // Print every state update out to the console
-    console.log(state)
+    if (state.protocolLoading) logInfo("Protocol loading true", state.email)
+    if (state.protocolProcess) logInfo("Protocol processing true", state.email)
 }

@@ -86,8 +86,6 @@ const bundleConfig = {
 const publishConfig = {
     // Configuration for publishing to AWS S3.
     publish: {
-        // TODO: Determine bucket from an environment variable to be set by
-        // the publishing script.
         bucket: process.env.S3_BUCKET ? process.env.S3_BUCKET : "PLACEHOLDER",
         provider: "s3",
         region: "us-east-1",

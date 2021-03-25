@@ -35,7 +35,7 @@ function init(): void {
             effects.persistState,
             effects.broadcastState,
             effects.closeAllWindows,
-            // effects.logState,
+            effects.logState,
         ]
     )
 }
