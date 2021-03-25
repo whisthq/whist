@@ -4,33 +4,50 @@ import pandas as pd
 import slack
 import sys
 
-
-"""
-Cluster info: 
-  - we want the branch and commit hash 
-    - if branch is dev, staging, or master
-      - if commit hash is different from current ocmmit hash then flag 
-  - 2 weeks limit: if been up for more than 2 weeks then flag 
+from datetime import date
 
 
-"""
+icons = {
+    "OLD COMMIT": ":red_circle:",
+    "OVERDUE": ":red_circle:",
+    "CURRENT COMMIT": ":large_green_circle:",
+    "IGNORE TIME": ":large_yellow_circle:",
+    "IGNORE COMMIT": ":large_yellow_circle:",
+}
 
 
-def read_tags(tags, commit, branch):
-    target_branches = ["dev", "staging", "master"]
+def get_tags(arn, region):
+    client = boto3.client("ecs", region_name=region)
+
+    response = client.list_tags_for_resource(resourceArn=arn)
+    return response["tags"]
+
+
+def read_tags(tags, commit, branch, resource):
+    target_branches = ["steveli/aws-resource-tagging", "staging", "master"]
     tag_branch = ""
     tag_commit = ""
-
+    key = "Key" if resource == "EC2" else "key"
+    value = "Value" if resource == "EC2" else "value"
     for t in tags:
-        if t["key"] == "git_branch":
-            tag_branch = t["value"]
-        if t["key"] == "git_commit":
-            tag_commit = t["value"]
-
+        if t[key] == "git_branch":
+            tag_branch = t[value]
+        if t[key] == "git_commit":
+            tag_commit = t[value]
+    # print(branch, tag_branch)
     if branch in target_branches and tag_branch == branch:
-        return "OLD COMMIT" if tag_commit != commit else "CURRENT VERSION"
+        return "OLD COMMIT" if tag_commit != commit else "CURRENT COMMIT"
 
-    return "IGNORE"
+    return "IGNORE COMMIT"
+
+
+def compare_timestamps(timestamp):
+    today = date.today()
+    launchTime = timestamp.date()
+
+    different = today - launchTime
+
+    return "OVERDUE" if different.days >= 14 else "IGNORE TIME", different.days
 
 
 def get_all_clusters(region):
@@ -43,18 +60,16 @@ def get_all_clusters(region):
 
 def flag_clusters(region, commit, branch):
     clusters = get_all_clusters(region)
-    flagged_clusters = []
     message = ""
 
     for c in clusters:
         clusterName = c["clusterName"]
         clusterArn = c["clusterArn"]
-
-        tags = c["tags"]
-
-        flag_status = read_tags(tags, commit, branch)
-        icon = ":red_circle:" if flag_status == "OLD COMMIT" else ":white_check_mark:"
-        message += "• " + clusterName + " - " + flag_status + " - " + icon + " \n"
+        tags = get_tags(clusterArn, region)
+        flag_status = read_tags(tags, commit, branch, "ECS")
+        icon = icons[flag_status]
+        if icon == ":red_circle:":
+            message += f"• {clusterName} - {flag_status} - {icon} \n"
 
     return message
 
@@ -68,50 +83,35 @@ def get_all_instances(region):
 
 def flag_instances(region, commit, branch):
     reservations = get_all_instances(region)
+    message = ""
+    for r in reservations:
+        instances = r["Instances"]
+        for instance in instances:
+            tag_status = ""
+            launchTime = instance["LaunchTime"]
+            instance_id = instance["InstanceId"]
+            launch_status, days = compare_timestamps(launchTime)
+            if "Tags" in instance:
+                tag_status = read_tags(instance["Tags"], commit, branch, "EC2")
+                launch_icon = icons[launch_status]
+                tag_icon = icons[tag_status]
 
+            if len(tag_status) == 0:
+                tag_status = "NO TAGS"
+                tag_icon = icons["IGNORE COMMIT"]
 
-# def flag_instances(region, commit, branch):
-#     """Reads running EC2 instances and formats a slack message to send
-#     Returns:
-#         A dictionary containing two keys, 'instances' and 'message,' where instances
-#         contains all the instances available and 'message' contains the slack message
-#         to be sent to the Fractal slack alerts channel
-#     """
-#     message = ""
-#     ec2_instances = []
-#     reservations = get_all_instances(region)
-#     for r in reservations:
-#         instances = r["Instances"]
-#         for instance in instances:
-#             row = {}
-#             instance_id = instance["InstanceId"]
-#             state = instance["State"]["Name"]
-#             row["Instance ID"] = instance_id
-#             row["Instance State"] = state
-#             icon = ":red_circle:" if state == "stopped" else ":white_check_mark:"
-#             message += (
-#                 "• " + instance["InstanceId"] + " - " + state + " - " + icon + " \n"
-#             )
-#             if "Tags" in instance:
-#                 for tag in instance["Tags"]:
-#                     if tag["Key"] == "Name":
-#                         row["tag-name"] = tag["Value"]
+            if launch_icon == ":red_circle:" or tag_icon == ":red_circle:":
+                message += f"• {instance_id} - {tag_status} - {tag_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
 
-#             ec2_instances.append(row)
-
-#     ret = dict()
-#     ret["instances"] = ec2_instances
-#     ret["message"] = message
-#     return ret
+    return message
 
 
 if __name__ == "__main__":
     region = os.environ.get("AWS_REGION")
+    resource = os.environ.get("AWS_RESOURCE")
     token = os.environ.get("SLACK_EC2_BOT_TOKEN")
-    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
-    region = "us-east-1"
-    # commit = sys.argv[1][0:7]
-    # branch = sys.argv[2]
+    commit = sys.argv[1][0:7]
+    branch = sys.argv[2]
 
     # slack message formatter
     blocks = [
@@ -119,7 +119,7 @@ if __name__ == "__main__":
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "*ECS Status for: {}*".format(region),
+                "text": "*{} Status for: {}*".format(resource, region),
             },
         },
         {
@@ -130,9 +130,15 @@ if __name__ == "__main__":
             },
         },
     ]
-    # obj = flag_instances(region, commit, branch)
-    # df_ec2 = pd.DataFrame(obj["instances"])
-    message = flag_clusters(region, "dev", "asdf")
+
+    message = ""
+
+    if resource == "EC2":
+        message = flag_instances(region, "asdf", "steveli/aws-resource-tagging")
+
+    elif resource == "ECS":
+        message = flag_clusters(region, "asdf", "steveli/aws-resource-tagging")
+
     client = slack.WebClient(token=token)
     blocks[1]["text"]["text"] = (
         message if len(message) > 0 else "No Instances available"
