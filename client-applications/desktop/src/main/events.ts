@@ -22,7 +22,7 @@ export const listenAppActivate: Event = (setState) => {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
         if (BrowserWindow.getAllWindows().length === 0) {
-            setState({ appWindowRequested: true })
+            setState({ appWindowRequest: true })
         }
     })
 }
@@ -55,5 +55,5 @@ export const verifyTokenOnStart: Event = async (setState) => {
             accessToken: response.json.user.access_token,
             email: response.json.user.user_id,
         })
-    setState({ accessToken: "", email: "", appWindowRequested: true })
+    setState({ accessToken: "", email: "", appWindowRequest: true })
 }

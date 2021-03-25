@@ -1,20 +1,28 @@
 import { useEffect, useState } from "react"
 import { IpcRendererEvent } from "electron"
-import { isEqual, merge } from "lodash"
+import { isEqual, isEmpty, merge } from "lodash"
 import { ChildProcess } from "child_process"
 
 export type State = {
     email: string
+    password: string
+    configToken: string
     accessToken: string
     refreshToken: string
+    loginRequest: boolean
+    loginLoading: boolean
+    loginWarning: string
     protocolLoading: boolean
-    appWindowRequested: boolean
+    appWindowRequest: boolean
     protocolProcess?: ChildProcess
 }
+export type StateIPC = Omit<State, "protocolProcess">
 export type Event = (setState: (state: Partial<State>) => void) => void
 export type Effect = (
     s: State
-) => Generator<State, State> | AsyncGenerator<State, State>
+) =>
+    | Generator<Partial<State>, Partial<State> | void>
+    | AsyncGenerator<Partial<State>, Partial<State> | void>
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 
@@ -28,7 +36,7 @@ const ipcError = [
 ].join(" ")
 
 export const useMainState = ():
-    | [Partial<State>, (s: Partial<State>) => void]
+    | [StateIPC, (s: Partial<StateIPC>) => void]
     | never => {
     // the window type doesn't have ipcRenderer, but we've manually
     // added that in preload.js with electron.contextBridge
@@ -37,10 +45,10 @@ export const useMainState = ():
     const ipc = window.ipcRenderer
     if (!(ipc && ipc.on && ipc.send)) throw new Error(ipcError)
 
-    const [mainState, setState] = useState({} as Partial<State>)
+    const [mainState, setState] = useState({} as StateIPC)
 
     useEffect(() => {
-        const listener = (_: IpcRendererEvent, state: Partial<State>) =>
+        const listener = (_: IpcRendererEvent, state: StateIPC) =>
             setState(state)
         ipc.on(StateChannel, listener)
         return () => {
@@ -48,7 +56,7 @@ export const useMainState = ():
         }
     }, [])
 
-    const setMainState = (state: Partial<State>) => {
+    const setMainState = (state: Partial<StateIPC>) => {
         ipc.send(StateChannel, state)
     }
 
@@ -56,34 +64,56 @@ export const useMainState = ():
 }
 
 export const initState = async (
-    init: State,
+    init: Partial<State>,
     events: Event[],
     effects: Effect[]
 ) => {
-    let cached = new Map()
-    let state = {}
+    // let cached = new Set()
+    let state = {} as State
 
-    const consumeEffect = async (eff: Effect, set: Function) => {
-        const iter = eff(state as State) //start the generator
-        for await (let newState of iter) // update state with yield objects
-            set(newState) // use passed function to avoid mutual recursion
-        cached.delete(eff) // make effect available to run again
+    // const consumeEffectAsync = async (eff: Effect, set: Function) => {
+    //     cached.add(eff)
+    //     // update state with yield objects
+    //     for await (let newState of eff(state as State)) set(newState) // use passed function to avoid mutual recursion
+    //     cached.delete(eff) // make effect available to run again
+    // }
+
+    // const consumeEffect = (eff: Effect, set: Function) => {
+    //     for (let newState of eff(state as State) as Generator) set(newState)
+    // }
+
+    const reduceEffects = async (effects: Effect[], setState: Function) => {
+        let nexts
+        const iters = effects.map((eff) => eff(state))
+        do {
+            nexts = await Promise.all(iters.map((i) => i.next()))
+            let newState = nexts.map((n) => n.value).reduce(merge, {})
+            // console.log("newState", newState)
+            if (!isEmpty(newState)) setState(newState)
+        } while (nexts.some((n) => !n.done))
     }
 
     const setState = (newState: Partial<State>) => {
         const prevState = { ...state }
         merge(state, newState) // mutate state object with new changes
-        if (isEqual(prevState, state)) return
-        for (let eff of effects) // run each of the effects
-            if (!cached.has(eff))
-                // don't re-run running effects
-                cached.set(eff, consumeEffect(eff, setState))
+        // console.log("OLDSTATE", prevState, "STATE", state, "NEWSTATE", newState)
+        // if (isEqual(prevState, state)) return
+        reduceEffects(effects, setState)
+        // run each of the effects
+        // don't re-run running effects
+        // for (let eff of effects.filter((eff) => !cached.has(eff)))
+        //     if (eff.constructor.name.startsWith("Async"))
+        //         consumeEffectAsync(eff, setState)
+        //     else consumeEffect(eff, setState)
     }
+
     // run event functions once on initialization
     for (let event of events) event(setState)
+
     // initialize the state with default values
     setState(init)
 }
 
-export const isLoggedIn = (state: State): boolean =>
-    state.accessToken && state.email ? true : false
+export const isLoggedIn = (state: State): boolean => {
+    return state.accessToken && state.email ? true : false
+}
