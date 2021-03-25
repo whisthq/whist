@@ -10,6 +10,7 @@ from datetime import date
 icons = {
     "OLD COMMIT": ":red_circle:",
     "OVERDUE": ":red_circle:",
+    "CREATED_ON_TEST": ":red_circle:",
     "CURRENT COMMIT": ":large_green_circle:",
     "IGNORE TIME": ":large_yellow_circle:",
     "IGNORE COMMIT": ":large_yellow_circle:",
@@ -17,6 +18,17 @@ icons = {
 
 
 def get_tags(arn, region):
+    """
+    Gets tags for a cluster with given arn. Have to call tags separately
+    because descrbe_clusters doesn't seem to return valid tags.
+
+    Args:
+        arn (str): arn of a cluster
+        region (str): current region
+
+    Returns:
+        array: An array of key value pairs representing the tags of a given cluster
+    """
     client = boto3.client("ecs", region_name=region)
 
     response = client.list_tags_for_resource(resourceArn=arn)
@@ -24,17 +36,34 @@ def get_tags(arn, region):
 
 
 def read_tags(tags, commit, branch, resource):
+    """
+    Reads tags for a given resource, either EC2 or ECS and returns status codes
+
+    Args:
+        tags (arr): array of key value pairs
+        commit (str): current commit hash
+        branch (str): current branch
+        resource (str): current aws resource, either EC2 or ECS
+
+    Returns:
+        str: status code, either ignore commit, old commit, current ocmmit, or create on test
+    """
     target_branches = ["dev", "staging", "master"]
     tag_branch = ""
     tag_commit = ""
+    test = ""
     key = "Key" if resource == "EC2" else "key"
     value = "Value" if resource == "EC2" else "value"
     for t in tags:
+        if t[key] == "created_on_test":
+            test = t[value]
         if t[key] == "git_branch":
             tag_branch = t[value]
         if t[key] == "git_commit":
             tag_commit = t[value]
-    # print(branch, tag_branch)
+
+    if test == "True":
+        return "CREATED ON TEST"
     if branch in target_branches and tag_branch == branch:
         return "OLD COMMIT" if tag_commit != commit else "CURRENT COMMIT"
 
@@ -42,6 +71,16 @@ def read_tags(tags, commit, branch, resource):
 
 
 def compare_timestamps(timestamp):
+    """
+    Compares a given timestamp with the current date and returns whether
+    the timestamp is more than 2 weeks old
+
+    Args:
+        timestamp (datetime): datetime object representing the timestamp an EC2 instance was created
+
+    Returns:
+        str: a String representing a status code, either overdue or ignore
+    """
     today = date.today()
     launchTime = timestamp.date()
 
@@ -51,6 +90,15 @@ def compare_timestamps(timestamp):
 
 
 def get_all_clusters(region):
+    """
+    Gets all clusters from a given region
+
+    Args:
+        region (str): string representing the given region
+
+    Returns:
+        array: an array of clusters from the given region
+    """
     client = boto3.client("ecs", region_name=region)
     clusterArns = client.list_clusters()["clusterArns"]
 
@@ -59,6 +107,17 @@ def get_all_clusters(region):
 
 
 def flag_clusters(region, commit, branch):
+    """
+    Flags all the clusters in a given region
+
+    Args:
+        region (str): current region
+        commit (str): current commit hash
+        branch (str): current branch
+
+    Returns:
+        str: message to be sent to slack containing all flagged clusters
+    """
     clusters = get_all_clusters(region)
     message = ""
 
@@ -75,6 +134,15 @@ def flag_clusters(region, commit, branch):
 
 
 def get_all_instances(region):
+    """
+    Gets all instances from a given region
+
+    Args:
+        region (str): current region
+
+    Returns:
+        arr: array containing all instances from the given region
+    """
     client = boto3.client("ec2", region_name=region)
     response = client.describe_instances()
 
@@ -82,6 +150,17 @@ def get_all_instances(region):
 
 
 def flag_instances(region, commit, branch):
+    """
+    Flags all the instances in a given region
+
+    Args:
+        region (str): current region
+        commit (str): current commit hash
+        branch (str): current branch
+
+    Returns:
+        str: message to be sent to slack containing all flagged instances
+    """
     reservations = get_all_instances(region)
     message = ""
     for r in reservations:
