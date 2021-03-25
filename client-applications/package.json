@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "electron-notarize": "^1.0.0"
+  }
+}
