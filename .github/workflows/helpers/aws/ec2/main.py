@@ -110,6 +110,9 @@ if __name__ == "__main__":
     region = os.environ.get("AWS_REGION")
     resource = os.environ.get("AWS_RESOURCE")
     token = os.environ.get("SLACK_EC2_BOT_TOKEN")
+
+    print(region)
+    print(resource)
     commit = sys.argv[1][0:7]
     branch = sys.argv[2]
 

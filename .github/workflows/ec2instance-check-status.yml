@@ -35,7 +35,7 @@ jobs:
                     - ca-central-1
                     - eu-west-1
                     - eu-central-1
-                resrouce:
+                resource:
                     - EC2
                     - ECS
         steps:
