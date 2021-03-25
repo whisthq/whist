@@ -323,6 +323,9 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: DEBUG THIS SUMBITCH
+              run: echo ${{ needs.fractal-publish-build-config.outcome }} && echo ${{ needs.fractal-publish-build-config.status }} && ${{ jobs.fractal-publish-build-config.outcome }} && echo ${{ jobs.fractal-publish-build-config.status }}
+
             # - name: Configure AWS CLI
             #   uses: aws-actions/configure-aws-credentials@v1
             #   with:
@@ -581,7 +584,7 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || ${{ needs.ami-publish-ec2.outcome }} == 'success' )
+        # if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || ${{ needs.ami-publish-ec2.outcome }} == 'success' )
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
