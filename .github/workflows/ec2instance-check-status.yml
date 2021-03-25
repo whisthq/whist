@@ -61,7 +61,7 @@ jobs:
 
             - name: Run ec2 instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA $GITHUB_REF
+              run: python3 main.py $GITHUB_SHA $GITHUB_HEAD_REF
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
