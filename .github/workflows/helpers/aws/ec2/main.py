@@ -193,9 +193,6 @@ if __name__ == "__main__":
     commit = sys.argv[1][0:7]
     branch = sys.argv[2]
 
-    print(branch)
-    print(commit)
-
     # slack message formatter
     blocks = [
         {
