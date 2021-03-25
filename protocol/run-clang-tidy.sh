@@ -70,12 +70,12 @@ done
 # header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
 headerFilter="client/|fractal/|server/"
 
-clang-tidy -p="$BUILD_DIR" --header-filter="$headerFilter" --quiet --export-fixes="$yamlFolder/$fixesFilename" "$filesToFix" || true
+clang-tidy -p="$BUILD_DIR" --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
 
 # ---- clean up yaml file before running replacements ----
 
 # deletes all clang-diagnostic-error entries
-perl -i -p -000 -e 's/  - DiagnosticName:[ ]*(clang-diagnostic-error|clang-diagnostic-unknown-pragmas)[^\n]*\n(    [^\n]*\n)*//g' "${yamlFolder}/${fixesFilename}"
+perl -i -p -000 -e 's/  - DiagnosticName:[ ]*(clang-diagnostic-error|clang-diagnostic-unknown-pragmas)[^\n]*\n(    [^\n]*\n)*//g' ${yamlFolder}/${fixesFilename}
 
 # get current directory path based on OS
 if [[ $isWindows == 1 ]]
@@ -89,11 +89,11 @@ fi
 thisDirectory="${thisDirectory}/"
 
 # remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
-perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath:[ ]*'"'"'?[:\/\\\w\.-]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch]|lodepng\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' "${yamlFolder}/${fixesFilename}"
+perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath:[ ]*'"'"'?[:\/\\\w\.-]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch]|lodepng\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
 
 if [[ $CICheck == 1 ]]
 then
-    numLines=$(cat "${yamlFolder}/${fixesFilename}" | wc -l | tr -d ' ') # wc on mac has leading whitespace for god knows what reason
+    numLines=$(cat ${yamlFolder}/${fixesFilename} | wc -l | tr -d ' ') # wc on mac has leading whitespace for god knows what reason
     # A yaml file with no format issues should have exactly 4 lines
     if [[ $numLines != 4 ]]
     then
@@ -114,9 +114,9 @@ else
         # run clang-tidy noted replacements
         if command -v clang-apply-replacements &> /dev/null
         then
-            clang-apply-replacements "$yamlFolder"
+            clang-apply-replacements $yamlFolder
         else
-            clang-apply-replacements-10 "$yamlFolder"
+            clang-apply-replacements-10 $yamlFolder
         fi
     else
         exit
