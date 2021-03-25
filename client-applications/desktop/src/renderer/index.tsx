@@ -3,7 +3,7 @@ import { Switch, Route } from "react-router-dom"
 import { Router } from "react-router"
 import ReactDOM from "react-dom"
 
-import Auth from "@app/renderer/pages/auth/auth"
+import Auth from "@app/renderer/pages/auth"
 
 import { browserHistory } from "@app/utils/history"
 

@@ -5,12 +5,12 @@ import * as effects from "@app/main/effects"
 
 function init(): void {
     const state = {
-        email: "",
-        accessToken: "",
-        refreshToken: "",
+        loginRequest: false,
+        loginLoading: false,
         protocolLoading: false,
-        appWindowRequested: true,
+        appWindowRequest: true,
     }
+
     // Use events.clearPersistOnStart for development/testing
     // if you want the auth window to pop up. Otherwise, your credentials will
     // be persisted and you'll launch the protocol right away.
@@ -31,10 +31,11 @@ function init(): void {
         [
             effects.launchAuthWindow,
             effects.launchProtocol,
+            effects.handleLogin,
             effects.persistState,
             effects.broadcastState,
             effects.closeAllWindows,
-            effects.logState,
+            // effects.logState,
         ]
     )
 }

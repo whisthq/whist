@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React from "react"
 
 import { FractalFadeIn } from "@app/components/custom/fade"
 import { Logo } from "@app/components/html/logo"
@@ -15,10 +15,16 @@ import {
     checkEmail,
     checkPassword,
 } from "@app/utils/auth"
-import { emailLogin } from "@app/utils/api"
-import { fractalLoginWarning } from "@app/utils/constants"
 
-const Login = (props: { onLogin: (json: object) => void }) => {
+const Login = (props: {
+    loading: boolean
+    warning: string
+    email: string
+    password: string
+    onLogin: () => void,
+    onChangeEmail: (s: string) => void
+    onChangePassword: (s: string) => void
+}) => {
     /*
         Description:
             Component for logging in. Contains the login form UI and 
@@ -30,42 +36,12 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                 is passed in as argument
     */
 
-    const { onLogin } = props
-
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [processing, setProcessing] = useState(false)
-    const [loginWarning, setLoginWarning] = useState("")
-
-    const login = () => {
-        if (loginEnabled(email, password)) {
-            setProcessing(true)
-            setLoginWarning(fractalLoginWarning.NONE)
-            emailLogin(email, password).then(({ json }) => {
-                if (json && json.access_token) {
-                    onLogin({ ...json, email })
-                } else {
-                    setLoginWarning(fractalLoginWarning.INVALID)
-                    setPassword("")
-                }
-                setProcessing(false)
-            })
-        } else {
-            setLoginWarning(fractalLoginWarning.INVALID)
-            setProcessing(false)
-        }
-    }
-
     const buttonState = () => {
-        if (processing) {
+        if (props.loading)
             return FractalButtonState.PROCESSING
-        } else {
-            if (loginEnabled(email, password)) {
-                return FractalButtonState.DEFAULT
-            } else {
-                return FractalButtonState.DISABLED
-            }
-        }
+        if (loginEnabled(props.email, props.password))
+            return FractalButtonState.DEFAULT
+        return FractalButtonState.DISABLED
     }
 
     return (
@@ -78,7 +54,7 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                     </h5>
                     <FractalWarning
                         type={FractalWarningType.DEFAULT}
-                        warning={loginWarning}
+                        warning={props.warning}
                         className="mt-4"
                     />
                     <h5 className="font-body text-left font-semibold mt-7 text-sm">
@@ -87,11 +63,11 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                     <FractalInput
                         type="email"
                         placeholder="Email"
-                        onChange={(email: string) => setEmail(email)}
-                        onEnterKey={login}
-                        value={email}
+                        onChange={props.onChangeEmail}
+                        onEnterKey={props.onLogin}
+                        value={props.email}
                         state={
-                            checkEmail(email)
+                            checkEmail(props.email)
                                 ? FractalInputState.SUCCESS
                                 : FractalInputState.DEFAULT
                         }
@@ -103,11 +79,11 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                     <FractalInput
                         type="password"
                         placeholder="Password"
-                        onChange={(password: string) => setPassword(password)}
-                        onEnterKey={login}
-                        value={password}
+                        onChange={props.onChangePassword}
+                        onEnterKey={props.onLogin}
+                        value={props.password}
                         state={
-                            checkPassword(password)
+                            checkPassword(props.password)
                                 ? FractalInputState.SUCCESS
                                 : FractalInputState.DEFAULT
                         }
@@ -117,7 +93,7 @@ const Login = (props: { onLogin: (json: object) => void }) => {
                         contents="Log In"
                         className="mt-4 w-full"
                         state={buttonState()}
-                        onClick={login}
+                        onClick={props.onLogin}
                     />
                     <FractalNavigation
                         url="/auth/signup"
