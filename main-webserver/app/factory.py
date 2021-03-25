@@ -3,15 +3,15 @@ import os
 import stripe
 
 from flask import Flask
-from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-from flask_marshmallow import Marshmallow
-from flask_sendgrid import SendGrid
 from flask import (
     abort,
     jsonify,
     make_response,
 )
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_marshmallow import Marshmallow
+from flask_sendgrid import SendGrid
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
