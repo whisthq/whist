@@ -1,6 +1,5 @@
 require('dotenv').config()
 const { notarize } = require('electron-notarize')
-const { execSync } = require("child_process")
 
 exports.default = async function afterSign(context) {
     const { electronPlatformName, appOutDir } = context
