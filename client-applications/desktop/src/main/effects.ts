@@ -28,7 +28,7 @@ export const handleLogin: Effect = async function* (state) {
 }
 
 export const launchAuthWindow: Effect = function* (state) {
-    if (!state.appWindowRequest) return
+    // if (!state.appWindowRequest) return
     if (isLoggedIn(state)) return { appWindowRequest: false }
     if (BrowserWindow.getAllWindows().length === 0) {
         createAuthWindow()
@@ -68,5 +68,5 @@ export const persistState: Effect = function* (state) {
 }
 
 export const logState: Effect = function* (state) {
-    console.log("STATE", state)
+    console.log(state)
 }

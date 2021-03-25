@@ -100,19 +100,20 @@ export const initState = async (
     }
 
     const setState = async (newState: Partial<State>) => {
+        const prevState = { ...state }
         merge(state, newState) // mutate state object with new changes
         // effects run on every state update
         // setState will not be called unless there are actually
         // updates to merge
         // effects will run until the state is "settled"
-        await reduceEffects(effects, setState)
+        if (!isEqual(state, prevState)) reduceEffects(effects, setState)
     }
 
     // run event functions once on initialization
     for (let event of events) event(setState)
 
     // initialize the state with default values
-    await setState(init)
+    setState(init)
 }
 
 export const isLoggedIn = (state: State): boolean => {
