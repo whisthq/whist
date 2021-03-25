@@ -582,7 +582,7 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }} == 'success' || ${{ needs.ami-publish-ec2.result }} == 'success' )
+        if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.ami-publish-ec2.result == 'success' )
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -643,7 +643,7 @@ jobs:
 
             - name: Update webserver task definitions if new ones were published
               id: update-webserver-taskdefs
-              if: ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }} == 'success'
+              if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -681,10 +681,6 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  print("ECS TASKS OUTCOME", "${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }}")
-                  print("AMI OUTCOME", "${{ needs.ami-publish-ec2.result }}")
-                  print("PUBLISH", "${{ needs.fractal-publish-build-config.outputs.jobs }}")
-
                   # this allows us to import from `scripts`
                   import sys; sys.path.append(".")
                   import json
