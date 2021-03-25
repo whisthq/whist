@@ -191,18 +191,6 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	// Return dockerID of newly created container
 	req.ReturnResult(string(dockerID), nil)
 	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
-
-	// Start a goroutine that kills the container when the host service's
-	// global context is cancelled.
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
-
-		<-globalCtx.Done()
-		cmd := exec.Command("docker", "kill", string(dockerID))
-		logger.Infof("SpinUpContainer(): global context cancelled. Killing container %s", dockerID)
-		cmd.Run()
-	}()
 }
 
 // Creates a file containing the DPI assigned to a specific container, and make
