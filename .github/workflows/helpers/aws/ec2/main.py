@@ -128,7 +128,7 @@ def flag_clusters(region, commit, branch):
         flag_status = read_tags(tags, commit, branch, "ECS")
         icon = icons[flag_status]
         if icon == ":red_circle:":
-            message += f"• {clusterName} - {flag_status} - {icon} \n"
+            message += f"• `{clusterName}` - {flag_status} - {icon} \n"
 
     return message
 
@@ -181,7 +181,7 @@ def flag_instances(region, commit, branch):
                 tag_icon = icons["IGNORE COMMIT"]
 
             if launch_icon == ":red_circle:" or tag_icon == ":red_circle:":
-                message += f"• {instance_id} - {tag_status} - {tag_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
+                message += f"• `{instance_id}` - {tag_status} - {tag_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
 
     return message
 
