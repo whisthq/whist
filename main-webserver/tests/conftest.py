@@ -471,7 +471,12 @@ def fractal_celery_proc(app):
 
     # we need to kill the process group because a new shell was launched which then launched celery
     fractal_logger.info(f"Killing celery process with pid {proc.pid}")
-    os.killpg(proc.pid, signal.SIGKILL)
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except PermissionError:
+        # some tests kill this process themselves; in this case us trying to kill an already killed
+        # process results in a PermissionError. We cleanly catch that specific error.
+        pass
 
 
 @pytest.fixture(autouse=True)

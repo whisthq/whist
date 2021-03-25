@@ -91,14 +91,15 @@ def test_webserver_sigterm(client):
 def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     """
     Make sure SIGTERM is properly handled by celery worker (and supervisord). After a SIGTERM, the
-    worker will pick up no new tasks and mark all existing tasks as REVOKED. For more info,
+    worker will no longer pick up new tasks and mark all existing tasks as REVOKED. For more info,
     see app/signals.py.
     """
     # start the dummy task and get the id
     task_id = dummy_task.delay().id
 
+    # let this task start, then we SIGTERM the celery worker
     started = False
-    for _ in range(60):  # try 60 times because process needs to start which has some delay
+    for _ in range(30):  # try 30 times because process needs to start which has some delay
         task_result = fractal_celery_app.AsyncResult(task_id)
         if task_result.state == "STARTED":
             started = True
@@ -109,6 +110,7 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     # send SIGTERM to the process group
     os.killpg(fractal_celery_proc, signal.SIGTERM)
 
+    # make sure the task gets revoked
     revoked = False
     for _ in range(10):
         task_result = fractal_celery_app.AsyncResult(task_id)
@@ -117,6 +119,17 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
             break
         time.sleep(1)  # wait for task to become available
     assert revoked is True, f"Got unexpected task state {task_result.state}."
+
+    # new tasks should never start
+    task_id = dummy_task.delay().id
+    started = False
+    for _ in range(30):  # try 30 times to make sure nobody picks up this task
+        task_result = fractal_celery_app.AsyncResult(task_id)
+        if task_result.state != "PENDING":
+            started = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert started is False, f"Got unexpected task state {task_result.state}."
 
 
 @pytest.mark.parametrize(
