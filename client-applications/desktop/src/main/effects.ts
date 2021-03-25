@@ -3,9 +3,10 @@ import { emailLogin } from "@app/utils/api"
 import { decryptConfigToken, createConfigToken } from "@app/utils/crypto"
 import { createAuthWindow } from "@app/utils/windows"
 import { fractalLoginWarning } from "@app/utils/constants"
-import { Effect, StateChannel, isLoggedIn } from "@app/utils/state"
+import { Effect, StateIPC, StateChannel, isLoggedIn } from "@app/utils/state"
 import { persistKeys } from "@app/utils/persist"
 import * as proto from "@app/utils/protocol"
+import { streamProtocolInfo } from "../utils/protocol"
 
 export const handleLogin: Effect = async function* (state) {
     // Only run if a login has been requested,
@@ -34,18 +35,37 @@ export const handleLogin: Effect = async function* (state) {
     }
 }
 
-export const launchAuthWindow: Effect = function* (state) {
-    // Only run if the auth window has been requested
-    if (!state.appWindowRequest) return
-    // If we're already logged in, do not show the app window
-    if (isLoggedIn(state)) return { appWindowRequest: false }
-    // Only show the auth window if there's not windows showing.
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createAuthWindow()
+export const launchWindows: Effect = function* (state) {
+    const auth = !state.windowAuth && !isLoggedIn(state) // && !displayError(state)
+    // const error = !state.windowError && displayError(state)
+
+    return {
+        windowAuth: auth ? createAuthWindow() : undefined,
+        // windowError: error ? createWindowError() : undefined
     }
-    // Clear auth window request after launching
-    return { appWindowRequest: false }
 }
+
+// export const launchAuthWindow: Effect = function* (state) {
+//     // Only run if the auth window has been requested
+//     if (!state.appWindowRequest) return
+//     // If we're already logged in, do not show the app window
+//     if (isLoggedIn(state)) return { appWindowRequest: false }
+//     if (state.windowAuth) return { appWindowRequest: false }
+//     return { appWindowRequest: false, windowAuth: createAuthWindow() }
+// }
+
+// export const launchErrorWindow: Effect = function* (state) {
+//     // Only run if the auth window has been requested
+//     if (!state.appWindowRequest) return
+//     // If we're already logged in, do not show the app window
+//     if (isLoggedIn(state)) return { appWindowRequest: false }
+//     // Only show the auth window if there's not windows showing.
+//     if (BrowserWindow.getAllWindows().length === 0) {
+//         createAuthWindow()
+//     }
+//     // Clear auth window request after launching
+//     return { appWindowRequest: false }
+// }
 
 export const closeAllWindows: Effect = function* (state) {
     // Any time we're logged in, we close all the windows.
@@ -59,10 +79,15 @@ export const broadcastState: Effect = function* (state) {
     // We run this effect every time to make sure that all renderer
     // threads are receiving an updated state.
     const contents = webContents.getAllWebContents()
+    delete state.windowAuth
+    delete state.windowError
+    delete state.protocolProcess
     contents.map((c) => {
         c.isLoading()
-            ? c.on("did-finish-load", () => c.send(StateChannel, state))
-            : c.send(StateChannel, state)
+            ? c.on("did-finish-load", () =>
+                  c.send(StateChannel, state as StateIPC)
+              )
+            : c.send(StateChannel, state as StateIPC)
     })
 }
 
@@ -73,16 +98,17 @@ export const launchProtocol: Effect = async function* (state) {
     if (state.protocolLoading) return
     // Only launch the protocol if one is not already open.
     if (state.protocolProcess) return
-    yield { protocolLoading: true }
+    // Launch the protocol process with a loading screen
+    const protocol = proto.launchProtocolLoading()
+    yield { protocolLoading: true, protocolProcess: protocol }
     // Make a request to create a container, and poll the task
     // endpoint until we receive a response that the container
     // is ready.
     const taskID = await proto.createContainer(state.email, state.accessToken)
     const info = await proto.waitUntilReady(taskID, state.accessToken)
-    return {
-        protocolLoading: false,
-        protocolProcess: proto.launchProtocol(info.output),
-    }
+    // Stream the response information to the protocol to load the browser
+    streamProtocolInfo(protocol, info.output)
+    return { protocolLoading: false }
 }
 
 export const persistState: Effect = function* (state) {

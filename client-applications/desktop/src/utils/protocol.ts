@@ -1,5 +1,5 @@
 import path from "path"
-import { spawn } from "child_process"
+import { spawn, ChildProcess } from "child_process"
 import { app, screen } from "electron"
 import { containerRequest, taskStatus } from "@app/utils/api"
 
@@ -97,4 +97,44 @@ export const launchProtocol = (info: {
             stdio: ["pipe", process.stdout, process.stderr],
         }
     )
+}
+
+export const launchProtocolLoading = () => {
+    if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
+
+    return spawn(protocolPath, ["--read-pipe"], {
+        detached: false,
+        stdio: ["pipe", process.stdout, process.stderr],
+    })
+}
+
+export const writeStream = (process: ChildProcess, message: string) => {
+    console.log(message)
+    process.stdin?.write(message)
+    process.stdin?.write("\n")
+}
+
+export const endStream = (process: ChildProcess, message: string) => {
+    process.stdin?.end(message)
+}
+
+export const streamProtocolInfo = (
+    protocol: ChildProcess,
+    info: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+        secret_key: string
+        ip: string
+    }
+) => {
+    writeStream(protocol, `ports?${parseInfoPorts(info)}`)
+    writeStream(protocol, `private-key?${info.secret_key}`)
+    writeStream(protocol, `ip?${info.ip}`)
+    writeStream(protocol, `finished?0`)
+}
+
+export const streamProtocolKill = (protocol: ChildProcess) => {
+    writeStream(protocol, "kill?0")
+    protocol.kill("SIGINT")
 }
