@@ -307,6 +307,7 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config] # container-images-publish-images-ghcr]
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|ecs-task-definitions-deploy-task-definitions-ec|')
         # strategy:
         #     matrix:
         #         app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -484,7 +485,6 @@ jobs:
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               id: build-new-amis
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
