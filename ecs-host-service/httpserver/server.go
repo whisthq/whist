@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
@@ -173,6 +174,53 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	res.send(w)
 }
 
+// SpinUpContainerRequest defines the (unauthenticated) `spin_up_container`
+// endpoint. For now, this endpoint is only exposed in the `localdev`
+// environment, and is used by `run_local_container_image.sh`. This endpoint
+// returns the Docker ID of the container. Eventually, as we move off ECS, this
+// endpoint will become the canonical way to start containers.
+type SpinUpContainerRequest struct {
+	AppName      string             `json:"app_name"`
+	AppImage     string             `json:"app_image"`
+	MountCommand string             `json:"mount_command"`
+	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler
+func (s *SpinUpContainerRequest) ReturnResult(result string, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass start values setting request
+// result back to the HTTP request handler via ReturnResult
+func (s *SpinUpContainerRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+// Process an HTTP request to spin up a container, to be handled in ecs-host-service.go
+func processSpinUpContainerRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is an PUT request
+	if verifyRequestType(w, r, http.MethodPut) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata SpinUpContainerRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
 // Helper functions
 
 // Function to verify the type (method) of a request
@@ -294,6 +342,9 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
+	if logger.GetAppEnvironment() == logger.EnvLocalDev {
+		mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
+	}
 
 	// Create the server itself
 	server := &http.Server{
