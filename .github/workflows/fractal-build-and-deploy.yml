@@ -324,7 +324,7 @@ jobs:
               uses: actions/checkout@v2
 
             - name: DEBUG THIS SUMBITCH
-              run: echo ${{ needs.fractal-publish-build-config.outcome }} && echo ${{ needs.fractal-publish-build-config.status }}
+              run: echo ${{ needs.fractal-publish-build-config.outputs }} && echo ${{ needs.fractal-publish-build-config.outputs.conclusion }} echo ${{ needs.fractal-publish-build-config.result }}
 
             # - name: Configure AWS CLI
             #   uses: aws-actions/configure-aws-credentials@v1
