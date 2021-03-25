@@ -17,6 +17,10 @@ import (
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
 
+func init() {
+	logger.Infof("TESTING IF FRACTALCONTAINER PACKAGE IS GETTING INITIALIZED TWICEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE. %v", &tracker)
+}
+
 // We define special types for the following string types for all the benefits
 // of type safety, including making sure we never switch Docker and Fractal
 // IDs, for instance.
