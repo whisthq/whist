@@ -23,6 +23,10 @@ const (
 	inUse
 )
 
+func init() {
+	logger.Infof("TESTING IF THIS PACKAGE IS GETTING INITIALIZED TWICEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE. %v", &ttymap)
+}
+
 // If the key exists in this map, that TTY is either `reserved` or `inUse`.
 var ttymap map[TTY]ttyStatus = make(map[TTY]ttyStatus)
 
@@ -37,15 +41,17 @@ func Allocate() (TTY, error) {
 	tty := randomTTYInAllowedRange()
 	numTries := 0
 
-	for _, exists := ttymap[tty]; exists; tty = randomTTYInAllowedRange() {
+	for v, exists := ttymap[tty]; exists; tty = randomTTYInAllowedRange() {
+		logger.Infof("TTY: tried tty %v but it exists with value %v", tty, v)
 		numTries++
 		if numTries >= 100 {
-			return TTY(0), logger.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long.", numTries)
+			return TTY(0), logger.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long. Number of allocated TTYs: %v", numTries, len(ttymap))
 		}
 	}
 
 	// Mark it as allocated and return
 	ttymap[tty] = inUse
+	logger.Infof("TTY: allocated tty %v", tty)
 	return tty, nil
 }
 
@@ -57,6 +63,7 @@ func Free(tty TTY) {
 	v, _ := ttymap[tty]
 	if v != reserved {
 		delete(ttymap, tty)
+		logger.Infof("TTY: freed tty %v", tty)
 	}
 }
 
