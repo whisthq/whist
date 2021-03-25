@@ -68,28 +68,51 @@ export const initState = async (
     events: Event[],
     effects: Effect[]
 ) => {
-    let state = {} as State
+    const cache = new Set()
+    const state = {} as State
 
-    const reduceEffects = async (effects: Effect[], setState: Function) => {
-        let nexts
-        const iters = effects.map((eff) => eff(state))
+    const reduceEffects = async (
+        effs: Effect[],
+        setState: Function
+    ): Promise<void> => {
+        // we cache running effects so that async effects are not run
+        // again before they return.
+        // we filter out effects that are in the cache
+        effs = effs.filter((eff) => !cache.has(eff))
+        // add all remaining effects to the cache
+        effs.forEach((eff) => cache.add(eff))
+        // Call each effect with the current state
+        const iters = effs.map((eff) => eff(state))
+
+        let updates
         do {
-            nexts = await Promise.all(iters.map((i) => i.next()))
-            let newState = nexts.map((n) => n.value).reduce(merge, {})
+            // start all effects and wait for return or first yield
+            updates = await Promise.all(iters.map((i) => i.next()))
+            // if effects have returned, remove them from cache
+            updates.map((el, idx) => el.done && cache.delete(effs[idx]))
+            // merge all the updated states into a single object
+            let newState = updates.map((u) => u.value).reduce(merge, {})
+            // only run setState if there's actually updates.
+            // call setState so that the state updates are merged with
+            // the current state value
             if (!isEmpty(newState)) setState(newState)
-        } while (nexts.some((n) => !n.done))
+        } while (updates.some((u) => !u.done))
     }
 
-    const setState = (newState: Partial<State>) => {
+    const setState = async (newState: Partial<State>) => {
         merge(state, newState) // mutate state object with new changes
-        reduceEffects(effects, setState)
+        // effects run on every state update
+        // setState will not be called unless there are actually
+        // updates to merge
+        // effects will run until the state is "settled"
+        await reduceEffects(effects, setState)
     }
 
     // run event functions once on initialization
     for (let event of events) event(setState)
 
     // initialize the state with default values
-    setState(init)
+    await setState(init)
 }
 
 export const isLoggedIn = (state: State): boolean => {
