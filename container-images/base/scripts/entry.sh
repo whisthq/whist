@@ -13,13 +13,12 @@ rm /var/run/nologin
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 
 # Wait for TTY and port mapping files to exist
-until [ -f $FRACTAL_MAPPINGS_DIR/.ready ]
-do
+until [[ -f "$FRACTAL_MAPPINGS_DIR/.ready" ]]; do
     sleep 0.1
 done
 
 # Register TTY once it was assigned via writing to a file by Fractal ECS host service
-ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
+ASSIGNED_TTY=$(cat "$FRACTAL_MAPPINGS_DIR/tty")
 
 # Create a TTY within the container so we don't have to hook it up to one of the host's
 # Also, create the device /dev/dri/card0 which is needed for GPU acceleration. Note that
@@ -33,4 +32,4 @@ sudo mknod -m 660 /dev/dri/card0 c 226 0
 # This installs fractal service
 echo "Start Pam Systemd Process for User fractal"
 export FRACTAL_UID=$(id -u fractal)
-systemctl start user@"$FRACTAL_UID"
+systemctl start "user@$FRACTAL_UID"

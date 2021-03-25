@@ -52,9 +52,9 @@ ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
-    SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -r '.source')
+    SOURCE_CONFIG_SUBPATH=$(echo "$row" | jq -r '.source')
     SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-    DEST_CONFIG_PATH=$(echo "${row}" | jq -r '.destination')
+    DEST_CONFIG_PATH=$(echo "$row" | jq -r '.destination')
 
     # If original config path does not exist, then continue
     if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -95,10 +95,11 @@ done
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-/usr/share/fractal/FractalServer "$OPTIONS"
+# No quotes, since we want the spaces in OPTIONS to separate actual arguments, rather than be a single argument with spaces in it
+/usr/share/fractal/FractalServer $OPTIONS
 
 # If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
-if [[ ! ${WEBSERVER_URL+x} ]]; then
+if [[ -z "$WEBSERVER_URL" ]]; then
     exit 0
 fi
 
@@ -111,13 +112,11 @@ fi
 #   logs: Appropriately JSON-sanitize `log.txt`
 # JSON Response:
 #   ID: the ID for the task for uploading logs; we need this to finish before container delete
-LOGS_TASK_ID=$(curl \
+LOGS_TASK_ID_JSON=$(curl \
         --header "Content-Type: application/json" \
         --request POST \
         --data @- \
-        "$WEBSERVER_URL"/logs \
-        << END \
-    | jq -er ".ID"
+        "$WEBSERVER_URL/logs" <<END
 {
     "sender": "server",
     "identifier": "$CONTAINER_ID",
@@ -126,6 +125,7 @@ LOGS_TASK_ID=$(curl \
 }
 END
 )
+LOGS_TASK_ID=$(echo "$LOGS_TASK_ID_JSON" | jq -er ".ID")
 
 get_task_state() {
     # GET $WEBSERVER_URL/status/$1
@@ -155,8 +155,7 @@ curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
-    "$WEBSERVER_URL"/container/delete \
-    << END
+    "$WEBSERVER_URL/container/delete" <<END
 {
     "container_id": "$CONTAINER_ID",
     "private_key":  "$FRACTAL_AES_KEY"
