@@ -64,7 +64,7 @@ else
     cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
     # Copy loading images to a temp folder (will be moved in afterSign script)
-    cp -r ../../protocol/client/build64/Darwin/loading protocol-build/client
+    # cp -r ../../protocol/client/build64/Darwin/loading protocol-build/client
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
