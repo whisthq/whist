@@ -68,19 +68,7 @@ export const initState = async (
     events: Event[],
     effects: Effect[]
 ) => {
-    // let cached = new Set()
     let state = {} as State
-
-    // const consumeEffectAsync = async (eff: Effect, set: Function) => {
-    //     cached.add(eff)
-    //     // update state with yield objects
-    //     for await (let newState of eff(state as State)) set(newState) // use passed function to avoid mutual recursion
-    //     cached.delete(eff) // make effect available to run again
-    // }
-
-    // const consumeEffect = (eff: Effect, set: Function) => {
-    //     for (let newState of eff(state as State) as Generator) set(newState)
-    // }
 
     const reduceEffects = async (effects: Effect[], setState: Function) => {
         let nexts
@@ -88,23 +76,13 @@ export const initState = async (
         do {
             nexts = await Promise.all(iters.map((i) => i.next()))
             let newState = nexts.map((n) => n.value).reduce(merge, {})
-            // console.log("newState", newState)
             if (!isEmpty(newState)) setState(newState)
         } while (nexts.some((n) => !n.done))
     }
 
     const setState = (newState: Partial<State>) => {
-        const prevState = { ...state }
         merge(state, newState) // mutate state object with new changes
-        // console.log("OLDSTATE", prevState, "STATE", state, "NEWSTATE", newState)
-        // if (isEqual(prevState, state)) return
         reduceEffects(effects, setState)
-        // run each of the effects
-        // don't re-run running effects
-        // for (let eff of effects.filter((eff) => !cached.has(eff)))
-        //     if (eff.constructor.name.startsWith("Async"))
-        //         consumeEffectAsync(eff, setState)
-        //     else consumeEffect(eff, setState)
     }
 
     // run event functions once on initialization
