@@ -26,7 +26,7 @@ const protocolPath = "./protocol-build/client/Fractal"
 
 const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 
-const getDPI = () => screen.getPrimaryDisplay().scaleFactor
+const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
 
 const chooseRegion = () => {
     return [
