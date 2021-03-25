@@ -55,6 +55,9 @@ else
     rm -rf protocol-build
     mkdir -p protocol-build/client
 
+    rm -rf loading 
+    mkdir -p loading
+
     # Move FractalClient and crashpad_handler over to client-app
     cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/Fractal
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
@@ -64,7 +67,7 @@ else
     cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
 
     # Copy loading images to a temp folder (will be moved in afterSign script)
-    # cp -r ../../protocol/client/build64/Darwin/loading protocol-build/client
+    cp -r ../../protocol/client/build64/Darwin/loading/*.png loading
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
