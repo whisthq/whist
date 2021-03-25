@@ -24,7 +24,7 @@ def get_tags(arn, region):
 
 
 def read_tags(tags, commit, branch, resource):
-    target_branches = ["steveli/aws-resource-tagging", "staging", "master"]
+    target_branches = ["dev", "staging", "master"]
     tag_branch = ""
     tag_commit = ""
     key = "Key" if resource == "EC2" else "key"
