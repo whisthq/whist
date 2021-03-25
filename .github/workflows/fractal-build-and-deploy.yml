@@ -323,9 +323,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: DEBUG THIS SUMBITCH
-              run: echo ${{ needs.fractal-publish-build-config.outputs }} && echo ${{ needs.fractal-publish-build-config.outputs.conclusion }} echo ${{ needs.fractal-publish-build-config.result }}
-
             # - name: Configure AWS CLI
             #   uses: aws-actions/configure-aws-credentials@v1
             #   with:
@@ -585,7 +582,7 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        # if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success' || ${{ needs.ami-publish-ec2.outcome }} == 'success' )
+        if: ${{ always() }} && ( ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }} == 'success' || ${{ needs.ami-publish-ec2.result }} == 'success' )
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -598,7 +595,7 @@ jobs:
 
             - name: Upgrade pip and install webserver scripting dependencies
               working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt && echo ${{ needs.ami-publish-ec2.outcome }}
+              run: pip install -r scripts/requirements.txt
 
             - name: Put webserver into maintenance mode
               id: start-maintenance-mode
@@ -646,7 +643,7 @@ jobs:
 
             - name: Update webserver task definitions if new ones were published
               id: update-webserver-taskdefs
-              if: ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success'
+              if: ${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }} == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -681,12 +678,12 @@ jobs:
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
               # the second check is needed because a job being skipped on the "if" counts as a success for whatever reason
-              if: ${{ needs.ami-publish-ec2.outcome }} == 'success' && contains(${{ needs.fractal-publish-build-config.outputs.jobs }}, '|ami-publish-ec2|')
+              if: ${{ needs.ami-publish-ec2.result }} == 'success'
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  print("ECS TASKS OUTCOME", "${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }}")
-                  print("AMI OUTCOME", "${{ needs.ami-publish-ec2.outcome }}")
+                  print("ECS TASKS OUTCOME", "${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.result }}")
+                  print("AMI OUTCOME", "${{ needs.ami-publish-ec2.result }}")
                   print("PUBLISH", "${{ needs.fractal-publish-build-config.outputs.jobs }}")
 
                   # this allows us to import from `scripts`
