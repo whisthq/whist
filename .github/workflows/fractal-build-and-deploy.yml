@@ -581,8 +581,8 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        if: always() && ((${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success') || (${{ needs.ami-publish-ec2.outcome }} == 'success'))
-
+        # (${{ needs.ami-publish-ec2.outcome }} == 'success'))
+        if: always() && ((${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success'))
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -595,7 +595,7 @@ jobs:
 
             - name: Upgrade pip and install webserver scripting dependencies
               working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
+              run: pip install -r scripts/requirements.txt && echo ${{ needs.ami-publish-ec2.outcome }} 
 
             - name: Put webserver into maintenance mode
               id: start-maintenance-mode
