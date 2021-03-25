@@ -410,7 +410,7 @@ jobs:
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
-            # ######################## Building ECS Host Service ########################
+            ######################## Building ECS Host Service ########################
 
             # To build ECS Host Service
             - name: Setup Go environment
