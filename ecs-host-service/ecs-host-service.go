@@ -66,9 +66,9 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 }
 
 // We don't want to require people to spin up an ECS cluster just to test
-// container images, so this function just mocks the ecsagent and
+// container images, so this function just mocks the ecsagent and webserver and
 // creates/starts a container.
-func mockECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+func mockECSAgentAndWebserver(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	goroutineTracker.Add(1)
 	go func() {
 		defer goroutineTracker.Done()
@@ -110,9 +110,9 @@ func mockECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, go
 
 		// Actually create the container using `docker create`. Yes, this could be
 		// done with the docker CLI, but that would take some effort to convert.
-		// This was quick and dirty. Also, once we're off ECS we'll be able to test
-		// running containers on any Linux machine without hackery like this, so
-		// this is temporary in any case.
+		// This was "quick" and dirty. Also, once we're off ECS we'll be able to
+		// test running containers on any Linux machine without hackery like this,
+		// so this is temporary in any case.
 
 		dockerCmdArgs := []string{
 			"create", "-it",
@@ -180,6 +180,11 @@ func mockECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, go
 			logger.Panicf(globalCancel, "Mocked ECS Agent: error writing resources for protocol: %s", err)
 		}
 		logger.Infof("Mocked ECS Agent: Successfully wrote resources for protocol.")
+
+		// TODO: Send ourselves a start values request (lmao)
+		// TODO: rename this function to something like run_test_container?
+		// TODO: edit the run_container_image.sh part of this
+		// TODO: separate all this functionality from the `localdev` target into its own `mockdev` target and app environment.
 
 		logger.Infof("Mocked ECS Agent: Finished starting up container %s", fc.GetFractalID())
 
@@ -460,7 +465,7 @@ func main() {
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
 		logger.Infof("Running in environment LocalDev, so not starting ecs-agent. Mocking it and starting a container instead.")
-		mockECSAgent(globalCtx, globalCancel, &goroutineTracker)
+		mockECSAgentAndWebserver(globalCtx, globalCancel, &goroutineTracker)
 	}
 
 	// Start main event loop
@@ -544,6 +549,10 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					containerDieHandler(dockerevent.ID)
 				}
 
+			// It may seem silly to just launch goroutines to handle these
+			// serverevents, but keeping the high-level flow control and handling in
+			// this package, and the low-level authentication, parsing, etc. of
+			// requests in `httpserver` provides code quality benefits.
 			case serverevent := <-httpServerEvents:
 				switch serverevent.(type) {
 				case *httpserver.SetContainerStartValuesRequest:
