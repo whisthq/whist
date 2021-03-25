@@ -582,7 +582,7 @@ jobs:
                 ami-publish-ec2,
             ]
         # (${{ needs.ami-publish-ec2.outcome }} == 'success'))
-        if: always() && ((${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success'))
+        if: always() && (${{ needs.ecs-task-definitions-deploy-task-definitions-ecs.outcome }} == 'success')
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
