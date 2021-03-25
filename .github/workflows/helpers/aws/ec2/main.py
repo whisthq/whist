@@ -137,10 +137,10 @@ if __name__ == "__main__":
     message = ""
 
     if resource == "EC2":
-        message = flag_instances(region, "asdf", "steveli/aws-resource-tagging")
+        message = flag_instances(region, commit, branch)
 
     elif resource == "ECS":
-        message = flag_clusters(region, "asdf", "steveli/aws-resource-tagging")
+        message = flag_clusters(region, commit, branch)
 
     client = slack.WebClient(token=token)
     blocks[1]["text"]["text"] = message
