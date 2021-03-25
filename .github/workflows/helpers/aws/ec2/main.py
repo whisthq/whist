@@ -91,9 +91,10 @@ def flag_instances(region, commit, branch):
             launchTime = instance["LaunchTime"]
             instance_id = instance["InstanceId"]
             launch_status, days = compare_timestamps(launchTime)
+            launch_icon = icons[launch_status]
+
             if "Tags" in instance:
                 tag_status = read_tags(instance["Tags"], commit, branch, "EC2")
-                launch_icon = icons[launch_status]
                 tag_icon = icons[tag_status]
 
             if len(tag_status) == 0:
