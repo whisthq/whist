@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"strings"
 
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
 	// that we never forget to send a message via Sentry. Instead, use the
@@ -25,6 +26,7 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -60,6 +62,140 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 		// reason (that means the context we passed in was cancelled, or there was
 		// some initialization error). Regardless, we "panic" and cancel the context.
 		logger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
+	}()
+}
+
+// We don't want to require people to spin up an ECS cluster just to test
+// container images, so this function just mocks the ecsagent and
+// creates/starts a container.
+func mockECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+	goroutineTracker.Add(1)
+	go func() {
+		defer goroutineTracker.Done()
+
+		fc := fractalcontainer.New(globalCtx, goroutineTracker, "abcdefabcdefabcdefabcdefabcdef")
+		logger.Infof("Mocked ECS Agent: created FractalContainer object %s", fc.GetFractalID())
+
+		// We just fix the ports we want
+		if err := fc.AssignPortBindings([]portbindings.PortBinding{
+			{ContainerPort: 32262, HostPort: 32262, BindIP: "", Protocol: "tcp"},
+			{ContainerPort: 32263, HostPort: 32263, BindIP: "", Protocol: "udp"},
+			{ContainerPort: 32273, HostPort: 32273, BindIP: "", Protocol: "tcp"},
+		}); err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: error assigning port bindings: %s", err)
+		}
+		logger.Infof("Mocked ECS Agent: successfully assigned port bindings.")
+		portBindings := fc.GetPortBindings()
+
+		if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: error initializing uinput devices: %s", err)
+		}
+		logger.Infof("Mocked ECS Agent: successfully initialized uinput devices.")
+		devices := fc.GetDeviceMappings()
+
+		if err := fc.InitializeTTY(); err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: error initializing TTY: %s", err)
+		}
+		logger.Infof("Mocked ECS Agent: successfully initialized TTY.")
+
+		// Get AppName, appImage, and mountCommand from environment variables (set by run_container_image.sh)
+		appName := fractalcontainer.AppName(os.Getenv("APP_NAME"))
+		appImage := os.Getenv("APP_IMAGE")
+		mountCommand := strings.TrimSpace(os.Getenv("MOUNT_COMMAND"))
+		printDockerCreateCommand := ("" != os.Getenv("PRINT_DOCKER_CREATE_COMMAND"))
+
+		logger.Infof(`APP NAME: "%s"`, appName)
+		logger.Infof(`APP IMAGE: "%s"`, appImage)
+		logger.Infof(`MOUNT COMMAND: "%s"`, mountCommand)
+
+		// Actually create the container using `docker create`. Yes, this could be
+		// done with the docker CLI, but that would take some effort to convert.
+		// This was quick and dirty. Also, once we're off ECS we'll be able to test
+		// running containers on any Linux machine without hackery like this, so
+		// this is temporary in any case.
+
+		dockerCmdArgs := []string{
+			"create", "-it",
+			`-v`, `/sys/fs/cgroup:/sys/fs/cgroup:ro`,
+			`-v`, `/fractal/` + string(fc.GetFractalID()) + `/containerResourceMappings:/fractal/resourceMappings:ro`,
+			`-v`, `/fractalCloudStorage/` + string(fc.GetFractalID()) + `:/fractal/cloudStorage:rshared`,
+			`-v`, `/fractal/temp/` + string(fc.GetFractalID()) + `/sockets:/tmp/sockets`,
+			`-v`, `/run/udev/data:/run/udev/data:ro`,
+			`-v`, `/fractal/` + string(fc.GetFractalID()) + `/userConfigs:/fractal/userConfigs:rshared`,
+			logger.Sprintf(`--device=%s:%s:%s`, devices[0].PathOnHost, devices[0].PathInContainer, devices[0].CgroupPermissions),
+			logger.Sprintf(`--device=%s:%s:%s`, devices[1].PathOnHost, devices[1].PathInContainer, devices[1].CgroupPermissions),
+			logger.Sprintf(`--device=%s:%s:%s`, devices[2].PathOnHost, devices[2].PathInContainer, devices[2].CgroupPermissions),
+		}
+		if mountCommand != "" {
+			dockerCmdArgs = append(dockerCmdArgs, strings.Split(mountCommand, " ")...)
+		}
+		dockerCmdArgs = append(dockerCmdArgs, []string{
+			`--tmpfs`, `/run`,
+			`--tmpfs`, `/run/lock`,
+			`--gpus`, `all`,
+			`-e`, `NVIDIA_CONTAINER_CAPABILITIES=all`,
+			`-e`, `NVIDIA_VISIBLE_DEVICES=all`,
+			`--shm-size=8g`,
+			`--cap-drop`, `ALL`,
+			`--cap-add`, `CAP_SETPCAP`,
+			`--cap-add`, `CAP_MKNOD`,
+			`--cap-add`, `CAP_AUDIT_WRITE`,
+			`--cap-add`, `CAP_CHOWN`,
+			`--cap-add`, `CAP_NET_RAW`,
+			`--cap-add`, `CAP_DAC_OVERRIDE`,
+			`--cap-add`, `CAP_FOWNER`,
+			`--cap-add`, `CAP_FSETID`,
+			`--cap-add`, `CAP_KILL`,
+			`--cap-add`, `CAP_SETGID`,
+			`--cap-add`, `CAP_SETUID`,
+			`--cap-add`, `CAP_NET_BIND_SERVICE`,
+			`--cap-add`, `CAP_SYS_CHROOT`,
+			`--cap-add`, `CAP_SETFCAP`,
+			// NOTE THAT CAP_NICE IS NOT ENABLED BY DEFAULT
+			`--cap-add`, `SYS_NICE`,
+			`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[0].HostPort, portBindings[0].ContainerPort, portBindings[0].Protocol),
+			`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[1].HostPort, portBindings[1].ContainerPort, portBindings[1].Protocol),
+			`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[2].HostPort, portBindings[2].ContainerPort, portBindings[2].Protocol),
+			appImage,
+		}...)
+
+		cmd := exec.CommandContext(globalCtx, "docker", dockerCmdArgs...)
+		if printDockerCreateCommand {
+			logger.Infof("Mocked ECS Agent: Running `docker create` command:\n%s\n\n", cmd)
+		}
+		output, err := cmd.CombinedOutput()
+		if err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: Error running `docker create` for %s:\n%s", fc.GetFractalID(), output)
+		}
+		dockerID := fractalcontainer.DockerID(strings.TrimSpace(string(output)))
+		logger.Infof("Mocked ECS Agent: Successfully ran `docker create` command and got back DockerID %s", dockerID)
+
+		err = fc.RegisterCreation(dockerID, appName)
+		if err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: error registering container creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
+		}
+		logger.Infof("Mocked ECS Agent: Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
+
+		if err := fc.WriteResourcesForProtocol(); err != nil {
+			logger.Panicf(globalCancel, "Mocked ECS Agent: error writing resources for protocol: %s", err)
+		}
+		logger.Infof("Mocked ECS Agent: Successfully wrote resources for protocol.")
+
+		logger.Infof("Mocked ECS Agent: Finished starting up container %s", fc.GetFractalID())
+
+		// Start a goroutine that kills the container when the host service's
+		// global context is cancelled.
+		goroutineTracker.Add(1)
+		go func() {
+			defer goroutineTracker.Done()
+
+			<-globalCtx.Done()
+			cmd := exec.Command("docker", "kill", string(dockerID))
+			logger.Infof("Mocked ECS Agent: global context cancelled. Killing container %s", dockerID)
+			cmd.Run()
+		}()
+
+		logger.Infof("Exiting mocked ECS Agent")
 	}()
 }
 
@@ -317,7 +453,8 @@ func main() {
 		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
-		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
+		logger.Infof("Running in environment LocalDev, so not starting ecs-agent. Mocking it and starting a container instead.")
+		mockECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	}
 
 	// Start main event loop
