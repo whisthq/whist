@@ -699,6 +699,8 @@ jobs:
                   AMIS = json.loads(amis_str)
 
                   WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
