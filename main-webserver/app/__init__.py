@@ -12,7 +12,7 @@ from .factory import create_app, jwtManager, ma, mail
 
 
 # Taken from https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
-_F = TypeVar("F", bound=Callable[..., Any])
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def parse_request(view_func: _F) -> _F:
@@ -35,7 +35,7 @@ def parse_request(view_func: _F) -> _F:
         # that way trying to pop from it raises a KeyError, which we have proper error handling for
         try:
             body = json.loads(request.data) if request.method == "POST" else dict()
-        except Exception as e:
+        except:
             fractal_logger.error("Failed to parse request", exc_info=True)
             body = dict()
 
@@ -87,7 +87,7 @@ def log_request(view_func: _F) -> _F:
                             safe_body,
                         )
                     )
-        except Exception as e:
+        except:
             fractal_logger.error("Failed to log request", exc_info=True)
         return view_func(*args, **kwargs)
 
