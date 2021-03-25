@@ -307,7 +307,6 @@ jobs:
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, container-images-publish-images-ghcr]
-        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|ecs-task-definitions-deploy-task-definitions-ec|')
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -484,6 +483,7 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
@@ -581,7 +581,10 @@ jobs:
                 ecs-task-definitions-deploy-task-definitions-ecs,
                 ami-publish-ec2,
             ]
-        # run this if either task defs or amis are updated
+        # run this if either task defs or amis job succeed
+        # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+        # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
+        # later, when we actually update amis, we make sure they were published
         if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.ami-publish-ec2.result == 'success' )
         runs-on: ubuntu-20.04
         steps:
@@ -677,7 +680,8 @@ jobs:
 
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
-              if: needs.ami-publish-ec2.result == 'success'
+              # check for success AND amis being published
+              if: needs.ami-publish-ec2.result == 'success' && contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               working-directory: main-webserver
               shell: python3 {0}
               run: |
