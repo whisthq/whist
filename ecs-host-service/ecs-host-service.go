@@ -205,46 +205,57 @@ func mockECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, go
 
 // Creates a file containing the DPI assigned to a specific container, and make
 // it accessible to that container. Also take the received User ID and retrieve
-// the user's app configs if the User ID is set.
-// Takes the request to the `set_container_start_values` endpoint as
-// an argument and returns nil if no errors, and error object if error.
-func handleStartValuesRequest(req *httpserver.SetContainerStartValuesRequest) error {
+// the user's app configs if the User ID is set. We make this function send
+// back the result for the provided request so that we can run in its own
+// goroutine and not block the event loop goroutine.
+func handleStartValuesRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetContainerStartValuesRequest) {
+	logAndReturnError := func(fmt string, v ...interface{}) {
+		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
+		logger.Error(err)
+		req.ReturnResult("", err)
+	}
+
 	// Verify identifying hostPort value
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		return logger.MakeError("Invalid HostPort for start values request: %v", req.HostPort)
+		logAndReturnError("Invalid HostPort: %v", req.HostPort)
+		return
 	}
 	hostPort := uint16(req.HostPort)
 
 	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
 	if err != nil {
-		return logger.MakeError("handleStartValuesRequest(): %s", err)
+		logAndReturnError(err.Error())
+		return
 	}
 
 	fc.AssignToUser(fractalcontainer.UserID(req.UserID))
 
 	err = fc.WriteStartValues(req.DPI, req.ContainerARN)
 	if err != nil {
-		return logger.MakeError("handleStartValuesRequest(): %s", err)
+		logAndReturnError(err.Error())
+		return
 	}
 
 	// Populate the user config folder for the container's app
-	// TODO: do this in a separate goroutine to not slow down the event loop, much like we do with `handleCloudStorageRequest`
 	err = fc.PopulateUserConfigs()
 	if err != nil {
-		return logger.MakeError("handleStartValuesRequest(): %s", err)
+		logAndReturnError(err.Error())
+		return
 	}
 
 	err = fc.MarkReady()
 	if err != nil {
-		return logger.MakeError("handleStartValuesRequest(): %s", err)
+		logAndReturnError(err.Error())
+		return
 	}
 
-	return nil
+	req.ReturnResult("", nil)
 }
 
-// We make this function return its own error, so that we don't block the event
-// loop  goroutine with `rclone mount` commands (which are fast in the happy
-// path, but can take a minute in the worst case).
+// We make this function send back the result for the provided request so that
+// we can run in its own goroutine and not block the event loop goroutine with
+// `rclone mount` commands (which are fast in the happy path, but can take a
+// minute in the worst case).
 func handleCloudStorageRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.MountCloudStorageRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := logger.MakeError("handleCloudStorageRequest(): "+fmt, v...)
@@ -261,27 +272,22 @@ func handleCloudStorageRequest(globalCtx context.Context, globalCancel context.C
 
 	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
 	if err != nil {
-		logAndReturnError("handleCloudStorageRequest(): %s", err)
+		logAndReturnError("%s", err)
 		return
 	}
 
 	provider, err := cloudstorage.GetProvider(req.Provider)
 	if err != nil {
-		logAndReturnError("handleCloudStorageRequest(): Unable to parse provider: %s", err)
+		logAndReturnError("Unable to parse provider: %s", err)
 		return
 	}
 
-	// We add the cloud storage in a separate goroutine, since mounting (even in
-	// background/daemon mode) can take over a minute.
-	errChan := make(chan error)
-	goroutineTracker.Add(1)
-	go func() {
-		defer goroutineTracker.Done()
+	err = fc.AddCloudStorage(goroutineTracker, provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
+	if err != nil {
+		logAndReturnError(err.Error())
+	}
 
-		errChan <- fc.AddCloudStorage(goroutineTracker, provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
-	}()
-
-	logAndReturnError((<-errChan).Error())
+	req.ReturnResult("", nil)
 }
 
 // Handle tasks to be completed when a container dies
@@ -535,23 +541,16 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					logger.Info("dockerevent: %s for %s %s\n", dockerevent.Action, dockerevent.Type, dockerevent.ID)
 				}
 				if dockerevent.Action == "die" {
-					// Since we want all steps in the die handler to be attempted,
-					// regardless of earlier errors, we let the containerDieHandler report
-					// its own errors, and return nothing to us.
 					containerDieHandler(dockerevent.ID)
 				}
 
 			case serverevent := <-httpServerEvents:
 				switch serverevent.(type) {
 				case *httpserver.SetContainerStartValuesRequest:
-					err := handleStartValuesRequest(serverevent.(*httpserver.SetContainerStartValuesRequest))
-					if err != nil {
-						logger.Error(err)
-					}
-					serverevent.ReturnResult("", err)
+					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
 
 				case *httpserver.MountCloudStorageRequest:
-					handleCloudStorageRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.MountCloudStorageRequest))
+					go handleCloudStorageRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.MountCloudStorageRequest))
 
 				default:
 					if serverevent != nil {
