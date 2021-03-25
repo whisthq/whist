@@ -19,11 +19,10 @@ cd "$DIR"
 OPTIND=1
 CICheck=0
 
-while getopts "c" opt
-do
+while getopts "c" opt; do
     case "$opt" in
-        c)
-            CICheck=1
+        c) CICheck=1 ;;
+        *) echo "Invalid Option: $opt" ;;
     esac
 done
 

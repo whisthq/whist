@@ -35,5 +35,5 @@ else
 
     echo "=== Retrieving DB data ==="
     echo ""
-    (pg_dump -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB --data-only --column-inserts -t sales.email_templates -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
+    (pg_dump -h "$POSTGRES_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" --data-only --column-inserts -t sales.email_templates -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
 fi
