@@ -726,8 +726,8 @@ def _assign_container(
     try:
         _mount_cloud_storage(user, base_container)
         _pass_start_values_to_instance(base_container)
-        num_tries += 1
     except StartValueException:
+        num_tries += 1
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
             return _clean_tasks_and_create_new_container(
                 base_container,
