@@ -67,8 +67,6 @@ export const persistState: Effect = function* (state) {
     persistKeys(state, "email", "accessToken")
 }
 
-export const handleConfigToken: Effect = function* (state) {}
-
 export const logState: Effect = function* (state) {
     console.log("STATE", state)
 }
