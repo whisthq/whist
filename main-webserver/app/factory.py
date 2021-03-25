@@ -70,7 +70,7 @@ def create_app(testing=False):
     return app
 
 
-def register_handlers(app):
+def register_handlers(app: Flask):
     """
     Register all flask app handlers
     """
