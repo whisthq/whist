@@ -406,6 +406,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             # ######################## Building ECS Host Service ########################
 
             # To build ECS Host Service
@@ -500,7 +504,6 @@ jobs:
                   fp = open("manifest.json", "r")
                   data = json.load(fp)
                   fp.close()
-
                   print(data)
                   new_ami_ids = data["builds"][0]["artifact_id"]
                   region_ami_pairs = new_ami_ids.split(",")
@@ -512,7 +515,7 @@ jobs:
                     REGION_NAMES.append(region_name)
                     AMIS.append(ami)
 
-                  # export region and ami arrays
+                  # export REGION_NAMES and AMIS arrays
                   # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
                   # it is best to explain via example:
                   # >>> data = {'key': "val'ue"} # tricky example because we have single and double quotes
@@ -596,7 +599,7 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip and install webserver scripting dependencies
+            - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
@@ -605,8 +608,7 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys; sys.path.append(".")
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import start_maintenance
 
@@ -650,9 +652,7 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import update_taskdefs
 
@@ -685,8 +685,7 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys; sys.path.append(".")
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
                   import json
 
                   from scripts.misc_scripts import login
@@ -733,8 +732,7 @@ jobs:
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys; sys.path.append(".")
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
                   from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import end_maintenance
 

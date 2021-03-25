@@ -11,13 +11,6 @@ from scripts.celery_scripts import poll_celery_task
 from scripts.utils import make_post_request
 
 
-# all currently supported scripts
-SUPPORTED_SCRIPTS = ["start_maintenance", "end_maintenance", "update_region", "update_taskdefs"]
-
-# scripts that need admin token to run
-SCRIPTS_NEEDING_ADMIN = ["start_maintenance", "end_maintenance", "update_region", "update_taskdefs"]
-
-
 def start_maintenance(web_url: str, admin_token: str):
     """
     Handle start_maintenance script. Steps:
@@ -25,7 +18,7 @@ def start_maintenance(web_url: str, admin_token: str):
     2. Repeat 1 a max of 450 times with 2 second sleep.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         admin_token: Needed to authorize use of the update_region endpoint.
 
     Returns:
@@ -57,7 +50,7 @@ def end_maintenance(web_url: str, admin_token: str):
     2. Repeat 1 a max of 60 times with 1 second sleep.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         admin_token: Needed to authorize use of the update_region endpoint.
     """
     # 60 * 1 sec = 60 sec = 1 min
@@ -89,7 +82,7 @@ def update_region(web_url: str, admin_token: str, region_name: str, ami: str):
     4. Return nothing iff nothing went wrong. Otherwise errors out.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         admin_token: Needed to authorize use of the update_region endpoint.
         region_name: Region to update. Ex: us-east-1
         ami: New AMI for region.
@@ -128,7 +121,7 @@ def update_taskdefs(
     3. Return nothing iff nothing went wrong. Otherwise errors out.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         admin_token: Needed to authorize use of the update_region endpoint.
         app_id: Optional. Update a specific `app_id` to `task_definition_arn`. Otherwise update
             all app_ids in db to their latest version according to AWS.
