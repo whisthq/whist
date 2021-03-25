@@ -75,3 +75,7 @@ export const decryptConfigToken = (text: string, password: string): string => {
     dec += decipher.final("utf8")
     return dec
 }
+
+export const createConfigToken = async () => {
+    return await generateRandomString(32)
+}

@@ -1,6 +1,6 @@
 import { webContents, BrowserWindow } from "electron"
 import { emailLogin } from "@app/utils/api"
-import { decryptConfigToken } from "@app/utils/crypto"
+import { decryptConfigToken, createConfigToken } from "@app/utils/crypto"
 import { createAuthWindow } from "@app/utils/windows"
 import { fractalLoginWarning } from "@app/utils/constants"
 import { Effect, StateChannel, isLoggedIn } from "@app/utils/state"
@@ -14,16 +14,18 @@ export const handleLogin: Effect = async function* (state) {
     const { json } = await emailLogin(state.email, state.password)
     const loginWarning =
         json && json.access_token ? "" : fractalLoginWarning.INVALID
-    yield { loginLoading: false, loginWarning }
+    if (loginWarning) return { loginLoading: false, loginWarning }
 
     return {
         password: "",
+        loginWarning,
+        loginLoading: false,
         loginRequest: false,
         accessToken: json.access_token || "",
         refreshToken: json.refresh_token || "",
         configToken: json.encrypted_config_token
             ? decryptConfigToken(state.password, json.encrypted_config_token)
-            : "",
+            : await createConfigToken(),
     }
 }
 
@@ -64,7 +66,7 @@ export const launchProtocol: Effect = async function* (state) {
 }
 
 export const persistState: Effect = function* (state) {
-    persistKeys(state, "email", "accessToken")
+    persistKeys(state, "email", "accessToken", "configToken")
 }
 
 export const logState: Effect = function* (state) {

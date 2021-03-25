@@ -117,5 +117,5 @@ export const initState = async (
 }
 
 export const isLoggedIn = (state: State): boolean => {
-    return state.accessToken && state.email ? true : false
+    return state.accessToken && state.email && state.configToken ? true : false
 }
