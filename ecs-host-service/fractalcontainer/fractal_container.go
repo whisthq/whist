@@ -60,7 +60,7 @@ type FractalContainer interface {
 	// are actually started, and therefore assigned a Docker runtime ID).
 	// FractalIDs are also used to dynamically provide each container with a
 	// directory that only that container has access to).
-	RegisterCreation(FractalID, DockerID, AppName) error
+	RegisterCreation(DockerID, AppName) error
 	GetDockerID() DockerID
 	GetAppName() AppName
 
@@ -237,15 +237,14 @@ func (c *containerData) GetTTY() ttys.TTY {
 	return c.tty
 }
 
-func (c *containerData) RegisterCreation(f FractalID, d DockerID, name AppName) error {
+func (c *containerData) RegisterCreation(d DockerID, name AppName) error {
 	c.rwlock.Lock()
 	defer c.rwlock.Unlock()
 
-	if len(f) == 0 || len(d) == 0 || len(name) == 0 {
-		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s", f, d, name)
+	if len(d) == 0 || len(name) == 0 {
+		return logger.MakeError("RegisterCreatedContainer: can't register container with an empty argument! fractalID: %s, dockerID: %s, name: %s", c.fractalID, d, name)
 	}
 
-	c.fractalID = f
 	c.dockerID = d
 	c.appName = name
 
