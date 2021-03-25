@@ -39,9 +39,6 @@ from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.models import ClusterInfo, RegionToAmi
 
-from app.helpers.utils.aws.base_ecs_client import ECSClient
-
-
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
