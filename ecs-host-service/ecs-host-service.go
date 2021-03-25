@@ -182,6 +182,15 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpContainer(): Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
 
+	cmd = exec.CommandContext(globalCtx, "docker", "start", string(dockerID))
+	logger.Infof("SpinUpContainer(): Running `docker start` command.")
+	output, err = cmd.CombinedOutput()
+	if err != nil {
+		logAndReturnError("SpinUpContainer(): Error running `docker start`: %s", output)
+		return
+	}
+	logger.Infof("SpinUpContainer(): Successfully started container.")
+
 	if err := fc.WriteResourcesForProtocol(); err != nil {
 		logAndReturnError("SpinUpContainer(): error writing resources for protocol: %s", err)
 		return
