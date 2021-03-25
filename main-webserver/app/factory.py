@@ -7,7 +7,11 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
-from flask import abort, jsonify, make_response
+from flask import (
+    abort,
+    jsonify,
+    make_response,
+)
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
@@ -76,7 +80,7 @@ def register_handlers(app: Flask):
     """
 
     @app.before_request
-    def abort_if_cannot_process_requests():
+    def abort_if_cannot_process_requests():  # pylint: disable=unused-variable
         """
         Make sure web requests can actually be processed before proceeding
         """
