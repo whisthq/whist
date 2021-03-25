@@ -2,6 +2,7 @@ from flask import current_app
 
 from app.constants.http_codes import SUCCESS, BAD_REQUEST
 from app.exceptions import SendGridException, TemplateNotFound
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.mail.mail_client import MailClient
 
 
@@ -23,11 +24,18 @@ def mail_helper(email_id, from_email, to_email, email_args):
         response to the request.
     """
 
+    mail_client = MailClient(current_app.config["SENDGRID_API_KEY"])
+
+    # Don't pass keyword arguments whose values would be None.
+    mail_kwargs = {
+        k: v for k, v in (("from_email", from_email), ("jinja_args", email_args)) if v is not None
+    }
+
     try:
-        mail_client = MailClient(current_app.config["SENDGRID_API_KEY"])
-        mail_client.send_email(
-            from_email=from_email, to_email=to_email, email_id=email_id, jinja_args=email_args
-        )
-        return {"verified": True, "status": SUCCESS}
+        mail_client.send_email(email_id, to_email, **mail_kwargs)
     except (SendGridException, TemplateNotFound):
+        fractal_logger.exception("Sendgrid failed to send mail")
+
         return {"verified": False, "status": BAD_REQUEST}
+
+    return {"verified": True, "status": SUCCESS}

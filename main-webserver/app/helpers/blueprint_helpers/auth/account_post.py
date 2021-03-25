@@ -242,9 +242,7 @@ def update_user_helper(body):
             token = user.token
             url = current_app.config["FRONTEND_URL"] + "/verify?" + token
             mail_client = MailClient(current_app.config["SENDGRID_API_KEY"])
-            mail_client.send_email(
-                to_email=user.user_id, email_id="EMAIL_VERIFICATION", jinja_args={"url": url}
-            )
+            mail_client.send_email("EMAIL_VERIFICATION", user.user_id, jinja_args={"url": url})
         if "password" in body:
             result_dict = reset_password_helper(
                 body["username"], body["password"], body["encrypted_config_token"]
