@@ -12,7 +12,7 @@ from celery import current_app
 import gevent
 
 from app.helpers.utils.general.logs import fractal_logger
-from app import set_web_requests_status
+from app.flask_handlers import set_web_requests_status
 
 
 class WebSignalHandler:

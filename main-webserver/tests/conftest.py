@@ -16,8 +16,7 @@ from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 import app.constants.env_names as env_names
-from app.helpers.utils.general.limiter import limiter
-from app import set_web_requests_status
+from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter

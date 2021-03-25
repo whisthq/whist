@@ -14,7 +14,7 @@ import platform
 
 from app.factory import create_app
 from app.celery_utils import make_celery
-from app import set_web_requests_status
+from app.flask_handlers import set_web_requests_status
 from app.helpers.utils.general.logs import fractal_logger
 from app.signals import WebSignalHandler
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn

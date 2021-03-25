@@ -13,10 +13,8 @@ from sqlalchemy.exc import OperationalError
 from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
-from celery import current_app as current_celery_app
-
 from app.config import _callback_webserver_hostname
-from app import can_process_requests, set_web_requests_status
+from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
@@ -24,6 +22,7 @@ from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, RegionToAmi
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 from app.constants.http_codes import SUCCESS, ACCEPTED, WEBSERVER_MAINTENANCE
+from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 from app.celery.dummy import dummy_task
 
 

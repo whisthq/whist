@@ -7,12 +7,15 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
+from flask import abort, jsonify, make_response
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 import app.constants.env_names as env_names
+from app.flask_handlers import can_process_requests
+from app.constants.http_codes import WEBSERVER_MAINTENANCE
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -62,7 +65,29 @@ def create_app(testing=False):
 
     CORS(app)
 
-    return register_blueprints(app)
+    register_handlers(app)
+    register_blueprints(app)
+    return app
+
+
+def register_handlers(app):
+    """
+    Register all flask app handlers
+    """
+
+    @app.before_request
+    def abort_if_cannot_process_requests():
+        """
+        Make sure web requests can actually be processed before proceeding
+        """
+        if not can_process_requests():
+            # abort with maintenance status and a message
+            abort(
+                make_response(
+                    jsonify({"msg": "Webserver is not processing requests right now."}),
+                    WEBSERVER_MAINTENANCE,
+                )
+            )
 
 
 def register_blueprints(app):
@@ -105,5 +130,3 @@ def register_blueprints(app):
     app.register_blueprint(logs_bp)
     app.register_blueprint(host_service_bp)
     app.register_blueprint(oauth_bp)
-
-    return app
