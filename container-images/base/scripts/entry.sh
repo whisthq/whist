@@ -26,11 +26,11 @@ ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
 # this CANNOT be done in the Dockerfile because it affects /dev/, so we have to do it here.
 # Note that we always use /dev/tty10 even though the minor number below (i.e.
 # the number after 4) may change
-sudo mknod -m 620 /dev/tty10 c 4 $ASSIGNED_TTY
+sudo mknod -m 620 /dev/tty10 c 4 "$ASSIGNED_TTY"
 sudo mkdir /dev/dri
 sudo mknod -m 660 /dev/dri/card0 c 226 0
 
 # This installs fractal service
 echo "Start Pam Systemd Process for User fractal"
-export FRACTAL_UID=`id -u fractal`
-systemctl start user@$FRACTAL_UID
+export FRACTAL_UID=$(id -u fractal)
+systemctl start user@"$FRACTAL_UID"

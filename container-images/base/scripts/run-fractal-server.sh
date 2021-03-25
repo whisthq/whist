@@ -52,9 +52,9 @@ ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 #   and the original location is the destination
 # Iterate through the possible configuration locations and copy
 for row in $(cat app-config-map.json | jq -rc '.[]'); do
-    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+    SOURCE_CONFIG_SUBPATH=$(echo "${row}" | jq -r '.source')
     SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+    DEST_CONFIG_PATH=$(echo "${row}" | jq -r '.destination')
 
     # If original config path does not exist, then continue
     if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
@@ -63,13 +63,13 @@ for row in $(cat app-config-map.json | jq -rc '.[]'); do
 
     # If the source path doesn't exist, then copy default configs to the synced app config folder
     if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+        cp -rT "$DEST_CONFIG_PATH" "$SOURCE_CONFIG_PATH"
     fi
 
     # Remove the original configs and symlink the new ones to the original locations
-    rm -rf $DEST_CONFIG_PATH
-    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-    chown -R fractal $SOURCE_CONFIG_PATH
+    rm -rf "$DEST_CONFIG_PATH"
+    ln -sfnT "$SOURCE_CONFIG_PATH" "$DEST_CONFIG_PATH"
+    chown -R fractal "$SOURCE_CONFIG_PATH"
 done
 
 # Delete broken symlinks from config
@@ -95,7 +95,7 @@ done
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-/usr/share/fractal/FractalServer $OPTIONS
+/usr/share/fractal/FractalServer "$OPTIONS"
 
 # If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
 if [[ ! ${WEBSERVER_URL+x} ]]; then
@@ -115,7 +115,7 @@ LOGS_TASK_ID=$(curl \
         --header "Content-Type: application/json" \
         --request POST \
         --data @- \
-        $WEBSERVER_URL/logs \
+        "$WEBSERVER_URL"/logs \
         << END \
     | jq -er ".ID"
 {
@@ -143,7 +143,7 @@ while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
     # that we're adding at most 5 seconds to container shutdown time in expectation.
     sleep 5
 
-    state=$(get_task_state $LOGS_TASK_ID)
+    state=$(get_task_state "$LOGS_TASK_ID")
 done
 
 # POST $WEBSERVER_URL/container/delete
@@ -155,7 +155,7 @@ curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
-    $WEBSERVER_URL/container/delete \
+    "$WEBSERVER_URL"/container/delete \
     << END
 {
     "container_id": "$CONTAINER_ID",

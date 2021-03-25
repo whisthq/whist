@@ -15,7 +15,7 @@ cd "$DIR/.."
 
 # Fractal container image to run
 image=${1:-fractal/base:current-build}
-app_name=$(echo $image | sed 's/.*fractal\/\(.*\):.*/\1/')
+app_name=$(echo "$image" | sed 's/.*fractal\/\(.*\):.*/\1/')
 
 # Define the folder to mount the Fractal protocol server into the container
 if [[ "$2" == mount ]]; then
@@ -50,8 +50,8 @@ create_container() {
         -v "/fractal/temp/$fractal_id/sockets:/tmp/sockets" \
         -v "/run/udev/data:/run/udev/data:ro" \
         -v "/fractal/$fractal_id/userConfigs:/fractal/userConfigs:rshared" \
-        $devices_arg \
-        $mount_protocol \
+        "$devices_arg" \
+        "$mount_protocol" \
         --tmpfs /run \
         --tmpfs /run/lock \
         --gpus all \
@@ -77,21 +77,21 @@ create_container() {
         -p 32262:32262 \
         -p 32263:32263/udp \
         -p 32273:32273 \
-        $1
+        "$1"
     # capabilities not enabled by default: CAP_NICE
 }
 
 # Helper function to kill a locally running Docker container
 # Args: container_id
 kill_container() {
-    docker kill $1 > /dev/null || true
-    docker rm $1 > /dev/null || true
+    docker kill "$1" > /dev/null || true
+    docker rm "$1" > /dev/null || true
 }
 
 # Helper function to print error message and then kill a locally running Docker container
 # Args: container_id, error_message
 print_error_and_kill_container() {
-    echo "$2" && kill_container $1 && exit 1
+    echo "$2" && kill_container "$1" && exit 1
 }
 
 # Check if host service is even running
@@ -116,7 +116,7 @@ send_start_values_request() {
       "dpi": '"$2"',
       "user_id": "'"${3:-}"'"
     }') \
-        || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
+        || (print_error_and_kill_container "$1" "DPI/container-ready request to the host service failed!")
     echo "Sent DPI/container-ready request to container $1!"
     echo "Response to DPI/container-ready request from host service: $response"
 }
@@ -168,14 +168,14 @@ send_uinput_device_request() {
 # Main executing thread
 check_if_host_service_running
 send_uinput_device_request $fractal_id
-container_id=$(create_container $image)
+container_id=$(create_container "$image")
 echo "Created container with ID: $container_id"
-send_register_docker_container_id_request $container_id $fractal_id $app_name
-docker start $container_id
-send_start_values_request $container_id $dpi $user_id
+send_register_docker_container_id_request "$container_id" $fractal_id "$app_name"
+docker start "$container_id"
+send_start_values_request "$container_id" "$dpi" "$user_id"
 
 # Run the Docker container
-docker exec -it $container_id /bin/bash || true
+docker exec -it "$container_id" /bin/bash || true
 
 # Kill the Docker container once we are done
-kill_container $container_id
+kill_container "$container_id"

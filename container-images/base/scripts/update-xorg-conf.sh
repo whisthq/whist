@@ -14,8 +14,8 @@ if [ ! -f ${XCONFIG} ]; then
 fi
 
 # Retrieve the current NVIDIA BusID and the new NVIDIA BusID
-OLDBUSID=`awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG}`
-NEWBUSID=`nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}'`
+OLDBUSID=$(awk '/BusID/{gsub(/"/, "", $2); print $2}' ${XCONFIG})
+NEWBUSID=$(nvidia-xconfig --query-gpu-info | awk '/PCI BusID/{print $4}')
 
 # Update the current NVIDIA BusID to the new NVIDIA BusID
 if [[ "${OLDBUSID}" == "${NEWBUSID}" ]] ; then
