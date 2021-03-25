@@ -21,7 +21,7 @@ function init(): void {
     initState(
         state,
         [
-            // events.clearPersistOnStart,
+            events.clearPersistOnStart,
             events.loadPersistOnStart,
             events.verifyTokenOnStart,
             events.listenState,
@@ -29,7 +29,7 @@ function init(): void {
             events.listenAppQuit,
         ],
         [
-            effects.launchAuthWindow,
+            effects.launchWindows,
             effects.launchProtocol,
             effects.handleLogin,
             effects.persistState,

@@ -43,4 +43,22 @@ export const createAuthWindow = () => {
     }
 
     win.webContents.on("did-finish-load", () => win.show())
+
+    return win
+}
+
+export const createErrorWindow = () => {
+    const win = new BrowserWindow({
+        ...base,
+        ...wSm,
+        ...hMd,
+        show: false,
+    } as BrowserWindowConstructorOptions)
+
+    if (app.isPackaged) {
+        win.loadFile("build/index.html")
+    } else {
+        win.loadURL("http://localhost:8080")
+        win.webContents.openDevTools({ mode: "undocked" })
+    }
 }

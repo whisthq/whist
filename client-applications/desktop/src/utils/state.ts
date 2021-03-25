@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { IpcRendererEvent } from "electron"
 import { isEqual, isEmpty, merge } from "lodash"
+import { BrowserWindow } from "electron"
 import { ChildProcess } from "child_process"
 
 export type State = {
@@ -15,8 +16,13 @@ export type State = {
     protocolLoading: boolean
     appWindowRequest: boolean
     protocolProcess?: ChildProcess
+    windowAuth?: BrowserWindow
+    windowError?: BrowserWindow
 }
-export type StateIPC = Omit<State, "protocolProcess">
+export type StateIPC = Omit<
+    State,
+    "protocolProcess" | "windowAuth" | "windowError"
+>
 export type Event = (setState: (state: Partial<State>) => void) => void
 export type Effect = (
     s: State
@@ -82,7 +88,7 @@ export const initState = async (
         // add all remaining effects to the cache
         effs.forEach((eff) => cache.add(eff))
         // Call each effect with the current state
-        const iters = effs.map((eff) => eff(state))
+        const iters = effs.map((eff) => eff({ ...state }))
 
         let updates
         do {
