@@ -101,8 +101,8 @@ github.com/fractal/ecs-agent/agent v0.0.0-20210324172607-f3ed8296976a h1:4LfJYeh
 github.com/fractal/ecs-agent/agent v0.0.0-20210324172607-f3ed8296976a/go.mod h1:pp5XqxI3UNIeO7cFt4xmk9J8lTtn6SOvf2rz96sSLCs=
 github.com/fractal/ecs-agent/agent v0.0.0-20210325023710-2216012166c8 h1:2QrtSRR98SCUYZtVEKY0XMaSp1CeLu2JIVwBbRlkZ44=
 github.com/fractal/ecs-agent/agent v0.0.0-20210325023710-2216012166c8/go.mod h1:XQdTbycZ0CNC4E/3ueZLqaVgAp4RdjPEVT6mUUi+2Mo=
-github.com/fractal/ecs-agent/agent v0.0.0-20210325160105-1c5c64915bc8 h1:lCldxXBvItiChfS4G9Uc1cGcbhgo/IJXBUwYdmI4NLg=
-github.com/fractal/ecs-agent/agent v0.0.0-20210325160105-1c5c64915bc8/go.mod h1:ZJGanH4L5sSPipeM+tuQ4zNFaH7Ma/5E0VAavKF/gfQ=
+github.com/fractal/ecs-agent/agent v0.0.0-20210325161018-4bf098d7226f h1:IMLrmEy5lpQejT3jE8mnaWzynNFeQpG484Z+DXKfPrI=
+github.com/fractal/ecs-agent/agent v0.0.0-20210325161018-4bf098d7226f/go.mod h1:ZJGanH4L5sSPipeM+tuQ4zNFaH7Ma/5E0VAavKF/gfQ=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210317201014-37e09fb08b21/go.mod h1:953/GCUoputtuADWSQkGdpIhOjFHjTar+pxTdvyPNU0=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210323055954-8cdaa4d08055/go.mod h1:fI5toe6d+GBlCFYFvDyMQ8chsJypDoc6pxCJk16l97Y=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210323184236-9a510f96e494/go.mod h1:NMTbWyUj//66b7a8Ba8ZG3IkyCnMoUENJWZxgYsGL20=
