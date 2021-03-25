@@ -96,9 +96,10 @@ else
         else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
             exit 1
-        fi
+        fi        
+
         # Package the application and upload to AWS S3 bucket
-        yarn package-ci
+        export S3_BUCKET=$bucket yarn package-ci
     else
         # Package the application locally, without uploading to AWS S3 bucket
         yarn package

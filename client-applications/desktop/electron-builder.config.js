@@ -88,7 +88,7 @@ const publishConfig = {
     publish: {
         // TODO: Determine bucket from an environment variable to be set by
         // the publishing script.
-        bucket: "PLACEHOLDER",
+        bucket: process.env.S3_BUCKET ? process.env.S3_BUCKET : "PLACEHOLDER",
         provider: "s3",
         region: "us-east-1",
     },
