@@ -232,4 +232,4 @@ if __name__ == "__main__":
     blocks[1]["text"]["text"] = message
 
     if len(message) > 0:
-        client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
+        client.chat_postMessage(channel="C018UQXR59D", blocks=blocks)
