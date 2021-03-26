@@ -35,19 +35,15 @@ func Allocate() (TTY, error) {
 	defer ttymapLock.Unlock()
 
 	var tty TTY
-
-	for numTries := 0; numTries < 100; numTries++ {
-		tty = getRrandomTTYInAllowedRange()
-		v, exists := ttymap[tty]
-		if exists {
-			logger.Infof("TTY: trying tty %v and it exists with value %v. Number of allocated TTYS: %v, and map: %v", tty, v, len(ttymap), ttymap)
-			continue
-		} else {
+	maxTries := 100
+	for numTries := 0; numTries < maxTries; numTries++ {
+		tty = randomTTYInAllowedRange()
+		if _, exists := ttymap[tty]; !exists {
 			break
 		}
 	}
 	if tty == TTY(0) {
-		return TTY(0), logger.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long. Number of allocated TTYs: %v", numTries, len(ttymap))
+		return TTY(0), logger.MakeError("Tried %v times to allocate a TTY for container. Breaking out to avoid spinning for too long. Number of currently-allocated TTYs: %v", maxTries, len(ttymap))
 	}
 
 	// Mark it as allocated and return
