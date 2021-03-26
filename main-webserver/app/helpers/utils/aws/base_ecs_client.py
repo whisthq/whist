@@ -212,8 +212,7 @@ class ECSClient:
                 {"key": "git_branch", "value": branch},
                 {"key": "git_commit", "value": commit},
                 {"key": "created_on_test", "value": "True" if current_app.testing else "False"},
-                {"key": "created_at", "value": date.today().strftime('%Y-%d-%m')
-
+                {"key": "created_at", "value": date.today().strftime("%Y-%d-%m")},
             ],
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
