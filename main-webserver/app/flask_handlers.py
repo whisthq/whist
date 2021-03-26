@@ -13,7 +13,7 @@ def set_web_requests_status(enabled: bool) -> bool:
         enabled: State of _WEB_REQUESTS_ENABLED. If True, web requests allowed. If False, all are
             rejected with WEBSERVER_MAINTENANCE status code.
     Returns:
-        True iff _WEB_REQUESTS_ENABLED was set to enabled.
+        True iff _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
     """
     global _WEB_REQUESTS_ENABLED  # pylint: disable=global-statement
     has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
