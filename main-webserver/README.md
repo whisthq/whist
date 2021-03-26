@@ -285,6 +285,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── constants --> Constants used throughout our program
 │   │   ├── bad_words_hashed.py --> hashes of inappropriate usernames
 │   │   ├── container_state_values.py --> all possible AWS container states
+│   │   ├── ec2_userdata_template.py --> exposes ec2_userdata_template.sh as a string
+│   │   ├── ec2_userdata_template.sh --> a template for the code executed on new EC2 instances at startup
 │   │   ├── generate_subsequences_for_words.py --> substring testing to find inappropriate usernames
 │   │   ├── hash_bad_words.py --> what we use to generate bad_words_hashed
 │   │   ├── http_codes.py -->  HTTP response codes we return in our app
@@ -317,9 +319,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── aws_general.py --> a few general utilities for AWS
 │   │       │   ├── aws_resource_integrity.py --> scripts that ensure certain AWS resources exist
 │   │       │   ├── aws_resource_locks.py --> scripts to ensure atomicity on AWS resource use
-│   │       │   ├── base_ecs_client.py -->  The majority of our AWS code lives here -- interfaces to clusters, containers, ASGs,
-                and assorted other AWS endpoints
-│   │       │   ├── base_userdata_template.sh --> a template for the code executed on new EC2 instances at startup
+│   │       │   ├── base_ecs_client.py -->  The majority of our AWS code lives here -- interfaces to clusters, containers, ASGs, and assorted other AWS endpoints
 │   │       │   ├── ecs_deletion.py --> code used for cluster deletion
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
 │   │       ├── datadog
