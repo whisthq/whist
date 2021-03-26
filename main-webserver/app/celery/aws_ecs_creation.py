@@ -83,7 +83,7 @@ def _clean_tasks_and_create_new_container(
         )
 
     # delete every task that is unassigned with that instance IP in the DB
-    all_tasks = UserContainer.query.filter_by(ip=container.ip, user_id="NULL").all()
+    all_tasks = UserContainer.query.filter_by(ip=container.ip, user_id=None).all()
     for task in all_tasks:
         # stop the task if it is running
         ecs_client = ECSClient(
