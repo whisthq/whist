@@ -17,7 +17,7 @@ cd "$DIR/.."
 
 # Fractal container image to run
 image=${1:-fractal/base:current-build}
-app_name=$(echo $image | sed 's/.*fractal\/\(.*\):.*/\1/')
+app_name=$(echo "$image" | sed 's/.*fractal\/\(.*\):.*/\1/')
 
 # Define the folder to mount the Fractal protocol server into the container
 if [[ "$2" == mount ]]; then
@@ -38,14 +38,14 @@ user_id=${FRACTAL_USER_ID:-''}
 # Helper function to kill a locally running Docker container
 # Args: container_id
 kill_container() {
-    docker kill $1 > /dev/null || true
-    docker rm $1 > /dev/null || true
+    docker kill "$1" > /dev/null || true
+    docker rm "$1" > /dev/null || true
 }
 
 # Helper function to print error message and then kill a locally running Docker container
 # Args: container_id, error_message
 print_error_and_kill_container() {
-    echo "$2" && kill_container $1 && exit 1
+    echo "$2" && kill_container "$1" && exit 1
 }
 
 # Check if host service is even running
@@ -71,7 +71,7 @@ send_start_values_request() {
       "dpi": '"$2"',
       "user_id": "'"${3:-}"'"
     }') \
-        || (print_error_and_kill_container $1 "DPI/container-ready request to the host service failed!")
+        || (print_error_and_kill_container "$1" "DPI/container-ready request to the host service failed!")
     echo "Response to DPI/container-ready request from host service: $response"
 }
 
@@ -99,10 +99,10 @@ send_spin_up_container_request() {
 container_id=""
 check_if_host_service_running
 send_spin_up_container_request "$app_name" "$image" "$mount_protocol"
-send_start_values_request $container_id $dpi $user_id
+send_start_values_request "$container_id" "$dpi" "$user_id"
 
 # Run bash inside the Docker container
-docker exec -it $container_id /bin/bash || true
+docker exec -it "$container_id" /bin/bash || true
 
 # Kill the container once we're done
-kill_container $container_id
+kill_container "$container_id"
