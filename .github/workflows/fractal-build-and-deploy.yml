@@ -692,7 +692,10 @@ jobs:
                   from scripts.maintenance_scripts import update_region
 
                   # get region_names and amis as python vars
-                  # we use single quotes because 
+                  # we use single quotes (') because earlier we put a backslash in front
+                  # of every single quote in the JSON-dumped string. Python won't get confused by
+                  # >>> var = 'blah \'blah'
+                  # those same protections were not made for double quotes (")
                   region_names_str='${{ needs.ami-publish-ec2.outputs.region_names }}'
                   print(f"Region names: {region_names_str}")
                   REGION_NAMES = json.loads(region_names_str)
