@@ -483,7 +483,7 @@ def _assign_container(
 
         # otherwise, we see if there's an unassigned container
         base_container: Optional[UserContainer] = None
-        
+
         db.session.execute("SET LOCAL lock_timeout='30s';")
         try:
             base_container = ensure_container_exists(
