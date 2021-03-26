@@ -11,7 +11,7 @@ from datetime import date
 icons = {
     "OLD COMMIT": ":red_circle:",
     "OVERDUE": ":red_circle:",
-    "CREATED_ON_TEST": ":red_circle:",
+    "CREATED ON TEST": ":red_circle:",
     "CURRENT COMMIT": ":large_green_circle:",
     "IGNORE TIME": ":large_yellow_circle:",
     "IGNORE COMMIT": ":large_yellow_circle:",
