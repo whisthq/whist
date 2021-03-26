@@ -12,9 +12,7 @@ from flask import current_app
 from dateutil.relativedelta import relativedelta
 from pyzipcode import ZipCodeDatabase
 
-# list of the 50 states
-# { state_code : state_name } for all states
-from app.constants.states import STATE_LIST
+from app.constants.regions import USRegion
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.time import date_to_unix, get_today
@@ -120,7 +118,6 @@ class StripeClient:
         # also we do not need it
         stripe.api_key = api_key
 
-        self.regions = STATE_LIST
         self.zipcode_db = ZipCodeDatabase()
 
         self.user_schema = UserSchema()
@@ -342,7 +339,7 @@ class StripeClient:
         except IndexError:
             raise RegionNotSupported
 
-        purchase_region = self.regions[purchase_region_code].strip().lower()
+        purchase_region = USRegion[purchase_region_code].strip().lower()
 
         # apply tax rate for their region (find the id for their region)
         tax_rates = map(
