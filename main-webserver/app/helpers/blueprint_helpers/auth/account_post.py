@@ -51,7 +51,6 @@ def login_helper(email, password):
                 "is_user": is_user,
                 "access_token": None,
                 "refresh_token": None,
-                "verification_token": None,
                 "name": None,
                 "created_timestamp": None,
             }
@@ -68,7 +67,6 @@ def login_helper(email, password):
         "is_user": is_user,
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "verification_token": user.token,
         "name": user.name,
         "created_timestamp": user.created_timestamp,
     }
@@ -84,12 +82,11 @@ def register_helper(username, password, name, reason_for_signup):
         reason_for_signup (str): The person's reason for signing up
 
     Returns:
-        A JSON object containing five keys: "access_token", "refresh_token", "status",
-        "verification_token", and "created_timestamp". "access_token" and "refresh_token" contain
-        the user's Fractal API access and refresh tokens respectively. "status" contains an integer
-        that is the same as the HTTP response's status code. "verification_token" contains the
-        token that the user can use to verify their email address. "created_timestamp" contains the
-        UNIX timestamp representing the time at which the new user's account was created.
+        A JSON object containing five keys: "access_token", "refresh_token", "status", and
+        "created_timestamp". "access_token" and "refresh_token" contain the user's Fractal API
+        access and refresh tokens respectively. "status" contains an integer that is the same as
+        the HTTP response's status code. "created_timestamp" contains the UNIX timestamp
+        representing the time at which the new user's account was created.
     """
 
     # First, generate a user ID
@@ -127,7 +124,6 @@ def register_helper(username, password, name, reason_for_signup):
 
     return {
         "status": status,
-        "verification_token": new_user.token if status == SUCCESS else None,  # TODO: Issue 519
         "access_token": access_token,
         "refresh_token": refresh_token,
         "created_timestamp": created_timestamp if status == SUCCESS else None,
@@ -260,7 +256,6 @@ def auto_login_helper(email):
             "status": SUCCESS,
             "access_token": access_token,
             "refresh_token": refresh_token,
-            "verification_token": user.token,
             "name": user.name,
         }
     else:
@@ -268,7 +263,6 @@ def auto_login_helper(email):
             "status": UNAUTHORIZED,
             "access_token": None,
             "refresh_token": None,
-            "verification_token": None,
             "name": None,
         }
 
