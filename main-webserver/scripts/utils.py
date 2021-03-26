@@ -9,7 +9,7 @@ def make_get_request(web_url: str, endpoint: str, admin_token: str = None):
     Makes a GET request. Properly formats admin_token (if given).
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         endpoint: endpoint at URL to hit
         admin_token: Optional token for admin access
 
@@ -35,7 +35,7 @@ def make_post_request(
     Makes a POST request. Properly formats admin_token (if given) and payload.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         endpoint: endpoint at URL to hit
         payload: data to POST to server. Can be None.
         admin_token: Optional token for admin access

@@ -8,19 +8,13 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), ".."))
 
 from scripts.utils import make_post_request
 
-# all currently supported scripts
-SUPPORTED_SCRIPTS = ["login"]
-
-# scripts that need admin token to run
-SCRIPTS_NEEDING_ADMIN = []
-
 
 def login(web_url: str, username: str, password: str):
     """
     Login and get the access tokens for a particular user.
 
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         username: user to login as
         password: password associated with user
 
