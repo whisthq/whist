@@ -109,6 +109,8 @@ github.com/fractal/ecs-agent/agent v0.0.0-20210325175553-b417193ae942 h1:ARAh0G7
 github.com/fractal/ecs-agent/agent v0.0.0-20210325175553-b417193ae942/go.mod h1:gP+/cyxOo4Kc0iIu+xnEgm/bL8dr/zcBbZXqgwbGmYg=
 github.com/fractal/ecs-agent/agent v0.0.0-20210326071003-7be4bb0a0e6a h1:kn5GmVMiZtgIbutYlUzkwJIl+1pRjMAnHE5KR34xVs8=
 github.com/fractal/ecs-agent/agent v0.0.0-20210326071003-7be4bb0a0e6a/go.mod h1:YfvSmjwALw+Xh1K3gI8JVX7e86yOJCnd5tqEW3GZ0IU=
+github.com/fractal/ecs-agent/agent v0.0.0-20210326170423-05b3cbf906f4 h1:b81wZnoPMnUBUkmMDEhj5Rh2e2lMsIb+BBMbkKWefFQ=
+github.com/fractal/ecs-agent/agent v0.0.0-20210326170423-05b3cbf906f4/go.mod h1:mJlGbplFc/gy5+e+JTN3XrDHCtUpg9Tjfe3bQC+PQPk=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210317201014-37e09fb08b21/go.mod h1:953/GCUoputtuADWSQkGdpIhOjFHjTar+pxTdvyPNU0=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210323055954-8cdaa4d08055/go.mod h1:fI5toe6d+GBlCFYFvDyMQ8chsJypDoc6pxCJk16l97Y=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210323184236-9a510f96e494/go.mod h1:NMTbWyUj//66b7a8Ba8ZG3IkyCnMoUENJWZxgYsGL20=
@@ -122,6 +124,7 @@ github.com/fractal/fractal/ecs-host-service v0.0.0-20210325155957-d6f97847daa4/g
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210325172138-c26f19f60b15/go.mod h1:NqH+8X8Ag/3KlatF4VqMfUZ2txCsAutD2rT2my4MBik=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210325175506-8bec96db5ef6/go.mod h1:qqHS15ubeMPpTr7ti65DpL5Mvc0FwyGVtLVWmmitQMw=
 github.com/fractal/fractal/ecs-host-service v0.0.0-20210326052430-5fb84be2b31b/go.mod h1:pGYjn4KyMEuQRpzYd2mU9kyUrhybrbT+diit0mDT/hQ=
+github.com/fractal/fractal/ecs-host-service v0.0.0-20210326160456-189655a9fbec/go.mod h1:5Gz1exXwbSZjRCfWOvXnTrjjZji5MCztEbaQlid8Chc=
 github.com/fractal/uinput-go v1.4.1-0.20210224145701-470172f5bd67 h1:StPmrKuCgMGhVnhC6AsOppaGpkcJtXQRVBaULNyvxDU=
 github.com/fractal/uinput-go v1.4.1-0.20210224145701-470172f5bd67/go.mod h1:bG0ywqQr5fU8ua8Be8QVMclwlMeYEHHftEHKgUUMhKI=
 github.com/fractal/uinput-go v1.4.1-0.20210317222648-a8da4c4638d7 h1:XcTkAu6RTzoChyyb6w4Fi+FZDb+IKX+NUYpOPwN1CRw=
