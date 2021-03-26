@@ -4,5 +4,3 @@ tags
 # Build
 build/
 ecs-host-service
-
-.host_service_output
