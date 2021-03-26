@@ -1200,8 +1200,8 @@ int main(int argc, char* argv[]) {
             char name[WINDOW_NAME_MAXLEN];
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
-                    strcmp(name, cur_window_name) != 0) {
-                    LOG_INFO("Sending window title to client: '%s'\n", name);
+                    (num_active_clients > 0 && strcmp(name, cur_window_name) != 0)) {
+                    LOG_INFO("Sending window title to client");
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fmsg_response = safe_malloc(fsmsg_size);
                     fmsg_response->type = SMESSAGE_WINDOW_TITLE;
