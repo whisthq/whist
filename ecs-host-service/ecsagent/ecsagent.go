@@ -10,7 +10,7 @@ import (
 	ecsapp "github.com/fractal/ecs-agent/agent/app"
 	ecslogger "github.com/fractal/ecs-agent/agent/logger"
 
-	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	fractallogger "github.com/fractal/ecs-agent/agent/fractallogger"
 
 	"github.com/cihub/seelog"
 )
