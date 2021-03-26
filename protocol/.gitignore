@@ -64,7 +64,6 @@ cmake-build-*
 CMakeFiles/
 build/
 docker-build/
-publish-build/
 CMakeCache.txt
 **/Makefile*
 **/makefile*

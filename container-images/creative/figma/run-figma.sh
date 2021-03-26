@@ -10,5 +10,5 @@ fi
 
 # Start Figma
 pushd "/opt/figma/" >/dev/null || exit 1
-exec ./electron app.asar "$@"
+exec ./electron app.asar $@
 popd >/dev/null || exit 1
