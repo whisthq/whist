@@ -59,9 +59,7 @@ def update_cluster(
 
     # We must delete every unassigned container in the cluster. Locks using with_for_update()
     unassigned_containers = (
-        UserContainer.query.with_for_update()
-        .filter_by(cluster=cluster_name, is_assigned=False)
-        .all()
+        UserContainer.query.with_for_update().filter_by(cluster=cluster_name, user_id=None).all()
     )
     for container in unassigned_containers:
         container_name = container.container_id
@@ -241,7 +239,7 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
         return
 
     db.session.execute("SET LOCAL lock_timeout='30s';")
-    
+
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
     if app_data is None:
         raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")
