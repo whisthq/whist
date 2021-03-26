@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
+	"github.com/fractal/ecs-agent/agent/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
