@@ -137,6 +137,10 @@ def update_cluster(
             },
         )
     else:
+        for instance_name in instance_list:
+            instance = InstanceInfo.query.get(instance_name)
+            instance.is_draining = True
+            db.session.commit()
         # The cluster did exist, and was updated successfully.
         self.update_state(
             state="SUCCESS",
@@ -144,10 +148,6 @@ def update_cluster(
                 "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
             },
         )
-        for instance_name in instance_list:
-            instance = InstanceInfo.query.get(instance_name)
-            instance.is_draining = True
-            db.session.commit()
 
 
 @shared_task(bind=True)
