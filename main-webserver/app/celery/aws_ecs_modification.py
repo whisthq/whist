@@ -138,7 +138,7 @@ def update_cluster(
         )
     else:
         for instance_name in instance_list:
-            instance = InstanceInfo.query.get(instance_name).one_or_none()
+            instance = InstanceInfo.query.get(instance_name)
             if instance is not None:
                 instance.is_draining = True
                 db.session.commit()
