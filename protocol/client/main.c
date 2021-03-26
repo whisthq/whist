@@ -764,6 +764,8 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    // Now that parsed_args() has been called and we've checked for the environment flag,
+    // we can rename the log file accordingly
     rename_log_file();
 
     // Initialize the SDL window

@@ -98,8 +98,17 @@ int get_logger_history_len() { return logger_history_len; }
 
 void start_connection_log();
 
-// Initializes the logger and starts a connection log
 void init_logger(char* log_dir) {
+    /*
+        Initializes the Fractal logger and starts writing to the log file
+
+        Arguments:
+            log_dir (char*): pointer to character array that indicates the directory in which the
+       log file should be stored
+
+        Returns:
+            None
+    */
     init_backtrace_handler();
 
     logger_history_len = 0;
@@ -144,6 +153,15 @@ void init_logger(char* log_dir) {
 }
 
 void init_sentry() {
+    /*
+        Initializes sentry based on the sentry_environment variable set in parsed_args
+
+        Arguments:
+            None
+
+        Returns:
+            None
+    */
     sentry_options_t* options = sentry_options_new();
     // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
     sentry_options_set_dsn(options, SENTRY_DSN);
@@ -157,9 +175,23 @@ void init_sentry() {
 }
 
 void rename_log_file() {
+    /*
+        Renames the log file to a name based on the current environment. Should be called after
+       init_logger (so the initial log file is created) and after parse_args (so any environment
+       variables have been passed in and parsed)
+
+        Arguments:
+            None
+
+        Returns:
+            None
+    */
+    // close the log file before renaming
     if (mprintf_log_file) {
         fclose(mprintf_log_file);
     }
+
+    // use sentry_environment to set new log file name
     char new_log_file_name[1000] = "";
     if (strcmp(sentry_environment, "production") == 0) {
         safe_strncpy(log_env, "", sizeof(log_env));
@@ -176,8 +208,11 @@ void rename_log_file() {
     if (rename(log_file_name, new_log_file_name) != 0) {
         printf("Couldn't rename logfile\n");
     }
+
+    // replace old log name with new name
     safe_strncpy(log_file_name, new_log_file_name, log_directory_length + log_file_length);
 
+    // reopen log file to write to
     mprintf_log_file = fopen(log_file_name, "ab");
     if (mprintf_log_file == NULL) {
         printf("Couldn't open up logfile\n");
@@ -237,14 +272,13 @@ void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...) {
 #ifndef _WIN32
     va_list args;
     va_start(args, fmt_str);
-    char* sentry_str = (char*)safe_malloc(LOGGER_BUF_SIZE);
-    vsnprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
+    char sentry_str[LOGGER_BUF_SIZE];
+    vsnprintf(sentry_str, sizeof(sentry_str), fmt_str, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
     va_end(args);
-    free(sentry_str);
 #endif
 }
 
@@ -253,15 +287,14 @@ void sentry_send_event(const char* fmt_str, ...) {
 
     va_list args;
     va_start(args, fmt_str);
-    char* sentry_str = (char*)safe_malloc(LOGGER_BUF_SIZE);
-    vsnprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
+    char sentry_str[LOGGER_BUF_SIZE];
+    vsnprintf(sentry_str, sizeof(sentry_str), fmt_str, args);
     va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
         /*   level */ SENTRY_LEVEL_ERROR,
         /*  logger */ "client-logs",
         /* message */ sentry_str);
     sentry_capture_event(event);
-    free(sentry_str);
 }
 
 int multi_threaded_printf(void* opaque) {
