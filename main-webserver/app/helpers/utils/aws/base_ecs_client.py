@@ -12,6 +12,7 @@ import botocore.exceptions
 from flask import current_app
 
 from app.helpers.utils.general.logs import fractal_logger
+from app.constants.ec2_userdata_template import userdata_template
 
 from . import ecs_deletion
 from . import autoscaling
@@ -653,8 +654,7 @@ class ECSClient:
         cluster_name = cluster_name or self.generate_name("cluster")
 
         # Initial data/scripts to be run on all container instances
-        with open(os.path.join(os.path.dirname(__file__), "base_userdata_template.sh")) as f:
-            userdata = f.read().format(cluster_name)
+        userdata = userdata_template.format(cluster_name)
 
         launch_config_name = launch_config_name or self.generate_name("launch_configuration")
         _ = self.auto_scaling_client.create_launch_configuration(
