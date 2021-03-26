@@ -164,12 +164,11 @@ jobs:
                   # Store job dependency files
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
-                  job_dependencies[fractal-start-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
                   job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
+                  job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
-                  job_dependencies[fractal-end-webserver-maintenance-mode]="protocol container-images ecs-task-definitions ecs-host-setup ecs-host-service"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -236,78 +235,13 @@ jobs:
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
-    # Put the webserver into maintenance mode while task defs/AMIs update
-    fractal-start-webserver-maintenance-mode:
-        name: "Put webserver into maintenance mode"
-        runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|fractal-start-webserver-maintenance-mode|')
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Upgrade pip and install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
-
-            - name: Put webserver into maintenance mode
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
-                  from scripts.misc_scripts import login
-                  from scripts.maintenance_scripts import start_maintenance
-
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-
-                  # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
-                  start_maintenance(WEBSERVER_URL, TOKEN)
-
-            - name: Notify Slack success
-              run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
-
-                  curl -X POST \
-                  --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-            - name: Notify Slack on failure
-              if: ${{ failure() }}
-              run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"].
     container-images-publish-images-ghcr:
         name: "Container Images: Build & Publish Images to GitHub Container Registry"
         runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-            ]
+        needs: [fractal-publish-build-config]
         outputs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
         if: >
@@ -372,11 +306,7 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-                container-images-publish-images-ghcr,
-            ]
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
@@ -455,11 +385,7 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-            ]
+        needs: [fractal-publish-build-config]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
@@ -468,7 +394,9 @@ jobs:
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
-
+        outputs:
+            region_names: ${{ steps.build-new-amis.outputs.region_names }}
+            amis: ${{ steps.build-new-amis.outputs.amis }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -478,7 +406,7 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip and install webserver scripting dependencies
+            - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
@@ -529,10 +457,6 @@ jobs:
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
 
-            # No quotes around ${{ env.aws_additional_supported_regions }} because ami_regions expects list.
-            # Also, we write to a temp json file and move to the right one
-            # because the current syntax doesn't permit modifying the same file
-            # in-place via jq.
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
@@ -564,25 +488,13 @@ jobs:
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append("../main-webserver")
                   import os
                   import subprocess
                   import json
-
-                  from scripts.misc_scripts import login
-                  from scripts.maintenance_scripts import update_region
-
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # stdout will be shared with the subprocess so we can see what is happening
                   subprocess.run("packer -machine-readable build ami_config.json", shell=True)
@@ -596,10 +508,33 @@ jobs:
                   new_ami_ids = data["builds"][0]["artifact_id"]
                   region_ami_pairs = new_ami_ids.split(",")
 
+                  REGION_NAMES = list()
+                  AMIS = list()
                   for region_ami_pair in region_ami_pairs:
                     region_name, ami = region_ami_pair.split(":")
-                    print(f"Region: {region_name}, AMI: {ami}")
-                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
+                    REGION_NAMES.append(region_name)
+                    AMIS.append(ami)
+
+                  # export REGION_NAMES and AMIS arrays
+                  # the .replace(...) makes all occurrences of a double quote " be prefixed by a \
+                  # it is best to explain via example:
+                  # >>> data = {'key': "val'ue"} # tricky example because we have single and double quotes
+                  # >>> print(json.dumps(data).replace('"', '\\"'))
+                  # {\"key\": \"val'ue\"} # this is saved as an output
+                  # LATER, when we need to use this output
+                  # >>> data = json.loads("{{ OUTPUT }}") # OUTPUT expands to {\"key\": \"val'ue\"}
+                  # >>> print(data)
+                  # {'key': "val'ue"}
+                  # if I did not add the \, then the json library would get confused by trying to read this:
+                  # >>> json.loads("{"key": "val'ue"}") # fails, we need the \ prefix
+                  region_names_str = json.dumps(REGION_NAMES).replace('"', '\\"')
+                  amis_str = json.dumps(AMIS).replace('"', '\\"')
+
+                  print(f"Regions array is set to {region_names_str}")
+                  print(f"::set-output name=region_names::{region_names_str}")
+
+                  print(f"AMI array is set to {amis_str}")
+                  print(f"::set-output name=amis::{amis_str}")
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
@@ -637,6 +572,203 @@ jobs:
               run: |
                   aws-hashicorp-packer-reaper list
                   aws-hashicorp-packer-reaper terminate --older-than 45m
+
+    # Uses webserver maintenance mode to update the following:
+    # 1. new task definitions if new task defs have been pushed to ECS
+    # 2. new AMIs if new AMIs have been built
+    main-webserver-update-fractal-services:
+        name: "Update Fractal Services using Main Webserver"
+        needs:
+            [
+                fractal-publish-build-config,
+                ecs-task-definitions-deploy-task-definitions-ecs,
+                ami-publish-ec2,
+            ]
+        # run this if either task defs or amis job succeed
+        # technically, we also should check if amis were published with: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+        # however, to keep this code clean and avoid complex GHA conditional logic we just check that one of (task defs, amis) succeeded here
+        # later, when we actually update amis, we make sure they were published
+        if: always() && ( needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success' || needs.ami-publish-ec2.result == 'success' )
+        runs-on: ubuntu-20.04
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
+            - name: Put webserver into maintenance mode
+              id: start-maintenance-mode
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import start_maintenance
+
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
+                  start_maintenance(WEBSERVER_URL, TOKEN)
+
+            - name: Notify Slack started maintenance mode
+              if: always() && steps.start-maintenance-mode.outcome == 'success'
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+
+                  curl -X POST \
+                  --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack on failure to start maintenance mode
+              if: always() && steps.start-maintenance-mode.outcome == 'failure'
+              run: |
+                  # this step only runs if starting maintenance mode fails
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Update webserver task definitions if new ones were published
+              id: update-webserver-taskdefs
+              if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import update_taskdefs
+
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  # Try to update taskdefs. Errors if request/celery task fails.
+                  update_taskdefs(WEBSERVER_URL, TOKEN)
+
+            - name: Notify Slack on failure to update webserver task definition
+              if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
+              run: |
+                  # this step only runs if updating webserver task defs fails
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Update webserver AMIs if new ones were built
+              id: update-webserver-amis
+              # check for success AND amis being published
+              if: needs.ami-publish-ec2.result == 'success' && contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
+                  import json
+
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import update_region
+
+                  # get region_names and amis as python vars
+                  # we use single quotes (') because earlier we put a backslash in front
+                  # of every single quote in the JSON-dumped string. Python won't get confused by
+                  # >>> var = 'blah \'blah'
+                  # those same protections were not made for double quotes (")
+                  region_names_str='${{ needs.ami-publish-ec2.outputs.region_names }}'
+                  print(f"Region names: {region_names_str}")
+                  REGION_NAMES = json.loads(region_names_str)
+
+                  amis_str='${{ needs.ami-publish-ec2.outputs.amis }}'
+                  print(f"AMIs: {amis_str}")
+                  AMIS = json.loads(amis_str)
+
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  # call update region
+                  for region_name, ami in zip(REGION_NAMES, AMIS):
+                    print(f"Updating region {region_name} to AMI: {ami}")
+                    update_region(WEBSERVER_URL, TOKEN, region_name, ami)
+
+            - name: Notify Slack on failure to update webserver amis
+              if: always() && steps.update-webserver-amis.outcome == 'failure'
+              run: |
+                  # this step only runs if updating webserver amis fails
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: end-maintenance-mode
+              id: end-maintenance-mode
+              # always end maintenance mode if we started it
+              if: always() && steps.start-maintenance-mode.outcome == 'success'
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import sys; sys.path.append(".") # this allows us to import from `scripts`
+                  from scripts.misc_scripts import login
+                  from scripts.maintenance_scripts import end_maintenance
+
+                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
+                  end_maintenance(WEBSERVER_URL, TOKEN)
+
+            - name: Notify Slack ended maintenance mode
+              if: always() && steps.end-maintenance-mode.outcome == 'success'
+              run: |
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack on failure to end maintenance mode
+              if: always() && steps.end-maintenance-mode.outcome == 'failure'
+              run: |
+                  # this step only runs if starting maintenance mode fails
+                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
@@ -962,71 +1094,3 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-    # End maintenance mode
-    fractal-end-webserver-maintenance-mode:
-        name: "End webserver maintenance mode"
-        runs-on: ubuntu-20.04
-        needs:
-            [
-                fractal-publish-build-config,
-                fractal-start-webserver-maintenance-mode,
-                container-images-publish-images-ghcr,
-                ecs-task-definitions-deploy-task-definitions-ecs,
-                ecs-task-definitions-notify-slack,
-                ami-publish-ec2,
-            ]
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|fractal-end-webserver-maintenance-mode|') &&
-            !failure()
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Upgrade pip and install webserver scripting dependencies
-              working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
-
-            - name: End webserver maintenance mode
-              working-directory: main-webserver
-              shell: python3 {0}
-              run: |
-                  # this allows us to import from `scripts`
-                  import sys
-                  sys.path.append(".")
-                  from scripts.misc_scripts import login
-                  from scripts.maintenance_scripts import end_maintenance
-
-                  WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
-
-                  # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
-                  end_maintenance(WEBSERVER_URL, TOKEN)
-
-            - name: Notify Slack on success
-              run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-
-            - name: Notify Slack on failure
-              if: ${{ failure() }}
-              run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}

@@ -9,18 +9,12 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), ".."))
 
 from scripts.utils import make_get_request
 
-# all currently supported scripts
-SUPPORTED_SCRIPTS = ["poll_celery_task"]
-
-# scripts that need admin token to run
-SCRIPTS_NEEDING_ADMIN = []
-
 
 def poll_celery_task(web_url: str, task_id: str, admin_token: str = None) -> str:
     """
     Poll celery task `task_id` for up to 10 minutes.
     Args:
-        web_url: URL to run script on
+        web_url: URL of webserver instance to run operation on
         task_id: Task to poll
         admin_token: Optional; can provide traceback info.
 
