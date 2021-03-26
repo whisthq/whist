@@ -138,9 +138,10 @@ def update_cluster(
         )
     else:
         for instance_name in instance_list:
-            instance = InstanceInfo.query.get(instance_name)
-            instance.is_draining = True
-            db.session.commit()
+            instance = InstanceInfo.query.get(instance_name).one_or_none()
+            if instance is not None:
+                instance.is_draining = True
+                db.session.commit()
         # The cluster did exist, and was updated successfully.
         self.update_state(
             state="SUCCESS",
