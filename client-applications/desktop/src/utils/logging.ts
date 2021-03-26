@@ -1,16 +1,50 @@
-const fs = require("fs")
-const util = require("util")
-const log_file = fs.createWriteStream(__dirname + "/debug.log", { flags: "w" })
-const log_stdout = process.stdout
+import { app } from "electron"
+import fs from "fs"
+import util from "util"
+import path from "path"
 
+import config from "@app/utils/config"
+
+// Where to send .log file
+const logPath = path.join(app.getAppPath().replace("/Resources/app.asar", ""), "debug.log")
+const logFile = fs.createWriteStream(logPath, { flags: "w" })
+const logStdOut = process.stdout
+
+// Initialize logz.io SDK
+const logzio = require("logzio-nodejs").createLogger({
+    token: config.keys.LOGZ_API_KEY,
+    protocol: "https",
+    port: "8071"
+})
+
+// Logging base function
 const formatUserID = (userID: string) => {
     return userID ? userID : "No user ID"
 }
 
-export const logInfo = (logs: string, userID = "") => {
-    logs = `${formatUserID(userID)} | ${logs}`
-    log_file.write(util.format(logs) + "\n")
-    log_stdout.write(util.format(logs) + "\n")
+enum LogLevel {
+    INFO = "INFO",
+    ERROR = "ERROR"
 }
 
-logInfo(`Logs can be found at ${__dirname}`)
+const logBase = (logs: string, userID = "", level=LogLevel.INFO) => {
+    const formattedLogs = `${formatUserID(userID)} | ${logs}`
+    logFile.write(util.format(formattedLogs) + "\n")
+    logStdOut.write(util.format(formattedLogs) + "\n")
+
+    if (app.isPackaged)
+        logzio.log({
+            message: logs,
+            userID: userID,
+            level: level,
+        })
+}
+
+// Export logging functions
+export const logInfo = (logs: string, userID = "") => {
+    logBase(logs, userID, LogLevel.INFO)
+}
+
+export const logError = (logs: string, userID = "") => {
+    logBase(logs, userID, LogLevel.ERROR)
+}
