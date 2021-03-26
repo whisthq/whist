@@ -1,6 +1,5 @@
 from app.factory import create_app
 from app.models import db, User, ClusterInfo, UserContainer
-from app.helpers.utils.aws.aws_resource_locks import lock_container_and_update
 import os
 import time
 import sys
@@ -9,7 +8,7 @@ import subprocess
 os.environ["REDIS_URL"] = "redis://"
 
 
-app = create_app()
+app = create_app(testing=True)
 with app.app_context():
 
     CONTAINER_ID = "TEST-CONTAINER"
