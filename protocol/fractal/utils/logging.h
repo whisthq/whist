@@ -64,7 +64,7 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-#define PRINTFUNCTION(format, ...) internal_logging_printf(format, __VA_ARGS__)
+#define PRINTFUNCTION(format, ...) internal_logging_printf(format, ##__VA_ARGS__)
 #define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
 #define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "

@@ -82,8 +82,10 @@ clock mprintf_timer;
 FILE* mprintf_log_file = NULL;
 FILE* mprintf_log_connection_file = NULL;
 int log_connection_log_id;
-char *log_directory = NULL;
-char *log_file_name = NULL;
+char* log_directory = NULL;
+size_t log_directory_length;
+char* log_file_name = NULL;
+size_t log_file_length = 100;
 char log_env[FRACTAL_ENVIRONMENT_MAXLEN];
 
 // This is written to in MultiThreaderPrintf
@@ -102,20 +104,23 @@ void init_logger(char* log_dir) {
 
     logger_history_len = 0;
     if (log_dir) {
-        size_t dir_len = strlen(log_dir);
-        log_directory = (char *)safe_malloc(dir_len + 2);
-        log_file_name = (char *)safe_malloc(dir_len + 22); // assuming the longest file name is {log_directory}log-staging_prev.txt
-        strncpy(log_directory, log_dir, dir_len + 1);
+        log_directory_length = strlen(log_dir);
+        log_directory = (char*)safe_malloc(log_directory_length + 2);
+        log_file_name = (char*)safe_malloc(log_directory_length +
+                                           log_file_length);  // assuming the longest file name is
+                                                              // {log_directory}log-staging_prev.txt
+        strncpy(log_directory, log_dir, log_directory_length);
 #if defined(_WIN32)
-        log_directory[dir_len] = '\\';
+        log_directory[log_directory_length] = '\\';
 #else
-        log_directory[dir_len] = '/';
+        log_directory[log_directory_length] = '/';
 #endif
-        log_directory[dir_len + 1] = '\0';
+        log_directory[log_directory_length + 1] = '\0';
 
         // name the initial log file before we know what environment we're in
-        safe_strncpy(log_env, "-init", FRACTAL_ENVIRONMENT_MAXLEN + 1);
-        snprintf(log_file_name, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
+        safe_strncpy(log_env, "-init", sizeof(log_env));
+        snprintf(log_file_name, log_directory_length + log_file_length, "%s%s%s%s", log_directory,
+                 "log", log_env, ".txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
@@ -139,7 +144,7 @@ void init_logger(char* log_dir) {
 }
 
 void init_sentry() {
-    sentry_options_t *options = sentry_options_new();
+    sentry_options_t* options = sentry_options_new();
     // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
     sentry_options_set_dsn(options, SENTRY_DSN);
     // These are used by sentry to classify events and so we can keep track of version specific
@@ -157,20 +162,21 @@ void rename_log_file() {
     }
     char new_log_file_name[1000] = "";
     if (strcmp(sentry_environment, "production") == 0) {
-        safe_strncpy(log_env, "", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+        safe_strncpy(log_env, "", sizeof(log_env));
     } else if (strcmp(sentry_environment, "staging") == 0) {
-        safe_strncpy(log_env, "-staging", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+        safe_strncpy(log_env, "-staging", sizeof(log_env));
     } else {
-        safe_strncpy(log_env, "-dev", FRACTAL_ENVIRONMENT_MAXLEN + 1);
+        safe_strncpy(log_env, "-dev", sizeof(log_env));
     }
-    snprintf(new_log_file_name, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
+    snprintf(new_log_file_name, sizeof(new_log_file_name), "%s%s%s%s", log_directory, "log",
+             log_env, ".txt");
 
-    printf("Trying to rename %s to %s \n", log_file_name, new_log_file_name);
-    
+    printf("Trying to rename %s to %s\n", log_file_name, new_log_file_name);
+
     if (rename(log_file_name, new_log_file_name) != 0) {
         printf("Couldn't rename logfile\n");
     }
-    safe_strncpy(log_file_name, new_log_file_name, 1001);
+    safe_strncpy(log_file_name, new_log_file_name, log_directory_length + log_file_length);
 
     mprintf_log_file = fopen(log_file_name, "ab");
     if (mprintf_log_file == NULL) {
@@ -231,14 +237,14 @@ void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...) {
 #ifndef _WIN32
     va_list args;
     va_start(args, fmt_str);
-    char *sentry_str = (char *)safe_malloc(LOGGER_BUF_SIZE);
-    snprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
+    char* sentry_str = (char*)safe_malloc(LOGGER_BUF_SIZE);
+    vsnprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
-    sentry_value_set_by_key(crumb, "level", sentry_value_new_string("WARNING")); // "WARNING" should ideally be tag, but I'm not sure why the definition isn't passing through
+    sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
     va_end(args);
-    // free(sentry_str); // should free this, but freeing it gives a seg fault
+    free(sentry_str);
 #endif
 }
 
@@ -247,8 +253,8 @@ void sentry_send_event(const char* fmt_str, ...) {
 
     va_list args;
     va_start(args, fmt_str);
-    char *sentry_str = (char *)safe_malloc(LOGGER_BUF_SIZE);
-    snprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
+    char* sentry_str = (char*)safe_malloc(LOGGER_BUF_SIZE);
+    vsnprintf(sentry_str, LOGGER_BUF_SIZE, fmt_str, args);
     va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
         /*   level */ SENTRY_LEVEL_ERROR,
@@ -500,11 +506,12 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
             logger_queue_size++;
             SDL_SemPost((SDL_sem*)logger_semaphore);
         } else {
-            // Get the length of the formatted string with args replaced.
             // After calls to function which invoke VA args, the args are
             // undefined so we copy
             va_list args_copy;
             va_copy(args_copy, args);
+
+            // Get the length of the formatted string with args replaced.
             int len = vsnprintf(NULL, 0, fmt_str, args) + 1;
 
             // print to a temp buf so we can split on \n

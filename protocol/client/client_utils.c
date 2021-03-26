@@ -42,9 +42,12 @@ extern volatile SDL_Window *window;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
+
+// This variables should stay as arrays - we call sizeof() on them
 extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
+
 extern bool using_sentry;
 extern bool skip_taskbar;
 
