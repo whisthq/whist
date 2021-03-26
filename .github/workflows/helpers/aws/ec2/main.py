@@ -4,6 +4,7 @@ import pandas as pd
 import slack
 import sys
 
+from datetime import datetime
 from datetime import date
 
 
@@ -125,10 +126,18 @@ def flag_clusters(region, commit, branch):
         clusterName = c["clusterName"]
         clusterArn = c["clusterArn"]
         tags = get_tags(clusterArn, region)
-        flag_status = read_tags(tags, commit, branch, "ECS")
-        icon = icons[flag_status]
-        if icon == ":red_circle:":
-            message += f"• `{clusterName}` - {flag_status} - {icon} \n"
+        git_status = read_tags(tags, commit, branch, "ECS")
+        git_icon = icons[git_status]
+        launch_status = ""
+        launch_icon = ""
+        days = 0
+        if "created_at" in tags:
+            launchTime = datetime.strptime(tags["created_at"], "%Y-%d-%m")
+            launch_status, days = compare_timestamps(launchTime)
+            launch_icon = icons[launch_status]
+
+        if git_icon == ":red_circle:":
+            message += f"• `{clusterName}` - {git_status} - {git_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
 
     return message
 
