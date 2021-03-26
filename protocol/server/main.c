@@ -75,8 +75,11 @@ extern Client clients[MAX_NUM_CLIENTS];
 
 char binary_aes_private_key[16];
 char hex_aes_private_key[33];
+
+// This variables should stay as arrays - we call sizeof() on them
 char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
 char webserver_url[WEBSERVER_URL_MAXLEN + 1];
+
 volatile int connection_id;
 static volatile bool exiting;
 
@@ -1059,7 +1062,6 @@ int parse_args(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-
 #ifdef _WIN32
     init_logger("C:\\ProgramData\\FractalCache");
 #else
