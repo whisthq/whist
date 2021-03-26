@@ -69,7 +69,9 @@ def create_app(testing=False):
 
 def register_handlers(app: Flask):
     """
-    Register all flask app handlers
+    Register all Flask app handlers. This should SHOULD NOT include endpoint definitions, which
+    happens via blueprints in `register_blueprints`. These handlers should be other functions
+    that need to be decorated by a Flask app (such as app.before_request(func)).
     """
     from app.flask_handlers import can_process_requests_handler
 

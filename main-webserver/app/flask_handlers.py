@@ -22,10 +22,11 @@ _WEB_REQUESTS_LOCK = threading.Lock()
 
 def set_web_requests_status(enabled: bool) -> bool:
     """
-    Set state of _WEB_REQUESTS_ENABLED.
+    Set state of _WEB_REQUESTS_ENABLED. If True, web requests allowed. If False, all are
+    rejected with WEBSERVER_MAINTENANCE status code.
+
     Args:
-        enabled: State of _WEB_REQUESTS_ENABLED. If True, web requests allowed. If False, all are
-            rejected with WEBSERVER_MAINTENANCE status code.
+        enabled: Desired state of _WEB_REQUESTS_ENABLED.
     Returns:
         True iff _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
     """
