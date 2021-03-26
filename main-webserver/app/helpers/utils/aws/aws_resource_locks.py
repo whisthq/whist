@@ -6,7 +6,7 @@ from app.models import db, UserContainer
 
 
 def set_local_lock_timeout(seconds=30):
-    db.session.execute(f"SET LOCAL lock_timeout='{time}s';")
+    db.session.execute(f"SET LOCAL lock_timeout='{seconds}s';")
 
 
 def lock_container_and_update(container_name, state, wait=0):
