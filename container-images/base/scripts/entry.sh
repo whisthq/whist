@@ -6,9 +6,6 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
-# Allow for SSH login
-rm /var/run/nologin
-
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
 
