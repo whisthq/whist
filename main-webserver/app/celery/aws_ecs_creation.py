@@ -17,6 +17,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+from app.helpers.utils.aws.aws_resource_locks import set_local_lock_timeout
 
 from app.models import (
     db,
@@ -484,7 +485,7 @@ def _assign_container(
         # otherwise, we see if there's an unassigned container
         base_container: Optional[UserContainer] = None
 
-        db.session.execute("SET LOCAL lock_timeout='30s';")
+        set_local_lock_timeout(30)
         try:
             base_container = ensure_container_exists(
                 find_available_container(region_name, task_definition_arn, task_version)

@@ -1,6 +1,9 @@
 from app.factory import create_app
 from app.models import db, User, ClusterInfo, UserContainer
-from app.helpers.utils.aws.aws_resource_locks import lock_container_and_update
+from app.helpers.utils.aws.aws_resource_locks import (
+    lock_container_and_update,
+    set_local_lock_timeout,
+)
 import os
 import time
 import sys
@@ -15,9 +18,9 @@ ACTION = sys.argv[4]
 if ACTION == "EDIT":
     NEW_STATE = sys.argv[5]
 
-app = create_app()
+app = create_app(test=True)
 with app.app_context():
-    db.session.execute("SET LOCAL lock_timeout='5s';")
+    set_local_lock_timeout(5)
 
     print("waiting to lock for", WAIT_BEFORE_LOCK, "seconds")
     time.sleep(WAIT_BEFORE_LOCK)

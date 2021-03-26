@@ -10,6 +10,7 @@ from app.exceptions import ClusterNotIdle
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+from app.helpers.utils.aws.aws_resource_locks import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.event_logging.events import (
     logged_event_container_deleted,
@@ -35,7 +36,7 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         None
     """
     task_start_time = time.time()
-    db.session.execute("SET LOCAL lock_timeout='30s';")
+    set_local_lock_timeout(30)
     try:
         container = ensure_container_exists(
             UserContainer.query.with_for_update().get(container_name)
