@@ -69,7 +69,7 @@ var portMapsLock = new(sync.Mutex)
 func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	mapToUse, err := getProtocolSpecificHostPortMap(desiredBind.Protocol)
 	if err != nil {
-		return desiredBind, logger.MakeError("allocateSinglePort failed. Error: %s", err)
+		return PortBinding{}, logger.MakeError("allocateSinglePort failed. Error: %s", err)
 	}
 
 	// If the given HostPort is nonzero, we want to use that one specifically.
@@ -77,28 +77,30 @@ func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	if desiredBind.HostPort != 0 {
 		// Check that the desired port is actually in the allowed range
 		if !isInAllowedRange(desiredBind.HostPort) {
-			return desiredBind, logger.MakeError("allocateSinglePort: received a request to allocate a disallowed port: %v/%s", desiredBind.HostPort, desiredBind.Protocol)
+			return PortBinding{}, logger.MakeError("allocateSinglePort: received a request to allocate a disallowed port: %v/%s", desiredBind.HostPort, desiredBind.Protocol)
 		}
 
 		// Check that this port isn't already allocated to a container, or reserved
 		if _, exists := (*mapToUse)[desiredBind.HostPort]; exists {
-			return desiredBind, logger.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v: already bound or reserved.", desiredBind.HostPort, desiredBind.Protocol)
+			return PortBinding{}, logger.MakeError("allocateSinglePort: Could not allocate HostPort %v/%v: already bound or reserved.", desiredBind.HostPort, desiredBind.Protocol)
 		}
 
 		// Mark it as allocated and return
 		(*mapToUse)[desiredBind.HostPort] = inUse
-		return desiredBind, nil
-
+		return PortBinding{}, nil
 	}
 
 	// Gotta allocate a port ourselves
-	randomPort := randomPortInAllowedRange()
-	numTries := 0
-	for _, exists := (*mapToUse)[randomPort]; exists; randomPort = randomPortInAllowedRange() {
-		numTries++
-		if numTries >= 100 {
-			return desiredBind, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", numTries, desiredBind.HostPort, desiredBind.Protocol)
+	var randomPort uint16
+	maxTries := 100
+	for numTries := 0; numTries < maxTries; numTries++ {
+		randomPort = randomPortInAllowedRange()
+		if _, exists := (*mapToUse)[randomPort]; !exists {
+			break
 		}
+	}
+	if randomPort == 0 {
+		return PortBinding{}, logger.MakeError("Tried %v times to allocate a host port for container port %v/%v. Breaking out to avoid spinning for too long.", maxTries, desiredBind.HostPort, desiredBind.Protocol)
 	}
 
 	// Mark it as allocated and return
