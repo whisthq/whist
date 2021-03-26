@@ -288,7 +288,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── generate_subsequences_for_words.py --> substring testing to find inappropriate usernames
 │   │   ├── hash_bad_words.py --> what we use to generate bad_words_hashed
 │   │   ├── http_codes.py -->  HTTP response codes we return in our app
-│   │   ├── states.py --> list of state abbreviations (e.g. CT for Connecticut)
+│   │   ├── regions.py --> list of region/state abbreviations (e.g. CT for Connecticut)
 │   │   └── time.py --> useful constants about time (like 60 seconds per minute)
 │   ├── exceptions.py --> exceptions we use throughout the app
 │   ├── factory.py -->  general application setup scripts
