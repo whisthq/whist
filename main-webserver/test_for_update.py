@@ -36,7 +36,6 @@ with app.app_context():
         user_id=USER_ID,
         cluster=CLUSTER,
         ip="123",
-        is_assigned=True,
         port_32262=123,
         port_32263=123,
         port_32273=123,
