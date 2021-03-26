@@ -69,7 +69,7 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 // Container event handlers
 // ------------------------------------
 
-// This function will only be called in the localdev environment. It is also
+// SpinUpContainer will only be called in the localdev environment. It is also
 // currently only used in `run_container_image.sh`. Eventually, as we move off
 // ECS, this endpoint will become the canonical way to start containers.
 func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SpinUpContainerRequest) {
