@@ -7,7 +7,7 @@ import { Effect, StateIPC, StateChannel, isLoggedIn } from "@app/utils/state"
 import { persistKeys } from "@app/utils/persist"
 import * as proto from "@app/utils/protocol"
 import { streamProtocolInfo } from "../utils/protocol"
-import { logInfo } from "@app/utils/logging"
+import { logInfo, logError } from "@app/utils/logging"
 
 export const handleLogin: Effect = async function* (state) {
     // Only run if a login has been requested,
@@ -20,8 +20,10 @@ export const handleLogin: Effect = async function* (state) {
     // Set a warning for the user the response is invalid
     const loginWarning =
         json && json.access_token ? "" : fractalLoginWarning.INVALID
-    if (loginWarning)
+    if (loginWarning) {
+        logInfo("Login failed because of invalid username or password")
         return { loginLoading: false, loginRequest: false, loginWarning }
+    }
 
     return {
         password: "",
@@ -40,6 +42,12 @@ export const launchWindows: Effect = function* (state) {
     const auth = !state.windowAuth && !isLoggedIn(state) // && !displayError(state)
     // const error = !state.windowError && displayError(state)
 
+    const numWindows = BrowserWindow.getAllWindows().length
+
+    logInfo(
+        `Launching auth window, there are currently ${numWindows.toString()} windows`
+    )
+    
     return {
         windowAuth: auth ? createAuthWindow() : undefined,
         // windowError: error ? createWindowError() : undefined
@@ -73,6 +81,9 @@ export const closeAllWindows: Effect = function* (state) {
     // This will need to change as soon as we introduce new
     // windows for errors or loading.
     if (!isLoggedIn(state)) return
+
+    logInfo("Closing all windows", state.email)
+
     for (let win of BrowserWindow.getAllWindows()) win.close()
 }
 
@@ -99,17 +110,33 @@ export const launchProtocol: Effect = async function* (state) {
     if (state.protocolLoading) return
     // Only launch the protocol if one is not already open.
     if (state.protocolProcess) return
-    // Launch the protocol process with a loading screen
-    const protocol = proto.launchProtocolLoading()
-    yield { protocolLoading: true, protocolProcess: protocol }
-    // Make a request to create a container, and poll the task
-    // endpoint until we receive a response that the container
-    // is ready.
-    const taskID = await proto.createContainer(state.email, state.accessToken)
-    const info = await proto.waitUntilReady(taskID, state.accessToken)
-    // Stream the response information to the protocol to load the browser
-    streamProtocolInfo(protocol, info.output)
-    return { protocolLoading: false }
+    yield { protocolLoading: true }
+
+    logInfo("Dispatching create container API request", state.email)
+
+    try {
+        logInfo("Launching protocol executable", state.email)
+
+        const protocol = proto.launchProtocolLoading()
+        yield { protocolLoading: true, protocolProcess: protocol }
+        // Make a request to create a container, and poll the task
+        // endpoint until we receive a response that the container
+        // is ready.
+
+        logInfo("Dispatching container create API request", state.email)
+        const taskID = await proto.createContainer(state.email, state.accessToken)
+
+        logInfo("Waiting until container is ready", state.email)
+
+        const info = await proto.waitUntilReady(taskID, state.accessToken)
+
+        logInfo(`Success, container is ready with params ${JSON.stringify(info.output)}`, state.email)
+        // Stream the response information to the protocol to load the browser
+        streamProtocolInfo(protocol, info.output)
+        return { protocolLoading: false }
+    } catch (err: any) {
+        logError(`Error in launching protocol: ${err.toString()}`)
+    }
 }
 
 export const persistState: Effect = function* (state) {
@@ -118,6 +145,5 @@ export const persistState: Effect = function* (state) {
 }
 
 export const logState: Effect = function* (state) {
-    if (state.protocolLoading) logInfo("Protocol loading true", state.email)
-    if (state.protocolProcess) logInfo("Protocol processing true", state.email)
+    logInfo(JSON.stringify(state), state.email)
 }
