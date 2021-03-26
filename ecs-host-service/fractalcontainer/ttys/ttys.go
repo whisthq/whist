@@ -23,10 +23,6 @@ const (
 	inUse
 )
 
-func init() {
-	logger.Infof("TESTING IF THIS PACKAGE IS GETTING INITIALIZED TWICEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE. %v", &ttymap)
-}
-
 // If the key exists in this map, that TTY is either `reserved` or `inUse`.
 var ttymap map[TTY]ttyStatus = make(map[TTY]ttyStatus)
 
