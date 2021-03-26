@@ -47,7 +47,7 @@ export const launchWindows: Effect = function* (state) {
     logInfo(
         `Launching auth window, there are currently ${numWindows.toString()} windows`
     )
-    
+
     return {
         windowAuth: auth ? createAuthWindow() : undefined,
         // windowError: error ? createWindowError() : undefined
