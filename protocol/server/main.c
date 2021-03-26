@@ -75,7 +75,7 @@ extern Client clients[MAX_NUM_CLIENTS];
 
 char binary_aes_private_key[16];
 char hex_aes_private_key[33];
-char identifier[FRACTAL_ENVIRONMENT_MAXLEN + 1];
+char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
 char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
