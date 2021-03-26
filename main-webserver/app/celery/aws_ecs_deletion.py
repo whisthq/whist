@@ -73,7 +73,6 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
 
     ecs_client.add_task(container_name)
 
-    # _______ FIX ME ________
     # TODO: just pass task as param
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
