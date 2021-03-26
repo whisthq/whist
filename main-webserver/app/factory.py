@@ -3,11 +3,6 @@ import os
 import stripe
 
 from flask import Flask
-from flask import (
-    abort,
-    jsonify,
-    make_response,
-)
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_marshmallow import Marshmallow
@@ -18,8 +13,6 @@ from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 import app.constants.env_names as env_names
-from app.flask_handlers import can_process_requests
-from app.constants.http_codes import WEBSERVER_MAINTENANCE
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -78,20 +71,9 @@ def register_handlers(app: Flask):
     """
     Register all flask app handlers
     """
+    from app.flask_handlers import can_process_requests_handler
 
-    @app.before_request
-    def abort_if_cannot_process_requests():  # pylint: disable=unused-variable
-        """
-        Make sure web requests can actually be processed before proceeding
-        """
-        if not can_process_requests():
-            # abort with maintenance status and a message
-            abort(
-                make_response(
-                    jsonify({"msg": "Webserver is not processing requests right now."}),
-                    WEBSERVER_MAINTENANCE,
-                )
-            )
+    can_process_requests_handler(app)
 
 
 def register_blueprints(app):

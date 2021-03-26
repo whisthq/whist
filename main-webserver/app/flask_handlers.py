@@ -1,5 +1,19 @@
+"""
+Install handlers for the flask app. Specifically:
+- can_process_requests_handler
+"""
+
 import threading
+
+from flask import Flask
+from flask import (
+    abort,
+    jsonify,
+    make_response,
+)
+
 from app.helpers.utils.general.logs import fractal_logger
+from app.constants.http_codes import WEBSERVER_MAINTENANCE
 
 # global lock-protected variable indicating whether webserver can process web requests
 _WEB_REQUESTS_ENABLED = True
@@ -48,3 +62,24 @@ def can_process_requests() -> bool:
     web_requests_status = _WEB_REQUESTS_ENABLED
     _WEB_REQUESTS_LOCK.release()
     return web_requests_status
+
+
+def can_process_requests_handler(app: Flask):
+    """
+    Registers a before_request handler to the Flask app `app`. Makes
+    sure web requests are enabled before processing them.
+    """
+
+    @app.before_request
+    def handler():  # pylint: disable=unused-variable
+        """
+        Make sure web requests can actually be processed before proceeding
+        """
+        if not can_process_requests():
+            # abort with maintenance status and a message
+            abort(
+                make_response(
+                    jsonify({"msg": "Webserver is not processing requests right now."}),
+                    WEBSERVER_MAINTENANCE,
+                )
+            )
