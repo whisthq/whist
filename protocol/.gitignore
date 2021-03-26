@@ -40,8 +40,6 @@ sentry-native
 version
 **/build32
 **/build64
-client/log*.txt
-server/log*.txt
 share/
 client/external_utils/Windows/ssh.exe
 *.v
