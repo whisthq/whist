@@ -18,7 +18,7 @@ ACTION = sys.argv[4]
 if ACTION == "EDIT":
     NEW_STATE = sys.argv[5]
 
-app = create_app(test=True)
+app = create_app(testing=True)
 with app.app_context():
     set_local_lock_timeout(5)
 
