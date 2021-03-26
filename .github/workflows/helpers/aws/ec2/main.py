@@ -201,7 +201,8 @@ if __name__ == "__main__":
     token = os.environ.get("SLACK_EC2_BOT_TOKEN")
     commit = sys.argv[1][0:7]
     branch = sys.argv[2]
-
+    print(commit)
+    print(branch)
     # slack message formatter
     blocks = [
         {

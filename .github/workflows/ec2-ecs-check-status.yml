@@ -1,28 +1,21 @@
-# workflows/ec2instance-check-status.yml
+# workflows/ec2-ecs-check-status.yml
 #
-# EC2 Instance Status: Checks EC2 Instance
-# Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
+# EC2 and ECS Status: Checks EC2 instance and ECS Clusters
+# Scans currently running EC2 instances and ECS clusters using AWS SDK and sends flagged instances as a slack message
 
-name: "EC2 Instance Status: Checks EC2 instance "
+name: "EC2 and ECS Status: Checks EC2 instance and ECS Clusters "
 
 on:
-    # TODO: UNCOMMENT
-    pull_request:
-        branches:
-            - dev
-
-    # # push:
-    # # triggers workflow on a schedule
-    # schedule:
-    #     - cron: "*/5 * * * *"
+    schedule:
+        - cron: "30 16 * * *" # runs at 11:30am (EST/UTC+5) each day
 
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
 
 jobs:
-    # Scanning EC2 Instances
-    # Checks for EC2 instance status and sends flagged instances as a slack message
-    ec2instance-check-status-main:
+    # Scanning EC2 Instances and ECS clusters
+    # Checks for EC2 instance and ECS Cluster status and sends flagged instances as a slack message
+    ec2-ecs-check-status-main:
         name: Scanning EC2 Instances
         runs-on: ubuntu-20.04
         strategy:
@@ -61,7 +54,7 @@ jobs:
 
             - name: Run ec2 instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA $GITHUB_HEAD_REF
+              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/}
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
@@ -76,7 +69,7 @@ jobs:
 
             - name: Run ecs instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA $GITHUB_HEAD_REF
+              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/}
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
