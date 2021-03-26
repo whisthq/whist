@@ -6,7 +6,7 @@ rcedit-x64.exe
 .unison
 .protocol
 clipboard/
-log.txt
+log*.txt
 connection_id.txt
 ssh_host_ecdsa_key.pub
 sshkey.pub

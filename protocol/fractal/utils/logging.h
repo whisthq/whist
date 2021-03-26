@@ -146,15 +146,11 @@ void init_logger(char* log_directory);
 
 /**
  * @brief                          Initialize the sentry logger
- *
- *
  */
 void init_sentry();
 
 /**
  * @brief                          Rename the file that logs are being written to
- *
- *
  */
 void rename_log_file();
 
