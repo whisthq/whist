@@ -178,15 +178,15 @@ class ECSClient:
         # branch, commit = self.get_git_info()
         branch, commit = self.get_git_info()
         branch = branch.replace("/", "-")
-        name = f"{starter_name}-<{branch}>-<{commit}>"
+        name = f"{starter_name}-<{branch}>-<{commit}>-{uuid.uuid4()}"
 
         # need a special case for capacity_provider and cluster
         # as they don't like special characters
         if starter_name in ["capacity_provider", "cluster"]:
-            name = f"{starter_name}-{branch}-{commit}"
+            name = f"{starter_name}-{branch}-{commit}-{uuid.uuid4()}"
 
         if current_app.testing:
-            name = f"test-{name}-{uuid.uuid4()}"
+            name = f"test-{name}"
 
         return name
 
@@ -319,7 +319,7 @@ class ECSClient:
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
-        # THIS IS THE PROBLEM RIGHT HERE
+
         auto_scaling_groups = list(
             map(
                 lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
@@ -504,8 +504,6 @@ class ECSClient:
                 "minContainers": auto_scaling_group_info["MinSize"],
                 "maxContainers": auto_scaling_group_info["MaxSize"],
             }
-
-        print(clusters_usage)
 
         fractal_logger.info(f"Cluster usage: {dict(clusters_usage)}")
         return clusters_usage

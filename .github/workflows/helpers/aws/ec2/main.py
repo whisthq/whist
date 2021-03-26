@@ -47,7 +47,7 @@ def read_tags(tags, commit, branch, resource):
         resource (str): current aws resource, either EC2 or ECS
 
     Returns:
-        str: status code, either ignore commit, old commit, current ocmmit, or create on test
+        str: status code, either ignore commit, old commit, current commit, or create on test
     """
     target_branches = ["dev", "staging", "master"]
     tag_branch = ""
@@ -55,13 +55,13 @@ def read_tags(tags, commit, branch, resource):
     test = ""
     key = "Key" if resource == "EC2" else "key"
     value = "Value" if resource == "EC2" else "value"
-    for t in tags:
-        if t[key] == "created_on_test":
-            test = t[value]
-        if t[key] == "git_branch":
-            tag_branch = t[value]
-        if t[key] == "git_commit":
-            tag_commit = t[value]
+    for tag in tags:
+        if tag[key] == "created_on_test":
+            test = tag[value]
+        if tag[key] == "git_branch":
+            tag_branch = tag[value]
+        if tag[key] == "git_commit":
+            tag_commit = tag[value]
 
     if test == "True":
         return "CREATED ON TEST"
