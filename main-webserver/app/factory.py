@@ -1,5 +1,7 @@
 import os
 
+import stripe
+
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -44,6 +46,9 @@ def create_app(testing=False):
     # Only set up a connection to a Sentry event ingestion endpoint in production and staging.
     if app.config["ENVIRONMENT"] in (env_names.PRODUCTION, env_names.STAGING):
         init_and_ensure_sentry_connection(app.config["ENVIRONMENT"], app.config["SENTRY_DSN"])
+
+    # Set the Stripe API key.
+    stripe.api_key = app.config["STRIPE_SECRET"]
 
     from .models import db
     from .helpers.utils.general.limiter import limiter
