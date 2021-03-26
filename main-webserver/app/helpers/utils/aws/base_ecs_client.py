@@ -1002,7 +1002,7 @@ class ECSClient:
         self.auto_scaling_client.delete_launch_configuration(
             LaunchConfigurationName=old_launch_config_name
         )
-        return cluster_name, ami
+        return cluster_name, ami, containers_list
 
     @staticmethod
     def delete_cluster(cluster_name, region):

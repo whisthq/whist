@@ -15,6 +15,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.models import (
     db,
     ClusterInfo,
+    InstanceInfo,
     RegionToAmi,
     UserContainer,
     SupportedAppImages,
@@ -121,7 +122,7 @@ def update_cluster(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     try:
-        ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+        _, _, instance_list = ecs_client.update_cluster_with_new_ami(cluster_name, ami)
     except FractalECSClusterNotFoundException:
         # We should remove any entries in the DB referencing this cluster, as they are out of date
         # Cluster is a primary key, so `.first()` suffices
@@ -143,6 +144,10 @@ def update_cluster(
                 "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
             },
         )
+        for instance_name in instance_list:
+            instance = InstanceInfo.query.get(instance_name)
+            instance.is_draining = True
+            db.session.commit()
 
 
 @shared_task(bind=True)

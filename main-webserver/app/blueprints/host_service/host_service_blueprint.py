@@ -49,4 +49,6 @@ def host_service_heartbeat(**kwargs):
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    return instance_heartbeat_helper(auth_token, instance_id, free_ram_kb, instance_type)
+    return instance_heartbeat_helper(
+        auth_token, instance_id, free_ram_kb, instance_type, dying_heartbeat
+    )

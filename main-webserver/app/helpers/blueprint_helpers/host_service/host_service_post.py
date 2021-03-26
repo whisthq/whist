@@ -39,7 +39,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str) -> Tuple[str, int]:
 
 
 def instance_heartbeat_helper(
-    auth_token: str, instance_id: str, free_ram_kb: int, instance_type: str
+    auth_token: str, instance_id: str, free_ram_kb: int, instance_type: str, is_dying: bool
 ) -> Tuple[str, int]:
     """
 
@@ -48,6 +48,7 @@ def instance_heartbeat_helper(
         instance_id (str): the AWS instance ID
         free_ram_kb (int): how many KB of ram are available
         instance_type (str): what type of instance (e.g. g4.xlarge) it is
+        is_dying (bool): if the instance is being shut down
 
     Returns: request status
 
@@ -57,7 +58,10 @@ def instance_heartbeat_helper(
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
     if instance.auth_token.lower() != auth_token.lower():
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
-    instance.instance_type = instance_type
-    instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
+    if is_dying:
+        db.session.delete(instance)
+    else:
+        instance.instance_type = instance_type
+        instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
     db.session.commit()
     return jsonify({"status": SUCCESS}), SUCCESS
