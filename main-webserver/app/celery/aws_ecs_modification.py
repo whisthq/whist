@@ -55,6 +55,7 @@ def update_cluster(
     fractal_logger.info(
         f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"
     )
+    db.session.execute("SET LOCAL lock_timeout='30s';")
 
     # We must delete every unassigned container in the cluster. Locks using with_for_update()
     unassigned_containers = (
@@ -239,6 +240,8 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
             update_task_definitions(app_id=_app_id)
         return
 
+    db.session.execute("SET LOCAL lock_timeout='30s';")
+    
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
     if app_data is None:
         raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")

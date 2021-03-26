@@ -17,6 +17,7 @@ if ACTION == "EDIT":
 
 app = create_app()
 with app.app_context():
+    db.session.execute("SET LOCAL lock_timeout='5s';")
 
     print("waiting to lock for", WAIT_BEFORE_LOCK, "seconds")
     time.sleep(WAIT_BEFORE_LOCK)
@@ -32,15 +33,3 @@ with app.app_context():
     elif ACTION == "EDIT":
         container.state = NEW_STATE
     db.session.commit()
-
-
-# _______________________ TRASH ________________________
-# with db.session.get_bind().connect() as con:
-#     rs = con.execute("select * from pg_locks;")
-#     for row in rs:
-#         print(row)
-
-# base_container = UserContainer.query.filter_by(
-#     container_id="id1"
-# ).first()  # lock using with_for_update()
-# print(base_container.state)

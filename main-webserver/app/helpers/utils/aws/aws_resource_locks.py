@@ -25,7 +25,7 @@ def lock_container_and_update(container_name, state, wait=0):
         ),
         extra={"label": get_container_user(container_name)},
     )
-
+    db.session.execute("SET LOCAL lock_timeout='30s';")
     # lock using with_for_update()
     container = UserContainer.query.with_for_update().filter_by(container_id=container_name).first()
 

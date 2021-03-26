@@ -35,6 +35,7 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         None
     """
     task_start_time = time.time()
+    db.session.execute("SET LOCAL lock_timeout='30s';")
     try:
         container = ensure_container_exists(
             UserContainer.query.with_for_update().get(container_name)
