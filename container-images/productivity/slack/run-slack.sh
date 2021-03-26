@@ -9,4 +9,4 @@ if pgrep chrome; then
 fi
 
 # Start Slack
-exec /usr/lib/slack/slack "$@"
+exec /usr/lib/slack/slack $@

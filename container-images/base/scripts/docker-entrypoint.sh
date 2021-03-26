@@ -11,25 +11,25 @@ set -Eeuo pipefail
 # If FRACTAL_AES_KEY is set, then create file
 if [ -n "${FRACTAL_AES_KEY+1}" ]
 then
-    echo "$FRACTAL_AES_KEY" > /usr/share/fractal/private/aes_key
+    echo $FRACTAL_AES_KEY > /usr/share/fractal/private/aes_key
 fi
 
 # If WEBSERVER_URL is set, then create file
 if [ -n "${WEBSERVER_URL+1}" ]
 then
-    echo "$WEBSERVER_URL" > /usr/share/fractal/private/webserver_url
+    echo $WEBSERVER_URL > /usr/share/fractal/private/webserver_url
 fi
 
 # If FRACTAL_DPI is set, then create file
 if [ -n "${FRACTAL_DPI+1}" ]
 then
-    echo "$FRACTAL_DPI" > /usr/share/fractal/private/dpi
+    echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
 fi
 
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
-    echo "$SENTRY_ENV" > /usr/share/fractal/private/sentry_env
+    echo $SENTRY_ENV > /usr/share/fractal/private/sentry_env
 fi
 
 # Unset the AWS key to make sure that this environment variable does not

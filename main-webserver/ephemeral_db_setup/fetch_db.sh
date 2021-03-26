@@ -25,8 +25,7 @@ POSTGRES_URI=${POSTGRES_URI:=""}
 
 # retrieve db info depending on if a URI is given or host/db/user. we check the prefix for a URI
 if [[ ^$POSTGRES_URI =~ "postgres://" ]]; then
-    echo "===  Retrieving DB data  ==="
-    echo ""
+    echo "===  Retrieving DB data  === \n"
     (pg_dump -d $POSTGRES_URI --data-only --column-inserts -t sales.email_templates -t hardware.region_to_ami -t hardware.supported_app_images) > db_data.sql
 
 else
