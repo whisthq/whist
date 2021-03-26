@@ -1,2 +1,2 @@
 [build]
-  ignore = "git diff --quite HEAD^ HEAD ."
+  ignore = "git diff --quiet HEAD^ HEAD ."
