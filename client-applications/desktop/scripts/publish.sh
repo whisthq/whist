@@ -59,7 +59,7 @@ else
     mkdir -p loading
 
     # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/Fractal
+    cp ../../protocol/client/build64/Darwin/FractalClient "protocol-build/client/ Fractal"
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
 
     # Copy over the FFmpeg dylibs
