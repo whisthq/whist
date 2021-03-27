@@ -32,7 +32,7 @@ from app.celery.aws_ecs_modification import manual_scale_cluster
 
 # print(os.environ)
 branch = os.environ["BRANCH"].replace("/", "-")
-commit = uuid.uuid4()[0:7]
+commit = os.environ["COMMIT"][0:7]
 pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
 pytest.container_name = None
 
