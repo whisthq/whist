@@ -163,7 +163,7 @@ class ECSClient:
 
     def get_git_info(self):
         branch = os.environ["BRANCH"]
-        commit = os.environ["APP_GIT_COMMIT"]
+        commit = current_app.config["APP_GIT_COMMIT"]
 
         return branch, commit[0:7]
 
