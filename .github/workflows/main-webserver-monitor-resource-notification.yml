@@ -1,15 +1,14 @@
-# workflows/ec2-ecs-check-status.yml
+# workflows/main-webserver-monitor-resource-notification.yml
 #
-# EC2 and ECS Status: Checks EC2 instance and ECS Clusters
+# Main Webserver: Monitor Resource Notification
 # Scans currently running EC2 instances and ECS clusters using AWS SDK and sends flagged instances as a slack message
 
-name: "EC2 and ECS Status: Checks EC2 instance and ECS Clusters "
+name: "Main Webserver: Monitor Resource Notification "
 
 on:
     schedule:
         - cron: "30 16 * * *" # runs at 11:30am (EST/UTC+5) each day
 
-    # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
 
 jobs:
@@ -52,13 +51,12 @@ jobs:
               working-directory: .github/workflows/helpers/aws/ec2
               run: pip install -r requirements.txt
 
-            - name: Run ec2 instances
+            - name: Scan ec2 instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/}
+              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} EC2
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
-                  AWS_RESOURCE: EC2
 
             - name: Configure AWS Credentials for ECS
               uses: aws-actions/configure-aws-credentials@v1
@@ -67,13 +65,12 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: ${{ matrix.aws-region}}
 
-            - name: Run ecs instances
+            - name: Scan ecs instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/}
+              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} ECS
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
-                  AWS_RESOURCE: ECS
 
             - name: Notify Slack if error
               if: ${{ failure() }}

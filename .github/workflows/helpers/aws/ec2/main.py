@@ -7,14 +7,14 @@ import sys
 from datetime import datetime
 from datetime import date
 
-
+# TODO: add comments for each icon type 
 icons = {
     "OLD COMMIT": ":red_circle:",
     "OVERDUE": ":red_circle:",
     "CREATED ON TEST": ":red_circle:",
     "CURRENT COMMIT": ":large_green_circle:",
     "IGNORE TIME": ":large_yellow_circle:",
-    "IGNORE COMMIT": ":large_yellow_circle:",
+    "NO COMMIT TAG": ":large_yellow_circle:",
 }
 
 
@@ -49,7 +49,7 @@ def read_tags(tags, commit, branch, resource):
     Returns:
         str: status code, either ignore commit, old commit, current commit, or create on test
     """
-    target_branches = ["dev", "staging", "master"]
+    target_branches = ["dev", "staging", "prod"]
     tag_branch = ""
     tag_commit = ""
     test = ""
@@ -68,7 +68,7 @@ def read_tags(tags, commit, branch, resource):
     if branch in target_branches and tag_branch == branch:
         return "OLD COMMIT" if tag_commit != commit else "CURRENT COMMIT"
 
-    return "IGNORE COMMIT"
+    return "NO COMMIT TAG"
 
 
 def compare_timestamps(timestamp):
@@ -123,6 +123,7 @@ def flag_clusters(region, commit, branch):
     message = ""
 
     for c in clusters:
+        line = ""
         clusterName = c["clusterName"]
         clusterArn = c["clusterArn"]
         tags = get_tags(clusterArn, region)
@@ -135,9 +136,18 @@ def flag_clusters(region, commit, branch):
             launchTime = datetime.strptime(tags["created_at"], "%Y-%d-%m")
             launch_status, days = compare_timestamps(launchTime)
             launch_icon = icons[launch_status]
-
+        
         if git_icon == ":red_circle:":
-            message += f"• `{clusterName}` - {git_status} - {git_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
+            line += f"• `{clusterName}` - {git_status}"
+
+        if launch_icon == ":red_circle:":
+            line += f" - {launch_status} - uptime: {days} days"
+        
+        line += git_icon if git_icon == ":red_circle" else launch_icon
+
+        if (len(line) > 0) {
+            message += f"{line} \n"
+        }
 
     return message
 
@@ -197,10 +207,10 @@ def flag_instances(region, commit, branch):
 
 if __name__ == "__main__":
     region = os.environ.get("AWS_REGION")
-    resource = os.environ.get("AWS_RESOURCE")
     token = os.environ.get("SLACK_EC2_BOT_TOKEN")
     commit = sys.argv[1][0:7]
     branch = sys.argv[2]
+    resource = sys.argv[3]
     print(commit)
     print(branch)
     # slack message formatter
