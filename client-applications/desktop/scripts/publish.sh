@@ -60,8 +60,9 @@ else
     mkdir -p loading
     cp -r ../../protocol/build-publish/client/build64/loading/*.png loading
 
-    rm -rf protocol-build
-    mkdir -p protocol-build/client
+    # Move FractalClient and crashpad_handler over to client-app
+    cp ../../protocol/client/build64/Darwin/FractalClient "protocol-build/client/ Fractal"
+    cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
 
     # Move FractalClient and related files over to client-app
     cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client

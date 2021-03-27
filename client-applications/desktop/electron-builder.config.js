@@ -4,7 +4,7 @@ const appDetails = {
     // TODO: Update this appId to something more sensible.
     appId: "com.fractalcomputers.fractal",
     copyright: "Copyright © Fractal Computers, Inc.",
-    productName: "FractalLauncher",
+    productName: "Fractal",
 }
 
 // This configuration controls how the application is bundled,
