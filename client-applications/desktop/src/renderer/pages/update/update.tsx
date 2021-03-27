@@ -17,8 +17,6 @@ const Update = () => {
     const sanitizeBytes = (fl: number) => Math.round((fl / 1000000) * 100) / 100
 
     useEffect(() => {
-        console.log(mainState)
-
         if(!mainState.needsUpdate) {
             goTo("/auth")
         }
