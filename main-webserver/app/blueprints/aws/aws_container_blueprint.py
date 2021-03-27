@@ -2,6 +2,7 @@ from flask import abort, Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
+import os
 
 from app import fractal_pre_process, log_request
 from app.maintenance.maintenance_manager import (
@@ -38,6 +39,9 @@ from app.helpers.utils.general.auth import fractal_auth, developer_required, pay
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.models import ClusterInfo, RegionToAmi
+
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -437,5 +441,44 @@ def aws_container_stun(**kwargs):
     else:
         status = set_stun(user, container_id, using_stun)
         response = jsonify({"status": status}), status
+
+    return response
+
+
+@aws_container_bp.route("/container/name", methods=["POST"])
+@fractal_pre_process
+def get_name(**kwargs):
+    body = kwargs["body"]
+    # name = ECSClient.generate_name("cluster")
+    region_name = "us-east-1"
+
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+    instance_type = "t3.small"
+    ami = "ami-0decb4a089d867dc1"
+    min_size = 0
+    max_size = 10
+
+    (
+        cluster_name,
+        launch_config_name,
+        auto_scaling_group_name,
+        capacity_provider_name,
+    ) = ecs_client.create_auto_scaling_cluster(
+        cluster_name=None,
+        instance_type=instance_type,
+        ami=ami,
+        min_size=min_size,
+        max_size=max_size,
+        availability_zones=None,
+    )
+
+    response = jsonify(
+        {
+            "cluster name": cluster_name,
+            "launch_config_name": launch_config_name,
+            "asg name": auto_scaling_group_name,
+        }
+    )
 
     return response
