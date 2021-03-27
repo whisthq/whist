@@ -66,13 +66,12 @@ jobs:
             # for a specific branch (i.e. `dev`), the next workflow will wait at least `continue-after-seconds` seconds
             # before starting to run, which helps ensure that there will not be any race condition between workflows
             - name: Make fractal-build-and-deploy.yml Workflows Sequential via Turnstyle
-              id: turnstyle
               uses: softprops/turnstyle@v1
               with:
-                continue-after-seconds: 600 # Put a minimum of 10 minutes distance between workflows
-                same-branch-only: true
+                  continue-after-seconds: 600 # Put a minimum of 10 minutes distance between workflows
+                  same-branch-only: true
               env:
-                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Detect Branch
               id: detect-branch
