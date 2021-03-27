@@ -7,7 +7,7 @@ from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
-from app.helpers.utils.aws.aws_resource_locks import set_local_lock_timeout
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.models import (
     db,
@@ -56,8 +56,8 @@ def update_cluster(
     fractal_logger.info(
         f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"
     )
-    set_local_lock_timeout(30)
 
+    set_local_lock_timeout(30)
     # We must delete every unassigned container in the cluster. Locks using with_for_update()
     unassigned_containers = (
         UserContainer.query.with_for_update().filter_by(cluster=cluster_name, user_id=None).all()
@@ -240,7 +240,6 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
         return
 
     set_local_lock_timeout(30)
-
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
     if app_data is None:
         raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")

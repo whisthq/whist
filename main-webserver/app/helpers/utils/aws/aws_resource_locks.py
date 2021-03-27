@@ -2,11 +2,8 @@ import time
 
 from app.helpers.utils.aws.aws_general import get_container_user
 from app.helpers.utils.general.logs import fractal_logger
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, UserContainer
-
-
-def set_local_lock_timeout(seconds=30):
-    db.session.execute(f"SET LOCAL lock_timeout='{seconds}s';")
 
 
 def lock_container_and_update(container_name, state, wait=0):
