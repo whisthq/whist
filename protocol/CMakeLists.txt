@@ -123,7 +123,7 @@ endif()
 # Windows option to add icon (used primarily for client app compilation pipeline)
 option(USE_CLIENT_APP_ICON "use client app icon in exe" OFF)
 
-# Get Bash on all OS's
+# Get Bash on all OSs
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     # Find git
     find_program(GIT git REQUIRED)
@@ -131,7 +131,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     get_filename_component(GIT_DIR ${GIT} DIRECTORY)
     # Look for gitbash based on git's path
     # NO_DEFAULT_PATH to avoid finding WSL bash, or any other bash
-    find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH REQUIRED)
+    find_program(BASH bash PATHS "${GIT_DIR}/../bin" NO_DEFAULT_PATH)
+
+    if (NOT BASH)
+        if(EXISTS "C:\\Windows\\System32\\wsl.exe")
+            set(WSL "C:\\Windows\\System32\\wsl.exe")
+            set(BASH "/bin/bash")
+        else()
+            message(FATAL_ERROR "Git Bash and WSL Bash not found! For WSL bash, make sure to create a symlink from C:\\Windows\\SysWOW64\\wsl.exe to C:\\Windows\\System32\\wsl.exe if you are on a 32-bit CMake install.")
+        endif()
+    endif()
 else()
     set(BASH "/bin/bash")
 endif()
@@ -139,14 +148,20 @@ endif()
 # download AWS S3 binaries unless indicated otherwise
 option(DOWNLOAD_BINARIES "download binaries from S3 via AWS CLI" ON)
 if (DOWNLOAD_BINARIES)
-    set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
-
     message(STATUS "Downloading binaries from AWS S3")
-    execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
-                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-                    RESULT_VARIABLE download_result)
+    if (WSL)
+        set(download_args ${CMAKE_SYSTEM_NAME} "`wslpath ${CMAKE_BINARY_DIR}/client/build64`" "`wslpath ${CMAKE_BINARY_DIR}/server/build64`" "`wslpath ${CMAKE_SOURCE_DIR}`" "`wslpath ${CMAKE_BINARY_DIR}/.download-binaries-cache`")
+        execute_process(COMMAND ${WSL} ${BASH} "`wslpath ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh`" ${download_args}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE download_result)
+    else()
+        set(download_args ${CMAKE_SYSTEM_NAME} ${CMAKE_BINARY_DIR}/client/build64 ${CMAKE_BINARY_DIR}/server/build64 ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR}/.download-binaries-cache)
+        execute_process(COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/download-binaries.sh ${download_args}
+                        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                        RESULT_VARIABLE download_result)
+    endif()
     if (NOT ${download_result} EQUAL "0")
-        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download}")
+        message(FATAL_ERROR "Failed to download binaries from AWS S3: exitcode: ${download_result}")
     endif()
 endif()
 
@@ -319,7 +334,14 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile
     add_subdirectory(server)
 endif()
 
-add_custom_target(clang-tidy
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
-    DEPENDS FractalClient ${SERV})
+if (WSL)
+    add_custom_target(clang-tidy
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMAND ${WSL} ${BASH} "wslpath `${CMAKE_SOURCE_DIR}/run-clang-tidy.sh`" -c
+        DEPENDS FractalClient ${SERV})
+else()
+    add_custom_target(clang-tidy
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
+        DEPENDS FractalClient ${SERV})
+endif()
