@@ -24,6 +24,11 @@ const httpConfig = {
     endpointRefreshToken: "/token/refresh",
 }
 
+const graphqlConfig = {
+    server: config.url.GRAPHQL_HTTP_URL,
+    endpointRefreshToken: "/token/refresh",
+}
+
 export const get = configGet(httpConfig)
 
 export const post = configPost(httpConfig)
@@ -63,4 +68,26 @@ export const containerRequest = async (
             dpi,
             app: "Google Chrome",
         },
+    })
+
+const graphqlPost = configPost(graphqlConfig)
+
+const stringifyGQL = (doc: any) => {
+    return doc.loc && doc.loc.source.body
+}
+
+export const sendGraphql = async (
+    operationsDoc: any,
+    operationName: string,
+    variables: any,
+    accessToken?: string
+) =>
+    graphqlPost({
+        endpoint: "",
+        accessToken,
+        body: JSON.stringify({
+            query: stringifyGQL(operationsDoc),
+            variables: variables,
+            operationName: operationName,
+        }),
     })

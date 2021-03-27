@@ -2,6 +2,7 @@ import path from "path"
 import { spawn, ChildProcess } from "child_process"
 import { app, screen } from "electron"
 import { containerRequest, taskStatus } from "@app/utils/api"
+import { chooseRegion } from "@app/utils/aws"
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -28,17 +29,6 @@ const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
 
-const chooseRegion = () => {
-    return [
-        "us-east-1",
-        "us-east-2",
-        "us-west-1",
-        "us-west-2",
-        "ca-central-1",
-        "eu-central-1",
-    ][0]
-}
-
 export const parseInfoPorts = (res: {
     port_32262: number
     port_32263: number
@@ -46,7 +36,8 @@ export const parseInfoPorts = (res: {
 }) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
 
 export const createContainer = async (email: string, accessToken: string) => {
-    const r = containerRequest(email, accessToken, chooseRegion(), getDPI())
+    const region = await chooseRegion()
+    const r = containerRequest(email, accessToken, region, getDPI())
     const response = await r
     if (!response.json.ID)
         throw new Error(
