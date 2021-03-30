@@ -21,6 +21,8 @@ from app.helpers.utils.general.sql_commands import (
 )
 from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
+from app.constants.db_lock_constants import LOCK_TIMEOUT
+
 
 @shared_task(bind=True)
 def delete_container(self: Task, container_name: str, aes_key: str) -> None:
@@ -36,7 +38,7 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         None
     """
     task_start_time = time.time()
-    set_local_lock_timeout(30)
+    set_local_lock_timeout(LOCK_TIMEOUT)
     try:
         container = ensure_container_exists(
             UserContainer.query.with_for_update().get(container_name)

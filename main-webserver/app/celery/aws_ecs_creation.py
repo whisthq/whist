@@ -39,6 +39,7 @@ from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
+from app.constants.db_lock_constants import LOCK_TIMEOUT
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
@@ -180,7 +181,7 @@ def find_available_container(
     Returns: either a fitting container or None if no container is found
 
     """
-    set_local_lock_timeout(30)
+    set_local_lock_timeout(LOCK_TIMEOUT)
     available_container = (
         UserContainer.query.filter_by(
             task_definition=task_definition_arn,
@@ -197,7 +198,7 @@ def find_available_container(
     if available_container is None:
         # check each replacement region for available containers
         for bundlable_region in bundled_region.get(region_name, []):
-            set_local_lock_timeout(30)
+            set_local_lock_timeout(LOCK_TIMEOUT)
             available_container = (
                 UserContainer.query.filter_by(
                     task_definition=task_definition_arn,
