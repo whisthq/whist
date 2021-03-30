@@ -19,7 +19,7 @@ import {
     checkConfirmPassword,
     checkConfirmPasswordVerbose,
 } from "@app/utils/auth"
-import { emailSignup } from "@app/utils/api"
+/* import { emailSignup } from "@app/utils/api" */
 
 import { fractalSignupWarning } from "@app/utils/constants"
 
@@ -49,17 +49,17 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
         if (signupEnabled(email, password, confirmPassword)) {
             setProcessing(true)
             setSignupWarning(fractalSignupWarning.NONE)
-            emailSignup(email, password, "", "").then(({ json, response }) => {
-                if (json && response.status === 200) {
-                    onSignup(json)
-                } else {
-                    setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
-                    setEmail("")
-                    setPassword("")
-                    setConfirmPassword("")
-                }
-                setProcessing(false)
-            })
+            /* emailSignup(email, password, "", "").then(({ json, response }) => {
+*     if (json && response.status === 200) {
+*         onSignup(json)
+*     } else {
+*         setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
+*         setEmail("")
+*         setPassword("")
+*         setConfirmPassword("")
+*     }
+*     setProcessing(false)
+* }) */
         } else {
             setProcessing(false)
         }

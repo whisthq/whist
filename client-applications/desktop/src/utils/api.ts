@@ -1,5 +1,7 @@
 import { configGet, configPost } from "@fractal/core-ts"
+import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 import config from "@app/utils/config"
+import { LoginServerError, LoginCredentialsWarning } from "@app/utils/errors"
 import { goTo } from "@app/utils/history"
 
 /*
@@ -29,8 +31,28 @@ export const get = configGet(httpConfig)
 export const post = configPost(httpConfig)
 
 export const emailLogin = async (username: string, password: string) =>
-    post({ endpoint: "/account/login", body: { username, password } })
+    await post({
+        endpoint: "/account/login",
+        body: { username, password },
+    })
 
+export const responseAccessToken = (response: {
+    json: { access_token?: string }
+}) => response.json?.access_token
+
+export const responseRefreshToken = (response: {
+    json: { refresh_token?: string }
+}) => response.json?.refresh_token
+
+export const responseConfigToken = async (
+    password: string,
+    response: {
+        json: { encrypted_config_token?: string }
+    }
+) =>
+    response.json.encrypted_config_token
+        ? decryptConfigToken(password, response.json.encrypted_config_token)
+        : await createConfigToken()
 export const tokenValidate = async (accessToken: string) =>
     get({ endpoint: "/token/validate", accessToken })
 
@@ -40,7 +62,7 @@ export const emailSignup = async (
     name: string,
     feedback: string
 ) =>
-    post({
+    await post({
         endpoint: "/account/register",
         body: { username, password, name, feedback },
     })

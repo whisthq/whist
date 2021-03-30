@@ -45,24 +45,18 @@ export const parseInfoPorts = (res: {
     port_32273: number
 }) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
 
-export const createContainer = async (email: string, accessToken: string) => {
-    const r = containerRequest(email, accessToken, chooseRegion(), getDPI())
-    const response = await r
-    if (!response.json.ID)
-        throw new Error(
-            "Could not create container! Received: " +
-                JSON.stringify(response, null, 4)
-        )
-    return response.json.ID
-}
+export const createContainer = async (email: string, accessToken: string) =>
+    await containerRequest(email, accessToken, chooseRegion(), getDPI())
 
-export const getContainerInfo = async (taskID: string, accessToken: string) => {
-    const response = await taskStatus(taskID, accessToken)
-    return response.json
-}
+export const getContainerInfo = async (taskID: string, accessToken: string) =>
+    await taskStatus(taskID, accessToken)
+
+export const responseContainerID = (response: { json?: { ID?: string } }) =>
+    response?.json?.ID
 
 export const waitUntilReady = async (taskID: string, accessToken: string) => {
     while (true) {
+        console.log("waiting")
         let info = await getContainerInfo(taskID, accessToken)
         if (info.state === "SUCCESS") return info
         if (!(info.state === "PENDING" || info.state === "STARTED"))

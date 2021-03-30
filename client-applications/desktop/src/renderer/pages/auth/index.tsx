@@ -12,19 +12,20 @@ const Auth = () => {
     */
 
     const [mainState, setMainState] = useMainState()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
+    const [email, setEmail] = useState("neil@fractal.co")
+    const [password, setPassword] = useState("Password1234")
     const [confirmPassword, setConfirmPassword] = useState("")
 
-    const onLogin = () => { setMainState({email, password, loginRequest: true}) }
+    const onLogin = () => {
+        setMainState({
+            email,
+            password,
+            loginRequests: [...mainState.loginRequests || [], Date.now()]})
+    }
 
     const onSignup = () => {
         console.log("Signed up!")
     }
-
-    React.useEffect(() => {
-        /* console.log(mainState) */
-    }, [mainState])
 
     return (
         <>

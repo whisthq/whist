@@ -27,13 +27,19 @@ const hXl = { height: 16 * 64 }
 const h2Xl = { height: 16 * 80 }
 const h3Xl = { height: 16 * 96 }
 
-export const createAuthWindow = () => {
-    const win = new BrowserWindow({
-        ...base,
-        ...wSm,
-        ...hMd,
-        show: false,
-    } as BrowserWindowConstructorOptions)
+type CreateWindowFunction = (
+    onReady?: (win: BrowserWindow) => any,
+    onClose?: (win: BrowserWindow) => any
+) => BrowserWindow
+
+export const getWindows = () => BrowserWindow.getAllWindows()
+
+export const createWindow = (
+    options: Partial<BrowserWindowConstructorOptions>,
+    onReady: (win: BrowserWindow) => any,
+    onClose: (win: BrowserWindow) => any
+) => {
+    const win = new BrowserWindow({ ...options, show: false })
 
     if (app.isPackaged) {
         win.loadFile("build/index.html")
@@ -42,23 +48,22 @@ export const createAuthWindow = () => {
         win.webContents.openDevTools({ mode: "undocked" })
     }
 
-    win.webContents.on("did-finish-load", () => win.show())
+    win.webContents.on("did-finish-load", () => onReady(win))
+    win.on("close", () => onClose(win))
 
     return win
 }
 
-export const createErrorWindow = () => {
-    const win = new BrowserWindow({
-        ...base,
-        ...wSm,
-        ...hMd,
-        show: false,
-    } as BrowserWindowConstructorOptions)
+export const createAuthWindow: CreateWindowFunction = (onReady, onClose) =>
+    createWindow(
+        { ...base, ...wSm, ...hMd } as BrowserWindowConstructorOptions,
+        (win) => onReady && onReady(win),
+        (win) => onClose && onClose(win)
+    )
 
-    if (app.isPackaged) {
-        win.loadFile("build/index.html")
-    } else {
-        win.loadURL("http://localhost:8080")
-        win.webContents.openDevTools({ mode: "undocked" })
-    }
-}
+export const createErrorWindow: CreateWindowFunction = (onReady, onClose) =>
+    createWindow(
+        { ...base, ...wSm, ...hMd } as BrowserWindowConstructorOptions,
+        (win) => onReady && onReady(win),
+        (win) => onClose && onClose(win)
+    )

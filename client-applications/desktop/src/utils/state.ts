@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import { IpcRendererEvent } from "electron"
 import { isEqual, isEmpty, merge } from "lodash"
-import { BrowserWindow } from "electron"
+import { IpcRendererEvent, BrowserWindow } from "electron"
 import { ChildProcess } from "child_process"
+import { getWindows } from "@app/utils/windows"
 
 export type State = {
     email: string
@@ -10,7 +10,8 @@ export type State = {
     configToken: string
     accessToken: string
     refreshToken: string
-    loginRequest: boolean
+    displayError: string
+    loginRequests: number[]
     loginLoading: boolean
     loginWarning: string
     protocolLoading: boolean
@@ -69,59 +70,14 @@ export const useMainState = ():
     return [mainState, setMainState]
 }
 
-export const initState = async (
-    init: Partial<State>,
-    events: Event[],
-    effects: Effect[]
+export const ipcBroadcast = (
+    state: Partial<State>,
+    windows: BrowserWindow[]
 ) => {
-    const cache = new Set()
-    const state = {} as State
-
-    const reduceEffects = async (
-        effs: Effect[],
-        setState: Function
-    ): Promise<void> => {
-        // we cache running effects so that async effects are not run
-        // again before they return.
-        // we filter out effects that are in the cache
-        effs = effs.filter((eff) => !cache.has(eff))
-        // add all remaining effects to the cache
-        effs.forEach((eff) => cache.add(eff))
-        // Call each effect with the current state
-        const iters = effs.map((eff) => eff({ ...state }))
-
-        let updates
-        do {
-            // start all effects and wait for return or first yield
-            updates = await Promise.all(iters.map((i) => i.next()))
-            // if effects have returned, remove them from cache
-            updates.map((el, idx) => el.done && cache.delete(effs[idx]))
-            // merge all the updated states into a single object
-            let newState = updates.map((u) => u.value).reduce(merge, {})
-            // only run setState if there's actually updates.
-            // call setState so that the state updates are merged with
-            // the current state value
-            if (!isEmpty(newState)) setState(newState)
-        } while (updates.some((u) => !u.done))
-    }
-
-    const setState = async (newState: Partial<State>) => {
-        const prevState = { ...state }
-        merge(state, newState) // mutate state object with new changes
-        // effects run on every state update
-        // setState will not be called unless there are actually
-        // updates to merge
-        // effects will run until the state is "settled"
-        if (!isEqual(state, prevState)) reduceEffects(effects, setState)
-    }
-
-    // run event functions once on initialization
-    for (let event of events) event(setState)
-
-    // initialize the state with default values
-    setState(init)
-}
-
-export const isLoggedIn = (state: State): boolean => {
-    return state.accessToken && state.email && state.configToken ? true : false
+    const contents = windows.map((win) => win.webContents)
+    contents.map((c) => {
+        c.isLoading()
+            ? c.on("did-finish-load", () => c.send(StateChannel, state))
+            : c.send(StateChannel, state)
+    })
 }
