@@ -18,7 +18,7 @@ if "%1%" == "--help" (
     cd ..\..\protocol
     mkdir build-publish
     cd build-publish
-    cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release -G "NMake Makefiles" -D USE_CLIENT_APP_ICON=ON
+    cmake -S .. -B . -D CMAKE_BUILD_TYPE=Release -G "Ninja" -D USE_CLIENT_APP_ICON=ON
     nmake FractalClient
     cd ..
     cd ..\client-applications\desktop

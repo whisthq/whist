@@ -4,35 +4,37 @@
 set -Eeuo pipefail
 
 function printhelp {
-    echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
-    echo "Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu."
-    echo ""
-    echo "  --version VERSION         set the version number of the client app"
-    echo "                            must be greater than the current version"
-    echo "                            in S3 bucket"
-    echo ""
-    echo "  --bucket BUCKET           set the S3 bucket to upload to (if -publish=true)"
-    echo "                            options are:"
-    echo "                              fractal-chromium-macos-dev      [macOS Fractalized Chrome Development Bucket]"
-    echo "                              fractal-chromium-macos-staging  [macOS Fractalized Chrome Staging Bucket]"
-    echo "                              fractal-chromium-macos-prod     [macOS Fractalized Chrome Production Bucket]"
-    echo "                              fractal-chromium-ubuntu-dev     [Linux Ubuntu Fractalized Chrome Development Bucket]"
-    echo "                              fractal-chromium-ubuntu-staging [Linux Ubuntu Fractalized Chrome Staging Bucket]"
-    echo "                              fractal-chromium-ubuntu-prod    [Linux Ubuntu Fractalized Chrome Production Bucket]"
-    echo ""
-    echo "  --env ENV                 environment to publish the client app with"
-    echo "                            defaults to development, options are dev/staging/prod"
-    echo ""
-    echo "  --publish PUBLISH         set whether to notarize the macOS application and publish to AWS S3 and auto-update live apps"
-    echo "                            defaults to false, options are true/false"
+    cat <<EOF
+Usage: $0 [OPTION 1] [OPTION 2] ...
+
+Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu.
+
+  --version VERSION         set the version number of the client app
+                            must be greater than the current version
+                            in S3 bucket
+
+  --bucket BUCKET           set the S3 bucket to upload to (if -publish=true)
+                            options are:
+                              fractal-chromium-macos-dev      [macOS Fractalized Chrome Development Bucket]
+                              fractal-chromium-macos-staging  [macOS Fractalized Chrome Staging Bucket]
+                              fractal-chromium-macos-prod     [macOS Fractalized Chrome Production Bucket]
+                              fractal-chromium-ubuntu-dev     [Linux Ubuntu Fractalized Chrome Development Bucket]
+                              fractal-chromium-ubuntu-staging [Linux Ubuntu Fractalized Chrome Staging Bucket]
+                              fractal-chromium-ubuntu-prod    [Linux Ubuntu Fractalized Chrome Production Bucket]
+
+  --env ENV                 environment to publish the client app with
+                            defaults to development, options are dev/staging/prod
+
+  --publish PUBLISH         set whether to notarize the macOS application and publish to AWS S3 and auto-update live apps
+                            defaults to false, options are true/false
+EOF
 }
 
-if [[ "$1" == "--help" ]]
-then
+if [[ "${1-}" == "--help" ]]; then
     printhelp
 else
     version=${version:-1.0.0}
-    bucket=${bucket:-fractal-chromium-macos-dev}
+    bucket=${bucket:-PLACEHOLDER}
     env=${env:-development}
     publish=${publish:-false}
 
@@ -40,6 +42,11 @@ else
     while [ $# -gt 0 ]; do
         if [[ $1 == *"--"* ]]; then
             param="${1/--/}"
+            if [[ -z "${2+x}" ]]; then
+              echo "Could not find value for parameter $param"
+              printhelp
+              exit 1
+            fi
             declare $param="$2"
         fi
         shift
@@ -84,16 +91,12 @@ else
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
     yarn config set network-timeout 600000
 
-    if [[ "$publish" == "true" ]]
-    then
-        if [[ "$env" == "dev" ]]
-        then
+    if [[ "$publish" == "true" ]]; then
+        if [[ "$env" == "dev" ]]; then
             yarn set-prod-env-dev
-    elif [[ "$env" == "staging" ]]
-        then
+        elif [[ "$env" == "staging" ]]; then
             yarn set-prod-env-staging
-    elif [[ "$env" == "prod" ]]
-        then
+        elif [[ "$env" == "prod" ]]; then
             yarn set-prod-env-prod
         else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
