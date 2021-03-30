@@ -1,14 +1,18 @@
 from flask import Blueprint
 from flask import jsonify, current_app
+from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.helpers.blueprint_helpers.mail.mail_post import mail_helper
+from app.helpers.utils.general.auth import developer_required
 
 mail_bp = Blueprint("mail_bp", __name__)
 
 
 @mail_bp.route("/mail", methods=["POST"])
 @fractal_pre_process
+@jwt_required()
+@developer_required
 def mail(**kwargs):
     """
     Handles all /mail routes. Needs:
