@@ -13,7 +13,7 @@
         "artifactName": "Fractal.${ext}",
         "asar": true,
         "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
-        "copyright": "Copyright � Fractal Computers, Inc.",
+        "copyright": "Copyright \ufffd Fractal Computers, Inc.",
         "deb": {
             "icon": "build/icon.png",
             "vendor": "Fractal Computers, Inc."
@@ -39,7 +39,8 @@
             "sign": false
         },
         "extraFiles": [
-            "build/"
+            "build/",
+            "loading/"
         ],
         "files": [
             "dist/",
@@ -51,8 +52,7 @@
             "main.prod.js",
             "main.prod.js.map",
             "package.json",
-            "build/icon.png",
-            "loading/"
+            "build/icon.png"
         ],
         "linux": {
             "artifactName": "Fractal.${ext}",
@@ -77,7 +77,7 @@
             },
             "extraFiles": [
                 {
-                    "from": "protocol-build/client/",
+                    "from": "protocol-build/client",
                     "to": "MacOS/"
                 }
             ],
@@ -242,7 +242,7 @@
         "electron": "9",
         "electron-builder": "^22.10.5",
         "electron-devtools-installer": "^3.0.0",
-        "electron-notarize": "^1.0.0",
+        "electron-notarize": "github:mingy98/electron-notarize#master",
         "electron-rebuild": "^2.3.5",
         "enzyme": "^3.11.0",
         "enzyme-adapter-react-16": "^1.15.2",
@@ -367,7 +367,7 @@
         "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
         "package-linux": "yarn build && electron-builder build --linux",
         "package-win": "yarn build && electron-builder build --win --x64",
-        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall",
+        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall && cd node_modules/electron-notarize && yarn && yarn build",
         "postlint-check": "prettier --ignore-path .eslintignore --single-quote --check \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
         "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
         "preinstall": "node ./internals/scripts/CheckYarn.js",
