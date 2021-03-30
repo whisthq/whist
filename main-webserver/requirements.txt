@@ -31,7 +31,6 @@ stripe==2.56.0
 waitress==2.0.0
 gevent==21.1.2
 supervisor==4.2.2
-
 aiohttp==3.7.3
 async-timeout==3.0.1
 attrs==20.3.0
