@@ -1,6 +1,7 @@
 import boto3
 import os
 import slack
+import uuid
 
 from datetime import datetime
 from datetime import date
@@ -43,7 +44,15 @@ def get_tags(arn, region):
     return response["tags"]
 
 
-def read_tags(tags, commit, branch, resource):
+def add_name(commit, branch, region, instance_id, test):
+    name = f"{'test' if test else ''}-<{branch}>-<{commit}>-{uuid.uuid4()}"
+    client = boto3.client("ec2", region_name=region)
+    client.create_tags(Resources=[instance_id], Tags=[{"Key": "Name", "Value": name}])
+
+    return name
+
+
+def read_tags(tags, commit, branch, resource, region, instance_id):
     """
     Reads tags for a given resource, either EC2 or ECS and returns status codes
 
@@ -56,10 +65,12 @@ def read_tags(tags, commit, branch, resource):
     Returns:
         str: status code, either ignore commit, old commit, current commit, or create on test
     """
+    found_name = False
     target_branches = ["dev", "staging", "prod"]
     tag_branch = ""
     tag_commit = ""
     test = ""
+    name = ""
     key = "Key" if resource == "EC2" else "key"
     value = "Value" if resource == "EC2" else "value"
     for tag in tags:
@@ -69,19 +80,23 @@ def read_tags(tags, commit, branch, resource):
             tag_branch = tag[value]
         if tag[key] == "git_commit":
             tag_commit = tag[value]
+        if tag[key] == "Name":
+            name = tag[value]
+            found_name = True
+
+    if resource == "EC2" and not found_name:
+        name = add_name(tag_commit, tag_branch, region, instance_id, test == "True")
 
     if test == "True":
-        return "CREATED ON TEST", tag_branch, tag_commit
+        return "CREATED ON TEST", tag_branch, tag_commit, name
     if branch in target_branches and tag_branch == branch:
         return (
-            "OLD COMMIT",
-            tag_branch,
-            tag_commit if tag_commit != commit else "CURRENT COMMIT",
-            tag_branch,
-            tag_commit,
+            ("OLD COMMIT", tag_branch, tag_commit, name)
+            if tag_commit != commit
+            else ("CURRENT COMMIT", tag_branch, tag_commit, name)
         )
 
-    return "NO COMMIT TAG", tag_branch, tag_commit
+    return ("NO COMMIT TAG", tag_branch, tag_commit, name)
 
 
 def compare_timestamps(timestamp):
@@ -143,30 +158,15 @@ def flag_clusters(region, commit, branch):
 
         tags = get_tags(clusterArn, region)
 
-        git_status, branch, commit = read_tags(tags, commit, branch, "ECS")
+        git_status, branch, commit, name = read_tags(tags, commit, branch, "ECS", region, "")
         git_icon = icons[git_status]
 
-        line = f"• `{clusterName}`"
-
-        launch_status = ""
-        launch_icon = ""
-        days = 0
-        if "created_at" in tags:
-            launch_time = datetime.strptime(tags["created_at"], "%Y-%d-%m")
-            launch_status, days = compare_timestamps(launch_time)
-            launch_icon = icons[launch_status]
+        line = f"`{clusterName}`"
 
         if git_icon == ":red_circle:":
             flag = True
-            line += f" - {git_status}"
-
-        if launch_icon == ":red_circle:":
-            flag = True
-            line += f" - {launch_status} - uptime: {days} days "
-
-        if flag:
-            line += git_icon if git_icon == ":red_circle:" else launch_icon
-            message += f"{line} \n"
+            line = f"• {git_icon} - {line} - {git_status} \n"
+            message += line
 
     return message
 
@@ -206,9 +206,10 @@ def flag_instances(region, commit, branch):
         for instance in instances:
             flag = False
 
-            branch = ""
-            commit = ""
+            tag_branch = ""
+            tag_commit = ""
             git_status = ""
+            name = ""
 
             launch_time = instance["LaunchTime"]
             instance_id = instance["InstanceId"]
@@ -216,14 +217,17 @@ def flag_instances(region, commit, branch):
             launch_status, days = compare_timestamps(launch_time)
             launch_icon = icons[launch_status]
 
-            line = f"• `{instance_id}`"
-
             if "Tags" in instance:
-                git_status, branch, commit = read_tags(instance["Tags"], commit, branch, "EC2")
+                git_status, tag_branch, tag_commit, name = read_tags(
+                    instance["Tags"], commit, branch, "EC2", region, instance_id
+                )
                 git_icon = icons[git_status]
             else:
+                name = add_name(commit, branch, region, instance_id)
                 git_status = "NO TAGS"
                 git_icon = icons["NO COMMIT TAG"]
+
+            line = f"`{name}`"
 
             if git_icon == ":red_circle:":
                 flag = True
@@ -234,20 +238,25 @@ def flag_instances(region, commit, branch):
                 line += f" - {launch_status} - uptime: {days} days "
 
             if flag:
-                line += git_icon if git_icon == ":red_circle:" else launch_icon
+                line = f"• :red_circle: {line}"
                 message += f"{line} \n"
-                if len(branch) > 0 and len(commit) > 0:
-                    message += f"      • Branch: `{branch}` \n"
-                    message += f"      • Commit: `{commit}` \n"
+                message += f"      • id: `{instance_id}` \n"
+
+                if len(tag_branch) > 0 and len(tag_commit) > 0:
+                    message += f"      • Branch: `{tag_branch}` \n"
+                    message += f"      • Commit: `{tag_commit}` \n"
 
     return message
 
 
 if __name__ == "__main__":
-    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    commit = os.environ.get("HEROKU_SLUG_COMMIT")
-    commit = commit[0:7]
-    branch = os.environ.get("BRANCH")
+    # token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+    # commit = os.environ.get("HEROKU_SLUG_COMMIT")
+    # commit = commit[0:7]
+    # branch = os.environ.get("BRANCH")
+    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
+    commit = "01234"
+    branch = "asdf"
 
     # slack message formatter
     for resource in ["EC2", "ECS"]:
@@ -280,4 +289,4 @@ if __name__ == "__main__":
             blocks[1]["text"]["text"] = message
 
             if len(message) > 0:
-                client.chat_postMessage(channel="C01MEPLJPHP", blocks=blocks)
+                client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
