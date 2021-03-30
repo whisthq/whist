@@ -149,13 +149,10 @@ Defines
 
 #define WRITE_MPRINTF_TO_LOG true
 
-// Note: Must be larger than FRACTAL_ENVIRONMENT_MAXLEN in order to read email from environment
-// variable
-#define USER_EMAIL_MAXLEN 300
-#define FRACTAL_ENVIRONMENT_MAXLEN 256
 #define FRACTAL_IDENTIFIER_MAXLEN 31
-#define MAX_WEBSERVER_URL_LEN 63
-#define ICON_PNG_FILENAME_MAXLEN 256
+#define WEBSERVER_URL_MAXLEN 63
+// this maxlen is the determined Fractal environment max length (the upper bound on all flags passed into the protocol)
+#define FRACTAL_ARGS_MAXLEN 255
 
 /*
 ============================
@@ -440,7 +437,7 @@ typedef struct FractalMouseMotionMessage {
 typedef struct FractalDiscoveryRequestMessage {
     int user_id;
     FractalTimeData time_data;
-    char user_email[USER_EMAIL_MAXLEN];
+    char user_email[FRACTAL_ARGS_MAXLEN + 1];
 } FractalDiscoveryRequestMessage;
 
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;

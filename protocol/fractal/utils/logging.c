@@ -53,7 +53,7 @@ int get_logger_history_len();
 void init_backtrace_handler();
 
 extern int connection_id;
-extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern char sentry_environment[FRACTAL_ARGS_MAXLEN+1];
 extern bool using_sentry;
 
 // logger Semaphores and Mutexes
