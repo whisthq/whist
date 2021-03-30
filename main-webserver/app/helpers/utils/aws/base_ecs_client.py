@@ -162,7 +162,10 @@ class ECSClient:
         return clients
 
     def get_git_info(self):
-        branch = os.environ["BRANCH"]
+        if "HEROKU_BRANCH" in os.environ:
+            branch = os.environ["HEROKU_BRANCH"]
+        else:
+            branch = os.environ["BRANCH"]
         commit = current_app.config["APP_GIT_COMMIT"]
 
         return branch, commit[0:7]

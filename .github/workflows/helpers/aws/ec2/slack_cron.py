@@ -236,8 +236,7 @@ def flag_instances(region, commit, branch):
 
 if __name__ == "__main__":
     # region = os.environ.get("AWS_REGION")
-    # token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
+    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
     commit = "asdf"
     branch = "dev"
     # slack message formatter
