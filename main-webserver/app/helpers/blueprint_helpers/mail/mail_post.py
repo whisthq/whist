@@ -1,7 +1,8 @@
 from flask import current_app
 
 from app.constants.http_codes import SUCCESS, BAD_REQUEST
-from app.helpers.utils.mail.mail_client import MailClient, SendGridException, TemplateNotFound
+from app.exceptions import SendGridException, TemplateNotFound
+from app.helpers.utils.mail.mail_client import MailClient
 
 
 def mail_helper(email_id, from_email, to_email, email_args):
