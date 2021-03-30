@@ -5,8 +5,6 @@ import slack
 from datetime import datetime
 from datetime import date
 
-from flask import current_app
-
 icons = {
     "OLD COMMIT": ":red_circle:",  # commit hash for resource is old - should be deleted
     "OVERDUE": ":red_circle:",  # resource uptime has been greater than 2 weeks - should be deleted or checked
@@ -247,7 +245,7 @@ def flag_instances(region, commit, branch):
 
 if __name__ == "__main__":
     token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    commit = current_app.config["APP_GIT_COMMIT"]
+    commit = os.environ.get("HEROKU_SLUG_COMMIT")
     commit = commit[0:7]
     branch = os.environ.get("BRANCH")
 
