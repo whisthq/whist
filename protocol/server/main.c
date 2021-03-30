@@ -76,7 +76,7 @@ extern Client clients[MAX_NUM_CLIENTS];
 char binary_aes_private_key[16];
 char hex_aes_private_key[33];
 char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
-char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
+char webserver_url[WEBSERVER_URL_MAXLEN + 1];
 volatile int connection_id;
 static volatile bool exiting;
 
@@ -88,7 +88,7 @@ volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 InputDevice* input_device = NULL;
-extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
+extern char sentry_environment[FRACTAL_ARGS_MAXLEN+1];
 extern bool using_sentry;
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
@@ -973,9 +973,9 @@ int parse_args(int argc, char* argv[]) {
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
-        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
-                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
+            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
+                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
         errno = 0;
@@ -991,7 +991,7 @@ int parse_args(int argc, char* argv[]) {
             }
             case 'i': {
                 printf("Identifier passed in: %s\n", optarg);
-                if (!safe_strncpy(identifier, optarg, FRACTAL_IDENTIFIER_MAXLEN + 1)) {
+                if (!safe_strncpy(identifier, optarg, sizeof(identifier))) {
                     printf("Identifier passed in is too long! Has length %lu but max is %d.\n",
                            (unsigned long)strlen(optarg), FRACTAL_IDENTIFIER_MAXLEN);
                     return -1;
@@ -1000,16 +1000,16 @@ int parse_args(int argc, char* argv[]) {
             }
             case 'w': {
                 printf("Webserver URL passed in: %s\n", optarg);
-                if (!safe_strncpy(webserver_url, optarg, MAX_WEBSERVER_URL_LEN + 1)) {
+                if (!safe_strncpy(webserver_url, optarg, sizeof(webserver_url))) {
                     printf("Webserver url passed in is too long! Has length %lu but max is %d.\n",
-                           (unsigned long)strlen(optarg), MAX_WEBSERVER_URL_LEN);
+                           (unsigned long)strlen(optarg), WEBSERVER_URL_MAXLEN);
                 }
                 break;
             }
             case 'e': {
                 // only log "production" and "staging" env sentry events
                 if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    if (!safe_strncpy(sentry_environment, optarg, FRACTAL_ENVIRONMENT_MAXLEN)) {
+                    if (!safe_strncpy(sentry_environment, optarg, sizeof(sentry_environment))) {
                         printf("Sentry environment is too long: %s\n", optarg);
                         return -1;
                     }

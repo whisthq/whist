@@ -42,9 +42,9 @@ extern volatile SDL_Window *window;
 
 extern volatile int max_bitrate;
 extern volatile int running_ci;
-extern char user_email[USER_EMAIL_MAXLEN];  // Note: Is larger than environment maxlen
-extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN + 1];
-extern char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
+extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
+extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
+extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
 extern bool skip_taskbar;
 
@@ -173,7 +173,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'u': {  // user email
-            if (!safe_strncpy(user_email, eval_optarg, USER_EMAIL_MAXLEN)) {
+            if (!safe_strncpy(user_email, eval_optarg, sizeof(user_email))) {
                 printf("User email is too long: %s\n", eval_optarg);
                 return -1;
             }
@@ -183,7 +183,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             // only log "production" and "staging" env sentry events
             if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
                 if (!safe_strncpy(sentry_environment, eval_optarg,
-                                  FRACTAL_ENVIRONMENT_MAXLEN + 1)) {
+                                  sizeof(sentry_environment))) {
                     printf("Sentry environment is too long: %s\n", eval_optarg);
                     return -1;
                 }
@@ -192,7 +192,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'i': {  // protocol window icon
-            if (!safe_strncpy(icon_png_filename, eval_optarg, ICON_PNG_FILENAME_MAXLEN)) {
+            if (!safe_strncpy(icon_png_filename, eval_optarg, sizeof(icon_png_filename))) {
                 printf("Icon PNG filename is too long: %s\n", eval_optarg);
                 return -1;
             }
@@ -337,9 +337,9 @@ int parse_args(int argc, char *argv[]) {
     memcpy((char *)&hex_aes_private_key, DEFAULT_HEX_PRIVATE_KEY, sizeof(hex_aes_private_key));
 
     // default user email
-    safe_strncpy(user_email, "None", USER_EMAIL_MAXLEN);
+    safe_strncpy(user_email, "None", sizeof(user_email));
     // default icon filename
-    safe_strncpy(icon_png_filename, "", ICON_PNG_FILENAME_MAXLEN);
+    safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
 
     int opt;
     bool ip_set = false;
@@ -347,9 +347,9 @@ int parse_args(int argc, char *argv[]) {
 
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
-        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ENVIRONMENT_MAXLEN) {
+        if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
             printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
-                   strlen(optarg), FRACTAL_ENVIRONMENT_MAXLEN);
+                   strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
         errno = 0;
@@ -757,7 +757,7 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     */
 
     // Copy email
-    if (!safe_strncpy(fmsg->user_email, email, USER_EMAIL_MAXLEN)) {
+    if (!safe_strncpy(fmsg->user_email, email, FRACTAL_ARGS_MAXLEN+1)) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
