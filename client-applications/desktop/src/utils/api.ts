@@ -1,7 +1,6 @@
 import { configGet, configPost } from "@fractal/core-ts"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 import config from "@app/utils/config"
-import { LoginServerError, LoginCredentialsWarning } from "@app/utils/errors"
 import { goTo } from "@app/utils/history"
 
 /*
