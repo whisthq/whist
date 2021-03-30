@@ -11,7 +11,7 @@ cd "$DIR/.."
 mkdir -p "base/build-temp/protocol"
 
 # Copy protocol build into build-temp
-BUILD_DIR="../protocol/docker-build/server/build64"
+BUILD_DIR="../protocol/build-docker/server/build64"
 cp $BUILD_DIR/libsentry.so base/build-temp/protocol
 cp $BUILD_DIR/crashpad_handler base/build-temp/protocol
 cp $BUILD_DIR/FractalServer base/build-temp/protocol

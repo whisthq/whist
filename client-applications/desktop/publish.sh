@@ -53,9 +53,9 @@ else
 
     # Make FractalClient and create its app bundle
     cd ../../protocol
-    mkdir -p publish-build
-    cd publish-build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
+    mkdir -p build-publish
+    cd build-publish
+    cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
     make -j FractalClient
     cd ..
     cd ../client-applications/desktop
@@ -63,10 +63,12 @@ else
     mkdir -p protocol-build/client
 
     # Move FractalClient and related files over to client-app
-    cp -r ../../protocol/publish-build/client/build64/* ./protocol-build/client
+    cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
 
-    # Codesign everything in ./client directory
-    find ./protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
+    # On Mac, codesign everything in ./protocol-build/client directory
+    if [[ "$(uname -s)" == "Darwin" ]]; then
+        find ./protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
+    fi
 
     # Initialize yarn first
     yarn -i
