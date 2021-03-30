@@ -260,13 +260,10 @@ def flag_instances(region, commit, branch):
 
 
 if __name__ == "__main__":
-    # token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    # commit = os.environ.get("HEROKU_SLUG_COMMIT")
-    # commit = commit[0:7]
-    # branch = os.environ.get("BRANCH")
-    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
-    commit = "01234"
-    branch = "steveli/aws-resource-tagging"
+    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+    commit = os.environ.get("HEROKU_SLUG_COMMIT")
+    commit = commit[0:7]
+    branch = os.environ.get("BRANCH")
 
     # slack message formatter
     for resource in ["EC2", "ECS"]:
