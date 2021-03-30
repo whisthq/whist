@@ -39,41 +39,42 @@ const chooseRegion = () => {
     ][0]
 }
 
-export const parseInfoPorts = (res: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-}) => `32262:${res.port_32262}.32263:${res.port_32263}.32273:${res.port_32273}`
-
-export const createContainer = async (email: string, accessToken: string) =>
+export const containerCreate = async (email: string, accessToken: string) =>
     await containerRequest(email, accessToken, chooseRegion(), getDPI())
 
-export const getContainerInfo = async (taskID: string, accessToken: string) =>
+export const containerInfo = async (taskID: string, accessToken: string) =>
     await taskStatus(taskID, accessToken)
 
 export const responseContainerID = (response: { json?: { ID?: string } }) =>
     response?.json?.ID
 
-export const waitUntilReady = async (taskID: string, accessToken: string) => {
-    while (true) {
-        console.log("waiting")
-        let info = await getContainerInfo(taskID, accessToken)
-        if (info.state === "SUCCESS") return info
-        if (!(info.state === "PENDING" || info.state === "STARTED"))
-            throw new Error(
-                "Container startup failed! Received: " +
-                    JSON.stringify(info, null, 4)
-            )
-        sleep(1000)
+export const responseContainerState = (response: {
+    json?: { state?: string }
+}) => response?.json?.state
+
+export const responseContainerPorts = (response?: {
+    info?: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
     }
+}) => {
+    const [a, b, c] = [
+        response?.info?.port_32262,
+        response?.info?.port_32263,
+        response?.info?.port_32273,
+    ]
+    return `32262:${a}.32263:${b}.32273:${c}`
 }
 
-export const launchProtocol = (info: {
-    port_32262: number
-    port_32263: number
-    port_32273: number
-    secret_key: string
-    ip: string
+export const launchProtocol = (response: {
+    info?: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+        secret_key: string
+        ip: string
+    }
 }) => {
     if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
 
@@ -81,10 +82,10 @@ export const launchProtocol = (info: {
         protocolPath,
         [
             "--ports",
-            parseInfoPorts(info),
+            responseContainerPorts(response),
             "--private-key",
-            info.secret_key,
-            info.ip,
+            response.info?.secret_key || "",
+            response.info?.ip || "",
         ],
         {
             detached: false,
@@ -114,17 +115,19 @@ export const endStream = (process: ChildProcess, message: string) => {
 
 export const streamProtocolInfo = (
     protocol: ChildProcess,
-    info: {
-        port_32262: number
-        port_32263: number
-        port_32273: number
-        secret_key: string
-        ip: string
+    response: {
+        info?: {
+            port_32262: number
+            port_32263: number
+            port_32273: number
+            secret_key?: string
+            ip?: string
+        }
     }
 ) => {
-    writeStream(protocol, `ports?${parseInfoPorts(info)}`)
-    writeStream(protocol, `private-key?${info.secret_key}`)
-    writeStream(protocol, `ip?${info.ip}`)
+    writeStream(protocol, `ports?${responseContainerPorts(response)}`)
+    writeStream(protocol, `private-key?${response.info?.secret_key}`)
+    writeStream(protocol, `ip?${response.info?.ip}`)
     writeStream(protocol, `finished?0`)
 }
 

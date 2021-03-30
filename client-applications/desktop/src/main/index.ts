@@ -4,9 +4,10 @@ import { app, BrowserWindow } from "electron"
 import { store, persistClear } from "@app/utils/persist"
 import EventEmitter from "node:events"
 import {
-    createContainer,
+    containerCreate,
+    containerInfo,
+    responseContainerState,
     responseContainerID,
-    waitUntilReady,
 } from "@app/utils/protocol"
 import { createAuthWindow, getWindows } from "@app/utils/windows"
 import {
@@ -17,16 +18,19 @@ import {
 } from "@app/utils/api"
 import _ from "lodash"
 import { persist, persistLoad } from "@app/utils/persist"
-import { fromEvent, combineLatest, merge } from "rxjs"
+import { fromEvent, combineLatest, merge, of, interval } from "rxjs"
 import {
     map,
     tap,
     share,
     pluck,
+    filter,
+    distinct,
     switchMap,
     exhaustMap,
     withLatestFrom,
     mapTo,
+    take,
 } from "rxjs/operators"
 
 // Set up Electron application listeners.
@@ -56,6 +60,13 @@ export const ipcStates = fromEvent(ipcMain, StateChannel).pipe(
 // Load the persisted state from the Electron store cache.
 export const persisted = appReady.pipe(map(() => persistLoad()))
 
+// Upon clicking the login button we receive a new login request, which is a
+// tuple of email, password.
+export const userLoginRequests = ipcStates
+    .pipe(pluck("loginRequest"))
+    .pipe(filter((req) => (req?.email && req?.password ? true : false)))
+    .pipe(share())
+
 // We can either get the user's email from the persisted state, or from
 // the IPC channel to the auth window. merge will take whatever comes first.
 // pluck extracts a value from a given key from an object.
@@ -63,18 +74,13 @@ export const persisted = appReady.pipe(map(() => persistLoad()))
 // window each time during development.
 export const userEmail = merge(
     // persisted.pipe(pluck("email")),
-    ipcStates.pipe(pluck("email"))
+    userLoginRequests.pipe(map((req) => req!.email))
 )
 
 // The user's password is pulled from IPC state, and not persisted.
-export const userPassword = ipcStates.pipe(pluck("password"))
+export const userPassword = userLoginRequests.pipe(map((req) => req!.password))
 
-export const userConfirmPassword = ipcStates.pipe(pluck("confirmPassword"))
-
-// Upon clicking the login button we receive a (arbitrary) new login request
-// object. We don't use its value, but its appearance triggers other
-// login-related subscriptions.
-export const userLoginRequests = ipcStates.pipe(pluck("loginRequests"))
+// export const userConfirmPassword = ipcStates.pipe(pluck("confirmPassword"))
 
 // Here we start to really think "reactively". We ask ourselves: "What is a
 // userLoginResponse"? The answer is that it's a combination of information:
@@ -124,10 +130,10 @@ export const containerCreateRequests = combineLatest([
     .pipe(withLatestFrom(userEmail))
 
 export const containerCreateResponses = containerCreateRequests.pipe(
-    exhaustMap(([token, email]) => createContainer(email!, token!))
+    exhaustMap(([token, email]) => containerCreate(email!, token!))
 )
 
-export const createContainerLoading = merge(
+export const containerCreateLoading = merge(
     containerCreateRequests.pipe(mapTo(true)),
     containerCreateResponses.pipe(mapTo(false))
 )
@@ -135,6 +141,17 @@ export const createContainerLoading = merge(
 export const containerTaskID = containerCreateResponses.pipe(
     map(responseContainerID)
 )
+
+export const containerCreateReady = containerCreateResponses
+    .pipe(withLatestFrom(containerTaskID, userAccessToken))
+    .pipe(
+        exhaustMap(([_res, id, token]) =>
+            interval(1000).pipe(switchMap(() => containerInfo(id!, token!)))
+        )
+    )
+    .pipe(map(responseContainerState))
+    .subscribe(console.log)
+
 export const protocolLaunchRequests = combineLatest([appReady, userAccessToken])
 
 export const protocolLaunchResponses = protocolLaunchRequests
