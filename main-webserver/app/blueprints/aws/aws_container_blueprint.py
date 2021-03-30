@@ -447,7 +447,7 @@ def aws_container_stun(**kwargs):
 @fractal_pre_process
 def get_name(**kwargs):
 
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+    ecs_client = ECSClient(launch_type="EC2", region_name="us-east-1")
 
     branch, commit = ecs_client.get_git_info()
     response = jsonify({"branch": branch, "commit": commit})
