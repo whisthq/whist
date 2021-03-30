@@ -1,3 +1,4 @@
+from typing import Dict, Union, Tuple, Optional
 from sqlalchemy.exc import DBAPIError
 
 from app.constants.http_codes import (
@@ -21,7 +22,9 @@ class BadAppError(Exception):
     """Raised when `preprocess_task_info` doesn't recognized an input."""
 
 
-def ping_helper(available, container_ip, port_32262, aeskey, version=None):
+def ping_helper(
+    available: bool, container_ip: str, port_32262: int, aeskey: str, version: Optional[str] = None
+) -> Tuple[Dict[str, str], int]:
     """Update container state in the database.
 
     Args:
@@ -106,7 +109,7 @@ def ping_helper(available, container_ip, port_32262, aeskey, version=None):
     return {"status": "OK"}, SUCCESS
 
 
-def preprocess_task_info(app):
+def preprocess_task_info(app: str) -> Tuple[str, int, str, Optional[str]]:
     """Maps names of applications to ECS task definitions.
 
     Arguments:
@@ -130,12 +133,17 @@ def preprocess_task_info(app):
     raise BadAppError("No Matching App Found")
 
 
-def protocol_info(address, port, aeskey):
+def protocol_info(address: str, port: int, aeskey: str) -> Tuple[str, int]:
     """Returns information, which is consumed by the protocol, to the client.
 
     Arguments:
-        address: The IP address of the container whose information should be
+        address (str): The IP address of the container whose information should be
             returned.
+        port (str): which port the container's port 32262 is mapped to
+        aeskey(str): the container's individual AES key
+
+    Returns:
+        a dict with conainer info
     """
 
     schema = UserContainerSchema(
@@ -162,7 +170,7 @@ def protocol_info(address, port, aeskey):
     return response
 
 
-def set_stun(user_id, container_id, using_stun):
+def set_stun(user_id: str, container_id: str, using_stun: bool) -> int:
     """Updates whether or not the specified container should use STUN.
 
     Arguments:

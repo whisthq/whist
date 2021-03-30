@@ -1,10 +1,11 @@
+from typing import Optional
 from app.models import db, UserContainerState
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.container_state_values import CANCELLED, PENDING
 from app.helpers.utils.general.logs import fractal_logger
 
 
-def container_state_obj(**kwargs):
+def container_state_obj(**kwargs) -> UserContainerState:
     """Fetches the UserContainerState object which has the user_id,
     state, and task_id (i.e. for the celery task, called statusID on the client app).
     This can be used to modify the table or read values.
@@ -21,7 +22,9 @@ def container_state_obj(**kwargs):
     return state_info
 
 
-def can_update_container_state(user, task_id, obj=None):
+def can_update_container_state(
+    user: str, task_id: str, obj: Optional[UserContainerState] = None
+) -> bool:
     """This lets us know if the user's entry in UserContainerState
     can be updated (meaning that the task_id which is calling this,
     passing its own task_id, is still the valid one for that
@@ -52,15 +55,15 @@ def can_update_container_state(user, task_id, obj=None):
 
 
 def set_container_state(
-    keyuser,
-    keytask,
-    user_id=None,
-    state=None,
-    task_id=None,
-    ip=None,
-    port=None,
-    client_app_auth_secret=None,
-    force=False,
+    keyuser: str,
+    keytask: str,
+    user_id: Optional[str] = None,
+    state: Optional[str] = None,
+    task_id: Optional[str] = None,
+    ip: Optional[str]=None,
+    port: Optional[int]=None,
+    client_app_auth_secret: Optional[str]=None,
+    force: Optional[bool] = False,
 ):
     """Set a container state in the UserContinerState (user_app_state) table. We
     require a keyuser (and potentially keytask) to set it. You can null out keytask only if
@@ -115,9 +118,7 @@ def set_container_state(
             )
 
 
-def create_container_state(
-    user_id, task_id, state=PENDING, ip=None, port=None, client_app_auth_secret=None
-):
+def create_container_state(user_id: str, task_id: str, state: Optional[str] = PENDING, ip: Optional[str] =None, port: Optional[int] =None, client_app_auth_secret: Optional[str] =None):
     """Creates a new entry into the app_info table.
 
     Args:
