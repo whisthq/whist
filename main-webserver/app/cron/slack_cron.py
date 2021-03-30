@@ -45,7 +45,17 @@ def get_tags(arn, region):
 
 
 def add_name(commit, branch, region, instance_id, test):
-    name = f"{'test' if test else ''}-<{branch}>-<{commit}>-{uuid.uuid4()}"
+    """
+    Adds a name tag for a given instance
+
+    Args:
+        commit (str): commit hash
+        branch (str): current branch name
+        region (str): region name
+        instance_id (str): given instance_id
+        test (bool): if instance was created on test or not
+    """
+    name = f"{'test-' if test else ''}<{branch}>-<{commit}>-{uuid.uuid4()}"
     client = boto3.client("ec2", region_name=region)
     client.create_tags(Resources=[instance_id], Tags=[{"Key": "Name", "Value": name}])
 
@@ -223,7 +233,7 @@ def flag_instances(region, commit, branch):
                 )
                 git_icon = icons[git_status]
             else:
-                name = add_name(commit, branch, region, instance_id)
+                name = add_name(commit, branch, region, instance_id, False)
                 git_status = "NO TAGS"
                 git_icon = icons["NO COMMIT TAG"]
 
@@ -240,11 +250,11 @@ def flag_instances(region, commit, branch):
             if flag:
                 line = f"• :red_circle: {line}"
                 message += f"{line} \n"
-                message += f"      • id: `{instance_id}` \n"
+                message += f"          • id: `{instance_id}` \n"
 
                 if len(tag_branch) > 0 and len(tag_commit) > 0:
-                    message += f"      • Branch: `{tag_branch}` \n"
-                    message += f"      • Commit: `{tag_commit}` \n"
+                    message += f"          • Branch: `{tag_branch}` \n"
+                    message += f"          • Commit: `{tag_commit}` \n"
 
     return message
 
