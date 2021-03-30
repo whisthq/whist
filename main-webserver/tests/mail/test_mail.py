@@ -1,11 +1,11 @@
 """Tests for the /mail endpoint."""
 
+from http import HTTPStatus
+
 import pytest
 import mailslurp_client
-from http import HTTPStatus
-from flask import current_app
 
-from app.helpers.utils.mail.mail_client import MailClient, TemplateNotFound, SendGridException
+from app.helpers.utils.mail.mail_client import MailClient
 from tests.constants.api_keys import MAILSLURP_API_KEY
 
 
