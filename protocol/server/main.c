@@ -1180,7 +1180,6 @@ int main(int argc, char* argv[]) {
         // client
         ClipboardData* cb = clipboard_synchronizer_get_new_clipboard();
         if (cb) {
-            LOG_INFO("Received clipboard trigger! Sending to client");
             FractalServerMessage* fmsg_response =
                 safe_malloc(sizeof(FractalServerMessage) + cb->size);
             fmsg_response->type = SMESSAGE_CLIPBOARD;
@@ -1188,9 +1187,7 @@ int main(int argc, char* argv[]) {
             read_lock(&is_active_rwlock);
             if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
                                      sizeof(FractalServerMessage) + cb->size) < 0) {
-                LOG_WARNING("Could not broadcast Clipboard Message");
-            } else {
-                LOG_INFO("Send clipboard message!");
+                LOG_WARNING("Failed to broadcast clipboard message.");
             }
             read_unlock(&is_active_rwlock);
             free(fmsg_response);
@@ -1201,7 +1198,6 @@ int main(int argc, char* argv[]) {
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
                     (num_active_clients > 0 && strcmp(name, cur_window_name) != 0)) {
-                    LOG_INFO("Sending window title to client");
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fmsg_response = safe_malloc(fsmsg_size);
                     fmsg_response->type = SMESSAGE_WINDOW_TITLE;
@@ -1209,9 +1205,8 @@ int main(int argc, char* argv[]) {
                     read_lock(&is_active_rwlock);
                     if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
                                              (int)fsmsg_size) < 0) {
-                        LOG_WARNING("Could not broadcast window title Message");
+                        LOG_WARNING("Failed to broadcast window title message.");
                     } else {
-                        LOG_INFO("Sent window title message!");
                         safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
                         client_joined_after_window_name_broadcast = false;
                     }
