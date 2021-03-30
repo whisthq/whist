@@ -19,17 +19,18 @@ else
 fi
 
 # Build protocol
-# Note: we clean build to prevent Cmake caching issues
 docker build . \
     --build-arg uid=$(id -u ${USER}) \
     -f Dockerfile \
     -t fractal/protocol-builder
-# Mount entire ./fractal directory so that git works for git revision
-# Mount .aws directory so that awscli in download-binaries.sh works
+
+# We mount .aws directory so that awscli in download-binaries.sh works
 MOUNT_AWS=""
 if [[ -d "$HOME/.aws" ]]; then
     MOUNT_AWS="--mount type=bind,source=$HOME/.aws,destination=/home/ubuntu/.aws,readonly"
 fi
+
+# We also mount entire ./fractal directory so that git works for git revision
 docker run \
     --rm \
     --env AWS_ACCESS_KEY_ID --env AWS_SECRET_ACCESS_KEY --env AWS_DEFAULT_REGION --env AWS_DEFAULT_OUTPUT \
