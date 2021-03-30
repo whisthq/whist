@@ -18,9 +18,7 @@ const Auth = () => {
 
     const onLogin = () => {
         setMainState({
-            email,
-            password,
-            loginRequests: [...mainState.loginRequests || [], Date.now()]})
+            loginRequest: { email, password }})
     }
 
     const onSignup = () => {

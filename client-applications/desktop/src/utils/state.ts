@@ -11,7 +11,7 @@ export type State = {
     accessToken: string
     refreshToken: string
     displayError: string
-    loginRequests: number[]
+    loginRequest: { email: string; password: string }
     loginLoading: boolean
     loginWarning: string
     protocolLoading: boolean
