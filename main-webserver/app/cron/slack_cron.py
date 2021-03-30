@@ -175,7 +175,7 @@ def flag_clusters(region, commit, branch):
 
         if git_icon == ":red_circle:":
             flag = True
-            line = f"• {git_icon} - {line} - {git_status} \n"
+            line = f"• {line} - *{git_status}* \n"
             message += line
 
     return message
@@ -245,10 +245,10 @@ def flag_instances(region, commit, branch):
 
             if launch_icon == ":red_circle:":
                 flag = True
-                line += f" - {launch_status} - uptime: {days} days "
+                line += f" - *{launch_status}* - uptime: {days} days "
 
             if flag:
-                line = f"• :red_circle: {line}"
+                line = f"• {line}"
                 message += f"{line} \n"
                 message += f"          • id: `{instance_id}` \n"
 
@@ -266,7 +266,7 @@ if __name__ == "__main__":
     # branch = os.environ.get("BRANCH")
     token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
     commit = "01234"
-    branch = "asdf"
+    branch = "steveli/aws-resource-tagging"
 
     # slack message formatter
     for resource in ["EC2", "ECS"]:
@@ -276,7 +276,7 @@ if __name__ == "__main__":
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "*{} Status for: {}*".format(resource, region),
+                        "text": "*{} Status for:* _{}_".format(resource, region),
                     },
                 },
                 {
