@@ -2,7 +2,6 @@ from flask import abort, Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
-import os
 
 from app import fractal_pre_process, log_request
 from app.maintenance.maintenance_manager import (

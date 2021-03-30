@@ -1,21 +1,28 @@
 import boto3
 import os
-import pandas as pd
 import slack
-import sys
 
 from datetime import datetime
 from datetime import date
 
-# TODO: add comments for each icon type 
 icons = {
-    "OLD COMMIT": ":red_circle:",
-    "OVERDUE": ":red_circle:",
-    "CREATED ON TEST": ":red_circle:",
-    "CURRENT COMMIT": ":large_green_circle:",
-    "IGNORE TIME": ":large_yellow_circle:",
-    "NO COMMIT TAG": ":large_yellow_circle:",
+    "OLD COMMIT": ":red_circle:",  # commit hash for resource is old - should be deleted
+    "OVERDUE": ":red_circle:",  # resource uptime has been greater than 2 weeks - should be deleted or checked
+    "CREATED ON TEST": ":red_circle:",  # resource has been created on test - should be deleted
+    "CURRENT COMMIT": ":large_green_circle:",  # commit matches current commit hash - ignore resource
+    "IGNORE TIME": ":large_green_circle:",  # resouce uptime is < 2 weeks - ignore resource
+    "NO COMMIT TAG": ":large_yellow_circle:",  # resources does not contain a commit tag - check resource to make sure if in use
 }
+
+regions = [
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "ca-central-1",
+    "eu-west-1",
+    "eu-central-1",
+]
 
 
 def get_tags(arn, region):
@@ -123,12 +130,18 @@ def flag_clusters(region, commit, branch):
     message = ""
 
     for c in clusters:
-        line = ""
+        flag = False
+
         clusterName = c["clusterName"]
         clusterArn = c["clusterArn"]
+
         tags = get_tags(clusterArn, region)
+
         git_status = read_tags(tags, commit, branch, "ECS")
         git_icon = icons[git_status]
+
+        line = f"• `{clusterName}`"
+
         launch_status = ""
         launch_icon = ""
         days = 0
@@ -136,18 +149,19 @@ def flag_clusters(region, commit, branch):
             launchTime = datetime.strptime(tags["created_at"], "%Y-%d-%m")
             launch_status, days = compare_timestamps(launchTime)
             launch_icon = icons[launch_status]
-        
+
         if git_icon == ":red_circle:":
-            line += f"• `{clusterName}` - {git_status}"
+            flag = True
+            line += f" - {git_status}"
 
         if launch_icon == ":red_circle:":
-            line += f" - {launch_status} - uptime: {days} days"
-        
+            flag = True
+            line += f" - {launch_status} - uptime: {days} days "
+
         line += git_icon if git_icon == ":red_circle" else launch_icon
 
-        if (len(line) > 0) {
+        if len(line) > 0 and flag:
             message += f"{line} \n"
-        }
 
     return message
 
@@ -185,62 +199,78 @@ def flag_instances(region, commit, branch):
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
-            tag_status = ""
+            flag = False
+
+            git_status = ""
+
             launchTime = instance["LaunchTime"]
             instance_id = instance["InstanceId"]
+
             launch_status, days = compare_timestamps(launchTime)
             launch_icon = icons[launch_status]
 
+            line = f"• `{instance_id}`"
+
             if "Tags" in instance:
-                tag_status = read_tags(instance["Tags"], commit, branch, "EC2")
-                tag_icon = icons[tag_status]
+                git_status = read_tags(instance["Tags"], commit, branch, "EC2")
+                git_icon = icons[git_status]
 
-            if len(tag_status) == 0:
-                tag_status = "NO TAGS"
-                tag_icon = icons["IGNORE COMMIT"]
+            if len(git_status) == 0:
+                git_status = "NO TAGS"
+                git_icon = icons["NO COMMIT TAG"]
 
-            if launch_icon == ":red_circle:" or tag_icon == ":red_circle:":
-                message += f"• `{instance_id}` - {tag_status} - {tag_icon} - {launch_status} - uptime: {days} days - {launch_icon} \n"
+            if git_icon == ":red_circle:":
+                flag = True
+                line += f"- {git_status}"
+
+            if launch_icon == ":red_circle:":
+                flag = True
+                line += f" - {launch_status} - uptime: {days} days "
+
+            line += git_icon if git_icon == ":red_circle" else launch_icon
+
+            if len(line) > 0 and flag:
+                message += f"{line} \n"
 
     return message
 
 
 if __name__ == "__main__":
-    region = os.environ.get("AWS_REGION")
-    token = os.environ.get("SLACK_EC2_BOT_TOKEN")
-    commit = sys.argv[1][0:7]
-    branch = sys.argv[2]
-    resource = sys.argv[3]
-    print(commit)
-    print(branch)
+    # region = os.environ.get("AWS_REGION")
+    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+    # token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
+    commit = "asdf"
+    branch = "dev"
     # slack message formatter
-    blocks = [
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "*{} Status for: {}*".format(resource, region),
-            },
-        },
-        {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "• Schedule meetings \n ",
-            },
-        },
-    ]
 
-    message = ""
+    for resource in ["EC2", "ECS"]:
+        for region in regions:
+            blocks = [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*{} Status for: {}*".format(resource, region),
+                    },
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "• Schedule meetings \n ",
+                    },
+                },
+            ]
+            message = ""
 
-    if resource == "EC2":
-        message = flag_instances(region, commit, branch)
+            if resource == "EC2":
+                message = flag_instances(region, commit, branch)
 
-    elif resource == "ECS":
-        message = flag_clusters(region, commit, branch)
+            elif resource == "ECS":
+                message = flag_clusters(region, commit, branch)
 
-    client = slack.WebClient(token=token)
-    blocks[1]["text"]["text"] = message
+            client = slack.WebClient(token=token)
+            blocks[1]["text"]["text"] = message
 
-    if len(message) > 0:
-        client.chat_postMessage(channel="C018UQXR59D", blocks=blocks)
+            if len(message) > 0:
+                client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)

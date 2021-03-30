@@ -53,10 +53,10 @@ jobs:
 
             - name: Scan ec2 instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} EC2
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
+              run: python main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} EC2
 
             - name: Configure AWS Credentials for ECS
               uses: aws-actions/configure-aws-credentials@v1
@@ -67,10 +67,10 @@ jobs:
 
             - name: Scan ecs instances
               working-directory: .github/workflows/helpers/aws/ec2
-              run: python3 main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} ECS
               env:
                   SLACK_EC2_BOT_TOKEN: ${{ secrets.SLACK_EC2_ALERTS_OAUTH_TOKEN }}
                   AWS_REGION: ${{ matrix.aws-region }}
+              run: python main.py $GITHUB_SHA ${GITHUB_REF#refs/heads/} ECS
 
             - name: Notify Slack if error
               if: ${{ failure() }}
