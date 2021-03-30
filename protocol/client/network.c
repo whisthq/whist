@@ -24,7 +24,7 @@ Includes
 
 // Init information
 extern volatile int audio_frequency;
-extern char user_email[USER_EMAIL_MAXLEN];
+extern char user_email[FRACTAL_ARGS_MAXLEN+1];
 
 // Data
 extern volatile char binary_aes_private_key[16];

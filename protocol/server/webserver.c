@@ -6,7 +6,7 @@ static clock last_protocol_info_check_time;
 
 extern char hex_aes_private_key[33];
 extern char identifier[FRACTAL_IDENTIFIER_MAXLEN + 1];
-extern char webserver_url[MAX_WEBSERVER_URL_LEN + 1];
+extern char webserver_url[WEBSERVER_URL_MAXLEN + 1];
 
 void update_webserver_parameters() {
     /*

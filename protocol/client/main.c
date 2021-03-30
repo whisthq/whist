@@ -92,9 +92,8 @@ volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
 int time_to_run_ci = 300;  // Seconds to run CI tests for
 volatile int running_ci = 0;
-char user_email[USER_EMAIL_MAXLEN];
-extern char sentry_environment[FRACTAL_ENVIRONMENT_MAXLEN];
-char icon_png_filename[ICON_PNG_FILENAME_MAXLEN];
+char user_email[FRACTAL_ARGS_MAXLEN+1];
+char icon_png_filename[FRACTAL_ARGS_MAXLEN+1];
 extern bool using_sentry;
 bool using_stun = true;
 
