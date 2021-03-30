@@ -1,3 +1,5 @@
+from typing import Dict, Union, Optional, Tuple
+
 from flask import current_app, jsonify
 
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
@@ -18,7 +20,7 @@ from app.helpers.utils.event_logging.events import (
 from app.helpers.utils.mail.mail_client import MailClient
 
 
-def login_helper(email, password):
+def login_helper(email: str, password: str) -> Dict[str, Union[bool, Optional[str], Optional[int]]]:
     """Verifies the username password combination in the users SQL table
 
     If the password is the admin password, just check if the username exists
@@ -73,9 +75,10 @@ def login_helper(email, password):
     }
 
 
-def register_helper(username, password, encrypted_config_token, name, reason_for_signup):
-    """Stores username and password in the database and generates user metadata, like their
-    user ID and promo code
+def register_helper(
+    username: str, password: str, encrypted_config_token: str, name: str, reason_for_signup: str
+) -> Dict[str, Union[bool, Optional[str], Optional[int]]]:
+    """Store username and password in the database.
 
     Parameters:
     username (str): The username
@@ -133,7 +136,7 @@ def register_helper(username, password, encrypted_config_token, name, reason_for
     }
 
 
-def verify_helper(username, provided_user_id):
+def verify_helper(username: str, provided_user_id: str) -> Dict[str, Union[bool, int]]:
     """Checks provided verification token against database token. If they match, we verify the
     user's email.
 
@@ -171,7 +174,7 @@ def verify_helper(username, provided_user_id):
         return {"status": UNAUTHORIZED, "verified": False}
 
 
-def delete_helper(username):
+def delete_helper(username: str) -> Dict[str, Union[int, Optional[str]]]:
     """Deletes a user's account and their disks from the database
 
     Parameters:
@@ -192,8 +195,8 @@ def delete_helper(username):
     return {"status": SUCCESS, "error": None}
 
 
-def reset_password_helper(username, password, encrypted_config_token):
-    """Updates the password and config token for a user in the users SQL table
+def reset_password_helper(username: str, password: str, encrypted_config_token: str) -> Dict[str, int]:
+    """Updates the password for a user in the users SQL table
 
     Args:
         username (str): The user to update the password for
@@ -213,7 +216,7 @@ def reset_password_helper(username, password, encrypted_config_token):
         return {"status": BAD_REQUEST}
 
 
-def lookup_helper(username):
+def lookup_helper(username: str) -> Dict[str, Union[bool, int]]:
     """Checks if user exists in the users SQL table
 
     Args:
@@ -227,7 +230,7 @@ def lookup_helper(username):
         return {"exists": False, "status": SUCCESS}
 
 
-def update_user_helper(body):
+def update_user_helper(body: Dict[str, str]) -> Tuple[str, int]:
     user = User.query.get(body["username"])
     if user:
         if "name" in body:
@@ -256,7 +259,15 @@ def update_user_helper(body):
     return jsonify({"msg": "User not found"}), NOT_FOUND
 
 
-def auto_login_helper(email):
+def auto_login_helper(email: str) -> Dict[str, Union[Optional[int], Optional[str]]]:
+    """
+    Allows client app to pull in access and refresh tokens for staying logged in
+    Args:
+        email: the email to get tokens for
+
+    Returns:  tokens to use
+
+    """
     user = User.query.get(email)
     access_token, refresh_token = get_access_tokens(email)
 
@@ -280,7 +291,16 @@ def auto_login_helper(email):
         }
 
 
-def verify_password_helper(email, password):
+def verify_password_helper(email: str, password: str) -> Dict[str, int]:
+    """
+    Verifies that passed in password is correct
+    Args:
+        email: the email to use
+        password: the password to check
+
+    Returns: a jsonified bool
+
+    """
     user = User.query.get(email)
 
     if not user or not check_value(user.password, password):

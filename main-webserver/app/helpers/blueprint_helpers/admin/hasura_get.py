@@ -1,7 +1,8 @@
+from typing import Dict
 from flask_jwt_extended import get_jwt_identity
 
 
-def auth_token_helper(auth_token):
+def auth_token_helper(auth_token: str) -> Dict[str, str]:
     """A helper function that processes any tokens passed to the /hasura/auth
     endpoint through the Authorization header
 
@@ -22,12 +23,12 @@ def auth_token_helper(auth_token):
     return hasura_role
 
 
-def login_token_helper(login_token):
+def login_token_helper(login_token: str) -> Dict[str, str]:
     """A helper function that processes any tokens passed to the /hasura/auth endpoint
     through the Login header
 
     Args:
-        login: A string that is either empty or contains a login token generated from the
+        login_token: A string that is either empty or contains a login token generated from the
         client-application
     Returns:
         A dictionary containing a single key "X-Hasura-Login-Token".

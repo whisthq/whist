@@ -1,3 +1,5 @@
+from typing import Dict, Union, Optional
+
 from app.constants.http_codes import BAD_REQUEST, SUCCESS
 from app.models import User
 from app.serializers.public import UserSchema
@@ -6,7 +8,7 @@ from app.helpers.utils.general.tokens import get_access_tokens
 user_schema = UserSchema()
 
 
-def fetch_user_helper(username):
+def fetch_user_helper(username: str) -> Dict[str, Union[Optional[str], int]]:
     """Returns the user's entire info
 
     Args:
