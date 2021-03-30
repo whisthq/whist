@@ -207,6 +207,14 @@ ext install ms-python.python
 
 6. Now open/create a Python file, write some code and save it to see the magic happen!
 
+# Real-Time Management
+
+TODO: improve this section with explanations on how to debug using Logz.io and run admin level things with Postman/Heroku.
+
+## Maintenance Mode
+
+It is possible for maintenance mode to hang, even though we've taken several precautions to stop this from happening. Please see this doc on how to deal with it: https://www.notion.so/tryfractal/Manually-Managing-Maintenance-Mode-d946ab8b01454ecca66a1e51743fde46.
+
 # FAQ
 
 ### How do the Flask and Celery applications know where Redis is running?
