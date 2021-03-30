@@ -66,7 +66,7 @@ check_if_host_service_running() {
 # This is necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the webserver would send this request to the Fractal host service, but for local development we need
 # to send it manually until our development pipeline is fully built
-# Args: container_id, DPI, user_id, config_encryption_token
+# Args: container_id, DPI, user_id, access_token
 send_start_values_request() {
     echo "Sending container start values request to container $1!"
     # Send the DPI/container-ready request
@@ -89,7 +89,7 @@ send_start_values_request() {
 # This is also necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the client app would send this request to the Fractal host service, but for local development we need
 # to send it manually until our development pipeline is fully built
-# Args: container_id, user_id, config_encryption_token
+# Args: container_id, user_id, config_encryption_token, access_token
 send_set_config_encryption_token_request() {
     # Send the config encryption token
     response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_config_encryption_token' \
