@@ -41,6 +41,8 @@ from app.models import ClusterInfo, RegionToAmi
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+
 
 @aws_container_bp.route("/regions", methods=("GET",))
 @log_request
@@ -438,4 +440,15 @@ def aws_container_stun(**kwargs):
         status = set_stun(user, container_id, using_stun)
         response = jsonify({"status": status}), status
 
+    return response
+
+
+@aws_container_bp.route("/container/name", methods=["POST"])
+@fractal_pre_process
+def get_name(**kwargs):
+
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
+    branch, commit = ecs_client.get_git_info()
+    response = jsonify({"branch": branch, "commit": commit})
     return response

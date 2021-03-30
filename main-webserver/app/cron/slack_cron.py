@@ -71,11 +71,17 @@ def read_tags(tags, commit, branch, resource):
             tag_commit = tag[value]
 
     if test == "True":
-        return "CREATED ON TEST"
+        return "CREATED ON TEST", tag_branch, tag_commit
     if branch in target_branches and tag_branch == branch:
-        return "OLD COMMIT" if tag_commit != commit else "CURRENT COMMIT"
+        return (
+            "OLD COMMIT",
+            tag_branch,
+            tag_commit if tag_commit != commit else "CURRENT COMMIT",
+            tag_branch,
+            tag_commit,
+        )
 
-    return "NO COMMIT TAG"
+    return "NO COMMIT TAG", tag_branch, tag_commit
 
 
 def compare_timestamps(timestamp):
@@ -90,9 +96,9 @@ def compare_timestamps(timestamp):
         str: a String representing a status code, either overdue or ignore
     """
     today = date.today()
-    launchTime = timestamp.date()
+    launch_time = timestamp.date()
 
-    different = today - launchTime
+    different = today - launch_time
 
     return "OVERDUE" if different.days >= 14 else "IGNORE TIME", different.days
 
@@ -108,9 +114,9 @@ def get_all_clusters(region):
         array: an array of clusters from the given region
     """
     client = boto3.client("ecs", region_name=region)
-    clusterArns = client.list_clusters()["clusterArns"]
+    cluster_arns = client.list_clusters()["clusterArns"]
 
-    response = client.describe_clusters(clusters=clusterArns)
+    response = client.describe_clusters(clusters=cluster_arns)
     return response["clusters"]
 
 
@@ -137,7 +143,7 @@ def flag_clusters(region, commit, branch):
 
         tags = get_tags(clusterArn, region)
 
-        git_status = read_tags(tags, commit, branch, "ECS")
+        git_status, branch, commit = read_tags(tags, commit, branch, "ECS")
         git_icon = icons[git_status]
 
         line = f"• `{clusterName}`"
@@ -146,8 +152,8 @@ def flag_clusters(region, commit, branch):
         launch_icon = ""
         days = 0
         if "created_at" in tags:
-            launchTime = datetime.strptime(tags["created_at"], "%Y-%d-%m")
-            launch_status, days = compare_timestamps(launchTime)
+            launch_time = datetime.strptime(tags["created_at"], "%Y-%d-%m")
+            launch_status, days = compare_timestamps(launch_time)
             launch_icon = icons[launch_status]
 
         if git_icon == ":red_circle:":
@@ -158,9 +164,8 @@ def flag_clusters(region, commit, branch):
             flag = True
             line += f" - {launch_status} - uptime: {days} days "
 
-        line += git_icon if git_icon == ":red_circle:" else launch_icon
-
-        if len(line) > 0 and flag:
+        if flag:
+            line += git_icon if git_icon == ":red_circle:" else launch_icon
             message += f"{line} \n"
 
     return message
@@ -201,21 +206,22 @@ def flag_instances(region, commit, branch):
         for instance in instances:
             flag = False
 
+            branch = ""
+            commit = ""
             git_status = ""
 
-            launchTime = instance["LaunchTime"]
+            launch_time = instance["LaunchTime"]
             instance_id = instance["InstanceId"]
 
-            launch_status, days = compare_timestamps(launchTime)
+            launch_status, days = compare_timestamps(launch_time)
             launch_icon = icons[launch_status]
 
             line = f"• `{instance_id}`"
 
             if "Tags" in instance:
-                git_status = read_tags(instance["Tags"], commit, branch, "EC2")
+                git_status, branch, commit = read_tags(instance["Tags"], commit, branch, "EC2")
                 git_icon = icons[git_status]
-
-            if len(git_status) == 0:
+            else:
                 git_status = "NO TAGS"
                 git_icon = icons["NO COMMIT TAG"]
 
@@ -227,20 +233,23 @@ def flag_instances(region, commit, branch):
                 flag = True
                 line += f" - {launch_status} - uptime: {days} days "
 
-            if len(line) > 0 and flag:
+            if flag:
                 line += git_icon if git_icon == ":red_circle:" else launch_icon
                 message += f"{line} \n"
+                if len(branch) > 0 and len(commit) > 0:
+                    message += f"      • Branch: `{branch}` \n"
+                    message += f"      • Commit: `{commit}` \n"
 
     return message
 
 
 if __name__ == "__main__":
-    # region = os.environ.get("AWS_REGION")
     token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    commit = "asdf"
-    branch = "dev"
-    # slack message formatter
+    commit = os.environ.get("HEROKU_SLUG_COMMIT")
+    commit = commit[0:7]
+    branch = os.environ.get("BRANCH")
 
+    # slack message formatter
     for resource in ["EC2", "ECS"]:
         for region in regions:
             blocks = [
