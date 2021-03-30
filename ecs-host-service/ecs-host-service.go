@@ -91,7 +91,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("SpinUpContainer(): error assigning port bindings: %s", err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): successfully assigned port bindings.")
+	logger.Infof("SpinUpContainer(): successfully assigned port bindings %v", fc.GetPortBindings())
 	portBindings := fc.GetPortBindings()
 
 	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
