@@ -158,7 +158,7 @@ def flag_clusters(region, commit, branch):
             flag = True
             line += f" - {launch_status} - uptime: {days} days "
 
-        line += git_icon if git_icon == ":red_circle" else launch_icon
+        line += git_icon if git_icon == ":red_circle:" else launch_icon
 
         if len(line) > 0 and flag:
             message += f"{line} \n"
@@ -227,9 +227,8 @@ def flag_instances(region, commit, branch):
                 flag = True
                 line += f" - {launch_status} - uptime: {days} days "
 
-            line += git_icon if git_icon == ":red_circle" else launch_icon
-
             if len(line) > 0 and flag:
+                line += git_icon if git_icon == ":red_circle:" else launch_icon
                 message += f"{line} \n"
 
     return message
@@ -237,8 +236,8 @@ def flag_instances(region, commit, branch):
 
 if __name__ == "__main__":
     # region = os.environ.get("AWS_REGION")
-    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    # token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
+    # token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
     commit = "asdf"
     branch = "dev"
     # slack message formatter
