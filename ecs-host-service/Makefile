@@ -60,7 +60,7 @@ else
 endif
 
 build: checkCI
-	GOPRIVATE=github.com/fractal $(GOGET) -d github.com/fractal/ecs-agent/agent@djsavvy/fix-docker-race
+	GOPRIVATE=github.com/fractal $(GOGET) -d github.com/fractal/ecs-agent/agent@dev
 	GOPRIVATE=github.com/fractal/uinput-go $(GOGET) -d github.com/fractal/uinput-go/@master
 	go mod tidy
 	$(GOBUILD) -ldflags "\
