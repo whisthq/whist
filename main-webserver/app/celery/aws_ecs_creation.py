@@ -53,9 +53,9 @@ user_cluster_schema = ClusterInfoSchema()
 
 def _clean_tasks_and_create_new_container(
     container: UserContainer,
-    task_version: Optional[int] = None,
-    webserver_url: str = "fractal-dev-server.herokuapp.com",
-    num_tries: Optional[int] = 0,
+    task_version: int,
+    webserver_url: str,
+    num_tries: int,
 ) -> Dict[str, Any]:
     """
     This function is called by _assign_container() upon failure of _pass_start_values()
@@ -731,6 +731,7 @@ def _assign_container(
         if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
             return _clean_tasks_and_create_new_container(
                 base_container,
+                task_version,
                 webserver_url,
                 num_tries,
             )

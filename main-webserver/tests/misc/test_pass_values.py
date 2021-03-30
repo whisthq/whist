@@ -37,4 +37,4 @@ def test_clean(user, container, monkeypatch):
     monkeypatch.setattr("app.celery.aws_ecs_creation.assign_container", function(returns=True))
     monkeypatch.setattr(ECSClient, "check_if_done", function(returns=True))
     with container() as c:
-        _clean_tasks_and_create_new_container(c)
+        _clean_tasks_and_create_new_container(c, 0, "", 0)
