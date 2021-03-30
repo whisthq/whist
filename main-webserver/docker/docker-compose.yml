@@ -9,6 +9,9 @@ x-app: &base-app
   networks:
     # docker networks make sure web/celery can find redis
     - primary
+  volumes:
+    - ..:/app
+    - $HOME/.aws:/.aws
 
 services:
   redis:
@@ -34,12 +37,11 @@ services:
     ports:
       - "7730:7730" # Proxy 7730 (should match $PORT) on localhost
     environment:
+      AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
-    volumes:
-      - ..:/app
 
   celery:
     <<: *base-app
@@ -50,9 +52,6 @@ services:
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 2
       WORKER_CONCURRENCY: 50
-    volumes:
-      - ..:/app
-      - $HOME/.aws:/.aws
 
 networks:
   primary:
