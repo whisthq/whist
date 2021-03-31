@@ -54,6 +54,9 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Installs boto3
+              run: pip install boto3
+
             - name: Scan ec2 instances
               working-directory: .github/workflows/helpers/aws
               run: |
