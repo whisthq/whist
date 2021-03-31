@@ -2,7 +2,7 @@ import { Event, State, StateChannel, ipcBroadcast } from "@app/utils/state"
 import { ipcMain } from "electron"
 import { app, BrowserWindow } from "electron"
 import { store, persistClear } from "@app/utils/persist"
-import { WarningLoginInvalid } from "@app/utils/warnings"
+import { fractalLoginWarning } from "@app/utils/constants"
 import EventEmitter from "node:events"
 import {
     containerCreate,
@@ -11,7 +11,7 @@ import {
     responseContainerLoading,
     responseContainerID,
 } from "@app/utils/protocol"
-import { createAuthWindow, getWindows } from "@app/utils/windows"
+import { createAuthWindow, createErrorWindow, getWindows } from "@app/utils/windows"
 import {
     emailLogin,
     responseAccessToken,
@@ -109,7 +109,7 @@ export const userLoginWarnings = zip(
     userLoginRequests,
     userLoginResponses
 ).pipe(
-    map(([_, r]) => (responseAccessToken(r) ? undefined : WarningLoginInvalid))
+    map(([_, r]) => (responseAccessToken(r) ? undefined : "Login warning"))
 )
 
 // We use helper functions from api.ts to extract the value of the tokens

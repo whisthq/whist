@@ -19,7 +19,7 @@ const wXl = { width: 16 * 64 }
 const w2Xl = { width: 16 * 80 }
 const w3Xl = { width: 16 * 96 }
 
-const hXs = { height: 16 * 24 }
+const hXs = { height: 16 * 20 }
 const hSm = { height: 16 * 32 }
 const hMd = { height: 16 * 40 }
 const hLg = { height: 16 * 56 }
@@ -63,7 +63,7 @@ export const createAuthWindow: CreateWindowFunction = (onReady, onClose) =>
 
 export const createErrorWindow: CreateWindowFunction = (onReady, onClose) =>
     createWindow(
-        { ...base, ...wSm, ...hMd } as BrowserWindowConstructorOptions,
+        { ...base, ...wMd, ...hXs } as BrowserWindowConstructorOptions,
         (win) => onReady && onReady(win),
         (win) => onClose && onClose(win)
     )
