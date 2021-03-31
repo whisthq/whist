@@ -191,7 +191,9 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(container: UserContainer, client_app_auth_secret: str = "") -> None
+def _pass_start_values_to_instance(
+    container: UserContainer, client_app_auth_secret: str = ""
+) -> None:
     """
     Send the instance start values to the host service.
 
