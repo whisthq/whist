@@ -132,5 +132,5 @@ if __name__ == "__main__":
 
     #         print(region, branch)
 
-    # instances = flag_instances(region, branch)
-    # print(instances)
+    instances = flag_instances(region, branch)
+    print(instances)
