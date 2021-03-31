@@ -1180,6 +1180,7 @@ int main(int argc, char* argv[]) {
         // client
         ClipboardData* cb = clipboard_synchronizer_get_new_clipboard();
         if (cb) {
+            LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
             FractalServerMessage* fmsg_response =
                 safe_malloc(sizeof(FractalServerMessage) + cb->size);
             fmsg_response->type = SMESSAGE_CLIPBOARD;
@@ -1198,6 +1199,7 @@ int main(int argc, char* argv[]) {
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
                     (num_active_clients > 0 && strcmp(name, cur_window_name) != 0)) {
+                    LOG_INFO("Window title changed. Broadcasting window title message.");
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fmsg_response = safe_malloc(fsmsg_size);
                     fmsg_response->type = SMESSAGE_WINDOW_TITLE;
