@@ -1,9 +1,40 @@
-import React, { useState } from "react"
+import React, { useState, useReducer } from "react"
 import { Route } from "react-router-dom"
 
 import Login from "@app/renderer/pages/auth/login"
 import Signup from "@app/renderer/pages/auth/signup"
 import { useMainState } from "@app/utils/state"
+import { string } from "prop-types"
+
+type AuthState = {
+    loginEmail: string
+    loginPassword: string
+    signupEmail: string
+    signupPassword: string
+    signupConfirmPassword: string
+}
+
+const initialState: AuthState = {
+    loginEmail: "",
+    loginPassword: "",
+    signupEmail: "",
+    signupPassword: "",
+    signupConfirmPassword: "",
+}
+
+const AuthReducer = (state: AuthState, action: Record<any, any>) => {
+    const isValidType = (value: string): value is keyof AuthState => {
+        return !Object.keys(initialState).includes(action.type)
+    }
+
+    if (isValidType(action.type)) {
+        state[action.type] = action.body
+        console.log(state)
+        return state
+    } else {
+        throw new Error("Invalid reducer key")
+    }
+}
 
 const Auth = () => {
     /*
@@ -12,18 +43,27 @@ const Auth = () => {
     */
 
     const [mainState, setMainState] = useMainState()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+    const [state, dispatch] = useReducer(AuthReducer, initialState)
 
     const onLogin = () => {
         setMainState({
-            email,
-            loginRequest: { email, password }})
+            email: state.loginEmail,
+            loginRequest: {
+                email: state.loginEmail,
+                password: state.loginPassword,
+            },
+        })
     }
 
     const onSignup = () => {
-        console.log("Signed up!")
+        setMainState({
+            email: state.signupEmail,
+            signupRequest: {
+                email: state.signupEmail,
+                password: state.signupPassword,
+                confirmPassword: state.signupConfirmPassword,
+            },
+        })
     }
 
     return (
@@ -33,13 +73,17 @@ const Auth = () => {
                 path="/"
                 render={() => (
                     <Login
-                        email={email}
-                        password={password}
+                        email={state.loginEmail}
+                        password={state.loginPassword}
                         warning={mainState.loginWarning}
                         loading={mainState.loginLoading}
                         onLogin={onLogin}
-                        onChangeEmail={setEmail}
-                        onChangePassword={setPassword}
+                        onChangeEmail={(s: string) =>
+                            dispatch({ type: "loginEmail", body: s })
+                        }
+                        onChangePassword={(s: string) =>
+                            dispatch({ type: "loginPassword", body: s })
+                        }
                     />
                 )}
             />
@@ -47,19 +91,39 @@ const Auth = () => {
                 path="/auth/login"
                 render={() => (
                     <Login
-                        email={email}
-                        password={password}
+                        email={state.loginEmail}
+                        password={state.loginPassword}
                         warning={mainState.loginWarning}
                         loading={mainState.loginLoading}
                         onLogin={onLogin}
-                        onChangeEmail={setEmail}
-                        onChangePassword={setPassword}
+                        onChangeEmail={(s: string) =>
+                            dispatch({ type: "loginEmail", body: s })
+                        }
+                        onChangePassword={(s: string) =>
+                            dispatch({ type: "loginPassword", body: s })
+                        }
                     />
                 )}
             />
             <Route
                 path="/auth/signup"
-                render={() => <Signup onSignup={onSignup} />}
+                render={() => (
+                    <Signup
+                        onSignup={onSignup}
+                        email={state.signupEmail}
+                        password={state.signupPassword}
+                        confirmPassword={state.signupConfirmPassword}
+                        onChangeEmail={(s: string) =>
+                            dispatch({ type: "signupEmail", body: s })
+                        }
+                        onChangePassword={(s: string) =>
+                            dispatch({ type: "signupPassword", body: s })
+                        }
+                        onChangeConfirmPassword={(s: string) =>
+                            dispatch({ type: "signupConfirmPassword", body: s })
+                        }
+                    />
+                )}
             />
         </>
     )

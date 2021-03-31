@@ -63,14 +63,22 @@ export const tokenValidate = async (accessToken: string) =>
 
 export const emailSignup = async (
     username: string,
-    password: string,
-    name: string,
-    feedback: string
-) =>
-    await post({
+    password: string
+) => {
+    const name = ""
+    const feedback = ""
+    
+    return await post({
         endpoint: "/account/register",
-        body: { username, password, name, feedback },
+        body: { username, password, name, feedback},
     })
+}
+
+export const emailSignupValid = (response: AsyncReturnType<typeof emailSignup>) =>
+    response.json?.access_token ? true : false
+
+export const emailSignupError = (response: AsyncReturnType<typeof emailSignup>) =>
+    response.response.status !== 200
 
 export const taskStatus = async (taskID: string, accessToken: string) =>
     get({ endpoint: "/status/" + taskID, accessToken })

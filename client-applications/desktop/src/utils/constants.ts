@@ -10,4 +10,6 @@ export const fractalSignupWarning = {
 
 export const WarningLoginInvalid = "Invalid email or password"
 
+export const WarningSignupInvalid = "Email already registered, please log in instead"
+
 export const ContainerAssignTimeout = 45000

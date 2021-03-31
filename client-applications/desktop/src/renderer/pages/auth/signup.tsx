@@ -21,9 +21,17 @@ import {
 } from "@app/utils/auth"
 /* import { emailSignup } from "@app/utils/api" */
 
-import { fractalSignupWarning } from "@app/utils/constants"
-
-const Signup = (props: { onSignup: (json: object) => void }) => {
+const Signup = (props: {
+    loading: boolean
+    warning: string
+    email: string
+    password: string
+    confirmPassword: string
+    onSignup: () => void
+    onChangeEmail: (s: string) => void
+    onChangePassword: (s: string) => void
+    onChangeConfirmPassword: (s: string) => void
+}) => {
     /*
         Description:
             Component for signing up for Fractal. Contains the signup form UI and 
@@ -35,41 +43,11 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                 is passed in as argument
     */
 
-    const { onSignup } = props
-
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
-
-    const [processing, setProcessing] = useState(false)
-    const [signupWarning, setSignupWarning] = useState("")
-
-    // Dispatches signup API call
-    const signup = () => {
-        if (signupEnabled(email, password, confirmPassword)) {
-            setProcessing(true)
-            setSignupWarning(fractalSignupWarning.NONE)
-            /* emailSignup(email, password, "", "").then(({ json, response }) => {
-*     if (json && response.status === 200) {
-*         onSignup(json)
-*     } else {
-*         setSignupWarning(fractalSignupWarning.ACCOUNT_EXISTS)
-*         setEmail("")
-*         setPassword("")
-*         setConfirmPassword("")
-*     }
-*     setProcessing(false)
-* }) */
-        } else {
-            setProcessing(false)
-        }
-    }
-
     const buttonState = () => {
-        if (processing) {
+        if (props.loading) {
             return FractalButtonState.PROCESSING
         } else {
-            if (signupEnabled(email, password, confirmPassword)) {
+            if (signupEnabled(props.email, props.password, props.confirmPassword)) {
                 return FractalButtonState.DEFAULT
             } else {
                 return FractalButtonState.DISABLED
@@ -87,11 +65,11 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                     </h5>
                     <FractalWarning
                         type={FractalWarningType.DEFAULT}
-                        warning={signupWarning}
+                        warning={props.warning}
                         className="mt-4"
                     />
                     <Flipper
-                        flipKey={checkPassword(password).toString()}
+                        flipKey={checkPassword(props.password).toString()}
                         spring="stiff"
                     >
                         <Flipped flipId="form">
@@ -104,12 +82,12 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                         type="email"
                                         placeholder="Email"
                                         onChange={(email: string) =>
-                                            setEmail(email)
+                                            props.onChangeEmail(email)
                                         }
-                                        onEnterKey={signup}
-                                        value={email}
+                                        onEnterKey={props.onSignup}
+                                        value={props.email}
                                         state={
-                                            checkEmail(email)
+                                            checkEmail(props.email)
                                                 ? FractalInputState.SUCCESS
                                                 : FractalInputState.DEFAULT
                                         }
@@ -118,7 +96,7 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                 </div>
                                 <FractalWarning
                                     type={FractalWarningType.SMALL}
-                                    warning={checkPasswordVerbose(password)}
+                                    warning={checkPasswordVerbose(props.password)}
                                     className="mt-3 float-right font-semibold"
                                 />
                                 <div key="password">
@@ -129,12 +107,12 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                         type="password"
                                         placeholder="Password"
                                         onChange={(password: string) =>
-                                            setPassword(password)
+                                            props.onChangePassword(password)
                                         }
-                                        onEnterKey={signup}
-                                        value={password}
+                                        onEnterKey={props.onSignup}
+                                        value={props.password}
                                         state={
-                                            checkPassword(password)
+                                            checkPassword(props.password)
                                                 ? FractalInputState.SUCCESS
                                                 : FractalInputState.DEFAULT
                                         }
@@ -144,13 +122,13 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                 <FractalWarning
                                     type={FractalWarningType.SMALL}
                                     warning={checkConfirmPasswordVerbose(
-                                        password,
-                                        confirmPassword
+                                        props.password,
+                                        props.confirmPassword
                                     )}
                                     className="mt-3 float-right font-semibold"
                                 />
                                 <div key="confirm-password">
-                                    {checkPassword(password) && (
+                                    {checkPassword(props.password) && (
                                         <>
                                             <h5 className="font-body text-left font-semibold mt-4 text-sm">
                                                 Confirm Password
@@ -159,14 +137,14 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                                                 type="password"
                                                 placeholder="Password"
                                                 onChange={(password: string) =>
-                                                    setConfirmPassword(password)
+                                                    props.onChangeConfirmPassword(password)
                                                 }
-                                                onEnterKey={signup}
-                                                value={confirmPassword}
+                                                onEnterKey={props.onSignup}
+                                                value={props.confirmPassword}
                                                 state={
                                                     checkConfirmPassword(
-                                                        password,
-                                                        confirmPassword
+                                                        props.password,
+                                                        props.confirmPassword
                                                     )
                                                         ? FractalInputState.SUCCESS
                                                         : FractalInputState.DEFAULT
@@ -183,7 +161,7 @@ const Signup = (props: { onSignup: (json: object) => void }) => {
                         contents="Sign up"
                         className="mt-4 w-full"
                         state={buttonState()}
-                        onClick={signup}
+                        onClick={props.onSignup}
                     />
                     <FractalNavigation
                         url="/auth/login"

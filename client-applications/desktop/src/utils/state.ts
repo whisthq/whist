@@ -12,6 +12,7 @@ export type State = {
     refreshToken: string
     displayError: string
     loginRequest: { email: string; password: string }
+    signupRequest: { email: string; password: string; confirmPassword: string }
     loginLoading: boolean
     loginWarning: string
     protocolLoading: boolean
