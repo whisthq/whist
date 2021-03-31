@@ -6,16 +6,14 @@ import sys
 
 def read_tags(tags, resource):
     """
-    Reads tags for a given resource, either EC2 or ECS and returns status codes
+    Reads tags for a given resource, either EC2 or ECS and returns tags
 
     Args:
         tags (arr): array of key value pairs
-        commit (str): current commit hash
-        branch (str): current branch
         resource (str): current aws resource, either EC2 or ECS
 
     Returns:
-        str: status code, either ignore commit, old commit, current commit, or create on test
+        tuple: the branch, commit, and name of the resource
     """
     tag_branch = ""
     tag_commit = ""

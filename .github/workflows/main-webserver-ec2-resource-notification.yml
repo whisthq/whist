@@ -1,28 +1,21 @@
-# workflows/ec2instance-check-status.yml
+# workflows/main-websever-ec2-resource-notification.yml
 #
-# EC2 Resource Notification: Checks EC2 Instance sttuses
+# Main Webserver: EC2 Resource Notification
 # Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
 
-name: "EC2 Instance Status: Checks EC2 instance "
+name: "Main Webserver: EC2 Resource Notification"
 
 on:
-    pull_request:
-        branches:
-            - dev
-
-    # push:
-    # triggers workflow on a schedule
     schedule:
-        - cron: "*/5 * * * *"
+        - cron: "30 16 * * 1" # runs at 11:30 am (EST/UTC+5) on every monday
 
-    # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
 
 jobs:
     # Scanning EC2 Instances
-    # Checks for EC2 instance status and sends flagged instances as a slack message
-    ec2instance-check-status-main:
-        name: Scanning EC2 Instances
+    # Checks for EC2 instance status and sends instances created on dev, staging, and prod as a slack message
+    main-webserver-hanging-resource-notification:
+        name: Main Webserver EC2 Resource Notification
         runs-on: ubuntu-20.04
         strategy:
             matrix:
@@ -54,7 +47,7 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Installs boto3
+            - name: Install boto3
               run: pip install boto3
 
             - name: Scan ec2 instances
@@ -66,13 +59,13 @@ jobs:
                   echo "EOF" >> $GITHUB_ENV
                   echo "$ec2_instances"
 
-            - name: Notify in Slack All instances
+            - name: Notify Slack all instances
               working-directory: .github/workflows/helpers/aws
               run: |
                   # notify slack if there are hanging resources
                   if [ ! -z "${{ env.ec2_instances }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging instances from *${{ matrix.region }}* in _${{ matrix.branch }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging instances from *${{ matrix.region }}* in _${{ matrix.branch }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
@@ -80,5 +73,5 @@ jobs:
               if: ${{ failure() }}
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.region }} at branch ${{ matrix.branch }}\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.region }} at branch ${{ matrix.branch }}\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
