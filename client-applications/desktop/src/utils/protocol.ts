@@ -52,6 +52,13 @@ export const responseContainerState = (response: {
     json?: { state?: string }
 }) => response?.json?.state
 
+export const responseContainerLoading = (response: {
+    json?: { state?: string }
+}) => {
+    const state = response?.json?.state
+    return state && (state == "SUCCESS" || state == "FAILURE")
+}
+
 export const responseContainerPorts = (response?: {
     info?: {
         port_32262: number
