@@ -54,14 +54,6 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip
-              working-directory: .github/workflows/helpers/aws/ec2
-              run: pip install --upgrade pip
-
-            - name: Install Dependencies
-              working-directory: .github/workflows/helpers/aws/ec2
-              run: pip install -r requirements.txt
-
             - name: Scan ec2 instances
               working-directory: .github/workflows/helpers/aws
               run: |
