@@ -1,4 +1,4 @@
-from typing import Dict, Union, Tuple, Optional
+from typing import Dict, Tuple, Optional
 from sqlalchemy.exc import DBAPIError
 
 from app.constants.http_codes import (
@@ -19,7 +19,7 @@ from app.serializers.hardware import UserContainerSchema
 
 
 class BadAppError(Exception):
-    """Raised when `preprocess_task_info` doesn't recognized an input."""
+    """Raised when `preprocess_task_info` doesn't recognize an input."""
 
 
 def ping_helper(

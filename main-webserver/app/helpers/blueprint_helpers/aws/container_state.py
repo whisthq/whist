@@ -42,7 +42,7 @@ def can_update_container_state(
     Args:
         user (str): The username of the user who's entry we want to
         check for whether it can be updated.
-        task_id (str): Thet task id (status id) of the celery task calling this.
+        task_id (str): The task id (status id) of the celery task calling this.
         obj (UserContainerState) : an object that can be passed if it's being used inside
         an internal method (such as set_container_state without force). Defaults to null.
 
@@ -60,9 +60,9 @@ def set_container_state(
     user_id: Optional[str] = None,
     state: Optional[str] = None,
     task_id: Optional[str] = None,
-    ip: Optional[str]=None,
-    port: Optional[int]=None,
-    client_app_auth_secret: Optional[str]=None,
+    ip: Optional[str] = None,
+    port: Optional[int] = None,
+    client_app_auth_secret: Optional[str] = None,
     force: Optional[bool] = False,
 ):
     """Set a container state in the UserContinerState (user_app_state) table. We
@@ -118,7 +118,14 @@ def set_container_state(
             )
 
 
-def create_container_state(user_id: str, task_id: str, state: Optional[str] = PENDING, ip: Optional[str] =None, port: Optional[int] =None, client_app_auth_secret: Optional[str] =None):
+def create_container_state(
+    user_id: str,
+    task_id: str,
+    state: Optional[str] = PENDING,
+    ip: Optional[str] = None,
+    port: Optional[int] = None,
+    client_app_auth_secret: Optional[str] = None,
+):
     """Creates a new entry into the app_info table.
 
     Args:
