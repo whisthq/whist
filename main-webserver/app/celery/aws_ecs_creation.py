@@ -42,9 +42,77 @@ from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNI
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
+from app.exceptions import StartValueException
+
+
+MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
 MAX_POLL_ITERATIONS = 20
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
+
+
+def _clean_tasks_and_create_new_container(
+    container: UserContainer,
+    task_version: int,
+    webserver_url: str,
+    num_tries: int,
+) -> Dict[str, Any]:
+    """
+    This function is called by _assign_container() upon failure of _pass_start_values()
+    or _mount_cloud_storage(). It cleans resources associated with the container
+    that failed (stops and delete tasks), then retries _assign_container().
+
+    Arguments:
+        container: An instance of the UserContainer model.
+        webserver_url: the webserver originating the initial assign_container request
+        num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
+
+    Returns:
+        After cleaning resources, returns the result of recursive call to assign_container,
+        which is a generated container, in json form
+    """
+    # stop base container task if it is running
+    ecs_client = ECSClient(
+        base_cluster=container.cluster, region_name=container.location, grab_logs=False
+    )
+    ecs_client.add_task(container.container_id)
+
+    if not ecs_client.check_if_done(offset=0):
+        ecs_client.stop_task(
+            reason="Failure to mount cloud storage or pass start values to instance", offset=0
+        )
+
+    # delete every task that is unassigned with that instance IP in the DB
+    all_tasks = UserContainer.query.filter_by(ip=container.ip, user_id=None).all()
+    for task in all_tasks:
+        # stop the task if it is running
+        ecs_client = ECSClient(
+            base_cluster=task.cluster, region_name=task.location, grab_logs=False
+        )
+        ecs_client.add_task(task.container_id)
+
+        if not ecs_client.check_if_done(offset=0):
+            ecs_client.stop_task(
+                reason="Failure to mount cloud storage or pass start values to instance", offset=0
+            )
+
+        # delete from db
+        fractal_sql_commit(db, lambda db, x: db.session.delete(x), task)
+
+    # delete base container from db
+    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+
+    # assign a new container for that user
+    return assign_container(
+        container.user_id,
+        container.task_definition,
+        task_version,
+        container.location,
+        container.cluster,
+        container.dpi,
+        webserver_url,
+        num_tries,
+    )
 
 
 def _mount_cloud_storage(user: User, container: UserContainer) -> None:
@@ -56,6 +124,10 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
 
     Returns:
         None
+
+    Raises:
+        StartValueException: When fails to connect to ECS host service
+            or cloud storage folder fails to mount
     """
 
     schema = CredentialSchema()
@@ -99,6 +171,7 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                         f"on {container.ip}: {error}"
                     )
                 )
+                raise StartValueException from error
             else:
                 if response.ok:
                     fractal_logger.info(
@@ -112,32 +185,38 @@ def _mount_cloud_storage(user: User, container: UserContainer) -> None:
                             f"{response.text}"
                         )
                     )
+                    raise StartValueException
+
         else:
             fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
-def _pass_start_values_to_instance(
-    ip: str, container_id: str, port: int, dpi: int, user_id: int
-) -> None:
+def _pass_start_values_to_instance(container: UserContainer) -> None:
     """
     Send the instance start values to the host service.
 
     Arguments:
-        ip: The IP address of the instance on which the container is running.
-        container_id: The id (currently ARN) of the container.
-        port: The port on the instance to which port 32262 within the container has been mapped.
-        dpi: The DPI of the client display.
-        user_id: The container's assigned user's user ID
+        container: An instance of the UserContainer model.
+
+    Returns:
+        None
+
+    Raises:
+        StartValueException: When fails to connect to ECS host service or
+            when set-start-values generates a bad response
     """
 
     try:
         response = requests.put(
-            f"https://{ip}:{current_app.config['HOST_SERVICE_PORT']}/set_container_start_values",
+            (
+                f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
+                "/set_container_start_values"
+            ),
             json={
-                "host_port": port,
-                "container_ARN": container_id,
-                "dpi": dpi,
-                "user_id": user_id,
+                "host_port": container.port_32262,
+                "container_ARN": container.container_id,
+                "dpi": container.dpi,
+                "user_id": container.user_id,
                 "auth_secret": current_app.config["HOST_SERVICE_SECRET"],
             },
             verify=False,
@@ -146,9 +225,10 @@ def _pass_start_values_to_instance(
         fractal_logger.error(
             (
                 "Encountered an error while attempting to connect to the ECS host service running "
-                f"on {ip}: {error}"
+                f"on {container.ip}: {error}"
             ),
         )
+        raise StartValueException from error
     else:
         if response.ok:
             fractal_logger.info("Container user values set.")
@@ -156,6 +236,7 @@ def _pass_start_values_to_instance(
             fractal_logger.error(
                 f"Received unsuccessful set-start-values response: {response.text}"
             )
+            raise StartValueException
 
 
 bundled_region = {
@@ -402,6 +483,7 @@ def assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: str = "fractal-dev-server.herokuapp.com",
+    num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
     """
     Assigns a running container to a user, or creates one if none exists
@@ -414,6 +496,7 @@ def assign_container(
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
+    :param num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
     :return: the generated container, in json form
 
     We directly call _assign_container because it can easily be mocked. The __code__ attribute
@@ -428,6 +511,7 @@ def assign_container(
         cluster_name,
         dpi,
         webserver_url,
+        num_tries,
     )
 
 
@@ -440,6 +524,7 @@ def _assign_container(
     cluster_name: Optional[str] = None,
     dpi: Optional[int] = 96,
     webserver_url: str = "fractal-dev-server.herokuapp.com",
+    num_tries: Optional[int] = 0,
 ) -> Dict[str, Any]:
     """
     See assign_container. This is helpful to mock.
@@ -638,14 +723,19 @@ def _assign_container(
             )
             raise Ignore
 
-    _mount_cloud_storage(user, base_container)  # Not tested
-    _pass_start_values_to_instance(
-        base_container.ip,
-        base_container.container_id,
-        base_container.port_32262,
-        base_container.dpi,
-        user.user_id,
-    )
+    try:
+        _mount_cloud_storage(user, base_container)
+        _pass_start_values_to_instance(base_container)
+    except StartValueException:
+        num_tries += 1
+        if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
+            return _clean_tasks_and_create_new_container(
+                base_container,
+                task_version,
+                webserver_url,
+                num_tries,
+            )
+
     time.sleep(1)
 
     if not _poll(base_container.container_id):
