@@ -29,6 +29,7 @@ celery.set_default()
 # enable web requests
 if not set_web_requests_status(True):
     fractal_logger.fatal("Could not enable web requests at startup. Failing out.")
+    os.sys.exit(1)
 
 # enable the web signal handler. This should work on OSX and Linux.
 if "windows" in platform.platform().lower():

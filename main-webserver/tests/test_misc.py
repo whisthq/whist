@@ -135,6 +135,11 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
         time.sleep(1)  # wait for task to become available
     assert started is False, f"Got unexpected task state {task_result.state}."
 
+    # stop anyone from running the task that was just created. this stops side-affects in future
+    # tests that start a celery worker which then runs the above task before the tasks it is
+    # supposed to run in the test
+    fractal_celery_app.control.purge()
+
 
 @pytest.mark.parametrize(
     "username, is_developer",
