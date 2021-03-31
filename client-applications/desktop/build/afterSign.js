@@ -4,7 +4,10 @@ const fs = require('fs')
 
 exports.default = async function afterSign(context) {
     const { electronPlatformName, appOutDir } = context
-    if (electronPlatformName !== 'darwin' || process.env.CSC_IDENTITY_AUTO_DISCOVERY==="false") {
+    if (
+        electronPlatformName !== 'darwin' ||
+        process.env.CSC_IDENTITY_AUTO_DISCOVERY === 'false'
+    ) {
         return
     }
 
