@@ -182,8 +182,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
         case 'e': {  // sentry environment
             // only log "production" and "staging" env sentry events
             if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
-                if (!safe_strncpy(sentry_environment, eval_optarg,
-                                  sizeof(sentry_environment))) {
+                if (!safe_strncpy(sentry_environment, eval_optarg, sizeof(sentry_environment))) {
                     printf("Sentry environment is too long: %s\n", eval_optarg);
                     return -1;
                 }
@@ -348,7 +347,7 @@ int parse_args(int argc, char *argv[]) {
     while (true) {
         opt = getopt_long(argc, argv, OPTION_STRING, cmd_options, NULL);
         if (opt != -1 && optarg && strlen(optarg) > FRACTAL_ARGS_MAXLEN) {
-            printf("Option passed into %c is too long! Length of %zd when max is %d", opt,
+            printf("Option passed into %c is too long! Length of %zd when max is %d\n", opt,
                    strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
@@ -757,7 +756,7 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     */
 
     // Copy email
-    if (!safe_strncpy(fmsg->user_email, email, FRACTAL_ARGS_MAXLEN+1)) {
+    if (!safe_strncpy(fmsg->user_email, email, FRACTAL_ARGS_MAXLEN + 1)) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
