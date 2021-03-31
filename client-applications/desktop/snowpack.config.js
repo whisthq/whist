@@ -43,6 +43,13 @@ module.exports = {
         output: "stream",
     },
     packageOptions: {
-        external: ["crypto", "path", "child_process", "fs", "electron", "electron-store"],
+        external: [
+            "crypto",
+            "path",
+            "child_process",
+            "fs",
+            "electron",
+            "electron-store",
+        ],
     },
 }
