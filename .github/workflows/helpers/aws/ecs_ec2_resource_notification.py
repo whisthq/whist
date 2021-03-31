@@ -3,9 +3,6 @@ import os
 import uuid
 import sys
 
-from datetime import datetime
-from datetime import date
-
 regions = [
     "us-east-1",
     "us-east-2",
