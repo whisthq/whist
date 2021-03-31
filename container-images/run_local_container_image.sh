@@ -15,7 +15,7 @@ cd "$DIR"
 # Parameters of the local container image to run
 app_path=${1%/}
 image=fractal/$app_path:current-build
-mount="mount" # Mount docker-build fractal binaries rather than copying them
+mount="mount" # Mount fractal build binaries rather than copying them
 
 # Run the container image stored locally
 ./helper-scripts/run_container_image.sh $image $mount
