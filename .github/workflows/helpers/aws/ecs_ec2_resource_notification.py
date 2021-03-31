@@ -102,8 +102,9 @@ def flag_instances(region, branch):
 
 if __name__ == "__main__":
 
-    region = sys.argv[1]
-    branch = sys.argv[2]
+    # region = sys.argv[1]
+    # branch = sys.argv[2]
+    print(sys.argv)
 
     # for region in regions:
     #     blocks = [
@@ -131,5 +132,5 @@ if __name__ == "__main__":
 
     #         print(region, branch)
 
-    instances = flag_instances(region, branch)
-    print(instances)
+    # instances = flag_instances(region, branch)
+    # print(instances)
