@@ -64,7 +64,7 @@ jobs:
                   echo 'ec2_instances<<EOF' >> $GITHUB_ENV
                   echo "$ec2_instances" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
-                  echo ${{ env.ec2_instances }}
+                  echo "${{ env.ec2_instances }}"
 
             - name: Notify in Slack if Hanging Resources Exist
               working-directory: .github/workflows/helpers/aws
