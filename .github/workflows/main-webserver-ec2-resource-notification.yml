@@ -1,0 +1,86 @@
+# workflows/ec2instance-check-status.yml
+#
+# EC2 Resource Notification: Checks EC2 Instance sttuses
+# Scans currently running EC2 instances using AWS SDK and sends flagged instances as a slack message
+
+name: "EC Instance Status: Checks EC2 instance "
+
+on:
+    pull_request:
+        branches:
+            - dev
+
+    # push:
+    # triggers workflow on a schedule
+    schedule:
+        - cron: "*/5 * * * *"
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+jobs:
+    # Scanning EC2 Instances
+    # Checks for EC2 instance status and sends flagged instances as a slack message
+    ec2instance-check-status-main:
+        name: Scanning EC2 Instances
+        runs-on: ubuntu-20.04
+        strategy:
+            matrix:
+                aws-region:
+                    - us-east-1
+                    - us-east-2
+                    - us-west-1
+                    - us-west-2
+                    - ca-central-1
+                    - eu-west-1
+                    - eu-central-1
+                branch:
+                    - steveli/aws-resource-tagging
+                    - staging
+                    - prod
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Configure AWS Credentials
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ matrix.aws-region}}
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: .github/workflows/helpers/aws/ec2
+              run: pip install --upgrade pip
+
+            - name: Install Dependencies
+              working-directory: .github/workflows/helpers/aws/ec2
+              run: pip install -r requirements.txt
+
+            - name: Scan ec2 instances
+              working-directory: .github/workflows/helpers/aws
+              run: |
+                    ec2_instances=$(python ecs_ec2_resource_notification.py ${{ matrix.region }} ${{ matrix.branch }})
+                    echo "ec2_instances=$ec2_instances" >> $GITHUB_ENV
+            
+                    - name: Notify in Slack if Resources Exist
+              working-directory: .github/workflows/helpers/aws
+              run: |
+                  # notify slack if there are hanging resources
+                  if [ ! -z "${{ env.hanging_resource }}" ]; then
+                      curl -X POST \
+                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.brabcg }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
+                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  fi
+
+            - name: Notify Slack if error
+              if: ${{ failure() }}
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-tests\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.aws-region }}\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
