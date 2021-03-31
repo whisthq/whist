@@ -22,8 +22,6 @@ from app.celery.aws_celery_exceptions import (
     InvalidAppId,
 )
 
-from app.constants.db_lock_constants import LOCK_TIMEOUT
-
 
 @shared_task(bind=True)
 def update_cluster(
@@ -59,7 +57,9 @@ def update_cluster(
         f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"
     )
 
-    set_local_lock_timeout(LOCK_TIMEOUT)
+    # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(30)
+
     # We must delete every unassigned container in the cluster. Locks using with_for_update()
     unassigned_containers = (
         UserContainer.query.with_for_update().filter_by(cluster=cluster_name, user_id=None).all()
@@ -241,7 +241,8 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
             update_task_definitions(app_id=_app_id)
         return
 
-    set_local_lock_timeout(LOCK_TIMEOUT)
+    # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(30)
     app_data = SupportedAppImages.query.filter_by(app_id=app_id).with_for_update().first()
     if app_data is None:
         raise InvalidAppId(f"App ID {app_id} is not in SupportedAppImages")

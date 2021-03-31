@@ -21,8 +21,6 @@ from app.helpers.utils.general.sql_commands import (
 )
 from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
-from app.constants.db_lock_constants import LOCK_TIMEOUT
-
 
 @shared_task(bind=True)
 def delete_container(self: Task, container_name: str, aes_key: str) -> None:
@@ -38,11 +36,13 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         None
     """
     task_start_time = time.time()
-    set_local_lock_timeout(LOCK_TIMEOUT)
+    # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(30)
     try:
+        # lock using with_for_update()
         container = ensure_container_exists(
             UserContainer.query.with_for_update().get(container_name)
-        )  # lock using with_for_update()
+        )
     except Exception as error:
         message = f"Container {container_name} was not in the database."
         fractal_logger.error(
