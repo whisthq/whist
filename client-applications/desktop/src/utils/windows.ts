@@ -34,6 +34,10 @@ type CreateWindowFunction = (
 
 export const getWindows = () => BrowserWindow.getAllWindows()
 
+export const closeWindows = () => {
+    BrowserWindow.getAllWindows().forEach((win) => win.close())
+}
+
 export const createWindow = (
     options: Partial<BrowserWindowConstructorOptions>,
     onReady: (win: BrowserWindow) => any,
