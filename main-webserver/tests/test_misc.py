@@ -33,7 +33,7 @@ def test_callback_webserver_hostname_localhost():
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
 
 
-def test_callback_websesrver_hostname_not_localhost():
+def test_callback_webserver_hostname_not_localhost():
     """Make sure the callback webserver hostname is the same as the Host request header."""
 
     hostname = "google.com"
