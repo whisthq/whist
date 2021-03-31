@@ -120,6 +120,10 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
         time.sleep(1)  # wait for task to become available
     assert revoked is True, f"Got unexpected task state {task_result.state}."
 
+    # see supervisor.conf in main-webserver root (specifically stopwaitsecs).
+    # At most 30 seconds are given before the process is SIGKILL'd, so we wait 30 seconds.
+    time.sleep(30)
+
     # new tasks should never start
     task_id = dummy_task.delay().id
     started = False

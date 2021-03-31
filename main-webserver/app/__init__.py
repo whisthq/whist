@@ -35,7 +35,7 @@ def parse_request(view_func: _F) -> _F:
         # that way trying to pop from it raises a KeyError, which we have proper error handling for
         try:
             # parse body if POST request and data is not an empty byte string
-            if request.method == "POST" and request.data is not b"":
+            if request.method == "POST" and request.data != b"":
                 body = json.loads(request.data)
             else:
                 body = dict()
