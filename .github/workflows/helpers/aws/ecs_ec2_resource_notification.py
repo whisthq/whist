@@ -3,18 +3,6 @@ import os
 import uuid
 import sys
 
-regions = [
-    "us-east-1",
-    "us-east-2",
-    "us-west-1",
-    "us-west-2",
-    "ca-central-1",
-    "eu-west-1",
-    "eu-central-1",
-]
-
-branches = ["dev", "staging", "prod"]
-
 
 def read_tags(tags, resource):
     """
@@ -91,11 +79,11 @@ def flag_instances(region, branch):
                 tag_branch, tag_commit, name = read_tags(instance["Tags"], "EC2")
 
             if branch == tag_branch:
-                line = f"     - `{name}`"
+                line = f"     - \\`{name}\\`"
                 message += f"{line} \n"
-                message += f"          - id: `{instance_id}` \n"
-                message += f"          - Branch: `{tag_branch}` \n"
-                message += f"          - Commit: `{tag_commit}` \n"
+                message += f"          - id: \\`{instance_id}\\` \n"
+                message += f"          - Branch: \\`{tag_branch}\\` \n"
+                message += f"          - Commit: \\`{tag_commit}\\` \n"
 
     return message
 
