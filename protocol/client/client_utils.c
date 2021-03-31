@@ -756,7 +756,7 @@ int prepare_init_to_server(FractalDiscoveryRequestMessage *fmsg, char *email) {
     */
 
     // Copy email
-    if (!safe_strncpy(fmsg->user_email, email, FRACTAL_ARGS_MAXLEN + 1)) {
+    if (!safe_strncpy(fmsg->user_email, email, sizeof(fmsg->user_email))) {
         LOG_ERROR("User email is too long: %s.\n", email);
         return -1;
     }
