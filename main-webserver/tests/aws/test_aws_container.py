@@ -47,7 +47,7 @@ def ecs_data(app):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(ecs_data, client, authorized, cluster_name=pytest.cluster_name):
+def test_create_cluster(ecs_data, client, authorized, cluster_name=""):
     cluster_name = cluster_name or pytest.cluster_name
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
