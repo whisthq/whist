@@ -8,7 +8,7 @@ Usage
 
 init_window_name_getter();
 
-char name[WINDOW_NAME_MAXLEN];
+char name[WINDOW_NAME_MAXLEN + 1];
 get_focused_window_name(name);
 
 destroy_window_name_getter();
@@ -49,7 +49,7 @@ int get_focused_window_name(char* name_return) {
      *
      * Arguments:
      *     name_return (char*): Pointer to location to write name. Must have at least
-     *                          WINDOW_NAME_MAXLEN bytes available.
+     *                          WINDOW_NAME_MAXLEN + 1 bytes available.
      *
      *  Return:
      *      ret (int): 0 on success, other integer on failure
@@ -80,7 +80,7 @@ int get_focused_window_name(char* name_return) {
                     list[0][i] = ' ';
                 }
             }
-            safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN);
+            safe_strncpy(name_return, list[0], WINDOW_NAME_MAXLEN + 1);
             XFreeStringList(list);
             return 0;
         } else {

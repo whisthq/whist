@@ -88,7 +88,7 @@ volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 volatile FractalCursorID last_cursor;
 InputDevice* input_device = NULL;
-extern char sentry_environment[FRACTAL_ARGS_MAXLEN+1];
+extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
 char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
@@ -122,7 +122,9 @@ int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
 bool client_joined_after_window_name_broadcast = false;
-char cur_window_name[WINDOW_NAME_MAXLEN] = {0};
+
+// This variable should always be an array - we call sizeof()
+char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
 
 /*
 ============================
@@ -1195,7 +1197,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
-            char name[WINDOW_NAME_MAXLEN];
+            char name[WINDOW_NAME_MAXLEN + 1];
             if (get_focused_window_name(name) == 0) {
                 if (client_joined_after_window_name_broadcast ||
                     (num_active_clients > 0 && strcmp(name, cur_window_name) != 0)) {
@@ -1209,7 +1211,8 @@ int main(int argc, char* argv[]) {
                                              (int)fsmsg_size) < 0) {
                         LOG_WARNING("Failed to broadcast window title message.");
                     } else {
-                        safe_strncpy(cur_window_name, name, WINDOW_NAME_MAXLEN);
+                        LOG_INFO("Sent window title message!");
+                        safe_strncpy(cur_window_name, name, sizeof(cur_window_name));
                         client_joined_after_window_name_broadcast = false;
                     }
                     read_unlock(&is_active_rwlock);

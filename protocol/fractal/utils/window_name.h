@@ -10,7 +10,7 @@ Usage
 
 init_window_name_getter();
 
-char name[WINDOW_NAME_MAXLEN];
+char name[WINDOW_NAME_MAXLEN + 1];
 get_focused_window_name(name);
 
 destroy_window_name_getter();
@@ -30,7 +30,10 @@ Defines
 ============================
 */
 
-#define WINDOW_NAME_MAXLEN 128
+// MAXLENs are the max length of the string they represent, _without_ the null character.
+// Therefore, whenever arrays are created or length of the string is compared, we should be
+// comparing to *MAXLEN + 1
+#define WINDOW_NAME_MAXLEN 127
 
 /*
 ============================
@@ -47,8 +50,8 @@ void init_window_name_getter();
 /**
  * @brief                          Get the name of the focused window.
  *
- * @param name_return              Address to write name. Should have at least WINDOW_NAME_MAXLEN
- *                                 bytes available.
+ * @param name_return              Address to write name. Should have at least WINDOW_NAME_MAXLEN +
+ *                                 1 bytes available.
  *
  * @returns                        0 on success, any other int on failure.
  */
