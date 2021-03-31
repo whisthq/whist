@@ -50,7 +50,7 @@ export const logDebug = (title: string, message: string | null, data?: any) => {
             "--" +
             message +
             "\n" +
-            (data ? JSON.stringify(data, null, 2) : "")
+            (data !== undefined ? JSON.stringify(data, null, 2) : "")
     )
 }
 
