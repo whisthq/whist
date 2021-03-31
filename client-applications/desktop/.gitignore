@@ -1,7 +1,8 @@
 # Fractal protocol
 protocol-build/
 MacOS/
-loadingtemp/
+loading/
+build/
 rcedit-x64.exe
 .unison
 .protocol
