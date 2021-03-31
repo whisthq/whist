@@ -25,6 +25,8 @@ regions = [
     "eu-central-1",
 ]
 
+branches = ["steveli/aws-resource-tagging", "staging", "prod"]
+
 
 def get_tags(arn, region):
     """
@@ -42,24 +44,6 @@ def get_tags(arn, region):
 
     response = client.list_tags_for_resource(resourceArn=arn)
     return response["tags"]
-
-
-def add_name(commit, branch, region, instance_id, test):
-    """
-    Adds a name tag for a given instance
-
-    Args:
-        commit (str): commit hash
-        branch (str): current branch name
-        region (str): region name
-        instance_id (str): given instance_id
-        test (bool): if instance was created on test or not
-    """
-    name = f"{'test-' if test else ''}<{branch}>-<{commit}>-{uuid.uuid4()}"
-    client = boto3.client("ec2", region_name=region)
-    client.create_tags(Resources=[instance_id], Tags=[{"Key": "Name", "Value": name}])
-
-    return name
 
 
 def read_tags(tags, commit, branch, resource, region, instance_id):
@@ -92,21 +76,8 @@ def read_tags(tags, commit, branch, resource, region, instance_id):
             tag_commit = tag[value]
         if tag[key] == "Name":
             name = tag[value]
-            found_name = True
 
-    if resource == "EC2" and not found_name:
-        name = add_name(tag_commit, tag_branch, region, instance_id, test == "True")
-
-    if test == "True":
-        return "CREATED ON TEST", tag_branch, tag_commit, name
-    if branch in target_branches and tag_branch == branch:
-        return (
-            ("OLD COMMIT", tag_branch, tag_commit, name)
-            if tag_commit != commit
-            else ("CURRENT COMMIT", tag_branch, tag_commit, name)
-        )
-
-    return ("NO COMMIT TAG", tag_branch, tag_commit, name)
+    return tag_branch, tag_commit, name
 
 
 def compare_timestamps(timestamp):
@@ -168,15 +139,9 @@ def flag_clusters(region, commit, branch):
 
         tags = get_tags(clusterArn, region)
 
-        git_status, branch, commit, name = read_tags(tags, commit, branch, "ECS", region, "")
-        git_icon = icons[git_status]
+        branch, commit, name = read_tags(tags, commit, branch, "ECS", region, "")
 
         line = f"`{clusterName}`"
-
-        if git_icon == ":red_circle:":
-            flag = True
-            line = f"• {line} - *{git_status}* \n"
-            message += line
 
     return message
 
@@ -214,11 +179,9 @@ def flag_instances(region, commit, branch):
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
-            flag = False
 
             tag_branch = ""
             tag_commit = ""
-            git_status = ""
             name = ""
 
             launch_time = instance["LaunchTime"]
@@ -226,74 +189,57 @@ def flag_instances(region, commit, branch):
 
             launch_status, days = compare_timestamps(launch_time)
             launch_icon = icons[launch_status]
-
             if "Tags" in instance:
-                git_status, tag_branch, tag_commit, name = read_tags(
+                tag_branch, tag_commit, name = read_tags(
                     instance["Tags"], commit, branch, "EC2", region, instance_id
                 )
-                git_icon = icons[git_status]
-            else:
-                name = add_name(commit, branch, region, instance_id, False)
-                git_status = "NO TAGS"
-                git_icon = icons["NO COMMIT TAG"]
 
-            line = f"`{name}`"
-
-            if git_icon == ":red_circle:":
-                flag = True
-                line += f"- {git_status}"
-
-            if launch_icon == ":red_circle:":
-                flag = True
-                line += f" - *{launch_status}* - uptime: {days} days "
-
-            if flag:
-                line = f"• {line}"
+            if branch == tag_branch:
+                line = f"     • `{name}`"
                 message += f"{line} \n"
                 message += f"          • id: `{instance_id}` \n"
-
-                if len(tag_branch) > 0 and len(tag_commit) > 0:
-                    message += f"          • Branch: `{tag_branch}` \n"
-                    message += f"          • Commit: `{tag_commit}` \n"
+                message += f"          • Branch: `{tag_branch}` \n"
+                message += f"          • Commit: `{tag_commit}` \n"
 
     return message
 
 
 if __name__ == "__main__":
-    token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
-    commit = os.environ.get("HEROKU_SLUG_COMMIT")
-    commit = commit[0:7]
-    branch = os.environ.get("BRANCH")
-
-    # slack message formatter
-    for resource in ["EC2", "ECS"]:
-        for region in regions:
-            blocks = [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*{} Status for:* _{}_".format(resource, region),
-                    },
+    # token = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+    # commit = os.environ.get("HEROKU_SLUG_COMMIT")
+    # commit = commit[0:7]
+    # branch = os.environ.get("BRANCH")
+    token = "xoxb-824878087478-1738745217397-gwRk3we5JOq5Gq7RHceFjBYA"
+    commit = "1234"
+    client = slack.WebClient(token=token)
+    for region in regions:
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "*EC2 Instances in:* _{}_ ".format(region),
                 },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "• Schedule meetings \n ",
+            },
+        ]
+
+        for branch in branches:
+            blocks.extend(
+                [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "*Status for branch:* `{}` \n".format(branch),
+                        },
                     },
-                },
-            ]
-            message = ""
+                ]
+            )
 
-            if resource == "EC2":
-                message = flag_instances(region, commit, branch)
+            print(region, branch)
 
-            elif resource == "ECS":
-                message = flag_clusters(region, commit, branch)
+            instances = flag_instances(region, commit, branch)
+            if len(instances) > 0:
+                blocks[1]["text"]["text"] += instances
 
-            client = slack.WebClient(token=token)
-            blocks[1]["text"]["text"] = message
-
-            if len(message) > 0:
                 client.chat_postMessage(channel="U01J21MUCMS", blocks=blocks)
