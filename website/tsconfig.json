@@ -14,7 +14,7 @@
         "forceConsistentCasingInFileNames": true,
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
-        "importsNotUsedAsValues": "error",
+        "importsNotUsedAsValues": "remove",
         "typeRoots": ["./src/@types", "./node_modules/@types"]
     }
 }

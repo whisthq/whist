@@ -9,7 +9,10 @@
     "postinstall": "cd node_modules/@fractal/core-ts && npm install && npm run build"
   },
   "dependencies": {
+    "@fortawesome/free-solid-svg-icons": "^5.15.3",
+    "@fortawesome/react-fontawesome": "^0.1.14",
     "@sentry/react": "^6.2.2",
+    "@types/react-modal": "^3.12.0",
     "classnames": "^2.2.6",
     "lodash": "^4.17.21",
     "prop-types": "^15.7.2",
@@ -19,9 +22,12 @@
     "react-fade-in": "^2.0.1",
     "react-ga": "^3.3.0",
     "react-icons": "^4.2.0",
+    "react-modal": "^3.12.1",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "react-router-hash-link": "^2.4.0",
+    "react-spring": "^9.0.0",
+    "react-typeform-embed": "^0.2.1",
     "reactjs-popup": "^2.0.4"
   },
   "devDependencies": {

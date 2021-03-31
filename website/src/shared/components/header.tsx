@@ -125,23 +125,7 @@ const Header = (props: {
                             )}
                         </StartHeaderRow>
                     }
-                    end={
-                        <EndHeaderRow>
-                            {props.isSignedIn ? (
-                                !props.onAccountPage && (
-                                    <MyAccountLinkBold
-                                        className={mobileHidden}
-                                    />
-                                )
-                            ) : (
-                                <SignInLinkBold className={mobileHidden} />
-                            )}
-                            <BarsIcon
-                                className="inline md:hidden text-black dark:text-gray-100"
-                                onClick={() => setExpanded(!expanded)}
-                            />
-                        </EndHeaderRow>
-                    }
+                    end={<></>}
                 />
             </div>
             <ScreenFull
@@ -170,18 +154,7 @@ const Header = (props: {
                             </StartHeaderCol>
                         }
                         middle={<div className="h-8"></div>}
-                        end={
-                            <EndHeaderCol>
-                                {props.isSignedIn && <MyAccountLinkStyled />}
-                                {props.isSignedIn ? (
-                                    <SignOutLinkButton
-                                        onClick={handleSignOutClick}
-                                    />
-                                ) : (
-                                    <SignInLinkButton />
-                                )}
-                            </EndHeaderCol>
-                        }
+                        end={<></>}
                     />
                 </div>
             </ScreenFull>
