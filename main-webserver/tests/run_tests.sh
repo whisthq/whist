@@ -21,9 +21,6 @@ if [ $IN_CI == true ]; then
     # override DATABASE_URL to the ephemeral db
     export DATABASE_URL=$POSTGRES_DEST_URI
 
-    export BRANCH=$HEROKU_TEST_RUN_BRANCH
-    export COMMIT=$HEROKU_TEST_RUN_COMMIT_VERSION
-
     # REDIS_URL is set by heroku. we don't need to do anything more.
 else
     echo "=== Make sure to run tests/setup/setup_tests.sh once prior to this ==="
@@ -38,8 +35,8 @@ else
     BRANCH=$(git branch --show-current)
     COMMIT=$(git rev-parse --short HEAD)
 
-    export BRANCH=$BRANCH
-    export COMMIT=$COMMIT
+    export APP_GIT_BRANCH=$BRANCH
+    export APP_GIT_COMMIT=$COMMIT
 
     # we use the remote user and remote db to make ephemeral db look as close to dev as possible
     # but of course, host and port are local

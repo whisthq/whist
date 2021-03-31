@@ -42,8 +42,8 @@ services:
       REDIS_URL: redis://redis
       HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
-      BRANCH: ${BRANCH}
-      COMMIT: ${COMMIT}
+      APP_GIT_BRANCH: ${APP_GIT_BRANCH}
+      APP_GIT_COMMIT: ${APP_GIT_COMMIT}
     volumes:
       - ..:/app
 

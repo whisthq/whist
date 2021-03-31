@@ -25,11 +25,11 @@ RUN apt-get update \
 
 
 # set git branch and commit hash enviornment variables 
-ARG BRANCH
-ENV BRANCH=$BRANCH
+ARG APP_GIT_BRANCH
+ENV APP_GIT_BRANCH=$APP_GIT_BRANCH
 
-ARG COMMIT
-ENV COMMIT=$COMMIT
+ARG APP_GIT_COMMIT
+ENV APP_GIT_COMMIT=$APP_GIT_COMMIT
 
 # Install python requirements
 COPY requirements.txt ./

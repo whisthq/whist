@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from flask import current_app
 from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import update_cluster
@@ -31,8 +32,8 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
 # print(os.environ)
-branch = os.environ["BRANCH"].replace("/", "-")
-commit = os.environ["COMMIT"][0:7]
+branch = current_app.config["APP_GIT_BRANCH"].replace("/", "-")
+commit = current_app.config["APP_GIT_COMMIT"][0:7]
 pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
 pytest.container_name = None
 
