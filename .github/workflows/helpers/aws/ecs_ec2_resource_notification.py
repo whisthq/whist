@@ -74,6 +74,7 @@ def flag_instances(region, branch):
             name = ""
 
             instance_id = instance["InstanceId"]
+            state = instance["State"]["Name"]
 
             if "Tags" in instance:
                 tag_branch, tag_commit, name = read_tags(instance["Tags"], "EC2")
@@ -84,6 +85,7 @@ def flag_instances(region, branch):
                 message += f"          - id: \\`{instance_id}\\` \n"
                 message += f"          - Branch: \\`{tag_branch}\\` \n"
                 message += f"          - Commit: \\`{tag_commit}\\` \n"
+                message += f"          - State: \\`{state}\\` \n"
 
     return message
 
@@ -92,32 +94,6 @@ if __name__ == "__main__":
 
     region = sys.argv[1]
     branch = sys.argv[2]
-
-    # for region in regions:
-    #     blocks = [
-    #         {
-    #             "type": "section",
-    #             "text": {
-    #                 "type": "mrkdwn",
-    #                 "text": "*EC2 Instances in:* _{}_ ".format(region),
-    #             },
-    #         },
-    #     ]
-
-    #     for branch in branches:
-    #         blocks.extend(
-    #             [
-    #                 {
-    #                     "type": "section",
-    #                     "text": {
-    #                         "type": "mrkdwn",
-    #                         "text": "*Status for branch:* `{}` \n".format(branch),
-    #                     },
-    #                 },
-    #             ]
-    #         )
-
-    #         print(region, branch)
 
     instances = flag_instances(region, branch)
     print(instances)

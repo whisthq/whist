@@ -35,7 +35,7 @@ jobs:
                     - eu-west-1
                     - eu-central-1
                 branch:
-                    - steveli/aws-resource-tagging
+                    - dev
                     - staging
                     - prod
         steps:
@@ -66,7 +66,7 @@ jobs:
                   echo "EOF" >> $GITHUB_ENV
                   echo "$ec2_instances"
 
-            - name: Notify in Slack if Hanging Resources Exist
+            - name: Notify in Slack All instances
               working-directory: .github/workflows/helpers/aws
               run: |
                   # notify slack if there are hanging resources
@@ -76,9 +76,9 @@ jobs:
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
-            # - name: Notify Slack if error
-            #   if: ${{ failure() }}
-            #   run: |
-            #       curl -X POST \
-            #       --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.region }} at branch ${{ matrix.branch }}\", \"icon_emoji\": \":fractal:\"}" \
-            #       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+            - name: Notify Slack if error
+              if: ${{ failure() }}
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.region }} at branch ${{ matrix.branch }}\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
