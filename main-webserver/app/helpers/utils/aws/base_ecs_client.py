@@ -743,6 +743,7 @@ class ECSClient:
                     "Value": "True" if current_app.testing else "False",
                     "PropagateAtLaunch": True,
                 },
+                {"Key": "Name", "Value": self.generate_name("ec2"), "PropagateAtLaunch": True},
             ],
         )
 
