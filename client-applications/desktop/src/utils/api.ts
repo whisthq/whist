@@ -1,7 +1,7 @@
 import { configGet, configPost } from "@fractal/core-ts"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 import config from "@app/utils/config"
-import { goTo } from "@app/utils/history"
+import { AsyncReturnType } from "@app/utils/types"
 
 /*
  * @fractal/core-ts http functions like "get" and "post"
@@ -35,11 +35,17 @@ export const emailLogin = async (username: string, password: string) =>
         body: { username, password },
     })
 
-export const responseAccessToken = (response: {
+export const emailLoginValid = (response: AsyncReturnType<typeof emailLogin>) =>
+    response.json?.access_token ? true : false
+
+export const emailLoginError = (response: AsyncReturnType<typeof emailLogin>) =>
+    response.response.status !== 200
+
+export const emailLoginAccessToken = (response: {
     json: { access_token?: string }
 }) => response.json?.access_token
 
-export const responseRefreshToken = (response: {
+export const emailLoginRefreshToken = (response: {
     json: { refresh_token?: string }
 }) => response.json?.refresh_token
 
