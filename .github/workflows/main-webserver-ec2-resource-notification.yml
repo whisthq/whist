@@ -73,9 +73,9 @@ jobs:
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
-            - name: Notify Slack if error
-              if: ${{ failure() }}
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.aws-region }}\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+            # - name: Notify Slack if error
+            #   if: ${{ failure() }}
+            #   run: |
+            #       curl -X POST \
+            #       --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.aws-region }}\", \"icon_emoji\": \":fractal:\"}" \
+            #       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
