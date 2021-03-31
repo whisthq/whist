@@ -502,7 +502,7 @@ func main() {
 	case <-sigChan:
 		logger.Infof("Got an interrupt or SIGTERM")
 	case <-globalCtx.Done():
-		logger.Errorf("Global context cancelled!")
+		logger.Infof("Global context cancelled!")
 	}
 }
 
