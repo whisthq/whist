@@ -101,7 +101,6 @@ def flag_instances(region, branch):
 
 
 if __name__ == "__main__":
-    print("Argv: ", sys.argv)
 
     region = sys.argv[1]
     branch = sys.argv[2]

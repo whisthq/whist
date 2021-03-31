@@ -69,7 +69,7 @@ jobs:
               working-directory: .github/workflows/helpers/aws
               run: |
                   # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.hanging_resource }}" ]; then
+                  if [ ! -z "${{ env.ec2_instances }}" ]; then
                       curl -X POST \
                       --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.branch }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
