@@ -2,7 +2,6 @@
 protocol-build/
 MacOS/
 loading/
-build/
 rcedit-x64.exe
 .unison
 .protocol
