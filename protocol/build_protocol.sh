@@ -40,8 +40,8 @@ docker run \
     fractal/protocol-builder \
     sh -c "\
     cd protocol &&                 \
-    mkdir -p docker-build &&       \
-    cd docker-build &&             \
+    mkdir -p build-docker &&       \
+    cd build-docker &&             \
     cmake                          \
         -S ..                      \
         -B .                       \

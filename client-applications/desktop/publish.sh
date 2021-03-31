@@ -45,34 +45,44 @@ else
         shift
     done
 
-    # Only notarize, when publish=true
-    if [[ "$publish" == "false" ]]; then
-        export CSC_IDENTITY_AUTO_DISCOVERY=false
-    fi
     python3 setVersion.gyp $bucket $version
 
     # Make FractalClient and create its app bundle
     cd ../../protocol
-    mkdir -p publish-build
-    cd publish-build
-    cmake .. -DCMAKE_BUILD_TYPE=Release
+    mkdir -p build-publish
+    cd build-publish
+    cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
     make -j FractalClient
     cd ..
     cd ../client-applications/desktop
+
+    rm -rf loading 
+    mkdir -p loading
+    cp -r ../../protocol/build-publish/client/build64/loading/*.png loading
+
     rm -rf protocol-build
     mkdir -p protocol-build/client
 
     # Move FractalClient and related files over to client-app
-    cp -r ../../protocol/publish-build/client/build64/* ./protocol-build/client
+    cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
+    rm -rf ./protocol-build/client/loading
 
-    # Codesign everything in ./client directory
-    find ./protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
+    mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
+
+
+    # On Mac, codesign everything in ./protocol-build/client directory
+    # Only notarize, when publish=true
+    if [[ "$publish" == "false" ]]; then
+        export CSC_IDENTITY_AUTO_DISCOVERY=false
+    else 
+        find ./protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
+    fi
 
     # Initialize yarn first
     yarn -i
 
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
-    yarn config set network-timeout 300000
+    yarn config set network-timeout 600000
 
     if [[ "$publish" == "true" ]]
     then
