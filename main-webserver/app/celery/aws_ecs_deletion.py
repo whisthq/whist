@@ -7,13 +7,10 @@ from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster
 from app.exceptions import ClusterNotIdle
-from app.exceptions import ContainerNotFoundException
-from app.helpers.utils.aws.aws_resource_locks import (
-    lock_container_and_update,
-    spin_lock,
-)
+
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.event_logging.events import (
     logged_event_container_deleted,
@@ -39,28 +36,13 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         None
     """
     task_start_time = time.time()
-
+    # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(30)
     try:
-        if spin_lock(container_name) < 0:
-            fractal_logger.error(
-                "spin_lock took too long.",
-                extra={
-                    "label": container_name,
-                },
-            )
-
-            raise Exception("Failed to acquire resource lock.")
-    except ContainerNotFoundException as no_container_exc:
-        if "test" in container_name and not current_app.testing:
-            fractal_logger.error(
-                "Test container attempted to communicate with nontest server",
-                extra={"label": container_name},
-            )
-            return
-        raise no_container_exc
-
-    try:
-        container = ensure_container_exists(UserContainer.query.get(container_name))
+        # lock using with_for_update()
+        container = ensure_container_exists(
+            UserContainer.query.with_for_update().get(container_name)
+        )
     except Exception as error:
         message = f"Container {container_name} was not in the database."
         fractal_logger.error(
@@ -85,10 +67,6 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         extra={"label": str(container_name)},
     )
 
-    lock_container_and_update(
-        container_name=container_name, state="DELETING", lock=True, temporary_lock=10
-    )
-
     container_cluster = container.cluster
     container_user = container.user_id
     container_location = container.location
@@ -110,7 +88,9 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
             },
         )
         ecs_client.spin_til_done(offset=0)
-    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+
+    db.session.delete(container)
+    db.session.commit()
 
     cluster_info = ClusterInfo.query.get(container_cluster)
     if not cluster_info:

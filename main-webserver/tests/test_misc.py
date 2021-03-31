@@ -2,15 +2,20 @@
 
 import re
 import time
+import concurrent.futures
 
 import pytest
+from sqlalchemy.exc import OperationalError
 
 from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
 from app.config import _callback_webserver_hostname
 from app.helpers.utils.general.auth import check_developer
+from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
+from app.models import db, RegionToAmi
 
 
 def test_callback_webserver_hostname_localhost():
@@ -156,3 +161,42 @@ def test_rate_limiter(client):
 
     resp = client.post("/newsletter/post")
     assert resp.status_code == 429
+
+
+def test_local_lock_timeout(app):
+    """
+    Test the function `set_local_lock_timeout` by running concurrent threads that try to grab
+    the lock. One should time out.
+    """
+
+    def acquire_lock(lock_timeout: int, hold_time: int):
+        try:
+            with app.app_context():
+                set_local_lock_timeout(lock_timeout)
+                _ = RegionToAmi.query.with_for_update().get("us-east-1")
+                fractal_logger.info("Got lock and data")
+                time.sleep(hold_time)
+            return True
+        except OperationalError as oe:
+            if "lock timeout" in str(oe):
+                return False
+            else:
+                # if we get an unexpected error, this test will fail
+                raise oe
+
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        fractal_logger.info("Starting threads...")
+        t1 = executor.submit(acquire_lock, 5, 10)
+        t2 = executor.submit(acquire_lock, 5, 10)
+
+        fractal_logger.info("Getting thread results...")
+        t1_result = t1.result()
+        t2_result = t2.result()
+
+        if t1_result is True and t2_result is True:
+            fractal_logger.error("Both threads got the lock! Locking failed.")
+            assert False
+        elif t1_result is False and t2_result is False:
+            fractal_logger.error("Neither thread got the lock! Invesigate..")
+            assert False
+        # here, only one thread got the lock so this test succeeds
