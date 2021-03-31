@@ -61,7 +61,7 @@ export const Middle = () => {
                 }
             />
                 <VerticalTemplate
-                    visible={visible}
+                    visible={true}
                     title={
                         <>
                             <div className="text-gray-dark dark:text-gray-300">

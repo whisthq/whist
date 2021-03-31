@@ -11,9 +11,8 @@ import Header from "@app/shared/components/header"
 import Footer from "@app/shared/components/footer"
 import Top from "./top"
 import Middle from "./middle"
-import Pricing from "./pricing"
 import Features from "./features"
-import ActionPrompt from "./actionPrompt"
+import ActionPrompt from "./bottom"
 
 const DarkModeIcon = (props: {dark: boolean, onClick: () => void }) => (
                 <div className="absolute">
@@ -48,7 +47,6 @@ export const Chrome = () => {
                 <Header dark={dark} />
                 <Top />
                 <Middle />
-                <Pricing dark={dark} />
                 <Features />
                 <ActionPrompt />
             </div>

@@ -1,5 +1,6 @@
 import React from "react"
-import { Link } from "react-router-dom"
+
+import Typeform from "@app/pages/home/components/typeform"
 
 export const ActionPrompt = () => {
     /*
@@ -17,11 +18,7 @@ export const ActionPrompt = () => {
                 <div className="font-body mt-4 text-md md:text-lg text-gray tracking-wide dark:text-gray-400">
                     Discover a faster, lighter, and more private Google Chrome.
                 </div>
-                <Link to="/dashboard">
-                    <button className="rounded bg-blue dark:bg-mint px-8 py-3 mt-8 text-gray-100 dark:text-black w-full md:w-48 hover:bg-mint hover:text-black duration-500">
-                        GET STARTED
-                    </button>
-                </Link>
+                <Typeform text="JOIN WAITLIST"/>
             </div>
         </div>
     )

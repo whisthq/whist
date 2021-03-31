@@ -14,6 +14,8 @@ import RedditLogo from "@app/assets/icons/redditLogo.svg"
 import FigmaLogo from "@app/assets/icons/figmaLogo.svg"
 import GmailLogo from "@app/assets/icons/gmailLogo.svg"
 
+import Typeform from "@app/pages/home/components/typeform"
+
 const SymmetricGeometric = (props: any) => (
     <FadeIn>
         <div
@@ -53,6 +55,7 @@ export const Top = () => {
     */
     const { width } = useContext(MainContext)
     const [hovering, setHovering] = useState(false)
+    const [show, setShow] = useState(false)
 
     const adjectives = ["faster", "lighter", "private"]
 
@@ -85,17 +88,7 @@ export const Top = () => {
                             complete privacy. Fractal is a supercharged version
                             of Chrome that runs in the cloud.
                         </p>
-                        <Link to="/auth">
-                            <button
-                                className={classNames("relative text-gray-100 rounded bg-blue dark:bg-mint dark:text-black px-8 py-3 mt-8 font-light",
-                                                      "w-full md:w-48 transition duration-500 hover:bg-mint hover:text-black mt-12 tracking-wide")}
-                                style={{ opacity: 1.0 }}
-                                onMouseEnter={() => setHovering(true)}
-                                onMouseLeave={() => setHovering(false)}
-                            >
-                                <div className="transform translate-y-0.5">GET STARTED</div>
-                            </button>
-                        </Link>
+                        <Typeform text="JOIN WAITLIST"/>
                     </div>
                 </FadeIn>
                 <FadeIn delay={width > ScreenSize.MEDIUM ? 1900 : 200}>
