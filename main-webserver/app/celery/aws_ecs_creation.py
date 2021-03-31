@@ -17,6 +17,7 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.helpers.utils.general.sql_commands import fractal_sql_update
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 
 from app.models import (
     db,
@@ -179,7 +180,8 @@ def find_available_container(
     Returns: either a fitting container or None if no container is found
 
     """
-
+    # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+    set_local_lock_timeout(30)
     available_container = (
         UserContainer.query.filter_by(
             task_definition=task_definition_arn,
@@ -192,9 +194,12 @@ def find_available_container(
         .limit(1)
         .one_or_none()
     )
+
     if available_container is None:
         # check each replacement region for available containers
         for bundlable_region in bundled_region.get(region_name, []):
+            # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+            set_local_lock_timeout(30)
             available_container = (
                 UserContainer.query.filter_by(
                     task_definition=task_definition_arn,
@@ -483,6 +488,7 @@ def _assign_container(
 
         # otherwise, we see if there's an unassigned container
         base_container: Optional[UserContainer] = None
+
         try:
             base_container = ensure_container_exists(
                 find_available_container(region_name, task_definition_arn, task_version)
@@ -582,7 +588,6 @@ def _assign_container(
             state="CREATING",
             location=region_name,
             os="Linux",
-            lock=False,
             secret_key=aeskey,
             task_definition=task_definition_arn,
             task_version=task_version,
@@ -781,7 +786,6 @@ def prewarm_new_container(
         state="CREATING",
         location=region_name,
         os="Linux",
-        lock=False,
         secret_key=aeskey,
         task_definition=task_definition_arn,
         task_version=task_version,

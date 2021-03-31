@@ -12,7 +12,6 @@ class UserContainer(db.Model):
     location = db.Column(db.String(250), nullable=False)
     os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
-    lock = db.Column(db.Boolean, nullable=False, default=False)
     user_id = db.Column(db.ForeignKey("users.user_id"), nullable=True)
     user = relationship("User", back_populates="containers")
     task_definition = db.Column(db.ForeignKey("hardware.supported_app_images.task_definition"))
@@ -27,7 +26,6 @@ class UserContainer(db.Model):
     using_stun = db.Column(db.Boolean, nullable=False, default=False)
     branch = db.Column(db.String(250), nullable=False, default="prod")
     allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
-    temporary_lock = db.Column(db.Integer)
     dpi = db.Column(db.Integer)
     secret_key = db.Column(
         StringEncryptedType(db.String, secret_key, AesEngine, "pkcs5"), nullable=False

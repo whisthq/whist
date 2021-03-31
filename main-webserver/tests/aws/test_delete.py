@@ -38,13 +38,6 @@ def test_successful(client, authorized, monkeypatch):
     assert response.status_code == HTTPStatus.ACCEPTED
 
 
-def test_timeout(monkeypatch):
-    monkeypatch.setattr(aws_resource_locks, "spin_lock", function(returns=-1))
-
-    with pytest.raises(Exception):
-        delete_container("mycontainerid123", "garbage!")
-
-
 def test_unauthorized(container, monkeypatch):
     c = container()
 
