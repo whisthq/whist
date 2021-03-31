@@ -61,7 +61,9 @@ jobs:
               working-directory: .github/workflows/helpers/aws
               run: |
                   ec2_instances=$(python ecs_ec2_resource_notification.py ${{ matrix.region }} ${{ matrix.branch }})
-                  echo "ec2_instances=$ec2_instances" >> $GITHUB_ENV
+                  echo "ec2_instances<<EOF" >> $GITHUB_ENV
+                  echo $ec2_instances >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
 
             - name: Notify in Slack if Hanging Resources Exist
               working-directory: .github/workflows/helpers/aws
