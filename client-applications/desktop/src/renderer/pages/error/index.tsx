@@ -19,8 +19,8 @@ const Error = (props: {
 
     return (
         <div className="mt-16 font-body text-center">
-            <div className="font-semibold text-2xl">An unexpected error has occured</div>
-            <div className="mt-2">The protocol stopped working.</div>
+            <div className="font-semibold text-2xl">{props.title}</div>
+            <div className="mt-2">{props.text}</div>
             <FractalButton
                 contents="Continue"
                 className="mt-8 px-12 py-3"
