@@ -13,7 +13,7 @@ def read_tags(tags, resource):
         resource (str): current aws resource, either EC2 or ECS
 
     Returns:
-        tuple: the branch, commit, and name of the resource
+        tuple: the branch, commit, name of the resource, and whether it was created on test
     """
     tag_branch = ""
     tag_commit = ""
@@ -50,21 +50,20 @@ def get_all_instances(region):
     return response["Reservations"]
 
 
-def flag_instances(region, branch):
+def flag_instances(region):
     """
     Flags all the instances in a given region
 
     Args:
         region (str): current region
-        commit (str): current commit hash
-        branch (str): current branch
 
     Returns:
-        str: message to be sent to slack containing all flagged instances
+        map: map of all branches with associated instances
     """
     reservations = get_all_instances(region)
     test_count = 0
     user_count = 0
+    branch_map = {}
     message = ""
     for r in reservations:
         instances = r["Instances"]
@@ -75,29 +74,29 @@ def flag_instances(region, branch):
             name = ""
             test = False
 
-            instance_id = instance["InstanceId"]
-
             if "Tags" in instance:
                 tag_branch, tag_commit, name, test = read_tags(instance["Tags"], "EC2")
 
-            if branch == tag_branch:
-                if test:
-                    test_count += 1
+            if len(tag_branch) > 0:
+                # [ user instances, test instances ]
+                if tag_branch in branch_map:
+                    if test:
+                        branch_map[tag_branch][1] += 1
+                    else:
+                        branch_map[tag_branch][0] += 1
                 else:
-                    user_count += 1
+                    branch_map[tag_branch] = [0, 1] if test else [1, 0]
 
-                line = f"          - \\`{name}\\`"
-                message += f"{line} \n"
-
-    return message, test_count, user_count
+    return branch_map
 
 
 if __name__ == "__main__":
 
     region = sys.argv[1]
-    branch = sys.argv[2]
 
-    instances, test, user = flag_instances(region, branch)
-    if len(instances) > 0:
-        instances = f"     *Summary:* {test} test instances, {user} user instances \n{instances}"
-        print(instances)
+    branches = flag_instances(region)
+    if len(branches) > 0:
+        message = ""
+        for branch in branches:
+            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user instances* - {branches[branch][1]} *test instances*\n"
+        print(message)
