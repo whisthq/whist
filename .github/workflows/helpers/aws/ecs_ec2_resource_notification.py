@@ -92,6 +92,9 @@ def flag_instances(region):
     """
     reservations = get_all_instances(region)
     message = ""
+
+    shutting_down_states = ["shutting-down", "terminated", "stopping", "stopped"]
+
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
@@ -100,20 +103,19 @@ def flag_instances(region):
             name = ""
             test = False
             instance_id = instance["InstanceId"]
+            state = instance["State"]["Name"]
 
             if "Tags" in instance:
                 name, test = read_tags(instance["Tags"], "EC2")
 
             overdue, days = compare_days(launch_time)
-            if overdue:
+            if overdue and state not in shutting_down_states:
                 message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - *UPTIME:* {days} days \n"
-
             elif test:
-                if compare_hours(launch_time):
-                    message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
-
+                if compare_hours(launch_time) and state not in shutting_down_states:
+                    message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - *TEST INSTANCE OVERDUE* \n"
             elif len(name) == 0:
-                message += f"     - id: \\`{instance_id}\\` - UNTAGGED/UNNAMED \n"
+                message += f"     - id: \\`{instance_id}\\` - *UNTAGGED/UNNAMED* \n"
 
     return message
 

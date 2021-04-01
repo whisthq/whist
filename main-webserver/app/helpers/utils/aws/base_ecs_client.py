@@ -178,12 +178,12 @@ class ECSClient:
         # branch, commit = self._get_git_info()
         branch, commit = self._get_git_info()
         branch = branch.replace("/", "-")
-        name = f"{starter_name}-<{branch}>-<{commit}>-uuid:{uuid.uuid4()}"
+        name = f"{starter_name}-<{branch}>-<{commit}>- uuid - {uuid.uuid4()}"
 
         # need a special case for capacity_provider and cluster
         # as they don't like special characters
         if starter_name in ["capacity_provider", "cluster"]:
-            name = f"{starter_name}-{branch}-{commit}-uuid:{uuid.uuid4()}"
+            name = f"{starter_name}-{branch}-{commit}- uuid - {uuid.uuid4()}"
 
         if current_app.testing:
             name = f"test-{name}"
