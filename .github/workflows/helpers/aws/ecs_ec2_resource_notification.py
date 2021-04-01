@@ -108,9 +108,9 @@ def flag_instances(region):
             if overdue:
                 message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - *UPTIME:* {days} days \n"
 
-            # elif test:
-            #     if compare_hours(launch_time):
-            #         message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
+            elif test:
+                if compare_hours(launch_time):
+                    message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
 
             elif len(name) == 0:
                 message += f"     - id: \\`{instance_id}\\` - UNTAGGED/UNNAMED \n"
