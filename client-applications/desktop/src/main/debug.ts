@@ -7,7 +7,7 @@ import * as protocol from "@app/main/protocol"
 import * as user from "@app/main/user"
 import * as errors from "@app/main/errors"
 
-const modules = [login, container, protocol, user]
+const modules = [login, container, protocol, user, errors]
 
 type DebugSchema = {
     [title: string]:
