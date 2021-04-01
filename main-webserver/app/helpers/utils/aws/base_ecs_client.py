@@ -971,7 +971,7 @@ class ECSClient:
         self.set_cluster(cluster_name)
         try:
             launch_config_info = self.describe_auto_scaling_groups_in_cluster(self.cluster)[0]
-        except IndexError:
+        except (IndexError, KeyError):
             # This means that the cluster we were looking for was not found.
             raise FractalECSClusterNotFoundException(cluster_name)
         asg_name = launch_config_info["AutoScalingGroupName"]
