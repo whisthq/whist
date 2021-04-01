@@ -14,8 +14,8 @@ import {
     containerAssignSuccess,
     containerAssignFailure,
 } from "@app/main/container"
-import { merge, zip, of } from "rxjs"
-import { mapTo, map, share, exhaustMap } from "rxjs/operators"
+import { merge, zip, of, fromEvent } from "rxjs"
+import { mapTo, map, filter, share, exhaustMap, mergeMap } from "rxjs/operators"
 
 export const protocolLaunchRequest = containerAssignRequest.pipe(
     exhaustMap(() => of(protocolLaunch())),
@@ -35,9 +35,12 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
 
 export const protocolLaunchFailure = containerAssignFailure
 
-// Close the application when the protocol closes.
-protocolLaunchRequest.subscribe((protocol) =>
-    protocol.on("close", () => app.exit())
+export const protocolCloseRequest = protocolLaunchRequest.pipe(
+    mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, "close")))
+)
+
+export const protocolCloseFailure = protocolCloseRequest.pipe(
+    filter(([protocol]) => protocol.killed)
 )
 
 // Stream the ip, secret_key, and ports info to the protocol when we

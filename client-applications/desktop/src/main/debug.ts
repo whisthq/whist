@@ -1,6 +1,6 @@
 // import { identity } from "lodash"
 import { isObservable } from "rxjs"
-import { identity } from "lodash"
+import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
 import * as login from "@app/main/login"
 import * as container from "@app/main/container"
@@ -53,6 +53,17 @@ const schema: DebugSchema = {
     protocolLaunchLoading: ["value:"],
     protocolLaunchSuccess: ["value:"],
     protocolLaunchFailure: ["error:"],
+    protocolCloseRequest: [
+        "printing subset of protocol object:",
+        ([protocol]) =>
+            pick(protocol, [
+                "killed",
+                "connected",
+                "exitCode",
+                "signalCode",
+                "pid",
+            ]),
+    ],
     errorRelaunchRequest: ["relaunching app due to error!"],
 }
 
