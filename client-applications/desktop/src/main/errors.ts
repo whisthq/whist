@@ -7,8 +7,8 @@ import {
 } from "@app/main/container"
 
 import { ipcState, appReady } from "@app/main/events"
-import { combineLatest } from "rxjs"
-import { pluck } from "rxjs/operators"
+import { concat, race, combineLatest, of } from "rxjs"
+import { pluck, withLatestFrom, skip, map } from "rxjs/operators"
 import {
     closeWindows,
     createAuthErrorWindow,
@@ -25,22 +25,16 @@ const errorRelaunchRequest = ipcState
         }
     })
 
-combineLatest(appReady, loginFailure).subscribe(() => {
-    closeWindows()
-    createAuthErrorWindow((win: any) => win.show())
-})
-
-combineLatest(appReady, containerCreateFailure).subscribe(() => {
-    closeWindows()
-    createContainerErrorWindow((win: any) => win.show())
-})
-
-combineLatest(appReady, containerAssignFailure).subscribe(() => {
-    closeWindows()
-    createContainerErrorWindow((win: any) => win.show())
-})
-
-combineLatest(appReady, protocolLaunchFailure).subscribe(() => {
-    closeWindows()
-    createProtocolErrorWindow((win: any) => win.show())
-})
+concat(
+    appReady,
+    race(
+        combineLatest(loginFailure, of(createAuthErrorWindow)),
+        combineLatest(containerCreateFailure, of(createContainerErrorWindow)),
+        combineLatest(containerAssignFailure, of(createContainerErrorWindow)),
+        combineLatest(protocolLaunchFailure, of(createProtocolErrorWindow))
+    )
+)
+    .pipe(skip(1)) // skip the appReady emit
+    .subscribe(([_failure, createWindow]) => {
+        closeWindows(), createWindow((win: any) => win.show())
+    })
