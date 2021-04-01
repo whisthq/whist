@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from "child_process"
+import { app } from "electron"
 import {
     protocolLaunch,
     protocolStreamInfo,
@@ -14,8 +14,8 @@ import {
     containerAssignSuccess,
     containerAssignFailure,
 } from "@app/main/container"
-import { merge, zip, of, from } from "rxjs"
-import { mapTo, map, share, exhaustMap, switchMap } from "rxjs/operators"
+import { merge, zip, of } from "rxjs"
+import { mapTo, map, share, exhaustMap } from "rxjs/operators"
 
 export const protocolLaunchRequest = containerAssignRequest.pipe(
     exhaustMap(() => of(protocolLaunch())),

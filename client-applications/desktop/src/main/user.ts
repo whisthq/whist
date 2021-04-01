@@ -1,4 +1,3 @@
-import { BrowserWindow } from "electron"
 import { appReady, ipcState } from "@app/main/events"
 import { createAuthWindow, closeWindows } from "@app/utils/windows"
 import { loginSuccess } from "@app/main/login"

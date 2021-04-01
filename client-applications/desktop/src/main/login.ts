@@ -30,5 +30,3 @@ export const loginFailure = loginRequest.pipe(
     exhaustMap((req) => from(req)),
     filter((res) => emailLoginError(res))
 )
-
-// export const loginFailure = of({ status: 500 })
