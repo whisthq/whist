@@ -84,7 +84,7 @@ jobs:
                   bash docker/local_deploy.sh
 
             - name: Ensure Containers Launch and Exit Properly
-              working-directory: main-webserver
+              working-directory: main-webserver/app
               shell: python3 {0}
               run: |
                   import time
@@ -99,7 +99,7 @@ jobs:
                   while status != "SUCCESS" and time_end-time_start < 120:
                     status = celery_status(dummy_task_id).json["STATE"]
                     time_end=time.time()
-                    
+
                   if status != "SUCCESS":
                     assert False
 
