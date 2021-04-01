@@ -22,7 +22,7 @@ def host_service(**kwargs):
     """
     username = kwargs.pop("username")
 
-    host_service_info = UserContainerState.query.filter_by(user_id=username)
+    host_service_info = UserContainerState.query.filter_by(user_id=username).first()
 
     if not host_service_info:
         return jsonify(
@@ -33,7 +33,6 @@ def host_service(**kwargs):
             }
         )
     else:
-        host_service_info = host_service_info[0]
         return jsonify(
             {
                 "ip": host_service_info.ip,
