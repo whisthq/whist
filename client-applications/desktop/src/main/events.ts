@@ -2,7 +2,7 @@ import { app, ipcMain } from "electron"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 import { map, share } from "rxjs/operators"
-import { StateChannel } from "@app/utils/state"
+import { StateChannel } from "@app/utils/constants"
 
 fromEvent(app as EventEmitter, "window-all-closed").subscribe(() => {
     // On macOS it is common for applications and their menu bar

@@ -1,28 +1,7 @@
 import { useEffect, useState } from "react"
-import { isEqual, isEmpty, merge } from "lodash"
 import { IpcRendererEvent, BrowserWindow } from "electron"
-import { ChildProcess } from "child_process"
-import { getWindows } from "@app/utils/windows"
-
-export type StateIPC = {
-    email: string
-    password: string
-    loginWarning: string
-    loginLoading: boolean
-    loginRequest: { email: string; password: string }
-    errorRelaunchRequest: number
-}
-
-export const StateChannel = "MAIN_STATE_CHANNEL"
-
-const ipcError = [
-    "Before you call useMainState(),",
-    "an ipcRenderer must be attached to the renderer window object to",
-    "communicate with the main process.",
-    "\n\nYou need to attach it in an Electron preload.js file using",
-    "contextBridge.exposeInMainWorld. You must explicity attach the 'on' and",
-    "'send' methods for them to be exposed.",
-].join(" ")
+import { StateIPC } from "@app/utils/types"
+import { ErrorIPC, StateChannel } from "@app/utils/constants"
 
 export const useMainState = ():
     | [StateIPC, (s: Partial<StateIPC>) => void]
@@ -32,7 +11,7 @@ export const useMainState = ():
     // so we ignore the type error in the next line
     //@ts-ignore
     const ipc = window.ipcRenderer
-    if (!(ipc && ipc.on && ipc.send)) throw new Error(ipcError)
+    if (!(ipc && ipc.on && ipc.send)) throw new Error(ErrorIPC)
 
     const [mainState, setState] = useState({} as StateIPC)
 
