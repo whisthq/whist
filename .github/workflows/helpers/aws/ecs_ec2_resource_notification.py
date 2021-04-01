@@ -62,6 +62,8 @@ def flag_instances(region):
     """
     reservations = get_all_instances(region)
     branch_map = {}
+    test_instances = 0
+    user_instances = 0
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
@@ -95,5 +97,5 @@ if __name__ == "__main__":
     if len(branches) > 0:
         message = ""
         for branch in branches:
-            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user* - {branches[branch][1]} *test*\n"
+            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user instances* - {branches[branch][1]} *test instances*\n"
         print(message)
