@@ -49,7 +49,7 @@ const getExecutableName = (): string => {
     if (currentOS === OperatingSystem.MAC) {
         return process.env.NODE_ENV === "development"
             ? "./FractalClient"
-            : "./Fractal"
+            : "./ Fractal"
     }
     if (currentOS === OperatingSystem.WINDOWS) {
         return "Fractal.exe"
