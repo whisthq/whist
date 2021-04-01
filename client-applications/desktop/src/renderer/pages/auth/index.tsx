@@ -12,8 +12,8 @@ const Auth = () => {
     */
 
     const [mainState, setMainState] = useMainState()
-    const [email, setEmail] = useState("neil@fractal.c")
-    const [password, setPassword] = useState("Password1234")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
     const onLogin = () => {
