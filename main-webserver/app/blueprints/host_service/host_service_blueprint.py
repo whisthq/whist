@@ -22,15 +22,25 @@ def host_service(**kwargs):
     """
     username = kwargs.pop("username")
 
-    host_service_info = UserContainerState.query.filter_by(user_id=username).one()
+    host_service_info = UserContainerState.query.filter_by(user_id=username)
 
-    return jsonify(
-        {
-            "ip": host_service_info.ip,
-            "port": host_service_info.port,
-            "client_app_auth_secret": host_service_info.client_app_auth_secret,
-        }
-    )
+    if not host_service_info:
+        return jsonify(
+            {
+                "ip": None,
+                "port": None,
+                "client_app_auth_secret": None
+            }
+        )
+    else:
+        host_service_info = host_service_info[0]
+        return jsonify(
+            {
+                "ip": host_service_info.ip,
+                "port": host_service_info.port,
+                "client_app_auth_secret": host_service_info.client_app_auth_secret,
+            }
+        )
 
 
 @host_service_bp.route("/host_service/auth", methods=("POST",))
