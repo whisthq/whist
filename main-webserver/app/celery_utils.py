@@ -22,6 +22,8 @@ import ssl
 
 from celery import Celery
 from celery.app.task import Task
+from celery.backends.redis import RedisBackend
+from celery.loaders.base import BaseLoader
 from hirefire.contrib.flask.blueprint import build_hirefire_blueprint
 from hirefire.procs.celery import CeleryProc
 from app.helpers.utils.metrics.celery import register_metrics_monitor_in_worker
@@ -65,6 +67,64 @@ CELERY_CONFIG = {
 }
 
 
+class FractalLoader(BaseLoader):
+    """A custom subclass of the base Celery loader class that lets us use a patched Redis backend.
+
+    The following explanation applies to Celery 5.0.5.
+
+    In order to use a patched version of the default Redis backend as the backend for the Fractal
+    Celery application, it was necessary to reverse engineer the value of the celery_app.backend
+    property.
+
+    https://github.com/celery/celery/blob/6157bc9053da6c1b149283d0ab58fe2958a8f2dd/celery/app/base.py#L1212
+
+    celery_app.backend is a property whose value is set by the celery_app._get_backend() method.
+    celery_app._get_backend() calls celery.app.backends.by_url() It is fairly straightforward to
+    reverse engineero celery.app.backends.by_url() and celery.app.backends.by_name() to determine
+    that instantiating a Celery application with a custom Celery loader class on which the
+    override_backends attribute is defined makes it possible to modify the default backend class
+    lookup behavior. In particular, defining this custom loader class allows us to inject the
+    import path of the patched Redis backend into the celery.app.backends.BACKEND_ALIASES lookup
+    table.
+
+    Attributes:
+        override_backends: A mapping whose keys are nicknames for supported celery backends (e.g.
+            "amqp", "rpc", "redis") and whose values are strings representing the dotted import
+            paths of the Python classes that provide support for those backends.
+    """
+
+    override_backends = {"redis": "app.celery_utils:FractalRedisBackend"}
+
+
+class FractalRedisBackend(RedisBackend):
+    """A patched version of the default Redis Celery backend.
+
+    The only difference between this patched Redis backend and the default version that ships with
+    the Celery package is that this version will report that a task is in a special null state if
+    it is not listed in the Redis store, whereas the default implementation will always fall back
+    on reporting tasks as PENDING. As explained at a high level in #1508, it's impossible to
+    differentiate between enqueued tasks that have not yet been picked up by a worker and
+    nonexistent tasks.
+
+    See the implementation of celery.backends.base.BaseKeyValueStoreBackend._get_task_meta_for to
+    understand why the default Celery backend always falls back on reporting tasks as PENDING.
+
+    https://github.com/celery/celery/blob/6157bc9053da6c1b149283d0ab58fe2958a8f2dd/celery/backends/base.py#L875
+    """
+
+    def get(self, key: bytes) -> bytes:
+        """Retrieve the value associated with a particular task metadata key in the database.
+
+        Args:
+            key: A byte string representing the task's metadata key (e.g. celery-task-meta-<uuid>).
+
+        Returns:
+            A JSON object containing the task's metadata encoded as a byte string. The encoded
+            object has two keys, "status", and "result", both of whose values are null.
+        """
+        return super().get(key) or b'{"status": null, "result": null}'
+
+
 def celery_params(flask_app):
     """Generate the parameters to use to instantiate a Flask application's Celery instance.
 
@@ -96,6 +156,7 @@ def celery_params(flask_app):
     parameters = {
         "broker": redis_url,
         "backend": redis_url,
+        "loader": FractalLoader,
         "task_cls": ContextTask,
     }
 
