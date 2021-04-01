@@ -9,6 +9,7 @@ import os
 
 from app.factory import create_app
 from app.celery_utils import make_celery
+from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 
 # this registers all the celery signal handling functions. we don't need to do anything more.
 import app.signals
