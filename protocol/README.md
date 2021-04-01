@@ -129,7 +129,7 @@ The above files are fairly static. If you add or remove a file, or change what a
 
 ## Development
 
-We use Cmake to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system. We also use cppcheck to run static tests on the code, which you should install as well. If you are running on Windows, you also need to make sure the Nvidia CUDA Compiler, NVCC, is installed with version 11.0 or higher to compile our CUDA code.
+We use Cmake and Ninja to compile, format and run tests. You first need to make sure Cmake 3.15 or higher is installed on your system, and install the latest version of Ninja as well (this may come with your Visual Studio, depending on how you configured it). We also use cppcheck to run static tests on the code, which you should install as well. If you are running on Windows, you also need to make sure the Nvidia CUDA Compiler, NVCC, is installed with version 11.0 or higher to compile our CUDA code.
 
 ### Installation
 
