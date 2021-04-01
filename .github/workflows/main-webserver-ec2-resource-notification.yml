@@ -65,7 +65,7 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "${{ env.ec2_instances }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging instances from *${{ matrix.region }}* in _${{ matrix.branch }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Instances from *${{ matrix.region }}* in _${{ matrix.branch }}_: \n ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
