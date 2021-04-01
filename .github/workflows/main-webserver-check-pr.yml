@@ -11,6 +11,7 @@ on:
             - prod
             - staging
             - dev
+            - mia/extend-heroku-ci-testing
         paths:
             - "main-webserver/**"
             - "!main-webserver/README.md"
