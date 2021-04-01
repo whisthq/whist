@@ -9,7 +9,6 @@ import {
 import { ipcState, appReady } from "@app/main/events"
 import { concat, race, combineLatest, of } from "rxjs"
 import { pluck, withLatestFrom, skip, map } from "rxjs/operators"
-import { WarningLoginInvalid } from "@app/utils/constants"
 import {
     closeWindows,
     createAuthErrorWindow,
@@ -30,12 +29,12 @@ concat(
     appReady,
     race(
         combineLatest(loginFailure, of(createAuthErrorWindow)),
-        combineLatest(containerCreateFailure, of(createContainerErrorWindow)),
+        combineLatest(containerAssignFailure, of(createContainerErrorWindow)),
         combineLatest(containerAssignFailure, of(createContainerErrorWindow)),
         combineLatest(protocolLaunchFailure, of(createProtocolErrorWindow))
     )
 )
     .pipe(skip(1)) // skip the appReady emit
     .subscribe(([_failure, createWindow]) => {
-        closeWindows(), createWindow((win: any) => win.show())
+        closeWindows(), createWindow()
     })
