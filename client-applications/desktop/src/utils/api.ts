@@ -39,7 +39,7 @@ export const emailLoginValid = (response: AsyncReturnType<typeof emailLogin>) =>
     response.json?.access_token ? true : false
 
 export const emailLoginError = (response: AsyncReturnType<typeof emailLogin>) =>
-    response.response?.status !== 200
+    response.status !== 200
 
 export const emailLoginAccessToken = (response: {
     json: { access_token?: string }

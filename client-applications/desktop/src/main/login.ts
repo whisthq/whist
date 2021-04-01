@@ -1,6 +1,5 @@
 import { ipcState } from "@app/main/events"
 import { from, merge, of, NEVER } from "rxjs"
-import { WarningLoginInvalid } from "@app/utils/constants"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
 import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
 
@@ -17,7 +16,7 @@ export const loginLoading = loginRequest.pipe(
 )
 
 export const loginWarning = loginRequest.pipe(
-    exhaustMap((req) => from(req).pipe(mapTo(WarningLoginInvalid))),
+    exhaustMap((req) => from(req)),
     filter((res) => !emailLoginError(res)),
     filter((res) => !emailLoginValid(res))
 )

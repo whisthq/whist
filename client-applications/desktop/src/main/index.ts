@@ -10,13 +10,14 @@ import { loginLoading, loginWarning } from "@app/main/login"
 import { ipcBroadcast } from "@app/utils/state"
 import { getWindows } from "@app/utils/windows"
 import { combineLatest } from "rxjs"
-import { startWith } from "rxjs/operators"
+import { startWith, mapTo } from "rxjs/operators"
+import { WarningLoginInvalid } from "@app/utils/constants"
 
 // Broadcast state to all renderer windows.
 combineLatest(
     ipcState,
     loginLoading.pipe(startWith(false)),
-    loginWarning.pipe(startWith(null))
+    loginWarning.pipe(mapTo(WarningLoginInvalid), startWith(null))
 ).subscribe(([state, loginLoading, loginWarning]) =>
     ipcBroadcast({ ...state, loginLoading, loginWarning }, getWindows())
 )

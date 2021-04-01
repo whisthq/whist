@@ -24,7 +24,7 @@ const schema: DebugSchema = {
     userConfigToken: ["value:"],
     loginRequest: ["login requested", null],
     loginLoading: ["value:"],
-    loginWarning: ["value:"],
+    loginWarning: ["logged in with invalid credentials", null],
     loginFailure: ["value:"],
     loginSuccess: [
         "printing only tokens:",
