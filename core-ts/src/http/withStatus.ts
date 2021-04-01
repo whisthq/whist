@@ -1,9 +1,9 @@
 import { ServerDecorator } from "../types/api"
 
 /*
- * Validates the status code of a ServerResponse.
- * Returns a ServerResponse with ok set to true
- * if valid, false if not.
+ * Adds 'status' and 'statusText' keys to the
+ * top-level response object. Returns the rest
+ * of the ServerResponse unchanged.
  *
  * @param fn - The downstream decorator function
  * @param req - a ServerRequest object
