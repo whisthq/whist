@@ -15,6 +15,8 @@ export type State = {
     signupRequest: { email: string; password: string; confirmPassword: string }
     loginLoading: boolean
     loginWarning: string
+    signupLoading: boolean 
+    signupWarning: string
     protocolLoading: boolean
     appWindowRequest: boolean
     protocolProcess?: ChildProcess

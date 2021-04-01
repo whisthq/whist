@@ -24,15 +24,16 @@ const initialState: AuthState = {
 
 const AuthReducer = (state: AuthState, action: Record<any, any>) => {
     const isValidType = (value: string): value is keyof AuthState => {
-        return !Object.keys(initialState).includes(action.type)
+        return Object.keys(initialState).includes(action.type)
     }
 
     if (isValidType(action.type)) {
-        state[action.type] = action.body
-        console.log(state)
-        return state
+        return {
+            ...state,
+            [action.type]: action.body
+        }
     } else {
-        throw new Error("Invalid reducer key")
+        throw new Error(`${action.type} is an invalid reducer key`)
     }
 }
 
@@ -56,6 +57,7 @@ const Auth = () => {
     }
 
     const onSignup = () => {
+        console.log("signup", state)
         setMainState({
             email: state.signupEmail,
             signupRequest: {
@@ -113,6 +115,8 @@ const Auth = () => {
                         email={state.signupEmail}
                         password={state.signupPassword}
                         confirmPassword={state.signupConfirmPassword}
+                        warning={mainState.signupWarning}
+                        loading={mainState.signupLoading}
                         onChangeEmail={(s: string) =>
                             dispatch({ type: "signupEmail", body: s })
                         }

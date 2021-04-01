@@ -81,8 +81,8 @@ const Signup = (props: {
                                     <FractalInput
                                         type="email"
                                         placeholder="Email"
-                                        onChange={(email: string) =>
-                                            props.onChangeEmail(email)
+                                        onChange={
+                                            props.onChangeEmail
                                         }
                                         onEnterKey={props.onSignup}
                                         value={props.email}
@@ -106,8 +106,8 @@ const Signup = (props: {
                                     <FractalInput
                                         type="password"
                                         placeholder="Password"
-                                        onChange={(password: string) =>
-                                            props.onChangePassword(password)
+                                        onChange={
+                                            props.onChangePassword
                                         }
                                         onEnterKey={props.onSignup}
                                         value={props.password}
@@ -136,8 +136,8 @@ const Signup = (props: {
                                             <FractalInput
                                                 type="password"
                                                 placeholder="Password"
-                                                onChange={(password: string) =>
-                                                    props.onChangeConfirmPassword(password)
+                                                onChange={
+                                                    props.onChangeConfirmPassword
                                                 }
                                                 onEnterKey={props.onSignup}
                                                 value={props.confirmPassword}

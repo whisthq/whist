@@ -7,6 +7,8 @@ import "@app/main/user"
 
 import { ipcState } from "@app/main/events"
 import { loginLoading, loginWarning } from "@app/main/login"
+import { signupLoading, signupWarning } from "@app/main/signup"
+
 
 import { ipcBroadcast } from "@app/utils/state"
 import { getWindows } from "@app/utils/windows"
@@ -20,4 +22,12 @@ combineLatest(
     loginWarning.pipe(startWith(null))
 ).subscribe(([state, loginLoading, loginWarning]) =>
     ipcBroadcast({ ...state, loginLoading, loginWarning }, getWindows())
+)
+
+combineLatest(
+    ipcState,
+    signupLoading.pipe(startWith(false)),
+    signupWarning.pipe(startWith(null))
+).subscribe(([state, signupLoading, signupWarning]) =>
+    ipcBroadcast({ ...state, signupLoading, signupWarning }, getWindows())
 )

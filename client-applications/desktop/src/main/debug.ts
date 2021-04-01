@@ -23,6 +23,9 @@ const schema: DebugSchema = {
     loginRequest: ["login requested", null],
     loginLoading: ["value:"],
     loginWarning: ["value:"],
+    signupRequest: ["login requested", null],
+    signupLoading: ["value:"],
+    signupWarning: ["value:"],
     loginFailure: ["value:"],
     loginSuccess: [
         "printing only tokens:",
