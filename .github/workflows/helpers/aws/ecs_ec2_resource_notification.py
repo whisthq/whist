@@ -8,6 +8,16 @@ from datetime import date
 from datetime import timezone
 from datetime import timedelta
 
+regions = [
+    "us-east-1",
+    "us-east-2",
+    "us-west-1",
+    "us-west-2",
+    "ca-central-1",
+    "eu-west-1",
+    "eu-central-1",
+]
+
 
 def read_tags(tags, resource):
     """
@@ -97,9 +107,10 @@ def flag_instances(region):
             overdue, days = compare_days(launch_time)
             if overdue:
                 message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - *UPTIME:* {days} days \n"
-            # elif test:
-            #     if compare_hours(launch_time):
-            #         message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
+
+            elif test:
+                if compare_hours(launch_time):
+                    message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
 
             elif len(name) == 0:
                 message += f"     - id: \\`{instance_id}\\` - UNTAGGED/UNNAMED \n"
@@ -109,8 +120,12 @@ def flag_instances(region):
 
 if __name__ == "__main__":
 
-    region = sys.argv[1]
+    message = ""
+    for region in regions:
+        message += "Instances from _*{}*_ \n".format(region)
+        instances = flag_instances(region)
+        message += (
+            flag_instances(region) if len(instances) > 0 else "No hanging instances"
+        )
 
-    message = flag_instances(region)
-    if len(message) > 0:
-        print(message)
+    print(message) if len(message) > 0 else print("No hanging instances!")

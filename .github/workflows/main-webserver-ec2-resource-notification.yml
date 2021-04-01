@@ -10,7 +10,7 @@ on:
         branches:
             - dev
     # schedule:
-    #     - cron: "30 16 * * 1" # runs at 11:30 am (EST/UTC+5) on every monday
+    #     - cron: "30 16 * * *" # runs at 11:30 am (EST/UTC+5) daily
 
     workflow_dispatch:
 
@@ -20,16 +20,6 @@ jobs:
     main-webserver-hanging-resource-notification:
         name: Main Webserver EC2 Resource Notification
         runs-on: ubuntu-20.04
-        strategy:
-            matrix:
-                region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -52,7 +42,7 @@ jobs:
             - name: Scan ec2 instances
               working-directory: .github/workflows/helpers/aws
               run: |
-                  ec2_instances=$(python ecs_ec2_resource_notification.py ${{ matrix.region }})
+                  ec2_instances=$(python ecs_ec2_resource_notification.py)
                   echo 'ec2_instances<<EOF' >> $GITHUB_ENV
                   echo "$ec2_instances" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
@@ -64,7 +54,7 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "${{ env.ec2_instances }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Instances from *${{ matrix.region }}*: \n${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
 
@@ -72,5 +62,5 @@ jobs:
               if: ${{ failure() }}
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure for ${{ matrix.region }}\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
