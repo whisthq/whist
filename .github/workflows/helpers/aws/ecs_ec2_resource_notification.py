@@ -95,5 +95,5 @@ if __name__ == "__main__":
     if len(branches) > 0:
         message = ""
         for branch in branches:
-            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user instances* - {branches[branch][1]} *test instances*\n"
+            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user* - {branches[branch][1]} *test*\n"
         print(message)
