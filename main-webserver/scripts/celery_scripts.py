@@ -1,5 +1,4 @@
 import time
-import argparse
 import sys
 import os
 
@@ -10,7 +9,7 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), ".."))
 from scripts.utils import make_get_request
 
 
-def poll_celery_task(web_url: str, task_id: str, admin_token: str = None) -> str:
+def poll_celery_task(web_url: str, task_id: str, admin_token: str = None):
     """
     Poll celery task `task_id` for up to 10 minutes.
     Args:
@@ -21,6 +20,7 @@ def poll_celery_task(web_url: str, task_id: str, admin_token: str = None) -> str
     Returns:
         The task output on success, otherwise errors out.
     """
+    print(f"Polling task {task_id}")
     # 300 * 2 sec = 600 sec = 10 min
     num_tries = 300
     sleep_time = 2
@@ -37,5 +37,6 @@ def poll_celery_task(web_url: str, task_id: str, admin_token: str = None) -> str
             # non-pending/started states should exit
             break
     assert resp_json is not None, f"No JSON response for task {task_id}"
+    print(f"Got JSON: {resp_json}")
     assert resp_json["state"] == "SUCCESS", f"Got response: {resp_json} for task {task_id}"
     return resp_json["output"]
