@@ -1,5 +1,5 @@
-from celery import current_app
-from flask import Blueprint, jsonify, make_response
+from celery import current_app, states
+from flask import abort, Blueprint, jsonify, make_response
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
@@ -51,13 +51,15 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
 
             response = {"state": result.status, "output": msg}
             return make_response(jsonify(response), SUCCESS)
-        else:
+        elif result.state in states.ALL_STATES:
             output = result.info
             # if isinstance(result.info, dict):
             #     if "msg" in result.info.keys():
             #         output = result.info["msg"]
             response = {"state": result.status, "output": output}
             return make_response(jsonify(response), SUCCESS)
+        else:
+            return abort(make_response({"error": f"Invalid task ID {task_id}"}, BAD_REQUEST))
     except Exception as e:
         response = {
             "state": "FAILURE",

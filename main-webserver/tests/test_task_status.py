@@ -15,8 +15,6 @@ def task():
         None
     """
 
-    pass
-
 
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
@@ -32,6 +30,16 @@ def test_success(client):
 
     assert response.status_code == HTTPStatus.OK
     assert response.json == {"state": "SUCCESS", "output": None}
+
+
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_nonexistent(client):
+    """Make sure that task status queries for garbage task IDs receive Bad Request responses."""
+
+    response = client.get("/status/garbage")
+
+    assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_backend(celery_app):

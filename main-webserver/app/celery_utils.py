@@ -80,7 +80,7 @@ class FractalLoader(BaseLoader):
 
     celery_app.backend is a property whose value is set by the celery_app._get_backend() method.
     celery_app._get_backend() calls celery.app.backends.by_url() It is fairly straightforward to
-    reverse engineero celery.app.backends.by_url() and celery.app.backends.by_name() to determine
+    reverse engineer celery.app.backends.by_url() and celery.app.backends.by_name() to determine
     that instantiating a Celery application with a custom Celery loader class on which the
     override_backends attribute is defined makes it possible to modify the default backend class
     lookup behavior. In particular, defining this custom loader class allows us to inject the
@@ -115,13 +115,23 @@ class FractalRedisBackend(RedisBackend):
     def get(self, key: bytes) -> bytes:
         """Retrieve the value associated with a particular task metadata key in the database.
 
+        Note that the key is not just the UUID of the task whose metadata we want to retrieve; it
+        is the concatenation of this class's task_keyprefix attribute, which is inherited from
+        RedisBackend.task_keyprefix, and the the task's UUID. For all intents and purposes, this
+        class's task_keyprefix attribute is a constant whose value is "celery-task-meta-".
+
+        https://github.com/celery/celery/blob/a6bae50be937e3cf0366efac08869b39778646a5/celery/backends/base.py#L713
+
         Args:
             key: A byte string representing the task's metadata key (e.g. celery-task-meta-<uuid>).
 
         Returns:
-            A JSON object containing the task's metadata encoded as a byte string. The encoded
-            object has two keys, "status", and "result", both of whose values are null.
+            A byte string representing the byte encoding of a JSON object containing the metadata
+            associated with the specified task metadata key in the Redis store. The encoded object
+            has two keys, "status", and "result", both of whose values will be null iff the key
+            cannot be found in the Redis store.
         """
+
         return super().get(key) or b'{"status": null, "result": null}'
 
 
