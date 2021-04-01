@@ -25,9 +25,6 @@ if [[ $* =~ [:space:]*--down[:space:]* ]]; then
     exit 0
 fi
 
-
-
-
 USE_DEV_DB=false
 # Allow passing `--use-dev-db` to use the dev database
 if [[ $* =~ [:space:]*--use-dev-db[:space:]* ]]; then

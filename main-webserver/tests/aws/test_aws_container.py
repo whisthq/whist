@@ -47,8 +47,8 @@ def ecs_data(app):
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(ecs_data, client, authorized, cluster_name=""):
-    cluster_name = cluster_name or pytest.cluster_name
+def test_create_cluster(ecs_data, client, authorized):
+    cluster_name = pytest.cluster_name
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
     resp = client.post(
@@ -377,8 +377,8 @@ def test_update_region(client, monkeypatch):
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("authorized")
-def test_delete_cluster(client, cluster=""):
-    cluster = cluster or pytest.cluster_name
+def test_delete_cluster(client):
+    cluster = pytest.cluster_name
     fractal_logger.info("Starting to delete cluster {}".format(cluster))
 
     resp = client.post(
