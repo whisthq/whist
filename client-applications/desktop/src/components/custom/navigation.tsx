@@ -12,6 +12,7 @@ interface BaseNavigationProps {
     text: string
     linkText?: string
     className?: string
+    onClick?: (e: any) => any
 }
 
 interface FractalNavigationProps extends BaseNavigationProps {}
@@ -68,7 +69,10 @@ const BaseNavigation: FC<BaseNavigationProps> = (
                                 : "font-body font-medium",
                             props.className
                         )}
-                        onClick={() => onClick(text)}
+                        onClick={() => {
+                            props.onClick && props.onClick(text)
+                            onClick(text)
+                        }}
                     >
                         {text}
                     </span>

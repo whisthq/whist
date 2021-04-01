@@ -22,6 +22,7 @@ const Login = (props: {
     email: string
     password: string
     onLogin: () => void,
+    onNavigate: (s: string) => void
     onChangeEmail: (s: string) => void
     onChangePassword: (s: string) => void
 }) => {
@@ -100,6 +101,7 @@ const Login = (props: {
                         text="Need an account? Sign up here."
                         linkText="here"
                         className="relative top-4"
+                        onClick={props.onNavigate}
                     />
                 </FractalFadeIn>
             </div>

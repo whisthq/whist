@@ -3,12 +3,13 @@ import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
 import * as login from "@app/main/login"
+import * as signup from "@app/main/signup"
 import * as container from "@app/main/container"
 import * as protocol from "@app/main/protocol"
 import * as user from "@app/main/user"
 import * as errors from "@app/main/errors"
 
-const modules = [login, container, protocol, user, errors]
+const modules = [login, container, protocol, user, errors, signup]
 
 type DebugSchema = {
     [title: string]:
@@ -19,9 +20,21 @@ type DebugSchema = {
 
 const schema: DebugSchema = {
     userEmail: ["value:"],
+    userPassword: ["value:", () => "********"],
     userAccessToken: ["value:"],
     userRefreshToken: ["value:"],
     userConfigToken: ["value:"],
+    signupRequest: ["signup requested", null],
+    signupLoading: ["value:"],
+    signupWarning: ["signed up with invalid credentials", null],
+    signupFailure: ["value:"],
+    signupSuccess: [
+        "printing only tokens:",
+        ({ json }) => ({
+            accessToken: json.access_token?.substring(0, 6) + "...",
+            refreshToken: json.refresh_token?.substring(0, 6) + "...",
+        }),
+    ],
     loginRequest: ["login requested", null],
     loginLoading: ["value:"],
     loginWarning: ["logged in with invalid credentials", null],

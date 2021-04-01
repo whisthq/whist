@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Route } from "react-router-dom"
+import React, { useState, useEffect } from "react"
+import { Route, useHistory } from "react-router-dom"
 
 import Login from "@app/renderer/pages/auth/login"
 import Signup from "@app/renderer/pages/auth/signup"
@@ -12,9 +12,15 @@ const Auth = () => {
     */
 
     const [mainState, setMainState] = useMainState()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+    const [email, setEmail] = useState("fakeemail@gmail.com")
+    const [password, setPassword] = useState("Password1234")
+    const [confirmPassword, setConfirmPassword] = useState("Password1234")
+
+
+    const clearPassword = () => {
+        setPassword("")
+        setConfirmPassword("")
+    }
 
     const onLogin = () => {
         setMainState({
@@ -23,14 +29,16 @@ const Auth = () => {
     }
 
     const onSignup = () => {
-        console.log("Signed up!")
+        setMainState({
+            email,
+            signupRequest: { email, password }})
     }
 
     return (
         <>
             <Route
                 exact
-                path="/"
+                path="/login"
                 render={() => (
                     <Login
                         email={email}
@@ -38,6 +46,7 @@ const Auth = () => {
                         warning={mainState.loginWarning}
                         loading={mainState.loginLoading}
                         onLogin={onLogin}
+                        onNavigate={clearPassword}
                         onChangeEmail={setEmail}
                         onChangePassword={setPassword}
                     />
@@ -52,14 +61,28 @@ const Auth = () => {
                         warning={mainState.loginWarning}
                         loading={mainState.loginLoading}
                         onLogin={onLogin}
+                        onNavigate={clearPassword}
                         onChangeEmail={setEmail}
                         onChangePassword={setPassword}
                     />
                 )}
             />
             <Route
-                path="/auth/signup"
-                render={() => <Signup onSignup={onSignup} />}
+                path="/"
+                render={() => (
+                    <Signup
+                        email={email}
+                        password={password}
+                        confirmPassword={confirmPassword}
+                        warning={mainState.signupWarning}
+                        loading={mainState.signupLoading}
+                        onSignup={onSignup}
+                        onNavigate={clearPassword}
+                        onChangeEmail={setEmail}
+                        onChangePassword={setPassword}
+                        onChangeConfirmPassword={setConfirmPassword}
+                    />
+                )}
             />
         </>
     )
