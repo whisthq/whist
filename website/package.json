@@ -34,7 +34,7 @@
         "lodash": "^4.17.21",
         "mailslurp-client": "^11.3.0",
         "moment": "^2.29.1",
-        "msw": "^0.27.0",
+        "msw": "^0.28.0",
         "node-fetch": "^2.6.1",
         "prettier": "^2.2.1",
         "puppeteer": "^8.0.0",
