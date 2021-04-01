@@ -61,10 +61,7 @@ def flag_instances(region):
         map: map of all branches with associated instances
     """
     reservations = get_all_instances(region)
-    test_count = 0
-    user_count = 0
     branch_map = {}
-    message = ""
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
