@@ -161,7 +161,7 @@ class ECSClient:
         )
         return clients
 
-    def get_git_info(self):
+    def _get_git_info(self):
         branch = current_app.config["APP_GIT_BRANCH"]
         commit = current_app.config["APP_GIT_COMMIT"]
 
@@ -175,8 +175,8 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        # branch, commit = self.get_git_info()
-        branch, commit = self.get_git_info()
+        # branch, commit = self._get_git_info()
+        branch, commit = self._get_git_info()
         branch = branch.replace("/", "-")
         name = f"{starter_name}-<{branch}>-<{commit}>-{uuid.uuid4()}"
 
@@ -198,7 +198,7 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster, will be automatically generated if not
                 provided
         """
-        branch, commit = self.get_git_info()
+        branch, commit = self._get_git_info()
 
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
@@ -710,7 +710,7 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        branch, commit = self.get_git_info()
+        branch, commit = self._get_git_info()
         availability_zones = availability_zones or [
             self.region_name + "a" if self.region_name != "us-east-1" else "us-east-1b"
         ]
