@@ -125,7 +125,9 @@ if __name__ == "__main__":
         message += "Instances from _*{}*_ \n".format(region)
         instances = flag_instances(region)
         message += (
-            flag_instances(region) if len(instances) > 0 else "No hanging instances"
+            flag_instances(region)
+            if len(instances) > 0
+            else "     - No hanging instances\n"
         )
 
     print(message) if len(message) > 0 else print("No hanging instances!")
