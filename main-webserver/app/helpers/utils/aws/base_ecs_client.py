@@ -727,6 +727,7 @@ class ECSClient:
             MaxSize=max_size,
             MinSize=min_size,
             AvailabilityZones=availability_zones,
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-tags.html
             Tags=[
                 {
                     "Key": "git_branch",
