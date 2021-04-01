@@ -18,6 +18,7 @@ export const loginLoading = loginRequest.pipe(
 
 export const loginWarning = loginRequest.pipe(
     exhaustMap((req) => from(req).pipe(mapTo(WarningLoginInvalid))),
+    filter((res) => !emailLoginError(res)),
     filter((res) => !emailLoginValid(res))
 )
 
