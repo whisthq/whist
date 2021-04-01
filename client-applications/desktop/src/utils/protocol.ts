@@ -34,10 +34,9 @@ export const protocolLaunch = () => {
 
     const protocol = spawn(protocolPath, ["--read-pipe"], {
         detached: false,
-        // stdio: ["pipe", process.stdout, process.stderr],
+        stdio: ["pipe", process.stdout, process.stderr],
     })
 
-    protocol.on("close", () => console.log("CLOSING"))
     return protocol
 }
 

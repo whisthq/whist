@@ -35,6 +35,11 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
 
 export const protocolLaunchFailure = containerAssignFailure
 
+// Close the application when the protocol closes.
+protocolLaunchRequest.subscribe((protocol) =>
+    protocol.on("close", () => app.exit())
+)
+
 // Stream the ip, secret_key, and ports info to the protocol when we
 // when we receive a successful container status response.
 zip(
