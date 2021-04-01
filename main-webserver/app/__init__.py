@@ -3,7 +3,7 @@ import json
 from functools import wraps
 import logging
 
-from flask import current_app, request
+from flask import current_app, request, make_response, jsonify
 
 from app.helpers.utils.general.logs import fractal_logger
 
@@ -34,7 +34,11 @@ def parse_request(view_func: _F) -> _F:
         # If a post body is malformed, we should treat it as an empty dict
         # that way trying to pop from it raises a KeyError, which we have proper error handling for
         try:
-            body = json.loads(request.data) if request.method == "POST" else dict()
+            # parse body if POST request and data is not an empty byte string
+            if request.method == "POST" and request.data != b"":
+                body = json.loads(request.data)
+            else:
+                body = dict()
         except:
             fractal_logger.error("Failed to parse request", exc_info=True)
             body = dict()

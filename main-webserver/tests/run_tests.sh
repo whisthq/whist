@@ -40,5 +40,7 @@ else
     export REDIS_URL="redis://localhost:6379/0"
 fi
 
+# regardless of in CI or local tests, we set this variable
+export TESTING=true
 # pass args to pytest
 (cd .. && pytest "$@")

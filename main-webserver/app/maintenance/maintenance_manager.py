@@ -78,6 +78,7 @@ def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
     """
     Tries to get lock using redis SETNX command. Tries `max_tries` time with a
     sleep time chosen randomly between 0 and 1 seconds to improve lock contention.
+    Expires the lock after 30 seconds.
 
     Args:
         max_tries: number of tries to get the lock
@@ -88,7 +89,13 @@ def _get_lock(max_tries: int = 100, should_sleep: bool = True) -> bool:
     """
     for _ in range(max_tries):
         got_lock = _REDIS_CONN.setnx(_REDIS_LOCK_KEY, 1)
+
         if got_lock:
+            # this key will last at most 30 sec.
+            # we need this because webserver can be SIGKILL'd anytime, which with bad luck
+            # could leave the lock "held" forever. anything holding the lock runs quickly,
+            # so 30 seconds should be more than enough.
+            _REDIS_CONN.expire(_REDIS_LOCK_KEY, 30)
             return True
         if should_sleep:
             sleep_time = random.random()
@@ -183,8 +190,7 @@ def try_end_maintenance() -> Tuple[bool, str]:
     # key did not exist, and True if the key did exist and was deleted.
     ended_maintenance = _REDIS_CONN.delete(_REDIS_MAINTENANCE_KEY)
     if not ended_maintenance:
-        # release lock
-        _REDIS_CONN.delete(_REDIS_LOCK_KEY)
+        _release_lock()
         # see function docstring for why we return True here
         return True, "Webserver was not in maintenance mode."
 
@@ -222,6 +228,11 @@ def try_register_task(task_id: int) -> bool:
         success = False
     else:
         _REDIS_CONN.rpush(_REDIS_TASKS_KEY, task_id)
+        # this key will last at most 900 sec = 15 minutes before being deleted
+        # we need this because tasks have no guarantee of termination; this
+        # stops us from tracking outdated tasks.
+        # any existing expire time on a key is reset after this invocation.
+        _REDIS_CONN.expire(_REDIS_TASKS_KEY, 900)
         success = True
 
     _release_lock()
