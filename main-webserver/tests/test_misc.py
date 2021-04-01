@@ -310,3 +310,14 @@ def test_regions(client):
     region_set = ["us-east-1", "us-west-1", "us-west-2", "ca-central-1", "us-east-2"]
 
     assert any(item in region_set for item in response.json)
+
+
+@pytest.mark.usefixtures("authorized")
+def test_host_service(client):
+    """Ensure that regions are returned by the /regions endpoint if they are allowed regions."""
+
+    response = client.get("/host_service")
+
+    expected_keys = ["ip", "port", "client_app_auth_secret"]
+
+    assert all(item in expected_keys for item in response.json)

@@ -9,6 +9,28 @@ from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
 host_service_bp = Blueprint("host_service_bp", __name__)
 
 
+@host_service_bp.route("/host_service", methods=("GET",))
+@jwt_required()
+@fractal_pre_process
+def host_service(**kwargs):
+    """Return the user's host service info for app config security
+
+    Returns:
+        JSON of user's host service info
+    """
+    username = kwargs.pop("username")
+
+    host_service_info = UserContainerState.query.filter_by(user_id=username).one()
+
+    return jsonify(
+        {
+            "ip": host_service_info.ip,
+            "port": host_service_info.port,
+            "client_app_auth_secret": host_service_info.client_app_auth_secret,
+        }
+    )
+
+
 @host_service_bp.route("/host_service/auth", methods=("POST",))
 @fractal_pre_process
 def host_service_auth(**kwargs):
