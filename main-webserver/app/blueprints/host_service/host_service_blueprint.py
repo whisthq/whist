@@ -25,13 +25,7 @@ def host_service(**kwargs):
     host_service_info = UserContainerState.query.filter_by(user_id=username).first()
 
     if not host_service_info:
-        return jsonify(
-            {
-                "ip": None,
-                "port": None,
-                "client_app_auth_secret": None
-            }
-        )
+        return jsonify({"ip": None, "port": None, "client_app_auth_secret": None})
     else:
         return jsonify(
             {
