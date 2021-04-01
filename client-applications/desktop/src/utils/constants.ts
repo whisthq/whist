@@ -11,3 +11,35 @@ export const fractalSignupWarning = {
 export const WarningLoginInvalid = "Invalid email or password"
 
 export const ContainerAssignTimeout = 45000
+
+// The Electron BrowserWindow API can be passed a hash parameter as data.
+// We use this so that renderer threads can decide which view component to
+// render as soon as a window appears.
+export const WindowHashAuth = "AUTH"
+
+export const WindowHashAuthError = "AUTH_ERROR"
+
+export const WindowHashContainerError = "CONTAINER_ERROR"
+
+export const WindowHashProtocolError = "PROTOCOL_ERROR"
+
+export const AuthErrorTitle = "There was an error logging you in."
+
+export const AuthErrorText =
+    "Try again in a few minutes, or contact support@fractal.co for help."
+
+export const ContainerErrorTitle =
+    "There was an error connecting to the Fractal servers."
+
+export const ContainerErrorText =
+    "Try again in a few minutes, or contact support@fractal.co for help."
+
+export const ProtocolErrorTitle = "The Fractal browser encountered an error."
+
+export const ProtocolErrorText =
+    "Try again in a few minutes, or contact support@fractal.co for help."
+
+export const NavigationErrorTitle = "There was an error loading this window."
+
+export const NavigationErrorText =
+    "Restart the Fractal application, or email support@fractal.co for help. "

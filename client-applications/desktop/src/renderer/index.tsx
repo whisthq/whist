@@ -1,21 +1,90 @@
 import React from "react"
 import { Switch, Route } from "react-router-dom"
 import { Router } from "react-router"
+import { chain } from "lodash"
 import ReactDOM from "react-dom"
 
 import Auth from "@app/renderer/pages/auth"
+import Error from "@app/renderer/pages/error"
+import {
+    AuthErrorTitle,
+    AuthErrorText,
+    ContainerErrorTitle,
+    ContainerErrorText,
+    ProtocolErrorTitle,
+    ProtocolErrorText,
+    WindowHashAuth,
+    WindowHashAuthError,
+    WindowHashContainerError,
+    WindowHashProtocolError,
+    NavigationErrorTitle,
+    NavigationErrorText,
+} from "@app/utils/constants"
 
 import { browserHistory } from "@app/utils/history"
+import { useMainState } from "@app/utils/state"
 
-const RootComponent = () => (
-    <>
-        <Router history={browserHistory}>
-            <Switch>
-                <Route exact path="/" component={Auth} />
-                <Route path="/auth" component={Auth} />
-            </Switch>
-        </Router>
-    </>
-)
+// Electron has no way to pass data to a newly launched browser
+// window. To avoid having to maintain multiple .html files for
+// each kind of window, we pass a constant across to the renderer
+// thread as a query parameter to determine which component
+// should be rendered.
+
+// If no query parameter match is found, we default to a
+// generic naviation error window.
+const show = chain(window.location.search.substring(1))
+    .split("=")
+    .chunk(2)
+    .fromPairs()
+    .get("show")
+    .value()
+
+const RootComponent = () => {
+    const [_mainState, setMainState] = useMainState()
+
+    const errorContinue = () =>
+        setMainState({ errorRelaunchRequest: Date.now() })
+
+    if (show === WindowHashAuth)
+        return (
+            <Router history={browserHistory}>
+                <Switch>
+                    <Route exact path="/" component={Auth} />
+                    <Route path="/auth" component={Auth} />
+                </Switch>
+            </Router>
+        )
+    if (show === WindowHashAuthError)
+        return (
+            <Error
+                title={AuthErrorTitle}
+                text={AuthErrorText}
+                onClick={errorContinue}
+            />
+        )
+    if (show === WindowHashContainerError)
+        return (
+            <Error
+                title={ContainerErrorTitle}
+                text={ContainerErrorText}
+                onClick={errorContinue}
+            />
+        )
+    if (show === WindowHashProtocolError)
+        return (
+            <Error
+                title={ProtocolErrorTitle}
+                text={ProtocolErrorText}
+                onClick={errorContinue}
+            />
+        )
+    return (
+        <Error
+            title={NavigationErrorTitle}
+            text={NavigationErrorText}
+            onClick={errorContinue}
+        />
+    )
+}
 
 ReactDOM.render(<RootComponent />, document.getElementById("root"))

@@ -2,6 +2,7 @@
 // import "@app/main/debug"
 import "@app/main/container"
 import "@app/main/debug"
+import "@app/main/errors"
 import "@app/main/protocol"
 import "@app/main/user"
 

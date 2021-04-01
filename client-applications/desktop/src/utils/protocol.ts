@@ -32,10 +32,13 @@ export const endStream = (process: ChildProcess, message: string) => {
 export const protocolLaunch = () => {
     if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
 
-    return spawn(protocolPath, ["--read-pipe"], {
+    const protocol = spawn(protocolPath, ["--read-pipe"], {
         detached: false,
         // stdio: ["pipe", process.stdout, process.stderr],
     })
+
+    protocol.on("close", () => console.log("CLOSING"))
+    return protocol
 }
 
 export const protocolStreamInfo = (

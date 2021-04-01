@@ -5,6 +5,7 @@ import * as login from "@app/main/login"
 import * as container from "@app/main/container"
 import * as protocol from "@app/main/protocol"
 import * as user from "@app/main/user"
+import * as errors from "@app/main/errors"
 
 const modules = [login, container, protocol, user]
 
@@ -51,6 +52,7 @@ const schema: DebugSchema = {
     protocolLaunchLoading: ["value:"],
     protocolLaunchSuccess: ["value:"],
     protocolLaunchFailure: ["error:"],
+    errorRelaunchRequest: ["relaunching app due to error!"],
 }
 
 const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any

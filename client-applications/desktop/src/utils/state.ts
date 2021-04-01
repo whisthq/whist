@@ -4,32 +4,14 @@ import { IpcRendererEvent, BrowserWindow } from "electron"
 import { ChildProcess } from "child_process"
 import { getWindows } from "@app/utils/windows"
 
-export type State = {
+export type StateIPC = {
     email: string
     password: string
-    configToken: string
-    accessToken: string
-    refreshToken: string
-    displayError: string
-    loginRequest: { email: string; password: string }
-    loginLoading: boolean
     loginWarning: string
-    protocolLoading: boolean
-    appWindowRequest: boolean
-    protocolProcess?: ChildProcess
-    windowAuth?: BrowserWindow
-    windowError?: BrowserWindow
+    loginLoading: boolean
+    loginRequest: { email: string; password: string }
+    errorRelaunchRequest: number
 }
-export type StateIPC = Omit<
-    State,
-    "protocolProcess" | "windowAuth" | "windowError"
->
-export type Event = (setState: (state: Partial<State>) => void) => void
-export type Effect = (
-    s: State
-) =>
-    | Generator<Partial<State>, Partial<State> | void>
-    | AsyncGenerator<Partial<State>, Partial<State> | void>
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 
@@ -71,7 +53,7 @@ export const useMainState = ():
 }
 
 export const ipcBroadcast = (
-    state: Partial<State>,
+    state: Partial<StateIPC>,
     windows: BrowserWindow[]
 ) => {
     const contents = windows.map((win) => win.webContents)
