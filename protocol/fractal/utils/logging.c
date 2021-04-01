@@ -389,10 +389,10 @@ int multi_threaded_printf(void* opaque) {
                 fclose(mprintf_log_file);
 
                 char f[1000] = "";
-                snprintf(f, 1000, "%s%s%s%s", log_directory, "log", log_env, ".txt");
+                snprintf(f, sizeof(f), "%s%s%s%s", log_directory, "log", log_env, ".txt");
 
                 char fp[1000] = "";
-                snprintf(fp, 1000, "%s%s%s%s", log_directory, "log", log_env, "_prev.txt");
+                snprintf(fp, sizeof(fp), "%s%s%s%s", log_directory, "log", log_env, "_prev.txt");
 
 #if defined(_WIN32)
                 WCHAR wf[1000];
