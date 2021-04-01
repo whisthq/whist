@@ -357,11 +357,15 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         asg = asg_list[0]
         # keep whichever instances are not empty
         desired_capacity = num_instances - empty_instances
-        ecs_client.set_auto_scaling_group_capacity(asg, desired_capacity)
-
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"Scaled cluster {cluster} from {num_instances} to {desired_capacity}.",
-            },
-        )
+        min_capacity = ClusterInfo.query.get(cluster).min_capacity
+        if desired_capacity >= min_capacity:
+            # only perform scale down if it is not below the min capacity of the cluster
+            ecs_client.set_auto_scaling_group_capacity(asg, desired_capacity)
+            msg = f"Scaled cluster {cluster} from {num_instances} to {desired_capacity}."
+            fractal_logger.info(msg)
+            self.update_state(
+                state="SUCCESS",
+                meta={
+                    "msg": msg,
+                },
+            )
