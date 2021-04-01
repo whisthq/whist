@@ -61,7 +61,14 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 		// If we got here, then that means that the ecsagent has exited for some
 		// reason (that means the context we passed in was cancelled, or there was
 		// some initialization error). Regardless, we "panic" and cancel the context.
-		logger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
+		if exitCode != 0 {
+			logger.Panicf(globalCancel, "ECS Agent exited with code %d", exitCode)
+		} else {
+			// Don't send error to Sentry
+			globalCancel()
+			logger.Infof("ECS Agent exited with code 0")
+		}
+
 	}()
 }
 
