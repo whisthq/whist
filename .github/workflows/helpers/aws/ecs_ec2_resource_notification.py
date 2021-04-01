@@ -96,9 +96,7 @@ def flag_instances(region):
 
             overdue, days = compare_days(launch_time)
             if overdue:
-                message += (
-                    f"     - \\`{name}\\` - id: \\`{instance_id}\\` - UPTIME: {days} \n"
-                )
+                message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - UPTIME: {days} days \n"
             elif test:
                 if compare_hours(launch_time):
                     message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
