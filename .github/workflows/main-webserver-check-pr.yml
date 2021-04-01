@@ -67,7 +67,14 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
-            - name: Run Tests on Heroku
+            # - name: Run Tests on Heroku
+            #   env:
+            #       HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+            #   working-directory: main-webserver
+            #   run: |
+            #       heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+
+            - name: Start Local Deploy
               shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
@@ -75,5 +82,29 @@ jobs:
               run: |
                   bash docker/retrieve_config.sh
                   bash docker/local_deploy.sh
+
+            - name: Ensure Containers Launch and Exit Properly
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import time
+                  from app.blueprints.celery.celery_status_blueprint import celery_dummy
+
+                  dummy_task_id = celery_dummy().json["ID"]
+
+                  time_start = time.time()
+                  time_end = time.time()
+                  status = celery_status(dummy_task_id).json["STATE"]
+                  while status != "SUCCESS" and time_end-time_start < 120:
+                    status = celery_status(dummy_task_id).json["STATE"]
+                    time_end=time.time()
+                  if status != "SUCCESS":
+                    assert False
+
+            - name: End Local Deploy
+              shell: bash -e {0}
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              working-directory: main-webserver
+              run: |
                   bash docker/local_deploy.sh --down
-                  heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
