@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     message = ""
     for region in regions:
-        message += "Instances from _*{}*_ \n".format(region)
+        message += "Instances from *{}* \n".format(region)
         instances = flag_instances(region)
         message += (
             flag_instances(region)
