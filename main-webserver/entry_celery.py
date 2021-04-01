@@ -19,3 +19,6 @@ app = create_app(testing=is_testing)
 celery = make_celery(app)
 
 celery.set_default()
+
+# initialize redis connection for maintenance package
+maintenance_init_redis_conn(app.config["REDIS_URL"])
