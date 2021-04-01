@@ -1,5 +1,6 @@
 // import { identity } from "lodash"
-import { identity, isObservable } from "rxjs"
+import { isObservable } from "rxjs"
+import { identity } from "lodash"
 import { logDebug } from "@app/utils/logging"
 import * as login from "@app/main/login"
 import * as container from "@app/main/container"
