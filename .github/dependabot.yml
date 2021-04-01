@@ -72,12 +72,6 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/container-images/creative/blockbench" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
     directory: "/container-images/creative/figma" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
@@ -85,24 +79,6 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/container-images/creative/gimp" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
-    directory: "/container-images/creative/godot" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
-    directory: "/container-images/creative/lightworks" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
-    directory: "/container-images/productivity/notion" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
