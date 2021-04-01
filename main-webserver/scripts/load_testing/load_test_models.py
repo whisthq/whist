@@ -34,4 +34,10 @@ class LoadTesting(db.Model):
     std_container_time = db.Column(db.Numeric, nullable=False)
     avg_web_time = db.Column(db.Numeric, nullable=False)
     max_web_time = db.Column(db.Numeric, nullable=False)
-    std_web_time = db.Column(db.Numeric, nullable=False)
+    user_errors = db.Column(db.Integer, nullable=False)
+
+    def __str__(self):
+        data = {}
+        for key in self.__mapper__.c.keys():
+            data[key] = getattr(self, key)
+        return str(data)

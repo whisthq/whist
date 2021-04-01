@@ -8,79 +8,36 @@ of interest:
 import sys
 import os
 import json
-import subprocess
-import statistics
 from typing import List, Dict, Union
-import argparse
 import math
 
 # this adds the load_testing folder root to the python path no matter where
 # this file is called from. We can now import from `scripts`.
-sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
-from load_test_core import OUTFOLDER
-from load_test_models import initialize_db, dummy_flask_app, db, LoadTesting
+import pandas as pd
+
+from scripts.load_testing.load_test_utils import OUTFOLDER
+from scripts.load_testing.load_test_models import initialize_db, dummy_flask_app, db, LoadTesting
 
 
-def load_load_test_data(fp):
+def load_load_test_data():
     """
-    Loads load test outputs as Python Lists. The format will be:
-    [
-        {
-            'task_id': <>,
-            'errors': [...],
-            'status_codes': [...],
-            'web_times': [...],
-            'poll_container_time': float,
-        },
-        ...
-    ]
-
-    Handles both the distributed load test case and the local load test case.
-
-    Args:
-        fp: pointer to file to load data from
+    TODO
 
     Returns:
         List of dictionaries structured as described above
     """
-    data = json.load(fp)
-    if "statusCode" in data:
-        # this is the distributed load test data; we need to parse out the "body" key
-        assert data["statusCode"] == 200
-        return json.loads(data["body"])
-    return data
+    exc_path = os.path.join(OUTFOLDER, "locust_load_test_exceptions.csv")
+    fail_path = os.path.join(OUTFOLDER, "locust_load_test_failures.csv")
+    stats_path = os.path.join(OUTFOLDER, "locust_load_test_stats.csv")
+    assert os.path.exists(exc_path)
+    assert os.path.exists(fail_path)
+    assert os.path.exists(stats_path)
 
-
-def compute_stats(data: List[Union[int, float]]):
-    """
-    Extract data from a list of int/float numbers.
-
-    Args:
-        A list of int/float numbers
-
-    Returns:
-        A dict of the max, min, avg, and stdev of the numbers.
-    """
-    stdev = 0
-    if len(data) > 1:
-        stdev = math.sqrt(statistics.variance(data))
-    return {
-        "max": max(data),
-        "min": min(data),
-        "avg": sum(data) / len(data),
-        "stdev": stdev,
-    }
-
-
-def print_stats(stats: Dict[str, float]):
-    """
-    Print the dictionary created by compute_stats
-    """
-    print(f"min: {stats['min']}")
-    print(f"max: {stats['max']}")
-    print(f"mean: {stats['avg']}")
-    print(f"stdev: {stats['stdev']}")
+    df_exc = pd.read_csv(exc_path)
+    df_stats = pd.read_csv(stats_path)
+    return df_exc, df_stats
 
 
 def analyze_load_test(run_id: str = None, db_uri: str = None):
@@ -106,56 +63,40 @@ def analyze_load_test(run_id: str = None, db_uri: str = None):
         assert db_uri is not None, "run_id is not None so db_uri must be given"
         initialize_db(db_uri)
 
-    assert os.path.isdir(OUTFOLDER)
-    files = os.listdir(OUTFOLDER)
-    all_load_test_data = []
-    for f in files:
-        with open(os.path.join(OUTFOLDER, f)) as fp:
-            # data will be a list of JSON outputs
-            data = load_load_test_data(fp)
-            all_load_test_data += data
+    df_exc, df_stats = load_load_test_data()
+    # assert len(df_exc) == 0, f"Got failures:\n{df_exc}"
 
-    # scan for errors
-    user_had_error = False
-    for data in all_load_test_data:
-        if len(data["errors"]) > 0:
-            user_had_error = True
-            task_id = data["task_id"]
-            errors = data["errors"]
-            print(f"Task {task_id} experienced errors: {errors}")
-    assert user_had_error is False
+    status_rows = df_stats[df_stats["Name"].apply(lambda x: x.startswith("/status"))]
+    print(status_rows[["Name", "Request Count", "Requests/s"]])
+    num_users = len(status_rows)
+    # pd.Series list of how long it took each load test user to get a container
+    all_user_container_times = status_rows["Request Count"] / status_rows["Requests/s"]
+    print(all_user_container_times)
+    avg_container_time = all_user_container_times.mean()
+    max_container_time = all_user_container_times.max()
+    std_container_time = all_user_container_times.std() if num_users > 1 else 0
+    user_errors = df_stats["Failure Count"].sum()
 
-    # do analysis if no errors
-    all_web_times = []
-    all_container_times = []
-    for data in all_load_test_data:
-        # TODO: use data["status_codes"]
-        all_web_times += data["web_times"]  # this is a list of all web request times
-        pct = data["poll_container_time"]
-        all_container_times.append(pct)
-
-    web_time_stats = compute_stats(all_web_times)
-    container_time_stats = compute_stats(all_container_times)
-
-    print("Web stats:\n------")
-    print_stats(web_time_stats)
-
-    print("\nContainer stats:\n------")
-    print_stats(container_time_stats)
-
-    if run_id is None:
-        return
+    aggregate_row = df_stats[df_stats["Name"] == "Aggregated"]
+    # convert msec to sec
+    avg_web_time = aggregate_row["Average Response Time"].values[0] / 1000
+    max_web_time = aggregate_row["Max Response Time"].values[0] / 1000
 
     new_lt_entry = LoadTesting(
         run_id=run_id,
-        num_users=len(all_container_times),
-        avg_container_time=container_time_stats["avg"],
-        max_container_time=container_time_stats["max"],
-        std_container_time=container_time_stats["stdev"],
-        avg_web_time=web_time_stats["avg"],
-        max_web_time=web_time_stats["max"],
-        std_web_time=web_time_stats["stdev"],
+        num_users=num_users,
+        avg_container_time=avg_container_time,
+        max_container_time=max_container_time,
+        std_container_time=std_container_time,
+        avg_web_time=avg_web_time,
+        max_web_time=max_web_time,
+        user_errors=user_errors,
     )
+
+    print(f"Load Test summary:\n{new_lt_entry}")
+
+    if run_id is None:
+        return
 
     with dummy_flask_app.app_context():
         db.session.add(new_lt_entry)
