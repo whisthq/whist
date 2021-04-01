@@ -3,6 +3,11 @@ import os
 import uuid
 import sys
 
+from datetime import datetime
+from datetime import date
+from datetime import timezone
+from datetime import timedelta
+
 
 def read_tags(tags, resource):
     """
@@ -15,8 +20,6 @@ def read_tags(tags, resource):
     Returns:
         tuple: the branch, commit, name of the resource, and whether it was created on test
     """
-    tag_branch = ""
-    tag_commit = ""
     name = ""
     test = "False"
     key = "Key" if resource == "EC2" else "key"
@@ -24,14 +27,31 @@ def read_tags(tags, resource):
     for tag in tags:
         if tag[key] == "created_on_test":
             test = tag[value]
-        if tag[key] == "git_branch":
-            tag_branch = tag[value]
-        if tag[key] == "git_commit":
-            tag_commit = tag[value]
         if tag[key] == "Name":
             name = tag[value]
 
-    return tag_branch, tag_commit, name, test == "True"
+    return name, test == "True"
+
+
+def compare_days(timestamp):
+    """
+    Compares a given timestamp with the current date and returns whether
+    the timestamp is more than 2 weeks old
+    Args:
+        timestamp (datetime): datetime object representing the timestamp an EC2 instance was created
+    Returns:
+        str: a String representing a status code, either overdue or ignore
+    """
+    today = date.today()
+    launch_time = timestamp.date()
+
+    different = today - launch_time
+
+    return (True, different.days) if different.days >= 14 else (False, different.days)
+
+
+def compare_hours(timestamp):
+    return abs(datetime.now(timezone.utc) - timestamp) > timedelta(hours=1)
 
 
 def get_all_instances(region):
@@ -61,41 +81,38 @@ def flag_instances(region):
         map: map of all branches with associated instances
     """
     reservations = get_all_instances(region)
-    branch_map = {}
-    test_instances = 0
-    user_instances = 0
+    message = ""
     for r in reservations:
         instances = r["Instances"]
         for instance in instances:
+            launch_time = instance["LaunchTime"]
 
-            tag_branch = ""
-            tag_commit = ""
             name = ""
             test = False
+            instance_id = instance["InstanceId"]
 
             if "Tags" in instance:
-                tag_branch, tag_commit, name, test = read_tags(instance["Tags"], "EC2")
+                name, test = read_tags(instance["Tags"], "EC2")
 
-            if len(tag_branch) > 0:
-                # [ user instances, test instances ]
-                if tag_branch in branch_map:
-                    if test:
-                        branch_map[tag_branch][1] += 1
-                    else:
-                        branch_map[tag_branch][0] += 1
-                else:
-                    branch_map[tag_branch] = [0, 1] if test else [1, 0]
+            overdue, days = compare_days(launch_time)
+            if overdue:
+                message += (
+                    f"     - \\`{name}\\` - id: \\`{instance_id}\\` - UPTIME: {days} \n"
+                )
+            elif test:
+                if compare_hours(launch_time):
+                    message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - TEST INSTANCE OVERDUE \n"
 
-    return branch_map
+            elif len(name) == 0:
+                message += f"     - \\'{instance_id}\\' - UNTAGGED/UNNAMED \n"
+
+    return message
 
 
 if __name__ == "__main__":
 
     region = sys.argv[1]
 
-    branches = flag_instances(region)
-    if len(branches) > 0:
-        message = ""
-        for branch in branches:
-            message += f"     *Branch* \\`{branch}\\`: {branches[branch][0]} *user instances* - {branches[branch][1]} *test instances*\n"
+    message = flag_instances(region)
+    if len(message) > 0:
         print(message)
