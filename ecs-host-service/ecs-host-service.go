@@ -566,7 +566,10 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					startDockerDaemon(globalCancel)
 					continue
 				default:
-					logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+					if !strings.HasSuffix(strings.ToLower(err.Error()), "context canceled") {
+						logger.Panicf(globalCancel, "Got an unknown error from the Docker event stream: %v", err)
+					}
+					return
 				}
 
 			case dockerevent := <-dockerevents:
