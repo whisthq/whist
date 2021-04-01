@@ -62,7 +62,20 @@ def create_app(testing=False):
 
     CORS(app)
 
-    return register_blueprints(app)
+    register_handlers(app)
+    register_blueprints(app)
+    return app
+
+
+def register_handlers(app: Flask):
+    """
+    Register all Flask app handlers. This should SHOULD NOT include endpoint definitions, which
+    happens via blueprints in `register_blueprints`. These handlers should be other functions
+    that need to be decorated by a Flask app (such as app.before_request(func)).
+    """
+    from app.flask_handlers import can_process_requests_handler
+
+    can_process_requests_handler(app)
 
 
 def register_blueprints(app):
@@ -105,5 +118,3 @@ def register_blueprints(app):
     app.register_blueprint(logs_bp)
     app.register_blueprint(host_service_bp)
     app.register_blueprint(oauth_bp)
-
-    return app

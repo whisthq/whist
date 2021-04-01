@@ -10,7 +10,7 @@ from app.celery.aws_ecs_creation import (
     _mount_cloud_storage,
     _assign_container,
 )
-from ..patches import function, Object
+from tests.patches import function, Object
 
 
 def test_pass_dpi_failure(user, container, monkeypatch):

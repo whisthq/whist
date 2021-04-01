@@ -3,6 +3,9 @@
 import re
 import time
 import concurrent.futures
+import platform
+import os
+import signal
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -11,11 +14,16 @@ from flask import current_app, g
 from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
 from app.config import _callback_webserver_hostname
+from app.flask_handlers import can_process_requests, set_web_requests_status
 from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.models import db, RegionToAmi
+from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
+from app.constants.http_codes import SUCCESS, ACCEPTED, WEBSERVER_MAINTENANCE
+from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
+from app.celery.dummy import dummy_task
 
 
 def test_callback_webserver_hostname_localhost():
@@ -25,7 +33,7 @@ def test_callback_webserver_hostname_localhost():
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
 
 
-def test_callback_websesrver_hostname_not_localhost():
+def test_callback_webserver_hostname_not_localhost():
     """Make sure the callback webserver hostname is the same as the Host request header."""
 
     hostname = "google.com"
@@ -39,6 +47,98 @@ def test_callback_webserver_hostname_localhost_with_port():
 
     with current_app.test_request_context(headers={"Host": "localhost:80"}):
         assert _callback_webserver_hostname() == "dev-server.fractal.co"
+
+
+# this test cannot be run on windows, as it uses POSIX signals.
+@pytest.mark.skipif(
+    "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
+)
+def test_webserver_sigterm(client):
+    """
+    Make sure SIGTERM is properly handled by webserver. After a SIGTERM, all new web requests should
+    error out with code WEBSERVER_MAINTENANCE. For more info, see app/signals.py.
+
+    Note that this is not the perfect test; third party libs like waitress can override signal
+    handlers. Waitress is only used in deployments (local or in Procfile with Heroku), not during
+    tests. It has been independently verified that waitress does not override our SIGTERM handler.
+    """
+    # this is a dummy endpoint that we hit to make sure web requests are ok
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == SUCCESS
+
+    self_pid = os.getpid()
+    os.kill(self_pid, signal.SIGTERM)
+
+    assert not can_process_requests()
+
+    # web requests should be rejected
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == WEBSERVER_MAINTENANCE
+
+    # re-enable web requests
+    assert set_web_requests_status(True)
+
+    # should be ok
+    resp = client.post("/newsletter/post")
+    assert resp.status_code == SUCCESS
+
+
+# this test cannot be run on windows, as it uses POSIX signals.
+@pytest.mark.skipif(
+    "windows" in platform.platform().lower(), reason="must be running a POSIX compliant OS."
+)
+@pytest.mark.usefixtures("authorized")
+def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
+    """
+    Make sure SIGTERM is properly handled by celery worker (and supervisord). After a SIGTERM, the
+    worker will no longer pick up new tasks and mark all existing tasks as REVOKED. For more info,
+    see app/signals.py.
+    """
+    # start the dummy task and get the id
+    task_id = dummy_task.delay().id
+
+    # let this task start, then we SIGTERM the celery worker
+    started = False
+    for _ in range(30):  # try 30 times because process needs to start which has some delay
+        task_result = fractal_celery_app.AsyncResult(task_id)
+        if task_result.state == "STARTED":
+            started = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert started is True, f"Got unexpected task state {task_result.state}."
+
+    # send SIGTERM to the process group
+    os.killpg(fractal_celery_proc, signal.SIGTERM)
+
+    # make sure the task gets revoked
+    revoked = False
+    for _ in range(10):
+        task_result = fractal_celery_app.AsyncResult(task_id)
+        if task_result.state == "REVOKED":
+            revoked = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert revoked is True, f"Got unexpected task state {task_result.state}."
+
+    # see supervisor.conf in main-webserver root (specifically stopwaitsecs).
+    # At most 30 seconds are given before the process is SIGKILL'd, so we wait 30 seconds.
+    time.sleep(30)
+
+    # new tasks should never start
+    task_id = dummy_task.delay().id
+    started = False
+    for _ in range(30):  # try 30 times to make sure nobody picks up this task
+        task_result = fractal_celery_app.AsyncResult(task_id)
+        if task_result.state != "PENDING":
+            started = True
+            break
+        time.sleep(1)  # wait for task to become available
+    assert started is False, f"Got unexpected task state {task_result.state}."
+
+    # stop anyone from running the task that was just created. this stops side-affects in future
+    # tests that start a celery worker which then runs the above task before the tasks it is
+    # supposed to run in the test
+    fractal_celery_app.control.purge()
 
 
 @pytest.mark.parametrize(
