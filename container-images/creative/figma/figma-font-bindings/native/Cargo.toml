@@ -19,7 +19,7 @@ name = "figma_font_bindings"
 crate-type = ["dylib"]
 
 [build-dependencies]
-neon-build = "0.7.1"
+neon-build = "0.8.0"
 
 [dependencies]
 neon = "0.8.0"
