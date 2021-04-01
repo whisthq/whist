@@ -84,10 +84,11 @@ jobs:
                   bash docker/local_deploy.sh
 
             - name: Ensure Containers Launch and Exit Properly
-              working-directory: main-webserver/app
+              working-directory: main-webserver
               shell: python3 {0}
               run: |
                   import time
+                  import sys; sys.path.append(".")
                   from app.blueprints.celery.celery_status_blueprint import celery_dummy
 
                   dummy_task_id = celery_dummy().json["ID"]
