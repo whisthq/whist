@@ -76,7 +76,6 @@ def flag_instances(region, branch):
             test = False
 
             instance_id = instance["InstanceId"]
-            state = instance["State"]["Name"]
 
             if "Tags" in instance:
                 tag_branch, tag_commit, name, test = read_tags(instance["Tags"], "EC2")
@@ -100,5 +99,5 @@ if __name__ == "__main__":
 
     instances, test, user = flag_instances(region, branch)
     if len(instances) > 0:
-        instances = f"     *Summary:* {test} test instances, {user} user instances \n {instances}"
+        instances = f"     *Summary:* {test} test instances, {user} user instances \n{instances}"
         print(instances)
