@@ -131,5 +131,6 @@ if __name__ == "__main__":
             if len(instances) > 0
             else "     - No hanging instances\n"
         )
+        message += "\n"
 
     print(message) if len(message) > 0 else print("No hanging instances!")
