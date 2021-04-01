@@ -300,3 +300,13 @@ def test_local_lock_timeout(app):
             fractal_logger.error("Neither thread got the lock! Invesigate..")
             assert False
         # here, only one thread got the lock so this test succeeds
+
+
+@pytest.mark.usefixtures("authorized")
+def test_regions(client):
+    """Ensure that regions are returned by the /regions endpoint iff they are allwed regions."""
+
+    response = client.get("/regions")
+    region_set = frozenset(("us-east-1", "us-west-1", "us-west-2", "eu-central-1"))
+
+    assert frozenset(response.json) == region_set
