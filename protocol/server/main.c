@@ -125,7 +125,7 @@ int encoder_factory_current_bitrate;
 CodecType encoder_factory_codec_type;
 
 bool client_joined_after_window_name_broadcast = false;
-
+int begin_time_to_exit = 60;
 // This variable should always be an array - we call sizeof()
 char cur_window_name[WINDOW_NAME_MAXLEN + 1] = {0};
 
@@ -808,7 +808,10 @@ int multithreaded_manage_clients(void* opaque) {
 
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
-    double begin_time_to_exit = 60.0;  // client 1 min to connect when the server first goes up
+    bool disable_timeout = false;
+    if (begin_time_to_exit == -1){ // client has `begin_time_to_exit` seconds to connect when the server first goes up. If the variable is -1, disable auto-exit.
+        disable_timeout = true;
+    }
     clock first_client_timer;  // start this now and then discard when first client has connected
     start_timer(&first_client_timer);
 
@@ -845,9 +848,9 @@ int multithreaded_manage_clients(void* opaque) {
             //  doesn't matter if we disconnect
             //  * if no clients are connected, it isn't possible for another client to nongracefully
             //  exit and reset the grace period timer
-            if ((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
+            if ((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit && !disable_timeout)) &&
                 (!client_exited_nongracefully ||
-                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period))) {
+                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period && !disable_timeout))) {
                 exiting = true;
             }
         } else {
@@ -938,6 +941,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {"identifier", required_argument, NULL, 'i'},
                                      {"webserver", required_argument, NULL, 'w'},
                                      {"environment", required_argument, NULL, 'e'},
+                                     {"timeout", required_argument, NULL, 't'},
                                      // these are standard for POSIX programs
                                      {"help", no_argument, NULL, FRACTAL_GETOPT_HELP_CHAR},
                                      {"version", no_argument, NULL, FRACTAL_GETOPT_VERSION_CHAR},
@@ -945,7 +949,7 @@ const struct option cmd_options[] = {{"private-key", required_argument, NULL, 'k
                                      {0, 0, 0, 0}};
 
 // i: means --identifier MUST take an argument
-#define OPTION_STRING "k:i:w:e:"
+#define OPTION_STRING "k:i:w:e:t:"
 
 int parse_args(int argc, char* argv[]) {
     // TODO: replace `server` with argv[0]
@@ -967,6 +971,9 @@ int parse_args(int argc, char* argv[]) {
         "                                  e.g prod, staging. Default: none\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
+        "  -t, --timeout                 Pass in the number of seconds before the server should\n"
+        "                                  auto exit request as an integer. Pass in -1\n"
+        "                                  to disable auto exit completely. Default: 60\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -1021,6 +1028,13 @@ int parse_args(int argc, char* argv[]) {
                     sentry_set_tag("runner", "server");
                     using_sentry = true;
                     init_sentry();
+                }
+                break;
+            }
+            case 't': {
+                printf("Timeout before autoexit passed in: %s\n", optarg);
+                if (sscanf(optarg, "%d", begin_time_to_exit) != 1 || (begin_time_to_exit <=0 && begin_time_to_exit != -1 ) {
+                    printf("Timeout should be a positive double or -1\n");
                 }
                 break;
             }
