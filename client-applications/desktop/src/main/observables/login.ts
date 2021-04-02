@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { eventIPC } from "@app/main/events/events"
+import { eventIPC } from "@app/main/events/ipc"
 import { from, merge, of } from "rxjs"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
 import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
