@@ -4,6 +4,7 @@ import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
 import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
 
 export const signupRequest = ipcState.pipe(
+    // withLatestFrom()
     pluck("signupRequest"),
     map((req) => req as { email?: string; password?: string }),
     filter((req) => (req?.email && req?.password ? true : false)),
@@ -17,6 +18,7 @@ export const signupLoading = signupRequest.pipe(
 
 export const signupWarning = signupRequest.pipe(
     exhaustMap((req) => from(req)),
+    filter((res) => !emailSignupError(res)),
     filter((res) => !emailSignupValid(res))
 )
 
