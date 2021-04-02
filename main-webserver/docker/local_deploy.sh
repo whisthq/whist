@@ -8,14 +8,12 @@
 
 # exit on error
 set -Eeuo pipefail
-BRANCH=$(git branch --show-current)
-COMMIT=$(git rev-parse --short HEAD)
+
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # make sure current directory is `main-webserver/docker`
 cd "$DIR"
-
 
 # Allow passing `--down` to spin down the docker-compose stack, instead of
 # having to cd into this directory and manually run the command.
@@ -45,7 +43,7 @@ if [ $USE_DEV_DB == true ]; then
     export DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}/${POSTGRES_DB}
 
     # launch all images but dev db
-    APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up --build -d redis web celery # don't spin up postgres_db
+    docker-compose up --build -d redis web celery # don't spin up postgres_db
 
 else
     bash ../ephemeral_db_setup/fetch_db.sh
@@ -60,7 +58,7 @@ else
     export DATABASE_URL=postgres://${POSTGRES_USER}@postgres_db/${POSTGRES_DB}
 
     # launch images with ephemeral db
-    APP_GIT_BRANCH=$BRANCH APP_GIT_COMMIT=$COMMIT docker-compose up -d --build
+    docker-compose up -d --build
 
     # let ephemeral db prepare. Check connections using psql.
     echo "Trying to connect to local db..."

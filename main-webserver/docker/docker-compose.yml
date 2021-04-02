@@ -56,6 +56,8 @@ services:
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       NUM_WORKERS: 2
       WORKER_CONCURRENCY: 50
+      APP_GIT_BRANCH: ${APP_GIT_BRANCH}
+      APP_GIT_COMMIT: ${APP_GIT_COMMIT}
 
 networks:
   primary:
