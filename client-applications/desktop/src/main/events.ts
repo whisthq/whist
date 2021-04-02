@@ -1,7 +1,8 @@
 import { app, ipcMain } from "electron"
 import EventEmitter from "events"
-import { fromEvent } from "rxjs"
-import { map, share, first } from "rxjs/operators"
+import { fromEvent, Observable } from "rxjs"
+import { map, share, first, pluck } from "rxjs/operators"
+import { store } from "@app/utils/persist"
 import { StateChannel } from "@app/utils/constants"
 
 fromEvent(app as EventEmitter, "window-all-closed").subscribe(() => {
@@ -10,11 +11,24 @@ fromEvent(app as EventEmitter, "window-all-closed").subscribe(() => {
     if (process.platform !== "darwin") app.quit()
 })
 
-export const appReady = fromEvent(app as EventEmitter, "ready").pipe(first())
-
 export const ipcState = fromEvent(ipcMain, StateChannel).pipe(
     map(([_event, state]) => state),
     share()
 )
 
+export const fromIPC = (...keys: string[]) =>
+    ipcState.pipe(pluck(...keys), share())
+
+export const fromPersisted = (key: string) =>
+    new Observable((subscriber) => {
+        if (store.get(key) !== undefined) subscriber.next(store.get(key))
+        store.onDidChange(key, (newKey, _oldKey) => {
+            subscriber.next(newKey)
+        })
+    }).pipe(share())
+
+export const appReady = fromEvent(app as EventEmitter, "ready").pipe(first())
+
 export const appActivations = fromEvent(app as EventEmitter, "activate")
+
+export const appQuits = fromEvent(app as EventEmitter, "window-all-closed")
