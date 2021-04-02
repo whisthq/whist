@@ -129,7 +129,7 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     started = False
     for _ in range(30):  # try 30 times to make sure nobody picks up this task
         task_result = fractal_celery_app.AsyncResult(task_id)
-        if task_result.state != "PENDING":
+        if task_result.state is not None:
             started = True
             break
         time.sleep(1)  # wait for task to become available
