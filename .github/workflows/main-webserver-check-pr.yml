@@ -77,6 +77,7 @@ jobs:
                   bash docker/local_deploy.sh
 
             - name: Ensure Containers Launch and Exit Properly
+              id: ensure-containers-work
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -99,6 +100,15 @@ jobs:
 
                   # errors out on failure
                   poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
+
+            - name: Print debug info on failure
+              working-directory: main-webserver
+              if: always() && steps.ensure-containers-work.outcome == 'failure'
+              shell: bash -e {0}
+              run: |
+                # print logs for us to see what happened
+                docker logs docker_web_1
+                docker logs docker_celery_1
 
             - name: End Local Deploy
               shell: bash -e {0}
