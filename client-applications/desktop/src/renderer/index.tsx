@@ -49,8 +49,7 @@ const RootComponent = () => {
         return (
             <Router history={browserHistory}>
                 <Switch>
-                    <Route exact path="/" component={Auth} />
-                    <Route path="/auth" component={Auth} />
+                    <Route path="/" component={Auth} />
                 </Switch>
             </Router>
         )

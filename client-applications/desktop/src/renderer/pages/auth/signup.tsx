@@ -164,7 +164,7 @@ const Signup = (props: {
                         onClick={props.onSignup}
                     />
                     <FractalNavigation
-                        url="/auth/login"
+                        url="/login"
                         text="Already have an account? Log in here."
                         linkText="here"
                         className="relative top-4"

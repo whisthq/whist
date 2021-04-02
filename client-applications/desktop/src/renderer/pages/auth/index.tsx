@@ -53,21 +53,7 @@ const Auth = () => {
                 )}
             />
             <Route
-                path="/auth/login"
-                render={() => (
-                    <Login
-                        email={email}
-                        password={password}
-                        warning={mainState.loginWarning}
-                        loading={mainState.loginLoading}
-                        onLogin={onLogin}
-                        onNavigate={clearPassword}
-                        onChangeEmail={setEmail}
-                        onChangePassword={setPassword}
-                    />
-                )}
-            />
-            <Route
+                exact
                 path="/"
                 render={() => (
                     <Signup
