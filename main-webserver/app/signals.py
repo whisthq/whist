@@ -3,11 +3,14 @@ This modules contains handlers for the following signals:
 1. SIGTERM. Sent by Heroku before dyno restart. See
 https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a1fdab7aeb1f77e6
 for more details on when this happens and how we are solving it.
+
+It also installs the following celery handlers (for use on web and celery workers):
+- 
 """
 import signal
 from typing import List
 
-from celery.signals import worker_shutting_down
+from celery.signals import before_task_publish, worker_shutting_down
 from celery import current_app
 import gevent
 
@@ -40,6 +43,21 @@ class WebSignalHandler:
         # 1. disallow web requests
         if not set_web_requests_status(False):
             fractal_logger.error("Could not disable web requests after SIGTERM.")
+
+
+@before_task_publish.connect
+def celery_before_task_publish_handler(
+    body, exchange, routing_key, headers, properties, declare, retry_policy, **kwargs
+):
+    """
+    See https://docs.celeryproject.org/en/stable/userguide/signals.html#before-task-publish
+    for an explanation on the arguments and the before_task_publish celery signal.
+    Runs directly after a celery task is declared, but before it is published. This will
+    run before .delay(...) returns. We use this to explicitly mark tasks as PENDING in the
+    backend. See https://github.com/fractal/fractal/pull/1556 for a full explanation.
+    """
+    task_id = headers["id"]
+    current_app.backend.store_result(task_id, None, "PENDING")
 
 
 @worker_shutting_down.connect
