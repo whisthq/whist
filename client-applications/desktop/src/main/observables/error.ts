@@ -3,11 +3,11 @@
 // for error-related side-effects defined in effects.ts.
 
 import { identity } from "lodash"
-import { eventIPC, eventAppReady } from "@app/main/events"
+import { eventIPC, eventAppReady } from "@app/main/events/events"
 import { concat, race, of, combineLatest } from "rxjs"
 import { pluck, filter, skip } from "rxjs/operators"
-import { loginFailure } from "@app/main/login"
-import { signupFailure } from "@app/main/signup"
+import { loginFailure } from "@app/main/observables/login"
+import { signupFailure } from "@app/main/observables/signup"
 import {
     createAuthErrorWindow,
     createContainerErrorWindow,
@@ -16,8 +16,8 @@ import {
 import {
     containerAssignFailure,
     containerCreateFailure,
-} from "@app/main/container"
-import { protocolLaunchFailure } from "@app/main/protocol"
+} from "@app/main/observables/container"
+import { protocolLaunchFailure } from "@app/main/observables/protocol"
 
 export const errorRelaunchRequest = eventIPC.pipe(
     pluck("errorRelaunchRequest"),
