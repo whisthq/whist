@@ -34,7 +34,7 @@ import * as container from "@app/main/observables/container"
 import * as protocol from "@app/main/observables/protocol"
 import * as user from "@app/main/observables/user"
 import * as error from "@app/main/observables/error"
-import * as events from "@app/main/events/events"
+import * as events from "@app/main/events"
 
 const modules = [login, container, protocol, user, error, signup, events]
 
