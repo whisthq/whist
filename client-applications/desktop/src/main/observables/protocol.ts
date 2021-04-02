@@ -15,7 +15,7 @@ import {
     containerAssignRequest,
     containerAssignSuccess,
     containerAssignFailure,
-} from "@app/main/container"
+} from "@app/main/observables/container"
 import { merge, zip, of, fromEvent } from "rxjs"
 import { mapTo, map, filter, share, exhaustMap, mergeMap } from "rxjs/operators"
 

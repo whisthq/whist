@@ -20,7 +20,7 @@
 import { app } from "electron"
 import { mapValues, identity } from "lodash"
 import { persist } from "@app/utils/persist"
-import { eventIPC, eventAppReady, eventAppQuit } from "@app/main/events"
+import { eventIPC, eventAppReady, eventAppQuit } from "@app/main/events/events"
 import { ipcBroadcast } from "@app/utils/state"
 import { zip, merge, concat, race, combineLatest, of } from "rxjs"
 import {
@@ -52,21 +52,21 @@ import {
     createContainerErrorWindow,
     createProtocolErrorWindow,
 } from "@app/utils/windows"
-import { userEmail, userAccessToken, userConfigToken } from "@app/main/user"
+import { userEmail, userAccessToken, userConfigToken } from "@app/main/observables/user"
 import {
     loginRequest,
     loginLoading,
     loginWarning,
     loginFailure,
     loginSuccess,
-} from "@app/main/login"
+} from "@app/main/observables/login"
 import {
     signupRequest,
     signupLoading,
     signupWarning,
     signupFailure,
     signupSuccess,
-} from "@app/main/signup"
+} from "@app/main/observables/signup"
 
 import {
     containerCreateRequest,
@@ -78,7 +78,7 @@ import {
     containerAssignPolling,
     containerAssignSuccess,
     containerAssignFailure,
-} from "@app/main/container"
+} from "@app/main/observables/container"
 import {
     protocolLaunchRequest,
     protocolLaunchLoading,
@@ -86,9 +86,9 @@ import {
     protocolLaunchFailure,
     protocolCloseRequest,
     protocolCloseFailure,
-} from "@app/main/protocol"
+} from "@app/main/observables/protocol"
 
-import { errorRelaunchRequest, errorWindowRequest } from "@app/main/error"
+import { errorRelaunchRequest, errorWindowRequest } from "@app/main/observables/error"
 
 // Persistence
 // We create observables for each piece of state we want to persist.
@@ -137,6 +137,7 @@ eventAppReady.subscribe(() => {
 zip(userEmail, userAccessToken).subscribe(() => {
     closeWindows()
 })
+
 // Application closing
 eventAppQuit.subscribe(() => {
     // On macOS it is common for applications and their menu bar

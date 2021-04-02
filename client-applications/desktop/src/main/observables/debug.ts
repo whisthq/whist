@@ -28,13 +28,13 @@
 import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
-import * as login from "@app/main/login"
-import * as signup from "@app/main/signup"
-import * as container from "@app/main/container"
-import * as protocol from "@app/main/protocol"
-import * as user from "@app/main/user"
-import * as error from "@app/main/error"
-import * as events from "@app/main/events"
+import * as login from "@app/main/observables/login"
+import * as signup from "@app/main/observables/signup"
+import * as container from "@app/main/observables/container"
+import * as protocol from "@app/main/observables/protocol"
+import * as user from "@app/main/observables/user"
+import * as error from "@app/main/observables/error"
+import * as events from "@app/main/events/events"
 
 const modules = [login, container, protocol, user, error, signup, events]
 
