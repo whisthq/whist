@@ -155,7 +155,65 @@ COPY depends/xf86-input-libinput/debian/control /xf86-input-libinput-fractal/DEB
 # Build debian package
 RUN dpkg-deb --build xf86-input-libinput-fractal
 
-################ STAGE 3: fractal-base ################
+################ STAGE 3: nvidia-grid-driver ################
+# - Copy and unpack the nvidia grid driver installer
+# - Install its contents into an output directory
+# EXPOSES the grid driver
+#############################################################
+FROM ubuntu:20.04 as nvidia-grid-driver
+
+# Force failure on non-zero exit code for commands with a pipe in them
+SHELL ["/bin/bash", "-Eeuo", "pipefail", "-c"]
+
+ENV container docker
+ENV LC_ALL C
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i 's/# deb/deb/g' /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Install installer dependencies
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    kmod \
+    libglvnd0 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+
+# Retrieve nvidia driver installer
+COPY build-temp/nvidia-driver/nvidia-driver-installer.run nvidia-driver-installer.run
+
+# Unpack the installer
+RUN chmod +x nvidia-driver-installer.run && \
+    sh nvidia-driver-installer.run -x
+
+# Install the driver to a folder
+RUN mkdir /dist /ignore && \
+    cd NVIDIA* && \
+    ./nvidia-installer --silent \
+                       --x-prefix=/dist/usr \
+                       --opengl-prefix=/dist/usr \
+                       --compat32-prefix=/dist/usr \
+                       --install-compat32-libs \
+                       --utility-prefix=/dist/usr \
+                       --documentation-prefix=/ignore \
+                       --no-nvidia-modprobe \
+                       --no-rpms \
+                       --no-backup \
+                       --no-kernel-module \
+                       --no-nouveau-check \
+                       --no-libglx-indirect \
+                       --no-distro-scripts \
+                       --no-drm \
+                       --no-check-for-alternate-installs \
+                       --no-install-libglvnd \
+                       --skip-depmod
+
+################ STAGE 4: fractal-base ################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
 #   xf86-input-libinput-build
@@ -493,23 +551,13 @@ RUN chown root:root /run/user
 COPY scripts/docker-entrypoint.sh /usr/share/fractal/docker-entrypoint.sh
 RUN chmod +x /usr/share/fractal/docker-entrypoint.sh
 
-# Install NVIDIA GRID Drivers
-COPY build-temp/nvidia-driver/nvidia-driver-installer.run /root/nvidia-driver-installer.run
-RUN cd /root && \
-    chmod +x nvidia-driver-installer.run && \
-    sh nvidia-driver-installer.run -x && \
-    cd NVIDIA* && \
-    ./nvidia-installer --silent \
-                       --no-kernel-module \
-                       --install-compat32-libs \
-                       --no-nouveau-check \
-                       --no-nvidia-modprobe \
-                       --no-rpms \
-                       --no-backup \
-                       --no-check-for-alternate-installs \
-                       --no-libglx-indirect && \
-    cd .. && \
-    rm -rf NVIDIA* nvidia-driver-installer.run
+# Install the Nvidia GRID Driver
+RUN apt-get install --no-install-recommends -y \
+    libglvnd0 \
+    && apt-get autoremove -y \
+    && apt-get clean \
+    && rm -rf /tmp/* /var/tmp/*
+COPY --from=nvidia-grid-driver /dist /
 
 # Set up Fractal Service that starts before X to fix the Nvidia GPU bus ID and device paths
 COPY config/01-fractal-nvidia.conf /usr/share/X11/xorg.conf.d/01-fractal-nvidia.conf
