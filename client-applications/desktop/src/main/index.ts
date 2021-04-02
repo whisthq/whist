@@ -1,23 +1,10 @@
-import "@app/main/container"
-import "@app/main/debug"
-import "@app/main/errors"
-import "@app/main/protocol"
 import "@app/main/user"
+import "@app/main/login"
+import "@app/main/error"
+import "@app/main/signup"
+import "@app/main/protocol"
+import "@app/main/container"
 
-import { ipcState } from "@app/main/events"
-import { loginLoading, loginWarning } from "@app/main/login"
-
-import { ipcBroadcast } from "@app/utils/state"
-import { getWindows } from "@app/utils/windows"
-import { combineLatest } from "rxjs"
-import { startWith, mapTo } from "rxjs/operators"
-import { WarningLoginInvalid } from "@app/utils/constants"
-
-// Broadcast state to all renderer windows.
-combineLatest(
-    ipcState,
-    loginLoading.pipe(startWith(false)),
-    loginWarning.pipe(mapTo(WarningLoginInvalid), startWith(null))
-).subscribe(([state, loginLoading, loginWarning]) =>
-    ipcBroadcast({ ...state, loginLoading, loginWarning }, getWindows())
-)
+import "@app/main/events"
+import "@app/main/effects"
+import "@app/main/debug"

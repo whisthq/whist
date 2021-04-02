@@ -1,5 +1,5 @@
 import { ipcState } from "@app/main/events"
-import { from, merge, of, NEVER } from "rxjs"
+import { from, merge, of } from "rxjs"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
 import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
 

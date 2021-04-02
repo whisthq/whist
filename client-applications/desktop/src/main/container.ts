@@ -9,7 +9,7 @@ import {
 import { userEmail, userAccessToken } from "@app/main/user"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { appReady } from "@app/main/events"
-import { from, merge, of, combineLatest, interval, race } from "rxjs"
+import { from, merge, of, combineLatest, interval } from "rxjs"
 import {
     mapTo,
     map,
