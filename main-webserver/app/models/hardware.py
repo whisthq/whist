@@ -6,6 +6,38 @@ from ._meta import db, secret_key
 
 
 class UserContainer(db.Model):
+    """User container data - information for spun up protocol containers
+
+    This SQLAlchemy model provides an interface to the hardware.user_containers
+    table of the database
+
+    Attributes:
+        container_id (string): container ID, taken from AWS
+        ip (string): ip address of the container
+        location (string): AWS region of the container
+        os (string): Container operating system
+        state (string): Container state, either [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE,
+            DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, DELETING, CREATING, RESTARTING, STARTING]
+        user_id (string): User ID, typically email
+        user (Obj): reference to user in public.users with id user_id
+        task_definition (string): foreign key to supported_app_images of streamed application
+        app (Obj): reference to hardware.supported_app_image obj of streamed application
+        port_32262 (int): port corresponding to port 32262
+        port_32263 (int): port corresponding to port 32263
+        port_32273 (int): port corresponding to port 32273
+        last_pinged (int): timestamp representing when the container was last pinged
+        cluster (string): foreign key for the cluster the container is hosted on
+        parent_cluster (obj): reference to hardware.cluster_info object of the parent
+        using_stun (bool): true/false whether we're using STUN server
+        branch (string): branch the container was created on - prod, staging, dev
+        allow_autoupdate (bool): true/false allow protocol to update automatically
+        dpi (int): pixel density of the stream
+        secret_key (string): 16-byte AES key used to encrypt communication between protocol
+            server and client
+
+
+    """
+
     __tablename__ = "user_containers"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     container_id = db.Column(db.String(250), primary_key=True, unique=True)
@@ -34,6 +66,28 @@ class UserContainer(db.Model):
 
 
 class ClusterInfo(db.Model):
+    """Stores data for ECS clusters spun up by the webserver. Containers information such as
+       total task count, number of running instances, and container status.
+
+    Attributes:
+        cluster (string): cluster id from AWS console
+        location (string): AWS region (i.e. us-east-1)
+        maxCPURemainingPerInstance (float): maximum available CPU that has not
+            been allocated to tasks
+        maxMemoryRemainingPerInstance (float): maximum avilable RAM that has not
+            been allocated to tasks
+        pendingTaskscount (int): number of tasks in the cluster that are in the PENDING state
+        runningTasksCount (int): number of tasks in the cluster that are in the RUNNING state
+        registeredContainerInstancesCount (int): The number of container instances registered
+            into the cluster. This includes container instances in both ACTIVE and DRAINING status.
+        minContainers (int): The minimum size of the Auto Scaling group.
+        maxContainers (int): The maximum size of the Auto Scaling Group
+        status: (string): Status of the cluster, either [ACTIVE, PROVISIONING,
+            DEPROVISINING, FAILED, INACTIVE]
+        containers (obj): reference to hardware.user_containers of containers within given cluster
+
+    """
+
     __tablename__ = "cluster_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
@@ -55,6 +109,25 @@ class ClusterInfo(db.Model):
 
 
 class SortedClusters(db.Model):
+    """Sorted list of cluster data, sorted by registeredCotnainerInstancesCount
+
+    Attributes:
+        cluster (string): cluster id from AWS console
+        location (string): AWS region (i.e. us-east-1)
+        maxCPURemainingPerInstance (float): maximum available CPU that has not
+            been allocated to tasks
+        maxMemoryRemainingPerInstance (float): maximum avilable RAM that has not
+            been allocated to tasks
+        pendingTaskscount (int): number of tasks in the cluster that are in the PENDING state
+        runningTasksCount (int): number of tasks in the cluster that are in the RUNNING state
+        registeredContainerInstancesCount (int): The number of container instances registered
+            into the cluster. This includes container instances in both ACTIVE and DRAINING status.
+        minContainers (int): The minimum size of the Auto Scaling group.
+        maxContainers (int): The maximum size of the Auto Scaling Group
+        status: (string): Status of the cluster, either [ACTIVE, PROVISIONING,
+            DEPROVISINING, FAILED, INACTIVE]
+    """
+
     __tablename__ = "cluster_sorted"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     cluster = db.Column(db.String(250), primary_key=True, unique=True)
@@ -116,6 +189,16 @@ class SupportedAppImages(db.Model):
 
 
 class Banners(db.Model):
+    """Contains info for website banners, such as picture URL, headings, and subheadings
+
+    Attributes:
+        heading (string): banner heading
+        subheading (string) banner subheading
+        category (string): banner category
+        background (string): banner image url
+        url (string): url to any external links
+    """
+
     __tablename__ = "banners"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
 
