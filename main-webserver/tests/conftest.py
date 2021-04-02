@@ -453,16 +453,13 @@ def fractal_celery_proc(app):
     # these are used by supervisord
     os.environ["NUM_WORKERS"] = "2"
     os.environ["WORKER_CONCURRENCY"] = "10"
-    cmd = (
-        f"cd {webserver_root} && "
-        "bash stem-cell.sh celery"  # this is the command we use during local deploys
-    )
 
     # stdout is shared but the process is run separately. Signals sent to the current process
-    # are also sent to this process.
+    # are also sent to this process. This is the exact command run by Procfile/stem-cell.sh
+    # for celery workers.
     proc = subprocess.Popen(
-        cmd,
-        shell=True,
+        ["supervisord", "-c", "supervisor.conf"],
+        shell=False,
     )
 
     fractal_logger.info(f"Started celery process with pid {proc.pid}")
@@ -474,7 +471,7 @@ def fractal_celery_proc(app):
     # we need to kill the process group because a new shell was launched which then launched celery
     fractal_logger.info(f"Killing celery process with pid {proc.pid}")
     try:
-        os.killpg(proc.pid, signal.SIGKILL)
+        os.kill(proc.pid, signal.SIGKILL)
     except (PermissionError, ProcessLookupError):
         # some tests kill this process themselves; in this case us trying to kill an already killed
         # process results in a PermissionError. We cleanly catch that specific error.
