@@ -4,7 +4,8 @@ from ._meta import db
 
 
 class LoginHistory(db.Model):
-    """Stores login/logout state for a given user
+    """
+    Stores login/logout state for a given user
 
     Attributes:
         user_id (str): User ID, usually an email
