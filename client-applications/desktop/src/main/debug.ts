@@ -7,9 +7,10 @@ import * as signup from "@app/main/signup"
 import * as container from "@app/main/container"
 import * as protocol from "@app/main/protocol"
 import * as user from "@app/main/user"
-import * as errors from "@app/main/errors"
+import * as error from "@app/main/error"
+import * as events from "@app/main/events"
 
-const modules = [login, container, protocol, user, errors, signup]
+const modules = [login, container, protocol, user, error, signup, events]
 
 type DebugSchema = {
     [title: string]:
@@ -19,6 +20,7 @@ type DebugSchema = {
 }
 
 const schema: DebugSchema = {
+    ipcState: ["value:"],
     userEmail: ["value:"],
     userPassword: ["value:", () => "********"],
     userAccessToken: ["value:"],
