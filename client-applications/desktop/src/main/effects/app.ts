@@ -5,6 +5,11 @@
 */
 
 import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+import {
+    eventUpdateDownloaded,
+} from "@app/main/events/autoupdate"
+
 import { eventAppReady, eventAppQuit } from "@app/main/events/app"
 import { zip } from "rxjs"
 import {
@@ -34,4 +39,9 @@ eventAppQuit.subscribe(() => {
     // On macOS it is common for applications and their menu bar
     // to stay active until the user quits explicitly with Cmd + Q
     if (process.platform !== "darwin") app.quit()
+})
+
+// If the update is downloaded, quit the app and install the update
+eventUpdateDownloaded.subscribe(() => {
+    autoUpdater.quitAndInstall()
 })
