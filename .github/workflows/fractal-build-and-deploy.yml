@@ -1164,3 +1164,36 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # Create GitHub Tag
+    # Create a GitHub Tag when promoting to the `prod` branch
+    # Runs if the entire deployment succeeds and the promotion is running on `prod`
+    fractal-create-github-release-tag:
+        name: "Create GitHub Prod Release Tag"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                main-webserver-deploy-heroku,
+                client-applications-publish-build-s3,
+                main-webserver-update-fractal-services,
+            ]
+        if: >
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # Get the whole git history
+
+            - name: Create GitHub Tag
+              uses: softprops/action-gh-release@v1
+              if: startsWith(github.ref, 'refs/tags/')
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Version X to Prod Completed.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
