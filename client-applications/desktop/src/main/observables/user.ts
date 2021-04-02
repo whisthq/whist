@@ -11,7 +11,7 @@
 // to local storage. The observables in this file then "listen" to local storage
 // to receive the updated data.
 
-import { fromEventPersist } from "@app/main/events"
+import { fromEventPersist } from "@app/main/events/events"
 import { map } from "rxjs/operators"
 
 export const userEmail = fromEventPersist("userEmail").pipe(
