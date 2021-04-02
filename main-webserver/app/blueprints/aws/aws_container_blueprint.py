@@ -3,7 +3,7 @@ from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
-from app import fractal_pre_process
+from app import fractal_pre_process, log_request
 from app.maintenance.maintenance_manager import (
     check_if_maintenance,
     try_start_maintenance,
@@ -34,13 +34,27 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     protocol_info,
     set_stun,
 )
-
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
-from app.models import ClusterInfo
+from app.models import ClusterInfo, RegionToAmi
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
+
+
+@aws_container_bp.route("/regions", methods=("GET",))
+@log_request
+@jwt_required()
+def regions():
+    """Return the list of regions in which users are allowed to deploy tasks.
+
+    Returns:
+        A list of strings, where each string is the name of a region.
+    """
+
+    allowed_regions = RegionToAmi.query.filter_by(allowed=True)
+
+    return jsonify([region.region_name for region in allowed_regions])
 
 
 @aws_container_bp.route("/container_state/<action>", methods=["POST"])
