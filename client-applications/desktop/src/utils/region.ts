@@ -5,6 +5,15 @@ import AWS from "aws-sdk"
 import { AWSRegion } from "@app/@types/aws"
 import config from "@app/utils/config"
 
+const findLowest = (arr: number[]) => {
+    let min = Number.MAX_SAFE_INTEGER 
+    for(let i = 0; i < arr.length; i += 1) {
+        if(arr[i] < min) {
+            min = arr[i]
+        }
+    }
+    return min
+}
 
 const fractalPingTime = async (host: string, numberPings: number) => {
     /*
@@ -26,14 +35,9 @@ const fractalPingTime = async (host: string, numberPings: number) => {
 
     // Resolve list of Promises synchronously to get a list of ping outputs
     const pingResults = await Promise.all(pingPromises)
+    const pingTimes = pingResults.map((res) => Number(res.avg))
 
-    // Calculate the average ping time
-    let totalTime = 0
-    for (let i = 0; i < numberPings; i += 1) {
-        totalTime += Number(pingResults[i].avg)
-    }
-
-    return totalTime / pingResults.length
+    return findLowest(pingTimes)
 }
 
 export const chooseRegion = async (regions: AWSRegion[]) => {
@@ -105,7 +109,7 @@ export const uploadToS3 = (
         }
 
         // Upload files to the bucket
-        s3.upload(params, (s3Error: string) => {
+        s3.upload(params, (s3Error: any) => {
             callback(s3Error)
         })
     } catch (unknownErr) {

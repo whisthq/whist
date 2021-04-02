@@ -103,9 +103,6 @@ export const regionRequest = async (
     accessToken: string
 ) => 
     get({
-        endpoint: "/region",
-        accessToken,
-        body: {
-            username
-        }
+        endpoint: `/regions?username=${username}`,
+        accessToken
     })
