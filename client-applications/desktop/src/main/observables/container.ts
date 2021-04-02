@@ -16,7 +16,7 @@ import {
 } from "@app/utils/container"
 import { userEmail, userAccessToken } from "@app/main/observables/user"
 import { ContainerAssignTimeout } from "@app/utils/constants"
-import { eventAppReady } from "@app/main/events/events"
+import { eventAppReady } from "@app/main/events/app"
 import { from, merge, of, combineLatest, interval } from "rxjs"
 import {
     mapTo,

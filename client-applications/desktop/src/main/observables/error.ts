@@ -3,7 +3,8 @@
 // for error-related side-effects defined in effects.ts.
 
 import { identity } from "lodash"
-import { eventIPC, eventAppReady } from "@app/main/events/events"
+import { eventIPC } from "@app/main/events/ipc"
+import { eventAppReady } from "@app/main/events/app"
 import { concat, race, of, combineLatest } from "rxjs"
 import { pluck, filter, skip } from "rxjs/operators"
 import { loginFailure } from "@app/main/observables/login"

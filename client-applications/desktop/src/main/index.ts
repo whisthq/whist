@@ -9,13 +9,6 @@
 // If you've created a new file in "main/" and you're not seeing it run, you
 // probably haven't imported it here.
 
-import "@app/main/observables/user"
-import "@app/main/observables/login"
-import "@app/main/observables/error"
-import "@app/main/observables/signup"
-import "@app/main/observables/protocol"
-import "@app/main/observables/container"
-
-import "@app/main/events/events"
-import "@app/main/effects/effects"
-import "@app/main/observables/debug"
+import "@app/main/observables"
+import "@app/main/events"
+import "@app/main/effects"
