@@ -458,10 +458,10 @@ def fractal_celery_proc(app):
         "bash stem-cell.sh celery"  # this is the command we use during local deploys
     )
 
-    # stdout is shared but the process is run independently
+    # stdout is shared but the process is run separately. Signals sent to the current process
+    # are also sent to this process.
     proc = subprocess.Popen(
         cmd,
-        start_new_session=True,
         shell=True,
     )
 
@@ -475,7 +475,7 @@ def fractal_celery_proc(app):
     fractal_logger.info(f"Killing celery process with pid {proc.pid}")
     try:
         os.killpg(proc.pid, signal.SIGKILL)
-    except PermissionError:
+    except (PermissionError, ProcessLookupError):
         # some tests kill this process themselves; in this case us trying to kill an already killed
         # process results in a PermissionError. We cleanly catch that specific error.
         pass
