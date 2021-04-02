@@ -96,6 +96,8 @@ jobs:
                   from scripts.utils import make_get_request
                   from scripts.celery_scripts import poll_celery_task
 
+                  time.sleep(5) # give containers 5 seconds to prepare
+
                   WEBSERVER_URL = "http://localhost:7730" # local webserver available here
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
