@@ -8,36 +8,28 @@ import time
 import sys
 import json
 from functools import wraps
+import csv
 
 # this adds the webserver repo root to the python path no matter where
 # this file is called from. We can now import from `scripts`.
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
 import locust
-from locust.user.task import LOCUST_STATE_STOPPING
 
 from scripts.load_testing.load_test_utils import (
     LOAD_TEST_CLUSTER_NAME,
     LOAD_TEST_CLUSTER_REGION,
     LOAD_TEST_USER_PREFIX,
     get_task_definition_arn,
+    OUTFOLDER,
+    CSV_PREFIX,
 )
-
-
-def preprocess_locust_task(func):
-    @wraps(func)
-    def wrapper(self, *args, **kwargs):
-        if self.error is True:
-            raise locust.exception.StopUser()
-        return func(self, *args, **kwargs)
-
-    return wrapper
 
 
 def get_num_users_and_host():
     """
-    NUM_USERS and HOST are passed to locust via CLI args. However, Locust does not provide a
-    way to access these variables. So, we extract them ourselves.
+    -u (number of users), --host (webserver url) are passed to locust via CLI args. However, Locust
+    does not provide a way to access these variables. So, we extract them ourselves.
     """
     # figured this out by looking at main() in locust source
     options = locust.argument_parser.parse_options()
@@ -52,6 +44,32 @@ def get_num_users_and_host():
 
 TOTAL_USERS, WEB_URL = get_num_users_and_host()
 ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
+CUSTOM_CSV_STATS_PATH = os.path.join(OUTFOLDER, f"{CSV_PREFIX}_user_stats.csv")
+
+
+def setup_custom_stats():
+    with open(CUSTOM_CSV_STATS_PATH, "w") as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow(["user_num", "container_time"])  # custom stats to collect
+
+
+def save_custom_stats(user_num: int, container_time: float):
+    with open(CUSTOM_CSV_STATS_PATH, "a") as f:
+        csv_writer = csv.writer(f)
+        csv_writer.writerow([user_num, container_time])
+
+
+setup_custom_stats()
+
+
+def preprocess_locust_task(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        if self.error is True:
+            raise locust.exception.StopUser()
+        return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class LoadTestUser(locust.HttpUser):
@@ -77,6 +95,10 @@ class LoadTestUser(locust.HttpUser):
         # task id to poll
         self.task_id = None
 
+        # timing
+        self.start_time = None
+        self.end_time = None
+
     def on_start(self):
         url = f"{WEB_URL}/aws_container/assign_container"
         payload = json.dumps(
@@ -88,6 +110,7 @@ class LoadTestUser(locust.HttpUser):
             }
         )
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+        self.start_time = time.time()
         # passing catch_response=True allows us to customize whether the request succeeded
         # we do so by calling resp.failure(msg) or resp.success()
         # warning: if you forget to report failure/success the task stats might not be reported
@@ -122,6 +145,7 @@ class LoadTestUser(locust.HttpUser):
 
         url = f"{WEB_URL}/status/{self.task_id}"
         headers = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
+
         # passing catch_response=True allows us to customize whether the request succeeded
         # we do so by calling resp.failure(optional_str) or resp.success()
         # warning: if you forget to report failure/success the task stats might not be reported
@@ -134,12 +158,10 @@ class LoadTestUser(locust.HttpUser):
                 msg = f"Expecting 200, got {resp.status_code}. Output: {resp.content}."
                 resp.failure(msg)
                 self.raise_fatal_exception(msg)
-
             elif resp.status_code == 503:
                 # overloaded server
                 resp.failure("Error - got 503")
                 raise locust.exception.RescheduleTask()
-
             else:
                 # process response
                 ret = resp.json()
@@ -149,11 +171,9 @@ class LoadTestUser(locust.HttpUser):
                     # not a failure, just need to retry
                     resp.success()
                     raise locust.exception.RescheduleTask()
-
                 elif state == "SUCCESS":
                     resp.success()
                     raise locust.exception.StopUser()
-
                 else:
                     self.raise_fatal_exception(
                         f"Got unexpected state {resp['state']}. Output: {output}."
@@ -168,6 +188,9 @@ class LoadTestUser(locust.HttpUser):
         raise ValueError(*args, **kwargs)
 
     def on_stop(self):
+        self.end_time = time.time()
+        save_custom_stats(user_num=self.user_num, container_time=self.end_time - self.start_time)
+
         # Locust (for some reason) does not neatly support stopping the test after
         # all users finish. See https://github.com/locustio/locust/issues/567.
         # We do this as a workaround
