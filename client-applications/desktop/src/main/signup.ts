@@ -1,9 +1,9 @@
-import { ipcState } from "@app/main/events"
+import { eventIPC } from "@app/main/events"
 import { from, merge, of } from "rxjs"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
 import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
 
-export const signupRequest = ipcState.pipe(
+export const signupRequest = eventIPC.pipe(
     // withLatestFrom()
     pluck("signupRequest"),
     map((req) => req as { email?: string; password?: string }),

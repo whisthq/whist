@@ -1,5 +1,5 @@
 import { identity } from "lodash"
-import { ipcState, appReady } from "@app/main/events"
+import { eventIPC, eventAppReady } from "@app/main/events"
 import { concat, race, of, combineLatest } from "rxjs"
 import { pluck, filter, skip } from "rxjs/operators"
 import { loginFailure } from "@app/main/login"
@@ -15,13 +15,13 @@ import {
 } from "@app/main/container"
 import { protocolLaunchFailure } from "@app/main/protocol"
 
-export const errorRelaunchRequest = ipcState.pipe(
+export const errorRelaunchRequest = eventIPC.pipe(
     pluck("errorRelaunchRequest"),
     filter(identity)
 )
 
 export const errorWindowRequest = concat(
-    appReady,
+    eventAppReady,
     race(
         combineLatest(loginFailure, of(createAuthErrorWindow)),
         combineLatest(signupFailure, of(createAuthErrorWindow)),

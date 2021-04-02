@@ -1,7 +1,7 @@
 import { app } from "electron"
 import { mapValues, identity } from "lodash"
 import { persist } from "@app/utils/persist"
-import { ipcState, appReady } from "@app/main/events"
+import { eventIPC, eventAppReady, eventAppQuit } from "@app/main/events"
 import { ipcBroadcast } from "@app/utils/state"
 import { zip, merge, concat, race, combineLatest, of } from "rxjs"
 import {
@@ -77,7 +77,7 @@ import { errorRelaunchRequest, errorWindowRequest } from "@app/main/error"
 // state updates.
 //
 // They are combined into a dictionary, which is persisted to local storage.
-const persistUserEmail = ipcState.pipe(pluck("signupRequest", "email"))
+const persistUserEmail = eventIPC.pipe(pluck("signupRequest", "email"))
 
 const persistUserAccessToken = merge(
     loginSuccess.pipe(map(emailLoginAccessToken)),
@@ -85,12 +85,12 @@ const persistUserAccessToken = merge(
 )
 
 const persistUserConfigToken = merge(
-    ipcState.pipe(
+    eventIPC.pipe(
         filter((req: any) => req.signupRequest),
         map(() => createConfigToken())
     ),
     zip(
-        ipcState.pipe(pluck("signupRequest", "password"), filter(identity))
+        eventIPC.pipe(pluck("signupRequest", "password"), filter(identity))
     ).pipe(switchMap((args) => emailLoginConfigToken(...args)))
 )
 
@@ -109,7 +109,7 @@ persistState.subscribe((state) => persist(state))
 
 // Window opening
 // appReady only fires once, at the launch of the application.
-appReady.subscribe(() => {
+eventAppReady.subscribe(() => {
     createAuthWindow((win: any) => win.show())
 })
 
@@ -118,8 +118,12 @@ appReady.subscribe(() => {
 zip(userEmail, userAccessToken).subscribe(() => {
     closeWindows()
 })
-
 // Application closing
+eventAppQuit.subscribe(() => {
+    // On macOS it is common for applications and their menu bar
+    // to stay active until the user quits explicitly with Cmd + Q
+    if (process.platform !== "darwin") app.quit()
+})
 errorRelaunchRequest.subscribe((req) => {
     if (req) {
         app.relaunch()
@@ -149,7 +153,7 @@ zip(
 
 // Broadcast state to all renderer windows.
 combineLatest(
-    ipcState,
+    eventIPC,
     loginLoading.pipe(startWith(false)),
     loginWarning.pipe(mapTo(WarningLoginInvalid), startWith(null))
 ).subscribe(([state, loginLoading, loginWarning]) =>

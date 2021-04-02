@@ -20,7 +20,7 @@ type DebugSchema = {
 }
 
 const schema: DebugSchema = {
-    ipcState: ["value:"],
+    eventIPC: ["value:"],
     userEmail: ["value:"],
     userPassword: ["value:", () => "********"],
     userAccessToken: ["value:"],

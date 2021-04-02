@@ -8,7 +8,7 @@ import {
 } from "@app/utils/container"
 import { userEmail, userAccessToken } from "@app/main/user"
 import { ContainerAssignTimeout } from "@app/utils/constants"
-import { appReady } from "@app/main/events"
+import { eventAppReady } from "@app/main/events"
 import { from, merge, of, combineLatest, interval } from "rxjs"
 import {
     mapTo,
@@ -25,7 +25,7 @@ import {
 } from "rxjs/operators"
 
 export const containerCreateRequest = combineLatest([
-    appReady,
+    eventAppReady,
     userAccessToken,
 ]).pipe(
     map(([_, token]) => token),
