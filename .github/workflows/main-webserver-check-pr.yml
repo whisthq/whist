@@ -111,5 +111,4 @@ jobs:
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
               working-directory: main-webserver
-              run: |
-                  heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}

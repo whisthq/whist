@@ -15,6 +15,5 @@ def dummy_task(self):
     self.update_state(state="STARTED")
     fractal_logger.info("Running dummy_task...")
 
-    # beware of removing this. test_celery_sigterm uses it and the sleep
-    # is critical to the test.
+    # beware of removing this. test_celery_sigterm uses it and the sleep is critical to the test.
     time.sleep(10)
