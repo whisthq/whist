@@ -97,3 +97,15 @@ export const containerRequest = async (
             app: "Google Chrome",
         },
     })
+
+export const regionRequest = async (
+    username: string,
+    accessToken: string
+) => 
+    get({
+        endpoint: "/region",
+        accessToken,
+        body: {
+            username
+        }
+    })
