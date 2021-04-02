@@ -1,23 +1,27 @@
 import { screen } from "electron"
-import { pick } from "lodash"
-import { containerRequest, taskStatus } from "@app/utils/api"
+import { pick, map } from "lodash"
+
+import { defaultAllowedRegions } from "@app/@types/aws"
+import { chooseRegion } from "@app/utils/region"
+import { containerRequest, regionRequest, taskStatus } from "@app/utils/api"
 import { AsyncReturnType } from "@app/utils/types"
 
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
 
-const chooseRegion = () => {
-    return [
-        "us-east-1",
-        "us-east-2",
-        "us-west-1",
-        "us-west-2",
-        "ca-central-1",
-        "eu-central-1",
-    ][0]
+export const regionGet = async (email: string, accessToken: string) => {
+    const regions = await regionRequest(email, accessToken)
+    if (!regions.json) {
+        return chooseRegion(defaultAllowedRegions)
+    } else {
+        return chooseRegion(regions.json)
+    }
 }
 
-export const containerCreate = async (email: string, accessToken: string) =>
-    await containerRequest(email, accessToken, chooseRegion(), getDPI())
+export const containerCreate = async (email: string, accessToken: string) => {
+    const region = await regionGet(email, accessToken)
+    console.log("the chosen region is", region)
+    return await containerRequest(email, accessToken, region, getDPI())
+}
 
 export const containerCreateError = (
     response: AsyncReturnType<typeof containerCreate>
