@@ -67,13 +67,6 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
-            # - name: Run Tests on Heroku
-            #   env:
-            #       HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-            #   working-directory: main-webserver
-            #   run: |
-            #       heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
-
             - name: Start Local Deploy
               shell: bash -e {0}
               env:
@@ -89,20 +82,22 @@ jobs:
               run: |
                   import time
                   import sys; sys.path.append(".")
-                  from app.blueprints.celery.celery_status_blueprint import celery_dummy
+                  from scripts.utils import make_get_request
+                  from scripts.celery_scripts import poll_celery_task
 
-                  dummy_task_id = celery_dummy().json["ID"]
+                  WEBSERVER_URL = "http://localhost:7730" # local webserver available here
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
-                  time_start = time.time()
-                  time_end = time.time()
-                  status = celery_status(dummy_task_id).json["STATE"]
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  while status != "SUCCESS" and time_end-time_start < 120:
-                    status = celery_status(dummy_task_id).json["STATE"]
-                    time_end=time.time()
+                  resp = make_get_request(WEBSERVER_URL, "/dummy", TOKEN)
+                  assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
+                  task_id = resp.json()["ID"]
 
-                  if status != "SUCCESS":
-                    assert False
+                  # errors out on failure
+                  poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
 
             - name: End Local Deploy
               shell: bash -e {0}
@@ -111,3 +106,10 @@ jobs:
               working-directory: main-webserver
               run: |
                   bash docker/local_deploy.sh --down
+
+            - name: Run Tests on Heroku
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              working-directory: main-webserver
+              run: |
+                  heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
