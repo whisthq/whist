@@ -342,3 +342,13 @@ else()
         COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
         DEPENDS FractalClient ${SERV})
 endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_custom_target(docs
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
+        COMMAND cp ${CMAKE_SOURCE_DIR}/docs/Doxyfile ${CMAKE_BINARY_DIR}/docs
+        COMMAND ${CMAKE_COMMAND} -E echo "OUTPUT_DIRECTORY = ${CMAKE_BINARY_DIR}/docs" >> ${CMAKE_BINARY_DIR}/docs/Doxyfile
+        COMMAND doxygen ${CMAKE_BINARY_DIR}/docs/Doxyfile
+        )
+endif ()

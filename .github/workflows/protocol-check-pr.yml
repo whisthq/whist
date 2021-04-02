@@ -122,7 +122,7 @@ jobs:
 
                       # install clang-tidy, coreutils for realpath, and perl
                       # we must hardcode this version, else we will install the overaggressive recent version
-                      sudo apt-get install -y clang-tidy-6.0 coreutils perl cppcheck
+                      sudo apt-get install -y clang-tidy-6.0 coreutils perl cppcheck doxygen
 
                       # we also need to symlink it so it can be called as clang-tidy
                       sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
@@ -202,6 +202,13 @@ jobs:
 
                   cd build
                   ninja clang-tidy || EXIT /B 1
+
+            - name: Build documentation
+              if: runner.os == 'Linux'
+              working-directory: protocol
+              run: |
+                  cd build
+                  make docs -j
 
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
