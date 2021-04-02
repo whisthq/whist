@@ -51,11 +51,11 @@ export const emailLoginRefreshToken = (response: {
 
 export const emailLoginConfigToken = async (
     password: string,
-    response: {
-        json: { encrypted_config_token?: string }
+    response?: {
+        json?: { encrypted_config_token?: string }
     }
 ) =>
-    response.json.encrypted_config_token
+    response?.json?.encrypted_config_token
         ? decryptConfigToken(password, response.json.encrypted_config_token)
         : await createConfigToken()
 
