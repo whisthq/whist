@@ -47,7 +47,14 @@ class WebSignalHandler:
 
 @before_task_publish.connect
 def celery_before_task_publish_handler(
-    body, exchange, routing_key, headers, properties, declare, retry_policy, **kwargs
+    body,
+    exchange,
+    routing_key,
+    headers,
+    properties,
+    declare,
+    retry_policy,
+    **kwargs,  # pylint: disable=unused-argument
 ):
     """
     See https://docs.celeryproject.org/en/stable/userguide/signals.html#before-task-publish
