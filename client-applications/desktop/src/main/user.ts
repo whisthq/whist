@@ -1,24 +1,12 @@
-import { appReady, ipcState } from "@app/main/events"
-import { createAuthWindow, closeWindows } from "@app/utils/windows"
-import { loginSuccess } from "@app/main/login"
-import { signupSuccess } from "@app/main/signup"
-import { emailLoginAccessToken } from "@app/utils/api"
-import { zip, race } from "rxjs"
-import { map, pluck, distinctUntilChanged } from "rxjs/operators"
+import { fromPersisted } from "@app/main/events"
+import { map } from "rxjs/operators"
 
-export const userEmail = ipcState.pipe(pluck("email"), distinctUntilChanged())
-
-export const userAccessToken = race(
-    loginSuccess.pipe(map(emailLoginAccessToken)),
-    signupSuccess.pipe(map(emailLoginAccessToken))
+export const userEmail = fromPersisted("userEmail").pipe(
+    map((s) => s as string)
 )
-
-// Start the auth window on launch
-appReady.subscribe(() => {
-    createAuthWindow((win: any) => win.show())
-})
-
-// If we have an access token and an email, close the existing windows.
-zip(userEmail, userAccessToken).subscribe(() => {
-    closeWindows()
-})
+export const userConfigToken = fromPersisted("userConfigToken").pipe(
+    map((s) => s as string)
+)
+export const userAccessToken = fromPersisted("userAccessToken").pipe(
+    map((s) => s as string)
+)
