@@ -2,7 +2,6 @@ import time
 
 from celery import shared_task
 
-from app.constants.http_codes import SUCCESS
 from app.helpers.utils.general.logs import fractal_logger
 
 
