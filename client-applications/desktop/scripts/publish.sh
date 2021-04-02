@@ -49,25 +49,25 @@ else
 
     # Make FractalClient and create its app bundle
     cd ../../protocol
-    cmake . -DCMAKE_BUILD_TYPE=Release
-    make FractalClient
+    mkdir -p build-publish
+    cd build-publish
+    cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
+    make -j FractalClient
+    cd ..
     cd ../client-applications/desktop
-    rm -rf protocol-build
-    mkdir -p protocol-build/client
 
     rm -rf loading 
     mkdir -p loading
+    cp -r ../../protocol/build-publish/client/build64/loading/*.png loading
 
-    # Move FractalClient and crashpad_handler over to client-app
-    cp ../../protocol/client/build64/Darwin/FractalClient protocol-build/client/Fractal
-    cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
+    rm -rf protocol-build
+    mkdir -p protocol-build/client
 
-    # Copy over the FFmpeg dylibs
-    cp ../../protocol/lib/64/ffmpeg/Darwin/*.dylib protocol-build/client
-    cp ../../protocol/client/build64/Darwin/*.dylib protocol-build/client
+    # Move FractalClient and related files over to client-app
+    cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
+    rm -rf ./protocol-build/client/loading
 
-    # Copy loading images to a temp folder (will be moved in afterSign script)
-    cp -r ../../protocol/client/build64/Darwin/loading/*.png loading
+    mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
