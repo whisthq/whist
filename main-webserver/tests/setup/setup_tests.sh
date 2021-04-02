@@ -30,6 +30,7 @@ if [ $DB_EXISTS == true ]; then
     # db itself was already created by Heroku; we just need to apply schema and insert data
     export DB_EXISTS=true
     bash ../../ephemeral_db_setup/db_setup.sh
+
     exit 0
 fi
 
@@ -49,8 +50,10 @@ fi
 export $(cat ../../docker/.env | xargs)
 
 bash ../../ephemeral_db_setup/fetch_db.sh
+BRANCH=$(git branch --show-current)
+COMMIT=$(git rev-parse --short HEAD)
 
-docker-compose up -d --build
+GIT_APP_BRANCH=$BRANCH GIT_APP_COMMIT=$COMMIT docker-compose up -d --build
 
 # local testing uses localhost db. override POSTGRES_HOST and set POSTGRES_PORT.
 export POSTGRES_HOST="localhost"

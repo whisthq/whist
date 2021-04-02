@@ -3,6 +3,7 @@
 
 *
 !requirements.txt
+!git_info.txt
 !app/
 !tests/
 !migrations/
