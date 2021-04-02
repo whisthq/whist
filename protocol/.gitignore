@@ -5,29 +5,15 @@ tags
 **/tags.temp
 
 # General files
-*.a
-*.o
-*.obj
 *.iml
+.idea/
 *.pyc
 *.cbp
 *.swp
-
-# Visual Studio
-**/Debug/
-**/Release/
 .vs/
 .vscode/
 .vscode/settings.json
-*.vcxproj
-*.vcxproj.filters
-*.sln
 .idea/
-*.pdb
-*.exp
-*.ilk
-*.user
-**/log*.txt
 
 # macOS
 .DS_Store
@@ -37,48 +23,19 @@ tags
 sentry-native
 
 # Fractal
-version
-**/build32
-**/build64
 share/
-client/external_utils/Windows/ssh.exe
-*.v
 ._share
-connection_id.txt
-.libcache
 
 # Cmake
-*.cmake
-*.make
-*.marks
-*.internal
-*.includecache
-fractal/**/*.lib
-client/*.lib
-server/*.lib
-CMakeSettings.json
-cmake-build-*
-CMakeFiles/
 build/
 build-*/
-CMakeCache.txt
-**/Makefile*
-**/makefile*
-**/GNUmakefile*
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-fixes/
 
-# Ninja
-.ninja_deps
-.ninja_log
-build.ninja
-
-# SDL
-include/SDL2
+# includes
 include/openssl
+include/SDL2
+
+# libs
+lib/64/openssl
 lib/64/SDL2/Darwin
 lib/64/SDL2/Linux
 lib/64/SDL2/Windows
