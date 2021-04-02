@@ -67,6 +67,15 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
             - name: Start Local Deploy
               shell: bash -e {0}
               env:
@@ -106,9 +115,12 @@ jobs:
               if: always() && steps.ensure-containers-work.outcome == 'failure'
               shell: bash -e {0}
               run: |
-                # print logs for us to see what happened
-                docker logs docker_web_1
-                docker logs docker_celery_1
+                  # print logs for us to see what happened
+                  echo "------ WEB LOGS ------"
+                  docker logs docker_web_1
+
+                  echo "------ CELERY LOGS ------"
+                  docker logs docker_celery_1
 
             - name: End Local Deploy
               shell: bash -e {0}
