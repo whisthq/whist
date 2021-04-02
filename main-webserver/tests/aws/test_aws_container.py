@@ -4,6 +4,7 @@ import uuid
 
 import pytest
 
+from flask import current_app
 from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import update_cluster
@@ -30,18 +31,24 @@ from ..patches import function
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.celery.aws_ecs_modification import manual_scale_cluster
 
-pytest.cluster_name = f"test-cluster-{uuid.uuid4()}"
-pytest.container_name = None
-
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
+
+
+@pytest.fixture(scope="module")
+def ecs_data(app):
+    with app.app_context():
+        branch = os.environ["HEROKU_TEST_RUN_BRANCH"].replace("/", "-")
+        commit = os.environ["HEROKU_TEST_RUN_COMMIT_VERSION"][0:7]
+        pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
+        pytest.container_name = None
 
 
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(client, authorized, cluster_name=pytest.cluster_name):
-    cluster_name = cluster_name or pytest.cluster_name
+def test_create_cluster(ecs_data, client, authorized):
+    cluster_name = pytest.cluster_name
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
     resp = client.post(
@@ -370,8 +377,8 @@ def test_update_region(client, monkeypatch):
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("authorized")
-def test_delete_cluster(client, cluster=pytest.cluster_name):
-    cluster = cluster or pytest.cluster_name
+def test_delete_cluster(client):
+    cluster = pytest.cluster_name
     fractal_logger.info("Starting to delete cluster {}".format(cluster))
 
     resp = client.post(

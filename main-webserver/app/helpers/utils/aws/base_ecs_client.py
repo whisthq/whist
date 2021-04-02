@@ -1,11 +1,13 @@
-import os.path
+import os
 import random
 import string
 import time
 import uuid
 from collections import defaultdict
+from datetime import date
 from pprint import saferepr
 from typing import List, Dict
+
 
 import boto3
 import botocore.exceptions
@@ -159,6 +161,12 @@ class ECSClient:
         )
         return clients
 
+    def _get_git_info(self):
+        branch = current_app.config["APP_GIT_BRANCH"]
+        commit = current_app.config["APP_GIT_COMMIT"]
+
+        return branch, commit[0:7]
+
     def generate_name(self, starter_name=""):
         """
         Helper function for generating a name with a random UUID
@@ -167,12 +175,18 @@ class ECSClient:
         Returns:
             str: the generated name
         """
+        # branch, commit = self._get_git_info()
+        branch, commit = self._get_git_info()
+        branch = branch.replace("/", "-")
+        name = f"{starter_name}-<{branch}>-<{commit}>-uuid-{uuid.uuid4()}"
+
+        # need a special case for capacity_provider and cluster
+        # as they don't like special characters
+        if starter_name in ["capacity_provider", "cluster"]:
+            name = f"{starter_name}-{branch}-{commit}-uuid-{uuid.uuid4()}"
 
         if current_app.testing:
-            name = f"test-{starter_name.replace('_', '-')}-{uuid.uuid4()}"
-        else:
-            letters = string.ascii_lowercase
-            name = starter_name + "_" + "".join(random.choice(letters) for i in range(10))
+            name = f"test-{name}"
 
         return name
 
@@ -184,13 +198,22 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster, will be automatically generated if not
                 provided
         """
+        branch, commit = self._get_git_info()
+
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
         if not isinstance(capacity_providers, list):
             raise Exception("capacity_providers must be a list of strs")
         cluster_name = cluster_name or self.generate_name("cluster")
+
         self.ecs_client.create_cluster(
             clusterName=cluster_name,
+            tags=[
+                {"key": "git_branch", "value": branch},
+                {"key": "git_commit", "value": commit},
+                {"key": "created_on_test", "value": "True" if current_app.testing else "False"},
+                {"key": "created_at", "value": date.today().strftime("%Y-%d-%m")},
+            ],
             capacityProviders=capacity_providers,
             defaultCapacityProviderStrategy=[
                 {
@@ -296,12 +319,14 @@ class ECSClient:
         capacity_providers_info = self.ecs_client.describe_capacity_providers(
             capacityProviders=capacity_providers
         )["capacityProviders"]
+
         auto_scaling_groups = list(
             map(
                 lambda cp: cp["autoScalingGroupProvider"]["autoScalingGroupArn"].split("/")[-1],
                 capacity_providers_info,
             )
         )
+
         return self.auto_scaling_client.describe_auto_scaling_groups(
             AutoScalingGroupNames=auto_scaling_groups
         )["AutoScalingGroups"]
@@ -480,7 +505,7 @@ class ECSClient:
                 "maxContainers": auto_scaling_group_info["MaxSize"],
             }
 
-        print(clusters_usage)
+        fractal_logger.info(f"Cluster usage: {dict(clusters_usage)}")
         return clusters_usage
 
     def set_and_register_task(
@@ -685,6 +710,7 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
+        branch, commit = self._get_git_info()
         availability_zones = availability_zones or [
             self.region_name + "a" if self.region_name != "us-east-1" else "us-east-1b"
         ]
@@ -701,6 +727,25 @@ class ECSClient:
             MaxSize=max_size,
             MinSize=min_size,
             AvailabilityZones=availability_zones,
+            # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-tags.html
+            Tags=[
+                {
+                    "Key": "git_branch",
+                    "Value": branch,
+                    "PropagateAtLaunch": True,
+                },
+                {
+                    "Key": "git_commit",
+                    "Value": commit,
+                    "PropagateAtLaunch": True,
+                },
+                {
+                    "Key": "created_on_test",
+                    "Value": "True" if current_app.testing else "False",
+                    "PropagateAtLaunch": True,
+                },
+                {"Key": "Name", "Value": self.generate_name("ec2"), "PropagateAtLaunch": True},
+            ],
         )
 
         return auto_scaling_group_name

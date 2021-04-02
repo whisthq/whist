@@ -239,6 +239,30 @@ class DeploymentConfig:
         return config_table_names.from_env(self.ENVIRONMENT)
 
     @property
+    def APP_GIT_BRANCH(self):  # pylint: disable=invalid-name
+        """The git branch (i.e. sha) of the source code for this particular instance of the
+        application.
+
+        The current implementation assumes that Heroku is the execution environment. It should fail
+        if this is not the case (hence os.environ[] instead of os.environ.get()). It supports
+        standard heroku app environments as well as test environments.
+        """
+        if (override_branch := os.environ.get("APP_GIT_BRANCH")) is not None:
+            return override_branch
+
+        # if running a review app
+        if (review_branch := os.environ.get("HEROKU_BRANCH")) is not None:
+            return review_branch
+
+        # if running in a heroku test environment, such as via `heroku ci:run`
+        if (test_branch := os.environ.get("HEROKU_TEST_RUN_BRANCH")) is not None:
+            return test_branch
+
+        return os.environ[
+            "BRANCH"
+        ]  # requires each environment, dev, staging, and prod to have a branch variable
+
+    @property
     def APP_GIT_COMMIT(self):  # pylint: disable=invalid-name
         """The git commit (i.e. sha) of the source code for this particular instance of the
         application.
