@@ -10,6 +10,7 @@ const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
 
 export const regionGet = async (email: string, accessToken: string) => {
     const regions = await regionRequest(email, accessToken)
+
     if (!regions.json) {
         return chooseRegion(defaultAllowedRegions)
     } else {
@@ -19,7 +20,6 @@ export const regionGet = async (email: string, accessToken: string) => {
 
 export const containerCreate = async (email: string, accessToken: string) => {
     const region = await regionGet(email, accessToken)
-    console.log("the chosen region is", region)
     return await containerRequest(email, accessToken, region, getDPI())
 }
 
