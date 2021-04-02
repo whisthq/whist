@@ -82,6 +82,7 @@ jobs:
               run: |
                   import time
                   import sys; sys.path.append(".")
+                  from scripts.misc_scripts import login
                   from scripts.utils import make_get_request
                   from scripts.celery_scripts import poll_celery_task
 
