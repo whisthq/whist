@@ -1,4 +1,5 @@
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql.expression import true
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, StringEncryptedType
 
 from ._meta import db, secret_key
@@ -73,12 +74,20 @@ class RegionToAmi(db.Model):
     This class represents the region_to_ami table in hardware
     it maps region names to the AMIs which should be used
     for clusters in that region
+
+    Attributes:
+        region_name: The name of the region to which the AMI corresponds as a string.
+        ami_id: A string representing the AMI ID of the latest AMI provisioned in the region
+            corresponding to this row.
+        allowed: A boolean indicating whether or not users are allowed to deploy tasks in the
+            region corresponding to this row.
     """
 
     __tablename__ = "region_to_ami"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     region_name = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
     ami_id = db.Column(db.String(250), nullable=False)
+    allowed = db.Column(db.Boolean, nullable=False, server_default=true())
 
 
 class SupportedAppImages(db.Model):

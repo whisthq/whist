@@ -47,6 +47,9 @@ def parse_request(view_func: _F) -> _F:
         kwargs["received_from"] = received_from
         kwargs["webserver_url"] = _callback_webserver_hostname()
 
+        if request.method == "GET":
+            kwargs["username"] = request.args.get("username")
+
         return view_func(*args, **kwargs)
 
     return cast(_F, wrapper)
