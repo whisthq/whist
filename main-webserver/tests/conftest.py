@@ -17,7 +17,6 @@ from app.factory import create_app
 from app.models import ClusterInfo, db, User, UserContainer
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
-from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from app.celery_utils import make_celery
@@ -67,7 +66,7 @@ def app():
     Returns:
         An instance of the Flask application for testing.
     """
-    import app.signals  # register signals
+    from app.signals import WebSignalHandler
 
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
