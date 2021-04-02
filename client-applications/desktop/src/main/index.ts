@@ -12,3 +12,4 @@
 import "@app/main/observables"
 import "@app/main/events"
 import "@app/main/effects"
+import "@app/main/debug"
