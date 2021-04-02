@@ -67,6 +67,8 @@ def app():
     Returns:
         An instance of the Flask application for testing.
     """
+    import app.signals  # register signals
+
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
 
@@ -433,8 +435,13 @@ def make_authorized_user(client, make_user, monkeypatch):
 @pytest.fixture
 def fractal_celery_app(app):
     """
-    Initialize celery like we do in entry_web.py. This is different than the built-in
+    Initialize celery like we do in entry_celery.py. This is different than the built-in
     celery_app fixture and works hand-in-hand with fractal_celery_proc.
+
+    TODO: we need to import app.signals here, but this gets confused with the app
+    fixture argument. Renaming the app fixture seems non-trivial because request_ctx
+    expects a fixture named app. For now, any relevant tests that use this fixture
+    need to import app.signals themselves.
     """
     celery_app = make_celery(app)
     celery_app.set_default()

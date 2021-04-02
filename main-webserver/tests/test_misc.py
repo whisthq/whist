@@ -94,6 +94,10 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     worker will no longer pick up new tasks and mark all existing tasks as REVOKED. For more info,
     see app/signals.py.
     """
+    # this registers import signals on the current worker, see fractal_celery_app
+    # for an explanation
+    import app.signals
+
     # start the dummy task and get the id
     task_id = dummy_task.delay().id
 
@@ -101,11 +105,14 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     started = False
     for _ in range(30):  # try 30 times because process needs to start which has some delay
         task_result = fractal_celery_app.AsyncResult(task_id)
+        fractal_logger.info(f"STATE: {task_result.state}")
         if task_result.state == "STARTED":
             started = True
             break
         time.sleep(1)  # wait for task to become available
-    assert started is True, f"Got unexpected task state {task_result.state}."
+    assert (
+        started is True
+    ), f"Got unexpected task state {task_result.state} and result {task_result.result}."
 
     # send SIGTERM to the process group
     os.killpg(fractal_celery_proc, signal.SIGTERM)

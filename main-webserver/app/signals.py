@@ -5,7 +5,7 @@ https://www.notion.so/tryfractal/Resolving-Heroku-Dyno-Restart-db63f4cbb9bd49a1a
 for more details on when this happens and how we are solving it.
 
 It also installs the following celery handlers (for use on web and celery workers):
-- 
+- before_task_publish
 """
 import signal
 from typing import List
