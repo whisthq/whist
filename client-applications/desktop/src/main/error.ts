@@ -1,3 +1,7 @@
+// This file is home to observables related to error handling in the application.
+// These should subscribe to "Failure" observables, and emit useful data
+// for error-related side-effects defined in effects.ts.
+
 import { identity } from "lodash"
 import { eventIPC, eventAppReady } from "@app/main/events"
 import { concat, race, of, combineLatest } from "rxjs"

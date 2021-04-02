@@ -1,3 +1,15 @@
+// This file is home to the observables that manage the signup page in the
+// renderer thread. They listen to IPC events what contain signupRequest
+// information, and they communicate with the server to authenticate the user.
+//
+// It's important to note that information received over IPC, like user email,
+// or received as a response from the webserver, like an access token, are not
+// subscribed directly by observables like userEmail and userConfigToken. All
+// received data goes through the full "persistence cycle" first, where it is
+// saved to local storage. userEmail and userConfigToken observables then
+// "listen" to local storage, and update their values based on local
+// storage changes.
+
 import { eventIPC } from "@app/main/events"
 import { from, merge, of } from "rxjs"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"

@@ -1,4 +1,30 @@
-// import { identity } from "lodash"
+// This file is a utility for debugging observables throughout the application.
+// By subscribing to observables here, we can see their values in our console
+// every time they emit.
+//
+// First, the module containing your new observables must be imported at the
+// top of this file. For example:
+//
+// import * as mymodule from @app/main/mymodule
+//
+// This will store a dictionary of the variables in @app/main/mymodule under
+// the symbol mymodule. You must then add mymodule to the "modules" list,
+// right below the import statements in this file.
+//
+// Finally, add the name of the observable you want to debug to the schema
+// dictionary. The key should be the name of your observable, and the value
+// is a tuple of ["debug message", trasnformFunction (optional)]. The
+// transformFunction will receive the emitted value from the observable, and
+// whatever the transformFunction returns will be printed in the debug
+// message. This is useful to only print the fields you care about in a large
+// object.
+//
+// If you don't pass a transformFunction, the entire value will be printed.
+// If you pass null as the transformFunction, only the debug message will
+// be printed, not the value.
+// If the observable name set as the schema key doesn't exist in any of the
+// modules, it will be ignored.
+
 import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"

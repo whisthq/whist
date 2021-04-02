@@ -1,3 +1,11 @@
+// This file is home to observables that manage container creation.
+// Their responsibilities are to listen for state that will trigger protocol
+// launches. These observables then communicate with the webserver and
+// poll the state of the containers while they spin up.
+//
+// These observables are subscribed by protocol launching observables, which
+// react to success container creation emissions from here.
+
 import {
     containerCreate,
     containerCreateError,
