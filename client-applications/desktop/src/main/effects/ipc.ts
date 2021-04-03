@@ -6,7 +6,7 @@
 import { eventIPC } from "@app/main/events/ipc"
 import { mapValues } from "lodash"
 import { ipcBroadcast } from "@app/utils/state"
-import { combineLatest } from "rxjs"
+import { combineLatest, Observable } from "rxjs"
 import { startWith, mapTo, withLatestFrom } from "rxjs/operators"
 import { WarningLoginInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
@@ -23,8 +23,15 @@ import { loginLoading, loginWarning } from "@app/main/observables/login"
 // Note that combineLatest doesn't emit until each of its observable arguments
 // emits an initial value. To get the state broacasting right away, we pipe
 // all the subscribed observables through startWith(undefined).
+//
+// We can only send serializable values over IPC, so the subscribed map is
+// constrained to observables that emit serializable values.
 
-const subscribed = {
+type SubscriptionMap = {
+    [key: string]: Observable<string | number | boolean | SubscriptionMap>
+}
+
+const subscribed: SubscriptionMap = {
     loginLoading: loginLoading,
     loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
 }
