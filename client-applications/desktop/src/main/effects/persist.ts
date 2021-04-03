@@ -2,40 +2,21 @@
  * Copyright Fractal Computers, Inc. 2021
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
-*/
+ */
 
 import { mapValues, identity } from "lodash"
 import { persist } from "@app/utils/persist"
 import { eventIPC } from "@app/main/events/ipc"
-import { ipcBroadcast } from "@app/utils/state"
 import { zip, merge, combineLatest } from "rxjs"
-import {
-    startWith,
-    map,
-    mapTo,
-    pluck,
-    filter,
-    switchMap,
-} from "rxjs/operators"
+import { startWith, map, pluck, filter, switchMap } from "rxjs/operators"
 import { createConfigToken } from "@app/utils/crypto"
-import { WarningLoginInvalid } from "@app/utils/constants"
 import {
     emailLoginConfigToken,
     emailLoginAccessToken,
     emailSignupAccessToken,
 } from "@app/utils/api"
-import {
-    getWindows,
-} from "@app/utils/windows"
-import {
-    loginLoading,
-    loginWarning,
-    loginSuccess,
-} from "@app/main/observables/login"
-import {
-    signupSuccess,
-} from "@app/main/observables/signup"
-
+import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
 
 // Persistence
 // We create observables for each piece of state we want to persist.
@@ -72,12 +53,3 @@ const persistState = combineLatest(
 )
 
 persistState.subscribe((state) => persist(state))
-
-// Broadcast state to all renderer windows.
-combineLatest(
-    eventIPC,
-    loginLoading.pipe(startWith(false)),
-    loginWarning.pipe(mapTo(WarningLoginInvalid), startWith(null))
-).subscribe(([state, loginLoading, loginWarning]) =>
-    ipcBroadcast({ ...state, loginLoading, loginWarning }, getWindows())
-)
