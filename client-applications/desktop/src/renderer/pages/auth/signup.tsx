@@ -56,7 +56,7 @@ const Signup = (props: {
     }
 
     return (
-        <div className="flex flex-col justify-center items-center bg-white h-screen text-center">
+        <div className="flex flex-col justify-center items-center h-screen text-center">
             <div className="w-full max-w-xs m-auto">
                 <FractalFadeIn>
                     <Logo />
