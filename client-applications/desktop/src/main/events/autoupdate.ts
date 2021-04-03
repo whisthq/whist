@@ -2,7 +2,10 @@ import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
-export const eventUpdateAvailable = fromEvent(autoUpdater as EventEmitter, "update-available")
+export const eventUpdateAvailable = fromEvent(
+    autoUpdater as EventEmitter,
+    "update-available"
+)
 
 export const eventUpdateNotAvailable = fromEvent(
     autoUpdater as EventEmitter,
@@ -19,6 +22,10 @@ export const eventUpdateDownloaded = fromEvent(
     "update-downloaded"
 )
 
+export const eventUpdateCheck = fromEvent(
+    autoUpdater as EventEmitter,
+    "checking-for-update"
+)
 
 // export const listenAutoUpdate: Event = (setState) => {
 //     // Autoupdater listeners, will fire if S3 app version is greater than current version
