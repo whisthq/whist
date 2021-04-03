@@ -31,7 +31,7 @@ import { useMainState } from "@app/utils/state"
 // should be rendered.
 
 // If no query parameter match is found, we default to a
-// generic naviation error window.
+// generic navigation error window.
 const show = chain(window.location.search.substring(1))
     .split("=")
     .chunk(2)
@@ -86,4 +86,19 @@ const RootComponent = () => {
     )
 }
 
-ReactDOM.render(<RootComponent />, document.getElementById("root"))
+// TODO: actually pass version number through IPC.
+const WindowBackground = (props: any) => {
+    return <div className="relative w-full h-full">
+        <div className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
+             style={{zIndex: -10}}>
+            <p className="font-body font-light text-gray-200 py-4">Version 1.0</p>
+        </div>
+        {props.children}
+    </div>
+}
+
+ReactDOM.render(
+    <WindowBackground>
+        <RootComponent />
+    </WindowBackground>
+    , document.getElementById("root"))
