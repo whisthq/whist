@@ -67,6 +67,71 @@ jobs:
               with:
                   ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
+            - name: Start Local Deploy
+              shell: bash -e {0}
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              working-directory: main-webserver
+              run: |
+                  bash docker/retrieve_config.sh
+                  bash docker/local_deploy.sh
+
+            - name: Ensure Containers Launch and Exit Properly
+              id: ensure-containers-work
+              working-directory: main-webserver
+              shell: python3 {0}
+              run: |
+                  import time
+                  import sys; sys.path.append(".")
+                  from scripts.misc_scripts import login
+                  from scripts.utils import make_get_request
+                  from scripts.celery_scripts import poll_celery_task
+
+                  time.sleep(5) # give containers 5 seconds to prepare
+
+                  WEBSERVER_URL = "http://localhost:7730" # local webserver available here
+                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # Log in as Admin to get Bearer Token
+                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+                  resp = make_get_request(WEBSERVER_URL, "/dummy", TOKEN)
+                  assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
+                  task_id = resp.json()["ID"]
+
+                  # errors out on failure
+                  poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
+
+            - name: Print debug info on failure
+              working-directory: main-webserver
+              if: always() && steps.ensure-containers-work.outcome == 'failure'
+              shell: bash -e {0}
+              run: |
+                  # print logs for us to see what happened
+                  echo "------ WEB LOGS ------"
+                  docker logs docker_web_1
+
+                  echo "------ CELERY LOGS ------"
+                  docker logs docker_celery_1
+
+            - name: End Local Deploy
+              shell: bash -e {0}
+              env:
+                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+              working-directory: main-webserver
+              run: |
+                  bash docker/local_deploy.sh --down
+
             - name: Run Tests on Heroku
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
