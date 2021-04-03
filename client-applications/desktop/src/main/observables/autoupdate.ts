@@ -35,7 +35,8 @@ export const autoUpdateDownloadRequest = eventUpdateAvailable.pipe(
 
 // This observable emits the download progress, it depends on the implementation
 // of the download functions, but this example just checks the size of the
-// downloading file every 100ms.
+// downloading file every 100ms. We would probably subscribe to this in
+// effects/ipc.ts to send the download status to the renderer thread.
 export const autoUpdateDownloadPolling = autoUpdateDownloadRequest.pipe(
     switchMap(() => interval(100).pipe(map(() => updateDownloadProgress())))
 )
@@ -58,6 +59,8 @@ export const autoUpdateDownloadFailure = autoUpdateDownloadRequest.pipe(
     filter(() => !updateDownloadValidate())
 )
 
+// We would probably have a subscription in effects/autoupdate.ts that
+// waits for this success observable, and then calls quitAndInstall().
 export const autoUpdateDownloadSuccess = autoUpdateDownloadRequest.pipe(
     exhaustMap((promise) => from(promise as Promise<any>)),
     filter(() => !updateDownloadValidate())
