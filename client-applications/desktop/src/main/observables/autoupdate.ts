@@ -9,10 +9,10 @@ import {
     catchError,
 } from "rxjs/operators"
 import {
-    eventUpdateCheck,
+    eventDownloadProgress,
     eventUpdateNotAvailable,
     eventUpdateAvailable,
-} from "@app/events/autoupdate"
+} from "@app/main/events/autoupdate"
 
 // These are fake functions, they don't belong here at all, but an example
 // of some possible utility functions we might need to plug into our observables
