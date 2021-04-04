@@ -17,12 +17,8 @@ const Update = () => {
     const sanitizeBytes = (fl: number) => Math.round((fl / 1000000) * 100) / 100
 
     useEffect(() => {
-        if(!mainState.update.needsUpdate) {
-            goTo("/auth")
-        }
-
-        if(mainState.update.updateInfo) {
-            let updateInfo = JSON.parse(mainState.update.updateInfo)
+        if(mainState.updateInfo) {
+            let updateInfo = JSON.parse(mainState.updateInfo)
 
             setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
             setPercentageDownloaded(Number(updateInfo.percent))

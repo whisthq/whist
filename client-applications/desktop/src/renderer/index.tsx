@@ -5,6 +5,7 @@ import { chain } from "lodash"
 import ReactDOM from "react-dom"
 
 import Auth from "@app/renderer/pages/auth"
+import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
 import {
     AuthErrorTitle,
@@ -14,6 +15,7 @@ import {
     ProtocolErrorTitle,
     ProtocolErrorText,
     WindowHashAuth,
+    WindowHashUpdate,
     WindowHashAuthError,
     WindowHashContainerError,
     WindowHashProtocolError,
@@ -53,6 +55,10 @@ const RootComponent = () => {
                 </Switch>
             </Router>
         )
+    if (show === WindowHashUpdate)
+            return (
+                <Update/>
+            )
     if (show === WindowHashAuthError)
         return (
             <Error
