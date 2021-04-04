@@ -11,15 +11,20 @@ import {
 } from "@app/main/events/autoupdate"
 
 import { eventAppReady, eventAppQuit } from "@app/main/events/app"
-import { zip } from "rxjs"
+import { zip, race } from "rxjs"
 import {
     closeWindows,
     createAuthWindow,
+    createUpdateWindow
 } from "@app/utils/windows"
 import {
     userEmail,
     userAccessToken,
 } from "@app/main/observables/user"
+import {
+    autoUpdateAvailable,
+    autoUpdateNotAvailable 
+} from "@app/main/observables/autoupdate"
 
 
 // Window opening
@@ -44,4 +49,11 @@ eventAppQuit.subscribe(() => {
 // If the update is downloaded, quit the app and install the update
 eventUpdateDownloaded.subscribe(() => {
     autoUpdater.quitAndInstall()
+})
+
+race(
+    autoUpdateAvailable,
+    autoUpdateNotAvailable 
+).subscribe((available: boolean) => {
+    if (available) closeWindows(), createUpdateWindow((win: any) => win.show())
 })

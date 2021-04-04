@@ -12,5 +12,5 @@ export type StateIPC = {
     loginRequest: { email: string; password: string }
     signupRequest: { email: string; password: string }
     errorRelaunchRequest: number
-    update: { needsUpdate: boolean; updateInfo: string}
+    updateInfo: string
 }

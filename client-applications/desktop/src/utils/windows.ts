@@ -2,6 +2,7 @@ import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import {
     WindowHashAuth,
+    WindowHashUpdate,
     WindowHashAuthError,
     WindowHashProtocolError,
     WindowHashContainerError,
@@ -95,4 +96,11 @@ export const createProtocolErrorWindow: CreateWindowFunction = () =>
         ...base,
         ...wMd,
         ...hXs,
+    } as BrowserWindowConstructorOptions)
+
+export const createUpdateWindow: CreateWindowFunction = () =>
+    createWindow(WindowHashUpdate, {
+        ...base,
+        ...wSm,
+        ...hMd,
     } as BrowserWindowConstructorOptions)

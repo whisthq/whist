@@ -12,6 +12,8 @@ export const ContainerAssignTimeout = 45000
 // render as soon as a window appears.
 export const WindowHashAuth = "AUTH"
 
+export const WindowHashUpdate = "UPDATE"
+
 export const WindowHashAuthError = "AUTH_ERROR"
 
 export const WindowHashContainerError = "CONTAINER_ERROR"
