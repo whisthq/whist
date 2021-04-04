@@ -14,17 +14,12 @@ export const eventUpdateNotAvailable = fromEvent(
 
 export const eventDownloadProgress = fromEvent(
     autoUpdater as EventEmitter,
-    "update-not-available"
+    "download-progress"
 )
 
 export const eventUpdateDownloaded = fromEvent(
     autoUpdater as EventEmitter,
     "update-downloaded"
-)
-
-export const eventUpdateCheck = fromEvent(
-    autoUpdater as EventEmitter,
-    "checking-for-update"
 )
 
 // export const listenAutoUpdate: Event = (setState) => {
