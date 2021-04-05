@@ -8,7 +8,6 @@ import RootApp from "@app/pages/root"
 
 import "@app/styles/global.module.css"
 import "@app/styles/bootstrap.css"
-import "@app/styles/tailwind.css"
 
 if (import.meta.env.REACT_APP_ENVIRONMENT === "production") {
     // the netlify build command is:
