@@ -1,14 +1,10 @@
 # workflows/main-webserver-hanging-resource-notification.yml
 #
 # Main Webserver: Hanging Resource Notification
-# Checks for Dangling Auto-Scaling Groups, Clusters, EC2 instances, and Packer Build Instances
+# Checks for Dangling Auto-Scaling Groups, Clusters, and Packer Build Instances
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    pull_request:
-        branches:
-            - dev
-
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
 
@@ -73,57 +69,9 @@ jobs:
                   # notify slack if there are hanging resources
                   if [ ! -z "${{ env.hanging_resource }}" ]; then
                       curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
+                      --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
-
-    main-webserver-hanging-ec2-notification:
-        name: Main Webserver EC2 Resource Notification
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install boto3
-              run: pip install boto3
-
-            - name: Scan ec2 instances
-              working-directory: .github/workflows/helpers/aws
-              run: |
-                  ec2_instances=$(python ecs_ec2_resource_notification.py)
-                  echo 'ec2_instances<<EOF' >> $GITHUB_ENV
-                  echo "$ec2_instances" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
-                  echo "$ec2_instances"
-
-            - name: Notify Slack all instances
-              working-directory: .github/workflows/helpers/aws
-              run: |
-                  # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.ec2_instances }}" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"(<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | Link>) ${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
-
-            - name: Notify Slack if error
-              if: ${{ failure() }}
-              run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
@@ -155,7 +103,7 @@ jobs:
                   do 
                     if [ "$(echo $line | sed 's/.*- //')" = "running" ]; then
                         curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \`${line}\`\", \"icon_emoji\": \":fractal:\"}" \
+                        --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \`${line}\`\", \"icon_emoji\": \":fractal:\"}" \
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
@@ -173,5 +121,5 @@ jobs:
             - name: Notify Slack if Hanging Resource Workflow Fails
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
