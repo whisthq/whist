@@ -2,7 +2,8 @@ import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
-autoUpdater.checkForUpdatesAndNotify()
+import { logDebug } from "@app/utils/logging"
+
 
 export const eventUpdateAvailable = fromEvent(
     autoUpdater as EventEmitter,

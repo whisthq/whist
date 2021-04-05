@@ -25,9 +25,6 @@ import {
     autoUpdateAvailable,
     autoUpdateNotAvailable 
 } from "@app/main/observables/autoupdate"
-import {
-    logDebug 
-} from "@app/utils/logging"
 
 
 // Window opening
@@ -58,6 +55,9 @@ race(
     autoUpdateAvailable,
     autoUpdateNotAvailable 
 ).subscribe((available: boolean) => {
-    logDebug("AUTO UPDATE", `Auto update available ${available.toString()}`)
-    if (available) closeWindows(), createUpdateWindow((win: any) => win.show())
+    if (available) {
+        closeWindows()
+        autoUpdater.downloadUpdate()
+        createUpdateWindow((win: any) => win.show())
+    }
 })
