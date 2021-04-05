@@ -75,7 +75,7 @@ def email():
         (
             "noreply@fractal.co",
             "Reset your password",
-            "PAYMENT_SUCCESSFUL",
+            "PASSWORD_RESET",
             {"link": "https://fractal.co"},
             HTTPStatus.OK,
         ),
