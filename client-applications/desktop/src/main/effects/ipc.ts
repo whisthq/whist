@@ -10,6 +10,7 @@ import { combineLatest, Observable } from "rxjs"
 import { startWith, mapTo, withLatestFrom } from "rxjs/operators"
 import { WarningLoginInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
+import { StateIPC } from "@app/utils/types"
 import { loginLoading, loginWarning } from "@app/main/observables/login"
 
 // This file is responsible for broadcasting state to all renderer windows.
@@ -41,5 +42,5 @@ combineLatest(
 )
     .pipe(withLatestFrom(eventIPC))
     .subscribe(([subs, state]) =>
-        ipcBroadcast({ ...state, ...subs }, getWindows())
+        ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
     )
