@@ -180,7 +180,7 @@ jobs:
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
-                  job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
+                  job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service container-images protocol ecs-task-definitions"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
@@ -421,7 +421,7 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs: [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
@@ -496,6 +496,9 @@ jobs:
             - name: Generate ami_config.json Packer Config File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
+              env:
+                GH_USERNAME: ${{ secrets.GHA_USERNAME }}
+                GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
               run: |
                   import json
                   import datetime
