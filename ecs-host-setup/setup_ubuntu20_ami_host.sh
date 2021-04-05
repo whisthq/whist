@@ -42,8 +42,12 @@ sudo sysctl -p /etc/sysctl.conf
 echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
 echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
 sudo apt-get install -y iptables-persistent
-sudo iptables -t nat -A PREROUTING -p tcp -d 169.254.170.2 --dport 80 -j DNAT --to-destination 127.0.0.1:51679
-sudo iptables -t nat -A OUTPUT -d 169.254.170.2 -p tcp -m tcp --dport 80 -j REDIRECT --to-ports 51679
+
+# Disable containers from accessing the instance metadata service on the host.
+# Critical to prevent IAM escalation from within containers while still using ECS.
+sudo iptables -I FORWARD -i docker0 -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP
+sudo iptables -I FORWARD -i docker0 -d 169.254.170.2   -p tcp -m multiport --dports 80,443 -j DROP
+
 sudo sh -c 'iptables-save > /etc/iptables/rules.v4'
 
 # Remove extra unnecessary files
