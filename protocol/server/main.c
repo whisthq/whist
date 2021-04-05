@@ -806,6 +806,7 @@ int multithreaded_manage_clients(void* opaque) {
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     bool disable_timeout = false;
+    LOG_INFO("**************************************begin_time_to_exit: %d********************************", begin_time_to_exit)
     if (begin_time_to_exit == -1){ // client has `begin_time_to_exit` seconds to connect when the server first goes up. If the variable is -1, disable auto-exit.
         disable_timeout = true;
     }
@@ -1029,7 +1030,7 @@ int parse_args(int argc, char* argv[]) {
             }
             case 't': {
                 printf("Timeout before autoexit passed in: %s\n", optarg);
-                if (sscanf(optarg, "%d", begin_time_to_exit) != 1 || (begin_time_to_exit <=0 && begin_time_to_exit != -1 ) {
+                if (sscanf(optarg, "%d", &begin_time_to_exit) != 1 || (begin_time_to_exit <=0 && begin_time_to_exit != -1)) {
                     printf("Timeout should be a positive double or -1\n");
                 }
                 break;

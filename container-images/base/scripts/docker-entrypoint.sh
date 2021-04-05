@@ -26,6 +26,12 @@ then
     echo $FRACTAL_DPI > /usr/share/fractal/private/dpi
 fi
 
+# If FRACTAL_TIMEOUT is set, then create file
+if [ -n "${FRACTAL_TIMEOUT+1}" ]
+then
+    echo $FRACTAL_TIMEOUT > /usr/share/fractal/private/timeout
+fi
+
 # If SENTRY_ENV is set, then create file
 if [ -n "${SENTRY_ENV+1}" ]
 then
