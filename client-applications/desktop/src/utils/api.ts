@@ -50,19 +50,29 @@ export const emailLoginRefreshToken = (response: {
 }) => response.json?.refresh_token
 
 export const emailLoginConfigToken = async (
-    password: string,
     response?: {
         json?: { encrypted_config_token?: string }
-    }
+    },
+    password: string
 ) =>
     response?.json?.encrypted_config_token
         ? decryptConfigToken(password, response.json.encrypted_config_token)
         : await createConfigToken()
 
-export const emailSignup = async (username: string, password: string) =>
+export const emailSignup = async (
+    username: string,
+    password: string,
+    encrypted_config_token: string
+) =>
     await post({
         endpoint: "/account/register",
-        body: { username, password, name: "", feedback: "" },
+        body: {
+            username,
+            password,
+            encrypted_config_token,
+            name: "",
+            feedback: "",
+        },
     })
 
 export const emailSignupValid = emailLoginValid
@@ -72,8 +82,6 @@ export const emailSignupError = emailLoginError
 export const emailSignupAccessToken = emailLoginAccessToken
 
 export const emailSignupRefreshToken = emailLoginRefreshToken
-
-export const emailSignupConfigToken = emailLoginConfigToken
 
 export const tokenValidate = async (accessToken: string) =>
     get({ endpoint: "/token/validate", accessToken })
@@ -98,11 +106,8 @@ export const containerRequest = async (
         },
     })
 
-export const regionRequest = async (
-    username: string,
-    accessToken: string
-) => 
+export const regionRequest = async (username: string, accessToken: string) =>
     get({
         endpoint: `/regions?username=${username}`,
-        accessToken
+        accessToken,
     })
