@@ -1,6 +1,8 @@
 import { configGet, configPost } from "@fractal/core-ts"
+import { HostServicePort } from "@app/utils/constants"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 import config from "@app/utils/config"
+import { apiPut } from "@app/utils/misc"
 import { AsyncReturnType } from "@app/utils/types"
 
 /*
@@ -35,24 +37,22 @@ export const emailLogin = async (username: string, password: string) =>
         body: { username, password },
     })
 
-export const emailLoginValid = (response: AsyncReturnType<typeof emailLogin>) =>
+type ResponseAuth = AsyncReturnType<typeof emailLogin>
+
+export const emailLoginValid = (response: ResponseAuth) =>
     response.json?.access_token ? true : false
 
-export const emailLoginError = (response: AsyncReturnType<typeof emailLogin>) =>
+export const emailLoginError = (response: ResponseAuth) =>
     response.status !== 200
 
-export const emailLoginAccessToken = (response: {
-    json: { access_token?: string }
-}) => response.json?.access_token
+export const emailLoginAccessToken = (response: ResponseAuth) =>
+    response.json?.access_token
 
-export const emailLoginRefreshToken = (response: {
-    json: { refresh_token?: string }
-}) => response.json?.refresh_token
+export const emailLoginRefreshToken = (response: ResponseAuth) =>
+    response.json?.refresh_token
 
 export const emailLoginConfigToken = async (
-    response: {
-        json?: { encrypted_config_token?: string }
-    },
+    response: ResponseAuth,
     password: string
 ) =>
     response?.json?.encrypted_config_token
@@ -77,7 +77,13 @@ export const emailSignup = async (
 
 export const emailSignupValid = emailLoginValid
 
-export const emailSignupError = emailLoginError
+export const emailSignupError = (response: ResponseAuth) => {
+    // A 400 bad response indicates that the user account exists,
+    // we consider this a warning, not a failure.
+    if (response.status === 400) return false
+    if (response.status === 200) return false
+    return true
+}
 
 export const emailSignupAccessToken = emailLoginAccessToken
 
@@ -111,3 +117,55 @@ export const regionRequest = async (username: string, accessToken: string) =>
         endpoint: `/regions?username=${username}`,
         accessToken,
     })
+
+export const hostServiceInfo = async (username: string, accessToken: string) =>
+    get({
+        endpoint: `/host_service?username=${username}`,
+        accessToken,
+    })
+
+type hostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
+
+export const hostServiceInfoIP = (res: hostServiceInfoResponse) => res.json?.ip
+
+export const hostServiceInfoPort = (res: hostServiceInfoResponse) =>
+    res.json?.port
+
+export const hostServiceInfoSecret = (res: hostServiceInfoResponse) =>
+    res.json?.client_app_auth_secret
+
+export const hostServiceInfoValid = (res: hostServiceInfoResponse) =>
+    res.status === 200 &&
+    hostServiceInfoIP(res) &&
+    hostServiceInfoPort(res) &&
+    hostServiceInfoSecret(res)
+        ? true
+        : false
+
+export const hostServiceInfoError = (_: hostServiceInfoResponse) =>
+    !hostServiceInfoValid
+
+export const hostServiceConfig = async (
+    ip: string,
+    host_port: number,
+    client_app_auth_secret: string,
+    user_id: string,
+    config_encryption_token: string
+) => {
+    return await apiPut(
+        "/set_config_encryption_token",
+        `https://${ip}:${HostServicePort}`,
+        {
+            user_id,
+            client_app_auth_secret,
+            host_port,
+            config_encryption_token,
+        },
+        true
+    )
+}
+
+export const hostServiceConfigValid = (res: { status: number }) =>
+    res.status === 200
+
+export const hostServiceConfigError = (_: any) => !hostServiceInfoValid
