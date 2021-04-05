@@ -90,7 +90,6 @@ rm -rf fractal
 
 If you have created an AMI in a specific AWS region (i.e. `us-east-1`) which you would like to replicate in a different AWS region (i.e. `us-west-1`), you can either re-run the scripts in a different region and start the process from scratch, or you can copy over your AMI (which is much faster). For complete details on how to copy over AMIs, see our [ECS Documentation on Notion](https://www.notion.so/tryfractal/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=ca4fdec782894072a6dd63f32b494e1d).
 
-
 ## Publishing
 
 The Fractal AMIs get automatically published to AWS EC2 through the `fractal-publish-ami.yml` GitHub Actions workflow. See `.github/workflows/fractal-publish-ami.yml` for the exact list of AWS regions supported and the AMI parameters.
