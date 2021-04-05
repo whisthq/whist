@@ -51,8 +51,10 @@ Public Functions
 /**
  * @brief                          Initialize the Update Clipboard Helper
  *
+ * @param is_client                Whether the caller is the client or the server
+ *
  */
-void init_clipboard_synchronizer();
+void init_clipboard_synchronizer(bool is_client);
 
 /**
  * @brief                          Set the clipboard to a given clipboard data

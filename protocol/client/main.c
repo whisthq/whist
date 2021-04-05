@@ -173,7 +173,7 @@ void init_update() {
     ping_id = 1;
     ping_failures = -2;
 
-    init_clipboard_synchronizer();
+    init_clipboard_synchronizer(true);
 
     updater_initialized = true;
 }
