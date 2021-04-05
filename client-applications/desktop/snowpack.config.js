@@ -44,6 +44,9 @@ module.exports = {
     },
     packageOptions: {
         external: [
+            "aws-sdk",
+            "ping",
+            "https",
             "crypto",
             "path",
             "child_process",
