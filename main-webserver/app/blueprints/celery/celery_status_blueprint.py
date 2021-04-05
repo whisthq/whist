@@ -1,5 +1,7 @@
+from uuid import UUID
+
 from celery import current_app
-from flask import Blueprint, jsonify, make_response
+from flask import abort, Blueprint, jsonify, make_response
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
@@ -19,6 +21,18 @@ celery_status_bp = Blueprint("celery_status_bp", __name__)
 @fractal_pre_process
 @jwt_required(optional=True)
 def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
+    try:
+        # The UUID constuctor will attempt to parse the supplied task ID, treated as a hex string,
+        # into a UUID. Hex strings that are parseable by the UUID constructor may optionally
+        # contain curly braces, dashes, or the prefix "urn:uuid:". Under the hood, the UUID
+        # constructor strips the input hex string of all optional characters and, ensures that
+        # exactly 32 characters remain, and finally attempts to convert them into an integer.
+        # https://docs.python.org/3/library/uuid.html#uuid.UUID
+        # https://github.com/python/cpython/blob/bdee2a389e4b10e1c0ab65bbd4fd03defe7b2837/Lib/uuid.py#L167
+        UUID(hex=task_id)
+    except ValueError:
+        abort(make_response({"error": "Invalid task ID"}, BAD_REQUEST))
+
     try:
         result = current_app.AsyncResult(task_id)
         if result.status == "SUCCESS":
