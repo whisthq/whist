@@ -17,12 +17,14 @@ import {
 import { userEmail, userAccessToken } from "@app/main/observables/user"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { eventAppReady } from "@app/main/events/app"
-import { from, merge, of, combineLatest, interval } from "rxjs"
+import { loadingFrom } from "@app/utils/observables"
+import { from, merge, of, interval } from "rxjs"
 import {
     mapTo,
     map,
     last,
     share,
+    sample,
     delay,
     filter,
     takeUntil,
@@ -32,36 +34,34 @@ import {
     takeWhile,
 } from "rxjs/operators"
 
-
-export const containerCreateRequest = combineLatest([
-    eventAppReady,
-    userAccessToken,
-]).pipe(
-    map(([_, token]) => token),
+export const containerCreateRequest = eventAppReady.pipe(
+    sample(userAccessToken),
     withLatestFrom(userEmail),
-    map(([token, email]) => containerCreate(email!, token!)),
+    map(([token, email]) => [email, token])
+)
+
+export const containerCreateProcess = containerCreateRequest.pipe(
+    exhaustMap(([email, token]) => from(containerCreate(email!, token!))),
     share()
 )
 
-export const containerCreateLoading = containerCreateRequest.pipe(
-    exhaustMap((req) => merge(of(true), from(req).pipe(mapTo(false))))
-)
-
-export const containerCreateSuccess = containerCreateRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const containerCreateSuccess = containerCreateProcess.pipe(
     filter((req) => !containerCreateError(req))
 )
 
-export const containerCreateFailure = containerCreateRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const containerCreateFailure = containerCreateProcess.pipe(
     filter((req) => containerCreateError(req))
 )
 
 export const containerAssignRequest = containerCreateSuccess.pipe(
     withLatestFrom(userAccessToken),
-    map(([{ json }, token]) =>
+    map(([response, token]) => [response.json.ID, token!])
+)
+
+export const containerAssignProcess = containerAssignRequest.pipe(
+    exhaustMap(([id, token]) =>
         interval(1000).pipe(
-            switchMap(() => containerInfo(json.ID, token!)),
+            switchMap(() => containerInfo(id, token)),
             takeWhile((res) => containerInfoPending(res), true),
             takeWhile((res) => !containerInfoError(res), true),
             takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
@@ -70,25 +70,25 @@ export const containerAssignRequest = containerCreateSuccess.pipe(
     )
 )
 
-export const containerAssignLoading = containerAssignRequest.pipe(
-    exhaustMap((req) => merge(of(true), from(req).pipe(last(), mapTo(false))))
-)
-
 export const containerAssignPolling = containerAssignRequest.pipe(
     exhaustMap((req) => from(req).pipe(map((res: any) => res.json?.state)))
 )
 
 export const containerAssignSuccess = containerAssignRequest.pipe(
-    exhaustMap((req) => from(req).pipe(last())),
     filter((req) => containerInfoSuccess(req))
 )
 
 export const containerAssignFailure = containerAssignRequest.pipe(
-    exhaustMap((req) => from(req).pipe(last())),
     filter(
         (req) =>
             containerInfoError(req) ||
             containerInfoPending(req) ||
             !containerInfoSuccess(req)
     )
+)
+
+export const containerAssignLoading = loadingFrom(
+    containerAssignRequest,
+    containerAssignSuccess,
+    containerAssignFailure
 )
