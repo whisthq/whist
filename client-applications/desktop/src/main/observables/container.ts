@@ -14,35 +14,27 @@ import {
     containerInfoSuccess,
     containerInfoPending,
 } from "@app/utils/container"
-import {
-    userEmail,
-    userAccessToken,
-    userConfigToken,
-} from "@app/main/observables/user"
+import { userEmail, userAccessToken } from "@app/main/observables/user"
+import { loginSuccess } from "@app/main/observables/login"
 import { ContainerAssignTimeout } from "@app/utils/constants"
-import { eventAppReady } from "@app/main/events/app"
 import { loadingFrom } from "@app/utils/observables"
 import { from, of, interval, merge } from "rxjs"
 import {
     map,
     last,
-    take,
     share,
-    sample,
     delay,
     filter,
     takeUntil,
-    skipWhile,
     exhaustMap,
     withLatestFrom,
     switchMap,
     takeWhile,
 } from "rxjs/operators"
 
-export const containerCreateRequest = eventAppReady.pipe(
-    sample(userAccessToken),
-    withLatestFrom(userEmail),
-    map(([token, email]) => [email, token])
+export const containerCreateRequest = loginSuccess.pipe(
+    withLatestFrom(userEmail, userAccessToken),
+    map(([_, email, token]) => [email, token])
 )
 
 export const containerCreateProcess = containerCreateRequest.pipe(
@@ -76,43 +68,21 @@ export const containerAssignPolling = containerAssignRequest.pipe(
             takeWhile((res) => containerInfoPending(res), true),
             takeWhile((res) => !containerInfoError(res), true),
             takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
-            map((res) => res.json?.state),
             share()
         )
     )
 )
 
-export const containerConfigRequest = containerAssignPolling.pipe(
-    exhaustMap((poll) =>
-        poll.pipe(
-            skipWhile((state) => state !== "PENDING"),
-            take(1)
-        )
-    ),
-    withLatestFrom(userConfigToken),
-    map((_, token) => token)
-)
+containerAssignPolling
+    .pipe(switchMap((res) => res))
+    .subscribe((res) => console.log(res?.json.state))
 
-export const containerConfigProcess = containerCreateRequest.pipe(
-    exhaustMap((_token) => Promise.all([]))
-)
-
-export const containerConfigSuccess = containerCreateRequest.pipe()
-
-export const containerConfigFailure = containerCreateRequest.pipe()
-
-export const containerConfigLoading = loadingFrom(
-    containerConfigRequest,
-    containerConfigSuccess,
-    containerConfigFailure
-)
 export const containerAssignSuccess = containerAssignPolling.pipe(
     exhaustMap((poll) => poll.pipe(last())),
     filter((res) => containerInfoSuccess(res))
 )
 
 export const containerAssignFailure = merge(
-    containerConfigFailure,
     containerAssignPolling.pipe(
         exhaustMap((poll) => poll.pipe(last())),
         filter(

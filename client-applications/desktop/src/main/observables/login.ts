@@ -18,7 +18,8 @@ import { filter, map, share, exhaustMap } from "rxjs/operators"
 
 export const loginRequest = fromEventIPC("loginRequest").pipe(
     filter((req) => (req?.email && req?.password ? true : false)),
-    map(({ email, password }) => [email, password])
+    map(({ email, password }) => [email, password]),
+    share()
 )
 
 export const loginProcess = loginRequest.pipe(
@@ -43,5 +44,6 @@ export const loginFailure = loginProcess.pipe(
 export const loginLoading = loadingFrom(
     loginRequest,
     loginSuccess,
-    loginFailure
+    loginFailure,
+    loginWarning
 )
