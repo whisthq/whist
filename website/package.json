@@ -4,9 +4,10 @@
     "main": "index.js",
     "license": "MIT",
     "scripts": {
-        "start": "snowpack dev",
-        "build": "snowpack build",
-        "postinstall": "cd node_modules/@fractal/core-ts && npm install && npm run build"
+        "start": "sh ./scripts/start.sh",
+        "build": "sh ./scripts/build.sh",
+        "tailwind": "sh ./scripts/tailwind.sh",
+        "postinstall": "sh ./scripts/postinstall.sh"
     },
     "dependencies": {
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
