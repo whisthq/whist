@@ -1,5 +1,5 @@
 import { screen } from "electron"
-import { pick, map } from "lodash"
+import { pick } from "lodash"
 
 import { defaultAllowedRegions } from "@app/@types/aws"
 import { chooseRegion } from "@app/utils/region"
@@ -36,20 +36,24 @@ export const containerInfoError = (
 
 export const containerInfoSuccess = (
     response: AsyncReturnType<typeof containerInfo>
-) => response.json.state === "SUCCESS"
+) => response?.json?.state === "SUCCESS"
 
 export const containerInfoPending = (
     response: AsyncReturnType<typeof containerInfo>
-) => response.json.state !== "SUCCESS" && response.json.state !== "FAILURE"
+) => response?.json?.state !== "SUCCESS" && response?.json.state !== "FAILURE"
 
 export const containerInfoPorts = (
     response: AsyncReturnType<typeof containerInfo>
-) => pick(response.json.output, ["port_32262", "port_32263", "port_32273"])
+) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
 
 export const containerInfoIP = (
     response: AsyncReturnType<typeof containerInfo>
-) => response.json.output.ip
+) => response?.json?.output?.ip
 
 export const containerInfoSecretKey = (
     response: AsyncReturnType<typeof containerInfo>
-) => response.json.output.secret_key
+) => response?.json?.output?.secret_key
+
+export const containerConfig = async (token: string) => {
+    return ""
+}
