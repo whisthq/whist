@@ -44,7 +44,7 @@ def mailslurp(get_mailslurp_key):
 def email():
     """Generates an inner function that takes in email details and formats them into a dictionary."""
 
-    def _email(from_email, subject, email_id):
+    def _email(from_email, subject, email_id, email_args):
         """Creates a dictionary with the given email details
 
         Args:
@@ -52,7 +52,7 @@ def email():
             subject (str): subject line of the email
             email_id (str): id of the email template being sent out
         """
-        return {"from_email": from_email, "subject": subject, "email_id": email_id}
+        return {"from_email": from_email, "subject": subject, "email_id": email_id, "email_args", email_args}
 
     return _email
 
@@ -92,7 +92,7 @@ def test_send_emails(mailslurp, email, client, from_email, subject, email_id, ar
             email_id=test_email["email_id"],
             from_email=test_email["from_email"],
             to_email=inbox.email_address,
-            email_args=test_email["args"],
+            email_args=test_email["email_args"],
         ),
     )
     assert response.status_code == expected
