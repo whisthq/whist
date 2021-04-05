@@ -7,12 +7,13 @@
 import { ipcMain } from "electron"
 import { fromEvent } from "rxjs"
 import { get } from "lodash"
-import { map, share } from "rxjs/operators"
+import { map, share, startWith } from "rxjs/operators"
 import { StateChannel } from "@app/utils/constants"
 import { StateIPC } from "@app/utils/types"
 
 export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
     map(([_event, state]) => state as Partial<StateIPC>),
+    startWith({}),
     share()
 )
 
