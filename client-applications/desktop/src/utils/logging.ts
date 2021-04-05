@@ -26,11 +26,11 @@ const formatUserID = (userID: string) => {
 }
 
 enum LogLevel {
-    INFO = "INFO",
+    DEBUG = "DEBUG",
     ERROR = "ERROR",
 }
 
-const logBase = (logs: string, userID = "", level = LogLevel.INFO) => {
+const logBase = (logs: string, userID = "", level = LogLevel.DEBUG) => {
     const formattedLogs = `${formatUserID(userID)} | ${logs}`
     logFile.write(util.format(formattedLogs) + "\n")
     logStdOut.write(util.format(formattedLogs) + "\n")
@@ -44,19 +44,23 @@ const logBase = (logs: string, userID = "", level = LogLevel.INFO) => {
 }
 
 export const logDebug = (title: string, message: string | null, data?: any) => {
-    console.log(
-        "DEBUG:" +
-            title +
-            "--" +
-            message +
-            "\n" +
-            (data !== undefined ? JSON.stringify(data, null, 2) : "")
-    )
+    const debugLog = `DEBUG: ${title} -- ${message} \n ${(data !== undefined ? JSON.stringify(data, null, 2) : "")}`
+
+    logFile.write(`${util.format(debugLog)} \n`)
+
+    if (app.isPackaged) {
+        logzio.log({
+            message: debugLog,
+            level: LogLevel.DEBUG
+        })
+    } else {
+        console.log(debugLog)
+    }
 }
 
 // Export logging functions
 export const logInfo = (logs: string, userID = "") => {
-    logBase(logs, userID, LogLevel.INFO)
+    logBase(logs, userID, LogLevel.DEBUG)
 }
 
 export const logError = (logs: string, userID = "") => {

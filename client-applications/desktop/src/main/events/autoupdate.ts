@@ -2,6 +2,8 @@ import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
+autoUpdater.checkForUpdatesAndNotify()
+
 export const eventUpdateAvailable = fromEvent(
     autoUpdater as EventEmitter,
     "update-available"

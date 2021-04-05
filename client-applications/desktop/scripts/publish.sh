@@ -103,6 +103,6 @@ else
         export S3_BUCKET=$bucket && yarn package-ci
     else
         # Package the application locally, without uploading to AWS S3 bucket
-        yarn package
+        export S3_BUCKET=$bucket && yarn package
     fi
 fi

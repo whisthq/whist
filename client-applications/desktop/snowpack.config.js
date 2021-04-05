@@ -53,6 +53,11 @@ module.exports = {
             "fs",
             "electron",
             "electron-store",
+            "net",
+            "os",
+            "events",
+            "punycode",
+            "querystring"
         ],
     },
 }

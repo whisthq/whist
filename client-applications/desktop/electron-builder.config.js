@@ -83,6 +83,8 @@ const bundleConfig = {
 
 // This configuration specifies to where and how we publish
 // our bundled application.
+console.log(process.env.S3_BUCKET)
+
 const publishConfig = {
     // Configuration for publishing to AWS S3.
     publish: {
