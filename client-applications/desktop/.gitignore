@@ -50,6 +50,9 @@ node_modules
 # Yarn
 .yarnclean
 
+# Dynamically created css
+public/css/tailwind.css
+
 # App packaged
 release
 dist
