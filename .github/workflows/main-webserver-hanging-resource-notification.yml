@@ -61,6 +61,7 @@ jobs:
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
                   echo "hanging_resource=$hanging_resource" >> $GITHUB_ENV
+
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
               working-directory: .github/workflows/helpers/aws
@@ -71,6 +72,7 @@ jobs:
                       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
+
     main-webserver-hanging-ec2-notification:
         name: Main Webserver EC2 Resource Notification
         runs-on: ubuntu-20.04
@@ -116,6 +118,7 @@ jobs:
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
         runs-on: ubuntu-20.04
@@ -150,6 +153,7 @@ jobs:
                         ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                     fi
                   done <<< "$packer_instances"
+
     notify-if-hanging-resource-fails:
         name: "Notify Slack if Hanging Resource Workflow Fails"
         needs:
