@@ -52,7 +52,12 @@ def email():
             subject (str): subject line of the email
             email_id (str): id of the email template being sent out
         """
-        return {"from_email": from_email, "subject": subject, "email_id": email_id, "email_args", email_args}
+        return {
+            "from_email": from_email,
+            "subject": subject,
+            "email_id": email_id,
+            "email_args": email_args,
+        }
 
     return _email
 
