@@ -10,6 +10,7 @@ void init_clipboard(bool is_client) {
         return;
     }
     is_client_clipboard = is_client;
+    LOG_INFO("SETTING is_client: %d", is_client);
     mutex = safe_SDL_CreateMutex();
     unsafe_init_clipboard();
 }
@@ -22,6 +23,7 @@ bool is_clipboard_a_client() {
             true if client, false if server
     */
 
+    LOG_INFO("is_clipboard_a_client: %d", is_client_clipboard);
     return is_client_clipboard;
 }
 
