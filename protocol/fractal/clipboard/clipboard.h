@@ -97,8 +97,18 @@ Public Functions
 /**
  * @brief                          Initialize the clipboard to put/get data
  *                                 to/from
+ *
+ * @param is_client                Whether the caller is the client or the server
+ *
  */
-void init_clipboard();
+void init_clipboard(bool is_client);
+
+/**
+ * @brief                          Returns whether the clipboard is a client or server
+ *
+ * @returns                        True if client, false if server
+ */
+bool is_clipboard_a_client();
 
 /**
  * @brief                          Get the current clipboard data

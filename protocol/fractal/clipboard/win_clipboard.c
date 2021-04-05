@@ -200,7 +200,9 @@ bool unsafe_has_clipboard_updated() {
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
-        has_updated = true;
+        if (is_clipboard_a_client()) {
+            has_updated = true;
+        }
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
     return has_updated;
