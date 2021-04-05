@@ -53,7 +53,3 @@ export const containerInfoIP = (
 export const containerInfoSecretKey = (
     response: AsyncReturnType<typeof containerInfo>
 ) => response?.json?.output?.secret_key
-
-export const containerConfig = async (token: string) => {
-    return ""
-}
