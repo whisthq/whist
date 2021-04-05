@@ -111,3 +111,18 @@ def test_send_to_bad_email(client):
         ),
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@pytest.mark.usefixtures("authorized")
+def test_send_template_bad_args(client):
+    """Tsets sending a sample email with bad jinja_args"""
+    response = client.post(
+        "/mail",
+        json=dict(
+            email_id="EMAIL_VERIFICATION",
+            from_email="noreply@fractal.co",
+            to_email="",
+            email_args={"bad_arg": "bad_arg"},
+        ),
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
