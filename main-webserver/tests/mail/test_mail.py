@@ -44,7 +44,7 @@ def mailslurp(get_mailslurp_key):
 def email():
     """Generates an inner function that takes in email details and formats them into a dictionary."""
 
-    def _email(from_email, subject, email_id):
+    def _email(from_email, subject, email_id, email_args):
         """Creates a dictionary with the given email details
 
         Args:
@@ -52,31 +52,44 @@ def email():
             subject (str): subject line of the email
             email_id (str): id of the email template being sent out
         """
-        return {"from_email": from_email, "subject": subject, "email_id": email_id}
+        return {
+            "from_email": from_email,
+            "subject": subject,
+            "email_id": email_id,
+            "email_args": email_args,
+        }
 
     return _email
 
 
 @pytest.mark.parametrize(
-    "from_email, subject, email_id, expected",
+    "from_email, subject, email_id, args, expected",
     [
         (
             "noreply@fractal.co",
             "Thank you for choosing Fractal",
             "PAYMENT_SUCCESSFUL",
+            {},
             HTTPStatus.OK,
         ),
-        ("", "Thank you for choosing Fractal", "PAYMENT_SUCCESSFUL", HTTPStatus.BAD_REQUEST),
-        ("noreply@fractal.co", "Thank you for choosing Fractal", "", HTTPStatus.BAD_REQUEST),
+        (
+            "noreply@fractal.co",
+            "Reset your password",
+            "PASSWORD_RESET",
+            {"link": "https://fractal.co"},
+            HTTPStatus.OK,
+        ),
+        ("", "Thank you for choosing Fractal", "PAYMENT_SUCCESSFUL", {}, HTTPStatus.BAD_REQUEST),
+        ("noreply@fractal.co", "Thank you for choosing Fractal", "", {}, HTTPStatus.BAD_REQUEST),
     ],
 )
 @pytest.mark.usefixtures("authorized")
-def test_send_emails(mailslurp, email, client, from_email, subject, email_id, expected):
+def test_send_emails(mailslurp, email, client, from_email, subject, email_id, args, expected):
     """Tests sample emails to a valid email address"""
     api_instance = mailslurp_client.InboxControllerApi(mailslurp)
     inbox = api_instance.create_inbox()
 
-    test_email = email(from_email, subject, email_id)
+    test_email = email(from_email, subject, email_id, args)
 
     response = client.post(
         "/mail",
@@ -84,7 +97,7 @@ def test_send_emails(mailslurp, email, client, from_email, subject, email_id, ex
             email_id=test_email["email_id"],
             from_email=test_email["from_email"],
             to_email=inbox.email_address,
-            email_args={},
+            email_args=test_email["email_args"],
         ),
     )
     assert response.status_code == expected
@@ -108,6 +121,21 @@ def test_send_to_bad_email(client):
             from_email="noreply@fractal.co",
             to_email="",
             email_args={},
+        ),
+    )
+    assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@pytest.mark.usefixtures("authorized")
+def test_send_template_bad_args(client):
+    """Tsets sending a sample email with bad jinja_args"""
+    response = client.post(
+        "/mail",
+        json=dict(
+            email_id="EMAIL_VERIFICATION",
+            from_email="noreply@fractal.co",
+            to_email="",
+            email_args={"bad_arg": "bad_arg"},
         ),
     )
     assert response.status_code == HTTPStatus.BAD_REQUEST
