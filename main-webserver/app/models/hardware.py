@@ -24,12 +24,12 @@ class UserContainer(db.Model):
         task_definition (string): foreign key to supported_app_images of streamed application
         app (SupportedAppImage): reference to hardware.supported_app_image obj of
             streamed application
-        port_32262 (int): port number on the ECS container instance host htat is forwraded to port 32262
-            on the container
-        port_32263 (int): port number on the ECS container instance host htat is forwraded to port 32263
-            on the container
-        port_32273 (int): port number on the ECS container instance host htat is forwraded to port 32273
-            on the container
+        port_32262 (int): port number on the ECS container instance host that is forwraded to
+            port 32262 on the container
+        port_32263 (int): port number on the ECS container instance host that is forwraded to
+            port 32263 on the container
+        port_32273 (int): port number on the ECS container instance host that is forwraded to
+            port 32273 on the container
         last_pinged (int): timestamp representing when the container was last pinged
         cluster (string): foreign key for the cluster the container is hosted on
         parent_cluster (ClusterInfo): reference to hardware.cluster_info object of the parent
@@ -192,27 +192,6 @@ class SupportedAppImages(db.Model):
         lazy="dynamic",
         passive_deletes=True,
     )
-
-
-class Banners(db.Model):
-    """Contains info for website banners, such as picture URL, headings, and subheadings
-
-    Attributes:
-        heading (string): banner heading
-        subheading (string) banner subheading
-        category (string): banner category
-        background (string): banner image url
-        url (string): url to any external links
-    """
-
-    __tablename__ = "banners"
-    __table_args__ = {"extend_existing": True, "schema": "hardware"}
-
-    heading = db.Column(db.String(250), nullable=False, unique=True, primary_key=True)
-    subheading = db.Column(db.String(250))
-    category = db.Column(db.String(250))
-    background = db.Column(db.String(250))
-    url = db.Column(db.String(250))
 
 
 class UserContainerState(db.Model):
