@@ -103,6 +103,7 @@ jobs:
                   echo "$ec2_instances" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
                   echo "$ec2_instances"
+
             - name: Notify Slack all instances
               working-directory: .github/workflows/helpers/aws
               run: |
@@ -112,6 +113,7 @@ jobs:
                       --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
                       ${{ secrets.SLACK_HOOKS_ENDPOINT }}
                   fi
+
             - name: Notify Slack if error
               if: ${{ failure() }}
               run: |
