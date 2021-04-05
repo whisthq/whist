@@ -14,6 +14,9 @@
 # production
 /build
 
+# dynamically generated css
+/public/css/tailwind.css
+
 # Python
 __pycache__
 .ipynb_checkpoints
