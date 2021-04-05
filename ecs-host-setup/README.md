@@ -90,13 +90,6 @@ rm -rf fractal
 
 If you have created an AMI in a specific AWS region (i.e. `us-east-1`) which you would like to replicate in a different AWS region (i.e. `us-west-1`), you can either re-run the scripts in a different region and start the process from scratch, or you can copy over your AMI (which is much faster). For complete details on how to copy over AMIs, see our [ECS Documentation on Notion](https://www.notion.so/tryfractal/4d91593ea0e0438b8bdb14c25c219d55?v=0c3983cf062d4c3d96ac2a65eb31761b&p=ca4fdec782894072a6dd63f32b494e1d).
 
-## Design Decisions
-
-### Fractal Host Service Controlling the ECS Agent
-
-We have made the decision to make the Fractal ECS host service start up the Docker daemon when it is ready (i.e. after the handshake with the webserver is complete). The ECS Agent is a system service that comes pre-installed on ECS-enabled EC2 instances and is responsible for orchestrating and managing Docker events and containers on the instance, on behalf of AWS.
-
-Previously, the Docker daemon and ECS Agent would start up on host machine at boot, and our host service would have to race to initialize before the host became marked as ready to accept new tasks. Now, we start the Docker daemon and the ECS Agent only when we're ready to process Docker events, and we guarantee that the host service never misses the startup of a container. Furthermore, by waiting for the authentication handshake with the webserver to complete before starting the ECS agent, we ensure that a host that failed to authenticate (and therefore fails to deliver heartbeats to the Fractal webserver, thus getting killed by the webserver in a few minutes) does not accept any tasks.
 
 ## Publishing
 

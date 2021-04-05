@@ -101,9 +101,7 @@ echo "================================================"
 sudo cp docker-daemon-config/daemon.json /etc/docker/daemon.json
 sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 
-# Disable Docker (see README.md)
 sudo systemctl restart docker
-sudo systemctl disable --now docker
 
 echo "================================================"
 echo "Installing Cloud Storage Dependencies..."
