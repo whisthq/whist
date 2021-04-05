@@ -3,26 +3,33 @@ import {
     userAccessToken,
     userConfigToken,
 } from "@app/main/observables/user"
-import { containerAssignPolling } from "@app/main/observables/container"
+import {
+    containerAssignPolling,
+    containerAssignFailure,
+} from "@app/main/observables/container"
 import { loadingFrom } from "@app/utils/observables"
 import {
     hostServiceInfo,
     hostServiceInfoValid,
-    hostServiceInfoError,
     hostServiceInfoIP,
     hostServiceInfoPort,
+    hostServiceInfoPending,
     hostServiceInfoSecret,
     hostServiceConfig,
     hostServiceConfigValid,
     hostServiceConfigError,
-} from "@app/utils/api"
-import { from } from "rxjs"
+} from "@app/utils/host"
+import { from, interval } from "rxjs"
 import {
     map,
     take,
+    last,
     share,
     filter,
     skipWhile,
+    takeWhile,
+    takeUntil,
+    switchMap,
     exhaustMap,
     withLatestFrom,
 } from "rxjs/operators"
@@ -39,17 +46,29 @@ export const hostInfoRequest = containerAssignPolling.pipe(
     share()
 )
 
-export const hostInfoProcess = hostInfoRequest.pipe(
-    exhaustMap(([email, token]) => from(hostServiceInfo(email, token))),
-    share()
+export const hostInfoPolling = hostInfoRequest.pipe(
+    map(([email, token]) =>
+        interval(1000).pipe(
+            switchMap(() => from(hostServiceInfo(email, token))),
+            takeWhile((res) => hostServiceInfoPending(res), true),
+            takeUntil(containerAssignFailure),
+            share()
+        )
+    )
 )
 
-export const hostInfoSuccess = hostInfoProcess.pipe(
+hostInfoPolling
+    .pipe(switchMap((res) => res))
+    .subscribe((res) => console.log("host poll", res?.status, res?.json))
+
+export const hostInfoSuccess = hostInfoPolling.pipe(
+    exhaustMap((poll) => poll.pipe(last())),
     filter((res) => hostServiceInfoValid(res))
 )
 
-export const hostInfoFailure = hostInfoProcess.pipe(
-    filter((res) => hostServiceInfoError(res))
+export const hostInfoFailure = hostInfoPolling.pipe(
+    exhaustMap((poll) => poll.pipe(last())),
+    filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res))
 )
 
 export const hostInfoLoading = loadingFrom(
