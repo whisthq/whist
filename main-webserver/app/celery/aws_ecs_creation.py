@@ -46,7 +46,7 @@ from app.exceptions import StartValueException
 
 
 MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
-MAX_POLL_ITERATIONS = 20
+MAX_POLL_ITERATIONS = 45
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
