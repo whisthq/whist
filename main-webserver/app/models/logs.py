@@ -9,7 +9,7 @@ class LoginHistory(db.Model):
 
     Attributes:
         user_id (str): User ID, usually an email
-        user (obj): reference to user in public.users with given user_id
+        user (User): reference to user in public.users with given user_id
         action (str): action of a user, logon or logoff
         timestamp (datetime): timestamp of action
     """
