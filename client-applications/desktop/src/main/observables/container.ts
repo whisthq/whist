@@ -22,7 +22,7 @@ import {
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { eventAppReady } from "@app/main/events/app"
 import { loadingFrom } from "@app/utils/observables"
-import { from, of, interval, merge, Observable } from "rxjs"
+import { from, of, interval, merge } from "rxjs"
 import {
     map,
     last,
