@@ -11,19 +11,11 @@
 // storage changes.
 
 import { fromEventIPC } from "@app/main/events/ipc"
-import { from, merge, of, race } from "rxjs"
+import { from } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
 import { createConfigToken } from "@app/utils/crypto"
-import {
-    mapTo,
-    filter,
-    map,
-    share,
-    exhaustMap,
-    switchMap,
-    startWith,
-} from "rxjs/operators"
+import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
 
 export const signupRequest = fromEventIPC("signupRequest").pipe(
     filter((req) => (req?.email && req?.password ? true : false)),
@@ -54,5 +46,6 @@ export const signupFailure = signupProcess.pipe(
 export const signupLoading = loadingFrom(
     signupRequest,
     signupSuccess,
-    signupFailure
+    signupFailure,
+    signupWarning
 )

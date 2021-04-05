@@ -16,15 +16,13 @@ import {
     containerAssignSuccess,
     containerAssignFailure,
 } from "@app/main/observables/container"
-import { merge, zip, of, fromEvent } from "rxjs"
-import { mapTo, map, filter, share, exhaustMap, mergeMap } from "rxjs/operators"
+import { loadingFrom } from "@app/utils/observables"
+import { zip, of, fromEvent } from "rxjs"
+import { map, filter, share, mergeMap } from "rxjs/operators"
 
-export const protocolLaunchRequest = containerAssignRequest.pipe(
-    exhaustMap(() => of(protocolLaunch())),
+export const protocolLaunchProcess = containerAssignRequest.pipe(
+    map(() => protocolLaunch()),
     share()
-)
-export const protocolLaunchLoading = protocolLaunchRequest.pipe(
-    exhaustMap(() => merge(of(true), containerAssignSuccess.pipe(mapTo(false))))
 )
 
 export const protocolLaunchSuccess = containerAssignSuccess.pipe(
@@ -37,7 +35,13 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
 
 export const protocolLaunchFailure = containerAssignFailure
 
-export const protocolCloseRequest = protocolLaunchRequest.pipe(
+export const protocolLoading = loadingFrom(
+    protocolLaunchProcess,
+    protocolLaunchSuccess,
+    protocolLaunchFailure
+)
+
+export const protocolCloseRequest = protocolLaunchProcess.pipe(
     mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, "close")))
 )
 
