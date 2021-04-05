@@ -2,14 +2,27 @@
 #include <fractal/core/fractal.h>
 
 SDL_mutex* mutex;
+bool is_client_clipboard = false;
 
-void init_clipboard() {
+void init_clipboard(bool is_client) {
     if (mutex) {
         LOG_ERROR("Clipboard is being initialized twice!");
         return;
     }
+    is_client_clipboard = is_client;
     mutex = safe_SDL_CreateMutex();
     unsafe_init_clipboard();
+}
+
+bool is_clipboard_a_client() {
+    /*
+        Returns whether the clipboard is a client or server
+
+        Returns:
+            true if client, false if server
+    */
+
+    return is_client_clipboard;
 }
 
 ClipboardData* get_clipboard() {

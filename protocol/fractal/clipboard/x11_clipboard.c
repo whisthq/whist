@@ -291,7 +291,10 @@ bool unsafe_has_clipboard_updated() {
                                XFixesSetSelectionOwnerNotifyMask);
     if (first) {
         first = false;
-        return true;
+        if (is_clipboard_a_client()) {
+            return true;
+        }
+        return false;
     }
     while (XPending(display)) {
         XNextEvent(display, &event);
