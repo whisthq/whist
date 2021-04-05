@@ -14,6 +14,7 @@ CONTAINER_ID_FILENAME=ContainerARN
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
+TIMEOUT_FILENAME=/usr/share/fractal/private/timeout
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -36,11 +37,16 @@ if [ -f "$WEBSERVER_URL_FILENAME" ]; then
     OPTIONS="$OPTIONS --webserver=$WEBSERVER_URL"
 fi
 
-
 # Send in Sentry environment, if set
 if [ -f "$SENTRY_ENV_FILENAME" ]; then
     export SENTRY_ENV=$(cat $SENTRY_ENV_FILENAME)
     OPTIONS="$OPTIONS --environment=$SENTRY_ENV"
+fi
+
+# Send in timeout, if set
+if [ -f "$TIMEOUT_FILENAME" ]; then
+    export TIMEOUT=$(cat $TIMEOUT_FILENAME)
+    OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
 # Create a google_drive folder in the user's home
