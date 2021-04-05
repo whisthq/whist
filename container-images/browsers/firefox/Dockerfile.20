@@ -66,3 +66,7 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla"
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
+
+# Swap in custom userChrome.css file
+RUN mkdir /home/fractal/.mozilla/firefox/chrome
+COPY userChrome.css /home/fractal/.mozilla/firefox/chrome
