@@ -13,6 +13,8 @@ import {
     hostServiceInfoPort,
     hostServiceInfoSecret,
     hostServiceConfig,
+    hostServiceConfigValid,
+    hostServiceConfigError,
 } from "@app/utils/api"
 import { from } from "rxjs"
 import {
@@ -74,6 +76,21 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
 
 export const hostConfigProcess = hostConfigRequest.pipe(
     exhaustMap(([ip, port, secret, email, token]) =>
-        hostServiceConfig(ip, port, secret, email, token)
-    )
+        from(hostServiceConfig(ip, port, secret, email, token))
+    ),
+    share()
+)
+
+export const hostConfigSuccess = hostConfigProcess.pipe(
+    filter((res) => hostServiceConfigValid(res))
+)
+
+export const hostConfigFailure = hostConfigProcess.pipe(
+    filter((res) => hostServiceConfigError(res))
+)
+
+export const hostConfigLoading = loadingFrom(
+    hostInfoRequest,
+    hostInfoSuccess,
+    hostInfoFailure
 )
