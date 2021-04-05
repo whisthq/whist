@@ -3,10 +3,9 @@ import { mapTo, startWith } from "rxjs/operators"
 
 export const loadingFrom = (
     request: Observable<any>,
-    success: Observable<any>,
-    failure: Observable<any>
+    ...ends: Observable<any>[]
 ) =>
     merge(
         request.pipe(mapTo(true), startWith(false)),
-        race(success.pipe(mapTo(false)), failure.pipe(mapTo(false)))
+        race(...ends.map((o) => o.pipe(mapTo(false))))
     )
