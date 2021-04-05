@@ -5,7 +5,7 @@ export const WarningSignupInvalid =
 
 export const WarningLoginInvalid = "Invalid email or password"
 
-export const ContainerAssignTimeout = 45000
+export const ContainerAssignTimeout = 120000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
