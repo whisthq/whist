@@ -2,13 +2,10 @@
  * Copyright Fractal Computers, Inc. 2021
  * @file app.ts
  * @brief This file contains subscriptions to error Observables.
-*/
-
+ */
 
 import { app } from "electron"
-import {
-    closeWindows,
-} from "@app/utils/windows"
+import { closeWindows } from "@app/utils/windows"
 
 import {
     errorRelaunchRequest,
@@ -23,6 +20,6 @@ errorRelaunchRequest.subscribe((req) => {
 })
 
 // Error windows
-errorWindowRequest.subscribe(([_failure, createWindow]) => {
-    closeWindows(), createWindow()
+errorWindowRequest.subscribe((windowFunction) => {
+    closeWindows(), windowFunction()
 })

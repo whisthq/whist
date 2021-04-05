@@ -5,8 +5,8 @@
 import { identity } from "lodash"
 import { eventIPC } from "@app/main/events/ipc"
 import { eventAppReady } from "@app/main/events/app"
-import { concat, race, of, combineLatest } from "rxjs"
-import { pluck, filter, skip } from "rxjs/operators"
+import { concat, merge } from "rxjs"
+import { pluck, filter, skip, share, mapTo } from "rxjs/operators"
 import { loginFailure } from "@app/main/observables/login"
 import { signupFailure } from "@app/main/observables/signup"
 import {
@@ -27,11 +27,11 @@ export const errorRelaunchRequest = eventIPC.pipe(
 
 export const errorWindowRequest = concat(
     eventAppReady,
-    race(
-        combineLatest(loginFailure, of(createAuthErrorWindow)),
-        combineLatest(signupFailure, of(createAuthErrorWindow)),
-        combineLatest(containerCreateFailure, of(createContainerErrorWindow)),
-        combineLatest(containerAssignFailure, of(createContainerErrorWindow)),
-        combineLatest(protocolLaunchFailure, of(createProtocolErrorWindow))
+    merge(
+        loginFailure.pipe(mapTo(createAuthErrorWindow)),
+        signupFailure.pipe(mapTo(createAuthErrorWindow)),
+        containerCreateFailure.pipe(mapTo(createContainerErrorWindow)),
+        containerAssignFailure.pipe(mapTo(createContainerErrorWindow)),
+        protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
     )
-).pipe(skip(1)) // skip the appReady emit
+).pipe(skip(1), share()) // skip the appReady emit
