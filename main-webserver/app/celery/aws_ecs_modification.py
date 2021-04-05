@@ -305,6 +305,15 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
     num_instances = cluster_data["registeredContainerInstancesCount"]
     expected_num_instances = math.ceil(num_tasks / factor)
+    # expected_num_instances must be >= cluster_data.minContainers
+    expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
+    # expected_num_instances must be <= cluster_data.maxContainers
+    expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
+
+    asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
+    if len(asg_list) != 1:
+        raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
+    asg = asg_list[0]
 
     if expected_num_instances == num_instances:
         self.update_state(
@@ -314,58 +323,12 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
             },
         )
         return
-
-    # now we check if there are actually empty instances
-    instances = ecs_client.list_container_instances(cluster)
-    instances_tasks = ecs_client.describe_container_instances(cluster, instances)
-
-    empty_instances = 0
-    for instance_task_data in instances_tasks:
-        if "runningTasksCount" not in instance_task_data:
-            msg = (
-                "Expected key runningTasksCount in AWS describe_container_instances response."
-                f" Got: {instance_task_data}"
-            )
-            raise ValueError(msg)
-        rtc = instance_task_data["runningTasksCount"]
-        if rtc == 0:
-            empty_instances += 1
-
-    if empty_instances == 0:
-        msg = (
-            f"Cluster {cluster} had {num_instances} instances but should have"
-            f" {expected_num_instances}. Number of total tasks: {num_tasks}. However, no instance"
-            " is empty so a scale down cannot be triggered. This means AWS ECS has suboptimally"
-            " distributed tasks onto instances."
-        )
-        fractal_logger.info(msg)
-
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": "Could not scale-down because no empty instances.",
-            },
-        )
-
+    elif expected_num_instances > num_instances:
+        # scale up detected
+        ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
     else:
-        # at this point, we have detected scale-down should happen and know that
-        # there are some empty instances for us to delete. we can safely do a scale-down.
-        asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
-        if len(asg_list) != 1:
-            raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
-
-        asg = asg_list[0]
-        # keep whichever instances are not empty
-        desired_capacity = num_instances - empty_instances
-        min_capacity = ClusterInfo.query.get(cluster).minContainers
-        if desired_capacity >= min_capacity:
-            # only perform scale down if it is not below the min capacity of the cluster
-            ecs_client.set_auto_scaling_group_capacity(asg, desired_capacity)
-            msg = f"Scaled cluster {cluster} from {num_instances} to {desired_capacity}."
-            fractal_logger.info(msg)
-            self.update_state(
-                state="SUCCESS",
-                meta={
-                    "msg": msg,
-                },
-            )
+        # scale down detected; this is more complex as we need to make sure there are containers
+        # with no tasks. This is because we discovered AWS will kill instances that have tasks
+        # without warning us. Until we strip out ASGs entirely from our infrastructure, we
+        # cannot scale down.
+        pass
