@@ -71,5 +71,6 @@ RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 # ADD chrome /home/fractal/.mozilla/firefox
 # COPY user.js /home/fractal/.mozilla/firefox
 
-RUN echo $(ls /home/fractal/.mozilla)
-# COPY userChrome.css /home/fractal/.mozilla/firefox/chrome
+# RUN echo $(ls /home/fractal/.mozilla)
+RUN mkdir /home/fractal/.mozilla/firefox && mkdir /home/fractal/.mozilla/firefox/chrome
+COPY userChrome.css /home/fractal/.mozilla/firefox/chrome
