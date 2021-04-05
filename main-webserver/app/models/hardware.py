@@ -21,14 +21,14 @@ class UserContainer(db.Model):
         user_id (string): User ID, typically email
         user (User): reference to user in public.users with id user_id
         task_definition (string): foreign key to supported_app_images of streamed application
-        app (supported_app_image): reference to hardware.supported_app_image obj of
+        app (SupportedAppImage): reference to hardware.supported_app_image obj of
             streamed application
         port_32262 (int): port corresponding to port 32262
         port_32263 (int): port corresponding to port 32263
         port_32273 (int): port corresponding to port 32273
         last_pinged (int): timestamp representing when the container was last pinged
         cluster (string): foreign key for the cluster the container is hosted on
-        parent_cluster (cluster_info): reference to hardware.cluster_info object of the parent
+        parent_cluster (ClusterInfo): reference to hardware.cluster_info object of the parent
         using_stun (bool): true/false whether we're using STUN server
         branch (string): branch the container was created on - prod, staging, dev
         allow_autoupdate (bool): true/false allow protocol to update automatically
@@ -85,7 +85,7 @@ class ClusterInfo(db.Model):
         maxContainers (int): The maximum size of the Auto Scaling Group
         status: (string): Status of the cluster, either [ACTIVE, PROVISIONING,
             DEPROVISINING, FAILED, INACTIVE]
-        containers (user_containers): reference to hardware.user_containers of containers
+        containers (UserContainer): reference to hardware.user_containers of containers
             within given cluster
 
     """
