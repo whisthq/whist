@@ -2,7 +2,7 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupRequest, signupSuccess } from "@app/main/observables/signup"
 import { merge, from } from "rxjs"
-import { map, switchMap, withLatestFrom, sample } from "rxjs/operators"
+import { map, sample, switchMap, withLatestFrom } from "rxjs/operators"
 import {
     emailLoginConfigToken,
     emailLoginAccessToken,
@@ -12,14 +12,15 @@ import {
 } from "@app/utils/api"
 
 export const userEmail = merge(
-    loginSuccess.pipe(sample(fromEventIPC("loginRequest", "email"))),
-    signupSuccess.pipe(sample(fromEventIPC("signupRequest", "email")))
+    fromEventIPC("loginRequest", "email").pipe(sample(loginSuccess)),
+    fromEventIPC("signupRequest", "email").pipe(sample(signupSuccess))
 )
 
 export const userConfigToken = merge(
-    loginSuccess.pipe(
-        withLatestFrom(fromEventIPC("loginRequest", "password")),
-        switchMap((args) => from(emailLoginConfigToken(...args)))
+    fromEventIPC("loginRequest", "password").pipe(
+        sample(loginSuccess),
+        withLatestFrom(loginSuccess),
+        switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))
     ),
     signupRequest.pipe(map(([_email, _password, token]) => token))
 )
