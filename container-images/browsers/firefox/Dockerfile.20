@@ -68,5 +68,8 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
 # Swap in custom userChrome.css file
-ADD chrome /home/fractal/.mozilla/firefox
-COPY user.js /home/fractal/.mozilla/firefox
+# ADD chrome /home/fractal/.mozilla/firefox
+# COPY user.js /home/fractal/.mozilla/firefox
+
+RUN mkdir /home/fractal/.mozilla/firefox/chrome
+COPY userChrome.css /home/fractal/.mozilla/firefox/chrome
