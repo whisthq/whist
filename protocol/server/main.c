@@ -806,7 +806,7 @@ int multithreaded_manage_clients(void* opaque) {
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     bool disable_timeout = false;
-    LOG_INFO("**************************************begin_time_to_exit: %d********************************", begin_time_to_exit)
+    LOG_INFO("**************************************begin_time_to_exit: %d********************************", begin_time_to_exit);
     if (begin_time_to_exit == -1){ // client has `begin_time_to_exit` seconds to connect when the server first goes up. If the variable is -1, disable auto-exit.
         disable_timeout = true;
     }

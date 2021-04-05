@@ -34,6 +34,9 @@ dpi=${FRACTAL_DPI:-96}
 # (https://github.com/fractal/fractal/issues/1136)
 user_id=${FRACTAL_USER_ID:-''}
 
+# timeout to set the protocol server to inside the container, defaults to 60 seconds if not set
+timeout=${FRACTAL_TIMEOUT:-60}
+
 # User config encryption token. This would normally be passed in by the client app,
 # but we'll use a fake key here.
 config_encryption_token="RaR9Olgvqj+/AtNUHAPXjRZ26FkrFIVd"
@@ -85,6 +88,25 @@ send_start_values_request() {
     echo "Response to container start values request from host service: $response"
 }
 
+# Send a dev start value request to the Fractal ECS host service HTTP server running on localhost
+# This should only be called in the dev pipeline, and can be used to send in any protocol server variables (i.e. timeout)
+# Args: container_id, timeout
+send_dev_values_request() {
+    echo "Sending container dev values request to container $1!"
+    # Send the DPI/container-ready request
+    response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_dev_values' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+      "auth_secret": "testwebserverauthsecretdev",
+      "host_port": 32262,
+      "timeout": '"$2"'
+    }') \
+        || (print_error_and_kill_container $1 "container dev values request to the host service failed!")
+
+    echo "Sent container dev values request to container $1!"
+    echo "Response to container dev values request from host service: $response"
+}
+
 # Send a set config encryption token request to the Fractal ECS host service HTTP server running on localhost
 # This is also necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the client app would send this request to the Fractal host service, but for local development we need
@@ -132,6 +154,7 @@ container_id=""
 check_if_host_service_running
 send_spin_up_container_request "$app_name" "$image" "$mount_protocol"
 send_start_values_request "$container_id" "$dpi" "$user_id" "$user_access_token"
+send_dev_values_request "$container_id" "$timeout"
 send_set_config_encryption_token_request "$container_id" "$user_id" "$config_encryption_token" "$user_access_token"
 
 # Run bash inside the Docker container

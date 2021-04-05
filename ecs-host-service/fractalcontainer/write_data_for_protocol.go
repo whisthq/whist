@@ -47,6 +47,15 @@ func (c *containerData) WriteStartValues(dpi int, containerARN string) error {
 	return nil
 }
 
+func (c *containerData) WriteDevValues(timeout int) error {
+	// Write timeout
+	if err := c.writeResourceMappingToFile("timeout", logger.Sprintf("%v", timeout)); err != nil {
+		// Don't need to wrap err here because it already contains the relevant info
+		return err
+	}
+	return nil
+}
+
 func (c *containerData) MarkReady() error {
 	return c.writeResourceMappingToFile(".ready", ".ready")
 }
