@@ -5,9 +5,10 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-   pull_request:
+    pull_request:
         branches:
             - dev
+
     schedule:
         - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
 
