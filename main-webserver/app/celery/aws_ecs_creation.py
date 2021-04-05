@@ -749,6 +749,9 @@ def _assign_container(
 
     time.sleep(1)
 
+    # Now we inform the client app that the container is ready and
+    # it needs to communicate with the host service to finish container startup
+    # and for the container to ping the webserver
     set_container_state(
         keyuser=username,
         keytask=self.request.id,
