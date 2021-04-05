@@ -1,8 +1,6 @@
 import { configGet, configPost } from "@fractal/core-ts"
-import { HostServicePort } from "@app/utils/constants"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 import config from "@app/utils/config"
-import { apiPut } from "@app/utils/misc"
 import { AsyncReturnType } from "@app/utils/types"
 
 /*
@@ -117,57 +115,3 @@ export const regionRequest = async (username: string, accessToken: string) =>
         endpoint: `/regions?username=${username}`,
         accessToken,
     })
-
-export const hostServiceInfo = async (username: string, accessToken: string) =>
-    get({
-        endpoint: `/host_service?username=${username}`,
-        accessToken,
-    })
-
-type hostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
-
-export const hostServiceInfoIP = (res: hostServiceInfoResponse) => res.json?.ip
-
-export const hostServiceInfoPort = (res: hostServiceInfoResponse) =>
-    res.json?.port
-
-export const hostServiceInfoSecret = (res: hostServiceInfoResponse) =>
-    res.json?.client_app_auth_secret
-
-export const hostServiceInfoValid = (res: hostServiceInfoResponse) =>
-    res.status === 200 &&
-    hostServiceInfoIP(res) &&
-    hostServiceInfoPort(res) &&
-    hostServiceInfoSecret(res)
-        ? true
-        : false
-
-export const hostServiceInfoError = (_: hostServiceInfoResponse) =>
-    !hostServiceInfoValid
-
-export const hostServiceConfig = async (
-    ip: string,
-    host_port: number,
-    client_app_auth_secret: string,
-    user_id: string,
-    config_encryption_token: string
-) => {
-    return (await apiPut(
-        "/set_config_encryption_token",
-        `https://${ip}:${HostServicePort}`,
-        {
-            user_id,
-            client_app_auth_secret,
-            host_port,
-            config_encryption_token,
-        },
-        true
-    )) as { status: number }
-}
-
-type HostServiceConfigResponse = AsyncReturnType<typeof hostServiceConfig>
-
-export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
-    res.status === 200
-
-export const hostServiceConfigError = (_: any) => !hostServiceInfoValid
