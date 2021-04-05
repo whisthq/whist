@@ -38,13 +38,9 @@ static char clipboard_buf[9000000];
 bool unsafe_has_clipboard_updated() {
     bool has_updated = false;
 
-    LOG_INFO("unsafe_has_clipboard_updated");
-
     int new_clipboard_sequence_number = get_clipboard_changecount();
-    LOG_INFO("new: %d, last: %d", new_clipboard_sequence_number, last_clipboard_sequence_number);
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
         if (is_clipboard_a_client()) {
-            LOG_INFO("IS A CLIENT");
             // check if new clipboard is an image or a string
             clipboard_has_image = check_clipboard_has_image();
             clipboard_has_string = check_clipboard_has_string();
@@ -161,7 +157,6 @@ ClipboardData* unsafe_get_clipboard() {
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
-    LOG_INFO("clipboard type %d", cb->type);
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
