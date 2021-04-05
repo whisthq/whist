@@ -75,7 +75,9 @@ export const containerAssignPolling = containerAssignRequest.pipe(
 
 containerAssignPolling
     .pipe(switchMap((res) => res))
-    .subscribe((res) => console.log(res?.json.state))
+    .subscribe((res) =>
+        console.log("container poll", res?.status, res?.json.state)
+    )
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
     exhaustMap((poll) => poll.pipe(last())),
