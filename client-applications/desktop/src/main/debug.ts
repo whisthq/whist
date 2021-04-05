@@ -28,7 +28,9 @@
 import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
+import { switchMap } from "rxjs/operators"
 import * as login from "@app/main/observables/login"
+import * as host from "@app/main/observables/host"
 import * as signup from "@app/main/observables/signup"
 import * as container from "@app/main/observables/container"
 import * as protocol from "@app/main/observables/protocol"
@@ -36,7 +38,7 @@ import * as user from "@app/main/observables/user"
 import * as error from "@app/main/observables/error"
 import * as events from "@app/main/events"
 
-const modules = [login, container, protocol, user, error, signup, events]
+const modules = [login, container, protocol, user, error, signup, events, host]
 
 type DebugSchema = {
     [title: string]:
@@ -53,7 +55,7 @@ const schema: DebugSchema = {
     userConfigToken: ["value:"],
     signupRequest: ["value:"],
     signupLoading: ["value:"],
-    signupWarning: ["signed up with invalid credentials", null],
+    signupWarning: ["user already exists", null],
     signupFailure: ["value:"],
     signupSuccess: [
         "printing only tokens:",
@@ -79,7 +81,7 @@ const schema: DebugSchema = {
     containerCreateFailure: ["error:"],
     containerAssignRequest: ["value:"],
     containerAssignLoading: ["value:"],
-    containerAssignPolling: ["state value"],
+    containerAssignPolling: ["polling containerAssign", null],
     containerAssignSuccess: ["value:"],
     containerAssignFailure: ["error:"],
     protocolLaunchRequest: [
@@ -103,6 +105,16 @@ const schema: DebugSchema = {
                 "signalCode",
                 "pid",
             ]),
+    ],
+    hostInfoRequest: ["value:"],
+    hostInfoProcess: [
+        "printing only status, json:",
+        (obj) => pick(obj, ["status", "json"]),
+    ],
+    hostConfigRequest: ["value:"],
+    hostConfigProcess: [
+        "printing only status, json:",
+        (obj) => pick(obj, ["status", "json"]),
     ],
     errorRelaunchRequest: ["relaunching app due to error!"],
 }
