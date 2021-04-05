@@ -13,7 +13,8 @@ class UserContainer(db.Model):
 
     Attributes:
         container_id (string): container ID, taken from AWS
-        ip (string): ip address of the container
+        ip (string): ip address of the ECS container instance (i.e. EC@ instance) on which the
+            container is running
         location (string): AWS region of the container
         os (string): Container operating system
         state (string): Container state, either [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE,
@@ -23,9 +24,12 @@ class UserContainer(db.Model):
         task_definition (string): foreign key to supported_app_images of streamed application
         app (SupportedAppImage): reference to hardware.supported_app_image obj of
             streamed application
-        port_32262 (int): port corresponding to port 32262
-        port_32263 (int): port corresponding to port 32263
-        port_32273 (int): port corresponding to port 32273
+        port_32262 (int): port number on the ECS container instance host htat is forwraded to port 32262
+            on the container
+        port_32263 (int): port number on the ECS container instance host htat is forwraded to port 32263
+            on the container
+        port_32273 (int): port number on the ECS container instance host htat is forwraded to port 32273
+            on the container
         last_pinged (int): timestamp representing when the container was last pinged
         cluster (string): foreign key for the cluster the container is hosted on
         parent_cluster (ClusterInfo): reference to hardware.cluster_info object of the parent
