@@ -311,7 +311,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to \`${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\` via Docker push to GitHub Container Registry :github:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to \`${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\` via Docker push to GitHub Container Registry (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>) :github:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
@@ -391,7 +391,7 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload :bezos:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>) :bezos:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # AMI: Build and Publish to AWS EC2
@@ -556,7 +556,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>). \", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # AMI: Kill "Packer Builder" Instances
@@ -645,7 +645,7 @@ jobs:
 
                   curl -X POST \
                   --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure to start maintenance mode
@@ -658,7 +658,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Update webserver task definitions if new ones were published
@@ -690,7 +690,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Update webserver AMIs if new ones were built
@@ -740,7 +740,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: end-maintenance-mode
@@ -770,7 +770,7 @@ jobs:
                   WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure to end maintenance mode
@@ -782,7 +782,7 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Main Webserver: Deploy to Heroku
@@ -846,7 +846,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku:\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Client Applications: Build & Publish to AWS S3
@@ -1107,5 +1107,5 @@ jobs:
 
                   # Notify Slack
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
