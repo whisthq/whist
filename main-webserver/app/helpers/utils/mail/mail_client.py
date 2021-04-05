@@ -19,6 +19,7 @@ Example:
 
 """
 
+import re
 from jinja2 import Template
 from python_http_client.exceptions import BadRequestsError
 from sendgrid import SendGridAPIClient
@@ -80,6 +81,11 @@ class MailClient:
 
         template_string = template.download()
 
+        fractal_logger.info("Checking arguments...")
+
+        if not MailUtils.check_jinja_args(template_string, jinja_args):
+            raise SendGridException
+
         fractal_logger.info("Sanitizing arguments...")
 
         sanitized_args = MailUtils.sanitize_jinja_args(
@@ -109,6 +115,26 @@ class MailUtils:
     """
     Contains all static methods for MailClient (above)
     """
+
+    @staticmethod
+    def check_jinja_args(template, jinja_args):
+        """Checks that jinja_args contains all the template arguments
+
+        Args:
+            template (str): Email template from S3
+            jinja_args (dict): Dict of arguments to pass to Jinja
+
+        Returns:
+            True if jinja_args contains all args, False otherwise
+
+        """
+        template_args = re.findall("{{([^}]+)}}", template)
+        jinja_keys = jinja_args.keys()
+
+        for template_arg in template_args:
+            if template_arg not in jinja_keys:
+                return False
+        return True
 
     @staticmethod
     def sanitize_jinja_args(to_email, jinja_args):

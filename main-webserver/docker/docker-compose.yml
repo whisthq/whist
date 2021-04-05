@@ -44,8 +44,6 @@ services:
       PORT: 7730
       APP_GIT_BRANCH: ${APP_GIT_BRANCH}
       APP_GIT_COMMIT: ${APP_GIT_COMMIT}
-    volumes:
-      - ..:/app
 
   celery:
     <<: *base-app
