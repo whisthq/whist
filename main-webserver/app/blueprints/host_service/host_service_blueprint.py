@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
+from app.constants.container_state_values import PENDING
 from app.models import UserContainerState
 
 host_service_bp = Blueprint("host_service_bp", __name__)
@@ -22,7 +23,7 @@ def host_service(**kwargs):
     """
     username = kwargs.pop("username")
 
-    host_service_info = UserContainerState.query.filter_by(user_id=username).first()
+    host_service_info = UserContainerState.query.filter_by(user_id=username, state=PENDING).first()
 
     if not host_service_info:
         return jsonify({"ip": None, "port": None, "client_app_auth_secret": None})
