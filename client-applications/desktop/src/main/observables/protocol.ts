@@ -16,8 +16,9 @@ import {
     containerAssignSuccess,
     containerAssignFailure,
 } from "@app/main/observables/container"
+import { hostConfigFailure } from "@app/main/observables/host"
 import { loadingFrom } from "@app/utils/observables"
-import { zip, of, fromEvent } from "rxjs"
+import { zip, of, fromEvent, merge } from "rxjs"
 import { map, filter, share, mergeMap } from "rxjs/operators"
 
 export const protocolLaunchProcess = containerAssignRequest.pipe(
@@ -33,7 +34,10 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
     }))
 )
 
-export const protocolLaunchFailure = containerAssignFailure
+export const protocolLaunchFailure = merge(
+    hostConfigFailure,
+    containerAssignFailure
+)
 
 export const protocolLoading = loadingFrom(
     protocolLaunchProcess,
