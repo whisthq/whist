@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script takes a container image that was built locally, tags it with the proper
-# naming convetion and Git hash, and uploads it to GitHub Container Resgitry (GHCR).
+# naming convention and Git hash, and uploads it to GitHub Container Registry (GHCR).
 # Arguments:
 #   $1 - app name (e.g. browsers/chrome)
 #   $2 - deploy environment (i.e. prod OR staging OR dev)
