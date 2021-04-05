@@ -10,35 +10,38 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { eventIPC } from "@app/main/events/ipc"
-import { from, merge, of } from "rxjs"
+import { fromEventIPC } from "@app/main/events/ipc"
+import { from } from "rxjs"
+import { loadingFrom } from "@app/utils/observables"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
-import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
+import { filter, map, share, exhaustMap } from "rxjs/operators"
 
-export const loginRequest = eventIPC.pipe(
-    pluck("loginRequest"),
-    map((req) => req as { email?: string; password?: string }),
+export const loginRequest = fromEventIPC("loginRequest").pipe(
     filter((req) => (req?.email && req?.password ? true : false)),
-    map((req) => emailLogin(req.email!, req.password!)),
+    map(({ email, password }) => [email, password])
+)
+
+export const loginProcess = loginRequest.pipe(
+    map(([email, password]) => emailLogin(email, password)),
+    exhaustMap((req) => from(req)),
     share()
 )
 
-export const loginLoading = loginRequest.pipe(
-    exhaustMap((req) => merge(of(true), from(req).pipe(mapTo(false))))
-)
-
-export const loginWarning = loginRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const loginWarning = loginProcess.pipe(
     filter((res) => !emailLoginError(res)),
     filter((res) => !emailLoginValid(res))
 )
 
-export const loginSuccess = loginRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const loginSuccess = loginProcess.pipe(
     filter((res) => emailLoginValid(res))
 )
 
-export const loginFailure = loginRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const loginFailure = loginProcess.pipe(
     filter((res) => emailLoginError(res))
+)
+
+export const signupLoading = loadingFrom(
+    loginRequest,
+    loginSuccess,
+    loginFailure
 )

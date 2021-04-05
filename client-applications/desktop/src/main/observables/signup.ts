@@ -10,37 +10,49 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { eventIPC } from "@app/main/events/ipc"
-import { from, merge, of } from "rxjs"
+import { fromEventIPC } from "@app/main/events/ipc"
+import { from, merge, of, race } from "rxjs"
+import { loadingFrom } from "@app/utils/observables"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
-import { pluck, mapTo, filter, map, share, exhaustMap } from "rxjs/operators"
+import { createConfigToken } from "@app/utils/crypto"
+import {
+    mapTo,
+    filter,
+    map,
+    share,
+    exhaustMap,
+    switchMap,
+    startWith,
+} from "rxjs/operators"
 
-export const signupRequest = eventIPC.pipe(
-    // withLatestFrom()
-    pluck("signupRequest"),
-    map((req) => req as { email?: string; password?: string }),
+export const signupRequest = fromEventIPC("signupRequest").pipe(
     filter((req) => (req?.email && req?.password ? true : false)),
-    map((req) => emailSignup(req.email!, req.password!)),
+    switchMap((req) => from(createConfigToken().then((token) => [req, token]))),
+    map(([req, token]) => [req?.email, req?.password, token]),
     share()
 )
 
-export const signupLoading = signupRequest.pipe(
-    exhaustMap((req) => merge(of(true), from(req).pipe(mapTo(false))))
+export const signupProcess = signupRequest.pipe(
+    map(([email, password, token]) => emailSignup(email, password, token)),
+    exhaustMap((req) => from(req)),
+    share()
 )
 
-export const signupWarning = signupRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const signupWarning = signupProcess.pipe(
     filter((res) => !emailSignupError(res)),
     filter((res) => !emailSignupValid(res))
 )
 
-export const signupSuccess = signupRequest.pipe(
-    exhaustMap((req) => from(req)),
-    filter((res) => emailSignupValid(res)),
-    share()
+export const signupSuccess = signupProcess.pipe(
+    filter((res) => emailSignupValid(res))
 )
 
-export const signupFailure = signupRequest.pipe(
-    exhaustMap((req) => from(req)),
+export const signupFailure = signupProcess.pipe(
     filter((res) => emailSignupError(res))
+)
+
+export const signupLoading = loadingFrom(
+    signupRequest,
+    signupSuccess,
+    signupFailure
 )
