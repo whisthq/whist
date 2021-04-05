@@ -58,25 +58,33 @@ def email():
 
 
 @pytest.mark.parametrize(
-    "from_email, subject, email_id, expected",
+    "from_email, subject, email_id, args, expected",
     [
         (
             "noreply@fractal.co",
             "Thank you for choosing Fractal",
             "PAYMENT_SUCCESSFUL",
+            {},
             HTTPStatus.OK,
         ),
-        ("", "Thank you for choosing Fractal", "PAYMENT_SUCCESSFUL", HTTPStatus.BAD_REQUEST),
-        ("noreply@fractal.co", "Thank you for choosing Fractal", "", HTTPStatus.BAD_REQUEST),
+        (
+            "noreply@fractal.co",
+            "Reset your password",
+            "PAYMENT_SUCCESSFUL",
+            {"link": "https://fractal.co"},
+            HTTPStatus.OK,
+        ),
+        ("", "Thank you for choosing Fractal", "PAYMENT_SUCCESSFUL", {}, HTTPStatus.BAD_REQUEST),
+        ("noreply@fractal.co", "Thank you for choosing Fractal", "", {}, HTTPStatus.BAD_REQUEST),
     ],
 )
 @pytest.mark.usefixtures("authorized")
-def test_send_emails(mailslurp, email, client, from_email, subject, email_id, expected):
+def test_send_emails(mailslurp, email, client, from_email, subject, email_id, args, expected):
     """Tests sample emails to a valid email address"""
     api_instance = mailslurp_client.InboxControllerApi(mailslurp)
     inbox = api_instance.create_inbox()
 
-    test_email = email(from_email, subject, email_id)
+    test_email = email(from_email, subject, email_id, args)
 
     response = client.post(
         "/mail",
@@ -84,7 +92,7 @@ def test_send_emails(mailslurp, email, client, from_email, subject, email_id, ex
             email_id=test_email["email_id"],
             from_email=test_email["from_email"],
             to_email=inbox.email_address,
-            email_args={},
+            email_args=test_email["args"],
         ),
     )
     assert response.status_code == expected
