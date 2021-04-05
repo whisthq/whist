@@ -84,7 +84,7 @@ const schema: DebugSchema = {
     containerAssignPolling: ["polling containerAssign", null],
     containerAssignSuccess: ["value:"],
     containerAssignFailure: ["error:"],
-    protocolLaunchRequest: [
+    protocolLaunchProcess: [
         "value:",
         ({ connected, exitCode, pid }) => ({
             connected,
@@ -107,15 +107,14 @@ const schema: DebugSchema = {
             ]),
     ],
     hostInfoRequest: ["value:"],
-    hostInfoProcess: [
-        "printing only status, json:",
-        (obj) => pick(obj, ["status", "json"]),
-    ],
+    hostInfoSuccess: ["value:"],
+    hostInfoFailure: ["value:"],
     hostConfigRequest: ["value:"],
     hostConfigProcess: [
         "printing only status, json:",
         (obj) => pick(obj, ["status", "json"]),
     ],
+
     errorRelaunchRequest: ["relaunching app due to error!"],
 }
 
