@@ -21,5 +21,6 @@ errorRelaunchRequest.subscribe((req) => {
 
 // Error windows
 errorWindowRequest.subscribe((windowFunction) => {
-    closeWindows(), windowFunction()
+    closeWindows()
+    windowFunction()
 })

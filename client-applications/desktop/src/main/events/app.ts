@@ -13,5 +13,3 @@ export const eventAppReady = fromEvent(app as EventEmitter, "ready")
 export const eventAppActivation = fromEvent(app as EventEmitter, "activate")
 
 export const eventAppQuit = fromEvent(app as EventEmitter, "window-all-closed")
-
-eventAppReady.subscribe(() => console.log("ready"))
