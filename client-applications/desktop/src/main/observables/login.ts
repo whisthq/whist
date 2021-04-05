@@ -40,7 +40,7 @@ export const loginFailure = loginProcess.pipe(
     filter((res) => emailLoginError(res))
 )
 
-export const signupLoading = loadingFrom(
+export const loginLoading = loadingFrom(
     loginRequest,
     loginSuccess,
     loginFailure
