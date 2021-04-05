@@ -287,6 +287,39 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 	req.ReturnResult("", nil)
 }
 
+// Creates a file containing the timeout assigned to a specific container, and make
+// it accessible to that container. We make this function send
+// back the result for the provided request so that we can run in its own
+// goroutine and not block the event loop goroutine.
+func handleDevValuesRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetContainerDevValuesRequest) {
+	logAndReturnError := func(fmt string, v ...interface{}) {
+		err := logger.MakeError("handleDevValuesRequest(): "+fmt, v...)
+		logger.Error(err)
+		req.ReturnResult("", err)
+	}
+
+	// Verify identifying hostPort value
+	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
+		logAndReturnError("Invalid HostPort: %v", req.HostPort)
+		return
+	}
+	hostPort := uint16(req.HostPort)
+
+	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
+	err = fc.WriteDevValues(req.Timeout)
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
+	req.ReturnResult("", nil)
+}
+
 // We make this function send back the result for the provided request so that
 // we can run in its own goroutine and not block the event loop goroutine with
 // `rclone mount` commands (which are fast in the happy path, but can take a
@@ -589,6 +622,9 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				switch serverevent.(type) {
 				case *httpserver.SetContainerStartValuesRequest:
 					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
+
+				case *httpserver.SetContainerDevValuesRequest:
+					go handleDevValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerDevValuesRequest))
 
 				case *httpserver.SetConfigEncryptionTokenRequest:
 					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))

@@ -14,7 +14,7 @@ CONTAINER_ID_FILENAME=ContainerARN
 PRIVATE_KEY_FILENAME=/usr/share/fractal/private/aes_key
 WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
-TIMEOUT_FILENAME=/usr/share/fractal/private/timeout
+TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
