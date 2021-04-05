@@ -836,9 +836,6 @@ class ECSClient:
             return False
         response = self.ecs_client.describe_tasks(tasks=self.tasks, cluster=self.cluster)
         resp = response["tasks"][offset]
-        fractal_logger.info(
-            f"AWS task {self.tasks[offset]} has following status: {resp['lastStatus']}"
-        )
 
         # if the container is stopped, it's broken -- raise an exception
         if resp["lastStatus"] == "STOPPED":
