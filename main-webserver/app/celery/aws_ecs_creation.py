@@ -38,7 +38,13 @@ from app.helpers.utils.event_logging.events import (
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
 from app.serializers.oauth import CredentialSchema
 
-from app.constants.container_state_values import FAILURE, PENDING, READY, SPINNING_UP_NEW
+from app.constants.container_state_values import (
+    FAILURE,
+    PENDING,
+    READY,
+    SPINNING_UP_NEW,
+    WAITING_FOR_CLIENT_APP,
+)
 
 from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 
@@ -747,7 +753,7 @@ def _assign_container(
         keyuser=username,
         keytask=self.request.id,
         task_id=self.request.id,
-        state=PENDING,
+        state=WAITING_FOR_CLIENT_APP,
         ip=base_container.ip,
         client_app_auth_secret=client_app_auth_secret,
         port=base_container.port_32262,
