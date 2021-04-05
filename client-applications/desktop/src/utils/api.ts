@@ -152,7 +152,7 @@ export const hostServiceConfig = async (
     user_id: string,
     config_encryption_token: string
 ) => {
-    return await apiPut(
+    return (await apiPut(
         "/set_config_encryption_token",
         `https://${ip}:${HostServicePort}`,
         {
@@ -162,10 +162,12 @@ export const hostServiceConfig = async (
             config_encryption_token,
         },
         true
-    )
+    )) as { status: number }
 }
 
-export const hostServiceConfigValid = (res: { status: number }) =>
+type HostServiceConfigResponse = AsyncReturnType<typeof hostServiceConfig>
+
+export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
     res.status === 200
 
 export const hostServiceConfigError = (_: any) => !hostServiceInfoValid
