@@ -2,9 +2,9 @@ import { eventIPC } from "@app/main/events/ipc"
 
 import { pluck } from "rxjs/operators"
 
-import { eventAppReady, eventAppQuit } from "@app/main/events/app"
+import { eventAppReady } from "@app/main/events/app"
 import { logDebug, logError } from "@app/utils/logging"
-import { combineLatest } from "rxjs"
+import { Observable, combineLatest } from "rxjs"
 
 import {
     protocolLaunchProcess,
@@ -14,26 +14,20 @@ import {
 
 import { loginRequest } from "@app/main/observables/login"
 
-combineLatest(
+const logWithEmail = (observable: Observable<any>, logs: string) => combineLatest(
     eventIPC.pipe(pluck("email")),
-    eventAppReady
-).subscribe(([email, _appReady]) => logDebug(email as string, "App ready event emitted"))
+    observable 
+).subscribe(([email, _observable]) => logDebug(email as string, logs))
 
-combineLatest(
-    eventIPC.pipe(pluck("email")),
-    protocolLaunchSuccess
-).subscribe(([email, _success]) => logDebug(email as string, "Protocol successfully launched"))
+const pluckLog = (observable: Observable<any>, logs: string) => observable.pipe(
+    pluck("email")
+).subscribe(email => logDebug(email as string, logs))
 
-combineLatest(
-    eventIPC.pipe(pluck("email")),
-    protocolLaunchFailure
-).subscribe(([email, _success]) =>
-    logError(email as string, "Protocol launch failed")
-)
+// For logging observables that don't emit an email
+logWithEmail(eventAppReady, "App ready event emitted")
+logWithEmail(protocolLaunchSuccess, "Protocol successfully launched")
+logWithEmail(protocolLaunchFailure, "Protocol launch failed")
+logWithEmail(protocolLaunchProcess, "spawn() protocol command sent")
 
-combineLatest(
-    eventIPC.pipe(pluck("email")),
-    protocolLaunchProcess
-).subscribe(([email, _success]) => logError(email as string, "spawn() protocol command sent"))
-
-loginRequest.pipe(pluck("email")).subscribe(email => logDebug(email as string, "Login attempt"))
+// For logging observables that already emit an email
+pluckLog(loginRequest, "Login attempt")
