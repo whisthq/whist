@@ -7,4 +7,5 @@ else
     sh ./scripts/publish.sh
 fi
 
+yarn tailwind
 snowpack dev
