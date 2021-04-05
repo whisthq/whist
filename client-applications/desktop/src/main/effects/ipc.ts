@@ -12,6 +12,7 @@ import { WarningLoginInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
 import { StateIPC } from "@app/utils/types"
 import { loginLoading, loginWarning } from "@app/main/observables/login"
+import { signupLoading } from "@app/main/observables/signup"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -35,6 +36,7 @@ type SubscriptionMap = {
 const subscribed: SubscriptionMap = {
     loginLoading: loginLoading,
     loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
+    signupLoading: signupLoading,
 }
 
 combineLatest(
