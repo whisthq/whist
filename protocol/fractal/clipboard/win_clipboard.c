@@ -24,8 +24,6 @@ strings, for use on windows OS's
 #include "../utils/png.h"
 #include "clipboard.h"
 
-bool start_tracking_clipboard_updates();
-
 char* get_clipboard_directory() {
     static char buf[MAX_PATH];
     wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
@@ -40,7 +38,6 @@ char* set_clipboard_directory() {
 void unsafe_init_clipboard() {
     get_clipboard_directory();
     set_clipboard_directory();
-    start_tracking_clipboard_updates();
 }
 
 void unsafe_destroy_clipboard() {}
@@ -189,11 +186,6 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
-
-bool start_tracking_clipboard_updates() {
-    last_clipboard_sequence_number = GetClipboardSequenceNumber();
-    return true;
-}
 
 bool unsafe_has_clipboard_updated() {
     bool has_updated = false;
