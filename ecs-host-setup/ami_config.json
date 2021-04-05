@@ -1,4 +1,8 @@
 {
+  "variables": {
+    "github_pat": "{{env `GH_PAT`}}",
+    "github_username": "{{env `GH_USERNAME`}}"
+  },
   "builders": [
     {
       "name": "Fractal AWS AMI Builder",
@@ -58,7 +62,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
+      "inline": ["cd /home/ubuntu/ecs-host-setup", "GH_USERNAME={{user `github_pat`}} GH_PAT={{user `github_pat`}} ./setup_ubuntu20_host.sh"]
     },
     {
       "type": "shell",
