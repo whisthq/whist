@@ -21,8 +21,6 @@ export const protocolFolder = path
 
 export const protocolPath = path.join(protocolFolder, getProtocolName())
 
-logDebug("PROTOCOL PATH IS", protocolPath)
-
 export const serializePorts = (ps: {
     port_32262: number
     port_32263: number
