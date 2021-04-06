@@ -73,6 +73,6 @@ RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
 # RUN echo $(su - fractal -c "ls -p /home/fractal/.mozilla")
 # RUN mkdir /home/fractal/.cache/.mozilla/firefox/chrome
-RUN name=$(find -name "/home/fractal/.mozilla/firefox/" "*.default-release")
+RUN name=$(find /home/fractal/.mozilla/firefox/ -name "*.default-release")
 COPY chrome /home/fractal/.mozilla/firefox/${name}.default-release
 COPY user.js /home/fractal/.mozilla/firefox/${name}.default-release
