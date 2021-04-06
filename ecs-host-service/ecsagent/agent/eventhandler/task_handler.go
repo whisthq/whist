@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	apitaskstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
@@ -30,7 +31,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/cihub/seelog"
 )
 
 const (

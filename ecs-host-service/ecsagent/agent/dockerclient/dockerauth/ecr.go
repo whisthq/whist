@@ -19,15 +19,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	log "github.com/cihub/seelog"
+	"github.com/docker/docker/api/types"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/async"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecr"
 	ecrapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecr/model/ecr"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/aws/aws-sdk-go/aws"
-	log "github.com/cihub/seelog"
-	"github.com/docker/docker/api/types"
 )
 
 type cacheKey struct {

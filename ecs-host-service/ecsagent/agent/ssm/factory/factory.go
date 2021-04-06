@@ -16,13 +16,13 @@ package factory
 import (
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/httpclient"
-	ssmclient "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ssm"
 	"github.com/aws/aws-sdk-go/aws"
 	awscreds "github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ssm"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/httpclient"
+	ssmclient "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ssm"
 )
 
 const (

@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/utils"
 	v2 "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/v2"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
-	"github.com/cihub/seelog"
 )
 
 // ContainerStatsPath specifies the relative URI path for serving container stats.

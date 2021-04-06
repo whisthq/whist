@@ -18,10 +18,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/utils"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
-	"github.com/cihub/seelog"
 )
 
 const (

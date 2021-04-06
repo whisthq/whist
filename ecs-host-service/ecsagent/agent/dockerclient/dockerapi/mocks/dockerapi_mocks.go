@@ -24,13 +24,13 @@ import (
 	reflect "reflect"
 	time "time"
 
+	types "github.com/docker/docker/api/types"
+	container0 "github.com/docker/docker/api/types/container"
+	filters "github.com/docker/docker/api/types/filters"
 	container "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	status "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	dockerclient "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	dockerapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	types "github.com/docker/docker/api/types"
-	container0 "github.com/docker/docker/api/types/container"
-	filters "github.com/docker/docker/api/types/filters"
 	gomock "github.com/golang/mock/gomock"
 )
 

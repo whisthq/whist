@@ -35,13 +35,13 @@ import (
 
 	"crypto/tls"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/cipher"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient/wsconn"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
-	"github.com/cihub/seelog"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 )

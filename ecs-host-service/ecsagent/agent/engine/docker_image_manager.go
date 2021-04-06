@@ -23,6 +23,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 
+	"github.com/cihub/seelog"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
@@ -30,7 +31,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/image"
-	"github.com/cihub/seelog"
 )
 
 const (

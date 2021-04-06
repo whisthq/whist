@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cihub/seelog"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
@@ -27,7 +28,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
 	resourcestatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/status"
-	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 )
 

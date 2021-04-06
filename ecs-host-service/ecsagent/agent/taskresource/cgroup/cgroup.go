@@ -22,6 +22,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/cihub/seelog"
+	"github.com/containerd/cgroups"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
@@ -29,8 +31,6 @@ import (
 	control "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/cgroup/control"
 	resourcestatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/ioutilwrapper"
-	"github.com/cihub/seelog"
-	"github.com/containerd/cgroups"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )

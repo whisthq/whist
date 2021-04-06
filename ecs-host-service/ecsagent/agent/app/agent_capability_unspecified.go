@@ -18,12 +18,12 @@ package app
 import (
 	"strings"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/volume"
-	"github.com/cihub/seelog"
 )
 
 func (agent *ecsAgent) appendVolumeDriverCapabilities(capabilities []*ecs.Attribute) []*ecs.Attribute {

@@ -19,13 +19,13 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	awscreds "github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	ecrapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecr/model/ecr"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/httpclient"
-	"github.com/aws/aws-sdk-go/aws"
-	awscreds "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
 )
 
 // ECRFactory defines the interface to produce an ECR SDK client

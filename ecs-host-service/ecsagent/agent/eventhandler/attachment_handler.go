@@ -19,11 +19,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/cihub/seelog"
 )
 
 // AttachmentEventHandler is a handler that is responsible for submitting attachment state change events

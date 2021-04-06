@@ -16,9 +16,9 @@ package pause
 import (
 	"context"
 
+	"github.com/docker/docker/api/types"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	"github.com/docker/docker/api/types"
 )
 
 // Loader defines an interface for loading the pause container image. This is mostly

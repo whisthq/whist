@@ -18,11 +18,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cihub/seelog"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apieni "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/eni"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/image"
-	"github.com/cihub/seelog"
 )
 
 // TaskEngineState keeps track of all mappings between tasks we know about

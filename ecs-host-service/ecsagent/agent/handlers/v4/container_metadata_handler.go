@@ -18,11 +18,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/containermetadata"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/utils"
 	v3 "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/v3"
-	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 )
 

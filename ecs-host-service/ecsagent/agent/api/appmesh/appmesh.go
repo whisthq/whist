@@ -16,8 +16,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 )
 
 const (

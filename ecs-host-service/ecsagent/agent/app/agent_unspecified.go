@@ -18,11 +18,11 @@ package app
 import (
 	"errors"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
-	"github.com/cihub/seelog"
 )
 
 func (agent *ecsAgent) initializeTaskENIDependencies(state dockerstate.TaskEngineState, taskEngine engine.TaskEngine) (error, bool) {

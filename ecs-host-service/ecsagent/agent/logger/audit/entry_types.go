@@ -18,9 +18,9 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger/audit/request"
-	log "github.com/cihub/seelog"
 )
 
 const (

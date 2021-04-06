@@ -16,11 +16,11 @@ package ec2
 import (
 	"strings"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	ec2sdk "github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/cihub/seelog"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 )
 
 const (

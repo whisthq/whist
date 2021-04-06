@@ -17,13 +17,13 @@ import (
 	"context"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eventstream"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/ttime"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/pkg/errors"
 )
 

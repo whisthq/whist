@@ -18,11 +18,11 @@ package task
 import (
 	"time"
 
+	"github.com/cihub/seelog"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
-	"github.com/cihub/seelog"
-	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/pkg/errors"
 )
 

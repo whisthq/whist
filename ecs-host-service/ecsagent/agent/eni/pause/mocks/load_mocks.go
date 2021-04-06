@@ -22,9 +22,9 @@ import (
 	context "context"
 	reflect "reflect"
 
+	types "github.com/docker/docker/api/types"
 	config "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	dockerapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	types "github.com/docker/docker/api/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

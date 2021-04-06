@@ -23,9 +23,9 @@ import (
 	reflect "reflect"
 	time "time"
 
-	task "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	types "github.com/docker/docker/api/types"
 	container "github.com/docker/docker/api/types/container"
+	task "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	gomock "github.com/golang/mock/gomock"
 )
 

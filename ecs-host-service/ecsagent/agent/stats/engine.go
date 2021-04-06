@@ -26,6 +26,8 @@ import (
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/docker/docker/api/types"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
@@ -36,8 +38,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eventstream"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats/resolver"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/tcs/model/ecstcs"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/docker/docker/api/types"
 )
 
 const (

@@ -19,6 +19,8 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/cihub/seelog"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
@@ -26,8 +28,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/cgroup"
 	resourcestatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/status"
 	resourcetype "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/types"
-	"github.com/cihub/seelog"
-	dockercontainer "github.com/docker/docker/api/types/container"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/pkg/errors"
 )
