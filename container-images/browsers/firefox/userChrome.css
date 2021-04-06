@@ -1,4 +1,4 @@
-/* No blue swipe on tabs when loaded
+/* No blue swipe on tabs when loaded */
 .tabbrowser-tab .tab-loading-burst {
     display: none !important;
-} */
+}
