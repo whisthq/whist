@@ -68,7 +68,7 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla"
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
 # Swap in custom userChrome.css file
-# RUN sudo chmod -R 777 /home/fractal/.cache/
+RUN sudo chmod -R 777 /home/fractal/.mozilla/
 # ADD userChrome.css /home/fractal/.mozilla/firefox/w8cqs9vm.default-release/chrome
 
 # RUN echo $(su - fractal -c "ls -p /home/fractal/.mozilla")
