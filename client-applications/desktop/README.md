@@ -30,7 +30,7 @@ Files related to the renderer process mostly live in `src/renderer`, with some s
 
 ### Client Main Process
 
-### The Event Loop
+#### The Event Loop
 
 The Electron "main" process runs in a NodeJS environment, and has full access to the NodeJS standard library and ecosystem. HTTP requests, process management, and file system interaction are handled with standard NodeJS APIs, while GUI windows, communication with the renderer process, and application lifecycle are managed with Electron's API.
 
@@ -50,7 +50,7 @@ Observables are a concept of functional reactive programming, and are the main s
 
 There are some great tutorials for RxJS out there, like [this one](https://www.learnrxjs.io) and [this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). Try starting out by thinking about how a "stream of data across time" is similar to a simple "list of data", and how you might `map`, `filter`, and `reduce` each one.
 
-### Organization
+#### Organization
 
 Main process functions are grouped primarily by level of abstraction, and then sub-grouped based on their functionality. This means that we have several files named, for example, `container.ts`, in locations like `utils/container.ts`, `effects/container.ts`, and `observables/container.ts`. It should feel natural to choose a place to put a new function, or where to look for an existing one.
 
@@ -76,7 +76,7 @@ import {
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
 
-### Debugging
+#### Debugging
 Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
 
 You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
