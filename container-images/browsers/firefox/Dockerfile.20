@@ -75,6 +75,9 @@ RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 # RUN mkdir /home/fractal/.cache/.mozilla/firefox/chrome
 # RUN name=$(find /home/fractal/.mozilla/firefox/ -name "*.default-release")
 ADD chrome /home/fractal/.mozilla/firefox/chrome
+RUN su - fractal -c "mv /home/fractal/.mozilla/firefox/chrome /home/fractal/.mozilla/firefox/*.default-release"
 COPY user.js /home/fractal/.mozilla/firefox/
+RUN su - fractal -c "mv /home/fractal/.mozilla/firefox/user.js /home/fractal/.mozilla/firefox/*.default-release"
+
 # RUN mv /home/fractal/.mozilla/firefox/chrome /home/fractal/.mozilla/firefox/*.default-release
 # RUN mv /home/fractal/.mozilla/firefox/user.js /home/fractal/.mozilla/firefox/*.default-release
