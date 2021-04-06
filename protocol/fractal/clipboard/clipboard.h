@@ -109,7 +109,7 @@ void init_clipboard(bool is_client);
  *
  * @returns                        True if client, false if server
  */
-bool is_local_clipboard_preserved();
+bool should_preserve_local_clipboard();
 
 /**
  * @brief                          Get the current clipboard data
