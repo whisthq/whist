@@ -291,7 +291,7 @@ bool unsafe_has_clipboard_updated() {
                                XFixesSetSelectionOwnerNotifyMask);
     if (first) {
         first = false;
-        if (is_local_clipboard_preserved()) {
+        if (should_preserve_local_clipboard()) {
             return true;
         }
         return false;
