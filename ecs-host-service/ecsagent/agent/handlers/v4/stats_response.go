@@ -14,10 +14,10 @@
 package v4
 
 import (
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	"github.com/pkg/errors"
 )
 

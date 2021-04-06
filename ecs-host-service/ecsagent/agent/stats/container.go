@@ -19,12 +19,12 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats/resolver"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/cihub/seelog"
 )
 
 func newStatsContainer(dockerID string, client dockerapi.DockerClient, resolver resolver.ContainerMetadataResolver,

@@ -18,11 +18,11 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 )
 
 const (

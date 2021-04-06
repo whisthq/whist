@@ -17,10 +17,10 @@ package execcmd
 import (
 	"context"
 
+	dockercontainer "github.com/docker/docker/api/types/container"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	dockercontainer "github.com/docker/docker/api/types/container"
 )
 
 const (

@@ -20,8 +20,8 @@ import (
 	"sync"
 	"time"
 
-	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/cihub/seelog"
+	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 )
 
 type Image struct {

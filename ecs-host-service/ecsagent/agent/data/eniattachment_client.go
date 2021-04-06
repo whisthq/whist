@@ -19,8 +19,8 @@ import (
 	apieni "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/eni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 func (c *client) SaveENIAttachment(eni *apieni.ENIAttachment) error {

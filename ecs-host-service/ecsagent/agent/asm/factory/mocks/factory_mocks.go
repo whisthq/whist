@@ -21,8 +21,8 @@ package mock_factory
 import (
 	reflect "reflect"
 
-	credentials "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	secretsmanageriface "github.com/aws/aws-sdk-go/service/secretsmanager/secretsmanageriface"
+	credentials "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	gomock "github.com/golang/mock/gomock"
 )
 

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/containernetworking/plugins/pkg/ns"
 	apitaskstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
@@ -27,7 +28,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats/resolver"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/nswrapper"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/containernetworking/plugins/pkg/ns"
 
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"

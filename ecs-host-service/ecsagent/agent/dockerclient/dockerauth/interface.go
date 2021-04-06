@@ -16,8 +16,8 @@
 package dockerauth
 
 import (
-	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/docker/docker/api/types"
+	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 )
 
 // DockerAuthProvider is something that can give the auth information for a given docker image

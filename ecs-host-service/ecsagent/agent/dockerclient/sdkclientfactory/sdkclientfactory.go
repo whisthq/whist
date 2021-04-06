@@ -16,10 +16,10 @@ package sdkclientfactory
 import (
 	"context"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/sdkclient"
 	log "github.com/cihub/seelog"
 	docker "github.com/docker/docker/client"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/sdkclient"
 	"github.com/pkg/errors"
 )
 

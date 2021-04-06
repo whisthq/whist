@@ -18,8 +18,8 @@ import (
 
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/image"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 func (c *client) SaveImageState(img *image.ImageState) error {

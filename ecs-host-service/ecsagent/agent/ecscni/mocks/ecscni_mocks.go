@@ -23,8 +23,8 @@ import (
 	reflect "reflect"
 	time "time"
 
-	ecscni "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	current "github.com/containernetworking/cni/pkg/types/current"
+	ecscni "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	gomock "github.com/golang/mock/gomock"
 )
 

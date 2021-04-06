@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"os"
 
+	dockercontainer "github.com/docker/docker/api/types/container"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
-	dockercontainer "github.com/docker/docker/api/types/container"
 )
 
 const (

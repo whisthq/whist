@@ -21,14 +21,14 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/tcs/model/ecstcs"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/cihub/seelog"
 )
 
 const (

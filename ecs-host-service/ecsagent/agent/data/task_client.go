@@ -19,8 +19,8 @@ import (
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 // SaveTask saves a task to the task bucket.

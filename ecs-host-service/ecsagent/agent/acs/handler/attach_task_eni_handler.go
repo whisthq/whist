@@ -16,12 +16,12 @@ package handler
 import (
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 	apieni "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/eni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
-	"github.com/aws/aws-sdk-go/aws"
 
 	"github.com/cihub/seelog"
 	"github.com/pkg/errors"

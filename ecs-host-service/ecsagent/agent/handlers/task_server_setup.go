@@ -19,6 +19,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cihub/seelog"
+	"github.com/didip/tollbooth"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
@@ -31,8 +33,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger/audit"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/cihub/seelog"
-	"github.com/didip/tollbooth"
 	"github.com/gorilla/mux"
 )
 

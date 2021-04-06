@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"time"
 
-	ecrapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecr/model/ecr"
 	"github.com/aws/aws-sdk-go/aws"
 	log "github.com/cihub/seelog"
+	ecrapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecr/model/ecr"
 )
 
 const (

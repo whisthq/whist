@@ -17,10 +17,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
-	"github.com/cihub/seelog"
 )
 
 // HandleEngineEvents handles state change events from the state change event channel by sending it to

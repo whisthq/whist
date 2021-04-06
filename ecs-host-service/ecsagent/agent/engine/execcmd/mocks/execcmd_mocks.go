@@ -22,11 +22,11 @@ import (
 	context "context"
 	reflect "reflect"
 
+	container0 "github.com/docker/docker/api/types/container"
 	container "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	task "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	dockerapi "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	execcmd "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/execcmd"
-	container0 "github.com/docker/docker/api/types/container"
 	gomock "github.com/golang/mock/gomock"
 )
 

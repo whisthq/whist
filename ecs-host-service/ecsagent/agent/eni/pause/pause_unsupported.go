@@ -19,9 +19,9 @@ import (
 	"context"
 	"runtime"
 
+	"github.com/docker/docker/api/types"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	"github.com/docker/docker/api/types"
 	"github.com/pkg/errors"
 )
 

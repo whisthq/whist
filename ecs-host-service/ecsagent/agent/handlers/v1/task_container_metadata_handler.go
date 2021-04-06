@@ -17,10 +17,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/cihub/seelog"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/utils"
-	"github.com/cihub/seelog"
 )
 
 const (
