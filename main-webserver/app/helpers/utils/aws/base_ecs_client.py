@@ -306,6 +306,11 @@ class ECSClient:
             HonorCooldown=False,
         )
 
+    def terminate_instance_in_auto_scaling_group(self, instance_id: str):
+        self.auto_scaling_client.terminate_instance_in_auto_scaling_group(
+            InstanceId=instance_id, ShouldDecrementDesiredCapacity=True
+        )
+
     def describe_auto_scaling_groups_in_cluster(self, cluster):
         """
         Args:
