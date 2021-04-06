@@ -264,15 +264,13 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
 @shared_task(bind=True)
 def manual_scale_cluster(self, cluster: str, region_name: str):
     """
-    Manually scales the cluster according the the following logic:
-        1. see if active_tasks + pending_tasks > num_instances * AWS_TASKS_PER_INSTANCE. if so,
-            we should trigger a scale down.
-        2. check if there are instances with 0 tasks. sometimes AWS can suboptimally distribute
-            our workloads, so we want to make sure there are instances we can actually delete.
-            If AWS does poorly distribute our loads, we log it.
-        3. trigger a scale down so only instances with tasks remain.
-    This function does not handle outscaling at the moment.
-    This function can be expanded to handle more custom scaling logic as we grow.
+    Check scaling a cluster based on simple rules:
+    1. expected_num_instances = ceil( (active_tasks + pending_tasks) / AWS_TASKS_PER_INSTANCE )
+    2. If expected_num_instances > num_instances, scale-up (see manual_scale_cluster_up)
+    3. if expected_num_instances < num_instances, scale-down (see manual_scale_cluster_down)
+
+    manual_scale_cluster_down has some complications, see its docstrings for details.
+
     Args:
         cluster: cluster to manually scale
         region_name: region that cluster resides in
@@ -321,7 +319,7 @@ def manual_scale_cluster_up(cluster: str, region_name: str, expected_num_instanc
         region_name: region that cluster resides in
         expected_num_instances: expected number of instances in the cluster
     """
-    fractal_logger.info("UP")
+    fractal_logger.info(f"Trying to scale up cluster {cluster}...")
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
     if len(asg_list) != 1:
@@ -346,7 +344,7 @@ def manual_scale_cluster_down(cluster: str, region_name: str, max_remove: int):
         region_name: region that cluster resides in
         max_remove: maximum number of instances to remove
     """
-    fractal_logger.info("DOWN")
+    fractal_logger.info(f"Trying to scale down cluster {cluster}...")
     # we check if there are actually empty instances
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     instances = ecs_client.list_container_instances(cluster)

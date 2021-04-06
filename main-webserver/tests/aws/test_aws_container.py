@@ -3,7 +3,6 @@ import os
 import uuid
 
 import pytest
-import boto3
 
 from flask import current_app
 from app.celery import aws_ecs_creation
