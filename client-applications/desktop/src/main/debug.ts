@@ -68,11 +68,8 @@ const schema: DebugSchema = {
     loginWarning: ["logged in with invalid credentials", null],
     loginFailure: ["value:"],
     loginSuccess: [
-        "printing only tokens:",
-        ({ json }) => ({
-            accessToken: json.access_token?.substring(0, 6) + "...",
-            refreshToken: json.refresh_token?.substring(0, 6) + "...",
-        }),
+        "value:",
+        ({ json }) => JSON.stringify(json)
     ],
     containerCreateRequest: ["value:"],
     containerCreateLoading: ["value:"],
