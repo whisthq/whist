@@ -7,8 +7,8 @@ import (
 	"strings"
 	"sync"
 
-	ecsapp "github.com/fractal/ecs-agent/agent/app"
-	ecslogger "github.com/fractal/ecs-agent/agent/logger"
+	ecsapp "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/app"
+	ecslogger "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger"
 
 	fractallogger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
