@@ -24,7 +24,7 @@
         "@types/react-router-dom": "^5.1.7",
         "@types/react-router-hash-link": "^1.2.1",
         "@types/redux-promise": "^0.5.29",
-        "@typescript-eslint/parser": "^4.15.2",
+        "@typescript-eslint/parser": "^4.21.0",
         "bootstrap": "^4.6.0",
         "connected-react-router": "^6.9.1",
         "graphql": "^15.5.0",
