@@ -195,7 +195,9 @@ def delete_helper(username: str) -> Dict[str, Union[int, Optional[str]]]:
     return {"status": SUCCESS, "error": None}
 
 
-def reset_password_helper(username: str, password: str, encrypted_config_token: str) -> Dict[str, int]:
+def reset_password_helper(
+    username: str, password: str, encrypted_config_token: str
+) -> Dict[str, int]:
     """Updates the password for a user in the users SQL table
 
     Args:
