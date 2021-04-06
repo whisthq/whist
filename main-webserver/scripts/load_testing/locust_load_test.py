@@ -52,6 +52,8 @@ class LoadTestUser(locust.HttpUser):
     available_user_num = 0
     # number of users that have finished.
     num_finished = 0
+    # a user had an exception
+    user_fail = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,6 +67,7 @@ class LoadTestUser(locust.HttpUser):
         try:
             self._on_start()
         except:
+            LoadTestUser.user_fail = True
             self.on_stop()
 
     def _on_start(self):
@@ -74,6 +77,7 @@ class LoadTestUser(locust.HttpUser):
         1. Make request for a container
         2. Poll until it is available
         """
+        raise ValueError("ok")
         task_id = None
         for _ in range(60):
             resp = self.try_assign_request()
@@ -113,6 +117,8 @@ class LoadTestUser(locust.HttpUser):
         # We do this as a workaround
         self.add_task_finished()
         if self.get_num_finished() == TOTAL_USERS:
+            # nonzero exit code if a user failed
+            self.environment.process_exit_code = 1 if LoadTestUser.user_fail is True else 0
             self.environment.runner.quit()
 
     def add_task_finished(self):

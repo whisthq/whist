@@ -62,8 +62,6 @@ jobs:
 
                   from scripts.misc_scripts import login  
                   from scripts.load_testing.load_test_management import (
-                      create_load_test_cluster,
-                      delete_load_test_cluster,
                       upgrade_webserver,
                       downgrade_webserver,
                   )
@@ -85,16 +83,8 @@ jobs:
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # --- Setup load test --- #
-                  # Create the cluster used for load testing
-                  create_load_test_cluster(WEBSERVER_URL, TOKEN)
-
                   # Upgrade the heroku app for prod-like use
                   upgrade_webserver(HEROKU_APP_NAME)
-
-                  # wait 5 minutes for the ASGs/capacity providers to prepare
-                  # TODO: fix bug in calling run_task right after cluster is created
-                  # https://tryfractal.slack.com/archives/C01KLRUMYEL/p1616478131017600
-                  time.sleep(60 * 5)
 
                   try:
                     # Until we fix high initial task latency, we need to do one lambda invocation
@@ -105,24 +95,14 @@ jobs:
                     # Use AWS lambda to run a distributed load test
                     run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
 
-                    # Analyze the load test and save the results to the db
-                    analyze_load_test(RUN_ID, DB_URI)
-
                   except Exception as e:
-                    print(f"Load test failed with exception {e}")
+                    # we just need the finally block to run before exiting badly
+                    raise e
                     
                   finally:
                     # --- Cleanup load test --- #
                     # run this always; restores webserver to its original state
                     downgrade_webserver(HEROKU_APP_NAME)
-
-                  # run this only if load test succeeded, otherwise keep up for debugging
-                  try:
-                    time.sleep(60 * 2) # sleep for 2 minutes so tasks auto-delete, then delete cluster
-                    # TODO: when delete_cluster is not broken on staging, remove this try/except
-                    delete_load_test_cluster(WEBSERVER_URL, TOKEN)
-                  except Exception as e:
-                    print(f"delete_cluster got exception {e}")
 
             - name: Notify Slack on success
               run: |
@@ -140,5 +120,5 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`. Investigate ASAP.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}

@@ -51,5 +51,5 @@ def run_local_load_test(web_url: str, admin_token: str, num_reqs: int):
         f"--headless --csv={csv_path} --only-summary"
     )
     ret = subprocess.run(cmd, shell=True)
-
+    assert ret.returncode == 0, "Failed to run a local load test."
     print("Successfully ran a local load test.")
