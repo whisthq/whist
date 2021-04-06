@@ -64,8 +64,7 @@ Consistency is a key design goal of this project. It should be easy to choose a 
 
 A good indication of well-organized functions is visual consistency. Functions on the same level of abstraction that return similar data will often look similar, especially if they don't do too much and use consistent parameter names. In fact, visual coherence is so important that we often carefully pick names that have the same letter count. For example:
 
-    ```js
-
+```js
 import {
 containerInfoRequest,
 containerInfoSuccess,
@@ -75,7 +74,6 @@ containerInfoWarning,
 containerInfoProcess,
 containerInfoPolling,
 } from "@app/observables/container"
-
 ```
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
