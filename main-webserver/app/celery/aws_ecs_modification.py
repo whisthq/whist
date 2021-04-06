@@ -17,10 +17,7 @@ from app.models import (
     SupportedAppImages,
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
-from app.celery.aws_celery_exceptions import (
-    InvalidArguments,
-    InvalidAppId,
-)
+from app.celery.aws_celery_exceptions import InvalidArguments, InvalidAppId, InvalidCluster
 
 
 @shared_task(bind=True)
@@ -289,31 +286,17 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
     factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
 
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-    cluster_data = ecs_client.describe_cluster(cluster)
-    keys = [
-        "runningTasksCount",
-        "pendingTasksCount",
-        "registeredContainerInstancesCount",
-    ]
-    for k in keys:
-        if k not in cluster_data:
-            raise ValueError(
-                f"Expected key {k} in AWS describle_cluster API response. Got: {cluster_data}"
-            )
+    cluster_data = ClusterInfo.query.get(cluster)
+    if cluster_data is None:
+        raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
 
-    num_tasks = cluster_data["runningTasksCount"] + cluster_data["pendingTasksCount"]
-    num_instances = cluster_data["registeredContainerInstancesCount"]
+    num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
+    num_instances = cluster_data.registeredContainerInstancesCount
     expected_num_instances = math.ceil(num_tasks / factor)
     # expected_num_instances must be >= cluster_data.minContainers
     expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
     # expected_num_instances must be <= cluster_data.maxContainers
     expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
-
-    asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
-    if len(asg_list) != 1:
-        raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
-    asg = asg_list[0]
 
     if expected_num_instances == num_instances:
         self.update_state(
@@ -325,10 +308,18 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         return
     elif expected_num_instances > num_instances:
         # scale up detected
+        ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+        asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
+        if len(asg_list) != 1:
+            raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
+        asg = asg_list[0]
         ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
     else:
-        # scale down detected; this is more complex as we need to make sure there are containers
-        # with no tasks. This is because we discovered AWS will kill instances that have tasks
-        # without warning us. Until we strip out ASGs entirely from our infrastructure, we
-        # cannot scale down.
+        # scale down detected; this is cannot be handled via the ASG interface because we
+        # discovered AWS will kill instances that have tasks without warning us. Until we
+        # strip out ASGs entirely from our infrastructure, we must:
+        # 1. manually inspect all instances and see how many tasks are on them
+        # 2. specifically kill the instances with no tasks
+        # this has a race condition between 1 and 2 and a task being assigned, which we
+        # need to accept for now
         pass
