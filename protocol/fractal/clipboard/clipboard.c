@@ -23,7 +23,7 @@ void init_clipboard(bool is_client) {
     unsafe_init_clipboard();
 }
 
-bool is_local_clipboard_preserved() {
+bool should_preserve_local_clipboard() {
     /*
         Returns whether the local clipboard should be preserved.
         The client should preserve its local clipboard by sharing
