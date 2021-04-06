@@ -10,14 +10,17 @@ import Error from "@app/renderer/pages/error"
 import {
     AuthErrorTitle,
     AuthErrorText,
-    ContainerErrorTitle,
-    ContainerErrorText,
+    ContainerCreateErrorTitle,
+    ContainerCreateErrorText,
+    ContainerAssignErrorTitle,
+    ContainerAssignErrorText,
     ProtocolErrorTitle,
     ProtocolErrorText,
     WindowHashAuth,
     WindowHashUpdate,
     WindowHashAuthError,
-    WindowHashContainerError,
+    WindowHashCreateContainerError,
+    WindowHashAssignContainerError,
     WindowHashProtocolError,
     NavigationErrorTitle,
     NavigationErrorText,
@@ -67,11 +70,19 @@ const RootComponent = () => {
                 onClick={errorContinue}
             />
         )
-    if (show === WindowHashContainerError)
+    if (show === WindowHashCreateContainerError)
         return (
             <Error
-                title={ContainerErrorTitle}
-                text={ContainerErrorText}
+                title={ContainerCreateErrorTitle}
+                text={ContainerCreateErrorText}
+                onClick={errorContinue}
+            />
+        )
+    if (show === WindowHashAssignContainerError)
+        return (
+            <Error
+                title={ContainerAssignErrorTitle}
+                text={ContainerAssignErrorText}
                 onClick={errorContinue}
             />
         )

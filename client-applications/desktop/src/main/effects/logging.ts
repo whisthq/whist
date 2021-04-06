@@ -57,11 +57,11 @@ s.signupFailure.subscribe((err) =>
 )
 
 c.containerCreateFailure.subscribe((err) =>
-    logError("containerCreateFailure", "Could create container", err)
+    logError("containerCreateFailure", "Could not create container", err)
 )
 
 c.containerAssignFailure.subscribe((err) =>
-    logError("containerAssignFailure", "Could assign container", err)
+    logError("containerAssignFailure", "Could not assign container", err)
 )
 
 h.hostInfoFailure.subscribe((err) =>

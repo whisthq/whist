@@ -16,6 +16,7 @@ import {
 } from "@app/utils/container"
 import { userEmail, userAccessToken } from "@app/main/observables/user"
 import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom } from "@app/utils/observables"
 import { from, of, interval, merge } from "rxjs"
@@ -32,7 +33,7 @@ import {
     takeWhile,
 } from "rxjs/operators"
 
-export const containerCreateRequest = loginSuccess.pipe(
+export const containerCreateRequest = merge(loginSuccess, signupSuccess).pipe(
     withLatestFrom(userEmail, userAccessToken),
     map(([_, email, token]) => [email, token])
 )
