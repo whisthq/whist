@@ -68,12 +68,18 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
 # Swap in custom userChrome.css file
+# COPY chrome /home/fractal/.mozilla/firefox/chrome
+# COPY user.js /home/fractal/.mozilla/firefox/
+# COPY setup_style.sh /home/fractal/.mozilla/firefox
+# RUN chmod +x setup_style.sh
+
+# ______________ TRASH ________________
 # RUN sudo chmod -R 777 /home/fractal/.mozilla/
 # ADD userChrome.css /home/fractal/.mozilla/firefox/w8cqs9vm.default-release/chrome
 
 # RUN echo $(su - fractal -c "ls -p /home/fractal/.mozilla")
 # RUN mkdir /home/fractal/.cache/.mozilla/firefox/chrome
-RUN su - root -c 'echo $(find /home/fractal/.mozilla/firefox/ -name "*.default-release")'
+# RUN su - root -c 'name=$(find /home/fractal/.mozilla/firefox/ -name "*.default-release")'
 # ADD chrome /home/fractal/.mozilla/firefox/${name}/chrome
 # RUN su - root -c "mv /home/fractal/.mozilla/firefox/chrome /home/fractal/.mozilla/firefox/*.default-release"
 # COPY user.js /home/fractal/.mozilla/firefox/
