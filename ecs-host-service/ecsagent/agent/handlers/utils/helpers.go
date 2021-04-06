@@ -17,9 +17,9 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger/audit"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger/audit/request"
-	"github.com/cihub/seelog"
 	"github.com/gorilla/mux"
 )
 

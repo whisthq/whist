@@ -26,10 +26,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
 
 	"github.com/pkg/errors"
 )

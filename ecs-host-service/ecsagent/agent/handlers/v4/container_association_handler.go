@@ -20,9 +20,9 @@ import (
 
 	v3 "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/v3"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/handlers/utils"
-	"github.com/cihub/seelog"
 )
 
 const (

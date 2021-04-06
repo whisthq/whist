@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/ttime"
 	"github.com/cihub/seelog"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/ttime"
 	"github.com/pkg/errors"
 )
 

@@ -31,12 +31,12 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/gpu"
 	ssmfactory "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ssm/factory"
 
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
 	cgroup "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/cgroup/control"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/ioutilwrapper"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 )
 

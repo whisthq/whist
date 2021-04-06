@@ -21,9 +21,9 @@ package mock_stats
 import (
 	reflect "reflect"
 
+	types "github.com/docker/docker/api/types"
 	stats "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats"
 	ecstcs "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/tcs/model/ecstcs"
-	types "github.com/docker/docker/api/types"
 	gomock "github.com/golang/mock/gomock"
 )
 

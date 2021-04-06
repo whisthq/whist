@@ -23,6 +23,9 @@ import (
 	"github.com/cihub/seelog"
 	"github.com/pkg/errors"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
+	"github.com/aws/aws-sdk-go/service/secretsmanager"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
@@ -31,9 +34,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
 	resourcestatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/status"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
 )
 
 const (

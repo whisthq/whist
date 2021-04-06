@@ -22,10 +22,10 @@ import (
 	"errors"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/cihub/seelog"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
 )
 
 // clientServer implements ClientServer for acs.

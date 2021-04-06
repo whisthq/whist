@@ -18,8 +18,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/cihub/seelog"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

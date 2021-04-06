@@ -19,9 +19,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/tcs/model/ecstcs"
 	"github.com/cihub/seelog"
 	"github.com/docker/docker/api/types"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/tcs/model/ecstcs"
 )
 
 const (

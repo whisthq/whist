@@ -19,8 +19,8 @@ import (
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 
-	bolt "go.etcd.io/bbolt"
 	"github.com/pkg/errors"
+	bolt "go.etcd.io/bbolt"
 )
 
 // SaveDockerContainer saves a docker container to the container bucket.

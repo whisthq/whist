@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api"
 	apicontainer "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container"
 	apicontainerstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/container/status"
@@ -25,7 +26,6 @@ import (
 	apitaskstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
-	"github.com/cihub/seelog"
 )
 
 // a state change that may have a container and, optionally, a task event to

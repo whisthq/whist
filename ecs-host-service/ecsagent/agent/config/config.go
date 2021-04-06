@@ -23,11 +23,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cihub/seelog"
 	apierrors "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/errors"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ec2"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
-	"github.com/cihub/seelog"
 )
 
 const (

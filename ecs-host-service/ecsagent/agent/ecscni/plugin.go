@@ -22,11 +22,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger"
 	"github.com/cihub/seelog"
 	"github.com/containernetworking/cni/libcni"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
 	"github.com/containernetworking/cni/pkg/types/current"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/logger"
 	"github.com/pkg/errors"
 )
 

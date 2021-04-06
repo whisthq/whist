@@ -18,6 +18,8 @@ package app
 import (
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
@@ -25,8 +27,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/volume"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/cihub/seelog"
 )
 
 const (

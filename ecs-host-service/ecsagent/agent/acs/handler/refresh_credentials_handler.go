@@ -17,12 +17,12 @@ import (
 
 	"context"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/cihub/seelog"
 )
 
 // refreshCredentialsHandler represents the refresh credentials operation for the ACS client

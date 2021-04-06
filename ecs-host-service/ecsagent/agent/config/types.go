@@ -16,8 +16,8 @@ package config
 import (
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 )
 
 // ImagePullBehaviorType is an enum variable type corresponding to different agent pull

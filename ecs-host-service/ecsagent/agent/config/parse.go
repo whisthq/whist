@@ -22,9 +22,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/cihub/seelog"
 	cnitypes "github.com/containernetworking/cni/pkg/types"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 )
 
 func parseCheckpoint(dataDir string) BooleanDefaultFalse {

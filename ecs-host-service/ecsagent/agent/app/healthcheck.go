@@ -17,8 +17,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/sighandlers/exitcodes"
 	"github.com/cihub/seelog"
+	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/sighandlers/exitcodes"
 )
 
 // runHealthcheck runs the Agent's healthcheck

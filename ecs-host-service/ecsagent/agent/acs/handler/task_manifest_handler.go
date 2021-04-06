@@ -17,14 +17,14 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 	apitask "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task"
 	apitaskstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/wsclient"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/cihub/seelog"
 )
 
 // taskManifestHandler handles task manifest message for the ACS client

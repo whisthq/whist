@@ -21,8 +21,8 @@ package mock_control
 import (
 	reflect "reflect"
 
-	control "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/cgroup/control"
 	cgroups "github.com/containerd/cgroups"
+	control "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/cgroup/control"
 	gomock "github.com/golang/mock/gomock"
 )
 
