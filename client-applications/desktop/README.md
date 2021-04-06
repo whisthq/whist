@@ -16,7 +16,7 @@ We use TypeScript for both processes, which is bundled and compiled to JavaScrip
 
 The Electron "renderer" process runs in a web browser environment. You'll feel right at home if you have web dev experience, as the renderer process has an identical API to Google Chrome. The renderer process is fully capable of performing HTTP requests and bundling NodeJS dependencies, and many applications rely on it for much of their functionality.
 
-However, the Fractal client application uses the renderer very minimally. As an architectural decision, we've decided to keep the renderer process as "dumb" as possible. It holds very little logic or state, and is essentially a "view" layer for the main process. 
+However, the Fractal client application uses the renderer very minimally. As an architectural decision, we've decided to keep the renderer process as "dumb" as possible. It holds very little logic or state, and is essentially a "view" layer for the main process.
 
 Applications can become tricky to manage when there's two "brains". It becomes unclear what computation should happen where, and keeping state in sync becomes a major challenge. Because the renderer process has no ability to launch child process, manage windows, or work with the filesystem, we decided to make the main process the "brain" of the app.
 
@@ -36,7 +36,7 @@ The Electron "main" process runs in a NodeJS environment, and has full access to
 
 The backbone of our main process is a reactive event loop managed by [RxJS](https://rxjs-dev.firebaseapp.com/guide/overview). It's useful to visualize each cycle of the event loop as a "stream" of data flowing in one direction. It's also useful to think of it as a story with a beginning, a middle, and an end.
 
-"Events" are the beginning of the story. Events create the data that flows through the event loop. Major events include Electron lifecycle events (`appReady`,  `appQuit`, etc.), and events related to user input (button clicks, input submit, etc). As the user interacts with the renderer process, data is sent through IPC back to the main process, where the new data is processed as a "event". Anytime there is a new event with data, the application event loop comes to life and reacts to it.
+"Events" are the beginning of the story. Events create the data that flows through the event loop. Major events include Electron lifecycle events (`appReady`, `appQuit`, etc.), and events related to user input (button clicks, input submit, etc). As the user interacts with the renderer process, data is sent through IPC back to the main process, where the new data is processed as a "event". Anytime there is a new event with data, the application event loop comes to life and reacts to it.
 
 "Effects" are the end of the story. Effects take incoming data, and perform some sort of side-effect that changes the state of the world. This might include creating GUI windows, sending state over IPC, or quitting the application. Nothing is done with the return value of an Effect function. When it receives new "upstream" data, it shouts a command out into the void and waits for new data.
 
@@ -46,7 +46,7 @@ The backbone of our main process is a reactive event loop managed by [RxJS](http
 
 An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables. Data flows through this "chain" of computation until it gets to an Effect, which uses the data to change something in the environment.
 
-The interaction of observables creates room for rich expression of control flow. Observables can accept "upstream" data with a fine degree of control over timing and parallelism. They can transform, filter, and join other observables to create new data structures. They are a higher-level abstraction of asynchrony than Promises, and allow us to focus on the "rules" that drive the order of computation within our system. 
+The interaction of observables creates room for rich expression of control flow. Observables can accept "upstream" data with a fine degree of control over timing and parallelism. They can transform, filter, and join other observables to create new data structures. They are a higher-level abstraction of asynchrony than Promises, and allow us to focus on the "rules" that drive the order of computation within our system.
 
 Observables are a concept of functional reactive programming, and are the main structure introduced by RxJS. Rx can be intimidating. The library has a huge API of utilities for creating and manipulating observables, and there's a natual learning curve that comes with starting to think about time-based streams of data. Once things start to click, the Rx standard library becomes a powerful tool, and it becomes very fast to implement complex behavior that can is otherwise unwiedly to write in an imperative style.
 
@@ -64,16 +64,18 @@ Consistency is a key design goal of this project. It should be easy to choose a 
 
 A good indication of well-organized functions is visual consistency. Functions on the same level of abstraction that return similar data will often look similar, especially if they don't do too much and use consistent parameter names. In fact, visual coherence is so important that we often carefully pick names that have the same letter count. For example:
 
-```js
+    ```js
+
 import {
-    containerInfoRequest,
-    containerInfoSuccess,
-    containerInfoFailure,
-    containerInfoLoading,
-    containerInfoWarning,
-    containerInfoProcess,
-    containerInfoPolling,
+containerInfoRequest,
+containerInfoSuccess,
+containerInfoFailure,
+containerInfoLoading,
+containerInfoWarning,
+containerInfoProcess,
+containerInfoPolling,
 } from "@app/observables/container"
+
 ```
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
@@ -83,4 +85,9 @@ Subscribers to observables can live anywhere in your codebase, which allows for 
 
 You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
 
+<<<<<<< Updated upstream
 A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
+=======
+A handy file during development is `main/debug.ts`. When the environemnt variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
+```
+>>>>>>> Stashed changes
