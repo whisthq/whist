@@ -40,7 +40,7 @@ bool unsafe_has_clipboard_updated() {
 
     int new_clipboard_sequence_number = get_clipboard_changecount();
     if (new_clipboard_sequence_number > last_clipboard_sequence_number) {
-        if (is_clipboard_a_client()) {
+        if (is_local_clipboard_preserved()) {
             // check if new clipboard is an image or a string
             clipboard_has_image = check_clipboard_has_image();
             clipboard_has_string = check_clipboard_has_string();
