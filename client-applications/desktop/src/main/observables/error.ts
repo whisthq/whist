@@ -12,6 +12,7 @@ import { signupFailure } from "@app/main/observables/signup"
 import {
     createAuthErrorWindow,
     createContainerErrorWindow,
+    assignContainerErrorWindow,
     createProtocolErrorWindow,
 } from "@app/utils/windows"
 import {
@@ -29,7 +30,7 @@ export const errorWindowRequest = merge(
     loginFailure.pipe(mapTo(createAuthErrorWindow)),
     signupFailure.pipe(mapTo(createAuthErrorWindow)),
     containerCreateFailure.pipe(mapTo(createContainerErrorWindow)),
-    containerAssignFailure.pipe(mapTo(createContainerErrorWindow)),
+    containerAssignFailure.pipe(mapTo(assignContainerErrorWindow)),
     protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
 ).pipe(
     withLatestFrom(eventAppReady),

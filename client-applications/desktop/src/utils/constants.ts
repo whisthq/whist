@@ -16,7 +16,9 @@ export const WindowHashUpdate = "UPDATE"
 
 export const WindowHashAuthError = "AUTH_ERROR"
 
-export const WindowHashContainerError = "CONTAINER_ERROR"
+export const WindowHashCreateContainerError = "CREATE_CONTAINER_ERROR"
+
+export const WindowHashAssignContainerError = "ASSIGN_CONTAINER_ERROR"
 
 export const WindowHashProtocolError = "PROTOCOL_ERROR"
 
@@ -25,10 +27,16 @@ export const AuthErrorTitle = "There was an error logging you in."
 export const AuthErrorText =
     "Try again in a few minutes, or contact support@fractal.co for help."
 
-export const ContainerErrorTitle =
+export const ContainerCreateErrorTitle =
     "There was an error connecting to the Fractal servers."
 
-export const ContainerErrorText =
+export const ContainerCreateErrorText =
+    "Try again in a few minutes, or contact support@fractal.co for help."
+
+export const ContainerAssignErrorTitle = 
+    "Fractal servers experienced an unexpected error."
+
+export const ContainerAssignErrorText =
     "Try again in a few minutes, or contact support@fractal.co for help."
 
 export const ProtocolErrorTitle = "The Fractal browser encountered an error."
