@@ -47,6 +47,13 @@ else
     
     export BUILD_NUMBER=$version
 
+    # Create protocol-build folder 
+    rm -f protocol-build
+    mkdir protocol-build 
+    cd protocol-build 
+    mkdir client 
+    cd ..
+
     # Make FractalClient and create its app bundle
     cd ../../protocol
     mkdir -p build-publish
@@ -61,6 +68,7 @@ else
     cp -r ../../protocol/build-publish/client/build64/loading/*.png loading
 
     # Move FractalClient and crashpad_handler over to client-app
+    echo "1"
     cp ../../protocol/client/build64/Darwin/FractalClient "protocol-build/client/ Fractal"
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
 
@@ -68,7 +76,13 @@ else
     cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
     rm -rf ./protocol-build/client/loading
 
+    echo "2"
     mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
+
+    if [ -f ./protocol-build/client/Fractal ]; then
+        rm -rf ./protocol-build/client/Fractal
+        echo "Fractal exe cleaned"
+    fi
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
