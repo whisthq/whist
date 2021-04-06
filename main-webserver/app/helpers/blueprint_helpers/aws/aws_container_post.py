@@ -1,5 +1,6 @@
 from sqlalchemy.exc import DBAPIError
 
+from app.constants.container_state_values import CANCELLED, FAILURE
 from app.constants.http_codes import (
     NOT_FOUND,
     BAD_REQUEST,
@@ -198,4 +199,15 @@ def check_if_live(user_id: str) -> bool:
 
     Returns: True if the user has a live container in the db
     """
-    return len(UserContainerState.query.filter_by(user_id=user_id).limit(1).all()) > 0
+    return (
+        len(
+            UserContainerState.query.filter(
+                UserContainerState.user_id == user_id,
+                UserContainerState.state != FAILURE,
+                UserContainerState.state != CANCELLED,
+            )
+            .limit(1)
+            .count()
+        )
+        > 0
+    )
