@@ -15,6 +15,7 @@ import csv
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
 import locust
+import gevent
 
 from scripts.load_testing.load_test_utils import (
     LOAD_TEST_CLUSTER_REGION,
@@ -60,6 +61,19 @@ class LoadTestUser(locust.HttpUser):
         LoadTestUser.available_user_num += 1
 
     def on_start(self):
+        # exceptions do not automatically run on_stop, so we do this as a workaround
+        try:
+            self._on_start()
+        except:
+            self.on_stop()
+
+    def _on_start(self):
+        """
+        Does two things:
+
+        1. Make request for a container
+        2. Poll until it is available
+        """
         task_id = None
         for _ in range(60):
             resp = self.try_assign_request()
@@ -77,6 +91,9 @@ class LoadTestUser(locust.HttpUser):
         poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=300, sleep_time=1.0)
 
     def try_assign_request(self):
+        """
+        Makes a request to /aws_container/assign_container
+        """
         payload = {
             "task_definition_arn": get_task_definition_arn(WEB_URL),
             "cluster_name": None,  # None means a cluster is chosen, like in /container/assign
@@ -85,17 +102,22 @@ class LoadTestUser(locust.HttpUser):
         }
         return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
 
-    # def on_stop(self):
-    #     # Locust (for some reason) does not neatly support stopping the test after
-    #     # all users finish. See https://github.com/locustio/locust/issues/567.
-    #     # We do this as a workaround
-    #     self.add_task_finished()
-    #     if self.get_num_finished() == TOTAL_USERS:
-    #         self.environment.runner.quit()
+    @locust.task
+    def do_nothing(self):
+        # indicates this user is done doing work; transitions user to on_stop
+        raise locust.exception.StopUser()
 
-    # def add_task_finished(self):
-    #     # no need for lock, see documentation for num_finished
-    #     LoadTestUser.num_finished += 1
+    def on_stop(self):
+        # Locust (for some reason) does not neatly support stopping the test after
+        # all users finish/error out. See https://github.com/locustio/locust/issues/567.
+        # We do this as a workaround
+        self.add_task_finished()
+        if self.get_num_finished() == TOTAL_USERS:
+            self.environment.runner.quit()
 
-    # def get_num_finished(self):
-    #     return LoadTestUser.num_finished
+    def add_task_finished(self):
+        # no need for lock, see documentation for LoadTestUser.num_finished
+        LoadTestUser.num_finished += 1
+
+    def get_num_finished(self):
+        return LoadTestUser.num_finished
