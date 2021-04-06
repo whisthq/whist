@@ -73,7 +73,7 @@ import {
     containerInfoWarning,
     containerInfoProcess,
     containerInfoPolling,
-} from "@app/observables/conainer"
+} from "@app/observables/container"
 ```
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
