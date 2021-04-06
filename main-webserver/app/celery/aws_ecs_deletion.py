@@ -8,6 +8,7 @@ from flask import current_app
 from app.celery.aws_ecs_modification import manual_scale_cluster
 from app.exceptions import ClusterNotIdle
 
+from app.helpers.blueprint_helpers.aws.container_state import container_state_obj
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
@@ -43,6 +44,7 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
         container = ensure_container_exists(
             UserContainer.query.with_for_update().get(container_name)
         )
+
     except Exception as error:
         message = f"Container {container_name} was not in the database."
         fractal_logger.error(
@@ -88,8 +90,9 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
             },
         )
         ecs_client.spin_til_done(offset=0)
-
+    container_state_row = container_state_obj(user_id=container_user)
     db.session.delete(container)
+    db.session.delete(container_state_row)
     db.session.commit()
 
     cluster_info = ClusterInfo.query.get(container_cluster)
