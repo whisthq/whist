@@ -313,7 +313,6 @@ CREATE TABLE hardware.user_containers (
     container_id character varying NOT NULL,
     ip character varying NOT NULL,
     location character varying NOT NULL,
-    os character varying NOT NULL,
     state character varying NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,

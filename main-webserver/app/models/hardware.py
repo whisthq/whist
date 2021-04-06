@@ -16,7 +16,6 @@ class UserContainer(db.Model):
         ip (string): ip address of the ECS container instance (i.e. EC@ instance) on which the
             container is running
         location (string): AWS region of the container
-        os (string): Container operating system
         state (string): Container state, either [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE,
             DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, DELETING, CREATING, RESTARTING, STARTING]
         user_id (string): User ID, typically email
@@ -48,7 +47,6 @@ class UserContainer(db.Model):
     container_id = db.Column(db.String(250), primary_key=True, unique=True)
     ip = db.Column(db.String(250), nullable=False)
     location = db.Column(db.String(250), nullable=False)
-    os = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.ForeignKey("users.user_id"), nullable=True)
     user = relationship("User", back_populates="containers")
