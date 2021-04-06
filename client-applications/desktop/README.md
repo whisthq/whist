@@ -42,6 +42,8 @@ The backbone of our main process is a reactive event loop managed by [RXJS](http
 
 "Observables" are the middle of the story. Observables represent the chain of computation between Events and Effects, and are the most important part of the main process architecture. Events and Effects have no state, little control flow, and generally don't do very much. This makes them easily testable and highly resuable. Our architecture places all of our key logic and state within observables, which provide a high-level abstraction over the scheduling of asynchronous events.
 
+#### Observables and RxJS
+
 An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables. Data flows through this "chain" of computation until it gets to an Effect, which uses the data to change something in the environment.
 
 The interaction of observables creates room for rich expression of control flow. Observables can accept "upstream" data with a fine degree of control over timing and parallelism. They can transform, filter, and join other observables to create new data structures. They are a higher-level abstraction of asynchrony than Promises, and allow us to focus on the "rules" that drive the order of computation within our system. 
