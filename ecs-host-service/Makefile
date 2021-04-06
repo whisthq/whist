@@ -78,10 +78,10 @@ format:
 
 lint: build
 	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
-	golint -set_exit_status ./...
+	go list ./... | grep -v /agent/ | xargs golint -set_exit_status
 
 vet: build
-	go vet ./...
+	go list ./... | grep -v /agent/ | xargs go vet
 
 # Note that we should build before we lint or vet, since build updates the fractal dependencies.
 .NOTPARALLEL:
