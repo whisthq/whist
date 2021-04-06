@@ -103,7 +103,7 @@ const environment = {
 }
 
 const getDevelopmentEnv = () => {
-    switch (import.meta.env.DEVELOPMENT_ENV) {
+    switch (process.env.DEVELOPMENT_ENV) {
         case FractalCIEnvironment.LOCAL:
             return environment.LOCAL
         default:
@@ -112,7 +112,7 @@ const getDevelopmentEnv = () => {
 }
 
 const getProductionEnv = () => {
-    switch (import.meta.env.PRODUCTION_ENV) {
+    switch (process.env.PRODUCTION_ENV) {
         case FractalCIEnvironment.DEVELOPMENT:
             return environment.DEVELOPMENT
         case FractalCIEnvironment.STAGING:
@@ -125,7 +125,7 @@ const getProductionEnv = () => {
 }
 
 export const config =
-    import.meta.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
         ? getDevelopmentEnv()
         : getProductionEnv()
 

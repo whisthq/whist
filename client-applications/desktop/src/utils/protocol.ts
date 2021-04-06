@@ -1,18 +1,27 @@
+import { app } from "electron"
+import path from "path"
 import { spawn, ChildProcess } from "child_process"
+
+import { logDebug } from "@app/utils/logging"
 
 // Temporarily pointing to the executable already installed in my applications
 // folder so that I have something to launch.
 //
 // const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 //
-// const getProtocolName = () => {
-//     if (process.platform !== "darwin") return "Fractal.exe"
-//     if (app.isPackaged) return "./FractalClient"
-//     return "./Fractal"
-// }
+const getProtocolName = () => {
+    if (process.platform !== "darwin") return "Fractal.exe"
+    return "./ Fractal"
+}
 
-// const protocolPath = path.join(app.getAppPath(), getProtocolName())
-const protocolPath = "./protocol-build/client/Fractal"
+export const protocolFolder = path
+    .join(app.getAppPath(), app.isPackaged ? "MacOS" : "protocol-build/client")
+    .replace("build/dist/main/", "")
+    .replace("Resources/app.asar/", "")
+
+export const protocolPath = path.join(protocolFolder, getProtocolName())
+
+logDebug("PROTOCOL PATH IS", protocolPath)
 
 export const serializePorts = (ps: {
     port_32262: number

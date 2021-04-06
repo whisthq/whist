@@ -48,11 +48,13 @@ else
     export BUILD_NUMBER=$version
 
     # Create protocol-build folder 
-    rm -f protocol-build
-    mkdir protocol-build 
-    cd protocol-build 
-    mkdir client 
-    cd ..
+    if [[ -f protocol-build ]]; then
+        rm -f protocol-build
+        mkdir protocol-build 
+        cd protocol-build 
+        mkdir client 
+        cd ..
+    fi
 
     # Make FractalClient and create its app bundle
     cd ../../protocol

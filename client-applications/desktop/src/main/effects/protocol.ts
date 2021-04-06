@@ -5,12 +5,18 @@
  */
 
 import { zip } from "rxjs"
-import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
+import path from "path"
+
+import { protocolStreamInfo, protocolStreamKill, protocolFolder } from "@app/utils/protocol"
 import {
     protocolLaunchProcess,
     protocolLaunchSuccess,
     protocolLaunchFailure,
+    protocolCloseRequest
 } from "@app/main/observables/protocol"
+import {
+    uploadToS3
+} from "@app/utils/logging"
 
 // Streaming information to protocol
 // Stream the ip, secret_key, and ports info to the protocol when we
@@ -26,5 +32,7 @@ zip(
     protocolLaunchProcess,
     protocolLaunchFailure
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))
+
+// protocolCloseRequest.subscribe(() => uploadToS3())
 
 

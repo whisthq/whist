@@ -26,7 +26,7 @@ const formatUserID = (userID: string) => {
     return userID ? userID : "No user ID"
 }
 
-enum LogLevel {
+export enum LogLevel {
     DEBUG = "DEBUG",
     ERROR = "ERROR",
 }
