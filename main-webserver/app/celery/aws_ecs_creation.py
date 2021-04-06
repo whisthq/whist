@@ -12,6 +12,7 @@ from requests import ConnectionError, Timeout, TooManyRedirects
 
 from app.maintenance.maintenance_manager import maintenance_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
+from app.celery.aws_ecs_modification import manual_scale_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -813,6 +814,10 @@ def _assign_container(
         logged_event_container_assigned(
             base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
         )
+
+    # trigger celery task to see if manual scaling should be done
+    manual_scale_cluster.delay(cluster_name, region_name)
+
     return user_container_schema.dump(base_container)
 
 
@@ -944,6 +949,9 @@ def prewarm_new_container(
             logged_event_container_prewarmed(
                 container.container_id, cluster_name, username="prewarm", time_taken=task_time_taken
             )
+
+        # trigger celery task to see if manual scaling should be done
+        manual_scale_cluster.delay(cluster_name, region_name)
 
         return user_container_schema.dump(container)
     else:
