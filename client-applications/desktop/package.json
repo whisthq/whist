@@ -127,7 +127,7 @@
         }
     ],
     "dependencies": {
-        "@apollo/client": "^3.2.4",
+        "@apollo/client": "^3.3.14",
         "@hot-loader/react-dom": "^16.11.0",
         "@sentry/electron": "^2.4.0",
         "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
