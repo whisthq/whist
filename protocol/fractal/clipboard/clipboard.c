@@ -2,27 +2,39 @@
 #include <fractal/core/fractal.h>
 
 SDL_mutex* mutex;
-bool is_client_clipboard = false;
+bool preserve_local_clipboard = false;
 
 void init_clipboard(bool is_client) {
+    /*
+        Intialize clipboard
+
+        Arguments:
+            is_client (bool): true if client, false if server.
+    */
+
     if (mutex) {
         LOG_ERROR("Clipboard is being initialized twice!");
         return;
     }
-    is_client_clipboard = is_client;
+    // If the caller is the client, then the clipboard state
+    //     should be preserved for the shared clipboard state.
+    preserve_local_clipboard = is_client;
     mutex = safe_SDL_CreateMutex();
     unsafe_init_clipboard();
 }
 
-bool is_clipboard_a_client() {
+bool is_local_clipboard_preserved() {
     /*
-        Returns whether the clipboard is a client or server
+        Returns whether the local clipboard should be preserved.
+        The client should preserve its local clipboard by sharing
+        the current clipboard state with the server. The server
+        should not preserve its local clipboard state.
 
         Returns:
             true if client, false if server
     */
 
-    return is_client_clipboard;
+    return preserve_local_clipboard;
 }
 
 ClipboardData* get_clipboard() {

@@ -104,11 +104,12 @@ Public Functions
 void init_clipboard(bool is_client);
 
 /**
- * @brief                          Returns whether the clipboard is a client or server
+ * @brief                          Returns whether the local clipboard should be preserved
+ *                                 in the shared clipboard between server and client.
  *
  * @returns                        True if client, false if server
  */
-bool is_clipboard_a_client();
+bool is_local_clipboard_preserved();
 
 /**
  * @brief                          Get the current clipboard data
