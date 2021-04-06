@@ -20,19 +20,29 @@ export const webservers: { [key: string]: string } = {
     production: "https://prod-server.fractal.co",
 }
 
+const url = {
+    GOOGLE_REDIRECT_URI: "com.tryfractal.app:/oauth2Callback",
+}
+
+const keys = {
+    GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
+    AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
+    AWS_SECRET_KEY: "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",
+    LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+}
+
 /*
     All environment variables. All secret keys have permission restrictions.
 */
 const environment = {
     LOCAL: {
+        keys,
         url: {
+            ...url,
             WEBSERVER_URL: webservers.local,
-        },
-        keys: {
-            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
-            AWS_SECRET_KEY: "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",
-            LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+            FRONTEND_URL: "http://localhost:3000",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
         },
         deployEnv: "dev",
         sentryEnv: "development",
@@ -44,14 +54,13 @@ const environment = {
         },
     },
     DEVELOPMENT: {
+        keys,
         url: {
+            ...url,
             WEBSERVER_URL: webservers.dev,
-        },
-        keys: {
-            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
-            AWS_SECRET_KEY: "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",
-            LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+            FRONTEND_URL: "https://dev.fractal.co",
+            GRAPHQL_HTTP_URL: "https://dev-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://dev-database.fractal.co/v1/graphql",
         },
         deployEnv: "dev",
         sentryEnv: "development",
@@ -63,14 +72,13 @@ const environment = {
         },
     },
     STAGING: {
+        keys,
         url: {
+            ...url,
             WEBSERVER_URL: webservers.staging,
-        },
-        keys: {
-            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
-            AWS_SECRET_KEY: "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",
-            LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+            FRONTEND_URL: "https://staging.fractal.co",
+            GRAPHQL_HTTP_URL: "https://staging-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://staging-database.fractal.co/v1/graphql",
         },
         deployEnv: "staging",
         sentryEnv: "staging",
@@ -82,14 +90,13 @@ const environment = {
         },
     },
     PRODUCTION: {
+        keys,
         url: {
+            ...url,
             WEBSERVER_URL: webservers.production,
-        },
-        keys: {
-            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
-            AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
-            AWS_SECRET_KEY: "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",
-            LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+            FRONTEND_URL: "https://fractal.co",
+            GRAPHQL_HTTP_URL: "https://prod-database.fractal.co/v1/graphql",
+            GRAPHQL_WS_URL: "wss://prod-database.fractal.co/v1/graphql",
         },
         deployEnv: "prod",
         sentryEnv: "production",
@@ -129,5 +136,5 @@ export const config =
         ? getDevelopmentEnv()
         : getProductionEnv()
 
-
+// default export until we have multiple exports
 export default config
