@@ -2,30 +2,24 @@
  * Copyright Fractal Computers, Inc. 2021
  * @file app.ts
  * @brief This file contains subscriptions to Electron app event emitters observables.
-*/
+ */
 
 import { app } from "electron"
 import { autoUpdater } from "electron-updater"
-import {
-    eventUpdateDownloaded,
-} from "@app/main/events/autoupdate"
+import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
 
 import { eventAppReady, eventAppQuit } from "@app/main/events/app"
 import { zip, race } from "rxjs"
 import {
     closeWindows,
     createAuthWindow,
-    createUpdateWindow
+    createUpdateWindow,
 } from "@app/utils/windows"
-import {
-    userEmail,
-    userAccessToken,
-} from "@app/main/observables/user"
+import { userEmail, userAccessToken } from "@app/main/observables/user"
 import {
     autoUpdateAvailable,
-    autoUpdateNotAvailable 
+    autoUpdateNotAvailable,
 } from "@app/main/observables/autoupdate"
-
 
 // Window opening
 // appReady only fires once, at the launch of the application.
@@ -51,13 +45,12 @@ eventUpdateDownloaded.subscribe(() => {
     autoUpdater.quitAndInstall()
 })
 
-race(
-    autoUpdateAvailable,
-    autoUpdateNotAvailable 
-).subscribe((available: boolean) => {
-    if (available) {
-        closeWindows()
-        autoUpdater.downloadUpdate()
-        createUpdateWindow((win: any) => win.show())
+race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
+    (available: boolean) => {
+        if (available) {
+            closeWindows()
+            autoUpdater.downloadUpdate()
+            createUpdateWindow((win: any) => win.show())
+        }
     }
-})
+)
