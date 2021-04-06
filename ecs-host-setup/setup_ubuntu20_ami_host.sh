@@ -53,7 +53,9 @@ ghcr_uri=ghcr.io
 git_hash=$(git rev-parse HEAD)
 git_branch=$(git rev-parse --abbrev-ref HEAD)
 echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
-docker pull "$ghcr_uri/fractal/$git_branch/browsers/chrome:$git_hash"
+pull_image="$ghcr_uri/fractal/$git_branch/browsers/chrome:$git_hash"
+echo "pulling image: $pull_image"
+docker pull "$pull_image"
 
 echo
 echo "Install complete. Make sure you do not reboot when creating the AMI (check NO REBOOT)"
