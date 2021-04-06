@@ -62,7 +62,7 @@ RUN apt-get update && apt-get install --allow-downgrades --no-install-recommends
 RUN echo export MOZ_USE_XINPUT2=1 | tee /etc/profile.d/use-xinput2.sh
 
 # Create default config paths
-RUN su - fractal -c "mkdir -p /home/fractal/.mozilla"
+RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
