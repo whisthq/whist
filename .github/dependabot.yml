@@ -106,11 +106,11 @@ updates:
   #####################################################
   ################## ECS-Host-Service #################
 
-  - package-ecosystem: "gomod"
-    directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
+  #  - package-ecosystem: "gomod"
+  #    directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
+  #    schedule:
+  #      interval: "monthly" # runs on the first day of each month
+  #    open-pull-requests-limit: 10
 
   #####################################################
   ################### Main-Webserver ##################
