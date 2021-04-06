@@ -40,8 +40,17 @@ type AppName string
 // orders, etc. more effectively.
 type UserID string
 
+// ConfigEncryptionToken is defined as its own type for similar reasons.
 type ConfigEncryptionToken string
+
+// ClientAppAccessToken is defined as its own type for similar reasons.
 type ClientAppAccessToken string
+
+// A SetupEndpoint is either "handleStartValuesRequest", or
+// "handleSetConfigEncryptionTokenRequest".
+// TODO: refactor the container
+// startup logic so we don't need this type at all. If we do absolutely need it
+// (which I doubt), we should define constants for this type.
 type SetupEndpoint string
 
 // FractalContainer represents a container as it is kept track of in this

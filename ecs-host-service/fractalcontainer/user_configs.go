@@ -115,9 +115,8 @@ func (c *containerData) backupUserConfigs() error {
 	//    which is an ignorable error
 	if err != nil && !strings.Contains(string(tarConfigOutput), "file changed") {
 		return logger.MakeError("Could not tar config directory: %s. Output: %s", err, tarConfigOutput)
-	} else {
-		logger.Infof("Tar config directory output: %s", tarConfigOutput)
 	}
+	logger.Infof("Tar config directory output: %s", tarConfigOutput)
 
 	// At this point, config archive must exist: encrypt app config
 	encryptConfigCmd := exec.Command(
