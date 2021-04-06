@@ -40,6 +40,12 @@ def run_local_load_test(web_url: str, admin_token: str, num_reqs: int):
     csv_path = os.path.join(OUTFOLDER, CSV_PREFIX)
     # add admin to environment; load test script will read it
     os.environ["ADMIN_TOKEN"] = admin_token
+    # -u: number of users
+    # -r: users/s generation rate
+    # --host: webserver url
+    # --headless: do not start a local web server showing results
+    # --csv: path to save results
+    # --only-summary: only print result summaries
     cmd = (
         f"locust -f locust_load_test.py -u {num_reqs} -r 10 --host {web_url} "
         f"--headless --csv={csv_path} --only-summary"

@@ -6,7 +6,6 @@ import sys
 import os
 
 
-LOAD_TEST_CLUSTER_NAME = "load_test_cluster"
 LOAD_TEST_CLUSTER_REGION = "us-east-1"
 LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
 

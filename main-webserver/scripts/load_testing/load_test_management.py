@@ -8,79 +8,18 @@ Setup a load test. Supports the following methods:
 """
 import sys
 import os
-import json
-import argparse
 import subprocess
 
-# this adds the load_testing folder to the python path no matter where
+# this adds the load_testing folder oot to the python path no matter where
 # this file is called from. We can now import from `scripts`.
-sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
-import requests
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
 # locally, this is imported from the `scripts` in monorepo
 # in the AWS lambda function, this is imported from the symlinked `scripts`
 # in the load_testing folder
-from scripts.celery_scripts import poll_celery_task
+from scripts.load_testing.load_test_utils import LOAD_TEST_USER_PREFIX
+
 from scripts.utils import make_post_request
-from load_test_core import (
-    LOAD_TEST_CLUSTER_NAME,
-    LOAD_TEST_CLUSTER_REGION,
-    LOAD_TEST_USER_PREFIX,
-)
-
-
-def create_load_test_cluster(web_url: str, admin_token: str):
-    """
-    Make the load testing cluster
-
-    Args:
-        web_url: URL of the webserver to load test
-        admin_token: needed to make the cluster
-
-    Returns:
-        None. Errors out if anything goes wrong.
-    """
-    endpoint = "/aws_container/create_cluster"
-    payload = {
-        "cluster_name": LOAD_TEST_CLUSTER_NAME,
-        "instance_type": "g3.4xlarge",
-        "region_name": LOAD_TEST_CLUSTER_REGION,
-        "max_size": 10,
-        "min_size": 1,
-    }
-    resp = make_post_request(web_url, endpoint, payload=payload, admin_token=admin_token)
-    assert resp.status_code == 202, f"Got bad response code {resp.status_code}, msg: {resp.content}"
-
-    task_id = resp.json()["ID"]
-
-    # errors out on failure
-    poll_celery_task(web_url, task_id, admin_token)
-
-
-def delete_load_test_cluster(web_url: str, admin_token: str):
-    """
-    Delete the load testing cluster.
-
-    Args:
-        web_url: URL of the webserver to load test
-        admin_token: needed to delete the cluster
-
-    Returns:
-        None. Errors out if anything goes wrong.
-    """
-    endpoint = "/aws_container/delete_cluster"
-    payload = {
-        "cluster_name": LOAD_TEST_CLUSTER_NAME,
-        "region_name": LOAD_TEST_CLUSTER_REGION,
-    }
-    resp = make_post_request(web_url, endpoint, payload=payload, admin_token=admin_token)
-    assert resp.status_code == 202, f"Got bad response code {resp.status_code}, msg: {resp.content}"
-
-    task_id = resp.json()["ID"]
-
-    # errors out on failure
-    poll_celery_task(web_url, task_id, admin_token=admin_token)
 
 
 def upgrade_webserver(app_name):
@@ -120,7 +59,7 @@ def downgrade_webserver(app_name):
 
 def make_load_test_user(web_url: str, admin_token: str, user_num: int):
     """
-    Create a user with the name LOAD_TEST_USER_PREFIX.format(user_num=i) for load testing
+    Create a user with the name LOAD_TEST_USER_PREFIX.format(user_num=user_num) for load testing
 
     Args:
         web_url: URL of the webserver to load test
@@ -130,7 +69,7 @@ def make_load_test_user(web_url: str, admin_token: str, user_num: int):
     Returns:
         None. Errors out if anything goes wrong.
     """
-    username = LOAD_TEST_USER_PREFIX.format(user_num=i)
+    username = LOAD_TEST_USER_PREFIX.format(user_num=user_num)
     endpoint = "/account/register"
     payload = {"username": username, "password": username, "name": username, "feedback": username}
     resp = make_post_request(web_url, endpoint, payload=payload, admin_token=admin_token)
