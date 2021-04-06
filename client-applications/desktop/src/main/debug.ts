@@ -28,7 +28,6 @@
 import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
-import { switchMap } from "rxjs/operators"
 import * as login from "@app/main/observables/login"
 import * as host from "@app/main/observables/host"
 import * as signup from "@app/main/observables/signup"
@@ -114,7 +113,11 @@ const schema: DebugSchema = {
         "printing only status, json:",
         (obj) => pick(obj, ["status", "json"]),
     ],
-
+    hostConfigSuccess: [
+        "printing only status, json:",
+        (obj) => pick(obj, ["status", "json"]),
+    ],
+    hostConfigFailure: ["error:"],
     errorRelaunchRequest: ["relaunching app due to error!"],
 }
 
