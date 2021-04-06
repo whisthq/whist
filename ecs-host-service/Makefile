@@ -60,7 +60,7 @@ else
 endif
 
 build: checkCI
-	GOPRIVATE=github.com/fractal $(GOGET) -d github.com/fractal/ecs-agent/agent@djsavvy/roll-in-uinput-go
+	GOPRIVATE=github.com/fractal $(GOGET) -d github.com/fractal/ecs-agent/agent@master
 	go mod tidy
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/ecs-agent/agent/fractallogger.gitCommit=$(GIT_COMMIT)'\
