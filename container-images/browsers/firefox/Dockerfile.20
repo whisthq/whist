@@ -70,8 +70,10 @@ RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 # ______________ TRASH ________________
 # Swap in custom userChrome.css file
 # RUN pwd
-RUN su - root -c 'echo $(find /home/fractal/.mozilla/firefox/*.default-release)'
-# COPY chrome /home/fractal/.mozilla/firefox/*.default-release/chrome
+COPY chrome /home/fractal/.mozilla/firefox/chrome
+RUN su - root -c "find /home/fractal/.mozilla/firefox/ -name '*.default-release' -exec mv /home/fractal/.mozilla/firefox/chrome {}/chrome \;"
+# RUN su - root -c "find /home/fractal/.mozilla/firefox/ -name '*.default-release' -exec cd {} \;
+
 # COPY user.js /home/fractal/.mozilla/firefox/
 # COPY setup_style.sh /home/fractal/.mozilla/firefox
 # RUN chmod +x setup_style.sh
@@ -84,7 +86,7 @@ RUN su - root -c 'echo $(find /home/fractal/.mozilla/firefox/*.default-release)'
 # RUN mkdir /home/fractal/.cache/.mozilla/firefox/chrome
 # RUN su - root -c 'name=$(find /home/fractal/.mozilla/firefox/ -name "*.default-release")'
 # ADD chrome /home/fractal/.mozilla/firefox/${name}/chrome
-# RUN su - root -c "mv /home/fractal/.mozilla/firefox/chrome /home/fractal/.mozilla/firefox/*.default-release"
+# RUN su - root -c "mv /home/fractal/.mozilla/firefox/chrome /home/fractal/.mozilla/firefox/$name"
 # COPY user.js /home/fractal/.mozilla/firefox/
 # RUN su - root -c "mv /home/fractal/.mozilla/firefox/user.js /home/fractal/.mozilla/firefox/*.default-release"
 
