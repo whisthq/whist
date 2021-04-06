@@ -200,14 +200,12 @@ def check_if_live(user_id: str) -> bool:
     Returns: True if the user has a live container in the db
     """
     return (
-        len(
-            UserContainerState.query.filter(
-                UserContainerState.user_id == user_id,
-                UserContainerState.state != FAILURE,
-                UserContainerState.state != CANCELLED,
-            )
-            .limit(1)
-            .count()
+        UserContainerState.query.filter(
+            UserContainerState.user_id == user_id,
+            UserContainerState.state != FAILURE,
+            UserContainerState.state != CANCELLED,
         )
+        .limit(1)
+        .count()
         > 0
     )
