@@ -2593,7 +2593,7 @@
   dependencies:
     envinfo "^7.7.3"
 
-"@webpack-cli/serve@^1.3.1":
+"@webpack-cli/serve@^1.3.0", "@webpack-cli/serve@^1.3.1":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@webpack-cli/serve/-/serve-1.3.1.tgz#911d1b3ff4a843304b9c3bacf67bb34672418441"
   integrity sha512-0qXvpeYO6vaNoRBI52/UsbcaBydJCggoBBnIo/ovQQdn6fug0BgwsjorV1hVS7fMqGVTZGcVxv8334gjmbj5hw==
@@ -3320,10 +3320,10 @@ autoprefixer@^9, autoprefixer@^9.8.6:
     postcss "^7.0.32"
     postcss-value-parser "^4.1.0"
 
-aws-sdk@^2.860.0:
-  version "2.876.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.876.0.tgz#afb7d0641795c4fdf09c6ee635a415534cd57a75"
-  integrity sha512-M+8M2U0X12pVCYyOJjabxCzFJaql2F0Wpfjwyq5aSso0y6OiqV1nPUgpviODQ8w4ZQy61xpMUO/54jLICy7kRQ==
+aws-sdk@^2.881.0:
+  version "2.881.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.881.0.tgz#cda305c65f9c7198d0730464526c87f636cfdf3d"
+  integrity sha512-jPjk2kfWxXzn5D1tch8DezTZ9V904GGxohWE/IK2zhvxn1GOrL42HyJlHg5uvISL1Mkf6ner/RLLuIjl7vYHBA==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
