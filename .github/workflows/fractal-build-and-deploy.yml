@@ -251,7 +251,7 @@ jobs:
                   echo "::set-output name=publish::$PUBLISH"
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"fractal-publish-build-config failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -322,7 +322,7 @@ jobs:
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images push failure failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -389,7 +389,7 @@ jobs:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -581,7 +581,7 @@ jobs:
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"AMI: Build and Publish to AWS EC2 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -617,7 +617,7 @@ jobs:
                   aws-hashicorp-packer-reaper terminate --older-than 45m
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"AMI: Kill Packer instances failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -885,7 +885,7 @@ jobs:
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Heroku deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
@@ -1124,7 +1124,7 @@ jobs:
                   fi
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
