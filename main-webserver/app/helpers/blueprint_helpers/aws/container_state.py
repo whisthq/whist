@@ -133,10 +133,8 @@ def create_container_state(
     Raises:
         Exception: if it fails to commit the creation somehow.
     """
-    # purge previous states here?
-    previous_states = UserContainerState.query.filter_by(user_id=user_id).all()
-    for state in previous_states:
-        db.session.delete(state)
+    # First, we purge any previous rows with this UID
+    UserContainerState.query.filter_by(user_id=user_id).delete()
     db.session.commit()
     obj = UserContainerState(
         user_id=user_id,
