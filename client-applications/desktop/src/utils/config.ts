@@ -29,7 +29,7 @@ const environment = {
             WEBSERVER_URL: webservers.local,
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
             LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
@@ -48,7 +48,7 @@ const environment = {
             WEBSERVER_URL: webservers.dev,
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
             LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
@@ -67,7 +67,7 @@ const environment = {
             WEBSERVER_URL: webservers.staging,
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
             LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
@@ -86,7 +86,7 @@ const environment = {
             WEBSERVER_URL: webservers.production,
         },
         keys: {
-            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
+            // STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
             AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU",
             AWS_SECRET_KEY: "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",
             LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
@@ -130,5 +130,4 @@ export const config =
         : getProductionEnv()
 
 
-// default export until we have multiple exports
 export default config
