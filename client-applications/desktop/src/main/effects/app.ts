@@ -9,13 +9,14 @@ import { autoUpdater } from "electron-updater"
 import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
 
 import { eventAppReady, eventAppQuit } from "@app/main/events/app"
-import { zip, race } from "rxjs"
+import { merge, race } from "rxjs"
 import {
     closeWindows,
     createAuthWindow,
     createUpdateWindow,
 } from "@app/utils/windows"
-import { userEmail, userAccessToken } from "@app/main/observables/user"
+import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
 import {
     autoUpdateAvailable,
     autoUpdateNotAvailable,
@@ -23,27 +24,18 @@ import {
 
 // Window opening
 // appReady only fires once, at the launch of the application.
-eventAppReady.subscribe(() => {
-    createAuthWindow((win: any) => win.show())
-})
+eventAppReady.subscribe(() => createAuthWindow((win: any) => win.show()))
 
 // Window closing
-// If we have an access token and an email, close the existing windows.
-zip(userEmail, userAccessToken).subscribe(() => {
-    closeWindows()
-})
+// If we have have successfully authorized, close the existing windows.
+merge(loginSuccess, signupSuccess).subscribe(() => closeWindows())
 
 // Application closing
-eventAppQuit.subscribe(() => {
-    // On macOS it is common for applications and their menu bar
-    // to stay active until the user quits explicitly with Cmd + Q
-    if (process.platform !== "darwin") app.quit()
-})
+eventAppReady.subscribe(() => app.quit())
+eventAppQuit.subscribe(() => app.quit())
 
 // If the update is downloaded, quit the app and install the update
-eventUpdateDownloaded.subscribe(() => {
-    autoUpdater.quitAndInstall()
-})
+eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
     (available: boolean) => {
