@@ -23,9 +23,9 @@ import (
 	// functionality in this imported package as well.
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	"github.com/fractal/ecs-agent/agent/fractalcontainer"
-	"github.com/fractal/ecs-agent/agent/fractalcontainer/cloudstorage"
-	"github.com/fractal/ecs-agent/agent/fractalcontainer/portbindings"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 
