@@ -29,6 +29,7 @@ from app.constants.http_codes import (
 )
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
     BadAppError,
+    check_if_live,
     ping_helper,
     preprocess_task_info,
     protocol_info,
@@ -373,6 +374,15 @@ def aws_container_assign(**kwargs):
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
     try:
         user = body.pop("username")
+        if check_if_live(user):
+            return (
+                jsonify(
+                    {
+                        "error": "User has a container running, close that one and try again",
+                    }
+                ),
+                BAD_REQUEST,
+            )
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)

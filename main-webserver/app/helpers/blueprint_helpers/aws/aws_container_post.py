@@ -13,7 +13,7 @@ from app.helpers.utils.general.sql_commands import (
     fractal_sql_update,
 )
 from app.helpers.utils.general.time import date_to_unix, get_today
-from app.models import db, LoginHistory, UserContainer, SupportedAppImages
+from app.models import db, LoginHistory, UserContainerState, UserContainer, SupportedAppImages
 from app.serializers.hardware import UserContainerSchema
 
 
@@ -188,3 +188,14 @@ def set_stun(user_id, container_id, using_stun):
             status = SUCCESS
 
     return status
+
+
+def check_if_live(user_id: str) -> bool:
+    """
+    Checks if a given user has a live container running
+    Args:
+        user_id: the id of the user
+
+    Returns: True if the user has a live container in the db
+    """
+    return len(UserContainerState.query.filter_by(user_id=user_id).limit(1).all()) > 0
