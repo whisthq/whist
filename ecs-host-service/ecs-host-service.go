@@ -21,7 +21,7 @@ import (
 	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
-	logger "github.com/fractal/ecs-agent/agent/fractallogger"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
 	"github.com/fractal/ecs-agent/agent/fractalcontainer"
 	"github.com/fractal/ecs-agent/agent/fractalcontainer/cloudstorage"
