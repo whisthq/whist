@@ -69,8 +69,9 @@ RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
 # ______________ TRASH ________________
 # Swap in custom userChrome.css file
-RUN pwd
-COPY chrome /home/fractal/.mozilla/firefox/chrome
+# RUN pwd
+RUN su - root -c 'echo $(find /home/fractal/.mozilla/firefox/*.default-release)'
+# COPY chrome /home/fractal/.mozilla/firefox/*.default-release/chrome
 # COPY user.js /home/fractal/.mozilla/firefox/
 # COPY setup_style.sh /home/fractal/.mozilla/firefox
 # RUN chmod +x setup_style.sh
