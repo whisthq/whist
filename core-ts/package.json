@@ -19,7 +19,7 @@
         "@types/jest": "^26.0.22",
         "@types/lodash": "^4.14.168",
         "@types/node": "^14.14.31",
-        "@types/node-fetch": "^2.5.8",
+        "@types/node-fetch": "^2.5.9",
         "@types/nodemon": "^1.19.0",
         "@typescript-eslint/eslint-plugin": "^4.20.0",
         "@typescript-eslint/parser": "^4.21.0",
