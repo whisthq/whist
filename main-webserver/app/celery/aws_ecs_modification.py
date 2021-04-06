@@ -307,19 +307,74 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         )
         return
     elif expected_num_instances > num_instances:
-        # scale up detected
-        ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-        asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
-        if len(asg_list) != 1:
-            raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
-        asg = asg_list[0]
-        ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
+        manual_scale_cluster_up(cluster, region_name, expected_num_instances)
     else:
-        # scale down detected; this is cannot be handled via the ASG interface because we
-        # discovered AWS will kill instances that have tasks without warning us. Until we
-        # strip out ASGs entirely from our infrastructure, we must:
-        # 1. manually inspect all instances and see how many tasks are on them
-        # 2. specifically kill the instances with no tasks
-        # this has a race condition between 1 and 2 and a task being assigned, which we
-        # need to accept for now
-        pass
+        # we cannot kill more than this many instances
+        max_remove = num_instances - expected_num_instances
+        manual_scale_cluster_down(cluster, region_name, max_remove)
+
+
+def manual_scale_cluster_up(cluster: str, region_name: str, expected_num_instances: int):
+    """
+    Perform a cluster scale-up. This function can be handled via the ASG interface.
+
+    Args:
+        cluster: cluster to manually scale up
+        region_name: region that cluster resides in
+        expected_num_instances: expected number of instances in the cluster
+    """
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+    asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
+    if len(asg_list) != 1:
+        raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
+    asg = asg_list[0]
+    ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
+
+
+def manual_scale_cluster_down(cluster: str, region_name: str, max_remove: int):
+    """
+    Perform a cluster scale-down. This function cannot be handled via the ASG interface because
+    we discovered AWS will kill instances that have tasks without warning us. Until we strip out
+    ASGs entirely from our infrastructure, we must:
+    1. manually inspect all instances and see how many tasks are on them
+    2. specifically kill the instances with no tasks
+    This has a race condition between 1 and 2 and a task being assigned, which we need to accept
+    for now.
+
+    Args:
+        cluster: cluster to manually scale down
+        region_name: region that cluster resides in
+        max_remove: maximum number of instances to remove
+    """
+    # we check if there are actually empty instances
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+    instances = ecs_client.list_container_instances(cluster)
+    instances_tasks = ecs_client.describe_container_instances(cluster, instances)
+
+    empty_instances = []
+    for instance_name, instance_task_data in zip(instances, instances_tasks):
+        if "runningTasksCount" not in instance_task_data:
+            msg = (
+                "Expected key runningTasksCount in AWS describe_container_instances response."
+                f" Got: {instance_task_data}"
+            )
+            raise ValueError(msg)
+        rtc = instance_task_data["runningTasksCount"]
+        if rtc == 0:
+            empty_instances.append(instance_name)
+
+    if len(empty_instances) == 0:
+        msg = (
+            f"Cluster {cluster} cannot scale down because every instance has tasks. This means "
+            "AWS ECS has suboptimally distributed tasks onto instances."
+        )
+        fractal_logger.info(msg)
+        return
+
+    # this caps the length of empty_instances to max_remove
+    empty_instances = empty_instances[:max_remove]
+    # delete instances that are known to have no tasks
+    for instance_name in empty_instances:
+        ecs_client.auto_scaling_client.terminate_instance_in_auto_scaling_group(
+            InstanceId=instance_name, ShouldDecrementDesiredCapacity=True
+        )
