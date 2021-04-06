@@ -108,7 +108,7 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     assert started is True, f"Got unexpected task state {task_result.state}."
 
     # send SIGTERM to the process group
-    os.killpg(fractal_celery_proc, signal.SIGTERM)
+    os.kill(fractal_celery_proc, signal.SIGTERM)
 
     # make sure the task gets revoked
     revoked = False
