@@ -278,7 +278,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         region_name: region that cluster resides in
     """
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": f"Checking if cluster {cluster} should be scaled.",
         },
@@ -293,18 +293,16 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
     num_instances = cluster_data.registeredContainerInstancesCount
     expected_num_instances = math.ceil(num_tasks / factor)
+
+    fractal_logger.info(f"{num_tasks}, {num_instances}, {expected_num_instances}")
+
     # expected_num_instances must be >= cluster_data.minContainers
     expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
     # expected_num_instances must be <= cluster_data.maxContainers
     expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
 
     if expected_num_instances == num_instances:
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"Cluster {cluster} did not need any scaling.",
-            },
-        )
+        fractal_logger.info(f"Cluster {cluster} did not need any scaling.")
         return
     elif expected_num_instances > num_instances:
         manual_scale_cluster_up(cluster, region_name, expected_num_instances)
@@ -323,12 +321,14 @@ def manual_scale_cluster_up(cluster: str, region_name: str, expected_num_instanc
         region_name: region that cluster resides in
         expected_num_instances: expected number of instances in the cluster
     """
+    fractal_logger.info("UP")
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
     if len(asg_list) != 1:
         raise ValueError(f"Expected 1 ASG but got {len(asg_list)} for cluster {cluster}")
     asg = asg_list[0]
     ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
+    fractal_logger.info(f"Cluster {cluster} was scaled up to {expected_num_instances}.")
 
 
 def manual_scale_cluster_down(cluster: str, region_name: str, max_remove: int):
@@ -346,6 +346,7 @@ def manual_scale_cluster_down(cluster: str, region_name: str, max_remove: int):
         region_name: region that cluster resides in
         max_remove: maximum number of instances to remove
     """
+    fractal_logger.info("DOWN")
     # we check if there are actually empty instances
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     instances = ecs_client.list_container_instances(cluster)
@@ -375,6 +376,7 @@ def manual_scale_cluster_down(cluster: str, region_name: str, max_remove: int):
     empty_instances = empty_instances[:max_remove]
     # delete instances that are known to have no tasks
     for instance_name in empty_instances:
-        ecs_client.auto_scaling_client.terminate_instance_in_auto_scaling_group(
-            InstanceId=instance_name, ShouldDecrementDesiredCapacity=True
+        fractal_logger.info(
+            f"Deleting {instance_name} in cluster {cluster} because it has no tasks."
         )
+        ecs_client.terminate_instance_in_auto_scaling_group(instance_name)

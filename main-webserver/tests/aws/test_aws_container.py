@@ -3,6 +3,7 @@ import os
 import uuid
 
 import pytest
+import boto3
 
 from flask import current_app
 from app.celery import aws_ecs_creation
@@ -241,11 +242,19 @@ def test_delete_container(client, monkeypatch):
 
     # delete_container will call manual_scale_cluster
     # it should follow through the logic until it actually tries to kill the instance,
-    # which we don't need to do since delete_cluster handles it. hence we mock it.
-    def mock_set_capacity(self, asg_name: str, desired_capacity: int):
-        setattr(mock_set_capacity, "test_passed", desired_capacity == 0)
+    # which we don't need to do since delete_cluster handles it.
+    # this in essence tests the db logic and unmocked AWS calls right up to
+    # terminate_instance_in_auto_scaling_group
+    def mock_terminate_instance_in_asg(*args, **kwargs):  # pylint: disable=unused-argument
+        # record the number of calls
+        current = getattr(mock_terminate_instance_in_asg, "calls", 0)
+        setattr(mock_terminate_instance_in_asg, "calls", current + 1)
 
-    monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
+    monkeypatch.setattr(
+        ECSClient,
+        "terminate_instance_in_auto_scaling_group",
+        mock_terminate_instance_in_asg,
+    )
 
     resp = client.post(
         "/container/delete",
@@ -267,8 +276,9 @@ def test_delete_container(client, monkeypatch):
         fractal_logger.error("Container was not deleted from database")
         assert False
 
-    assert hasattr(mock_set_capacity, "test_passed")  # make sure function was called
-    assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
+    # make sure function was called once
+    assert hasattr(mock_terminate_instance_in_asg, "calls")
+    assert getattr(mock_terminate_instance_in_asg, "calls") == 1
 
 
 @pytest.mark.container_serial
@@ -536,3 +546,132 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     # undo changes
     app_data.task_version = old_version
     db.session.commit()
+
+
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
+    """
+    Unit test for scaling a cluster up. Mocks all AWS functions.
+    """
+    cluster = bulk_cluster(
+        location="fake-region",
+        # this should be a scale-up
+        pendingTasksCount=6,
+        runningTasksCount=5,
+        registeredContainerInstancesCount=1,
+        minContainers=1,
+        maxContainers=10,
+    )
+
+    def mock_set_asg_capacity(
+        self, asg_name: str, desired_capacity: int
+    ):  # pylint: disable=unused-argument
+        # manual_scale_cluster should try to increase capacity to 2
+        setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 2)
+
+    monkeypatch.setattr(
+        ECSClient, "get_auto_scaling_groups_in_cluster", function(returns=["fake-asg"])
+    )
+    monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_asg_capacity)
+
+    manual_scale_cluster.delay(cluster.cluster, cluster.location).get()
+
+    # make sure the mock function was called with the right desired capacity
+    assert hasattr(mock_set_asg_capacity, "test_passed")
+    assert getattr(mock_set_asg_capacity, "test_passed")
+
+
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_manual_scale_cluster_down_simple(bulk_cluster, monkeypatch):
+    """
+    Unit test for scaling a cluster down. Mocks all AWS functions. By "simple",
+    we mean that there is an obvious instance to delete.
+    """
+    cluster = bulk_cluster(
+        location="fake-region",
+        # this should be a scale-down
+        pendingTasksCount=5,
+        runningTasksCount=4,
+        registeredContainerInstancesCount=2,
+        minContainers=1,
+        maxContainers=10,
+    )
+
+    # mock the AWS functions so that fake-container2 should be selected for deletion
+    monkeypatch.setattr(
+        ECSClient,
+        "list_container_instances",
+        function(returns=["fake-container1", "fake-container2"]),
+    )
+    monkeypatch.setattr(
+        ECSClient,
+        "describe_container_instances",
+        function(returns=[{"runningTasksCount": 4}, {"runningTasksCount": 0}]),
+    )
+
+    # manual_scale_cluster should try to delete fake-container2
+    def mock_terminate_instance_in_asg(self, instance_id):  # pylint: disable=unused-argument
+        setattr(mock_terminate_instance_in_asg, "test_passed", instance_id == "fake-container2")
+
+    monkeypatch.setattr(
+        ECSClient,
+        "terminate_instance_in_auto_scaling_group",
+        mock_terminate_instance_in_asg,
+    )
+
+    # now we call the function
+    manual_scale_cluster.delay(cluster.cluster, cluster.location).get()
+
+    # make sure the mock function was called with the right desired capacity
+    assert hasattr(mock_terminate_instance_in_asg, "test_passed")
+    assert getattr(mock_terminate_instance_in_asg, "test_passed")
+
+
+@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("celery_worker")
+def test_manual_scale_cluster_down_complex(bulk_cluster, monkeypatch):
+    """
+    Unit test for scaling a cluster down. Mocks all AWS functions. By "complex",
+    we mean that although there should be a scale-down, AWS suboptimally
+    distributed tasks onto instances so we cannot kill any of them.
+    """
+    cluster = bulk_cluster(
+        location="fake-region",
+        # this should be a scale-down, but won't be triggered because instances will have tasks
+        pendingTasksCount=5,
+        runningTasksCount=4,
+        registeredContainerInstancesCount=2,
+        minContainers=1,
+        maxContainers=10,
+    )
+
+    # mock the AWS functions so that even though a scale-down should be triggered
+    # no instance can actually be terminated
+    monkeypatch.setattr(
+        ECSClient,
+        "list_container_instances",
+        function(returns=["fake-container1", "fake-container2"]),
+    )
+    monkeypatch.setattr(
+        ECSClient,
+        "describe_container_instances",
+        function(returns=[{"runningTasksCount": 3}, {"runningTasksCount": 1}]),
+    )
+
+    # manual_scale_cluster should never call this
+    def mock_terminate_instance_in_asg(self, instance_id):  # pylint: disable=unused-argument
+        setattr(mock_terminate_instance_in_asg, "called", True)
+
+    monkeypatch.setattr(
+        ECSClient,
+        "terminate_instance_in_auto_scaling_group",
+        mock_terminate_instance_in_asg,
+    )
+
+    # now we call the function
+    manual_scale_cluster.delay(cluster.cluster, cluster.location).get()
+
+    # make sure the mock function was never called
+    assert not hasattr(mock_terminate_instance_in_asg, "called")
