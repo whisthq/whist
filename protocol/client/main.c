@@ -772,6 +772,9 @@ int main(int argc, char* argv[]) {
         LOG_FATAL("Failed to initialize SDL");
     }
 
+    // Make sure that ctrl+click is processed as a right click on Mac
+    SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
+
     // Set sentry user here based on email from command line args
     // It defaults to None, so we only inform sentry if the client app passes in a user email
     // We do this here instead of in initLogger because initLogger is used both by the client and
