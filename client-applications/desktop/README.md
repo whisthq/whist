@@ -30,9 +30,9 @@ Files related to the renderer process mostly live in `src/renderer`, with some s
 
 ### Client Main Process
 
-#### The Event Loop
-
 The Electron "main" process runs in a NodeJS environment, and has full access to the NodeJS standard library and ecosystem. HTTP requests, process management, and file system interaction are handled with standard NodeJS APIs, while GUI windows, communication with the renderer process, and application lifecycle are managed with Electron's API.
+
+#### The Event Loop
 
 The backbone of our main process is a reactive event loop managed by [RXJS](https://rxjs-dev.firebaseapp.com/guide/overview). It's useful to visualize each cycle of the event loop as a "stream" of data flowing in one direction. It's also useful to think of it as a story with a beginning, a middle and an end.
 
