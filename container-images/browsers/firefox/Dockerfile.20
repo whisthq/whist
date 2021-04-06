@@ -67,13 +67,15 @@ RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
 
+# ______________ TRASH ________________
 # Swap in custom userChrome.css file
-# COPY chrome /home/fractal/.mozilla/firefox/chrome
+RUN pwd
+COPY chrome /home/fractal/.mozilla/firefox/chrome
 # COPY user.js /home/fractal/.mozilla/firefox/
 # COPY setup_style.sh /home/fractal/.mozilla/firefox
 # RUN chmod +x setup_style.sh
 
-# ______________ TRASH ________________
+
 # RUN sudo chmod -R 777 /home/fractal/.mozilla/
 # ADD userChrome.css /home/fractal/.mozilla/firefox/w8cqs9vm.default-release/chrome
 
