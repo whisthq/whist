@@ -22,9 +22,9 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                # checkout staging branch
-                ref: "staging"
+              # with:
+              #   # checkout staging branch
+              #   ref: "staging"
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -68,15 +68,14 @@ jobs:
                       upgrade_webserver,
                       downgrade_webserver,
                   )
-                  from scripts.load_testing.load_test import run_distributed_load_test, run_local_load_test
-                  from scripts.load_testing.load_test_analysis import analyze_load_test
+                  from scripts.load_testing.load_test_driver import run_local_load_test
 
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
-                  NUM_INVOCATIONS = int("${{ env.num_invocations }}")
+                  NUM_USERS = int("${{ env.num_users }}")
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-                  RUN_ID = "${{ github.run_id }}"
+
                   # use heroku to get the database url for the current app
                   ret = subprocess.run(f"heroku config:get DATABASE_URL --app {HEROKU_APP_NAME}", capture_output=True, shell=True)
                   assert ret.returncode == 0, f"Heroku DATABASE_URL retrieval failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
@@ -92,11 +91,7 @@ jobs:
                   try:
                     # Until we fix high initial task latency, we need to do one lambda invocation
                     # to sidestep the first task's high latency issue
-                    run_local_load_test(WEBSERVER_URL, TOKEN, 1, 1)
-
-                    # --- Run and analyze load test --- #
-                    # Use AWS lambda to run a distributed load test
-                    run_distributed_load_test(WEBSERVER_URL, TOKEN, NUM_INVOCATIONS)
+                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS)
 
                   except Exception as e:
                     # we just need the finally block to run before exiting badly
