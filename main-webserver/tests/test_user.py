@@ -23,10 +23,11 @@ def test_serialize(make_user):
     assert type(user_dict["created_timestamp"]) == int
 
 
-def test_no_stripe_customer_id(make_user):
-    """Report that a user with no recorded Stripe customer ID should not receive service."""
+@pytest.mark.parametrize("stripe_customer_id", (None, ""))
+def test_no_stripe_customer_id(make_user, stripe_customer_id):
+    """Report that users with various falsy Stripe customer IDs should not receive service."""
 
-    user = make_user()
+    user = make_user(stripe_customer_id=stripe_customer_id)
 
     assert not user.subscribed
 
