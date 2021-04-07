@@ -89,6 +89,8 @@ jobs:
                   # defined as a formatted json array to be copied into packer_vars.json directly
                   data["destination_regions"] = "us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1"
 
+                  print(data)
+
                   fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
