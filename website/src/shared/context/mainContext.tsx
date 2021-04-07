@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 
-import useWindowDimensions from "shared/utils/formatting"
+import useWindowDimensions from "@app/shared/utils/formatting"
 
 interface MainContextInterface {
     width: number

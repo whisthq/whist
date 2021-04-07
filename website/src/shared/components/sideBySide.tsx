@@ -1,20 +1,20 @@
 import React, { useContext } from "react"
 import { Row, Col } from "react-bootstrap"
 
-import { ScreenSize } from "shared/constants/screenSizes"
-import MainContext from "shared/context/mainContext"
+import { ScreenSize } from "@app/shared/constants/screenSizes"
+import MainContext from "@app/shared/context/mainContext"
 
-import GraphicsImage from "assets/largeGraphics/graphics.svg"
-import SpeedTestBackground from "assets/largeGraphics/speedTestBackground.svg"
-import SpeedTest from "assets/gifs/speedTest.gif"
-import DemoBackground from "assets/largeGraphics/demoBackground.svg"
-import BlenderDemo from "assets/gifs/blenderDemo.gif"
-import ChromeShadow from "assets/largeGraphics/chromeShadow.svg"
-import FirefoxShadow from "assets/largeGraphics/firefoxShadow.svg"
-import FigmaShadow from "assets/largeGraphics/figmaShadow.svg"
-import BlenderShadow from "assets/largeGraphics/blenderShadow.svg"
-import MayaShadow from "assets/largeGraphics/mayaShadow.svg"
-import UnityShadow from "assets/largeGraphics/unityShadow.svg"
+import GraphicsImage from "@app/assets/largeGraphics/graphics.svg"
+import SpeedTestBackground from "@app/assets/largeGraphics/speedTestBackground.svg"
+import SpeedTest from "@app/assets/gifs/speedTest.gif"
+import DemoBackground from "@app/assets/largeGraphics/demoBackground.svg"
+import BlenderDemo from "@app/assets/gifs/blenderDemo.gif"
+import ChromeShadow from "@app/assets/largeGraphics/chromeShadow.svg"
+import FirefoxShadow from "@app/assets/largeGraphics/firefoxShadow.svg"
+import FigmaShadow from "@app/assets/largeGraphics/figmaShadow.svg"
+import BlenderShadow from "@app/assets/largeGraphics/blenderShadow.svg"
+import MayaShadow from "@app/assets/largeGraphics/mayaShadow.svg"
+import UnityShadow from "@app/assets/largeGraphics/unityShadow.svg"
 
 export const SideBySide = (props: any) => {
     const { appHighlight, width } = useContext(MainContext)
