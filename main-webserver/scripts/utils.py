@@ -56,7 +56,7 @@ def make_post_request(
     return requests.post(url=url, headers=headers, data=payload_str)
 
 
-def make_put_request(web_url: str, endpoint: str, payload: dict) -> requests.Response:
+def make_put_request(web_url: str, endpoint: str, payload: dict, **kwargs) -> requests.Response:
     """
     Makes a PUT request. Properly formats payload.
 
@@ -69,4 +69,5 @@ def make_put_request(web_url: str, endpoint: str, payload: dict) -> requests.Res
         Response from requests library.
     """
     url = urljoin(web_url, endpoint)
-    return requests.put(url, json=payload)
+    print(url)
+    return requests.put(url, json=payload, **kwargs)

@@ -78,15 +78,17 @@ class LoadTestUser(locust.HttpUser):
         Does two things:
 
         1. Make request for a container
-        2. Poll until it is available
+        2. Poll /host_service
+        3. Send app configs to host service
+        4. Poll for assign success
         """
         # make assign request
-        print("assigning container")
         task_id = None
-        for _ in range(60):
+        for _ in range(1):
             resp = self.try_assign_request()
             if resp.status_code == 202:
                 task_id = resp.json()["ID"]
+                break
             elif resp.status_code == 503:
                 pass
             else:
@@ -97,48 +99,54 @@ class LoadTestUser(locust.HttpUser):
             time.sleep(1.0)
 
         assert task_id is not None
-        print(f"TASK: {task_id}")
 
-        # # poll host_service
-        # print("polling host service...")
-        # ip = None
-        # host_port = None
-        # client_app_auth_secret = None
-        # for _ in range(300):
-        #     resp = self.try_get_host_service_info()
-        #     if resp.status_code == 200:
-        #         resp_json = resp.json()
-        #         ip = resp_json["ip"]
-        #         host_port = resp_json["port"]
-        #         client_app_auth_secret = resp_json["client_app_auth_secret"]
-        #         if ip is not None:
-        #             break  # stop on non-None response
-        #     elif resp.status_code == 503:
-        #         pass
-        #     else:
-        #         raise ValueError(f"Unexpected status code for /host_service: {resp.status_code}")
-        #     # sleep and try again
-        #     time.sleep(1.0)
+        # poll host_service
+        ip = None
+        host_port = None
+        client_app_auth_secret = None
+        for _ in range(300):
+            resp = self.try_get_host_service_info()
+            if resp.status_code == 200:
+                resp_json = resp.json()
+                ip = resp_json["ip"]
+                host_port = resp_json["port"]
+                client_app_auth_secret = resp_json["client_app_auth_secret"]
+                if ip is not None:
+                    break  # stop on non-None response
+            elif resp.status_code == 503:
+                pass
+            else:
+                raise ValueError(
+                    f"unexpected status code for /host_service: {resp.status_code}. Content: {resp.content}"
+                )
+            # sleep and try again
+            time.sleep(1.0)
 
-        # # send app config token; errors out on failure
-        # print("sending config token")
-        # resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
-        # assert resp.ok, f"Got status code {resp.status_code} with content {resp.content}"
+        # send app config token; errors out on failure
+        resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
+        assert resp.ok, f"Got status code {resp.status_code} with content {resp.content}"
 
-        # print("polling assign")
-        # # wait for container to be available; this will error out if anything fails
-        # poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=60, sleep_time=1.0)
+        # wait for container to be available; this will error out if anything fails
+        poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=60, sleep_time=1.0)
 
+    # def try_assign_request(self):
+    #     """
+    #     Makes a request to webserver /container/assign
+    #     """
+    #     payload = {
+    #         "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+    #         "app": "Google Chrome",
+    #         "region_name": LOAD_TEST_CLUSTER_REGION,
+    #     }
+    #     return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
     def try_assign_request(self):
-        """
-        Makes a request to webserver /container/assign
-        """
         payload = {
+            "task_definition_arn": get_task_definition_arn(WEB_URL),
+            "cluster_name": None,  # None means a cluster is chosen, like in /container/assign
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-            "app": "Google Chrome",
             "region_name": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
 
     def try_get_host_service_info(self):
         """
@@ -147,7 +155,7 @@ class LoadTestUser(locust.HttpUser):
         params = {
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
         }
-        return make_get_request(WEB_URL, "/host_service", params=params)
+        return make_get_request(WEB_URL, "/host_service", params=params, admin_token=ADMIN_TOKEN)
 
     def send_app_config_token(self, ip: str, host_port: int, client_app_auth_secret: str):
         """
@@ -160,7 +168,9 @@ class LoadTestUser(locust.HttpUser):
             "config_encryption_token": APP_CONFIG_TOKEN,
             "client_app_auth_secret": client_app_auth_secret,
         }
-        return make_put_request(host_service_url, "set_config_encryption_token", payload=payload)
+        return make_put_request(
+            host_service_url, "set_config_encryption_token", payload=payload, verify=False
+        )
 
     @locust.task
     def do_nothing(self):
