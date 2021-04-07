@@ -173,7 +173,7 @@ func createMouse(path string, name []byte) (fd *os.File, err error) {
 	}
 
 	// register button events (in order to enable left, right, middle, button 4, and button 5 click)
-	for _, event := range []int{evBtnLeft, evBtnRight, evBtnMiddle, evBtnSide, evBtnExtra, evBtnForward, evBtnBack, evBtnTask} {
+	for _, event := range []int{evBtn0, evBtn1, evBtn2, evBtn3, evBtn4, evBtn5, evBtn6, evBtn7, evBtn8, evBtn9, evBtnLeft, evBtnRight, evBtnMiddle, evBtnSide, evBtnExtra, evBtnForward, evBtnBack, evBtnTask} {
 		err = ioctl(deviceFile, uiSetKeyBit, uintptr(event))
 		if err != nil {
 			deviceFile.Close()

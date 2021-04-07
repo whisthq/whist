@@ -36,6 +36,16 @@ const (
 	absX             = 0x0
 	absY             = 0x1
 	synReport        = 0
+	evBtn0           = 0x100
+	evBtn1           = 0x101
+	evBtn2           = 0x102
+	evBtn3           = 0x103
+	evBtn4           = 0x104
+	evBtn5           = 0x105
+	evBtn6           = 0x106
+	evBtn7           = 0x107
+	evBtn8           = 0x108
+	evBtn9           = 0x109
 	evBtnLeft        = 0x110
 	evBtnRight       = 0x111
 	evBtnMiddle      = 0x112
