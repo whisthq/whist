@@ -1,8 +1,8 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import classNames from "classnames"
-import LogoBlack from "assets/icons/logoBlack.svg"
-import LogoWhite from "assets/icons/logoWhite.svg"
+import LogoBlack from "@app/assets/icons/logoBlack.svg"
+import LogoWhite from "@app/assets/icons/logoWhite.svg"
 
 export const AboutLink = (props: { className: string }) => (
     <Link className={props.className} to="/about" id="about">
@@ -23,7 +23,7 @@ export const SupportLink = (props: { className: string }) => (
 export const CareersLink = (props: { className: string }) => (
     <a
         className={props.className}
-        href="https://www.notion.so/tryfractal/Fractal-Job-Board-a39b64712f094c7785f588053fc283a9"
+        href="mailto: careers@fractal.co"
         id="careers"
     >
         Careers

@@ -1,5 +1,0 @@
-@import "~styles/global.module.css";
-
-.carousel-indicators li {
-    background-color: var(--primary-background-color);
-}

@@ -1,5 +1,9 @@
 /* eslint-disable */
-import { FractalEnvironment, FractalConfig } from "shared/types/config"
+import React from "react"
+import type {
+    FractalEnvironment,
+    FractalConfig,
+} from "@app/shared/types/config"
 
 const environment: FractalEnvironment = {
     local: {
@@ -11,8 +15,9 @@ const environment: FractalEnvironment = {
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+            STRIPE_PUBLIC_KEY: import.meta.env
+                .REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
         sentry_env: "development",
@@ -34,8 +39,9 @@ const environment: FractalEnvironment = {
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+            STRIPE_PUBLIC_KEY: import.meta.env
+                .REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
         sentry_env: "development",
@@ -57,8 +63,9 @@ const environment: FractalEnvironment = {
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/nRa1zGFa",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+            STRIPE_PUBLIC_KEY: import.meta.env
+                .REACT_APP_STRIPE_STAGING_PUBLIC_KEY,
+            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
         sentry_env: "staging",
@@ -80,8 +87,8 @@ const environment: FractalEnvironment = {
             TYPEFORM_URL: "https://tryfractal.typeform.com/to/RsOsBSSu",
         },
         keys: {
-            STRIPE_PUBLIC_KEY: process.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
-            GOOGLE_CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID,
+            STRIPE_PUBLIC_KEY: import.meta.env.REACT_APP_STRIPE_PROD_PUBLIC_KEY,
+            GOOGLE_CLIENT_ID: import.meta.env.REACT_APP_GOOGLE_CLIENT_ID,
             GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
         },
         sentry_env: "production",
@@ -99,22 +106,22 @@ const environment: FractalEnvironment = {
 const VALID_ENVS = new Set(["local", "development", "staging", "production"])
 
 const LIVE_ENV = (() => {
-    if (!process.env.REACT_APP_ENVIRONMENT) return "development"
-    if (!VALID_ENVS.has(process.env.REACT_APP_ENVIRONMENT.toString()))
+    if (!import.meta.env.REACT_APP_ENVIRONMENT) return "development"
+    if (!VALID_ENVS.has(import.meta.env.REACT_APP_ENVIRONMENT.toString()))
         throw new Error(
             "Environment variable REACT_APP_ENVIRONMENT must be one of: " +
                 Array.from(VALID_ENVS).join(", ") +
                 ". Received: " +
-                process.env.REACT_APP_ENVIRONMENT
+                import.meta.env.REACT_APP_ENVIRONMENT
         )
-    return process.env.REACT_APP_ENVIRONMENT.toString()
+    return import.meta.env.REACT_APP_ENVIRONMENT.toString()
 })()
 
 export const config: FractalConfig = (() => {
-    if (process.env.NODE_ENV !== "development")
+    if (import.meta.env.NODE_ENV !== "development")
         return environment[LIVE_ENV as keyof FractalEnvironment]
 
-    if (process.env.REACT_APP_USE_DOCKER) return environment.local
+    if (import.meta.env.REACT_APP_USE_DOCKER) return environment.local
 
     return environment.development
 })()
