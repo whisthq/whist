@@ -38,6 +38,9 @@ const (
 	synReport        = 0
 	evBtnLeft        = 0x110
 	evBtnRight       = 0x111
+	evBtnMiddle      = 0x112
+	evBtn4           = 0x104
+	evBtn5           = 0x105
 	evBtnTouch       = 0x14a
 	evBtnToolFinger  = 0x145
 	evBtnToolPen     = 0x140

@@ -27,25 +27,15 @@ type Mouse interface {
 	// values will cause a move towards the upper left corner.
 	Move(x, y int32) error
 
-	// LeftClick will issue a single left click.
-	LeftClick() error
+	// MouseButtonClick will issue a right click.
+	MouseButtonClick(buttonCode int) error
 
-	// RightClick will issue a right click.
-	RightClick() error
+	// MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
+	// MouseButtonRelease is invoked.
+	MouseButtonPress(buttonCode int) error
 
-	// LeftPress will simulate a press of the left mouse button. Note that the button will not be released until
-	// LeftRelease is invoked.
-	LeftPress() error
-
-	// LeftRelease will simulate the release of the left mouse button.
-	LeftRelease() error
-
-	// RightPress will simulate the press of the right mouse button. Note that the button will not be released until
-	// RightRelease is invoked.
-	RightPress() error
-
-	// RightRelease will simulate the release of the right mouse button.
-	RightRelease() error
+	// MouseButtonRelease will simulate the release of a mouse button.
+	MouseButtonRelease(buttonCode int) error
 
 	// Wheel will simulate a wheel movement.
 	Wheel(horizontal bool, delta int32) error
@@ -135,46 +125,25 @@ func (vRel vMouse) Move(x, y int32) error {
 	return nil
 }
 
-// LeftClick will issue a LeftClick.
-func (vRel vMouse) LeftClick() error {
-	err := sendBtnEvent(vRel.deviceFile, []int{evBtnLeft}, btnStatePressed)
+// MouseButtonClick will issue a MouseButtonClick
+func (vRel vMouse) MouseButtonClick(buttonCode int) error {
+	err := sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
 	if err != nil {
-		return fmt.Errorf("Failed to issue the LeftClick event: %v", err)
+		return fmt.Errorf("Failed to issue the 0x%x mouse button event: %v", buttonCode, err)
 	}
 
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnLeft}, btnStateReleased)
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
-// RightClick will issue a RightClick
-func (vRel vMouse) RightClick() error {
-	err := sendBtnEvent(vRel.deviceFile, []int{evBtnRight}, btnStatePressed)
-	if err != nil {
-		return fmt.Errorf("Failed to issue the RightClick event: %v", err)
-	}
-
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnRight}, btnStateReleased)
+// MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
+// MouseButtonRelease is invoked.
+func (vRel vMouse) MouseButtonPress(buttonCode int) error {
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
 }
 
-// LeftPress will simulate a press of the left mouse button. Note that the button will not be released until
-// LeftRelease is invoked.
-func (vRel vMouse) LeftPress() error {
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnLeft}, btnStatePressed)
-}
-
-// LeftRelease will simulate the release of the left mouse button.
-func (vRel vMouse) LeftRelease() error {
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnLeft}, btnStateReleased)
-}
-
-// RightPress will simulate the press of the right mouse button. Note that the button will not be released until
-// RightRelease is invoked.
-func (vRel vMouse) RightPress() error {
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnRight}, btnStatePressed)
-}
-
-// RightRelease will simulate the release of the right mouse button.
-func (vRel vMouse) RightRelease() error {
-	return sendBtnEvent(vRel.deviceFile, []int{evBtnRight}, btnStateReleased)
+// MouseButtonRelease will simulate the release of a mouse button.
+func (vRel vMouse) MouseButtonRelease(buttonCode int) error {
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
 // Wheel will simulate a wheel movement.
@@ -203,8 +172,8 @@ func createMouse(path string, name []byte) (fd *os.File, err error) {
 		return nil, fmt.Errorf("failed to register key device: %v", err)
 	}
 
-	// register button events (in order to enable left and right click)
-	for _, event := range []int{evBtnLeft, evBtnRight} {
+	// register button events (in order to enable left, right, middle, button 4, and button 5 click)
+	for _, event := range []int{evBtnLeft, evBtnRight, evBtnMiddle, evBtn4, evBtn5} {
 		err = ioctl(deviceFile, uiSetKeyBit, uintptr(event))
 		if err != nil {
 			deviceFile.Close()
