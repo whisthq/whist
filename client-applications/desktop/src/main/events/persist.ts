@@ -2,7 +2,7 @@
  * Copyright Fractal Computers, Inc. 2021
  * @file persist.ts
  * @brief This file contains RXJS observables that deal with state persistence (i.e. shared state).
-*/
+ */
 
 import { Observable } from "rxjs"
 import { share } from "rxjs/operators"

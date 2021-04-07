@@ -5,11 +5,8 @@ const { contextBridge, ipcRenderer } = require("electron")
 // be wrapped in a new function object so they can correctly be passed
 // to the renderer process.
 
-contextBridge.exposeInMainWorld(
-    "ipcRenderer",
-    {
-        on: (...args) => ipcRenderer.on(...args),
-        send: (...args) => ipcRenderer.send(...args),
-        removeListener: (...args) => ipcRenderer.removeListener(...args)
-    }
-)
+contextBridge.exposeInMainWorld("ipcRenderer", {
+    on: (...args) => ipcRenderer.on(...args),
+    send: (...args) => ipcRenderer.send(...args),
+    removeListener: (...args) => ipcRenderer.removeListener(...args),
+})

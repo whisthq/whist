@@ -16,7 +16,6 @@ const Auth = () => {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
 
-
     const clearPassword = () => {
         setPassword("")
         setConfirmPassword("")
@@ -25,13 +24,15 @@ const Auth = () => {
     const onLogin = () => {
         setMainState({
             email,
-            loginRequest: { email, password }})
+            loginRequest: { email, password },
+        })
     }
 
     const onSignup = () => {
         setMainState({
             email,
-            signupRequest: { email, password }})
+            signupRequest: { email, password },
+        })
     }
 
     return (

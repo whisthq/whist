@@ -57,7 +57,7 @@ module.exports = {
             "os",
             "events",
             "punycode",
-            "querystring"
+            "querystring",
         ],
     },
 }

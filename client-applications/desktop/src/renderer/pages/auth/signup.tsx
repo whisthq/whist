@@ -47,7 +47,13 @@ const Signup = (props: {
         if (props.loading) {
             return FractalButtonState.PROCESSING
         } else {
-            if (signupEnabled(props.email, props.password, props.confirmPassword)) {
+            if (
+                signupEnabled(
+                    props.email,
+                    props.password,
+                    props.confirmPassword
+                )
+            ) {
                 return FractalButtonState.DEFAULT
             } else {
                 return FractalButtonState.DISABLED
@@ -81,9 +87,7 @@ const Signup = (props: {
                                     <FractalInput
                                         type="email"
                                         placeholder="Email"
-                                        onChange={
-                                            props.onChangeEmail
-                                        }
+                                        onChange={props.onChangeEmail}
                                         onEnterKey={props.onSignup}
                                         value={props.email}
                                         state={
@@ -96,7 +100,9 @@ const Signup = (props: {
                                 </div>
                                 <FractalWarning
                                     type={FractalWarningType.SMALL}
-                                    warning={checkPasswordVerbose(props.password)}
+                                    warning={checkPasswordVerbose(
+                                        props.password
+                                    )}
                                     className="mt-3 float-right font-semibold"
                                 />
                                 <div key="password">
@@ -106,9 +112,7 @@ const Signup = (props: {
                                     <FractalInput
                                         type="password"
                                         placeholder="Password"
-                                        onChange={
-                                            props.onChangePassword
-                                        }
+                                        onChange={props.onChangePassword}
                                         onEnterKey={props.onSignup}
                                         value={props.password}
                                         state={
