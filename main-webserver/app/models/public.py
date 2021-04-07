@@ -71,8 +71,9 @@ class User(db.Model):
             trial.
         """
 
-        # The user won't have a stripe_customer_id until they have at least started a free trial.
-        if self.stripe_customer_id is None:
+        # Don't even bother checking the user's subscription status on Stripe if their
+        # stripe_customer_id is falsy (e.g. None, "")
+        if not self.stripe_customer_id:
             return False
 
         customer = stripe.Customer.retrieve(self.stripe_customer_id, expand=("subscriptions",))
