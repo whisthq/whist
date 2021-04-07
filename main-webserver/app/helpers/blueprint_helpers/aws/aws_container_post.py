@@ -121,8 +121,6 @@ def protocol_info(address, port, aeskey):
 
     schema = UserContainerSchema(
         only=(
-            "allow_autoupdate",
-            "branch",
             "secret_key",
             "container_id",
             "user_id",

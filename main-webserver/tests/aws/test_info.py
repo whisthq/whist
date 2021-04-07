@@ -59,8 +59,6 @@ def test_protocol_info(container):
         response, status = protocol_info(c.ip, c.port_32262, c.secret_key)
 
         assert status == HTTPStatus.OK
-        assert response.pop("allow_autoupdate") == c.allow_autoupdate
-        assert response.pop("branch") == c.branch
         assert response.pop("secret_key") == c.secret_key
         assert response.pop("container_id") == c.container_id
         assert response.pop("user_id") == c.user_id
