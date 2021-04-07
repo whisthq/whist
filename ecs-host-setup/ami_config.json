@@ -46,7 +46,13 @@
     {
       "type": "shell",
       "inline": [
-        "echo {{user `github_pat`}}; echo {{user `github_username`}}; echo {{user `git_hash`}}; echo {{user `github_branch`}}"
+        "echo {{user `github_pat`}}; echo {{user `github_username`}}; echo {{user `git_hash`}}; echo {{user `git_branch`}}"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "./testin_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
       ]
     }
   ]
