@@ -18,54 +18,39 @@ on:
     workflow_dispatch:
 
 jobs:
-    # Linting
-    # Checks for formatting using Black and Pylint.
-    main-webserver-check-pr-linting:
-        name: Linting
+    main-webserver-load-testing:
+        name: Main Webserver Load Testing
         runs-on: ubuntu-20.04
+
+        env:
+            webserver_url: "https://dev-server.fractal.co"
+            heroku_app_name: "fractal-dev-server"
+            num_users: "1"
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              # with:
+              #   # checkout staging branch
+              #   ref: "staging"
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
               with:
-                  python-version: 3.8
+                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
 
-            - name: Upgrade pip
-              working-directory: main-webserver
-              run: pip install --upgrade pip
-
-            - name: Install Dependencies
-              working-directory: main-webserver
-              run: pip install -r requirements.txt -r requirements-test.txt
-
-            - name: Check if Code is Linted with Python Black
-              working-directory: main-webserver
+            - name: Authenticate Heroku
               run: |
-                  result=$(black . --check) # Returns 0 if the code is already linted
-                  if [ "$result" -ne "0" ]; then
-                    (echo "To pass this check please lint the code with Python Black" && false)
-                  else
-                    (echo "Code is linted with Python Black" && true)
-                  fi
-
-            - name: Check if Code Matches Pylint Standards
-              working-directory: main-webserver
-              run: pylint app # Returns 0 iff code is linted
-
-    # Heroku Testing
-    # Checks unit tests on the Heroku pipeline.
-    main-webserver-check-pr-testing-heroku:
-        name: Heroku Testing
-        runs-on: ubuntu-20.04
-
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-              with:
-                  ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
+                  cat > ~/.netrc << EOF
+                  machine api.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  machine git.heroku.com
+                    login ${{ secrets.HEROKU_DEVELOPER_LOGIN_EMAIL }}
+                    password ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+                  EOF
 
             - name: Set up Python 3.8
               uses: actions/setup-python@v2
@@ -74,66 +59,193 @@ jobs:
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
+              # install generic scripting dependencies and load testing dependencies
+              run: pip install -r scripts/requirements.txt && pip install -r scripts/load_testing/requirements.txt
 
-            - name: Start Local Deploy
-              shell: bash -e {0}
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
-              run: |
-                  bash docker/retrieve_config.sh
-                  bash docker/local_deploy.sh
-
-            - name: Ensure Containers Launch and Exit Properly
-              id: ensure-containers-work
+            - name: Setup and run load test
               working-directory: main-webserver
               shell: python3 {0}
               run: |
+                  # this allows us to import from `scripts`
+                  import sys
+                  sys.path.append(".")
+                  import subprocess
                   import time
-                  import sys; sys.path.append(".")
-                  from scripts.misc_scripts import login
-                  from scripts.utils import make_get_request
-                  from scripts.celery_scripts import poll_celery_task
 
-                  time.sleep(5) # give containers 5 seconds to prepare
+                  from scripts.misc_scripts import login  
+                  from scripts.load_testing.load_test_management import (
+                      upgrade_webserver,
+                      downgrade_webserver,
+                  )
+                  from scripts.load_testing.load_test_driver import run_local_load_test
 
-                  WEBSERVER_URL = "http://localhost:7730" # local webserver available here
+                  WEBSERVER_URL = "${{ env.webserver_url }}"
+                  HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
+                  NUM_USERS = int("${{ env.num_users }}")
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+                  # use heroku to get the database url for the current app
+                  ret = subprocess.run(f"heroku config:get DATABASE_URL --app {HEROKU_APP_NAME}", capture_output=True, shell=True)
+                  assert ret.returncode == 0, f"Heroku DATABASE_URL retrieval failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
+                  DB_URI = ret.stdout.decode("utf-8").strip()
 
                   # Log in as Admin to get Bearer Token
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
-                  resp = make_get_request(WEBSERVER_URL, "/dummy", admin_token=TOKEN)
-                  assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
-                  task_id = resp.json()["ID"]
+                  # --- Setup load test --- #
+                  # Upgrade the heroku app for prod-like use
+                  upgrade_webserver(HEROKU_APP_NAME)
 
-                  # errors out on failure
-                  poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
+                  try:
+                    # Until we fix high initial task latency, we need to do one lambda invocation
+                    # to sidestep the first task's high latency issue
+                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS)
 
-            - name: Print debug info on failure
-              working-directory: main-webserver
-              if: always() && steps.ensure-containers-work.outcome == 'failure'
-              shell: bash -e {0}
+                  except Exception as e:
+                    # we just need the finally block to run before exiting badly
+                    raise e
+                    
+                  finally:
+                    # --- Cleanup load test --- #
+                    # run this always; restores webserver to its original state
+                    downgrade_webserver(HEROKU_APP_NAME)
+
+            - name: Notify Slack on success
               run: |
-                  # print logs for us to see what happened
-                  echo "------ WEB LOGS ------"
-                  docker logs docker_web_1
+                  WEBSERVER_URL=${{ env.webserver_url }}
 
-                  echo "------ CELERY LOGS ------"
-                  docker logs docker_celery_1
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
-            - name: End Local Deploy
-              shell: bash -e {0}
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
+            - name: Notify Slack on failure
+              if: ${{ failure() }}
               run: |
-                  bash docker/local_deploy.sh --down
+                  WEBSERVER_URL=${{ env.webserver_url }}
 
-            - name: Run Tests on Heroku
-              env:
-                  HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
-              run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+                  # Notify slack of failure.
+                  curl -X POST \
+                    --data-urlencode \
+                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # # Linting
+    # # Checks for formatting using Black and Pylint.
+    # main-webserver-check-pr-linting:
+    #     name: Linting
+    #     runs-on: ubuntu-20.04
+
+    #     steps:
+    #         - name: Checkout Git Repository
+    #           uses: actions/checkout@v2
+
+    #         - name: Set up Python 3.8
+    #           uses: actions/setup-python@v2
+    #           with:
+    #               python-version: 3.8
+
+    #         - name: Upgrade pip
+    #           working-directory: main-webserver
+    #           run: pip install --upgrade pip
+
+    #         - name: Install Dependencies
+    #           working-directory: main-webserver
+    #           run: pip install -r requirements.txt -r requirements-test.txt
+
+    #         - name: Check if Code is Linted with Python Black
+    #           working-directory: main-webserver
+    #           run: |
+    #               result=$(black . --check) # Returns 0 if the code is already linted
+    #               if [ "$result" -ne "0" ]; then
+    #                 (echo "To pass this check please lint the code with Python Black" && false)
+    #               else
+    #                 (echo "Code is linted with Python Black" && true)
+    #               fi
+
+    #         - name: Check if Code Matches Pylint Standards
+    #           working-directory: main-webserver
+    #           run: pylint app # Returns 0 iff code is linted
+
+    # # Heroku Testing
+    # # Checks unit tests on the Heroku pipeline.
+    # main-webserver-check-pr-testing-heroku:
+    #     name: Heroku Testing
+    #     runs-on: ubuntu-20.04
+
+    #     steps:
+    #         - name: Checkout Git Repository
+    #           uses: actions/checkout@v2
+    #           with:
+    #               ref: ${{ github.event.pull_request.head.ref }} # must checkout the branch, not just the commit, for Heroku CI to work
+
+    #         - name: Set up Python 3.8
+    #           uses: actions/setup-python@v2
+    #           with:
+    #               python-version: 3.8
+
+    #         - name: Install webserver scripting dependencies
+    #           working-directory: main-webserver
+    #           run: pip install -r scripts/requirements.txt
+
+    #         - name: Start Local Deploy
+    #           shell: bash -e {0}
+    #           env:
+    #               HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+    #           working-directory: main-webserver
+    #           run: |
+    #               bash docker/retrieve_config.sh
+    #               bash docker/local_deploy.sh
+
+    #         - name: Ensure Containers Launch and Exit Properly
+    #           id: ensure-containers-work
+    #           working-directory: main-webserver
+    #           shell: python3 {0}
+    #           run: |
+    #               import time
+    #               import sys; sys.path.append(".")
+    #               from scripts.misc_scripts import login
+    #               from scripts.utils import make_get_request
+    #               from scripts.celery_scripts import poll_celery_task
+
+    #               time.sleep(5) # give containers 5 seconds to prepare
+
+    #               WEBSERVER_URL = "http://localhost:7730" # local webserver available here
+    #               USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
+    #               PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
+
+    #               # Log in as Admin to get Bearer Token
+    #               TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
+
+    #               resp = make_get_request(WEBSERVER_URL, "/dummy", admin_token=TOKEN)
+    #               assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
+    #               task_id = resp.json()["ID"]
+
+    #               # errors out on failure
+    #               poll_celery_task(WEBSERVER_URL, task_id, TOKEN)
+
+    #         - name: Print debug info on failure
+    #           working-directory: main-webserver
+    #           if: always() && steps.ensure-containers-work.outcome == 'failure'
+    #           shell: bash -e {0}
+    #           run: |
+    #               # print logs for us to see what happened
+    #               echo "------ WEB LOGS ------"
+    #               docker logs docker_web_1
+
+    #               echo "------ CELERY LOGS ------"
+    #               docker logs docker_celery_1
+
+    #         - name: End Local Deploy
+    #           shell: bash -e {0}
+    #           env:
+    #               HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+    #           working-directory: main-webserver
+    #           run: |
+    #               bash docker/local_deploy.sh --down
+
+    #         - name: Run Tests on Heroku
+    #           env:
+    #               HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
+    #           working-directory: main-webserver
+    #           run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
