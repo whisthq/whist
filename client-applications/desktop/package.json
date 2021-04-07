@@ -4,13 +4,13 @@
     "license": "MIT",
     "main": "build/dist/main/index.js",
     "scripts": {
-        "start": "sh ./scripts/start.sh",
-        "build": "sh ./scripts/build.sh",
-        "package": "sh ./scripts/package.sh --publish never",
-        "package-ci": "sh ./scripts/package.sh --publish always",
-        "tailwind": "sh scripts/tailwind.sh",
+        "start": "./scripts/start.sh",
+        "build": "./scripts/build.sh",
+        "package": "./scripts/package.sh --publish never",
+        "package-ci": "./scripts/package.sh --publish always",
+        "tailwind": "./scripts/tailwind.sh",
         "retrieve": "python3 scripts/retrieve.py",
-        "postinstall": "sh scripts/postinstall.sh"
+        "postinstall": "./scripts/postinstall.sh"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^1.2.35",

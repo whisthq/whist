@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 yarn tailwind
 snowpack build
