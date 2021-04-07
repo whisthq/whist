@@ -1,11 +1,11 @@
-import { Observable, merge, race } from "rxjs"
-import { mapTo, startWith } from "rxjs/operators"
+import { Observable, merge, race } from 'rxjs'
+import { mapTo, startWith } from 'rxjs/operators'
 
 export const loadingFrom = (
-    request: Observable<any>,
-    ...ends: Observable<any>[]
+  request: Observable<any>,
+  ...ends: Array<Observable<any>>
 ) =>
-    merge(
-        request.pipe(mapTo(true), startWith(false)),
-        race(...ends.map((o) => o.pipe(mapTo(false))))
-    )
+  merge(
+    request.pipe(mapTo(true), startWith(false)),
+    race(...ends.map((o) => o.pipe(mapTo(false))))
+  )

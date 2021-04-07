@@ -1,13 +1,12 @@
-import React from "react"
+import React from 'react'
 
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
-import classNames from "classnames"
+import { FractalButton, FractalButtonState } from '@app/components/html/button'
+import classNames from 'classnames'
 
-const Error = (props: { title: string; text: string; onClick: () => void }) => {
-    /*
+const Error = (props: { title: string, text: string, onClick: () => void }) => {
+  /*
         Description:
             Error pop-up
-
 
         Arguments:
             title (string): Title of error window
@@ -15,11 +14,11 @@ const Error = (props: { title: string; text: string; onClick: () => void }) => {
             onClick (() => void): Function to execute when window button is pressed
     */
 
-    return (
+  return (
         <div
             className={classNames(
-                "flex flex-col h-screen items-center",
-                "justify-center font-body text-center"
+              'flex flex-col h-screen items-center',
+              'justify-center font-body text-center'
             )}
         >
             <div className="font-semibold text-2xl">{props.title}</div>
@@ -35,7 +34,7 @@ const Error = (props: { title: string; text: string; onClick: () => void }) => {
                 </div>
             </div>
         </div>
-    )
+  )
 }
 
 export default Error

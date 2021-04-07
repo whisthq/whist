@@ -1,51 +1,49 @@
-import React from "react"
+import React from 'react'
 
-import { FractalFadeIn } from "@app/components/custom/fade"
-import { Logo } from "@app/components/html/logo"
-import { FractalInput, FractalInputState } from "@app/components/html/input"
+import { FractalFadeIn } from '@app/components/custom/fade'
+import { Logo } from '@app/components/html/logo'
+import { FractalInput, FractalInputState } from '@app/components/html/input'
 import {
-    FractalWarning,
-    FractalWarningType,
-} from "@app/components/custom/warning"
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
-import { FractalNavigation } from "@app/components/custom/navigation"
+  FractalWarning,
+  FractalWarningType
+} from '@app/components/custom/warning'
+import { FractalButton, FractalButtonState } from '@app/components/html/button'
+import { FractalNavigation } from '@app/components/custom/navigation'
 
 import {
-    loginEnabled,
-    checkEmail,
-    checkPassword,
-} from "@app/utils/auth"
+  loginEnabled,
+  checkEmail,
+  checkPassword
+} from '@app/utils/auth'
 
 const Login = (props: {
-    loading: boolean
-    warning: string
-    email: string
-    password: string
-    onLogin: () => void,
-    onNavigate: (s: string) => void
-    onChangeEmail: (s: string) => void
-    onChangePassword: (s: string) => void
+  loading: boolean
+  warning: string
+  email: string
+  password: string
+  onLogin: () => void
+  onNavigate: (s: string) => void
+  onChangeEmail: (s: string) => void
+  onChangePassword: (s: string) => void
 }) => {
-    /*
+  /*
         Description:
-            Component for logging in. Contains the login form UI and 
+            Component for logging in. Contains the login form UI and
             dispatches login API call
 
         Arguments:
-            onLogin((json) => void): 
+            onLogin((json) => void):
                 Callback function fired when login API call is sent, body of response
                 is passed in as argument
     */
 
-    const buttonState = () => {
-        if (props.loading)
-            return FractalButtonState.PROCESSING
-        if (loginEnabled(props.email, props.password))
-            return FractalButtonState.DEFAULT
-        return FractalButtonState.DISABLED
-    }
+  const buttonState = () => {
+    if (props.loading) { return FractalButtonState.PROCESSING }
+    if (loginEnabled(props.email, props.password)) { return FractalButtonState.DEFAULT }
+    return FractalButtonState.DISABLED
+  }
 
-    return (
+  return (
         <div className="flex flex-col justify-center items-center h-screen text-center">
             <div className="w-full max-w-xs m-auto">
                 <FractalFadeIn>
@@ -69,8 +67,8 @@ const Login = (props: {
                         value={props.email}
                         state={
                             checkEmail(props.email)
-                                ? FractalInputState.SUCCESS
-                                : FractalInputState.DEFAULT
+                              ? FractalInputState.SUCCESS
+                              : FractalInputState.DEFAULT
                         }
                         className="mt-1"
                     />
@@ -85,8 +83,8 @@ const Login = (props: {
                         value={props.password}
                         state={
                             checkPassword(props.password)
-                                ? FractalInputState.SUCCESS
-                                : FractalInputState.DEFAULT
+                              ? FractalInputState.SUCCESS
+                              : FractalInputState.DEFAULT
                         }
                         className="mt-1"
                     />
@@ -106,7 +104,7 @@ const Login = (props: {
                 </FractalFadeIn>
             </div>
         </div>
-    )
+  )
 }
 
 export default Login

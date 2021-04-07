@@ -1,21 +1,21 @@
-import path from "path"
-import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
+import path from 'path'
+import { app, BrowserWindow, BrowserWindowConstructorOptions } from 'electron'
 import {
-    WindowHashAuth,
-    WindowHashUpdate,
-    WindowHashAuthError,
-    WindowHashProtocolError,
-    WindowHashContainerError,
-} from "@app/utils/constants"
+  WindowHashAuth,
+  WindowHashUpdate,
+  WindowHashAuthError,
+  WindowHashProtocolError,
+  WindowHashContainerError
+} from '@app/utils/constants'
 
 const buildRoot = app.isPackaged
-    ? path.join(app.getAppPath(), "build")
-    : path.resolve("public")
+  ? path.join(app.getAppPath(), 'build')
+  : path.resolve('public')
 
 const base = {
-    webPreferences: { preload: path.join(buildRoot, "preload.js") },
-    resizable: false,
-    titleBarStyle: "hidden",
+  webPreferences: { preload: path.join(buildRoot, 'preload.js') },
+  resizable: false,
+  titleBarStyle: 'hidden'
 }
 
 const wXs = { width: 16 * 24 }
@@ -35,72 +35,72 @@ const h2Xl = { height: 16 * 80 }
 const h3Xl = { height: 16 * 96 }
 
 type CreateWindowFunction = (
-    onReady?: (win: BrowserWindow) => any,
-    onClose?: (win: BrowserWindow) => any
+  onReady?: (win: BrowserWindow) => any,
+  onClose?: (win: BrowserWindow) => any
 ) => BrowserWindow
 
 export const getWindows = () => BrowserWindow.getAllWindows()
 
 export const closeWindows = () => {
-    BrowserWindow.getAllWindows().forEach((win) => win.close())
+  BrowserWindow.getAllWindows().forEach((win) => win.close())
 }
 
 export const createWindow = (
-    show: string,
-    options: Partial<BrowserWindowConstructorOptions>,
-    onReady?: (win: BrowserWindow) => any,
-    onClose?: (win: BrowserWindow) => any
+  show: string,
+  options: Partial<BrowserWindowConstructorOptions>,
+  onReady?: (win: BrowserWindow) => any,
+  onClose?: (win: BrowserWindow) => any
 ) => {
-    const win = new BrowserWindow({ ...options, show: false })
+  const win = new BrowserWindow({ ...options, show: false })
 
-    const params = "?show=" + show
+  const params = '?show=' + show
 
-    if (app.isPackaged) {
-        win.loadFile("build/index.html", { search: params })
-    } else {
-        win.loadURL("http://localhost:8080" + params)
-        win.webContents.openDevTools({ mode: "undocked" })
-    }
+  if (app.isPackaged) {
+    win.loadFile('build/index.html', { search: params })
+  } else {
+    win.loadURL('http://localhost:8080' + params)
+    win.webContents.openDevTools({ mode: 'undocked' })
+  }
 
-    win.webContents.on("did-finish-load", () =>
-        onReady ? onReady(win) : win.show()
-    )
-    win.on("close", () => onClose && onClose(win))
+  win.webContents.on('did-finish-load', () =>
+    (onReady != null) ? onReady(win) : win.show()
+  )
+  win.on('close', () => (onClose != null) && onClose(win))
 
-    return win
+  return win
 }
 
 export const createAuthWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashAuth, {
-        ...base,
-        ...wSm,
-        ...hMd,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashAuth, {
+    ...base,
+    ...wSm,
+    ...hMd
+  } as BrowserWindowConstructorOptions)
 
 export const createAuthErrorWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashAuthError, {
-        ...base,
-        ...wMd,
-        ...hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashAuthError, {
+    ...base,
+    ...wMd,
+    ...hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashContainerError, {
-        ...base,
-        ...wMd,
-        ...hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashContainerError, {
+    ...base,
+    ...wMd,
+    ...hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createProtocolErrorWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashProtocolError, {
-        ...base,
-        ...wMd,
-        ...hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashProtocolError, {
+    ...base,
+    ...wMd,
+    ...hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createUpdateWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashUpdate, {
-        ...base,
-        ...wSm,
-        ...hMd,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashUpdate, {
+    ...base,
+    ...wSm,
+    ...hMd
+  } as BrowserWindowConstructorOptions)

@@ -1,40 +1,41 @@
-import React, { useState, useEffect } from "react"
-import { Route, useHistory } from "react-router-dom"
+import React, { useState, useEffect } from 'react'
+import { Route, useHistory } from 'react-router-dom'
 
-import Login from "@app/renderer/pages/auth/login"
-import Signup from "@app/renderer/pages/auth/signup"
-import { useMainState } from "@app/utils/state"
+import Login from '@app/renderer/pages/auth/login'
+import Signup from '@app/renderer/pages/auth/signup'
+import { useMainState } from '@app/utils/state'
 
 const Auth = () => {
-    /*
+  /*
         Description:
             Router for auth-related pages (e.g. login and signup)
     */
 
-    const [mainState, setMainState] = useMainState()
-    const [email, setEmail] = useState("")
-    const [password, setPassword] = useState("")
-    const [confirmPassword, setConfirmPassword] = useState("")
+  const [mainState, setMainState] = useMainState()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
 
+  const clearPassword = () => {
+    setPassword('')
+    setConfirmPassword('')
+  }
 
-    const clearPassword = () => {
-        setPassword("")
-        setConfirmPassword("")
-    }
+  const onLogin = () => {
+    setMainState({
+      email,
+      loginRequest: { email, password }
+    })
+  }
 
-    const onLogin = () => {
-        setMainState({
-            email,
-            loginRequest: { email, password }})
-    }
+  const onSignup = () => {
+    setMainState({
+      email,
+      signupRequest: { email, password }
+    })
+  }
 
-    const onSignup = () => {
-        setMainState({
-            email,
-            signupRequest: { email, password }})
-    }
-
-    return (
+  return (
         <>
             <Route
                 exact
@@ -71,7 +72,7 @@ const Auth = () => {
                 )}
             />
         </>
-    )
+  )
 }
 
 export default Auth

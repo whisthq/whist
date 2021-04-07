@@ -17,6 +17,6 @@
 // subscribe to any observables in the rest of the application. Subscribing
 // to a "downstream" observable from here can cause circular dependencies.
 
-import "@app/main/events/app"
-import "@app/main/events/ipc"
-import "@app/main/events/persist"
+import '@app/main/events/app'
+import '@app/main/events/ipc'
+import '@app/main/events/persist'

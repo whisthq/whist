@@ -1,7 +1,7 @@
-import { configGet, configPost } from "@fractal/core-ts"
-import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
-import config from "@app/utils/config"
-import { AsyncReturnType } from "@app/utils/types"
+import { configGet, configPost } from '@fractal/core-ts'
+import { createConfigToken, decryptConfigToken } from '@app/utils/crypto'
+import config from '@app/utils/config'
+import { AsyncReturnType } from '@app/utils/types'
 
 /*
  * @fractal/core-ts http functions like "get" and "post"
@@ -20,9 +20,9 @@ import { AsyncReturnType } from "@app/utils/types"
  */
 
 const httpConfig = {
-    server: config.url.WEBSERVER_URL,
-    // handleAuth: (_: any) => goTo("/auth"),
-    endpointRefreshToken: "/token/refresh",
+  server: config.url.WEBSERVER_URL,
+  // handleAuth: (_: any) => goTo("/auth"),
+  endpointRefreshToken: '/token/refresh'
 }
 
 export const get = configGet(httpConfig)
@@ -30,57 +30,57 @@ export const get = configGet(httpConfig)
 export const post = configPost(httpConfig)
 
 export const emailLogin = async (username: string, password: string) =>
-    await post({
-        endpoint: "/account/login",
-        body: { username, password },
-    })
+  await post({
+    endpoint: '/account/login',
+    body: { username, password }
+  })
 
 type ResponseAuth = AsyncReturnType<typeof emailLogin>
 
 export const emailLoginValid = (response: ResponseAuth) =>
-    response.json?.access_token ? true : false
+  !!response.json?.access_token
 
 export const emailLoginError = (response: ResponseAuth) =>
-    response.status !== 200
+  response.status !== 200
 
 export const emailLoginAccessToken = (response: ResponseAuth) =>
-    response.json?.access_token
+  response.json?.access_token
 
 export const emailLoginRefreshToken = (response: ResponseAuth) =>
-    response.json?.refresh_token
+  response.json?.refresh_token
 
 export const emailLoginConfigToken = async (
-    response: ResponseAuth,
-    password: string
+  response: ResponseAuth,
+  password: string
 ) =>
-    response?.json?.encrypted_config_token
-        ? decryptConfigToken(response.json.encrypted_config_token, password)
-        : await createConfigToken()
+  response?.json?.encrypted_config_token
+    ? decryptConfigToken(response.json.encrypted_config_token, password)
+    : await createConfigToken()
 
 export const emailSignup = async (
-    username: string,
-    password: string,
-    encrypted_config_token: string
+  username: string,
+  password: string,
+  encrypted_config_token: string
 ) =>
-    await post({
-        endpoint: "/account/register",
-        body: {
-            username,
-            password,
-            encrypted_config_token,
-            name: "",
-            feedback: "",
-        },
-    })
+  await post({
+    endpoint: '/account/register',
+    body: {
+      username,
+      password,
+      encrypted_config_token,
+      name: '',
+      feedback: ''
+    }
+  })
 
 export const emailSignupValid = emailLoginValid
 
 export const emailSignupError = (response: ResponseAuth) => {
-    // A 400 bad response indicates that the user account exists,
-    // we consider this a warning, not a failure.
-    if (response.status === 400) return false
-    if (response.status === 200) return false
-    return true
+  // A 400 bad response indicates that the user account exists,
+  // we consider this a warning, not a failure.
+  if (response.status === 400) return false
+  if (response.status === 200) return false
+  return true
 }
 
 export const emailSignupAccessToken = emailLoginAccessToken
@@ -88,30 +88,30 @@ export const emailSignupAccessToken = emailLoginAccessToken
 export const emailSignupRefreshToken = emailLoginRefreshToken
 
 export const tokenValidate = async (accessToken: string) =>
-    get({ endpoint: "/token/validate", accessToken })
+  get({ endpoint: '/token/validate', accessToken })
 
 export const taskStatus = async (taskID: string, accessToken: string) =>
-    get({ endpoint: "/status/" + taskID, accessToken })
+  get({ endpoint: '/status/' + taskID, accessToken })
 
 export const containerRequest = async (
-    username: string,
-    accessToken: string,
-    region: string,
-    dpi: number
+  username: string,
+  accessToken: string,
+  region: string,
+  dpi: number
 ) =>
-    post({
-        endpoint: "/container/assign",
-        accessToken,
-        body: {
-            username,
-            region,
-            dpi,
-            app: "Google Chrome",
-        },
-    })
+  post({
+    endpoint: '/container/assign',
+    accessToken,
+    body: {
+      username,
+      region,
+      dpi,
+      app: 'Google Chrome'
+    }
+  })
 
 export const regionRequest = async (username: string, accessToken: string) =>
-    get({
-        endpoint: `/regions?username=${username}`,
-        accessToken,
-    })
+  get({
+    endpoint: `/regions?username=${username}`,
+    accessToken
+  })
