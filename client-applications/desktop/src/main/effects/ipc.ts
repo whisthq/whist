@@ -38,6 +38,8 @@ const subscribed: SubscriptionMap = {
     loginLoading: loginLoading,
     loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
     updateInfo: autoUpdateDownloadProgress,
+    signupLoading: signupLoading,
+    signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid))
 }
 
 combineLatest(mapValues(subscribed, (o) => o.pipe(startWith(undefined))))
