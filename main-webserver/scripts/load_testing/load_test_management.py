@@ -10,7 +10,7 @@ import sys
 import os
 import subprocess
 
-# this adds the load_testing folder oot to the python path no matter where
+# this adds the webserver repo root to the python path no matter where
 # this file is called from. We can now import from `scripts`.
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 

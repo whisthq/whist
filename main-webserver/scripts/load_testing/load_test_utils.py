@@ -6,15 +6,7 @@ import sys
 import os
 
 
-LOAD_TEST_CLUSTER_REGION = "us-east-1"
 LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
-
-# this will be located at load_test_dump (from the perspective of this file)
-# no matter where it is called from
-OUTFOLDER = os.path.join(os.getcwd(), os.path.dirname(__file__), "load_test_dump")
-# used to prefix the CSVs created by locust. See `load_test.py:run_local_load_test`
-# for more details on which CSVs are created.
-CSV_PREFIX = "locust_load_test"
 
 
 def get_task_definition_arn(web_url: str) -> str:

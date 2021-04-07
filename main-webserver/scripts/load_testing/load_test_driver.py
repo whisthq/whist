@@ -8,14 +8,12 @@ import os
 import subprocess
 import shutil
 
-# this adds the load_testing folder oot to the python path no matter where
+# this adds the webserver repo root to the python path no matter where
 # this file is called from. We can now import from `scripts`.
-sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
+webserver_root = os.path.join(os.getcwd(), os.path.dirname(__file__), "../..")
+sys.path.append(webserver_root)
 
-from scripts.load_testing.load_test_utils import OUTFOLDER, CSV_PREFIX
-
-
-def run_local_load_test(web_url: str, admin_token: str, num_users: int):
+def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_name: str):
     """
     Run a local load test using locust.
 
@@ -24,20 +22,17 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int):
         admin_token: needed to the scripts perform admin-level actions on the webserver.
             See load_test.py:load_test_single_user for a full explanation.
         num_users: total number of users to simulate
+        region_name: region to load test in
 
     Returns:
         Calls `locust` utility on `locust_load_test.py`. It will exit with nonzero exit
         code if any user cannot get a container. If that happens, this function will
         also exit with error.
     """
-    if os.path.exists(OUTFOLDER):
-        print(f"Cleaning existing {OUTFOLDER}")
-        shutil.rmtree(OUTFOLDER)
-    os.makedirs(OUTFOLDER, exist_ok=False)
-
-    csv_path = os.path.join(OUTFOLDER, CSV_PREFIX)
-    # add admin to environment; load test script will read it
+    locust_file_path = os.path.join(webserver_root, "scripts", "load_testing", "locust_load_test.py")
+    # add admin_token and region_name to environment; load test script will read it
     os.environ["ADMIN_TOKEN"] = admin_token
+    os.environ["REGION_NAME"] = region_name
     # -u: number of users
     # -r: users/s generation rate
     # --host: webserver url
@@ -45,7 +40,7 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int):
     # --csv: path to save results
     # --only-summary: only print result summaries
     cmd = (
-        f"locust -f locust_load_test.py -u {num_users} -r 10 --host {web_url} "
+        f"locust -f {locust_file_path} -u {num_users} -r 10 --host {web_url} "
         f"--headless --only-summary"
     )
     ret = subprocess.run(cmd, shell=True)

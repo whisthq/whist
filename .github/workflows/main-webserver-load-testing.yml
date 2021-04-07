@@ -15,16 +15,16 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
-            webserver_url: "https://staging-server.fractal.co"
-            heroku_app_name: "fractal-staging-server"
-            num_invocations: "1"
+            webserver_url: "https://dev-server.fractal.co"
+            heroku_app_name: "fractal-dev-server"
+            num_users: "1"
 
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              # with:
-              #   # checkout staging branch
-              #   ref: "staging"
+              with:
+                # checkout staging branch
+                ref: "staging"
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -51,7 +51,8 @@ jobs:
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
-              run: pip install -r scripts/requirements.txt
+              # install generic scripting dependencies and load testing dependencies
+              run: pip install -r scripts/requirements.txt && pip install -r scripts/load_testing/requirements.txt
 
             - name: Setup and run load test
               working-directory: main-webserver

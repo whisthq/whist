@@ -18,11 +18,8 @@ import locust
 import gevent
 
 from scripts.load_testing.load_test_utils import (
-    LOAD_TEST_CLUSTER_REGION,
     LOAD_TEST_USER_PREFIX,
     get_task_definition_arn,
-    OUTFOLDER,
-    CSV_PREFIX,
 )
 
 from scripts.utils import make_post_request, make_get_request, make_put_request
@@ -43,6 +40,7 @@ def get_num_users_and_host():
 
 TOTAL_USERS, WEB_URL = get_num_users_and_host()
 ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
+LOAD_TEST_CLUSTER_REGION = os.environ["REGION_NAME"]
 # a hard-coded encrypted app config token with text: fake_text, password: fake_pwd
 APP_CONFIG_TOKEN = "62aed4c219c461e18f109ac689fd42e8929d82898280f9f403e78b98dacee1e5a8acad5da822a04fccc4cb890a463a2b0856e9804fa367d321f4c0e670c2057ab191383ec16ddea1d2"
 
