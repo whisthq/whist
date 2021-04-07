@@ -17,8 +17,8 @@ import {
 import { userEmail, userAccessToken } from "@app/main/observables/user"
 import { loginSuccess } from "@app/main/observables/login"
 import { ContainerAssignTimeout } from "@app/utils/constants"
-import { loadingFrom } from "@app/utils/observables"
-import { from, of, interval, merge } from "rxjs"
+import { loadingFrom, pollMap } from "@app/utils/observables"
+import { from, of } from "rxjs"
 import {
     map,
     last,
@@ -28,7 +28,6 @@ import {
     takeUntil,
     exhaustMap,
     withLatestFrom,
-    switchMap,
     takeWhile,
 } from "rxjs/operators"
 
@@ -62,37 +61,29 @@ export const containerAssignRequest = containerCreateSuccess.pipe(
 )
 
 export const containerAssignPolling = containerAssignRequest.pipe(
-    map(([id, token]) =>
-        interval(1000).pipe(
-            switchMap(() => from(containerInfo(id, token))),
-            takeWhile((res) => containerInfoPending(res), true),
-            takeWhile((res) => !containerInfoError(res), true),
-            takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
-            share()
-        )
-    )
+    pollMap(1000, ([id, token]) => containerInfo(id, token)),
+    takeWhile((res) => containerInfoPending(res), true),
+    takeWhile((res) => !containerInfoError(res), true),
+    takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
+    share()
 )
 
-containerAssignPolling
-    .pipe(switchMap((res) => res))
-    .subscribe((res) =>
-        console.log("container poll", res?.status, res?.json.state)
-    )
+containerAssignPolling.subscribe((res) =>
+    console.log("container poll", res?.status, res?.json.state)
+)
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
-    exhaustMap((poll) => poll.pipe(last())),
+    last(),
     filter((res) => containerInfoSuccess(res))
 )
 
-export const containerAssignFailure = merge(
-    containerAssignPolling.pipe(
-        exhaustMap((poll) => poll.pipe(last())),
-        filter(
-            (res) =>
-                containerInfoError(res) ||
-                containerInfoPending(res) ||
-                !containerInfoSuccess(res)
-        )
+export const containerAssignFailure = containerAssignPolling.pipe(
+    last(),
+    filter(
+        (res) =>
+            containerInfoError(res) ||
+            containerInfoPending(res) ||
+            !containerInfoSuccess(res)
     )
 )
 

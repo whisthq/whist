@@ -7,7 +7,7 @@ import {
     containerAssignPolling,
     containerAssignFailure,
 } from "@app/main/observables/container"
-import { loadingFrom } from "@app/utils/observables"
+import { loadingFrom, pollMap } from "@app/utils/observables"
 import {
     hostServiceInfo,
     hostServiceInfoValid,
@@ -19,7 +19,7 @@ import {
     hostServiceConfigValid,
     hostServiceConfigError,
 } from "@app/utils/host"
-import { from, interval } from "rxjs"
+import { from } from "rxjs"
 import {
     map,
     take,
@@ -29,45 +29,36 @@ import {
     skipWhile,
     takeWhile,
     takeUntil,
-    switchMap,
     exhaustMap,
     withLatestFrom,
 } from "rxjs/operators"
 
 export const hostInfoRequest = containerAssignPolling.pipe(
-    exhaustMap((poll) =>
-        poll.pipe(
-            skipWhile((res) => res?.json.state !== "PENDING"),
-            take(1)
-        )
-    ),
+    skipWhile((res) => res?.json.state !== "PENDING"),
+    take(1),
     withLatestFrom(userEmail, userAccessToken),
     map(([_, email, token]) => [email, token]),
     share()
 )
 
 export const hostInfoPolling = hostInfoRequest.pipe(
-    map(([email, token]) =>
-        interval(1000).pipe(
-            switchMap(() => from(hostServiceInfo(email, token))),
-            takeWhile((res) => hostServiceInfoPending(res), true),
-            takeUntil(containerAssignFailure),
-            share()
-        )
-    )
+    pollMap(1000, ([email, token]) => hostServiceInfo(email, token)),
+    takeWhile((res) => hostServiceInfoPending(res), true),
+    takeUntil(containerAssignFailure),
+    share()
 )
 
-hostInfoPolling
-    .pipe(switchMap((res) => res))
-    .subscribe((res) => console.log("host poll", res?.status, res?.json))
+hostInfoPolling.subscribe((res) =>
+    console.log("host poll", res?.status, res?.json)
+)
 
 export const hostInfoSuccess = hostInfoPolling.pipe(
-    exhaustMap((poll) => poll.pipe(last())),
+    last(),
     filter((res) => hostServiceInfoValid(res))
 )
 
 export const hostInfoFailure = hostInfoPolling.pipe(
-    exhaustMap((poll) => poll.pipe(last())),
+    last(),
     filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res))
 )
 
