@@ -41,10 +41,10 @@ A virtual mouse input device is just as easy to create and use:
 			err = vm.MoveDown(42)
 
 		Example (trigger a left click):
-			err = vm.LeftClick()
+			err = vm.MouseButtonClick(evBtnLeft)
 
 		Example (trigger a right click):
-			err = vm.RightClick()
+			err = vm.MouseButtonClick(evBtnRight)
 
 	3. Close the device
 		Example: err = vm.Close()

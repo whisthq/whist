@@ -13,25 +13,15 @@ type TouchPad interface {
 	// MoveTo will move the cursor to the specified position on the screen
 	MoveTo(x int32, y int32) error
 
-	// LeftClick will issue a single left click.
-	LeftClick() error
+	// MouseButtonClick will issue a right click.
+	MouseButtonClick(buttonCode int) error
 
-	// RightClick will issue a right click.
-	RightClick() error
+	// MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
+	// MouseButtonRelease is invoked.
+	MouseButtonPress(buttonCode int) error
 
-	// LeftPress will simulate a press of the left mouse button. Note that the button will not be released until
-	// LeftRelease is invoked.
-	LeftPress() error
-
-	// LeftRelease will simulate the release of the left mouse button.
-	LeftRelease() error
-
-	// RightPress will simulate the press of the right mouse button. Note that the button will not be released until
-	// RightRelease is invoked.
-	RightPress() error
-
-	// RightRelease will simulate the release of the right mouse button.
-	RightRelease() error
+	// MouseButtonRelease will simulate the release of a mouse button.
+	MouseButtonRelease(buttonCode int) error
 
 	// TouchDown will simulate a single touch to a virtual touch device. Use TouchUp to end the touch gesture.
 	TouchDown() error
@@ -83,44 +73,25 @@ func (vTouch vTouchPad) MoveTo(x int32, y int32) error {
 	return sendAbsEvent(vTouch.deviceFile, x, y)
 }
 
-func (vTouch vTouchPad) LeftClick() error {
-	err := sendBtnEvent(vTouch.deviceFile, []int{evBtnLeft}, btnStatePressed)
+// MouseButtonClick will issue a MouseButtonClick
+func (vRel vTouchPad) MouseButtonClick(buttonCode int) error {
+	err := sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
 	if err != nil {
-		return fmt.Errorf("Failed to issue the LeftClick event: %v", err)
+		return fmt.Errorf("Failed to issue the 0x%x mouse button event: %v", buttonCode, err)
 	}
 
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnLeft}, btnStateReleased)
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
-func (vTouch vTouchPad) RightClick() error {
-	err := sendBtnEvent(vTouch.deviceFile, []int{evBtnRight}, btnStatePressed)
-	if err != nil {
-		return fmt.Errorf("Failed to issue the RightClick event: %v", err)
-	}
-
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnRight}, btnStateReleased)
+// MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
+// MouseButtonRelease is invoked.
+func (vRel vTouchPad) MouseButtonPress(buttonCode int) error {
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
 }
 
-// LeftPress will simulate a press of the left mouse button. Note that the button will not be released until
-// LeftRelease is invoked.
-func (vTouch vTouchPad) LeftPress() error {
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnLeft}, btnStatePressed)
-}
-
-// LeftRelease will simulate the release of the left mouse button.
-func (vTouch vTouchPad) LeftRelease() error {
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnLeft}, btnStateReleased)
-}
-
-// RightPress will simulate the press of the right mouse button. Note that the button will not be released until
-// RightRelease is invoked.
-func (vTouch vTouchPad) RightPress() error {
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnRight}, btnStatePressed)
-}
-
-// RightRelease will simulate the release of the right mouse button.
-func (vTouch vTouchPad) RightRelease() error {
-	return sendBtnEvent(vTouch.deviceFile, []int{evBtnRight}, btnStateReleased)
+// MouseButtonRelease will simulate the release of a mouse button.
+func (vRel vTouchPad) MouseButtonRelease(buttonCode int) error {
+	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
 func (vTouch vTouchPad) TouchDown() error {
