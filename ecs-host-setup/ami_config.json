@@ -44,21 +44,52 @@
   ],
   "provisioners": [
     {
+      "type": "shell",
+      "inline": [
+        "while [ ! -f /var/lib/cloud/instance/boot-finished ]; do echo 'Waiting for cloud-init...'; sleep 1; done"
+      ]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": "true",
+      "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
+    },
+    {
+      "pause_before": "10s",
       "type": "file",
       "source": "../ecs-host-setup",
       "destination": "/home/ubuntu"
     },
     {
-      "type": "shell",
-      "inline": [
-        "echo {{user `github_pat`}}; echo {{user `github_username`}}; echo {{user `git_hash`}}; echo {{user `git_branch`}}"
-      ]
+      "type": "file",
+      "source": "../ecs-host-service/build/ecs-host-service",
+      "destination": "/home/ubuntu/ecs-host-service"
     },
     {
       "type": "shell",
+      "inline": ["cd /home/ubuntu/ecs-host-setup", "bash setup_ubuntu20_host.sh {{user `github_pat`}} {{user `github_pat`}} {{user `git_branch`}} {{user `git_hash`}}"]
+    },
+    {
+      "type": "shell",
+      "expect_disconnect": "true",
+      "inline": ["sudo reboot"]
+    },
+    {
+      "pause_before": "10s",
+      "type": "shell",
       "inline": [
-        "cd /home/ubuntu/ecs-host-setup","bash testing_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
+        "cd /home/ubuntu/ecs-host-setup",
+        "./setup_ubuntu20_ami_host.sh",
+        "cd ..",
+        "rm -rf ecs-host-setup"
       ]
+    }
+  ],
+  "post-processors": [
+    {
+      "type": "manifest",
+      "output": "manifest.json",
+      "strip_path": true
     }
   ]
 }
