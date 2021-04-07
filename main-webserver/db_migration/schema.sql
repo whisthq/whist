@@ -218,19 +218,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: banners; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.banners (
-    heading character varying NOT NULL,
-    subheading character varying,
-    category character varying,
-    background character varying,
-    url character varying
-);
-
-
---
 -- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -1149,14 +1136,6 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY oauth.credentials ALTER COLUMN id SET DEFAULT nextval('oauth.credentials_id_seq'::regclass);
-
-
---
--- Name: banners banners_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.banners
-    ADD CONSTRAINT banners_pkey PRIMARY KEY (heading);
 
 
 --
