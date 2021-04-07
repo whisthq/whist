@@ -26,6 +26,7 @@ jobs:
             webserver_url: "https://dev-server.fractal.co"
             heroku_app_name: "fractal-dev-server"
             num_users: "1"
+            load_test_region: "us-east-1"
 
         steps:
             - name: Checkout Git Repository
@@ -82,6 +83,7 @@ jobs:
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
                   NUM_USERS = int("${{ env.num_users }}")
+                  LOAD_TEST_REGION = "${{ env.load_test_region }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
@@ -100,7 +102,7 @@ jobs:
                   try:
                     # Until we fix high initial task latency, we need to do one lambda invocation
                     # to sidestep the first task's high latency issue
-                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS)
+                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS, LOAD_TEST_REGION)
 
                   except Exception as e:
                     # we just need the finally block to run before exiting badly
