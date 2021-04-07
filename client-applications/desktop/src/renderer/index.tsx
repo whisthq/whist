@@ -10,8 +10,12 @@ import Error from "@app/renderer/pages/error"
 import {
     AuthErrorTitle,
     AuthErrorText,
-    ContainerCreateErrorTitle,
-    ContainerCreateErrorText,
+    ContainerCreateErrorTitleInternal,
+    ContainerCreateErrorTextInternal,
+    ContainerCreateErrorTitleNoAccess,
+    ContainerCreateErrorTextNoAccess,
+    ContainerCreateErrorTitleUnauthorized,
+    ContainerCreateErrorTextUnauthorized,
     ContainerAssignErrorTitle,
     ContainerAssignErrorText,
     ProtocolErrorTitle,
@@ -19,7 +23,9 @@ import {
     WindowHashAuth,
     WindowHashUpdate,
     WindowHashAuthError,
-    WindowHashCreateContainerError,
+    WindowHashCreateContainerErrorNoAccess,
+    WindowHashCreateContainerErrorUnauthorized,
+    WindowHashCreateContainerErrorInternal,
     WindowHashAssignContainerError,
     WindowHashProtocolError,
     NavigationErrorTitle,
@@ -67,11 +73,27 @@ const RootComponent = () => {
                 onClick={errorContinue}
             />
         )
-    if (show === WindowHashCreateContainerError)
+    if (show === WindowHashCreateContainerErrorNoAccess)
         return (
             <Error
-                title={ContainerCreateErrorTitle}
-                text={ContainerCreateErrorText}
+                title={ContainerCreateErrorTitleNoAccess}
+                text={ContainerCreateErrorTextNoAccess}
+                onClick={errorContinue}
+            />
+        )
+    if (show === WindowHashCreateContainerErrorUnauthorized)
+        return (
+            <Error
+                title={ContainerCreateErrorTitleUnauthorized}
+                text={ContainerCreateErrorTextUnauthorized}
+                onClick={errorContinue}
+            />
+        )
+    if (show === WindowHashCreateContainerErrorInternal)
+        return (
+            <Error
+                title={ContainerCreateErrorTitleInternal}
+                text={ContainerCreateErrorTextInternal}
                 onClick={errorContinue}
             />
         )

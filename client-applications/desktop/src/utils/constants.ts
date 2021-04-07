@@ -1,3 +1,6 @@
+// TODO: This is getting a bit unwieldy. Let's create a way to group related errors, e.g.
+// a "container error" object.
+
 export const HostServicePort = 4678
 
 export const WarningSignupInvalid =
@@ -16,7 +19,14 @@ export const WindowHashUpdate = "UPDATE"
 
 export const WindowHashAuthError = "AUTH_ERROR"
 
-export const WindowHashCreateContainerError = "CREATE_CONTAINER_ERROR"
+export const WindowHashCreateContainerErrorNoAccess =
+    "CREATE_CONTAINER_ERROR_NO_ACCESS"
+
+export const WindowHashCreateContainerErrorUnauthorized =
+    "CREATE_CONTAINER_ERROR_UNAUTHORIZED"
+
+export const WindowHashCreateContainerErrorInternal =
+    "CREATE_CONTAINER_ERROR_INTERNAL"
 
 export const WindowHashAssignContainerError = "ASSIGN_CONTAINER_ERROR"
 
@@ -27,13 +37,25 @@ export const AuthErrorTitle = "There was an error logging you in."
 export const AuthErrorText =
     "Try again in a few minutes, or contact support@fractal.co for help."
 
-export const ContainerCreateErrorTitle =
+export const ContainerCreateErrorTitleInternal =
     "There was an error connecting to the Fractal servers."
 
-export const ContainerCreateErrorText =
+export const ContainerCreateErrorTextInternal =
     "Try again in a few minutes, or contact support@fractal.co for help."
 
-export const ContainerAssignErrorTitle = 
+export const ContainerCreateErrorTitleNoAccess =
+    "Your account does not have access to Fractal."
+
+export const ContainerCreateErrorTextNoAccess =
+    "Access to Fractal is currently invite-only. Please contact support@fractal.co for help."
+
+export const ContainerCreateErrorTitleUnauthorized =
+    "There was an error authenticating you with the Fractal servers."
+
+export const ContainerCreateErrorTextUnauthorized =
+    "Please try logging in again."
+
+export const ContainerAssignErrorTitle =
     "Fractal servers experienced an unexpected error."
 
 export const ContainerAssignErrorText =
