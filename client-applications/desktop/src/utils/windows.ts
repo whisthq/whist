@@ -5,7 +5,9 @@ import {
     WindowHashUpdate,
     WindowHashAuthError,
     WindowHashProtocolError,
-    WindowHashCreateContainerError,
+    WindowHashCreateContainerErrorNoAccess,
+    WindowHashCreateContainerErrorUnauthorized,
+    WindowHashCreateContainerErrorInternal,
     WindowHashAssignContainerError,
 } from "@app/utils/constants"
 
@@ -85,8 +87,22 @@ export const createAuthErrorWindow: CreateWindowFunction = () =>
         ...hXs,
     } as BrowserWindowConstructorOptions)
 
-export const createContainerErrorWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashCreateContainerError, {
+export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
+    createWindow(WindowHashCreateContainerErrorNoAccess, {
+        ...base,
+        ...wMd,
+        ...hXs,
+    } as BrowserWindowConstructorOptions)
+
+export const createContainerErrorWindowUnauthorized: CreateWindowFunction = () =>
+    createWindow(WindowHashCreateContainerErrorUnauthorized, {
+        ...base,
+        ...wMd,
+        ...hXs,
+    } as BrowserWindowConstructorOptions)
+        
+export const createContainerErrorWindowInternal: CreateWindowFunction = () =>
+    createWindow(WindowHashCreateContainerErrorInternal, {
         ...base,
         ...wMd,
         ...hXs,
