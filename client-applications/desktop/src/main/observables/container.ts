@@ -21,7 +21,7 @@ import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap } from "@app/utils/observables"
-import { from, of } from "rxjs"
+import { from, of, merge } from "rxjs"
 import {
     map,
     last,
