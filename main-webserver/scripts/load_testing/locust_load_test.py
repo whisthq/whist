@@ -25,7 +25,7 @@ from scripts.load_testing.load_test_utils import (
     CSV_PREFIX,
 )
 
-from scripts.utils import make_post_request
+from scripts.utils import make_post_request, make_get_request, make_put_request
 from scripts.celery_scripts import poll_celery_task
 
 
@@ -43,6 +43,8 @@ def get_num_users_and_host():
 
 TOTAL_USERS, WEB_URL = get_num_users_and_host()
 ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
+# a hard-coded encrypted app config token with text: fake_text, password: fake_pwd
+APP_CONFIG_TOKEN = "62aed4c219c461e18f109ac689fd42e8929d82898280f9f403e78b98dacee1e5a8acad5da822a04fccc4cb890a463a2b0856e9804fa367d321f4c0e670c2057ab191383ec16ddea1d2"
 
 
 class LoadTestUser(locust.HttpUser):
@@ -66,7 +68,8 @@ class LoadTestUser(locust.HttpUser):
         # exceptions do not automatically run on_stop, so we do this as a workaround
         try:
             self._on_start()
-        except:
+        except Exception as e:
+            print(f"User {self.user_num} got error {str(e)}")
             LoadTestUser.user_fail = True
             self.on_stop()
 
@@ -77,7 +80,8 @@ class LoadTestUser(locust.HttpUser):
         1. Make request for a container
         2. Poll until it is available
         """
-        raise ValueError("ok")
+        # make assign request
+        print("assigning container")
         task_id = None
         for _ in range(60):
             resp = self.try_assign_request()
@@ -86,25 +90,77 @@ class LoadTestUser(locust.HttpUser):
             elif resp.status_code == 503:
                 pass
             else:
-                raise ValueError(f"Unexpected status code for assign container: {resp.status_code}")
+                raise ValueError(
+                    f"Unexpected status code for assign container: {resp.status_code}. Content: {resp.content}"
+                )
             # sleep and try again
             time.sleep(1.0)
 
-        # wait for container to be available; this will error out if anything fails
-        # TODO: support app config
-        poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=300, sleep_time=1.0)
+        assert task_id is not None
+        print(f"TASK: {task_id}")
+
+        # # poll host_service
+        # print("polling host service...")
+        # ip = None
+        # host_port = None
+        # client_app_auth_secret = None
+        # for _ in range(300):
+        #     resp = self.try_get_host_service_info()
+        #     if resp.status_code == 200:
+        #         resp_json = resp.json()
+        #         ip = resp_json["ip"]
+        #         host_port = resp_json["port"]
+        #         client_app_auth_secret = resp_json["client_app_auth_secret"]
+        #         if ip is not None:
+        #             break  # stop on non-None response
+        #     elif resp.status_code == 503:
+        #         pass
+        #     else:
+        #         raise ValueError(f"Unexpected status code for /host_service: {resp.status_code}")
+        #     # sleep and try again
+        #     time.sleep(1.0)
+
+        # # send app config token; errors out on failure
+        # print("sending config token")
+        # resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
+        # assert resp.ok, f"Got status code {resp.status_code} with content {resp.content}"
+
+        # print("polling assign")
+        # # wait for container to be available; this will error out if anything fails
+        # poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=60, sleep_time=1.0)
 
     def try_assign_request(self):
         """
-        Makes a request to /aws_container/assign_container
+        Makes a request to webserver /container/assign
         """
         payload = {
-            "task_definition_arn": get_task_definition_arn(WEB_URL),
-            "cluster_name": None,  # None means a cluster is chosen, like in /container/assign
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+            "app": "Google Chrome",
             "region_name": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
+
+    def try_get_host_service_info(self):
+        """
+        Make a GET request to webserver /host_service for container info
+        """
+        params = {
+            "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+        }
+        return make_get_request(WEB_URL, "/host_service", params=params)
+
+    def send_app_config_token(self, ip: str, host_port: int, client_app_auth_secret: str):
+        """
+        Make a PUT request to host service with app config token
+        """
+        host_service_url = f"https://{ip}:4678"
+        payload = {
+            "user_id": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+            "host_port": host_port,
+            "config_encryption_token": APP_CONFIG_TOKEN,
+            "client_app_auth_secret": client_app_auth_secret,
+        }
+        return make_put_request(host_service_url, "set_config_encryption_token", payload=payload)
 
     @locust.task
     def do_nothing(self):

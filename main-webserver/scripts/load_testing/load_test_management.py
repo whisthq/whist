@@ -71,6 +71,12 @@ def make_load_test_user(web_url: str, admin_token: str, user_num: int):
     """
     username = LOAD_TEST_USER_PREFIX.format(user_num=user_num)
     endpoint = "/account/register"
-    payload = {"username": username, "password": username, "name": username, "feedback": username}
+    payload = {
+        "username": username,
+        "password": username,
+        "name": username,
+        "feedback": username,
+        "encrypted_config_token": "",
+    }
     resp = make_post_request(web_url, endpoint, payload=payload, admin_token=admin_token)
     assert resp.status_code == 200, f"Got bad response code {resp.status_code}, msg: {resp.content}"
