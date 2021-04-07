@@ -129,24 +129,16 @@ class LoadTestUser(locust.HttpUser):
         # wait for container to be available; this will error out if anything fails
         poll_celery_task(WEB_URL, task_id, ADMIN_TOKEN, num_tries=60, sleep_time=1.0)
 
-    # def try_assign_request(self):
-    #     """
-    #     Makes a request to webserver /container/assign
-    #     """
-    #     payload = {
-    #         "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-    #         "app": "Google Chrome",
-    #         "region_name": LOAD_TEST_CLUSTER_REGION,
-    #     }
-    #     return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
     def try_assign_request(self):
+        """
+        Makes a request to webserver /container/assign
+        """
         payload = {
-            "task_definition_arn": get_task_definition_arn(WEB_URL),
-            "cluster_name": None,  # None means a cluster is chosen, like in /container/assign
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-            "region_name": LOAD_TEST_CLUSTER_REGION,
+            "app": "Google Chrome",
+            "region": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
 
     def try_get_host_service_info(self):
         """
