@@ -6,6 +6,12 @@
 
 set -Eeuo pipefail
 
+# Parse input variables
+GH_PAT={1}
+GH_USERNAME={2} 
+GIT_BRANCH={3}
+GIT_HASH={4}
+
 # Prevent user from running script as root, to guarantee that all steps are
 # associated with the fractal user.
 if [ "$EUID" -eq 0 ]; then

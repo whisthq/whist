@@ -67,7 +67,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/ubuntu/ecs-host-setup", "export GH_USERNAME={{user `github_pat`}}; export GH_PAT={{user `github_pat`}}; export GIT_BRANCH={{user `git_branch`}}; export GIT_HASH={{user `git_hash`}}; ./setup_ubuntu20_host.sh"]
+      "inline": ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_branch`}} {{user `git_hash`}}"]
     },
     {
       "type": "shell",
