@@ -13,6 +13,7 @@ import shutil
 webserver_root = os.path.join(os.getcwd(), os.path.dirname(__file__), "../..")
 sys.path.append(webserver_root)
 
+
 def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_name: str):
     """
     Run a local load test using locust.
@@ -29,7 +30,9 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_n
         code if any user cannot get a container. If that happens, this function will
         also exit with error.
     """
-    locust_file_path = os.path.join(webserver_root, "scripts", "load_testing", "locust_load_test.py")
+    locust_file_path = os.path.join(
+        webserver_root, "scripts", "load_testing", "locust_load_test.py"
+    )
     # add admin_token and region_name to environment; load test script will read it
     os.environ["ADMIN_TOKEN"] = admin_token
     os.environ["REGION_NAME"] = region_name
