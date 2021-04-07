@@ -52,7 +52,7 @@
     {
       "type": "shell",
       "inline": [
-        "./testin_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
+        "./testing_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
       ]
     }
   ]
