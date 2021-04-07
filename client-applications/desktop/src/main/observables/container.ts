@@ -89,8 +89,8 @@ export const containerAssignFailure = containerAssignPolling.pipe(
             containerInfoPending(res) ||
             !containerInfoSuccess(res)
     )
-  )
-);
+)
+
 
 export const containerAssignLoading = loadingFrom(
   containerAssignRequest,
