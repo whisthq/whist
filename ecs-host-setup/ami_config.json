@@ -57,7 +57,7 @@
     {
       "type": "shell",
       "inline": [
-        "./testing_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
+        "cd /home/ubuntu/ecs-host-setup","./testing_script.sh {{user `github_pat`}} {{user `github_username`}} {{user `git_hash`}} {{user `git_branch`}}"
       ]
     }
   ]
