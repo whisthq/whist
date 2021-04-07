@@ -1,8 +1,5 @@
-from sqlalchemy.exc import DBAPIError
-
 from app.constants.http_codes import (
     NOT_FOUND,
-    BAD_REQUEST,
     SUCCESS,
     UNAUTHORIZED,
 )
