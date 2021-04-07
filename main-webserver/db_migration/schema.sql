@@ -46,13 +46,6 @@ CREATE SCHEMA hdb_views;
 
 
 --
--- Name: logs; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA logs;
-
-
---
 -- Name: oauth; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -1637,15 +1630,7 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
     ADD CONSTRAINT hdb_remote_relationship_table_schema_table_name_fkey FOREIGN KEY (table_schema, table_name) REFERENCES hdb_catalog.hdb_table(table_schema, table_name) ON UPDATE CASCADE;
 
 
---
--- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
---
-
-ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
-    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
 
 --
 -- PostgreSQL database dump complete
 --
-
