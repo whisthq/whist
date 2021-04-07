@@ -1,8 +1,6 @@
 #!/bin/bash
-
 # Exit on subcommand errors
 set -Eeuo pipefail
-
 function printhelp {
     echo "Usage: build [OPTION 1] [OPTION 2] ...\n"
     echo "Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu."
@@ -26,7 +24,6 @@ function printhelp {
     echo "  --publish PUBLISH         set whether to notarize the macOS application and publish to AWS S3 and auto-update live apps"
     echo "                            defaults to false, options are true/false"
 }
-
 if [[ "${1-default}" == "--help" ]]
 then
     printhelp
@@ -35,7 +32,6 @@ else
     bucket=${bucket:-PLACEHOLDER}
     env=${env:-dev}
     publish=${publish:-false}
-
     # get named params
     while [ $# -gt 0 ]; do
         if [[ $1 == *"--"* ]]; then
@@ -44,18 +40,16 @@ else
         fi
         shift
     done
-    
     export BUILD_NUMBER=$version
-
     # Create protocol-build folder 
-    if [[ -f protocol-build ]]; then
-        rm -f protocol-build
-        mkdir protocol-build 
-        cd protocol-build 
-        mkdir client 
-        cd ..
+    if [[ -d "/protocol-build" ]]; then
+        echo "Deleting old protocol build folder"
+        rm -d protocol-build
     fi
-
+    mkdir protocol-build 
+    cd protocol-build 
+    mkdir client 
+    cd ..
     # Make FractalClient and create its app bundle
     cd ../../protocol
     mkdir -p build-publish
@@ -64,41 +58,32 @@ else
     make -j FractalClient
     cd ..
     cd ../client-applications/desktop
-
     rm -rf loading 
     mkdir -p loading
     cp -r ../../protocol/build-publish/client/build64/loading/*.png loading
-
     # Move FractalClient and crashpad_handler over to client-app
     echo "1"
     cp ../../protocol/client/build64/Darwin/FractalClient "protocol-build/client/ Fractal"
     cp ../../protocol/client/build64/Darwin/crashpad_handler protocol-build/client/crashpad_handler
-
     # Move FractalClient and related files over to client-app
     cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
     rm -rf ./protocol-build/client/loading
-
     echo "2"
     mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
-
     if [ -f ./protocol-build/client/Fractal ]; then
         rm -rf ./protocol-build/client/Fractal
         echo "Fractal exe cleaned"
     fi
-
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
         export CSC_IDENTITY_AUTO_DISCOVERY=false
     else
         find protocol-build/client -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
     fi
-
     # Initialize yarn first
     yarn -i
-
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
     yarn config set network-timeout 600000
-
     if [[ "$publish" == "true" ]]
     then
         if [[ "$env" == "dev" ]]
@@ -114,7 +99,6 @@ else
             echo "Did not set a valid environment; not publishing. Options are dev/staging/prod"
             exit 1
         fi        
-
         # Package the application and upload to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package-ci
     else

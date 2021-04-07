@@ -23,9 +23,17 @@ export const containerCreate = async (email: string, accessToken: string) => {
     return await containerRequest(email, accessToken, region, getDPI())
 }
 
-export const containerCreateError = (
+export const containerCreateErrorNoAccess = (
     response: AsyncReturnType<typeof containerCreate>
-) => !response?.json?.ID
+) => response.status === 402 
+
+export const containerCreateErrorUnauthorized = (
+    response: AsyncReturnType<typeof containerCreate>
+) => response.status === 422
+
+export const containerCreateErrorInternal = (
+    response: AsyncReturnType<typeof containerCreate>
+) => ![402, 422].includes(response.status) && !response?.json?.ID
 
 export const containerInfo = async (taskID: string, accessToken: string) =>
     await taskStatus(taskID, accessToken)

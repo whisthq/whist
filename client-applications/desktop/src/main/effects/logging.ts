@@ -56,8 +56,20 @@ s.signupFailure.subscribe((err) =>
     logError("signupFailure", "Could not signup", err)
 )
 
-c.containerCreateFailure.subscribe((err) =>
-    logError("containerCreateFailure", "Could not create container", err)
+c.containerCreateFailureNoAccess.subscribe((err) =>
+    logError("containerCreateFailure", "Could not create container because user does not have access", err)
+)
+
+c.containerCreateFailureUnauthorized.subscribe((err) =>
+    logError(
+        "containerCreateFailure",
+        "Could not create container because JWT is invalid",
+        err
+    )
+)
+
+c.containerCreateFailureInternal.subscribe((err) =>
+    logError("containerCreateFailure", "Could not create container because of unexpected server error", err)
 )
 
 c.containerAssignFailure.subscribe((err) =>
