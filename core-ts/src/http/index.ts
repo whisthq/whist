@@ -3,6 +3,7 @@ import { withCatch } from "./withCatch"
 import { withGet } from "./withGet"
 import { withJSON } from "./withJSON"
 import { withPost } from "./withPost"
+import { withStatus } from "./withStatus"
 import { withServer } from "./withServer"
 import { withURL } from "./withURL"
 import { withTokenRefresh } from "./withTokenRefresh"
@@ -22,6 +23,7 @@ export const configGet = (c: ConfigHTTP) => {
         withHandleAuth(c.handleAuth || identity),
         withTokenRefresh(c.endpointRefreshToken || ""),
         withURL,
+        withStatus,
         withJSON
     )
 }
@@ -37,6 +39,7 @@ export const configPost = (c: ConfigHTTP) => {
         withHandleAuth(c.handleAuth || identity),
         withTokenRefresh(c.endpointRefreshToken || ""),
         withURL,
+        withStatus,
         withJSON
     )
 }
