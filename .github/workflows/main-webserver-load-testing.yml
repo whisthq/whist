@@ -23,8 +23,8 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                # checkout staging branch
-                ref: "staging"
+                  # checkout staging branch
+                  ref: "staging"
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
