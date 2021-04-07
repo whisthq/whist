@@ -44,6 +44,11 @@
   ],
   "provisioners": [
     {
+      "type": "file",
+      "source": "../ecs-host-setup",
+      "destination": "/home/ubuntu"
+    },
+    {
       "type": "shell",
       "inline": [
         "echo {{user `github_pat`}}; echo {{user `github_username`}}; echo {{user `git_hash`}}; echo {{user `git_branch`}}"
