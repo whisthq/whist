@@ -87,11 +87,11 @@ else
     cd ..
 
     # Move FractalClient and related files over to client-app build folder
-    cp -r ../../../protocol/build-publish/client/build64/* ./protocol-build/client
+    cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
     # Move loading png's out because Electron builder doesn't like them
     mv ./protocol-build/client/loading ./loading
     # Rename FractalClient to Fractal
-    mv ./protocol-build/client/FractalClient ./protocol-build/client/Fractal
+    mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
