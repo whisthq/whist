@@ -127,7 +127,6 @@ def protocol_info(address, port, aeskey):
             "allow_autoupdate",
             "branch",
             "secret_key",
-            "using_stun",
             "container_id",
             "user_id",
             "dpi",
@@ -144,31 +143,3 @@ def protocol_info(address, port, aeskey):
             response = None, UNAUTHORIZED
 
     return response
-
-
-def set_stun(user_id, container_id, using_stun):
-    """Updates whether or not the specified container should use STUN.
-
-    Arguments:
-        user_id: The user_id of the authenticated user.
-        container_id: The container_id of the container to modify.
-        using_stun: A boolean indicating whether or not the specified container
-            should use STUN.
-    """
-
-    status = NOT_FOUND
-    container = UserContainer.query.get(container_id)
-
-    if getattr(container, "user_id", None) == user_id:
-        assert user_id  # Sanity check
-
-        container.using_stun = using_stun
-
-        try:
-            db.session.commit()
-        except DBAPIError:
-            status = BAD_REQUEST
-        else:
-            status = SUCCESS
-
-    return status

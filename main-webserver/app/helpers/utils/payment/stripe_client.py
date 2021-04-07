@@ -17,7 +17,7 @@ from app.constants.regions import USRegion
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.time import date_to_unix, get_today
 
-from app.models import db, User, LoginHistory
+from app.models import db, User
 from app.serializers.public import UserSchema
 
 """ Welcome to the stripe client. The stripe client is a one stop shop for all things stripe, similarly
@@ -547,21 +547,6 @@ class StripeClient:
         if user_price != hourly_price:
             fractal_logger.error(
                 "{username} is not an hourly price subscriber. Why are we charging them hourly?".format(
-                    username=email
-                ),
-                extra={"label": email},
-            )
-            return
-
-        latest_user_activity = (
-            LoginHistory.query.filter_by(user_id=email)
-            .order_by(LoginHistory.timestamp.desc())
-            .first()
-        )
-
-        if latest_user_activity.action != "logon":
-            fractal_logger.error(
-                "{username} logged off and is an hourly subscriber, but no logon was found".format(
                     username=email
                 ),
                 extra={"label": email},

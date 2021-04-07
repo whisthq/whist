@@ -17,7 +17,13 @@ class UserContainer(db.Model):
             container is running
         location (string): AWS region of the container
         state (string): Container state, either [RUNNING_AVAILABLE, RUNNING_UNAVAILABLE,
-            DEALLOCATED, DEALLOCATING, STOPPED, STOPPING, DELETING, CREATING, RESTARTING, STARTING]
+            STOPPED, STOPPING, DELETING, CREATING, RESTARTING, STARTING]
+
+            RUNNING_AVAILABLE: The protocol server is running, but no client has connected yet.
+                We know when the protocol server is running once it sends its first ping back
+                to the web server.
+            RUNNING_UNAVAILABLE: The protocol server is running and a client is connected.
+
         user_id (string): User ID, typically email
         user (User): reference to user in public.users with id user_id
         task_definition (string): foreign key to supported_app_images of streamed application
@@ -32,9 +38,6 @@ class UserContainer(db.Model):
         last_pinged (int): timestamp representing when the container was last pinged
         cluster (string): foreign key for the cluster the container is hosted on
         parent_cluster (ClusterInfo): reference to hardware.cluster_info object of the parent
-        using_stun (bool): true/false whether we're using STUN server
-        branch (string): branch the container was created on - prod, staging, dev
-        allow_autoupdate (bool): true/false allow protocol to update automatically
         dpi (int): pixel density of the stream
         secret_key (string): 16-byte AES key used to encrypt communication between protocol
             server and client
@@ -59,9 +62,6 @@ class UserContainer(db.Model):
     last_pinged = db.Column(db.Integer)
     cluster = db.Column(db.ForeignKey("hardware.cluster_info.cluster"))
     parent_cluster = relationship("ClusterInfo", back_populates="containers")
-    using_stun = db.Column(db.Boolean, nullable=False, default=False)
-    branch = db.Column(db.String(250), nullable=False, default="prod")
-    allow_autoupdate = db.Column(db.Boolean, nullable=False, default=True)
     dpi = db.Column(db.Integer)
     secret_key = db.Column(
         StringEncryptedType(db.String, secret_key, AesEngine, "pkcs5"), nullable=False
