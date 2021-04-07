@@ -1,9 +1,10 @@
+  
 --
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.5 (Debian 12.5-1.pgdg100+1)
--- Dumped by pg_dump version 12.3
+-- Dumped from database version 12.5 (Ubuntu 12.5-1.pgdg16.04+1)
+-- Dumped by pg_dump version 13.2
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -63,6 +64,34 @@ CREATE SCHEMA oauth;
 --
 
 CREATE SCHEMA sales;
+
+
+--
+-- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
@@ -190,6 +219,19 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: banners; Type: TABLE; Schema: hardware; Owner: -
+--
+
+CREATE TABLE hardware.banners (
+    heading character varying NOT NULL,
+    subheading character varying,
+    category character varying,
+    background character varying,
+    url character varying
+);
+
+
+--
 -- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -209,7 +251,12 @@ CREATE TABLE hardware.cluster_info (
 
 --
 -- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
+-- NOTE:  the complex OR condition is to handle both clusters that are
+-- underloaded and clusters that have just been created
+-- since AWS default returns 0 for max memory for clusters
+-- early in their lifecycle
 --
+
 
 CREATE VIEW hardware.cluster_sorted AS
  SELECT cluster_info.cluster,
@@ -223,7 +270,7 @@ CREATE VIEW hardware.cluster_sorted AS
     cluster_info.status,
     cluster_info.location
    FROM hardware.cluster_info
-  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance" = (0)::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
+  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance"::double precision = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
   ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
 
 
@@ -247,14 +294,14 @@ CREATE TABLE hardware.supported_app_images (
     app_id character varying NOT NULL,
     logo_url character varying,
     task_definition character varying,
-    task_version integer,
+    task_version integer DEFAULT NULL,
     category character varying,
     description character varying,
     long_description character varying,
     url character varying,
     tos character varying,
     active boolean NOT NULL,
-    preboot_number double precision DEFAULT 0.0 NOT NULL
+    preboot_number float DEFAULT 0.0 NOT NULL
 );
 
 
@@ -280,17 +327,55 @@ CREATE TABLE hardware.user_containers (
     container_id character varying NOT NULL,
     ip character varying NOT NULL,
     location character varying NOT NULL,
+    os character varying NOT NULL,
     state character varying NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,
     last_pinged bigint,
     cluster character varying,
+    using_stun boolean DEFAULT false NOT NULL,
+    allow_autoupdate boolean DEFAULT true NOT NULL,
+    branch character varying(250) DEFAULT 'prod'::character varying NOT NULL,
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
     secret_key text NOT NULL,
     task_definition character varying,
-    task_version integer,
+    task_version integer DEFAULT NULL,
     dpi integer DEFAULT 96
+);
+
+
+--
+-- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: event_log; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.event_log (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    schema_name text NOT NULL,
+    table_name text NOT NULL,
+    trigger_name text NOT NULL,
+    payload jsonb NOT NULL,
+    delivered boolean DEFAULT false NOT NULL,
+    error boolean DEFAULT false NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    locked boolean DEFAULT false NOT NULL,
+    next_retry_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
 );
 
 
@@ -317,6 +402,25 @@ CREATE TABLE hdb_catalog.hdb_action (
     action_defn jsonb NOT NULL,
     comment text,
     is_system_defined boolean DEFAULT false
+);
+
+
+--
+-- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_action_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    action_name text,
+    input_payload jsonb NOT NULL,
+    request_headers jsonb NOT NULL,
+    session_variables jsonb NOT NULL,
+    response_payload jsonb,
+    errors jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    response_received_at timestamp with time zone,
+    status text NOT NULL,
+    CONSTRAINT hdb_action_log_status_check CHECK ((status = ANY (ARRAY['created'::text, 'processing'::text, 'completed'::text, 'error'::text])))
 );
 
 
@@ -389,6 +493,36 @@ CREATE VIEW hdb_catalog.hdb_computed_field_function AS
 
 
 --
+-- Name: hdb_cron_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_cron_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_events (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    trigger_name text NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
 -- Name: hdb_cron_triggers; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -402,6 +536,23 @@ CREATE TABLE hdb_catalog.hdb_cron_triggers (
     include_in_metadata boolean DEFAULT false NOT NULL,
     comment text
 );
+
+
+--
+-- Name: hdb_cron_events_stats; Type: VIEW; Schema: hdb_catalog; Owner: -
+--
+
+CREATE VIEW hdb_catalog.hdb_cron_events_stats AS
+ SELECT ct.name,
+    COALESCE(ce.upcoming_events_count, (0)::bigint) AS upcoming_events_count,
+    COALESCE(ce.max_scheduled_time, now()) AS max_scheduled_time
+   FROM (hdb_catalog.hdb_cron_triggers ct
+     LEFT JOIN ( SELECT hdb_cron_events.trigger_name,
+            count(*) AS upcoming_events_count,
+            max(hdb_cron_events.scheduled_time) AS max_scheduled_time
+           FROM hdb_catalog.hdb_cron_events
+          WHERE ((hdb_cron_events.tries = 0) AND (hdb_cron_events.status = 'scheduled'::text))
+          GROUP BY hdb_cron_events.trigger_name) ce ON ((ct.name = ce.trigger_name)));
 
 
 --
@@ -666,6 +817,40 @@ CREATE VIEW hdb_catalog.hdb_role AS
 
 
 --
+-- Name: hdb_scheduled_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_scheduled_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_events (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    webhook_conf json NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    retry_conf json,
+    payload json,
+    header_conf json,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    comment text,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
 -- Name: hdb_schema_update_event; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -739,6 +924,19 @@ CREATE VIEW hdb_catalog.hdb_unique_constraint AS
      JOIN information_schema.key_column_usage kcu USING (constraint_schema, constraint_name))
   WHERE ((tc.constraint_type)::text = 'UNIQUE'::text)
   GROUP BY tc.table_name, tc.constraint_schema, tc.constraint_name;
+
+
+--
+-- Name: hdb_version; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_version (
+    hasura_uuid uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    version text NOT NULL,
+    upgraded_on timestamp with time zone NOT NULL,
+    cli_state jsonb DEFAULT '{}'::jsonb NOT NULL,
+    console_state jsonb DEFAULT '{}'::jsonb NOT NULL
+);
 
 
 --
@@ -827,6 +1025,17 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
+-- Name: login_history; Type: TABLE; Schema: logs; Owner: -
+--
+
+CREATE TABLE logs.login_history (
+    user_id character varying(250) NOT NULL,
+    action character varying(250),
+    "timestamp" integer
+);
+
+
+--
 -- Name: credentials; Type: TABLE; Schema: oauth; Owner: -
 --
 
@@ -889,7 +1098,7 @@ CREATE TABLE public.tokens (
 
 CREATE TABLE public.users (
     user_id character varying(250) NOT NULL,
-    encrypted_config_token character varying(256) DEFAULT ''::character varying NOT NULL,
+    encrypted_config_token character varying(256) NOT NULL DEFAULT ''::character varying,
     token character varying(250),
     name character varying(250),
     password character varying(250) NOT NULL,
@@ -944,6 +1153,14 @@ ALTER TABLE ONLY oauth.credentials ALTER COLUMN id SET DEFAULT nextval('oauth.cr
 
 
 --
+-- Name: banners banners_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
+--
+
+ALTER TABLE ONLY hardware.banners
+    ADD CONSTRAINT banners_pkey PRIMARY KEY (heading);
+
+
+--
 -- Name: cluster_info cluster_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -992,11 +1209,35 @@ ALTER TABLE ONLY hardware.user_containers
 
 
 --
+-- Name: event_invocation_logs event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_invocation_logs
+    ADD CONSTRAINT event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: event_log event_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_log
+    ADD CONSTRAINT event_log_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: event_triggers event_triggers_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
 ALTER TABLE ONLY hdb_catalog.event_triggers
     ADD CONSTRAINT event_triggers_pkey PRIMARY KEY (name);
+
+
+--
+-- Name: hdb_action_log hdb_action_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_action_log
+    ADD CONSTRAINT hdb_action_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -1029,6 +1270,22 @@ ALTER TABLE ONLY hdb_catalog.hdb_allowlist
 
 ALTER TABLE ONLY hdb_catalog.hdb_computed_field
     ADD CONSTRAINT hdb_computed_field_pkey PRIMARY KEY (table_schema, table_name, computed_field_name);
+
+
+--
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_cron_events hdb_cron_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_events
+    ADD CONSTRAINT hdb_cron_events_pkey PRIMARY KEY (id);
 
 
 --
@@ -1080,11 +1337,35 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
 
 
 --
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_scheduled_events hdb_scheduled_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_events
+    ADD CONSTRAINT hdb_scheduled_events_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: hdb_table hdb_table_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
 ALTER TABLE ONLY hdb_catalog.hdb_table
     ADD CONSTRAINT hdb_table_pkey PRIMARY KEY (table_schema, table_name);
+
+
+--
+-- Name: hdb_version hdb_version_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_version
+    ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
 
 
 --
@@ -1220,10 +1501,66 @@ CREATE INDEX loc_taskdef_uid ON hardware.user_containers USING btree (location, 
 
 
 --
+-- Name: event_invocation_logs_event_id_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_invocation_logs_event_id_idx ON hdb_catalog.event_invocation_logs USING btree (event_id);
+
+
+--
+-- Name: event_log_created_at_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_created_at_idx ON hdb_catalog.event_log USING btree (created_at);
+
+
+--
+-- Name: event_log_delivered_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_delivered_idx ON hdb_catalog.event_log USING btree (delivered);
+
+
+--
+-- Name: event_log_locked_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_locked_idx ON hdb_catalog.event_log USING btree (locked);
+
+
+--
+-- Name: event_log_trigger_name_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_trigger_name_idx ON hdb_catalog.event_log USING btree (trigger_name);
+
+
+--
+-- Name: hdb_cron_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_cron_event_status ON hdb_catalog.hdb_cron_events USING btree (status);
+
+
+--
+-- Name: hdb_scheduled_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_scheduled_event_status ON hdb_catalog.hdb_scheduled_events USING btree (status);
+
+
+--
 -- Name: hdb_schema_update_event_one_row; Type: INDEX; Schema: hdb_catalog; Owner: -
 --
 
 CREATE UNIQUE INDEX hdb_schema_update_event_one_row ON hdb_catalog.hdb_schema_update_event USING btree (((occurred_at IS NOT NULL)));
+
+
+--
+-- Name: hdb_version_one_row; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (((version IS NOT NULL)));
 
 
 --
@@ -1265,6 +1602,14 @@ ALTER TABLE ONLY hardware.user_containers
 
 
 --
+-- Name: event_invocation_logs event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_invocation_logs
+    ADD CONSTRAINT event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.event_log(id);
+
+
+--
 -- Name: hdb_action_permission hdb_action_permission_action_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1286,6 +1631,22 @@ ALTER TABLE ONLY hdb_catalog.hdb_allowlist
 
 ALTER TABLE ONLY hdb_catalog.hdb_computed_field
     ADD CONSTRAINT hdb_computed_field_table_schema_table_name_fkey FOREIGN KEY (table_schema, table_name) REFERENCES hdb_catalog.hdb_table(table_schema, table_name) ON UPDATE CASCADE;
+
+
+--
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_cron_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hdb_cron_events hdb_cron_events_trigger_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_events
+    ADD CONSTRAINT hdb_cron_events_trigger_name_fkey FOREIGN KEY (trigger_name) REFERENCES hdb_catalog.hdb_cron_triggers(name) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
@@ -1313,6 +1674,21 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
 
 
 --
--- PostgreSQL database dump complete
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: login_history login_history_user_id_fkey; Type: FK CONSTRAINT; Schema: logs; Owner: -
+--
+
+ALTER TABLE ONLY logs.login_history
+    ADD CONSTRAINT login_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
