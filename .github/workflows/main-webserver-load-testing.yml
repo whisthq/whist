@@ -1,7 +1,8 @@
 # workflows/main-webserver-load-testing.yml
 #
 # Main Webserver: Load Testing
-# Makes sure our staging server can handle load
+# Runs a load test with 1 user (TODO: up to 100) on our staging webserver to test
+# load stability of staging every Sunday at 2am Eastern.
 
 name: "Main Webserver: Load Testing"
 on:
@@ -18,6 +19,7 @@ jobs:
             webserver_url: "https://dev-server.fractal.co"
             heroku_app_name: "fractal-dev-server"
             num_users: "1"
+            load_test_region: "us-east-1"
 
         steps:
             - name: Checkout Git Repository
@@ -74,6 +76,7 @@ jobs:
                   WEBSERVER_URL = "${{ env.webserver_url }}"
                   HEROKU_APP_NAME = "${{ env.heroku_app_name }}"
                   NUM_USERS = int("${{ env.num_users }}")
+                  LOAD_TEST_REGION = "${{ env.load_test_region }}"
                   USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
                   PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
 
@@ -92,7 +95,7 @@ jobs:
                   try:
                     # Until we fix high initial task latency, we need to do one lambda invocation
                     # to sidestep the first task's high latency issue
-                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS)
+                    run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS, LOAD_TEST_REGION)
 
                   except Exception as e:
                     # we just need the finally block to run before exiting badly
@@ -108,7 +111,7 @@ jobs:
                   WEBSERVER_URL=${{ env.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure
@@ -119,5 +122,5 @@ jobs:
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts-test\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
