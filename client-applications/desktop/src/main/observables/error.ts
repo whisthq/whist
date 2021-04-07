@@ -18,10 +18,13 @@ import {
     createProtocolErrorWindow,
 } from "@app/utils/windows"
 import {
+  containerCreateErrorNoAccess,
+  containerCreateErrorUnauthorized,
+  containerCreateErrorInternal,
+} from "@app/utils/container";
+import {
     containerAssignFailure,
-    containerCreateFailureNoAccess,
-    containerCreateFailureUnauthorized,
-    containerCreateFailureInternal,
+    containerCreateFailure
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
 
@@ -33,14 +36,14 @@ export const errorRelaunchRequest = eventIPC.pipe(
 export const errorWindowRequest = merge(
     loginFailure.pipe(mapTo(createAuthErrorWindow)),
     signupFailure.pipe(mapTo(createAuthErrorWindow)),
-    containerCreateFailureNoAccess.pipe(
-        mapTo(createContainerErrorWindowNoAccess)
-    ),
-    containerCreateFailureUnauthorized.pipe(
-        mapTo(createContainerErrorWindowUnauthorized)
-    ),
-    containerCreateFailureInternal.pipe(
-        mapTo(createContainerErrorWindowInternal)
+    containerCreateFailure.pipe(
+    map((response) => {
+            if (containerCreateErrorNoAccess(response))
+                return createContainerErrorWindowNoAccess
+            if (containerCreateErrorUnauthorized(response))
+                return createContainerErrorWindowUnauthorized
+            return createContainerErrorWindowInternal
+        })
     ),
     containerAssignFailure.pipe(mapTo(assignContainerErrorWindow)),
     protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
