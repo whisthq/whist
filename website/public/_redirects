@@ -1,5 +1,0 @@
-http://testingtesting.fractal.co https://testingtesting.fractal.co 302!
-http://testingtesting.fractal.co/* https://testingtesting.fractal.co/:splat 302!
-https://testingtesting.fractal.co https://gentle-garbanzo-w8oy45a908aufaql0fjxdebh.herokudns.com 200
-https://testingtesting.fractal.co/* https://gentle-garbanzo-w8oy45a908aufaql0fjxdebh.herokudns.com/:splat 200
-/*    /index.html   200

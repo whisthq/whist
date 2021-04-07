@@ -1,388 +1,73 @@
 {
-    "author": {
-        "email": "support@fractal.co",
-        "name": "Fractal Computers, Inc.",
-        "url": "https://www.fractal.co"
+    "name": "Fractal",
+    "version": "1.0.0",
+    "license": "MIT",
+    "main": "build/dist/main/index.js",
+    "scripts": {
+        "start": "sh ./scripts/start.sh",
+        "build": "sh ./scripts/build.sh",
+        "package": "sh ./scripts/package.sh --publish never",
+        "package-ci": "sh ./scripts/package.sh --publish always",
+        "tailwind": "sh scripts/tailwind.sh",
+        "retrieve": "python3 scripts/retrieve.py",
+        "postinstall": "sh scripts/postinstall.sh"
     },
-    "browserslist": [
-        "extends browserslist-config-erb"
-    ],
-    "build": {
-        "afterSign": "build/afterSign.js",
-        "appId": "com.fractalcomputers.fractal",
-        "artifactName": "Fractal.${ext}",
-        "asar": true,
-        "asarUnpack": "node_modules/create-desktop-shortcuts/**/*",
-        "copyright": "Copyright � Fractal Computers, Inc.",
-        "deb": {
-            "icon": "build/icon.png",
-            "vendor": "Fractal Computers, Inc."
-        },
-        "directories": {
-            "buildResources": "resources",
-            "output": "release"
-        },
-        "dmg": {
-            "contents": [
-                {
-                    "x": 130,
-                    "y": 220
-                },
-                {
-                    "path": "/Applications",
-                    "type": "link",
-                    "x": 410,
-                    "y": 220
-                }
-            ],
-            "icon": "build/icon.png",
-            "sign": false
-        },
-        "extraFiles": [
-            "build/",
-            "loading/"
-        ],
-        "files": [
-            "dist/",
-            "node_modules/",
-            "icons/",
-            "resources/",
-            "protocol-build/",
-            "app.html",
-            "main.prod.js",
-            "main.prod.js.map",
-            "package.json",
-            "build/icon.png"
-        ],
-        "linux": {
-            "artifactName": "Fractal.${ext}",
-            "category": "Productivity",
-            "description": "Fractal Chromium Desktop Application. ",
-            "extraFiles": [
-                "protocol-build/"
-            ],
-            "icon": "build/icon.png",
-            "synopsis": "Fractal Chromium Desktop Application",
-            "target": [
-                "AppImage"
-            ]
-        },
-        "mac": {
-            "category": "public.app-category.productivity",
-            "darkModeSupport": true,
-            "entitlements": "build/entitlements.mac.plist",
-            "entitlementsInherit": "build/entitlements.mac.plist",
-            "extendInfo": {
-                "NSHighResolutionCapable": true
-            },
-            "extraFiles": [
-                {
-                    "from": "protocol-build/client",
-                    "to": "MacOS/"
-                }
-            ],
-            "gatekeeperAssess": false,
-            "hardenedRuntime": true,
-            "icon": "build/icon.png",
-            "minimumSystemVersion": "10.14.0",
-            "signIgnore": [
-                "MacOS/protocol-build*"
-            ],
-            "target": [
-                "dmg",
-                "zip"
-            ],
-            "type": "distribution"
-        },
-        "productName": "Fractal",
-        "protocols": {
-            "name": "fractal-protocol",
-            "schemes": [
-                "fractal"
-            ]
-        },
-        "publish": {
-            "bucket": "PLACEHOLDER",
-            "provider": "s3",
-            "region": "us-east-1"
-        },
-        "win": {
-            "extraFiles": [
-                "protocol-build/"
-            ],
-            "icon": "build/icon.ico",
-            "target": [
-                "nsis"
-            ]
-        }
-    },
-    "contributors": [
-        {
-            "email": "phil@fractal.co",
-            "name": "Philippe Noel"
-        },
-        {
-            "email": "ming@fractal.co",
-            "name": "Ming Ying"
-        }
-    ],
     "dependencies": {
-        "@apollo/client": "^3.2.4",
-        "@hot-loader/react-dom": "^16.11.0",
-        "@sentry/electron": "^2.4.0",
-        "@tailwindcss/postcss7-compat": "npm:@tailwindcss/postcss7-compat",
-        "@testing-library/jest-dom": "^5.11.6",
-        "@testing-library/react": "^11.2.2",
-        "autoprefixer": "10",
-        "aws-sdk": "^2.860.0",
-        "bootstrap": "^4.5.2",
-        "connected-react-router": "^6.9.1",
-        "core-js": "^3",
-        "dedent-js": "^1.0.1",
-        "dotenv": "^8.2.0",
-        "electron-debug": "^3.0.1",
-        "electron-store": "^7.0.2",
-        "electron-titlebar": "^0.0.3",
-        "electron-updater": "^4.3.8",
-        "eval": "^0.1.6",
-        "exponential-backoff": "^3.1.0",
-        "graphql": "^15.3.0",
-        "history": "^4.10.1",
-        "jquery": "^3.6.0",
-        "json5": "^2.1.3",
-        "ky": "^0.27.0",
-        "ky-universal": "^0.9.1",
-        "node-fetch": "^2.6.1",
-        "node-forge": "^0.10.0",
-        "ping": "^0.4.0",
-        "png2icons": "^2.0.1",
-        "popper.js": "^1.16.1",
-        "postcss": "8",
-        "postcss-loader": "^4.1.0",
-        "prop-types": "^15.6.0",
-        "react": "^16.12.0",
-        "react-dom": "^16.12.0",
-        "react-electron-titlebar": "^1.0.9",
-        "react-fade-in": "^2.0.0",
-        "react-hot-loader": "^4.12.19",
-        "react-icons": "^4.2.0",
-        "react-redux": "^7.2.0",
-        "react-router": "^5.1.2",
-        "react-router-dom": "^5.1.2",
-        "react-typewriter-effect": "^1.0.2",
-        "redux": "^4.0.5",
-        "redux-saga": "^1.1.3",
-        "resolve-url-loader": "^3.1.1",
-        "source-map-support": "^0.5.16",
-        "subscriptions-transport-ws": "^0.9.18",
-        "tailwindcss": "npm:@tailwindcss/postcss7-compat",
-        "tcp-ping": "^0.1.1",
-        "temp": "^0.9.4",
-        "winston": "^3.3.3",
-        "winston-logzio": "^5.1.2"
-    },
-    "description": "Fractal Chromium Desktop Application",
-    "devDependencies": {
-        "@babel/core": "^7.13.8",
-        "@babel/plugin-proposal-class-properties": "^7.13.0",
-        "@babel/plugin-proposal-decorators": "^7.13.5",
-        "@babel/plugin-proposal-do-expressions": "^7.8.3",
-        "@babel/plugin-proposal-export-default-from": "^7.8.3",
-        "@babel/plugin-proposal-export-namespace-from": "^7.8.3",
-        "@babel/plugin-proposal-function-bind": "^7.8.3",
-        "@babel/plugin-proposal-function-sent": "^7.8.3",
-        "@babel/plugin-proposal-json-strings": "^7.8.3",
-        "@babel/plugin-proposal-logical-assignment-operators": "^7.8.3",
-        "@babel/plugin-proposal-nullish-coalescing-operator": "^7.8.3",
-        "@babel/plugin-proposal-numeric-separator": "^7.8.3",
-        "@babel/plugin-proposal-optional-chaining": "^7.13.8",
-        "@babel/plugin-proposal-pipeline-operator": "^7.8.3",
-        "@babel/plugin-proposal-throw-expressions": "^7.8.3",
-        "@babel/plugin-syntax-dynamic-import": "^7.8.3",
-        "@babel/plugin-syntax-import-meta": "^7.8.3",
-        "@babel/plugin-transform-react-constant-elements": "^7.8.3",
-        "@babel/plugin-transform-react-inline-elements": "^7.8.3",
-        "@babel/plugin-transform-runtime": "^7.13.9",
-        "@babel/preset-env": "^7.13.9",
-        "@babel/preset-react": "^7.8.3",
-        "@babel/preset-typescript": "^7.13.0",
-        "@babel/register": "^7.13.8",
-        "@jest-runner/electron": "^3.0.0",
-        "@types/enzyme": "^3.10.4",
-        "@types/enzyme-adapter-react-16": "^1.0.5",
-        "@types/history": "^4.7.4",
-        "@types/jest": "^26.0.20",
-        "@types/node": "^14.14.32",
+        "@fortawesome/fontawesome-svg-core": "^1.2.35",
+        "@fortawesome/free-solid-svg-icons": "^5.15.3",
+        "@fortawesome/react-fontawesome": "^0.1.14",
+        "@fractal/core-ts": "file:../../core-ts",
         "@types/node-fetch": "^2.5.8",
+        "@types/ping": "^0.2.0",
+        "@types/react-router": "^5.1.12",
+        "@types/react-router-dom": "^5.1.7",
+        "aws-sdk": "^2.878.0",
+        "classnames": "^2.2.6",
+        "electron-store": "^7.0.2",
+        "electron-updater": "^4.3.8",
+        "history": "^4.10.1",
+        "lodash": "^4.17.21",
+        "logzio-nodejs": "^2.0.2",
+        "path": "^0.12.7",
+        "ping": "^0.4.0",
+        "prop-types": "^15.7.2",
+        "rc-progress": "^3.1.3",
+        "react": "^17.0.1",
+        "react-dom": "^17.0.1",
+        "react-flip-toolkit": "^7.0.13",
+        "react-icons": "^4.2.0",
+        "react-router": "^5.2.0",
+        "react-router-dom": "^5.2.0",
+        "react-spring": "^8.0.27",
+        "rxjs": "^7.0.0-beta.13"
+    },
+    "devDependencies": {
+        "@snowpack/plugin-build-script": "^2.1.0",
+        "@snowpack/plugin-dotenv": "^2.0.5",
+        "@snowpack/plugin-react-refresh": "^2.4.0",
+        "@snowpack/plugin-run-script": "^2.3.0",
+        "@snowpack/plugin-typescript": "^1.2.1",
+        "@types/classnames": "^2.2.11",
+        "@types/lodash": "^4.14.168",
+        "@types/node": "^14.14.35",
         "@types/react": "^17.0.3",
         "@types/react-dom": "^17.0.2",
-        "@types/react-redux": "^7.1.6",
-        "@types/react-router": "^5.1.12",
-        "@types/react-router-dom": "^5.1.3",
-        "@types/react-test-renderer": "^17.0.1",
-        "@types/redux-logger": "^3.0.7",
-        "@types/sinon": "^9.0.11",
-        "@types/tapable": "^1.0.5",
-        "@types/webpack": "^4.41.3",
-        "@typescript-eslint/eslint-plugin": "^2.17.0",
-        "@typescript-eslint/parser": "^2.17.0",
-        "@webpack-cli/serve": "^1.3.0",
-        "babel-core": "^7.0.0-bridge.0",
-        "babel-eslint": "^10.0.3",
-        "babel-jest": "^26.6.3",
-        "babel-loader": "^8.0.6",
-        "babel-plugin-dev-expression": "^0.2.2",
-        "babel-plugin-transform-react-remove-prop-types": "^0.4.24",
-        "browserslist-config-erb": "^0.0.1",
-        "chalk": "^4.0.0",
+        "@types/snowpack-env": "^2.3.3",
+        "@typescript-eslint/parser": "^4.17.0",
+        "autoprefixer": "^10.2.5",
         "concurrently": "^6.0.0",
-        "cross-env": "^7.0.2",
-        "cross-spawn": "^7.0.3",
-        "css-loader": "^5.1.1",
-        "detect-port": "^1.3.0",
-        "electron": "9",
+        "electron": "^12.0.1",
         "electron-builder": "^22.10.5",
-        "electron-devtools-installer": "^3.0.0",
         "electron-notarize": "github:mingy98/electron-notarize#master",
-        "electron-rebuild": "^2.3.5",
-        "enzyme": "^3.11.0",
-        "enzyme-adapter-react-16": "^1.15.2",
-        "enzyme-to-json": "^3.4.4",
+        "esbuild": "^0.9.2",
         "eslint": "^7.21.0",
-        "eslint-config-airbnb-typescript": "6.3.2",
-        "eslint-config-erb": "^0.3.0",
-        "eslint-config-prettier": "^6.9.0",
-        "eslint-import-resolver-webpack": "^0.12.1",
-        "eslint-plugin-compat": "^3.5.1",
-        "eslint-plugin-import": "^2.20.0",
-        "eslint-plugin-jest": "^23.6.0",
-        "eslint-plugin-jsx-a11y": "^6.3.0",
-        "eslint-plugin-prettier": "^3.1.2",
-        "eslint-plugin-promise": "^4.2.1",
-        "eslint-plugin-react": "^7.18.0",
-        "eslint-plugin-react-hooks": "4.2.0",
-        "eslint-plugin-testcafe": "^0.2.1",
-        "fbjs-scripts": "^3.0.0",
-        "file-loader": "^6.0.0",
-        "identity-obj-proxy": "^3.0.0",
-        "jest": "^26.6.3",
-        "lint-staged": "^10.0.2",
-        "mini-css-extract-plugin": "^1.3.9",
-        "node-sass": "^5.0.0",
-        "opencollective-postinstall": "^2.0.2",
-        "optimize-css-assets-webpack-plugin": "^5.0.3",
-        "prettier": "2.2.1",
-        "react-test-renderer": "^16.12.0",
-        "redux-logger": "^3.0.6",
-        "rimraf": "^3.0.0",
-        "sass-loader": "^8.0.2",
-        "sinon": "^9.0.2",
-        "style-loader": "^2.0.0",
-        "stylelint": "^13.12.0",
-        "stylelint-config-prettier": "^8.0.1",
-        "stylelint-config-standard": "^21.0.0",
-        "terser-webpack-plugin": "^4.2.3",
-        "testcafe": "^1.12.0",
-        "testcafe-browser-provider-electron": "0.0.16",
-        "testcafe-react-selectors": "^4.0.0",
-        "ts-jest": "26.5.3",
-        "typed-css-modules-webpack-plugin": "^0.2.0",
-        "typescript": "^4.2.3",
-        "url-loader": "^4.1.0",
-        "webpack": "^4.41.5",
-        "webpack-bundle-analyzer": "^4.4.0",
-        "webpack-cli": "^4.5.0",
-        "webpack-dev-server": "^3.11.2",
-        "webpack-merge": "^5.7.3",
-        "yarn": "^1.22.1"
-    },
-    "engines": {
-        "node": ">=14.x",
-        "npm": "use-yarn",
-        "yarn": ">=1.19.x"
-    },
-    "homepage": "https://www.fractal.co",
-    "jest": {
-        "moduleDirectories": [
-            "node_modules",
-            "app/node_modules"
-        ],
-        "moduleFileExtensions": [
-            "js",
-            "jsx",
-            "ts",
-            "tsx",
-            "json"
-        ],
-        "moduleNameMapper": {
-            "\\.(css|less|sass|scss)$": "identity-obj-proxy",
-            "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/internals/mocks/fileMock.js"
-        },
-        "setupFiles": [
-            "./internals/scripts/CheckBuildsExist.js"
-        ],
-        "setupFilesAfterEnv": [
-            "./internals/tests/set-test-timeout.js"
-        ],
-        "testURL": "http://localhost/"
-    },
-    "keywords": [
-        "fractal"
-    ],
-    "license": "UNLICENSED",
-    "lint-staged": {
-        "*.{css,scss}": [
-            "stylelint --ignore-path .eslintignore --syntax scss --fix",
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ],
-        "*.{html,md,yml}": [
-            "prettier --ignore-path .eslintignore --single-quote --write"
-        ],
-        "*.{js,jsx,ts,tsx}": [
-            "cross-env NODE_ENV=development eslint --cache"
-        ],
-        "{*.json,.{babelrc,eslintrc,prettierrc,stylelintrc}}": [
-            "prettier --ignore-path .eslintignore --parser json --write"
-        ]
-    },
-    "name": "fractal",
-    "private": true,
-    "productName": "Fractal",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/fractal/fractal.git"
-    },
-    "scripts": {
-        "build": "concurrently \"yarn build-main\" \"yarn build-renderer\"",
-        "build-dll": "cross-env NODE_ENV=development webpack --config ./configs/webpack.config.renderer.dev.dll.babel.js",
-        "build-e2e": "cross-env E2E_BUILD=true yarn build",
-        "build-main": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.main.prod.babel.js",
-        "build-renderer": "cross-env NODE_ENV=production webpack --config ./configs/webpack.config.renderer.prod.babel.js",
-        "dev": "cross-env START_HOT=1 yarn start-renderer-dev",
-        "dev-docker": "cross-env DEVELOPMENT_ENV=local START_HOT=1 yarn start-renderer-dev",
-        "electron-rebuild": "electron-rebuild --parallel --force --types prod,dev,optional --module-dir app",
-        "lint-check": "yarn eslint --max-warnings 0 \"app/*.ts*\" && yarn eslint --max-warnings 0 \"app/pages/**/*.ts*\" && yarn eslint --max-warnings 0 \"app/shared/**/*.ts*\" && yarn eslint --max-warnings 0 \"app/store/**/*.ts*\"",
-        "lint-fix": "yarn eslint --max-warnings 0 --fix \"app/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/pages/**/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/shared/**/*.ts*\" && yarn eslint --max-warnings 0 --fix \"app/store/**/*.ts*\"",
-        "package": "yarn build && electron-builder build --publish never",
-        "package-all": "yarn build && electron-builder build -mwl",
-        "package-ci": "yarn postinstall && yarn build && electron-builder build --publish always",
-        "package-linux": "yarn build && electron-builder build --linux",
-        "package-win": "yarn build && electron-builder build --win --x64",
-        "postinstall": "node -r @babel/register internals/scripts/CheckNativeDep.js && electron-builder install-app-deps && yarn build-dll && opencollective-postinstall && cd node_modules/electron-notarize && yarn && yarn build",
-        "postlint-check": "prettier --ignore-path .eslintignore --single-quote --check \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
-        "postlint-fix": "prettier --ignore-path .eslintignore --single-quote --write \"**/*.{js,jsx,json,html,css,less,scss,yml}\"",
-        "preinstall": "node ./internals/scripts/CheckYarn.js",
-        "prestart": "yarn build",
-        "set-prod-env-dev": "node ./generateEnv.ts dev",
-        "set-prod-env-prod": "node ./generateEnv.ts prod",
-        "set-prod-env-staging": "node ./generateEnv.ts staging",
-        "start": "cross-env NODE_ENV=development electron ./app/main.prod.js",
-        "start-main-dev": "cross-env START_HOT=1 NODE_ENV=development electron -r ./internals/scripts/BabelRegister ./app/main.dev.ts",
-        "start-renderer-dev": "cross-env NODE_ENV=development webpack serve --config configs/webpack.config.renderer.dev.babel.js",
-        "test": "cross-env NODE_ENV=test BABEL_DISABLE_CACHE=1 jest",
-        "test-ci": "yarn test --ci --logHeapUsage --verbose",
-        "test-watch": "yarn test --watch",
-        "ts": "tsc"
-    },
-    "version": "1.0.0"
+        "eslint-plugin-react": "^7.22.0",
+        "nodemon": "^2.0.7",
+        "postcss": "^8.2.8",
+        "prettier": "^2.2.1",
+        "snowpack": "^3.1.1",
+        "tailwindcss": "^2.0.3",
+        "tailwindcss-cli": "^0.1.2",
+        "typescript": "^4.2.3"
+    }
 }

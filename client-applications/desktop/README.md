@@ -1,253 +1,86 @@
-# Fractal Desktop Applications
+# Fractal Desktop Client
 
-This folder contains the code for the Fractal desktop applications running on Windows and MacOS (Linux currently not supported). The applications are built with cross-platform compatibility using ElectronJS.
+This repository contains the code for the Fractal client application, which is the end user's gateway into Fractal's technology. The user downloads and installs the client into `Applications` (MacOS) or `Program Files` (Windows), and launches it anytime they want to open up the Fractal browser.
 
-## High-Level Overview
+At a high-level, this repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in "packaging" the application for the user. This "packaging" involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS. Below, we'll discuss each of these functions in more detail.
 
-### Electron
+## Client Application Source Code
 
-The client-app uses ElectronJS for cross-platform compatibility and for the building of desktop apps using the React framework. In particular, it differs from web development in its use of processes:
+Our client application is built on [Electron](https://www.electronjs.org), which is a cross-platform GUI framework. It provides a consistent interface for interacting with different operating system functions (like window management), as well as a GUI rendering engine based on Chromium. This means that user interface work with Electron is very similar to modern web design. Electron windows simply render HTML pages, which are able to link to external CSS, images, and JavaScript.
 
-Electron has two types of processes - Main and Renderer. The main process is the underlying process that controls everything, and it spins up renderer processes in `BrowserWindow` instances that display the UI. Each renderer process is only responsible for its own `BrowserWindow`, and communicates with the main process through IPC. Currently, we use 3 renderer processes maximum - mainWindow, loginWindow, and paymentWindow (each for their respective purposes).
+Electron applications are divided into two major parts, the "main" and the "renderer" processes. While the two processes are both JavaScript environments, they have completely different capabilities and responsibilities. Even though they're both JS-based, they are different CPU processes and can only communicate via serializable data. Essentially, the main/renderer communication is limited to anything that is serializable into JSON.
 
-### React/Redux/Redux saga
+We use TypeScript for both processes, which is bundled and compiled to JavaScript with [Snowpack](https://www.snowpack.dev).
 
-Our client-app is organized with a standard React/Redux/Redux saga structure with a sprinkling of React hooks -- React being the visual components and app logic, Redux saga being the middleware that listens and dispatches actions (both side effects and state changes), and Redux for managing the underlying application state.
+### Client Renderer Process
 
-The "state" of the app is a collection of objects that store current global application data, e.g. the `User` object with `userID` and `name`, the `ComputerInfo` object with the AWS `region`). Note that redux architecture revolves around a strict unidirectional data flow. This means that all data in an application follows the same lifecycle pattern, making the logic more predictable and easier to understand.
+The Electron "renderer" process runs in a web browser environment. You'll feel right at home if you have web dev experience, as the renderer process has an identical API to Google Chrome. The renderer process is fully capable of performing HTTP requests and bundling NodeJS dependencies, and many applications rely on it for much of their functionality.
 
-![Standard flow](https://miro.medium.com/max/1400/1*VxWA0VFZq4NZG1mI20PYDw.png)
+However, the Fractal client application uses the renderer very minimally. As an architectural decision, we've decided to keep the renderer process as "dumb" as possible. It holds very little logic or state, and is essentially a "view" layer for the main process.
 
-React is where our UI is built. See [here](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289) for how our React files are structured. React also dispatches actions to Redux to indicate state changes.
+Applications can become tricky to manage when there's two "brains". It becomes unclear what computation should happen where, and keeping state in sync becomes a major challenge. Because the renderer process has no ability to launch child process, manage windows, or work with the filesystem, we decided to make the main process the "brain" of the app.
 
-Redux manages our application state synchronously with the stored state and reducers. Reducers are pure functions that take the previous state and an action, and return the next state. In a reducer, we should never mutate the arguments/change the object structure, perform side effects like API calls, etc.
+We use a single Electron IPC channel to communicate between the main process and the renderer windows. The main process always "broadcasts" an object to all windows across this IPC channel. This object represents the "state" of the application, which the renderers will use to decide what to display.
 
-This is where Redux saga comes in. As a middleware, it intercepts any dispatched actions from React, completes any side effects, and dispatches necessary pure state changes to the Redux reducers.
+To simplify interaction with this IPC channel, we've created a React hook called `useMainState`, which listens for new state and re-renders the window. `useMainState` also provides a way to send a state update back to the main process, which then "round-trips" and once again triggers a re-render. The API is nearly identical to React's built-in `useState` to make it feel familiar to use.
 
-#### React hooks
+We've designed the renderer process to be easy to reason about. There's little that can go wrong, because it doesn't do very much. Since IPC communication is a little slow, the renderer still uses some local state (like for storing keystrokes), but if we could, we'd make it completely stateless. Its purpose is to accept user input and render the main process state into JSX/HTML, nothing more.
 
-In addition to Redux saga for side effects, we also sometimes use React hooks, namely `useEffect`. We keep these separate because while there is a global application state, components can also have local states. We use React hooks to deal with state changes that specifically pertain to that component (e.g. `timedOut`, `shouldForceQuit`, `protocolLock` in `launcher.tsx`), while Redux saga is for the global application state (e.g. the `User`. which is referred to in many different components).
+Files related to the renderer process mostly live in `src/renderer`, with some shared React components located in `src/components`, and a few helper functions in `src/utils`.
 
-## File Structure
+### Client Main Process
 
-```
-cd app
-tree -I "node_modules|dist|*.d.ts|*.css|fonts|svgs"
-```
+The Electron "main" process runs in a NodeJS environment, and has full access to the NodeJS standard library and ecosystem. HTTP requests, process management, and file system interaction are handled with standard NodeJS APIs, while GUI windows, communication with the renderer process, and application lifecycle are managed with Electron's API.
 
-```
-./desktop/app
-├── app.html <- wrapper html for the entire app
-├── assets <- fonts/svg files
-├── index.tsx <- wrapper for the React portion of the app
-├── main.dev.ts <- module in the main process to create/communicate with renderer processes
-├── main.prod.js <- main.dev.ts, compiled by webpack for performance wins
-├── main.prod.js.LICENSE.txt
-├── menu.ts <- file to build application menu
-├── package.json <- manages dependencies, scripts, versions, etc.
-├── pages
-│   ├── launcher
-│   │   ├── constants
-│   │   │   └── loadingMessages.ts <- messages that display as the protocol is launching
-│   │   └── launcher.tsx <- React component for the launching page
-│   ├── loading
-│   │   └── loading.tsx <- React component for the loading page
-│   ├── login
-│   │   ├── components <- React components for smaller pieces of the login page
-│   │   │   ├── geometric
-│   │   │   │   └── geometric.tsx
-│   │   │   ├── redirect
-│   │   │   │   └── redirect.tsx
-│   │   │   └── splashScreen
-│   │   │       └── splashScreen.tsx
-│   │   └── login.tsx <- Wrapper component for the login page
-│   ├── payment
-│   │   └── payment.tsx <- React component for the payment page
-│   ├── root.tsx <- highest level React component, contains router + title bar
-│   └── update
-│       └── update.tsx <- React component for the update page
-├── shared
-│   ├── components <- smaller components that are reused on multiple pages
-│   │   ├── chromeBackground
-│   │   │   └── chromeBackground.tsx
-│   │   ├── loadingAnimation
-│   │   │   └── loadingAnimation.tsx
-│   │   ├── titleBar.tsx
-│   │   └── version.tsx
-│   ├── constants
-│   │   ├── config.ts <- environment configurations
-│   │   └── graphql.ts <- GraphQL methods
-│   ├── types <- classes, types, and enums for typing safety
-│   │   ├── api.ts <- Fractal's API, HTTP codes, and request names
-│   │   ├── aws.ts <- AWS regions
-│   │   ├── cache.ts <- Electron store/cache variables
-│   │   ├── client.ts <- client user's computer information
-│   │   ├── config.ts <- configuration/environment types
-│   │   ├── containers.ts <- container/task states
-│   │   ├── input.ts <- input keys
-│   │   ├── ipc.ts <- ipc listener names
-│   │   ├── navigation.ts <- route names
-│   │   ├── redux.ts
-│   │   └── ui.ts <- UI component type
-│   └── utils
-│       ├── files <- helper functions that edit/are dependent on the user's files
-│       │   ├── __tests__
-│       │   │   └── images.test.ts
-│       │   ├── aws.ts
-│       │   ├── exec.ts
-│       │   ├── images.ts
-│       │   └── shortcuts.ts
-│       └── general
-│           ├── __tests__
-│           │   ├── api.test.ts
-│           │   ├── helpers.test.ts
-│           │   └── reducer.test.ts
-│           ├── api.ts <- HTTP calls
-│           ├── dpi.ts <- functions to find what DPI to use
-│           ├── helpers.ts <- otherwise homeless helper functions
-│           ├── logging.ts <- logging utils
-│           └── reducer.ts <- mostly unused, except for `deepCopyObject()`
-├── store
-│   ├── actions <- actions that can be dispatched
-│   │   ├── auth <- actions that change the auth state
-│   │   │   ├── pure.ts
-│   │   │   └── sideEffects.ts
-│   │   ├── client <- actions that change the client state
-│   │   │   ├── pure.ts
-│   │   │   └── sideEffects.ts
-│   │   └── container <- actions that change the container state
-│   │       ├── pure.ts
-│   │       └── sideEffects.ts
-│   ├── configureStore.dev.ts <- dev configuration of redux/redux saga
-│   ├── configureStore.prod.ts <- prod configuration of redux/redux saga
-│   ├── configureStore.ts <- wrapper that chooses the dev/prod store configure
-│   ├── history.ts <- gives us access to the history object
-│   ├── reducers <- reducers. no side effects happen here, just pure state changes
-│   │   ├── auth
-│   │   │   ├── default.ts <- default auth state
-│   │   │   └── reducer.ts
-│   │   ├── client
-│   │   │   ├── default.ts <- default client state
-│   │   │   └── reducer.ts
-│   │   ├── container
-│   │   │   ├── default.ts <- default container state
-│   │   │   └── reducer.ts
-│   │   └── root.ts <- wrapper for all reducers
-│   └── sagas <- sagas. side effects live here
-│       ├── auth
-│       │   └── index.ts
-│       ├── client
-│       │   └── index.ts
-│       ├── container
-│       │   └── index.ts
-│       └── root.ts <- wrapper for all sagas
-└── yarn.lock <- lock file for dependencies
+#### The Event Loop
+
+The backbone of our main process is a reactive event loop managed by [RxJS](https://rxjs-dev.firebaseapp.com/guide/overview). It's useful to visualize each cycle of the event loop as a "stream" of data flowing in one direction. It's also useful to think of it as a story with a beginning, a middle, and an end.
+
+"Events" are the beginning of the story. Events create the data that flows through the event loop. Major events include Electron lifecycle events (`appReady`, `appQuit`, etc.), and events related to user input (button clicks, input submit, etc). As the user interacts with the renderer process, data is sent through IPC back to the main process, where the new data is processed as a "event". Anytime there is a new event with data, the application event loop comes to life and reacts to it.
+
+"Effects" are the end of the story. Effects take incoming data, and perform some sort of side-effect that changes the state of the world. This might include creating GUI windows, sending state over IPC, or quitting the application. Nothing is done with the return value of an Effect function. When it receives new "upstream" data, it shouts a command out into the void and waits for new data.
+
+"Observables" are the middle of the story. Observables represent the chain of computation between Events and Effects, and are the most important part of the main process architecture. Events and Effects have no state, little control flow, and generally don't do very much. This makes them easily testable and highly resuable. Our architecture places all of our key logic and state within observables, which provide a high-level abstraction over the scheduling of asynchronous events.
+
+#### Observables and RxJS
+
+An observable is not much more complicated than a function. If I'm an observable, I might "subscribe" to an Event, so that when the Event is triggered, I run my function with the data created by the event. It's possible that I may have subscribers of my own. When I have my function result, I'll pass it on to my subscribers, who may themselves be observables. Data flows through this "chain" of computation until it gets to an Effect, which uses the data to change something in the environment.
+
+The interaction of observables creates room for rich expression of control flow. Observables can accept "upstream" data with a fine degree of control over timing and parallelism. They can transform, filter, and join other observables to create new data structures. They are a higher-level abstraction of asynchrony than Promises, and allow us to focus on the "rules" that drive the order of computation within our system.
+
+Observables are a concept of functional reactive programming, and are the main structure introduced by RxJS. Rx can be intimidating. The library has a huge API of utilities for creating and manipulating observables, and there's a natual learning curve that comes with starting to think about time-based streams of data. Once things start to click, the Rx standard library becomes a powerful tool, and it becomes very fast to implement complex behavior that can is otherwise unwiedly to write in an imperative style.
+
+There are some great tutorials for RxJS out there, like [this one](https://www.learnrxjs.io) and [this one](https://gist.github.com/staltz/868e7e9bc2a7b8c1f754). Try starting out by thinking about how a "stream of data across time" is similar to a simple "list of data", and how you might `map`, `filter`, and `reduce` each one.
+
+#### Organization
+
+Main process functions are grouped primarily by level of abstraction, and then sub-grouped based on their functionality. This means that we have several files named, for example, `container.ts`, in locations like `utils/container.ts`, `effects/container.ts`, and `observables/container.ts`. It should feel natural to choose a place to put a new function, or where to look for an existing one.
+
+You can identify a level of abstraction by "what the functions know about". Generally, the `utils` folder is for the lowest level of abstraction. `utils/container.ts` knows about the NodeJS standard library, `core-ts`, and HTTP responses. The functions inside it are tiny, only a few lines each. Files like this tend to be bags of functions that all have a similar return type, like an HTTP response, and provide helpers to extract data or perform validation. For example, `containerInfo` returns an HTTP response, and comes with `containerInfoValid` to check if the response is successful. It also brings along `containerInfoIP` and `containerInfoPorts` to extract the IP address and ports from the response.
+
+This format makes function names verbose, but it allows for higher-levels of abstraction to be expressed much more concisely. `observables/container.ts` now doesn't need to know that it's dealing with an HTTP response. It can be entirely devoted to scheduling `containerInfo` requests and managing relationships with other observables. This becomes especially useful when you realize that `containerInfo`, when triggered by an event, needs to poll the webserver every second until certain other parts of application state receive certain data. This requires complex business logic that's much easier to manage when you're not complecting it with details like HTTP status codes.
+
+Consistency is a key design goal of this project. It should be easy to choose a name for a function or observable when you need to. Names tend to be prefixed by their functionality, like `containerInfo` and `containerAssign`, and are often trailed by some sort of state like `Request`, `Warning`, `Success`, `Failure`, or `Loading`. Try and re-use these key terms as often as possible.
+
+A good indication of well-organized functions is visual consistency. Functions on the same level of abstraction that return similar data will often look similar, especially if they don't do too much and use consistent parameter names. In fact, visual coherence is so important that we often carefully pick names that have the same letter count. For example:
+
+```js
+import {
+containerInfoRequest,
+containerInfoSuccess,
+containerInfoFailure,
+containerInfoLoading,
+containerInfoWarning,
+containerInfoProcess,
+containerInfoPolling,
+} from "@app/observables/container"
 ```
 
-## Setting Up for Development
+This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
 
-1. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
+#### Debugging
+Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
 
-2. `cd` into the `desktop` folder.
+You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
 
-3. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
-
-4. To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. Note: `yarn dev` will start the Electron application, but will not fetch the Fractal protocol, which is necessary to stream apps. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
-
-## How To Contribute
-
-Before making a pull request, ensure that the following steps are taken:
-
-1. Make sure the application is fully working both in `dev` (via `yarn dev`) and packaged (see **Packaging for Production**). This is important because the Electron app can behave differently when packaged. For example, file paths will change.
-
-2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
-
-3. Lint your code by running `yarn lint-fix`. If this does not pass, your code will fail Github CI.
-
-4. Run all test files by running `yarn test`. If this does not pass, your code will fail Github CI. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
-
-5. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
-
-Finally, you can open PR to `dev`.
-
-### How To Clear The App's Cache
-
-Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting/modifying/reviewing the files at:
-
--   On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
--   On Windows, look in `C:\Users\<user>\AppData\Roaming\{Electron,Fractal}\Cache\config.json`
-
-The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
-
-## Testing the client app with the protocol
-
-The client app launches the protocol, but the protocol needs to be built first.
-
-1. Go to the `/protocol/` README to install all the necessary prerequisites.
-
-2. In the `client-applications/desktop` folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/desktop/release`. No cross-compilation is possible, e.g. you can only package the Windows application from a Windows computer.
-
-#### MacOS Notarizing
-
-Before you can package the MacOS application it needs to be notarized. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully. You can download the certificate from AWS S3 on [this link](https://fractal-dev-secrets.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized as part of the regular build script.
-
-In order for this to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it _at least_ once following installation, which will prompt you to install additional components. If your macOS version is too old to install Xcode directly from the macOS App Store, you can manually download the macOS SDK (which you'd normally obtain through Xcode) for your macOS version and place it in the right subfolder. Here's an example for macOS 10.14:
-
-```
-# Explicitly retrieve macOS 10.14 SDK
-wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
-
-# Untar it
-xz -d MacOSX10.14.sdk.tar.xz
-tar -xf MacOSX10.14.sdk.tar
-
-# Move it to the right folder for building the protocol
-mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
-```
-
-Once those components are installed, you need to open up a terminal and run `xcode-select --install` to install the Xcode CLI, which is necessary for the notarizing to work. Once all of these are done, you should have no problem with the notarization process as part of the packaging of the application.
-
-### Publishing New Versions
-
-Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `prod`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
-
-Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
-
-#### Update Channels
-
-There is a channel for `testing` and `production` on each platform. These channels are backed by AWS S3 buckets ([here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#)) that follow a file structure and metadata schema specified by [electron-builder's publish system](https://www.electron.build/configuration/publish) (it's basically the executable installer + a well-known YAML file with metadata like file hash, file name, and release date which is used for knowing when an update is available).
-
-## Continous Integration
-
-This repository has basic continuous integration through GitHub Actions. For every PR to `dev`, `staging`, or `prod`, GitHub Actions will attempt to build the bundled application on Windows-64bit, macOS-64bit, and Linux-64bit. These will be uploaded to their respective s3 buckets: `s3://fractal-chromium-{windows,macos,ubuntu}-{dev,staging,prod}`. Each s3 bucket functions as a release channel and only stores the latest version. A YAML-formatted metadata file is present detailing the version and other info. See [electron-builder's publish documentation](https://www.electron.build/configuration/publish) for more info.
-
-Changes in the `protocol/` subrepo will also trigger the client-apps to be rebuilt.
-
-Additionally, [style](#Styling) checks will be run to verify that you formatted your code via Prettier. You should make sure that all tests pass under the Actions tab.
-
-## Styling
-
-To ensure that code formatting is standardized, and to minimize clutter in the commits, you should set up styling with [Prettier](https://prettier.io/) before making any PRs. We have [pre-commit hooks](https://pre-commit.com/) with Prettier support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` to instantiate the hooks for Prettier.
-
-You can always run Prettier directly from a terminal by typing `yarn format`, or you can install it directly within your IDE by via the following instructions:
-
-### [VSCode](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)
-
-Additional specific checks are done by ESLint. Please run `yarn lint-check` or `yarn lint-fix` (the latter if you want to auto-fix all possible issues) and address all raised issues. If any issues seem incompatible or irrelevant to this project, add them to .eslintrc and either demote to warnings or mute entirely.
-
-Launch VS Code Quick Open (Ctrl+P/Cmd+P), paste the following command, and press enter.
-
-```
-ext install esbenp.prettier-vscode
-```
-
-To ensure that this extension is used over other extensions you may have installed, be sure to set it as the default formatter in your VS Code settings. This setting can be set for all languages or by a specific language.
-
-```
-{
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
-}
-```
+A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
