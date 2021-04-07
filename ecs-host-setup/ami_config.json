@@ -1,21 +1,31 @@
 {
   "variables": {
-    "github_pat": "{{env `GH_PAT`}}",
-    "github_username": "{{env `GH_USERNAME`}}",
-    "git_branch": "{{env `GIT_BRANCH`}}",
-    "git_hash": "{{env `GIT_HASH`}}"
+    "github_pat": "",
+    "github_username": "",
+    "git_branch": "",
+    "git_hash": "",
+    "access_key": "",
+    "secret_key": "",
+    "source_region": "",
+    "source_ami": "",
+    "destination_regions": "",
+    "instance_type": "",
+    "ami-name": "",
+    "subnet_id": "",
+    "vpc_id": ""
   },
+  "sensitive-variables": ["access_key", "secret_key", "github_username", "github_pat"],
   "builders": [
     {
       "name": "Fractal AWS AMI Builder",
       "type": "amazon-ebs",
-      "access_key": "PLACEHOLDER",
-      "secret_key": "PLACEHOLDER",
-      "region": "PLACEHOLDER",
-      "source_ami": "PLACEHOLDER",
-      "ami_regions": "PLACEHOLDER",
-      "instance_type": "PLACEHOLDER",
-      "ami_name": "PLACEHOLDER",
+      "access_key": "{{user `access_key`}}",
+      "secret_key": "{{user `secret_key`}}",
+      "region": "{{user `source_region`}}",
+      "source_ami": "{{user `source_ami`}}",
+      "ami_regions": "{{user `destination_regions`}}",
+      "instance_type": "{{user `instance_type`}}",
+      "ami_name": "{{user `ami_name`}}",
       "ami_description": "Fractal-optimized Ubuntu 20.04 AWS Machine Image.",
       "iam_instance_profile": "PackerAMIBuilder",
       "ssh_username": "ubuntu",
@@ -28,8 +38,8 @@
         }
       ],
       "ebs_optimized": true,
-      "subnet_id": "PLACEHOLDER",
-      "vpc_id": "PLACEHOLDER"
+      "subnet_id": "{{user `subnet_id`}}",
+      "vpc_id": "{{user `vpc_id`}}"
     }
   ],
   "provisioners": [
@@ -64,7 +74,7 @@
     },
     {
       "type": "shell",
-      "inline": ["cd /home/ubuntu/ecs-host-setup", "GH_USERNAME={{user `github_pat`}} GH_PAT={{user `github_pat`}} GIT_BRANCH={{user `git_branch`}} GIT_HASH={{user `git_hash`}} ./setup_ubuntu20_host.sh"]
+      "inline": ["cd /home/ubuntu/ecs-host-setup", "./setup_ubuntu20_host.sh"]
     },
     {
       "type": "shell",
@@ -76,7 +86,7 @@
       "type": "shell",
       "inline": [
         "cd /home/ubuntu/ecs-host-setup",
-        "./setup_ubuntu20_ami_host.sh",
+        "./setup_ubuntu20_ami_host.sh {{user `github_username`}} {{user `github_pat`}} {{user `git_branch`}} {{user `git_hash`}}",
         "cd ..",
         "rm -rf ecs-host-setup"
       ]

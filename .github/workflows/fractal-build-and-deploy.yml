@@ -494,30 +494,30 @@ jobs:
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
 
-            - name: Generate ami_config.json Packer Config File for Building New AMI
+            - name: Generate packer_vars.json Packer Variables File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
                   import json
                   import datetime
-                  fp = open("ami_config.json", "r")
-                  data = json.load(fp)
-                  fp.close()
-
-                  data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
-                  data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  data = {}
+                  data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+                  data["git_branch"] = "{{ needs.fractal-publish-build-config.outputs.branch }}"
+                  data["git_hash"] = "${{ env.commit_sha }}"
+                  data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["builders"][0]["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
-                  data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
-                  data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
-                  data["builders"][0]["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
-                  data["builders"][0]["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
-                  data["builders"][0]["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+                  data["source_region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-                  # defined as a formatted json array to be copied into ami_config.json directly
-                  data["builders"][0]["ami_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
-
-                  fp = open("ami_config.json", "w")
+                  # defined as a formatted json array to be copied into packer_vars.json directly
+                  data["destination_regions"] = "us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1"
+                  fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
 
@@ -527,11 +527,6 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               id: build-new-amis
               working-directory: ecs-host-setup
-              env:
-                  GH_USERNAME: ${{ secrets.GHA_USERNAME }}
-                  GH_PAT: ${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}
-                  GIT_BRANCH: ${{ needs.fractal-publish-build-config.outputs.branch }}
-                  GIT_HASH: ${{ env.commit_sha }}
               shell: python3 {0}
               run: |
                   import os
@@ -539,7 +534,7 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable build ami_config.json", shell=True)
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.json", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
