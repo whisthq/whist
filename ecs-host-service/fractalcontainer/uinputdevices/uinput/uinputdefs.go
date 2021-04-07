@@ -39,8 +39,11 @@ const (
 	evBtnLeft        = 0x110
 	evBtnRight       = 0x111
 	evBtnMiddle      = 0x112
-	evBtn4           = 0x104
-	evBtn5           = 0x105
+	evBtnSide        = 0x113
+	evBtnExtra       = 0x114
+	evBtnForward     = 0x115
+	evBtnBack        = 0x116
+	evBtnTask        = 0x117
 	evBtnTouch       = 0x14a
 	evBtnToolFinger  = 0x145
 	evBtnToolPen     = 0x140
