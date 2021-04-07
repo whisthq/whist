@@ -12,6 +12,11 @@ GH_USERNAME={2}
 GIT_BRANCH={3}
 GIT_HASH={4}
 
+echo "username $GH_USERNAME passed correctly"
+echo "pat $GH_PAT passed correctly"
+echo "branch $GH_BRANCH passed correctly"
+echo "hash $GH_HASH passed correctly"
+
 # Prevent user from running script as root, to guarantee that all steps are
 # associated with the fractal user.
 if [ "$EUID" -eq 0 ]; then
