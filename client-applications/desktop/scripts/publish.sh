@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # Exit on subcommand errors
 set -Eeuo pipefail
 
@@ -35,8 +34,7 @@ Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu.
 
 EOF
 }
-
-if [[ "${1-}" == "--help" ]]
+if [[ "${1-default}" == "--help" ]]
 then
     printhelp
 else
@@ -44,7 +42,6 @@ else
     bucket=${bucket:-PLACEHOLDER}
     env=${env:-dev}
     publish=${publish:-false}
-
     # get named params
     while [[ "$#" -gt 0 ]]; do
         if [[ "$1" == *"--"* ]]; then
@@ -103,10 +100,8 @@ else
             find protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \;
         fi
     fi
-
     # Initialize yarn first
     yarn -i
-
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
     yarn config set network-timeout 600000
 
