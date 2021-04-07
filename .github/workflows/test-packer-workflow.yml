@@ -80,7 +80,7 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable -var-file-packer_vars.json build ami_config.json", shell=True)
+                  subprocess.run("packer -machine-readable -var-file=packer_vars.json build ami_config.json", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
