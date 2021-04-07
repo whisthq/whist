@@ -69,7 +69,7 @@ const schema: DebugSchema = {
     loginFailure: ["value:"],
     loginSuccess: [
         "value:",
-        ({ json }) => JSON.stringify(json)
+        ({ json }) => json
     ],
     containerCreateRequest: ["value:"],
     containerCreateLoading: ["value:"],
