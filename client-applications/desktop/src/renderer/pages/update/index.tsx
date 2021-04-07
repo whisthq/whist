@@ -17,7 +17,7 @@ const Update = () => {
     const sanitizeBytes = (fl: number) => Math.round((fl / 1000000) * 100) / 100
 
     useEffect(() => {
-        if(mainState.updateInfo) {
+        if (mainState.updateInfo) {
             let updateInfo = JSON.parse(mainState.updateInfo)
 
             setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
@@ -26,7 +26,6 @@ const Update = () => {
             setTotalDownloadSize(sanitizeBytes(updateInfo.total))
         }
     }, [mainState])
-
 
     return (
         <div className="flex flex-col justify-center items-center bg-white h-screen text-center">

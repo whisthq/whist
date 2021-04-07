@@ -3,9 +3,9 @@ import ping from "ping"
 import { AWSRegion } from "@app/@types/aws"
 
 const findLowest = (arr: number[]) => {
-    let min = Number.MAX_SAFE_INTEGER 
-    for(let i = 0; i < arr.length; i += 1) {
-        if(arr[i] < min) {
+    let min = Number.MAX_SAFE_INTEGER
+    for (let i = 0; i < arr.length; i += 1) {
+        if (arr[i] < min) {
             min = arr[i]
         }
     }

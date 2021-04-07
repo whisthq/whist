@@ -55,10 +55,7 @@ const RootComponent = () => {
                 </Switch>
             </Router>
         )
-    if (show === WindowHashUpdate)
-            return (
-                <Update/>
-            )
+    if (show === WindowHashUpdate) return <Update />
     if (show === WindowHashAuthError)
         return (
             <Error
@@ -94,17 +91,24 @@ const RootComponent = () => {
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
-    return <div className="relative w-full h-full">
-        <div className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
-             style={{zIndex: -10}}>
-            <p className="font-body font-light text-gray-200 py-4">Version 1.0</p>
+    return (
+        <div className="relative w-full h-full">
+            <div
+                className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
+                style={{ zIndex: -10 }}
+            >
+                <p className="font-body font-light text-gray-200 py-4">
+                    Version 1.0
+                </p>
+            </div>
+            {props.children}
         </div>
-        {props.children}
-    </div>
+    )
 }
 
 ReactDOM.render(
     <WindowBackground>
         <RootComponent />
-    </WindowBackground>
-    , document.getElementById("root"))
+    </WindowBackground>,
+    document.getElementById("root")
+)

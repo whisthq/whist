@@ -12,11 +12,16 @@ import * as p from "@app/main/observables/protocol"
 import * as s from "@app/main/observables/signup"
 import * as l from "@app/main/observables/login"
 
-const logWithEmail = (observable: Observable<any>, logs: string, level: LogLevel) => {
-    if(level === LogLevel.ERROR) return combineLatest(
-        eventIPC.pipe(pluck("email")),
-        observable
-    ).subscribe(([email, _observable]) => logError(email as string, logs))
+const logWithEmail = (
+    observable: Observable<any>,
+    logs: string,
+    level: LogLevel
+) => {
+    if (level === LogLevel.ERROR)
+        return combineLatest(
+            eventIPC.pipe(pluck("email")),
+            observable
+        ).subscribe(([email, _observable]) => logError(email as string, logs))
 
     return combineLatest(
         eventIPC.pipe(pluck("email")),
@@ -24,8 +29,15 @@ const logWithEmail = (observable: Observable<any>, logs: string, level: LogLevel
     ).subscribe(([email, _observable]) => logDebug(email as string, logs))
 }
 
-const pluckLog = (observable: Observable<any>, logs: string, level: LogLevel) => {
-    if(level === LogLevel.ERROR) return observable.pipe(pluck("email")).subscribe((email) => logError(email as string, logs))
+const pluckLog = (
+    observable: Observable<any>,
+    logs: string,
+    level: LogLevel
+) => {
+    if (level === LogLevel.ERROR)
+        return observable
+            .pipe(pluck("email"))
+            .subscribe((email) => logError(email as string, logs))
     return observable
         .pipe(pluck("email"))
         .subscribe((email) => logDebug(email as string, logs))

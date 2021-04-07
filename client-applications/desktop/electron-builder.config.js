@@ -13,7 +13,7 @@ const bundleConfig = {
     afterSign: "build/afterSign.js",
 
     artifactName: "Fractal.${ext}",
-    
+
     asar: true,
 
     directories: {
@@ -30,9 +30,7 @@ const bundleConfig = {
         schemes: ["fractal"],
     },
 
-    extraFiles: [
-        "loading/"
-    ],
+    extraFiles: ["loading/"],
 
     mac: {
         category: "public.app-category.productivity",
@@ -51,9 +49,9 @@ const bundleConfig = {
         extraFiles: [
             {
                 from: "protocol-build/client",
-                to: "MacOS/"
-            }
-        ]
+                to: "MacOS/",
+            },
+        ],
     },
 
     // This controls the positions of the Fractal application and

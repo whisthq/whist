@@ -66,19 +66,20 @@ A good indication of well-organized functions is visual consistency. Functions o
 
 ```js
 import {
-containerInfoRequest,
-containerInfoSuccess,
-containerInfoFailure,
-containerInfoLoading,
-containerInfoWarning,
-containerInfoProcess,
-containerInfoPolling,
+    containerInfoRequest,
+    containerInfoSuccess,
+    containerInfoFailure,
+    containerInfoLoading,
+    containerInfoWarning,
+    containerInfoProcess,
+    containerInfoPolling,
 } from "@app/observables/container"
 ```
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
 
 #### Debugging
+
 Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
 
 You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.

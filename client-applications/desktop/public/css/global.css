@@ -21,7 +21,6 @@
     --font-family-secondary: "Myriad Pro";
 }
 
-
 @font-face {
     font-family: --font-family-primary;
     src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
@@ -32,7 +31,7 @@
 @font-face {
     font-family: --font-family-primary;
     src: url("../assets/fonts/JosefinSans-VariableFont_wght.ttf");
-    font-weight: bold;  /* bold == 700 */
+    font-weight: bold; /* bold == 700 */
     font-style: bold;
 }
 

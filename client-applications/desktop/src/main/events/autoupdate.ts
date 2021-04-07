@@ -4,7 +4,6 @@ import { fromEvent } from "rxjs"
 
 import { logDebug } from "@app/utils/logging"
 
-
 export const eventUpdateAvailable = fromEvent(
     autoUpdater as EventEmitter,
     "update-available"
