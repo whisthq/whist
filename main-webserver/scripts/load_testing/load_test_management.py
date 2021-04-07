@@ -14,9 +14,6 @@ import subprocess
 # this file is called from. We can now import from `scripts`.
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
-# locally, this is imported from the `scripts` in monorepo
-# in the AWS lambda function, this is imported from the symlinked `scripts`
-# in the load_testing folder
 from scripts.load_testing.load_test_utils import LOAD_TEST_USER_PREFIX
 
 from scripts.utils import make_post_request

@@ -63,7 +63,7 @@ class LoadTestUser(locust.HttpUser):
         LoadTestUser.available_user_num += 1
 
     def on_start(self):
-        # exceptions do not automatically run on_stop, so we do this as a workaround
+        # exceptions will not run self.on_stop, so we do this as a workaround
         try:
             self._on_start()
         except Exception as e:
@@ -73,7 +73,7 @@ class LoadTestUser(locust.HttpUser):
 
     def _on_start(self):
         """
-        Does two things:
+        Does four things:
 
         1. Make request for a container
         2. Poll /host_service

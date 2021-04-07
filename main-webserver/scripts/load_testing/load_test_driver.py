@@ -37,7 +37,6 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_n
     # -r: users/s generation rate
     # --host: webserver url
     # --headless: do not start a local web server showing results
-    # --csv: path to save results
     # --only-summary: only print result summaries
     cmd = (
         f"locust -f {locust_file_path} -u {num_users} -r 10 --host {web_url} "
