@@ -10,7 +10,7 @@ import { logDebug } from "@app/utils/logging"
 // const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 //
 const getProtocolName = () => {
-    if (process.platform !== "darwin") return "Fractal.exe"
+    if (process.platform === "win32") return "Fractal.exe"
     return "./ Fractal"
 }
 
@@ -37,7 +37,7 @@ export const endStream = (process: ChildProcess, message: string) => {
 }
 
 export const protocolLaunch = () => {
-    if (process.platform === "darwin") spawn("chmod", ["+x", protocolPath])
+    if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
 
     const protocol = spawn(protocolPath, ["--read-pipe"], {
         detached: false,
