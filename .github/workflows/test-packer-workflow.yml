@@ -73,7 +73,7 @@ jobs:
                   import datetime
                   data = {}
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
-                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+                  data["github_username"] = "${{ github.repository_owner }}"
                   data["git_branch"] = "dev"
                   data["git_hash"] = "${{ env.commit_sha }}"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
