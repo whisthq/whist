@@ -72,8 +72,6 @@ jobs:
             # This spins up an AWS EC2 instance to create the AMI, and then deletes it
             # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
             - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
-              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              id: build-new-amis
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
