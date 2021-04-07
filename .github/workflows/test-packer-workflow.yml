@@ -1,0 +1,92 @@
+name: "Fractal: Build & Deploy"
+
+on:
+    push:
+        branches:
+            - mia/packer-env-var-fix
+
+jobs:
+    ami-publish-ec2:
+        name: "AMI: Build & Publish to AWS EC2"
+        runs-on: ubuntu-20.04
+        env:
+            aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
+            aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
+            aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
+            aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
+            aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
+        outputs:
+            region_names: ${{ steps.build-new-amis.outputs.region_names }}
+            amis: ${{ steps.build-new-amis.outputs.amis }}
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install webserver scripting dependencies
+              working-directory: main-webserver
+              run: pip install -r scripts/requirements.txt
+
+            - name: Retrieve Current Git Hash as Environment Variable
+              run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+            - name: Configure AWS CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_EC2_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_EC2_S3_SECRET_ACCESS_KEY }}
+                  aws-region: ${{ env.aws_new_ami_source_region }}
+
+            - name: Generate packer_vars.json Packer Variables File for Building New AMI
+              working-directory: ecs-host-setup
+              shell: python3 {0}
+              run: |
+                  import json
+                  import datetime
+                  data = {}
+                  data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+                  data["git_branch"] = "dev"
+                  data["git_hash"] = "${{ env.commit_sha }}"
+                  data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
+                  data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+                  data["source_region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
+                  # defined as a formatted json array to be copied into packer_vars.json directly
+                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
+
+                  fp = open("packer_vars.json", "w")
+                  json.dump(data, fp)
+                  fp.close()
+
+            # This spins up an AWS EC2 instance to create the AMI, and then deletes it
+            # It *could* fail if we are maxed-out in number AWS vCPUs allowed in aws_new_ami_source_region
+            - name: Create New AMI in aws_new_ami_source_region via Packer, Update Region, and Update Appropriate Database
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              id: build-new-amis
+              working-directory: ecs-host-setup
+              shell: python3 {0}
+              run: |
+                  import os
+                  import subprocess
+                  import json
+
+                  # stdout will be shared with the subprocess so we can see what is happening
+                  subprocess.run("packer -machine-readable -var-file-packer_vars.json build ami_config.json", shell=True)
+
+                  # if packer fails, manifest.json does not get created and the entire workflow fails here
+                  assert os.path.exists("manifest.json")
+                  fp = open("manifest.json", "r")
+                  data = json.load(fp)
+                  fp.close()
+                  print(data)
