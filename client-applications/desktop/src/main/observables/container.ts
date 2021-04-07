@@ -35,45 +35,34 @@ import {
 } from "rxjs/operators"
 
 export const containerCreateRequest = merge(loginSuccess, signupSuccess).pipe(
-    withLatestFrom(userEmail, userAccessToken),
-    map(([_, email, token]) => [email, token])
-)
+  withLatestFrom(userEmail, userAccessToken),
+  map(([_, email, token]) => [email, token])
+);
 
 export const containerCreateProcess = containerCreateRequest.pipe(
-    exhaustMap(([email, token]) => from(containerCreate(email!, token!))),
-    share()
-)
+  exhaustMap(([email, token]) => from(containerCreate(email!, token!))),
+  share()
+);
 
 export const containerCreateSuccess = containerCreateProcess.pipe(
-    filter((req) => !containerCreateErrorNoAccess(req)),
-    filter((req) => !containerCreateErrorUnauthorized(req)),
-    filter((req) => !containerCreateErrorInternal(req))
+  filter((req) => !!req.json.ID === true)
 )
 
-export const containerCreateFailureNoAccess = containerCreateProcess.pipe(
-    filter((req) => containerCreateErrorNoAccess(req))
-)
-
-export const containerCreateFailureUnauthorized = containerCreateProcess.pipe(
-    filter((req) => containerCreateErrorUnauthorized(req))
-)
-
-export const containerCreateFailureInternal = containerCreateProcess.pipe(
-    filter((req) => containerCreateErrorInternal(req))
+export const containerCreateFailure = containerCreateProcess.pipe(
+  filter(
+    (req) => !!req.json.ID === false)
 )
 
 export const containerCreateLoading = loadingFrom(
-    containerCreateRequest,
-    containerCreateSuccess,
-    containerCreateFailureNoAccess,
-    containerCreateFailureUnauthorized,
-    containerCreateFailureInternal
-)
+  containerCreateRequest,
+  containerCreateSuccess,
+  containerCreateFailure
+);
 
 export const containerAssignRequest = containerCreateSuccess.pipe(
-    withLatestFrom(userAccessToken),
-    map(([response, token]) => [response.json.ID, token!])
-)
+  withLatestFrom(userAccessToken),
+  map(([response, token]) => [response.json.ID, token!])
+);
 
 export const containerAssignPolling = containerAssignRequest.pipe(
     pollMap(1000, ([id, token]) => containerInfo(id, token)),
@@ -100,10 +89,11 @@ export const containerAssignFailure = containerAssignPolling.pipe(
             containerInfoPending(res) ||
             !containerInfoSuccess(res)
     )
-)
+  )
+);
 
 export const containerAssignLoading = loadingFrom(
-    containerAssignRequest,
-    containerAssignSuccess,
-    containerAssignFailure
-)
+  containerAssignRequest,
+  containerAssignSuccess,
+  containerAssignFailure
+);
