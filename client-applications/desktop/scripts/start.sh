@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -Eeuo pipefail
+
 if [[ -f "protocol-build/client/ Fractal" ]]; then
     echo "Protocol built, starting..."
 else

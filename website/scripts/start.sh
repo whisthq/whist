@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+
+set -Eeuo pipefail
 
 yarn tailwind && snowpack dev
