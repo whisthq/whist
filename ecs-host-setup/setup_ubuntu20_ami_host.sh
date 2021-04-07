@@ -6,6 +6,12 @@
 
 set -Eeuo pipefail
 
+# Parse input variables
+GH_USERNAME=${1}
+GH_PAT=${2}
+GIT_BRANCH=${3}
+GIT_HASH=${4}
+
 # Prevent user from running script as root, to guarantee that all steps are
 # associated with the fractal user.
 if [ "$EUID" -eq 0 ]; then
@@ -50,7 +56,7 @@ sudo rm -f /var/lib/ecs/data/*
 
 # Here we pre-pull the desired container-images onto the AMI to speed up container startup.
 ghcr_uri=ghcr.io
-echo $GH_PAT | docker login --username $GH_USERNAME --password-stdin $ghcr_uri
+echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin "$ghcr_uri"
 pull_image="$ghcr_uri/fractal/$GIT_BRANCH/browsers/chrome:$GIT_HASH"
 echo "pulling image: $pull_image"
 docker pull "$pull_image"
