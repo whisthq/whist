@@ -58,6 +58,7 @@ func (c *containerData) PopulateUserConfigs() error {
 
 	encTarPath := configDir + c.getEncryptedArchiveFilename()
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
+	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 
 	// At this point, config archive must exist: decrypt app config
 	decryptConfigCmd := exec.Command(
@@ -78,7 +79,7 @@ func (c *containerData) PopulateUserConfigs() error {
 	}
 
 	// Extract the config archive to the user config directory
-	untarConfigCmd := exec.Command("/usr/bin/tar", "-I", "lz4", "-xf", decTarPath, "-C", configDir)
+	untarConfigCmd := exec.Command("/usr/bin/tar", "-I", "lz4", "-xf", decTarPath, "-C", unpackedConfigPath)
 	untarConfigOutput, err := untarConfigCmd.CombinedOutput()
 	if err != nil {
 		return logger.MakeError("Could not untar config archive: %s. Output: %s", err, untarConfigOutput)
@@ -103,11 +104,11 @@ func (c *containerData) backupUserConfigs() error {
 	configDir := c.getUserConfigDir()
 	encTarPath := configDir + c.getEncryptedArchiveFilename()
 	decTarPath := configDir + c.getDecryptedArchiveFilename()
+	unpackedConfigPath := configDir + c.getUnpackedConfigsDirectoryName()
 	s3ConfigPath := c.getS3ConfigPath()
 
 	tarConfigCmd := exec.Command(
-		"/usr/bin/tar", "-I", "lz4", "-C", configDir, "-cf", decTarPath,
-		"--exclude="+c.getEncryptedArchiveFilename(), "--exclude="+c.getDecryptedArchiveFilename(),
+		"/usr/bin/tar", "-I", "lz4", "-C", unpackedConfigPath, "-cf", decTarPath,
 		".")
 	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 	// tar is only fatal when exit status is 2 -
@@ -165,3 +166,8 @@ func (c *containerData) getEncryptedArchiveFilename() string {
 func (c *containerData) getDecryptedArchiveFilename() string {
 	return "fractal-app-config.tar.lz4"
 }
+
+func (c *containerData) getUnpackedConfigsDirectoryName() string {
+	return "unpacked_configs"
+}
+
