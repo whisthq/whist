@@ -16,9 +16,11 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0 # Get the whole git history
 
             - name: Create GitHub Tag
-              uses: softprops/action-gh-release@v1
+              uses: softprops/action-gh-release@v1                
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
