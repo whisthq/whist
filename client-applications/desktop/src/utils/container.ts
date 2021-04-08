@@ -20,7 +20,15 @@ export const regionGet = async (email: string, accessToken: string) => {
 
 export const containerCreate = async (email: string, accessToken: string) => {
     const region = await regionGet(email, accessToken)
-    return await containerRequest(email, accessToken, region, getDPI())
+    const response = await containerRequest(
+        email,
+        accessToken,
+        region,
+        getDPI()
+    )
+    console.log("THE ORIGINAL RESPONSE IS")
+    console.log(response)
+    return response
 }
 
 export const containerCreateErrorNoAccess = (

@@ -64,16 +64,17 @@ export const decryptConfigToken = (text: string, password: string): string => {
         Returns:
             (string): the decrypted text
     */
-    // const hashedPassword = generateHashedPassword(password)
-    // const encrypted = text.substring(0, 128)
-    // const configIV = text.substring(128, 224)
-    // const tag = Buffer.from(text.substring(224), "hex")
-    // var decipher = crypto.createDecipheriv(algorithm, hashedPassword, configIV)
-    // decipher.setAuthTag(tag)
-    // var dec = decipher.update(encrypted, "hex", "utf8")
-    // dec += decipher.final("utf8")
-    // return dec
-    return ""
+    const hashedPassword = generateHashedPassword(password)
+    const encrypted = text.substring(0, 128)
+    const configIV = text.substring(128, 224)
+    const tag = Buffer.from(text.substring(224), "hex")
+    console.log("CONFIG IV", configIV)
+    console.log(text.length)
+    var decipher = crypto.createDecipheriv(algorithm, hashedPassword, configIV)
+    decipher.setAuthTag(tag)
+    var dec = decipher.update(encrypted, "hex", "utf8")
+    dec += decipher.final("utf8")
+    return dec
 }
 
 export const createConfigToken = async () => {
