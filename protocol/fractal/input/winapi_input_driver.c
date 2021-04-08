@@ -382,7 +382,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
     ip.mi.dy = 0;
 
     switch (button) {
-        case SDL_BUTTON_LEFT:
+        case MOUSE_L: {
             // left click
             if (pressed) {
                 ip.mi.dwFlags = MOUSEEVENTF_LEFTDOWN;
@@ -390,7 +390,8 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
                 ip.mi.dwFlags = MOUSEEVENTF_LEFTUP;
             }
             break;
-        case SDL_BUTTON_MIDDLE:
+        }
+        case MOUSE_MIDDLE: {
             // middle click
             if (pressed) {
                 ip.mi.dwFlags = MOUSEEVENTF_MIDDLEDOWN;
@@ -398,7 +399,8 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
                 ip.mi.dwFlags = MOUSEEVENTF_MIDDLEUP;
             }
             break;
-        case SDL_BUTTON_RIGHT:
+        }
+        case MOUSE_R: {
             // right click
             if (pressed) {
                 ip.mi.dwFlags = MOUSEEVENTF_RIGHTDOWN;
@@ -406,6 +408,29 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
                 ip.mi.dwFlags = MOUSEEVENTF_RIGHTUP;
             }
             break;
+        }
+        case MOUSE_X1: {
+            // extra button 1 click
+            if (pressed) {
+                ip.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                ip.mi.mouseData = XBUTTON1;
+            } else {
+                ip.mi.dwFlags = MOUSEEVENTF_XUP;
+                ip.mi.mouseData = XBUTTON1;
+            }
+            break;
+        }
+        case MOUSE_X2: {
+            // extra button 1 click
+            if (pressed) {
+                ip.mi.dwFlags = MOUSEEVENTF_XDOWN;
+                ip.mi.mouseData = XBUTTON2;
+            } else {
+                ip.mi.dwFlags = MOUSEEVENTF_XUP;
+                ip.mi.mouseData = XBUTTON2;
+            }
+            break;
+        }
         default:
             break;
     }
