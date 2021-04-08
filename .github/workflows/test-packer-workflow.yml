@@ -1,8 +1,9 @@
-name: "Fractal: Build & Deploy"
+name: "Test Packer Workflow"
 
 on:
     push:
         branches:
+            - djsavvy+mia/packer-fix
             - mia/packer-env-var-fix
 
 jobs:
