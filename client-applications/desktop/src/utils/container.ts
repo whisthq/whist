@@ -26,8 +26,6 @@ export const containerCreate = async (email: string, accessToken: string) => {
         region,
         getDPI()
     )
-    console.log("THE ORIGINAL RESPONSE IS")
-    console.log(response)
     return response
 }
 

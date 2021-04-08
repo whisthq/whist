@@ -62,22 +62,16 @@ export const emailSignup = async (
     username: string,
     password: string,
     encrypted_config_token: string
-) => {
-    const body = {
-        username,
+) =>  
+    await post({
+        endpoint: "/account/register",
+        body: {username,
         password,
         encrypted_config_token,
         name: "",
         feedback: "",
-    }
-
-    console.log("----EMAIL SIGNUP BODY IS-----", body)
-    
-    return await post({
-        endpoint: "/account/register",
-        body: body
+        }
     })
-}
 
 export const emailSignupValid = emailLoginValid
 
