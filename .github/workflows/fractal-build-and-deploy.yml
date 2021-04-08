@@ -899,6 +899,8 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
+        outputs:
+            release_version: ${{ steps.generate-release-version.outputs.release_version }}
         needs: [fractal-publish-build-config]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
@@ -954,6 +956,7 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
             - name: Retrieve Desktop App Version from Config Database
+              id: generate-release-version
               shell: bash -e {0}
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
@@ -1036,6 +1039,9 @@ jobs:
 
                   # store new desktop app version as GitHub env to substitute in client-apps package.json
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+                  # store new desktop app version as GitHub step output to substitute in GitHub release tag creation
+                  echo "::set-output name=release_version::${NEW_VERSION}"
 
             - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
               shell: bash -e {0}
@@ -1158,4 +1164,48 @@ jobs:
                   # Notify Slack
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # Create GitHub Tag
+    # Create a GitHub Tag when promoting to the `prod` branch
+    # Runs if the entire deployment succeeds and the promotion is running on `prod`
+    fractal-create-github-release-tag:
+        name: "Create GitHub Prod Release Tag"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                client-applications-publish-build-s3,
+                main-webserver-deploy-heroku,
+                main-webserver-update-fractal-services,
+            ]
+        if: >
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Retrieve Today's Date
+              run: echo "date=$(date)" >> $GITHUB_ENV
+
+            - name: Create GitHub Tag
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
+                  body: Fractal Promotion to Production on ${{ env.date }}.
+                  draft: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Fractal Version \`v${{ needs.client-applications-publish-build-s3.outputs.release_version }}\` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"GitHub Release Creation failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
