@@ -28,6 +28,7 @@
 import { isObservable } from "rxjs"
 import { identity, pick } from "lodash"
 import { logDebug } from "@app/utils/logging"
+import { app } from "electron"
 import * as login from "@app/main/observables/login"
 import * as host from "@app/main/observables/host"
 import * as signup from "@app/main/observables/signup"
@@ -111,12 +112,14 @@ const schema: DebugSchema = {
 
 const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any
 
-for (let key in symbols)
-    if (isObservable(symbols[key as string]) && schema[key]) {
-        symbols[key].subscribe((...args: any) => {
-            let [message, func] = schema[key]
-            if (func === undefined) func = identity
-            let data = func ? func(...args) : undefined
-            logDebug(key, message, data)
-        })
-    }
+if (!app.isPackaged) {
+    for (let key in symbols)
+        if (isObservable(symbols[key as string]) && schema[key]) {
+            symbols[key].subscribe((...args: any) => {
+                let [message, func] = schema[key]
+                if (func === undefined) func = identity
+                let data = func ? func(...args) : undefined
+                logDebug(key, message, data)
+            })
+        }
+}
