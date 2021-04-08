@@ -38,8 +38,6 @@ export const errorWindowRequest = merge(
     signupFailure.pipe(mapTo(createAuthErrorWindow)),
     containerCreateFailure.pipe(
     map((response) => {
-            console.log("THE RESPONSE IS", JSON.stringify(response))
-            console.log("THE STATUS IS", response.status)
             if (containerCreateErrorNoAccess(response))
                 return createContainerErrorWindowNoAccess
             if (containerCreateErrorUnauthorized(response))

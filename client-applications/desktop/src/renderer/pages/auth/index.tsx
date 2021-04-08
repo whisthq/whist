@@ -35,8 +35,6 @@ const Auth = () => {
         })
     }
 
-    console.log("-------- WARNING ---------", mainState)
-
     return (
         <>
             <Route
