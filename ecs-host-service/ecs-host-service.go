@@ -216,14 +216,14 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 // and returns nil if no errors, and error object if error.
 func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
+		err := logger.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
 
 	// Verify that the requested host port is valid
 	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort for start values request: %v", req.HostPort)
+		logAndReturnError("Invalid HostPort for set config encryption token request: %v", req.HostPort)
 		return
 	}
 	hostPort := uint16(req.HostPort)
