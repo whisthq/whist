@@ -74,24 +74,24 @@ func (vTouch vTouchPad) MoveTo(x int32, y int32) error {
 }
 
 // MouseButtonClick will issue a MouseButtonClick
-func (vRel vTouchPad) MouseButtonClick(buttonCode int) error {
-	err := sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
+func (vTouch vTouchPad) MouseButtonClick(buttonCode int) error {
+	err := sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStatePressed)
 	if err != nil {
 		return fmt.Errorf("Failed to issue the 0x%x mouse button event: %v", buttonCode, err)
 	}
 
-	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
+	return sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
 // MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
 // MouseButtonRelease is invoked.
-func (vRel vTouchPad) MouseButtonPress(buttonCode int) error {
-	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStatePressed)
+func (vTouch vTouchPad) MouseButtonPress(buttonCode int) error {
+	return sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStatePressed)
 }
 
 // MouseButtonRelease will simulate the release of a mouse button.
-func (vRel vTouchPad) MouseButtonRelease(buttonCode int) error {
-	return sendBtnEvent(vRel.deviceFile, []int{buttonCode}, btnStateReleased)
+func (vTouch vTouchPad) MouseButtonRelease(buttonCode int) error {
+	return sendBtnEvent(vTouch.deviceFile, []int{buttonCode}, btnStateReleased)
 }
 
 func (vTouch vTouchPad) TouchDown() error {
