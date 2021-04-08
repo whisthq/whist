@@ -1,4 +1,4 @@
-name: "Test Packer Workflow"
+name: "Fractal: Build & Deploy"
 
 on:
     push:
