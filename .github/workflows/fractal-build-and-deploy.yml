@@ -904,6 +904,8 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
+        outputs:
+            release_version: ${{ steps.generate-release-version.outputs.release_version }}
         needs: [fractal-publish-build-config]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
@@ -959,6 +961,7 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
             - name: Retrieve Desktop App Version from Config Database
+              id: generate-release-version
               shell: bash -e {0}
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
@@ -1041,6 +1044,9 @@ jobs:
 
                   # store new desktop app version as GitHub env to substitute in client-apps package.json
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+                  # store new desktop app version as GitHub step output to substitute in GitHub release tag creation
+                  echo "::set-output name=release_version::${NEW_VERSION}"
 
             - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
               shell: bash -e {0}
@@ -1184,18 +1190,20 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-
-
-
-
+            - name: Retrieve Today's Date
+              run: echo "date=$(date)" >> $GITHUB_ENV
 
             - name: Create GitHub Tag
               uses: softprops/action-gh-release@v1
+              with:
+                tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
+                body: Fractal Promotion to Production on ${{ env.date }}.
+                draft: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Version X to Prod Completed.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Fractal Version \`v${{ needs.client-applications-publish-build-s3.outputs.release_version }}\` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }}\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
