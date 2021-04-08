@@ -385,8 +385,12 @@ def make_user():
     users = []
 
     def _user(stripe_customer_id=None, domain="fractal.co", **kwargs):
-        kwargs["user_id"] = f"test-user-{uuid.uuid4()}@{domain}"
-        kwargs["password"] = kwargs["encrypted_config_token"] = ""
+        if "user_id" not in kwargs:
+            kwargs["user_id"] = f"test-user-{uuid.uuid4()}@{domain}"
+        if "password" not in kwargs:
+            kwargs["password"] = ""
+        if "encrypted_config_token" not in kwargs:
+            kwargs["encrypted_config_token"] = ""
         user = User(stripe_customer_id=stripe_customer_id, **kwargs)
 
         db.session.add(user)
@@ -420,6 +424,7 @@ def make_authorized_user(client, make_user, monkeypatch):
     """
 
     def _authorized_user(stripe_customer_id=None, domain="fractal.co", **kwargs):
+        kwargs["verified"] = True
         user = make_user(stripe_customer_id=stripe_customer_id, domain=domain, **kwargs)
         access_token = create_access_token(identity=user.user_id)
 

@@ -142,16 +142,17 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
 
 
 @pytest.mark.parametrize(
-    "username, is_developer",
+    "username, verified, is_developer",
     (
-        ("developer@fractal.co", True),
-        ("jeff@amazon.com", False),
-        ("h4x0r@fractal.co@gmail.com", False),
+        ("developer@fractal.co", True, True),
+        ("fake_developer@fractal.co", False, False),
+        ("jeff@amazon.com", True, False),
+        ("h4x0r@fractal.co@gmail.com", True, False),
     ),
 )
-def test_check_developer(app, is_developer, username):
+def test_check_developer(app, make_user, is_developer, username, verified):
     """Handle authorized requests from normal users correctly."""
-
+    make_user(user_id=username, verified=verified)
     access_token = create_access_token(username)
 
     with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
