@@ -36,11 +36,10 @@ GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 
 @pytest.fixture(scope="module")
 def ecs_data(app):
-    with app.app_context():
-        branch = os.environ["HEROKU_TEST_RUN_BRANCH"].replace("/", "-")
-        commit = os.environ["HEROKU_TEST_RUN_COMMIT_VERSION"][0:7]
-        pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
-        pytest.container_name = None
+    branch = app.config["APP_GIT_BRANCH"].replace("/", "-")
+    commit = app.config["APP_GIT_COMMIT"][:7]
+    pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
+    pytest.container_name = None
 
 
 @pytest.mark.container_serial
