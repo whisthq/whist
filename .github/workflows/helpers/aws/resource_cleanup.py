@@ -243,7 +243,7 @@ def get_hanging_tasks(urls, secrets, region):
                 stdout=subprocess.PIPE,
             ).communicate()
             tasks_and_times = (
-                (task["containers"][0]["taskArn"], (cluster, task["createdAt"]))
+                (task["taskArn"], (cluster, task["createdAt"]))
                 for task in json.loads(task_times)["tasks"]
             )
             aws_tasks_and_times.update(dict(tasks_and_times))
