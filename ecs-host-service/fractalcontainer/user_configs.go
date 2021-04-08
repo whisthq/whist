@@ -170,4 +170,3 @@ func (c *containerData) getDecryptedArchiveFilename() string {
 func (c *containerData) getUnpackedConfigsDirectoryName() string {
 	return "unpacked_configs"
 }
-
