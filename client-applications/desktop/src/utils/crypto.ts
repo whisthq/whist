@@ -44,11 +44,21 @@ export const encryptConfigToken = async (text: string, password: string) => {
         Returns:
             (string): the encrypted text
     */
+    console.log("ENCRYPTING", text, password)
     const configIV = await generateRandomString(48)
     const hashedPassword = generateHashedPassword(password)
 
+    console.log("hashed passwrod", hashedPassword)
+    console.log("config", configIV)
+
     var cipher = crypto.createCipheriv(algorithm, hashedPassword, configIV)
+
+    console.log("cipher", cipher)
+
     var encrypted = cipher.update(text, "utf8", "hex")
+
+    console.log("encrypted", encrypted)
+    
     encrypted += cipher.final("hex")
     var tag = cipher.getAuthTag().toString("hex")
 

@@ -56,21 +56,12 @@ const schema: DebugSchema = {
     signupLoading: ["value:"],
     signupWarning: ["user already exists", null],
     signupFailure: ["value:"],
-    signupSuccess: [
-        "printing only tokens:",
-        ({ json }) => ({
-            accessToken: json.access_token?.substring(0, 6) + "...",
-            refreshToken: json.refresh_token?.substring(0, 6) + "...",
-        }),
-    ],
+    signupSuccess: ["value:", ({ json }) => json],
     loginRequest: ["value:"],
     loginLoading: ["value:"],
     loginWarning: ["logged in with invalid credentials", null],
     loginFailure: ["value:"],
-    loginSuccess: [
-        "value:",
-        ({ json }) => json
-    ],
+    loginSuccess: ["value:", ({ json }) => json],
     containerCreateRequest: ["value:"],
     containerCreateLoading: ["value:"],
     containerCreateSuccess: ["printing only taskID:", ({ json }) => json.ID],
