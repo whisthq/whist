@@ -611,4 +611,3 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 		}
 	}()
 }
-
