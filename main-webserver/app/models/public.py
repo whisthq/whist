@@ -56,9 +56,6 @@ class User(db.Model):
         "UserContainer", back_populates="user", lazy="dynamic", passive_deletes=True
     )
     credentials = relationship("Credential", backref="user")
-    history = relationship(
-        "LoginHistory", back_populates="user", lazy="dynamic", passive_deletes=True
-    )
 
     @property
     def subscribed(self) -> bool:

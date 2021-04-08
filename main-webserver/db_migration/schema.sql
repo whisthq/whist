@@ -1,3 +1,4 @@
+  
 --
 -- PostgreSQL database dump
 --
@@ -42,13 +43,6 @@ CREATE SCHEMA hdb_pro_catalog;
 --
 
 CREATE SCHEMA hdb_views;
-
-
---
--- Name: logs; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA logs;
 
 
 --
@@ -218,19 +212,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- Name: banners; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.banners (
-    heading character varying NOT NULL,
-    subheading character varying,
-    category character varying,
-    background character varying,
-    url character varying
-);
-
-
---
 -- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -326,15 +307,11 @@ CREATE TABLE hardware.user_containers (
     container_id character varying NOT NULL,
     ip character varying NOT NULL,
     location character varying NOT NULL,
-    os character varying NOT NULL,
     state character varying NOT NULL,
     user_id character varying,
     port_32262 bigint DEFAULT '-1'::integer NOT NULL,
     last_pinged bigint,
     cluster character varying,
-    using_stun boolean DEFAULT false NOT NULL,
-    allow_autoupdate boolean DEFAULT true NOT NULL,
-    branch character varying(250) DEFAULT 'prod'::character varying NOT NULL,
     port_32263 bigint DEFAULT '-1'::integer NOT NULL,
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
     secret_key text NOT NULL,
@@ -1024,17 +1001,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- Name: login_history; Type: TABLE; Schema: logs; Owner: -
---
-
-CREATE TABLE logs.login_history (
-    user_id character varying(250) NOT NULL,
-    action character varying(250),
-    "timestamp" integer
-);
-
-
---
 -- Name: credentials; Type: TABLE; Schema: oauth; Owner: -
 --
 
@@ -1149,14 +1115,6 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY oauth.credentials ALTER COLUMN id SET DEFAULT nextval('oauth.credentials_id_seq'::regclass);
-
-
---
--- Name: banners banners_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.banners
-    ADD CONSTRAINT banners_pkey PRIMARY KEY (heading);
 
 
 --
@@ -1678,14 +1636,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
 
 ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
     ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: login_history login_history_user_id_fkey; Type: FK CONSTRAINT; Schema: logs; Owner: -
---
-
-ALTER TABLE ONLY logs.login_history
-    ADD CONSTRAINT login_history_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON DELETE CASCADE;
 
 
 --

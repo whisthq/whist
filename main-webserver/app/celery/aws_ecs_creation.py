@@ -683,7 +683,6 @@ def _assign_container(
             port_32273=curr_network_binding[32273],
             state="CREATING",
             location=region_name,
-            os="Linux",
             secret_key=aeskey,
             task_definition=task_definition_arn,
             task_version=task_version,
