@@ -19,6 +19,7 @@ export const regionGet = async (email: string, accessToken: string) => {
 }
 
 export const containerCreate = async (email: string, accessToken: string) => {
+    console.log("creating", email, accessToken)
     const region = await regionGet(email, accessToken)
     const response = await containerRequest(
         email,
@@ -31,11 +32,11 @@ export const containerCreate = async (email: string, accessToken: string) => {
 
 export const containerCreateErrorNoAccess = (
     response: AsyncReturnType<typeof containerCreate>
-) => response.status === 402 
+) => response.status === 402
 
 export const containerCreateErrorUnauthorized = (
     response: AsyncReturnType<typeof containerCreate>
-) => response.status === 422
+) => response.status === 422 || response.status === 401
 
 export const containerCreateErrorInternal = (
     response: AsyncReturnType<typeof containerCreate>
