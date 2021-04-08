@@ -79,10 +79,6 @@
         "cd ..",
         "rm -rf ecs-host-setup"
       ]
-    },
-    {
-      "type": "shell",
-      "inline": ["sudo systemctl enable --now unattended-upgrades.service"]
     }
   ],
   "post-processors": [
