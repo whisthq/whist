@@ -421,7 +421,7 @@ int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button
             break;
         }
         case MOUSE_X2: {
-            // extra button 1 click
+            // extra button 2 click
             if (pressed) {
                 ip.mi.dwFlags = MOUSEEVENTF_XDOWN;
                 ip.mi.mouseData = XBUTTON2;
