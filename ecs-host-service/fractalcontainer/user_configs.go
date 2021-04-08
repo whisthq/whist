@@ -107,7 +107,7 @@ func (c *containerData) backupUserConfigs() error {
 
 	tarConfigCmd := exec.Command(
 		"/usr/bin/tar", "-I", "lz4", "-C", configDir, "-cf", decTarPath,
-		"--exclude="+encTarPath, "--exclude="+decTarPath,
+		"--exclude="+c.getEncryptedArchiveFilename(), "--exclude="+c.getDecryptedArchiveFilename(),
 		".")
 	tarConfigOutput, err := tarConfigCmd.CombinedOutput()
 	// tar is only fatal when exit status is 2 -
