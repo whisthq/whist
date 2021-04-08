@@ -26,8 +26,8 @@ jobs:
                     - eu-west-1
                     - eu-central-1
                 resource:
-                    - ASGs
-                    - Clusters
+                    # - ASGs
+                    # - Clusters
                     - Tasks
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
