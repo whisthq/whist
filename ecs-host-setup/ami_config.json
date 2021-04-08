@@ -41,8 +41,7 @@
     },
     {
       "type": "shell",
-      "expect_disconnect": "true",
-      "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
+      "inline": ["sudo systemctl disable --now unattended-upgrades.service"]
     },
     {
       "pause_before": "10s",
@@ -80,6 +79,10 @@
         "cd ..",
         "rm -rf ecs-host-setup"
       ]
+    },
+    {
+      "type": "shell",
+      "inline": ["sudo systemctl enable --now unattended-upgrades.service"]
     }
   ],
   "post-processors": [
