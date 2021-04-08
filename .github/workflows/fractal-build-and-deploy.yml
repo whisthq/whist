@@ -503,7 +503,7 @@ jobs:
                   data = {}
                   data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
                   data["github_username"] = "${{ secrets.GHA_USERNAME }}"
-                  data["git_branch"] = "{{ needs.fractal-publish-build-config.outputs.branch }}"
+                  data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   data["git_hash"] = "${{ env.commit_sha }}"
                   data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
                   data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
