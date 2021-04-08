@@ -23,10 +23,10 @@ import { from } from "rxjs"
 import {
     map,
     take,
-    last,
     share,
     filter,
     skipWhile,
+    takeLast,
     takeWhile,
     takeUntil,
     exhaustMap,
@@ -53,12 +53,12 @@ hostInfoPolling.subscribe((res) =>
 )
 
 export const hostInfoSuccess = hostInfoPolling.pipe(
-    last(),
+    takeLast(1),
     filter((res) => hostServiceInfoValid(res))
 )
 
 export const hostInfoFailure = hostInfoPolling.pipe(
-    last(),
+    takeLast(1),
     filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res))
 )
 

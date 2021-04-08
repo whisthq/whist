@@ -8,9 +8,6 @@
 
 import {
     containerCreate,
-    containerCreateErrorNoAccess,
-    containerCreateErrorUnauthorized,
-    containerCreateErrorInternal,
     containerInfo,
     containerInfoError,
     containerInfoSuccess,
@@ -24,10 +21,10 @@ import { loadingFrom, pollMap } from "@app/utils/observables"
 import { from, of, merge } from "rxjs"
 import {
     map,
-    last,
     share,
     delay,
     filter,
+    takeLast,
     takeUntil,
     exhaustMap,
     withLatestFrom,
@@ -35,34 +32,33 @@ import {
 } from "rxjs/operators"
 
 export const containerCreateRequest = merge(loginSuccess, signupSuccess).pipe(
-  withLatestFrom(userEmail, userAccessToken),
-  map(([_, email, token]) => [email, token])
-);
+    withLatestFrom(userEmail, userAccessToken),
+    map(([_, email, token]) => [email, token])
+)
 
 export const containerCreateProcess = containerCreateRequest.pipe(
-  exhaustMap(([email, token]) => from(containerCreate(email!, token!))),
-  share()
-);
+    exhaustMap(([email, token]) => from(containerCreate(email!, token!))),
+    share()
+)
 
 export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req) => !!req.json.ID === true)
+    filter((req) => !!req.json.ID === true)
 )
 
 export const containerCreateFailure = containerCreateProcess.pipe(
-  filter(
-    (req) => !!req.json.ID === false)
+    filter((req) => !!req.json.ID === false)
 )
 
 export const containerCreateLoading = loadingFrom(
-  containerCreateRequest,
-  containerCreateSuccess,
-  containerCreateFailure
-);
+    containerCreateRequest,
+    containerCreateSuccess,
+    containerCreateFailure
+)
 
 export const containerAssignRequest = containerCreateSuccess.pipe(
-  withLatestFrom(userAccessToken),
-  map(([response, token]) => [response.json.ID, token!])
-);
+    withLatestFrom(userAccessToken),
+    map(([response, token]) => [response.json.ID, token!])
+)
 
 export const containerAssignPolling = containerAssignRequest.pipe(
     pollMap(1000, ([id, token]) => containerInfo(id, token)),
@@ -77,12 +73,12 @@ containerAssignPolling.subscribe((res) =>
 )
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
-    last(),
+    takeLast(1),
     filter((res) => containerInfoSuccess(res))
 )
 
 export const containerAssignFailure = containerAssignPolling.pipe(
-    last(),
+    takeLast(1),
     filter(
         (res) =>
             containerInfoError(res) ||
@@ -91,9 +87,8 @@ export const containerAssignFailure = containerAssignPolling.pipe(
     )
 )
 
-
 export const containerAssignLoading = loadingFrom(
-  containerAssignRequest,
-  containerAssignSuccess,
-  containerAssignFailure
-);
+    containerAssignRequest,
+    containerAssignSuccess,
+    containerAssignFailure
+)
