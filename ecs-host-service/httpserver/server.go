@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/fractal/ecs-agent/agent/fractalcontainer/portbindings"
-	logger "github.com/fractal/ecs-agent/agent/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
 
 // Variables for the auth_secret used to communicate between the webserver and

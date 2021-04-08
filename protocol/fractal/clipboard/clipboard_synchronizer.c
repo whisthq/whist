@@ -65,9 +65,12 @@ bool is_clipboard_synchronizing() {
     return updating_clipboard;
 }
 
-void init_clipboard_synchronizer() {
+void init_clipboard_synchronizer(bool is_client) {
     /*
         Initialize the clipboard and the synchronizer thread
+
+        Arguments:
+            is_client (bool): whether the caller is the client (true) or the server (false)
     */
 
     LOG_INFO("Initializing clipboard");
@@ -77,7 +80,7 @@ void init_clipboard_synchronizer() {
         return;
     }
 
-    init_clipboard();
+    init_clipboard(is_client);
 
     connected = true;
 

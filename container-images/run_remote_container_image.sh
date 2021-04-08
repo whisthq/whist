@@ -1,8 +1,12 @@
 #!/bin/bash
 
-# This script runs a container image stored in GitHub Container Registry (GHCR). For  it to
-# work with the Fractal containers, this script needs to be run directly on a Fractal-enabled
-# (see /ecs-host-setup) AWS EC2 instance, via SSH, without needing to build a container image beforehand.
+# This script runs a container image stored in GitHub Container Registry
+# (GHCR). For it to work with the Fractal containers, this script needs to be
+# run directly on a Fractal-enabled (see /ecs-host-setup) AWS EC2 instance, via
+# SSH, without needing to build a container image beforehand.
+# Arguments:
+#    $1 - app name, including deploy environment (e.g. dev/browsers/chrome)
+#    $2 - remote tag, i.e. git hash you wanna use
 
 set -Eeuo pipefail
 

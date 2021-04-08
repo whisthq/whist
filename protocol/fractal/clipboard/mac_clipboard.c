@@ -18,9 +18,7 @@ whatever files are in the SET_CLIPBOARD directory.
 #include <fractal/core/fractal.h>
 #include "clipboard.h"
 
-bool start_tracking_clipboard_updates();
-
-void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
+void unsafe_init_clipboard(){};
 
 void unsafe_destroy_clipboard(){};
 
@@ -30,20 +28,12 @@ void unsafe_destroy_clipboard(){};
 #include "../utils/mac_utils.h"
 #include "clipboard_osx.h"
 
-bool clipboard_has_image;
-bool clipboard_has_string;
-bool clipboard_has_files;
+bool clipboard_has_image = false;
+bool clipboard_has_string = false;
+bool clipboard_has_files = false;
 static int last_clipboard_sequence_number = -1;
 
 static char clipboard_buf[9000000];
-
-bool start_tracking_clipboard_updates() {
-    last_clipboard_sequence_number = get_clipboard_changecount();  // to capture the first event
-    clipboard_has_image = false;
-    clipboard_has_string = false;
-    clipboard_has_files = false;
-    return true;
-}
 
 bool unsafe_has_clipboard_updated() {
     bool has_updated = false;
@@ -54,8 +44,10 @@ bool unsafe_has_clipboard_updated() {
         clipboard_has_image = check_clipboard_has_image();
         clipboard_has_string = check_clipboard_has_string();
         clipboard_has_files = check_clipboard_has_files();
-        has_updated = (clipboard_has_image || clipboard_has_string ||
-                       clipboard_has_files);  // should be always set to true in here
+        if (should_preserve_local_clipboard()) {
+            has_updated = (clipboard_has_image || clipboard_has_string ||
+                           clipboard_has_files);  // should be always set to true in here
+        }
         last_clipboard_sequence_number = new_clipboard_sequence_number;
     }
     return has_updated;

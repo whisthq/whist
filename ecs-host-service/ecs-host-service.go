@@ -21,12 +21,12 @@ import (
 	// forget to send a message via Sentry.  For the same reason, we make sure
 	// not to import the fmt package either, instead separating required
 	// functionality in this imported package as well.
-	logger "github.com/fractal/ecs-agent/agent/fractallogger"
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	"github.com/fractal/ecs-agent/agent/fractalcontainer"
-	"github.com/fractal/ecs-agent/agent/fractalcontainer/cloudstorage"
-	"github.com/fractal/ecs-agent/agent/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 
 	dockertypes "github.com/docker/docker/api/types"
@@ -135,7 +135,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		`-v`, `/fractalCloudStorage/` + string(fc.GetFractalID()) + `:/fractal/cloudStorage:rshared`,
 		`-v`, `/fractal/temp/` + string(fc.GetFractalID()) + `/sockets:/tmp/sockets`,
 		`-v`, `/run/udev/data:/run/udev/data:ro`,
-		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/userConfigs:/fractal/userConfigs:rshared`,
+		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/userConfigs/unpacked_configs:/fractal/userConfigs:rshared`,
 		logger.Sprintf(`--device=%s:%s:%s`, devices[0].PathOnHost, devices[0].PathInContainer, devices[0].CgroupPermissions),
 		logger.Sprintf(`--device=%s:%s:%s`, devices[1].PathOnHost, devices[1].PathInContainer, devices[1].CgroupPermissions),
 		logger.Sprintf(`--device=%s:%s:%s`, devices[2].PathOnHost, devices[2].PathInContainer, devices[2].CgroupPermissions),

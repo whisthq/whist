@@ -150,24 +150,24 @@ def payment_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        user = User.query.get(get_jwt_identity())
-
-        if user is None:
-            abort(UNAUTHORIZED)
-
         # admin/developer override
-        if not check_developer() and not user.subscribed:
-            fractal_logger.warning(f"{user.user_id} must pay to access {request.path}.")
+        if not check_developer():
+            user = User.query.get(get_jwt_identity())
 
-            return (
-                jsonify(
-                    {
-                        "error": ("User is not a valid paying user."),
-                    }
-                ),
-                PAYMENT_REQUIRED,
-            )
+            if user is None:
+                abort(UNAUTHORIZED)
 
+            if not user.subscribed:
+                fractal_logger.warning(f"{user.user_id} must pay to access {request.path}.")
+
+                return (
+                    jsonify(
+                        {
+                            "error": ("User is not a valid paying user."),
+                        }
+                    ),
+                    PAYMENT_REQUIRED,
+                )
         return func(*args, **kwargs)
 
     return wrapper

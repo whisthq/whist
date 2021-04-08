@@ -75,15 +75,6 @@ done
 # Delete broken symlinks from config
 find $USER_CONFIGS_DIR -xtype l -delete
 
-# To assist the tar tool's "exclude" option, create a dummy tar file if it does not already exist
-#     tar is really pleb: it won't exclude the file unless it exists when it starts tarring, so
-#     since we're tarring within the directory, tar gets confused about the new tar archive and
-#     doesn't exclude it from its archive process. Hence the dummy file!
-tarFile=$USER_CONFIGS_DIR/fractal-app-config.tar.lz4
-if [ ! -f "$tarFile" ]; then
-    touch $tarFile
-fi
-
 # Create a .configready file that forces the display to wait until configs are synced
 #     We are also forced to wait until the display has started
 touch $USER_CONFIGS_DIR/.configready
@@ -162,3 +153,4 @@ curl \
     "private_key":  "$FRACTAL_AES_KEY"
 }
 END
+

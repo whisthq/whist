@@ -180,7 +180,7 @@ jobs:
                   declare -A job_dependencies
                   # If "" is given, then the whole repo will be a dependency
                   job_dependencies[container-images-publish-images-ghcr]="protocol container-images ecs-task-definitions"
-                  job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service"
+                  job_dependencies[ami-publish-ec2]="ecs-host-setup ecs-host-service container-images protocol ecs-task-definitions"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
                   job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
@@ -250,6 +250,13 @@ jobs:
                   echo "Publish is set to: $PUBLISH"
                   echo "::set-output name=publish::$PUBLISH"
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"fractal-publish-build-config failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # Container Images: Build & Publish to GitHub Container Registry
     # Build and publish the container images to a GitHub Container Registry repository
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"].
@@ -314,6 +321,13 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":whale: Container images builds pushed to \`${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\` via Docker push to GitHub Container Registry (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>) :github:\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Container images push failure failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
     # Render and deploy the app task definitions to ECS.
     # Runs if config succeeds and branch is in ["prod", "staging", "dev"] and publish-images-ghcr succeeds.
@@ -374,6 +388,13 @@ jobs:
               with:
                   task-definition: ${{ steps.render-web-container.outputs.task-definition }}
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
     # Runs if deploy-task-definitions-ecs succeeds.
@@ -400,7 +421,8 @@ jobs:
     ami-publish-ec2:
         name: "AMI: Build & Publish to AWS EC2"
         runs-on: ubuntu-20.04
-        needs: [fractal-publish-build-config]
+        needs:
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|ami-publish-ec2|')
         env:
@@ -472,30 +494,30 @@ jobs:
                     echo 'APP_ENV=DEV' > app_env.env
                   fi
 
-            - name: Generate ami_config.json Packer Config File for Building New AMI
+            - name: Generate packer_vars.json Packer Variables File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
                   import json
                   import datetime
-                  fp = open("ami_config.json", "r")
-                  data = json.load(fp)
-                  fp.close()
-
-                  data["builders"][0]["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
-                  data["builders"][0]["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
+                  data = {}
+                  data["github_pat"] = "${{ secrets.GHA_PERSONAL_ACCESS_TOKEN }}"
+                  data["github_username"] = "${{ secrets.GHA_USERNAME }}"
+                  data["git_branch"] = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  data["git_hash"] = "${{ env.commit_sha }}"
+                  data["secret_key"] = "${{ secrets.AWS_EC2_SECRET_ACCESS_KEY}}"
+                  data["access_key"] = "${{ secrets.AWS_EC2_ACCESS_KEY_ID }}"
                   date_str = datetime.datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
-                  data["builders"][0]["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
-                  data["builders"][0]["region"] = "${{ env.aws_new_ami_source_region }}"
-                  data["builders"][0]["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
-                  data["builders"][0]["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
-                  data["builders"][0]["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
-                  data["builders"][0]["source_ami"] = "${{ env.aws_source_ami_id }}"
+                  data["ami_name"] = f"fractal-ecs-host-ami-${{ env.commit_sha }}-{date_str}"
+                  data["source_region"] = "${{ env.aws_new_ami_source_region }}"
+                  data["instance_type"] = "${{ env.aws_new_ami_instance_type }}"
+                  data["subnet_id"] = "${{ env.aws_new_ami_subnet_id }}"
+                  data["vpc_id"] = "${{ env.aws_new_ami_vpc_id }}"
+                  data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
-                  # defined as a formatted json array to be copied into ami_config.json directly
-                  data["builders"][0]["ami_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
-
-                  fp = open("ami_config.json", "w")
+                  # defined as a string of comma-separated values (no spaces) as required by Packer.
+                  data["destination_regions"] = "us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1"
+                  fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
 
@@ -512,7 +534,7 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable build ami_config.json", shell=True)
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.json", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
@@ -559,6 +581,13 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"New Fractal AMI \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Deployed to All Supported AWS Regions (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>). \", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"AMI: Build and Publish to AWS EC2 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # AMI: Kill "Packer Builder" Instances
     # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
     # Runs unconditionally after ami-publish-ec2
@@ -587,6 +616,13 @@ jobs:
               run: |
                   aws-hashicorp-packer-reaper list
                   aws-hashicorp-packer-reaper terminate --older-than 45m
+
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"AMI: Kill Packer instances failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # Uses webserver maintenance mode to update the following:
     # 1. new task definitions if new task defs have been pushed to ECS
@@ -849,6 +885,13 @@ jobs:
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Heroku deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # Client Applications: Build & Publish to AWS S3
     # Build and publish the client applications to their respective AWS S3 bucket,
     # from which Electron-Updater pulls them for auto-updating
@@ -856,6 +899,8 @@ jobs:
     client-applications-publish-build-s3:
         name: "Client Applications: Build & Deploy ${{ matrix.config.name }}"
         runs-on: ${{ matrix.config.os }}
+        outputs:
+            release_version: ${{ steps.generate-release-version.outputs.release_version }}
         needs: [fractal-publish-build-config]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
@@ -911,6 +956,7 @@ jobs:
             ############################# Unix Configuration Steps END #############################
 
             - name: Retrieve Desktop App Version from Config Database
+              id: generate-release-version
               shell: bash -e {0}
               run: |
                   BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
@@ -993,6 +1039,9 @@ jobs:
 
                   # store new desktop app version as GitHub env to substitute in client-apps package.json
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
+
+                  # store new desktop app version as GitHub step output to substitute in GitHub release tag creation
+                  echo "::set-output name=release_version::${NEW_VERSION}"
 
             - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
               shell: bash -e {0}
@@ -1081,6 +1130,13 @@ jobs:
                     https://config-database.fractal.co/v1/graphql
                   fi
 
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
     # Runs if client-applications-publish-build-s3 succeeds.
@@ -1108,4 +1164,48 @@ jobs:
                   # Notify Slack
                   curl -X POST \
                   --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+    # Create GitHub Tag
+    # Create a GitHub Tag when promoting to the `prod` branch
+    # Runs if the entire deployment succeeds and the promotion is running on `prod`
+    fractal-create-github-release-tag:
+        name: "Create GitHub Prod Release Tag"
+        runs-on: ubuntu-20.04
+        needs:
+            [
+                fractal-publish-build-config,
+                client-applications-publish-build-s3,
+                main-webserver-deploy-heroku,
+                main-webserver-update-fractal-services,
+            ]
+        if: >
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Retrieve Today's Date
+              run: echo "date=$(date)" >> $GITHUB_ENV
+
+            - name: Create GitHub Tag
+              uses: softprops/action-gh-release@v1
+              with:
+                  tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
+                  body: Fractal Promotion to Production on ${{ env.date }}.
+                  draft: false
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+            - name: Notify Slack
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Fractal Version \`v${{ needs.client-applications-publish-build-s3.outputs.release_version }}\` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+
+            - name: Notify Slack if error
+              if: failure()
+              run: |
+                  curl -X POST \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"GitHub Release Creation failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}

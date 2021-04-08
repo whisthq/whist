@@ -1154,7 +1154,7 @@ int main(int argc, char* argv[]) {
 
     LOG_INFO("Receiving packets...");
 
-    init_clipboard_synchronizer();
+    init_clipboard_synchronizer(false);
     init_window_name_getter();
 
     clock ack_timer;

@@ -167,10 +167,10 @@ Replace `<PAT>` with a [Github Personal Access Token](https://docs.github.com/en
 Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
-[FRACTAL_DPI=96] ./run_remote_container_image.sh APP TAG [MOUNT]
+[FRACTAL_DPI=96] ./run_remote_container_image.sh APP_WITH_ENVIRONMENT TAG [MOUNT]
 ```
 
-The argument `TAG` is the full Git commit hash to run. All other configuration is the same as for the local case.
+The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIRONMENT` is something like `dev/browsers/chrome`, for instance. All other configuration is the same as the local case.
 
 ### Connecting to Images
 
@@ -189,10 +189,10 @@ We store our production container images on GitHub Container Registry (GHCR) and
 Once an image has been built via `./build_container_image.sh APP` and therefore tagged with `current-build`, that image may be manually pushed to GHCR by running (note, however, this is usually done by the CI. You shouldn't have to do this except in very rare circumstances. If you do, make sure to commit all of your changes before building and pushing):
 
 ```
-GH_PAT=xxx GH_USERNAME=xxx ./push_container_image.sh APP
+GH_PAT=xxx GH_USERNAME=xxx ./push_container_image.sh APP ENVIRONMENT
 ```
 
-Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. The image is tagged with the full git commit hash of the current branch.
+Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub personal access token and username, respectively. Here, `APP` is again the path to the relevant app folder; e.g., `base` or `browsers/chrome`. Environment is either `dev`, `staging`, `prod`, or nothing. The image is tagged with the full git commit hash of the current branch.
 
 ### Continous Delivery
 

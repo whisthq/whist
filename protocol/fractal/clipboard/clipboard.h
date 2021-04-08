@@ -97,8 +97,19 @@ Public Functions
 /**
  * @brief                          Initialize the clipboard to put/get data
  *                                 to/from
+ *
+ * @param is_client                Whether the caller is the client or the server
+ *
  */
-void init_clipboard();
+void init_clipboard(bool is_client);
+
+/**
+ * @brief                          Returns whether the local clipboard should be preserved
+ *                                 in the shared clipboard between server and client.
+ *
+ * @returns                        True if client, false if server
+ */
+bool should_preserve_local_clipboard();
 
 /**
  * @brief                          Get the current clipboard data

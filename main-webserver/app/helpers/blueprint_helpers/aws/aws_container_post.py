@@ -1,9 +1,7 @@
 from typing import Dict, Tuple, Optional
 from sqlalchemy.exc import DBAPIError
-
 from app.constants.http_codes import (
     NOT_FOUND,
-    BAD_REQUEST,
     SUCCESS,
     UNAUTHORIZED,
 )
@@ -14,7 +12,7 @@ from app.helpers.utils.general.sql_commands import (
     fractal_sql_update,
 )
 from app.helpers.utils.general.time import date_to_unix, get_today
-from app.models import db, LoginHistory, UserContainer, SupportedAppImages
+from app.models import db, UserContainer, SupportedAppImages
 from app.serializers.hardware import UserContainerSchema
 
 
@@ -64,14 +62,6 @@ def ping_helper(
     # Detect and handle disconnect event
     if container_info.state == "RUNNING_UNAVAILABLE" and available:
         # Add logoff event to timetable
-        log = LoginHistory(
-            user_id=username,
-            action="logoff",
-            timestamp=date_to_unix(get_today()),
-        )
-
-        fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
-
         fractal_logger.info(
             "{username} just disconnected from Fractal".format(username=username),
             extra={"label": str(username)},
@@ -80,14 +70,6 @@ def ping_helper(
     # Detect and handle logon event
     if container_info.state == "RUNNING_AVAILABLE" and not available:
         # Add logon event to timetable
-        log = LoginHistory(
-            user_id=username,
-            action="logon",
-            timestamp=date_to_unix(get_today()),
-        )
-
-        fractal_sql_commit(db, lambda db, x: db.session.add(x), log)
-
         fractal_logger.info(
             "{username} just connected to Fractal".format(username=username),
             extra={"label": str(username)},
@@ -148,10 +130,7 @@ def protocol_info(address: str, port: int, aeskey: str) -> Tuple[str, int]:
 
     schema = UserContainerSchema(
         only=(
-            "allow_autoupdate",
-            "branch",
             "secret_key",
-            "using_stun",
             "container_id",
             "user_id",
             "dpi",
@@ -168,31 +147,3 @@ def protocol_info(address: str, port: int, aeskey: str) -> Tuple[str, int]:
             response = None, UNAUTHORIZED
 
     return response
-
-
-def set_stun(user_id: str, container_id: str, using_stun: bool) -> int:
-    """Updates whether or not the specified container should use STUN.
-
-    Arguments:
-        user_id: The user_id of the authenticated user.
-        container_id: The container_id of the container to modify.
-        using_stun: A boolean indicating whether or not the specified container
-            should use STUN.
-    """
-
-    status = NOT_FOUND
-    container = UserContainer.query.get(container_id)
-
-    if getattr(container, "user_id", None) == user_id:
-        assert user_id  # Sanity check
-
-        container.using_stun = using_stun
-
-        try:
-            db.session.commit()
-        except DBAPIError:
-            status = BAD_REQUEST
-        else:
-            status = SUCCESS
-
-    return status

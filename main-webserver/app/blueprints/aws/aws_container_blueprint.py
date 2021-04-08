@@ -32,7 +32,6 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     ping_helper,
     preprocess_task_info,
     protocol_info,
-    set_stun,
 )
 from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
@@ -403,39 +402,5 @@ def aws_container_assign(**kwargs):
                 dpi=dpi,
             )
             response = jsonify({"ID": task.id}), ACCEPTED
-
-    return response
-
-
-@aws_container_bp.route("/container/stun", methods=["POST"])
-@fractal_pre_process
-@jwt_required()
-@fractal_auth
-def aws_container_stun(**kwargs):
-    """Set the using_stun column of a row in the hardware.user_containers database table.
-
-    POST keys:
-        container_id: The container ID of the container whose using_stun attribute should
-            be updated string.
-        username: The user ID of the user who owns the container as a string.
-        stun: A boolean indicating something about a STUN server.
-
-    Returns:
-        A dictionary containing a single key "status" whose value is an integer that is the same as
-        the response's HTTP status code.
-    """
-
-    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
-    body = kwargs.pop("body")
-
-    try:
-        container_id = body.pop("container_id")
-        user = body.pop("username")
-        using_stun = body.pop("stun")
-    except KeyError:
-        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-    else:
-        status = set_stun(user, container_id, using_stun)
-        response = jsonify({"status": status}), status
 
     return response

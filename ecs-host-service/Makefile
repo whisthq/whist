@@ -60,12 +60,10 @@ else
 endif
 
 build: checkCI
-	GOPRIVATE=github.com/fractal $(GOGET) -d github.com/fractal/ecs-agent/agent@master
-	GOPRIVATE=github.com/fractal/uinput-go $(GOGET) -d github.com/fractal/uinput-go/@master
 	go mod tidy
 	$(GOBUILD) -ldflags "\
-		-X 'github.com/fractal/ecs-agent/agent/fractallogger.gitCommit=$(GIT_COMMIT)'\
-		-X 'github.com/fractal/ecs-agent/agent/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
+		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
@@ -80,10 +78,10 @@ format:
 
 lint: build
 	(cd ~ && $(GOGET) -u golang.org/x/lint/golint)
-	golint -set_exit_status ./...
+	go list ./... | grep -v /agent/ | xargs golint -set_exit_status
 
 vet: build
-	go vet ./...
+	go list ./... | grep -v /agent/ | xargs go vet
 
 # Note that we should build before we lint or vet, since build updates the fractal dependencies.
 .NOTPARALLEL:
