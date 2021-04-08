@@ -85,3 +85,14 @@ Subscribers to observables can live anywhere in your codebase, which allows for 
 You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
 
 A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
+
+
+## Traps!
+
+Abstractions leak. Bugs hide. Things don't work the way they seem. This is programming, and sometimes we have to get our hands dirty with implementaion details that we shouldn't have to know about. Here's a small collection of some with this project.
+
+### Always use take(1)/takeLast(1) instead of first()/last()
+
+These are pairs of observable operators that seem like they should do the same thing. Often they do, when observables are emitting consistently. The subtle difference is that `first()` will error after a certain amount of time if its upstream observable never emits. `take(1)` will not error and just sit silently. `last()` and `takeLast(1)` share the same behavior.
+
+This is important to know, because you'll only see the `EmptyError` from `first` and `last` at runtime. It will appear as a cryptic, hard to read Electron pop-up. This is a difficult error, so the takeaway is that you should never use `first()` or `last()`. Always use `take(1)` and `takeLast(1)`.
