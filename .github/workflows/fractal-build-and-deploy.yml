@@ -1174,17 +1174,21 @@ jobs:
         needs:
             [
                 fractal-publish-build-config,
-                main-webserver-deploy-heroku,
                 client-applications-publish-build-s3,
+                main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
             ]
         if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   fetch-depth: 0 # Get the whole git history
+
+
+
+
 
             - name: Create GitHub Tag
               uses: softprops/action-gh-release@v1
