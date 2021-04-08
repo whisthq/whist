@@ -18,7 +18,7 @@ jobs:
         env:
             webserver_url: "https://dev-server.fractal.co"
             heroku_app_name: "fractal-dev-server"
-            num_users: "1"
+            num_users: "10"
             load_test_region: "us-east-1"
 
         steps:
@@ -58,7 +58,7 @@ jobs:
 
             - name: Setup and run load test
               working-directory: main-webserver
-              shell: python3 {0}
+              shell: python3 {0} # any uncaught Python error will exit the shell and fail this step
               run: |
                   # this allows us to import from `scripts`
                   import sys
