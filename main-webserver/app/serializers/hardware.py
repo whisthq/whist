@@ -1,6 +1,5 @@
 from app import ma
 from app.models import (
-    Banners,
     ClusterInfo,
     RegionToAmi,
     SupportedAppImages,
@@ -29,11 +28,6 @@ class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
 class RegionToAmiSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = RegionToAmi
-
-
-class BannersSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Banners
 
 
 class UserContainerStateSchema(ma.SQLAlchemyAutoSchema):

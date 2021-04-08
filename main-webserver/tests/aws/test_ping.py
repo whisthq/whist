@@ -99,22 +99,3 @@ def test_ping_helper(available, container, final_state, initial_state):
         db.session.add(c)
 
         assert c.state == final_state
-
-        history = c.user.history
-
-        if initial_state == "RUNNING_AVAILABLE" and final_state == "RUNNING_UNAVAILABLE":
-            # Make sure the login was recorded in the database.
-            login = history.first()
-
-            assert login
-            assert login.action == "logon"
-        elif initial_state == "RUNNING_UNAVAILABLE" and final_state == "RUNNING_AVAILABLE":
-            # Make sure the logout was recorded in the database.
-            logout = history.first()
-
-            assert logout
-            assert logout.action == "logoff"
-        else:
-            # Make sure that neither any login nor logout events have been
-            # recorded.
-            assert not db.session.query(history.exists()).scalar()
