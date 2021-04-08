@@ -89,12 +89,12 @@ A handy file during development is `main/debug.ts`. When the environment variabl
 
 ## Traps!
 
-Abstractions leak. Bugs hide. Things don't work the way they seem. This is programming, and sometimes we have to get our hands dirty with implementaion details that we shouldn't have to know about. Here's a small collection of some with this project.
+Abstractions leak. Bugs hide. Things don't work the way they seem. This is programming, and sometimes we have to get our hands dirty with implementation details that we shouldn't have to know about. Here's some for this project.
 
 ### Always use take(1)/takeLast(1) instead of first()/last()
 
-These are pairs of observable operators that seem like they should do the same thing. Often they do, when observables are emitting consistently. The subtle difference is that `first()` will error after a certain amount of time if its upstream observable never emits. `take(1)` will not error and just sit silently. `last()` and `takeLast(1)` share the same behavior.
+These are pairs of observable operators that seem like they should do the same thing. Often they do, when observables are emitting consistently. The subtle difference is that `first()` will error after a certain amount of time if its upstream observable never emits. `take(1)` will not error and simply be silent. Similarly, `last()` will error, and `takeLast(1)` will not.
 
-This is important to know, because you'll only see the `EmptyError` from `first` and `last` at runtime. It will appear as a cryptic, hard to read Electron pop-up. This is a difficult error, so the takeaway is that you should never use `first()` or `last()`. Always use `take(1)` and `takeLast(1)`.
+This is important to know, because you won't see the `EmptyError` caused by `first` and `last` until runtime. When you do, it will appear as a cryptic, hard to read Electron pop-up. This is a difficult error, so the takeaway is that you should never use `first()` or `last()`. Always use `take(1)` and `takeLast(1)`.
 
 [More info here](https://swalsh.org/blog/rxjs-first-vs-take1).
