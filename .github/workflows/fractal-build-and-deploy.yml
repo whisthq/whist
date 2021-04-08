@@ -1183,8 +1183,7 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  fetch-depth: 0 # Get the whole git history
+
 
 
 
@@ -1192,7 +1191,6 @@ jobs:
 
             - name: Create GitHub Tag
               uses: softprops/action-gh-release@v1
-              if: startsWith(github.ref, 'refs/tags/')
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
