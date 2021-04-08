@@ -288,13 +288,14 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_SELECT         // 263 -> Media Select
 };
 
+// SDL only supports these 5 mouse buttons.
 const int linux_mouse_buttons[6] = {
     0,           // 0 -> no FractalMouseButton
     BTN_LEFT,    // 1 -> Left Button
     BTN_MIDDLE,  // 2 -> Middle Button
     BTN_RIGHT,   // 3 -> Right Button
-    BTN_3,       // 4 -> Extra Mouse Button 1
-    BTN_4        // 5 -> Extra Mouse Button 2
+    BTN_SIDE,    // 4 -> Extra Mouse Button 1
+    BTN_EXTRA    // 5 -> Extra Mouse Button 2
 };
 
 #define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
