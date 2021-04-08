@@ -1,4 +1,6 @@
+import { LexRuntime } from "aws-sdk"
 import crypto from "crypto"
+import { isLength } from "lodash"
 
 export const generateHashedPassword = (password: string): string => {
     /*
@@ -44,23 +46,15 @@ export const encryptConfigToken = async (text: string, password: string) => {
         Returns:
             (string): the encrypted text
     */
-    console.log("ENCRYPTING", text, password)
     const configIV = await generateRandomString(48)
     const hashedPassword = generateHashedPassword(password)
 
-    console.log("hashed passwrod", hashedPassword)
-    console.log("config", configIV)
+    let cipher = crypto.createCipheriv(algorithm, hashedPassword, configIV)
 
-    var cipher = crypto.createCipheriv(algorithm, hashedPassword, configIV)
-
-    console.log("cipher", cipher)
-
-    var encrypted = cipher.update(text, "utf8", "hex")
-
-    console.log("encrypted", encrypted)
+    let encrypted = cipher.update(text, "utf8", "hex")
     
     encrypted += cipher.final("hex")
-    var tag = cipher.getAuthTag().toString("hex")
+    let tag = cipher.getAuthTag().toString("hex")
 
     return encrypted.concat(configIV, tag)
 }
@@ -78,12 +72,11 @@ export const decryptConfigToken = (text: string, password: string): string => {
     const encrypted = text.substring(0, 128)
     const configIV = text.substring(128, 224)
     const tag = Buffer.from(text.substring(224), "hex")
-    console.log("CONFIG IV", configIV)
-    console.log(text.length)
-    var decipher = crypto.createDecipheriv(algorithm, hashedPassword, configIV)
+    let decipher = crypto.createDecipheriv(algorithm, hashedPassword, configIV)
     decipher.setAuthTag(tag)
-    var dec = decipher.update(encrypted, "hex", "utf8")
+    let dec = decipher.update(encrypted, "hex", "utf8")
     dec += decipher.final("utf8")
+
     return dec
 }
 
