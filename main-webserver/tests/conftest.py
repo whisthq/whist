@@ -99,7 +99,9 @@ def authorized(client, user, monkeypatch):
     Returns:
         An instance of the User model representing the authorized user.
     """
-
+    # mark the user as verified for admin access
+    user.verified = True
+    db.session.commit()
     access_token = create_access_token(identity=user.user_id)
 
     # environ_base contains base data that is used to construct every request that the client
