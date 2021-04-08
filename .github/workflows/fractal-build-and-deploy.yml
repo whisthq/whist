@@ -598,8 +598,7 @@ jobs:
     # Runs unconditionally after ami-publish-ec2
     kill-packer-builder-instances:
         name: "Kill Packer Builder Tagged EC2 Instances"
-        needs:
-            [fractal-publish-build-config, ami-publish-ec2]
+        needs: [fractal-publish-build-config, ami-publish-ec2]
         if: always()
         runs-on: ubuntu-20.04
         steps:
