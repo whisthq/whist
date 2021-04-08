@@ -14,12 +14,12 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { from } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
-import { createConfigToken } from "@app/utils/crypto"
+import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
 
 export const signupRequest = fromEventIPC("signupRequest").pipe(
     filter((req) => (req?.email && req?.password ? true : false)),
-    switchMap((req) => from(createConfigToken().then((token) => [req, token]))),
+    switchMap((req) => from(createConfigToken().then((token) => encryptConfigToken(token, req.password)).then((token) => [req, token]))),
     map(([req, token]) => [req?.email, req?.password, token]),
     share()
 )
