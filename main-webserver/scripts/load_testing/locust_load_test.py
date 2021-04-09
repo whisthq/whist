@@ -129,14 +129,24 @@ class LoadTestUser(locust.HttpUser):
 
     def try_assign_request(self):
         """
-        Makes a request to webserver /container/assign
+        Makes a request to webserver /container/assign.
+        See the deleted code at
+        https://github.com/fractal/fractal/pull/1455/commits/d3e80ea78b12d817e00a811d9f172fa64d488e2a
+        for how to do this but by choosing a specific cluster instead of letting webserver decide.
         """
+        # payload = {
+        #     "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+        #     "app": "Google Chrome",
+        #     "region": LOAD_TEST_CLUSTER_REGION,
+        # }
+        # return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
         payload = {
+            "task_definition_arn": get_task_definition_arn(WEB_URL),
+            "cluster_name": "jatin-test",  # None means a cluster is chosen, like in /container/assign
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-            "app": "Google Chrome",
-            "region": LOAD_TEST_CLUSTER_REGION,
+            "region_name": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
 
     def try_get_host_service_info(self):
         """
