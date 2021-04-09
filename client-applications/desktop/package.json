@@ -8,6 +8,7 @@
         "build": "./scripts/build.sh",
         "package": "./scripts/package.sh --publish never",
         "package-ci": "./scripts/package.sh --publish always",
+        "package-local": "./scripts/publish.sh",
         "tailwind": "./scripts/tailwind.sh",
         "retrieve": "python3 scripts/retrieve.py",
         "postinstall": "./scripts/postinstall.sh"
