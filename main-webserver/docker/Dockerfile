@@ -23,14 +23,6 @@ RUN apt-get update \
     python-dev \
     libpq-dev
 
-
-# set git branch and commit hash enviornment variables 
-ARG APP_GIT_BRANCH
-ENV APP_GIT_BRANCH=$APP_GIT_BRANCH
-
-ARG APP_GIT_COMMIT
-ENV APP_GIT_COMMIT=$APP_GIT_COMMIT
-
 # Install python requirements
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
