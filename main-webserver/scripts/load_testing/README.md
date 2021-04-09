@@ -11,14 +11,13 @@ Load testing is a valuable tool for discovering complex bugs in our code base. P
 ├── requirements.txt # requirements for running the load test scripts specifically
 ```
 
+# Usage
+The primarily user is a chronjob Github actions workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be locally against any of our deployed webservers (dev, staging, prod) and review apps.
+
 ## Testing Against Staging
 
 See the workflow at `.github/workflows/main-webserver-load-testing.yml` (specifically the "Setup and run load test" step).
 Those are the steps you'd need to take to setup, run, and cleanup a load test. Just open a Python shell and follow along, or make a Python file that runs as many of the commands as you'd like in one go.
-
-Note 1: You can run `run_local_load_test` locally.
-
-Note 2: To run against dev, you may need to run `load_test_management.py:make_load_test_user` first. Check if they exist in the dbs.
 
 ## From Scratch in a Review App
 
@@ -28,6 +27,10 @@ Note 2: To run against dev, you may need to run `load_test_management.py:make_lo
 4. Follow the steps for testing against `staging`.
 5. For cleanup, remember to delete the Hirefire application. Of course, also remember to do the usual cleanup steps shown in the workflow.
 
-## Load Testing Results
+Note: You will need to run `load_test_management.py:make_load_test_user` first against the review app.
 
-See https://docs.google.com/spreadsheets/u/2/d/1yGook9y4vc6leG_uGub8ft-AN9T7ilYvbxrcRPXZqSY/edit#gid=0.
+# Design Decisions
+
+There were many design considerations in this PR. The most relevant ones are summarized below:
+1. We want something that used existing solutions and scaled well to different future use-cases we might have. Two such potential future use-cases are distributed load testing and simulating user actions with their containers. We eventually settled on Locust, which makes it relatively easy to run load tests locally (as we do now) and has potential to scale with projects like https://github.com/FutureSharks/invokust. Simulating actions in containers can be done with `@locust.task` inside `locust_load_test.py:LoadTestUser`. Right now we only implement the `on_start` method to get the container.
+2. We chose to run the tests against staging because standing up a review app periodically or adding a new app to Fractal's Heroku account had too much overhead. This adds further purpose to staging as an intermediary between fast-moving, quickly changing `dev` and stable, user-facing `prod`.
