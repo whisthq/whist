@@ -1,3 +1,6 @@
+process.env.PRODUCTION_ENV = "development"
+process.env.VERSION = "v2.1.0"
+
 enum FractalNodeEnvironment {
     DEVELOPMENT = "development",
     PRODUCTION = "production",
