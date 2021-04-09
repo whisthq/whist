@@ -20,6 +20,11 @@ func (c *containerData) PopulateUserConfigs() error {
 		return logger.MakeError("Could not make dir %s. Error: %s", configDir, err)
 	}
 
+	unpackedConfigDir := configDir + c.getUnpackedConfigsDirectoryName()
+	if err := os.MkdirAll(unpackedConfigDir, 0777); err != nil {
+		return logger.MakeError("Could not make dir %s. Error: %s", unpackedConfigDir, err)
+	}
+
 	// Once we've extracted everything, we open up permissions for the user
 	// config directory so it's accessible by the non-root user in the
 	// containers. We also are okay with setting executable bits here, since it's
