@@ -12,6 +12,7 @@ Load testing is a valuable tool for discovering complex bugs in our code base. P
 ```
 
 # Usage
+
 The primarily user is a chronjob Github actions workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be locally against any of our deployed webservers (dev, staging, prod) and review apps.
 
 ## Testing Against Staging
@@ -32,5 +33,6 @@ Note: You will need to run `load_test_management.py:make_load_test_user` first a
 # Design Decisions
 
 There were many design considerations in this PR. The most relevant ones are summarized below:
+
 1. We want something that used existing solutions and scaled well to different future use-cases we might have. Two such potential future use-cases are distributed load testing and simulating user actions with their containers. We eventually settled on Locust, which makes it relatively easy to run load tests locally (as we do now) and has potential to scale with projects like https://github.com/FutureSharks/invokust. Simulating actions in containers can be done with `@locust.task` inside `locust_load_test.py:LoadTestUser`. Right now we only implement the `on_start` method to get the container.
 2. We chose to run the tests against staging because standing up a review app periodically or adding a new app to Fractal's Heroku account had too much overhead. This adds further purpose to staging as an intermediary between fast-moving, quickly changing `dev` and stable, user-facing `prod`.
