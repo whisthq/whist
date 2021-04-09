@@ -4,7 +4,7 @@ import boto3
 import botocore
 
 
-def delete_autoscaling_group(autoscaling_group, region):
+def delete_autoscaling_group(autoscaling_group: str, region: str):
     """Delete the specified auto-scaling group.
 
     Args:
