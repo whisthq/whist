@@ -1,3 +1,4 @@
+from typing import Dict, Union
 from flask import current_app
 
 from app.constants.http_codes import SUCCESS, BAD_REQUEST
@@ -6,7 +7,9 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.mail.mail_client import MailClient
 
 
-def mail_helper(email_id, from_email, to_email, email_args):
+def mail_helper(
+    email_id: str, from_email: str, to_email: str, email_args: Dict[str, str]
+) -> Dict[str, Union[bool, int]]:
     """
     Helper function for the /mail route.
 

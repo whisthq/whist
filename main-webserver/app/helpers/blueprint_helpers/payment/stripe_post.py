@@ -1,3 +1,4 @@
+from typing import Tuple
 from flask import current_app, jsonify
 
 from functools import reduce
@@ -21,7 +22,7 @@ from app.helpers.utils.payment.stripe_client import (
 )
 
 # TODO (optional) make templates for boilerplate
-def addSubscriptionHelper(email, plan):
+def addSubscriptionHelper(email: str, plan: str) -> Tuple[str, int]:
     fractal_logger.info("Signing {} up for plan {}".format(email, plan), extra={"label": email})
 
     client = StripeClient(current_app.config["STRIPE_SECRET"])
@@ -60,7 +61,7 @@ def addSubscriptionHelper(email, plan):
     return jsonify({"status": status}), status
 
 
-def deleteSubscriptionHelper(email):
+def deleteSubscriptionHelper(email: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
     try:
         client.cancel_subscription(email)
@@ -78,7 +79,7 @@ def deleteSubscriptionHelper(email):
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
 
 
-def addCardHelper(email, source):
+def addCardHelper(email: str, source: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
@@ -95,7 +96,7 @@ def addCardHelper(email, source):
     return jsonify({"status": status}), status
 
 
-def deleteCardHelper(email, source):
+def deleteCardHelper(email: str, source: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
@@ -112,7 +113,7 @@ def deleteCardHelper(email, source):
     return jsonify({"status": status}), status
 
 
-def retrieveHelper(email):
+def retrieveHelper(email: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
     try:
