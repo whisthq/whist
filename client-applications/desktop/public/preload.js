@@ -14,7 +14,11 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 })
 
 // We don't have access to the process object, so we must pass environment
-// variables over to the window object here. The number below is the version
-// number to be displayed on the renderer window.
+// variables over to the window object here.
 
+
+// The version number to be displayed on the renderer window.
 contextBridge.exposeInMainWorld("VERSION", process.env.VERSION)
+
+// The production environment
+contextBridge.exposeInMainWorld("PRODUCTION_ENV", process.env.PRODUCTION_ENV)
