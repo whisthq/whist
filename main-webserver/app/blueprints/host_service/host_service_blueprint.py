@@ -4,10 +4,11 @@ from flask import Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import jwt_required
 
-from app import fractal_pre_process
+from app import fractal_pre_process, fractal_logger
 from app.constants.http_codes import SUCCESS, ACCEPTED, BAD_REQUEST, FORBIDDEN
 from app.constants.container_state_values import WAITING_FOR_CLIENT_APP
 from app.models import UserContainerState
+from app.serializers.hardware import UserContainerStateSchema
 
 host_service_bp = Blueprint("host_service_bp", __name__)
 
@@ -22,12 +23,17 @@ def host_service(**kwargs):
         JSON of user's host service info
     """
     username = kwargs.pop("username")
-
+    fractal_logger.info(username)
     host_service_info = UserContainerState.query.filter_by(
         user_id=username, state=WAITING_FOR_CLIENT_APP
-    ).first()
+    ).one_or_none()
+    fractal_logger.info(
+        "No row found"
+        if host_service_info is None
+        else UserContainerStateSchema.dump(host_service_info)
+    )
 
-    if not host_service_info:
+    if host_service_info is None:
         return jsonify({"ip": None, "port": None, "client_app_auth_secret": None})
     else:
         return jsonify(
