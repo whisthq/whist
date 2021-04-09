@@ -3,4 +3,4 @@
 set -Eeuo pipefail
 
 yarn tailwind
-snowpack build
+VERSION=$(git describe --abbrev=0) snowpack build

@@ -10,4 +10,4 @@ else
 fi
 
 yarn tailwind
-snowpack dev
+VERSION=$(git describe --abbrev=0) snowpack dev
