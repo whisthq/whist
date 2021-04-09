@@ -13,12 +13,14 @@ import {
     containerInfoSuccess,
     containerInfoPending,
 } from "@app/utils/container"
-import { userEmail, userAccessToken } from "@app/main/observables/user"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
+import {
+    userEmail,
+    userAccessToken,
+    userConfigToken,
+} from "@app/main/observables/user"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap } from "@app/utils/observables"
-import { from, of, merge } from "rxjs"
+import { from, of, merge, zip } from "rxjs"
 import {
     map,
     share,
@@ -31,10 +33,11 @@ import {
     takeWhile,
 } from "rxjs/operators"
 
-export const containerCreateRequest = merge(loginSuccess, signupSuccess).pipe(
-    withLatestFrom(userEmail, userAccessToken),
-    map(([_, email, token]) => [email, token])
-)
+export const containerCreateRequest = zip(
+    userEmail,
+    userAccessToken,
+    userConfigToken
+).pipe(map(([email, access, _]) => [email, access]))
 
 export const containerCreateProcess = containerCreateRequest.pipe(
     exhaustMap(([email, token]) => from(containerCreate(email!, token!))),

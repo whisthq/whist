@@ -9,7 +9,7 @@ import { autoUpdater } from "electron-updater"
 import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
 
 import { eventAppReady, eventWindowsAllClosed } from "@app/main/events/app"
-import { merge, race } from "rxjs"
+import { merge, race, zip } from "rxjs"
 import { takeUntil } from "rxjs/operators"
 import {
     closeWindows,
@@ -23,10 +23,27 @@ import {
     autoUpdateAvailable,
     autoUpdateNotAvailable,
 } from "@app/main/observables/autoupdate"
+import {
+    userEmail,
+    userAccessToken,
+    userConfigToken,
+} from "@app/main/observables/user"
 
 // Window opening
+//
 // appReady only fires once, at the launch of the application.
-eventAppReady.subscribe(() => createAuthWindow((win: any) => win.show()))
+// We use takeUntil to make sure that the auth window only fires when
+// we have all of [userEmail, userAccessToken, userConfigToken].
+//
+// It's possible to be in an incomplete state, only having one or two of
+// these tokens. This is mostly because of the async nature of userConfigToken,
+// which has some async decryption involved.
+//
+// If we don't have all three when the app opens, we force the user to log in
+// again.
+eventAppReady
+    .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
+    .subscribe(() => createAuthWindow((win: any) => win.show()))
 
 // Application closing
 eventWindowsAllClosed
