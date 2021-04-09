@@ -732,6 +732,7 @@ class ECSClient:
             MaxSize=max_size,
             MinSize=min_size,
             AvailabilityZones=availability_zones,
+            NewInstancesProtectedFromScaleIn=True,
             # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-as-tags.html
             Tags=[
                 {
@@ -794,6 +795,7 @@ class ECSClient:
                     "status": "ENABLED",
                     "targetCapacity": 100,
                 },
+                "managedTerminationProtection": "ENABLED",
             },
         )
         return capacity_provider_name
