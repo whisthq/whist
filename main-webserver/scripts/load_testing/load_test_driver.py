@@ -45,6 +45,7 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_n
         f"locust -f {locust_file_path} -u {num_users} -r 10 --host {web_url} "
         f"--headless --only-summary"
     )
+    # stdout is shared with the current process so we can see what happens
     ret = subprocess.run(cmd, shell=True)
     assert ret.returncode == 0, "Failed to run a local load test."
     print("Successfully ran a local load test.")

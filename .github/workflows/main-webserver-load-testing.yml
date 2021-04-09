@@ -66,10 +66,7 @@ jobs:
                   import time
 
                   from scripts.misc_scripts import login  
-                  from scripts.load_testing.load_test_management import (
-                      upgrade_webserver,
-                      downgrade_webserver,
-                  )
+                  from scripts.load_testing.load_test_management import prod_webserver_context
                   from scripts.load_testing.load_test_driver import run_local_load_test
 
                   WEBSERVER_URL = "${{ env.webserver_url }}"
@@ -88,21 +85,10 @@ jobs:
                   TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # --- Setup load test --- #
-                  # Upgrade the heroku app for prod-like use
-                  upgrade_webserver(HEROKU_APP_NAME)
-
-                  try:
+                  # Temporarily upgrade the heroku app for prod-like use. Will be downgraded after the with- block finishes.
+                  with prod_webserver_context(HEROKU_APP_NAME):
                     # trigger the load test; this errors out if any user does not get a container
                     run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS, LOAD_TEST_REGION)
-
-                  except Exception as e:
-                    # we just need the finally block to run before exiting badly
-                    raise e
-                    
-                  finally:
-                    # --- Cleanup load test --- #
-                    # run this always; restores webserver to its original state
-                    downgrade_webserver(HEROKU_APP_NAME)
 
             - name: Notify Slack on success
               run: |

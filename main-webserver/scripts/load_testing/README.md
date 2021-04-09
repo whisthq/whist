@@ -13,7 +13,7 @@ Load testing is a valuable tool for discovering complex bugs in our code base. P
 
 # Usage
 
-The primarily user is a Github Actions chronjob workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be locally against any of our deployed webservers (dev, staging, prod) and review apps.
+The primarily user is a Github Actions chronjob workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be run locally against any of our deployed webservers (dev, staging, prod) and review apps.
 
 ## Testing Against Staging
 
@@ -27,8 +27,6 @@ Those are the steps you'd need to take to setup, run, and cleanup a load test. J
 3. Run `load_test_management.py:make_load_test_user` for however many concurrent users you plan on doing.
 4. Follow the steps for testing against `staging`.
 5. For cleanup, remember to delete the Hirefire application. Of course, also remember to do the usual cleanup steps shown in the workflow.
-
-Note: You will need to run `load_test_management.py:make_load_test_user` first against the review app.
 
 # Design Decisions
 
