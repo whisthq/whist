@@ -1,5 +1,7 @@
 from typing import Dict, Union, Optional, Tuple
 
+import stripe
+
 from flask import current_app, jsonify
 
 from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
@@ -78,14 +80,19 @@ def login_helper(email: str, password: str) -> Dict[str, Union[bool, Optional[st
 def register_helper(
     username: str, password: str, encrypted_config_token: str, name: str, reason_for_signup: str
 ) -> Dict[str, Union[bool, Optional[str], Optional[int]]]:
-    """Store username and password in the database.
+    """Create a new Fractal user.
 
-    Parameters:
-    username (str): The username
-    password (str): The password
-    encrypted_config_token (str):  the encrypted config access token
-    name (str): The person's name
-    reason_for_signup (str): The person's reason for signing up
+    Registering a new user automatically enrolls the user in a free trial of Fractal's monthly
+    subscription service.
+
+    Args:
+        username: The new user's email address as a string.
+        password: The digest of the user's password as a string. The user's password is hashed
+            client-side. We hash this value again before storing it in the database.
+        encrypted_config_token: A random string, AES-256 encrypted with the user's plaintext
+            password. Encryption occurs client-side.
+        name: The user's full name as a string.
+        reason_for_signup: A bit of text indiciating why the user signed up for Fractal.
 
     Returns:
         A JSON object containing five keys: "access_token", "refresh_token", "status",
@@ -96,12 +103,16 @@ def register_helper(
         UNIX timestamp representing the time at which the new user's account was created.
     """
 
-    # First, generate a user ID
+    customer = stripe.Customer.create(email=username, name=name)
+    subscription = stripe.Subscription.create(
+        customer=customer["id"],
+        items=[{"price": "price_1I8SoeIOnFXg3A2jVqGwiWPG"}],
+        trial_period_days=7,
+    )
 
-    token = generate_token(username)
+    assert subscription["status"] == "trialing"
 
-    # Second, hash their password
-
+    token = generate_token(username)  # Generate an email verification token.
     pwd_token = hash_value(password)
 
     # Add the user to the database
@@ -112,27 +123,20 @@ def register_helper(
         token=token,
         name=name,
         reason_for_signup=reason_for_signup,
+        stripe_customer_id=customer["id"],
     )
 
-    status = SUCCESS
     access_token, refresh_token = get_access_tokens(username)
 
-    # Check for errors in adding the user to the database
-
-    try:
-        db.session.add(new_user)
-        db.session.commit()
-    except Exception:
-        fractal_logger.error("Registration failed.", extra={"label": username}, exc_info=True)
-        status = BAD_REQUEST
-        access_token = refresh_token = None
+    db.session.add(new_user)
+    db.session.commit()
 
     return {
-        "status": status,
-        "verification_token": new_user.token if status == SUCCESS else None,  # TODO: Issue 519
+        "status": SUCCESS,
+        "verification_token": new_user.token,  # TODO: FCTL-64
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "created_timestamp": new_user.created_at.timestamp() if status == SUCCESS else None,
+        "created_timestamp": new_user.created_at.timestamp(),
     }
 
 
