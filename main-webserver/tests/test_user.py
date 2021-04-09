@@ -1,8 +1,11 @@
 """Unit tests for the User model and its serializer."""
 
+import uuid
+
 import pytest
 import stripe
 
+from app.models import db, User
 from app.serializers.public import UserSchema
 
 from tests.patches import function
@@ -53,3 +56,29 @@ def test_stripe_customer_id(make_user, monkeypatch, should_receive_service, subs
     monkeypatch.setattr(stripe.Customer, "retrieve", function(returns=customer))
 
     assert user.subscribed == should_receive_service
+
+
+def test_register_user(client):
+    """Ensure that new users are immediately granted access to Fractal."""
+
+    email = f"test-{uuid.uuid4()}@example.com"
+    response = client.post(
+        "/account/register",
+        json={
+            "username": email,
+            "password": "",
+            "encrypted_config_token": "blah",
+            "name": "Name",
+            "feedback": "Testing",
+        },
+    )
+
+    assert response.status_code == 200
+
+    user = User.query.filter_by(user_id=email).one()
+
+    assert user.subscribed
+
+    stripe.Customer.delete(user.stripe_customer_id)
+    db.session.delete(user)
+    db.session.commit()
