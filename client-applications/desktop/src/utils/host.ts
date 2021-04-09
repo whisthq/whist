@@ -5,7 +5,7 @@ import { HostServicePort } from "@app/utils/constants"
 
 export const hostServiceInfo = async (username: string, accessToken: string) =>
     get({
-        endpoint: `/host_service?username=${username}`,
+        endpoint: `/host_service?username=${encodeURIComponent(username)}`,
         accessToken,
     })
 
