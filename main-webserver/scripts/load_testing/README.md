@@ -1,6 +1,6 @@
 # Load Testing
 
-Load testing is a valuable tool for discovering complex bugs in our code base. Previously, it has helped identify issues with our locking mechanisms on webserver and race conditions in ECS-host. It runs every Sunday at 2am EST in the `main-webserver-load-testing` workflow. Load testing source is a little complex to navigate, so this README exists to help demystify all that is going on. First, the files:
+Load testing is a valuable tool for discovering complex bugs in our code base. Previously, it has helped identify issues with our locking mechanisms on webserver and race conditions in the host service. It runs every Sunday at 2am EST in the `main-webserver-load-testing` workflow. Load testing source is a little complex to navigate, so this README exists to help demystify all that is going on. First, the files:
 
 ```
 ./scripts/load_testing

@@ -1,8 +1,8 @@
 # workflows/main-webserver-load-testing.yml
 #
 # Main Webserver: Load Testing
-# Runs a load test with 1 user (TODO: up to 100) on our staging webserver to test
-# load stability of staging every Sunday at 2am Eastern.
+# Runs a load test with `num_users` users on our staging webserver to test the load stability of
+# staging every Sunday at 2am Eastern.
 
 name: "Main Webserver: Load Testing"
 on:
@@ -25,8 +25,7 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
-                  # checkout staging branch
-                  ref: "staging"
+                  ref: "staging" # use staging version of load testing scripts
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -93,8 +92,7 @@ jobs:
                   upgrade_webserver(HEROKU_APP_NAME)
 
                   try:
-                    # Until we fix high initial task latency, we need to do one lambda invocation
-                    # to sidestep the first task's high latency issue
+                    # trigger the load test; this errors out if any user does not get a container
                     run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS, LOAD_TEST_REGION)
 
                   except Exception as e:
@@ -111,16 +109,16 @@ jobs:
                   WEBSERVER_URL=${{ env.webserver_url }}
 
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-staging\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
             - name: Notify Slack on failure
-              if: ${{ failure() }}
+              if: failure()
               run: |
                   WEBSERVER_URL=${{ env.webserver_url }}
 
                   # Notify slack of failure.
                   curl -X POST \
                     --data-urlencode \
-                    "payload={\"channel\": \"#alerts\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
+                    "payload={\"channel\": \"#alerts-staging\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
                     ${{ secrets.SLACK_HOOKS_ENDPOINT }}
