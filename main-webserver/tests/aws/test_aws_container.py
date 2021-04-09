@@ -241,8 +241,7 @@ def test_delete_container(client, monkeypatch):
     # delete_container will call manual_scale_cluster
     # it should follow through the logic until it actually tries to kill the instance,
     # which we don't need to do since delete_cluster handles it.
-    # this in essence tests the db logic and unmocked AWS calls right up to
-    # set_auto_scaling_group_capacity
+    # this in essence tests the logic right up to set_auto_scaling_group_capacity
     def mock_set_capacity(self, asg_name: str, desired_capacity: int):
         setattr(mock_set_capacity, "test_passed", desired_capacity == 0)
 
@@ -268,7 +267,6 @@ def test_delete_container(client, monkeypatch):
         fractal_logger.error("Container was not deleted from database")
         assert False
 
-    # make sure function was called once
     assert hasattr(mock_set_capacity, "test_passed")  # make sure function was called
     assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
 
