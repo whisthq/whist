@@ -124,6 +124,8 @@ const RootComponent = () => {
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
+    const win = window as unknown as { VERSION: number }
+    const version = win.VERSION
     return (
         <div className="relative w-full h-full">
             <div
@@ -131,7 +133,7 @@ const WindowBackground = (props: any) => {
                 style={{ zIndex: -10 }}
             >
                 <p className="font-body font-light text-gray-200 py-4">
-                    Version 1.0
+                    {version}
                 </p>
             </div>
             {props.children}
