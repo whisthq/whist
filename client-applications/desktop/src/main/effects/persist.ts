@@ -53,4 +53,4 @@ merge(
 // As we finalize development, we'll still clear the persisted store on
 // each start.
 // We'll comment out this line below when we finally want to store credentials.
-persistClear()
+// persistClear()
