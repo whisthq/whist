@@ -343,7 +343,8 @@ class LocalConfig(DeploymentConfig):
 
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     ENVIRONMENT = property(getter("ENVIRONMENT", fetch=False, default=env_names.LOCAL))  # type: ignore # pylint: disable=line-too-long
-    APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT"))
+    APP_GIT_BRANCH = property(getter("APP_GIT_BRANCH", default="unknown", fetch=False))
+    APP_GIT_COMMIT = property(getter("APP_GIT_COMMIT", default="unknown", fetch=False))
     HOST_SERVER = "local-unknown"
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
