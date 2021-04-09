@@ -8,12 +8,12 @@ Load testing is a valuable tool for discovering complex bugs in our code base. P
 ├── load_test_utils.py # load test utility methods/constants
 ├── load_test_management.py # helps set up and tear down a load test
 ├── load_test_driver.py # overarching function to actually run a local load test
-├── requirements.txt # requirements for running the load test scripts specifically
+├── locust_load_test.py # main load test file - run by Locust
 ```
 
 # Usage
 
-The primarily user is a chronjob Github actions workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be locally against any of our deployed webservers (dev, staging, prod) and review apps.
+The primarily user is a Github Actions chronjob workflow at `.github/workflows/main-webserver-load-testing.yml`. However, these scripts can be locally against any of our deployed webservers (dev, staging, prod) and review apps.
 
 ## Testing Against Staging
 
