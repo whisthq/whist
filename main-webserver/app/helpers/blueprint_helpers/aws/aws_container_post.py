@@ -1,5 +1,4 @@
 from typing import Dict, Tuple, Optional
-from sqlalchemy.exc import DBAPIError
 from app.constants.http_codes import (
     NOT_FOUND,
     SUCCESS,
