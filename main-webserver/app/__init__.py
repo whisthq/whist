@@ -1,15 +1,15 @@
-from typing import Any, Callable, TypeVar, Tuple, cast
 import json
-from functools import wraps
 import logging
 
-from flask import current_app, request, make_response, jsonify
+from typing import Any, Callable, TypeVar, cast
+from functools import wraps
+
+from flask import current_app, request
 
 from app.helpers.utils.general.logs import fractal_logger
 
 from .config import _callback_webserver_hostname
-from .factory import create_app, jwtManager, ma, mail
-
+from .factory import jwtManager, ma
 
 # Taken from https://mypy.readthedocs.io/en/stable/generics.html#declaring-decorators
 _F = TypeVar("_F", bound=Callable[..., Any])
