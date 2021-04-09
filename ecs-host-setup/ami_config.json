@@ -51,8 +51,7 @@
     },
     {
       "type": "shell",
-      "expect_disconnect": "true",
-      "inline": ["sudo apt-get remove unattended-upgrades -y", "sudo reboot"]
+      "inline": ["sudo systemctl disable --now unattended-upgrades.service"]
     },
     {
       "pause_before": "10s",
