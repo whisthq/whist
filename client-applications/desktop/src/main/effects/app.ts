@@ -28,6 +28,7 @@ import {
     userAccessToken,
     userConfigToken,
 } from "@app/main/observables/user"
+import { protocolCloseSuccess } from "@app/main/observables/protocol"
 
 // Window opening
 //
@@ -70,3 +71,5 @@ race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
         }
     }
 )
+
+protocolCloseSuccess.subscribe(() => app.quit())
