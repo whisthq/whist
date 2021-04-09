@@ -52,7 +52,7 @@ const schema: DebugSchema = {
     userEmail: ["value:"],
     userAccessToken: ["value:"],
     userRefreshToken: ["value:"],
-    userConfigToken: ["value:"],
+    userConfigToken: ["value:", () => "NOT PRINTING THIS NOW"],
     signupRequest: ["value:"],
     signupLoading: ["value:"],
     signupWarning: ["user already exists", null],
@@ -97,7 +97,7 @@ const schema: DebugSchema = {
     hostInfoRequest: ["value:"],
     hostInfoSuccess: ["value:"],
     hostInfoFailure: ["value:"],
-    hostConfigRequest: ["value:"],
+    hostConfigRequest: ["val:", (_) => "HostConfigRequest Emitted!"],
     hostConfigProcess: [
         "printing only status, json:",
         (obj) => pick(obj, ["status", "json"]),
@@ -112,7 +112,13 @@ const schema: DebugSchema = {
 
 const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any
 
-if (!app.isPackaged) {
+// For now, we're are printing the debug logs even when the app is packaged.
+// We are also commenting out the logs in main/effects/logging to avoid
+// duplicates.
+//
+// When we decide to return to standard logging, we should replace the
+// true below with !app.isPackaged.
+if (true) {
     for (let key in symbols)
         if (isObservable(symbols[key as string]) && schema[key]) {
             symbols[key].subscribe((...args: any) => {
