@@ -41,8 +41,8 @@ def get_num_users_and_host():
 TOTAL_USERS, WEB_URL = get_num_users_and_host()
 ADMIN_TOKEN = os.environ["ADMIN_TOKEN"]
 LOAD_TEST_CLUSTER_REGION = os.environ["REGION_NAME"]
-# a hard-coded encrypted app config token with text: fake_text, password: fake_pwd
-APP_CONFIG_TOKEN = "62aed4c219c461e18f109ac689fd42e8929d82898280f9f403e78b98dacee1e5a8acad5da822a04fccc4cb890a463a2b0856e9804fa367d321f4c0e670c2057ab191383ec16ddea1d2"
+# a hard-coded config token created using the generateRandomString(32) function in frontend code
+APP_CONFIG_TOKEN = "9095ce5d4a231b5c26d4e04e139506f4aaa7e981270d0b827bc9f74d30a1c579"
 
 
 class LoadTestUser(locust.HttpUser):
@@ -134,19 +134,12 @@ class LoadTestUser(locust.HttpUser):
         https://github.com/fractal/fractal/pull/1455/commits/d3e80ea78b12d817e00a811d9f172fa64d488e2a
         for how to do this but by choosing a specific cluster instead of letting webserver decide.
         """
-        # payload = {
-        #     "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-        #     "app": "Google Chrome",
-        #     "region": LOAD_TEST_CLUSTER_REGION,
-        # }
-        # return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
         payload = {
-            "task_definition_arn": get_task_definition_arn(WEB_URL),
-            "cluster_name": "jatin-test",  # None means a cluster is chosen, like in /container/assign
             "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
-            "region_name": LOAD_TEST_CLUSTER_REGION,
+            "app": "Google Chrome",
+            "region": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/aws_container/assign_container", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/container/assign", payload, ADMIN_TOKEN)
 
     def try_get_host_service_info(self):
         """
