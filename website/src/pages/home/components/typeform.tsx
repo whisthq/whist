@@ -2,7 +2,7 @@ import React, { useState } from "react"
 import Modal from "react-modal"
 import { FaTimes } from "react-icons/fa"
 import TypeformComponent from "react-typeform-embed"
-import classNames from "classNames"
+import classNames from "classnames"
 
 import "reactjs-popup/dist/index.css"
 
