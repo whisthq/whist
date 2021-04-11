@@ -73,11 +73,9 @@ export const uploadToS3 = async (
         Uploads a local file to S3
 
     Arguments:
-        localFilePath (string): Path of file to upload (e.g. C://log.txt)
-        s3FileName (string): What to call the file once it's uploaded to S3 (e.g. "FILE.txt")
-        callback (function): Callback function to fire once file is uploaded
+        email (string): user email of the logged in user 
     Returns:
-        boolean: Success true/false
+        response from the s3 upload
     */
 
     const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
