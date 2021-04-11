@@ -72,4 +72,3 @@ race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
     }
 )
 
-protocolCloseSuccess.subscribe(() => app.quit())
