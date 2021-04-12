@@ -27,7 +27,7 @@ type Mouse interface {
 	// values will cause a move towards the upper left corner.
 	Move(x, y int32) error
 
-	// MouseButtonClick will issue a right click.
+	// MouseButtonClick will issue a mouse button click.
 	MouseButtonClick(buttonCode int) error
 
 	// MouseButtonPress will simulate the press of a mouse button. Note that the button will not be released until
