@@ -50,10 +50,10 @@ export const AnimatedLineA = (props: { scale?: number }) => {
                         width="44"
                         height="44"
                         filterUnits="userSpaceOnUse"
-                        color-interpolation-filters="sRGB"
+                        colorInterpolationFilters="sRGB"
                     >
                         <feFlood
-                            flood-opacity="0"
+                            floodOpacity="0"
                             result="BackgroundImageFix"
                         />
                         <feColorMatrix
@@ -92,10 +92,10 @@ export const AnimatedLineA = (props: { scale?: number }) => {
                         width="44"
                         height="44"
                         filterUnits="userSpaceOnUse"
-                        color-interpolation-filters="sRGB"
+                        colorInterpolationFilters="sRGB"
                     >
                         <feFlood
-                            flood-opacity="0"
+                            floodOpacity="0"
                             result="BackgroundImageFix"
                         />
                         <feColorMatrix
