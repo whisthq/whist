@@ -4,10 +4,10 @@
  * @brief This file contains RXJS observables that deal with state persistence (i.e. shared state).
  */
 
-import { eventAppReady } from "@app/main/events/app"
-import { Subject } from "rxjs"
-import { distinctUntilChanged, map } from "rxjs/operators"
-import { store } from "@app/utils/persist"
+import { eventAppReady } from '@app/main/events/app'
+import { Subject } from 'rxjs'
+import { distinctUntilChanged, map } from 'rxjs/operators'
+import { store } from '@app/utils/persist'
 
 // We create the persistence observables slightly differently from the
 // others across the project.
@@ -37,15 +37,15 @@ import { store } from "@app/utils/persist"
 export const persisted = new Subject()
 
 export const fromEventPersist = (key: string) =>
-    persisted.pipe(
-        map((obj: any) => obj[key]),
-        distinctUntilChanged()
-    )
+  persisted.pipe(
+    map((obj: any) => obj[key]),
+    distinctUntilChanged()
+  )
 
 store.onDidAnyChange((newStore: any, _oldStore: any) => {
-    persisted.next(newStore)
+  persisted.next(newStore)
 })
 
 eventAppReady.subscribe(() => {
-    persisted.next(store.store)
+  persisted.next(store.store)
 })

@@ -4,31 +4,31 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from "electron"
-import { autoUpdater } from "electron-updater"
-import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
+import { app } from 'electron'
+import { autoUpdater } from 'electron-updater'
+import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
 
-import { eventAppReady, eventWindowsAllClosed } from "@app/main/events/app"
-import { merge, race, zip } from "rxjs"
-import { takeUntil } from "rxjs/operators"
+import { eventAppReady, eventWindowsAllClosed } from '@app/main/events/app'
+import { merge, race, zip } from 'rxjs'
+import { takeUntil } from 'rxjs/operators'
 import {
-    closeWindows,
-    createAuthWindow,
-    createUpdateWindow,
-} from "@app/utils/windows"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
-import { errorWindowRequest } from "@app/main/observables/error"
+  closeWindows,
+  createAuthWindow,
+  createUpdateWindow
+} from '@app/utils/windows'
+import { loginSuccess } from '@app/main/observables/login'
+import { signupSuccess } from '@app/main/observables/signup'
+import { errorWindowRequest } from '@app/main/observables/error'
 import {
-    autoUpdateAvailable,
-    autoUpdateNotAvailable,
-} from "@app/main/observables/autoupdate"
+  autoUpdateAvailable,
+  autoUpdateNotAvailable
+} from '@app/main/observables/autoupdate'
 import {
-    userEmail,
-    userAccessToken,
-    userConfigToken,
-} from "@app/main/observables/user"
-import { protocolCloseSuccess } from "@app/main/observables/protocol"
+  userEmail,
+  userAccessToken,
+  userConfigToken
+} from '@app/main/observables/user'
+import { protocolCloseSuccess } from '@app/main/observables/protocol'
 
 // Window opening
 //
@@ -43,13 +43,13 @@ import { protocolCloseSuccess } from "@app/main/observables/protocol"
 // If we don't have all three when the app opens, we force the user to log in
 // again.
 eventAppReady
-    .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-    .subscribe(() => createAuthWindow((win: any) => win.show()))
+  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
+  .subscribe(() => createAuthWindow((win: any) => win.show()))
 
 // Application closing
 eventWindowsAllClosed
-    .pipe(takeUntil(merge(loginSuccess, signupSuccess, errorWindowRequest)))
-    .subscribe(() => app.quit())
+  .pipe(takeUntil(merge(loginSuccess, signupSuccess, errorWindowRequest)))
+  .subscribe(() => app.quit())
 
 // Window closing
 // If we have have successfully authorized, close the existing windows.
@@ -62,14 +62,13 @@ merge(loginSuccess, signupSuccess).subscribe(() => closeWindows())
 // If the update is downloaded, quit the app and install the update
 eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
 
-race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
-    (available: boolean) => {
-        if (available) {
-            closeWindows()
-            autoUpdater.downloadUpdate()
-            createUpdateWindow((win: any) => win.show())
-        }
-    }
+race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe((available: boolean) => {
+  if (available) {
+    closeWindows()
+    createUpdateWindow((win: any) => win.show())
+    autoUpdater.downloadUpdate().catch(err => console.error(err))
+  }
+}
 )
 
 protocolCloseSuccess.subscribe(() => app.quit())

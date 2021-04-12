@@ -1,10 +1,10 @@
-import React, { Children } from "react"
-import { useTrail, animated } from "react-spring"
+import React, { Children } from 'react'
+import { useTrail, animated } from 'react-spring'
 
 export const FractalFadeIn = (props: {
-    children: JSX.Element | JSX.Element[]
+  children: JSX.Element | JSX.Element[]
 }) => {
-    /*
+  /*
         Description:
             Wraps around children elements and applies a fade-in animation. If multiple
             children are present, each child is faded in sequentially
@@ -19,12 +19,12 @@ export const FractalFadeIn = (props: {
             children(JSX.Element | JSX.Element[]): Any children nested within this component
     */
 
-    const items = Children.toArray(props.children)
-    const trail = useTrail(items.length, {
-        from: { opacity: 0 },
-        to: { opacity: 1 },
-    })
-    return (
+  const items = Children.toArray(props.children)
+  const trail = useTrail(items.length, {
+    from: { opacity: 0 },
+    to: { opacity: 1 }
+  })
+  return (
         <div {...props}>
             <div>
                 {trail.map((props: any, index: number) => (
@@ -34,5 +34,5 @@ export const FractalFadeIn = (props: {
                 ))}
             </div>
         </div>
-    )
+  )
 }

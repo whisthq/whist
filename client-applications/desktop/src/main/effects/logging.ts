@@ -1,21 +1,21 @@
-import { eventIPC } from "@app/main/events/ipc"
+// import { eventIPC } from '@app/main/events/ipc'
 
-import { pluck } from "rxjs/operators"
-import { omit } from "lodash"
+// import { pluck } from 'rxjs/operators'
+import { omit } from 'lodash'
 
-import { logDebug, logError, LogLevel } from "@app/utils/logging"
-import { Observable, combineLatest } from "rxjs"
-import config from "@app/utils/config"
+import { logDebug } from '@app/utils/logging'
+// import { Observable, combineLatest } from 'rxjs'
+import config from '@app/utils/config'
 
-import * as e from "@app/main/events/app"
-import * as h from "@app/main/observables/host"
-import * as c from "@app/main/observables/container"
-import * as p from "@app/main/observables/protocol"
-import * as s from "@app/main/observables/signup"
-import * as l from "@app/main/observables/login"
+// import * as e from '@app/main/events/app'
+// import * as h from '@app/main/observables/host'
+// import * as c from '@app/main/observables/container'
+// import * as p from '@app/main/observables/protocol'
+// import * as s from '@app/main/observables/signup'
+// import * as l from '@app/main/observables/login'
 
 // Printing out app config, omitting the api keys.
-logDebug("APP CONFIG", "printing utils/config.ts", omit(config, ["keys"]))
+logDebug('APP CONFIG', 'printing utils/config.ts', omit(config, ['keys']))
 
 // Commented out for the moment, as we'll use the logging in debug.ts
 // for the first release of this. The extra visibility will be helpful
