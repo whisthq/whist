@@ -176,9 +176,9 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 
 // SetContainerDevValuesRequest defines the (unauthenticated) dev values endpoint
 type SetContainerDevValuesRequest struct {
-	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
-	Timeout              int                `json:"timeout"`                // timeout to set for the container
-	resultChan           chan requestResult // Channel to pass the start values setting result between goroutines
+	HostPort   int                `json:"host_port"` // Port on the host to whose container the start values correspond
+	Timeout    int                `json:"timeout"`   // timeout to set for the container
+	resultChan chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
