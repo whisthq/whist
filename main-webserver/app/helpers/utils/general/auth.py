@@ -96,9 +96,24 @@ def check_developer() -> bool:
     elif current_app.config["DASHBOARD_USERNAME"] in current_user:
         return True
     elif current_user.endswith("@fractal.co"):
-        # make sure they are actually verified
+        # first just check if the user is in the db and verified
         user = User.query.get(current_user)
-        return user is not None and user.verified is True
+        if user is not None and user.verified is True:
+            return True
+        # otherwise, allow a verified developer with the name real_developer to pass
+        # real_developer+anything@fractal.co. This lets devs create new accounts that don't have
+        # real emails associated with them. According to
+        # https://gmail.googleblog.com/2008/03/2-hidden-ways-to-get-more-from-your.html
+        # these emails still map to real_developer@fractal.co
+        groups = current_user.split("+")
+        if len(groups) >= 2:
+            # if a + was found in the username, we extract everything before the + and use that
+            # as the current user
+            real_developer = groups[0]
+            current_user = f"{real_developer}@fractal.co"
+            user = User.query.get(current_user)
+            # make sure the real_developer is actually verified
+            return user is not None and user.verified is True
     return False
 
 
