@@ -14,6 +14,7 @@ import json
 import os
 
 from collections import namedtuple
+from urllib.parse import urlsplit, urlunsplit
 
 from dotenv import load_dotenv
 from flask import request
@@ -56,6 +57,29 @@ def _callback_webserver_hostname():
         if not any((host in request.host for host in ("localhost", "127.0.0.1")))
         else "dev-server.fractal.co"
     )
+
+
+def _ensure_postgresql(conn_string: str) -> str:
+    """Ensure that a particular PostgreSQL connection string's scheme is "postgresql".
+
+    PostgreSQL connection strings that start with "postgres://" have long been deprecated and are
+    no longer supported since SQLAlchemy 1.4.0b1. Unfortunately, the PostgreSQL connection strings
+    with which Heroku automatically populates environment variables all begin with "postgres://"
+    (see for yourself by running heroku config:get DATABASE_URL --app=fractal-dev-server).
+
+    https://docs.sqlalchemy.org/en/14/changelog/changelog_14.html#change-3687655465c25a39b968b4f5f6e9170b
+
+    Args:
+        conn_string: A PostgreSQL connection string. It should start with either "postgres://" or
+            "postgresql://".
+
+    Returns:
+        The same PostgreSQL connection string whose scheme is guaranteed to be "postgresql".
+    """
+
+    _scheme, *parts = urlsplit(conn_string)
+
+    return urlunsplit(("postgresql", *parts))
 
 
 def getter(key, fetch=True, **kwargs):
@@ -150,9 +174,13 @@ class DeploymentConfig:
     """
 
     def __init__(self):
-        engine = create_engine(os.environ["CONFIG_DB_URL"], echo=False, pool_pre_ping=True)
+        engine = create_engine(
+            _ensure_postgresql(os.environ["CONFIG_DB_URL"]), echo=False, pool_pre_ping=True
+        )
 
         self.session = Session(bind=engine)
+
+    database_url = property(getter("DATABASE_URL", fetch=False))
 
     DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
@@ -174,7 +202,6 @@ class DeploymentConfig:
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
     SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
     SILENCED_ENDPOINTS = ("/status", "/ping")
-    SQLALCHEMY_DATABASE_URI = property(getter("DATABASE_URL", fetch=False))
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
@@ -328,6 +355,16 @@ class DeploymentConfig:
         """
 
         return os.environ.get("REDIS_TLS_URL") or os.environ["REDIS_URL"]
+
+    @property
+    def SQLALCHEMY_DATABASE_URI(self):  # pylint: disable=invalid-name
+        """The connection string of the application's main database.
+
+        Returns:
+            A PostgreSQL connection string whose scheme is guaranteed to be "postgresql".
+        """
+
+        return _ensure_postgresql(self.database_url)
 
 
 class LocalConfig(DeploymentConfig):
