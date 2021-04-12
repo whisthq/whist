@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = "Fractal Web Server"
+project = "Fractal Webserver"
 copyright = "2021, Fractal Computers, Inc."
 author = "Fractal"
 
