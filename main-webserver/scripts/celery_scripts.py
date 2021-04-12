@@ -9,21 +9,26 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), ".."))
 from scripts.utils import make_get_request
 
 
-def poll_celery_task(web_url: str, task_id: str, admin_token: str = None):
+def poll_celery_task(
+    web_url: str,
+    task_id: str,
+    admin_token: str = None,
+    num_tries: int = 300,
+    sleep_time: float = 2.0,
+):
     """
     Poll celery task `task_id` for up to 10 minutes.
     Args:
         web_url: URL of webserver instance to run operation on
         task_id: Task to poll
         admin_token: Optional; can provide traceback info.
+        num_tries: number of times to try getting task result
+        sleep_time: sleep time in between tries
 
     Returns:
         The task output on success, otherwise errors out.
     """
     print(f"Polling task {task_id}")
-    # 300 * 2 sec = 600 sec = 10 min
-    num_tries = 300
-    sleep_time = 2
     endpoint = f"/status/{task_id}"
     resp_json = None
     for _ in range(num_tries):
