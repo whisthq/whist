@@ -34,3 +34,6 @@ tags
 
 # Local testing database files
 db_setup/db_data.sql
+
+# Sphinx documentation build directory
+docs/_build
