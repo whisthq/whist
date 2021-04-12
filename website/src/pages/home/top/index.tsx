@@ -1,28 +1,26 @@
-import React, { useState, useContext } from "react"
-import { Link } from "react-router-dom"
-import FadeIn from "react-fade-in"
-import { TypeWriter } from "@app/shared/components/typewriter"
-import classNames from "classnames"
+import React, { useContext } from 'react'
+import FadeIn from 'react-fade-in'
+import { TypeWriter } from '@app/shared/components/typewriter'
 
-import MainContext from "@app/shared/context/mainContext"
-import { ScreenSize } from "@app/shared/constants/screenSizes"
-import Geometric from "./geometric"
-import YoutubeLogo from "@app/assets/icons/youtubeLogo.svg"
-import InstagramLogo from "@app/assets/icons/instagramLogo.svg"
-import FacebookLogo from "@app/assets/icons/facebookLogo.svg"
-import RedditLogo from "@app/assets/icons/redditLogo.svg"
-import FigmaLogo from "@app/assets/icons/figmaLogo.svg"
-import GmailLogo from "@app/assets/icons/gmailLogo.svg"
+import MainContext from '@app/shared/context/mainContext'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import Geometric from './geometric'
+import YoutubeLogo from '@app/assets/icons/youtubeLogo.svg'
+import InstagramLogo from '@app/assets/icons/instagramLogo.svg'
+import FacebookLogo from '@app/assets/icons/facebookLogo.svg'
+import RedditLogo from '@app/assets/icons/redditLogo.svg'
+import FigmaLogo from '@app/assets/icons/figmaLogo.svg'
+import GmailLogo from '@app/assets/icons/gmailLogo.svg'
 
-import Typeform from "@app/pages/home/components/typeform"
+import Typeform from '@app/pages/home/components/typeform'
 
 const SymmetricGeometric = (props: any) => (
     <FadeIn>
         <div
             className={props.className}
             style={{
-                top: 400,
-                left: 425,
+              top: 400,
+              left: 425
             }}
         >
             <Geometric
@@ -34,8 +32,8 @@ const SymmetricGeometric = (props: any) => (
         <div
             className={props.className}
             style={{
-                top: 400,
-                right: -840,
+              top: 400,
+              right: -840
             }}
         >
             <Geometric
@@ -48,18 +46,17 @@ const SymmetricGeometric = (props: any) => (
 )
 
 export const Top = () => {
-    /*
+  /*
         Top section of Chrome product page
 
         Arguments: none
     */
-    const { width } = useContext(MainContext)
-    const [hovering, setHovering] = useState(false)
-    const [show, setShow] = useState(false)
+  const { width } = useContext(MainContext)
+  const hovering = false
 
-    const adjectives = ["faster", "lighter", "private"]
+  const adjectives = ['faster', 'lighter', 'private']
 
-    return (
+  return (
         <div>
             <div className="text-white text-lg m-auto text-center py-8">
             </div>
@@ -96,11 +93,11 @@ export const Top = () => {
                         <img
                             src={YoutubeLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 45 : 25,
-                                top: width > ScreenSize.MEDIUM ? 170 : 125,
-                                width: width > ScreenSize.MEDIUM ? 70 : 50,
-                                opacity: hovering ? 0.15 : 0.25,
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 45 : 25,
+                              top: width > ScreenSize.MEDIUM ? 170 : 125,
+                              width: width > ScreenSize.MEDIUM ? 70 : 50,
+                              opacity: hovering ? 0.15 : 0.25
                             }}
                             className="animate-bounce"
                             alt="youtube"
@@ -108,12 +105,12 @@ export const Top = () => {
                         <img
                             src={FigmaLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 250 : 150,
-                                top: width > ScreenSize.MEDIUM ? 80 : 50,
-                                width: width > ScreenSize.MEDIUM ? 40 : 30,
-                                opacity: hovering ? 0.15 : 0.25,
-                                animationDelay: "0.9s",
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 250 : 150,
+                              top: width > ScreenSize.MEDIUM ? 80 : 50,
+                              width: width > ScreenSize.MEDIUM ? 40 : 30,
+                              opacity: hovering ? 0.15 : 0.25,
+                              animationDelay: '0.9s'
                             }}
                             className="animate-bounce"
                             alt="figma"
@@ -121,12 +118,12 @@ export const Top = () => {
                         <img
                             src={InstagramLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 170 : 150,
-                                top: width > ScreenSize.MEDIUM ? 280 : 175,
-                                width: width > ScreenSize.MEDIUM ? 45 : 35,
-                                opacity: hovering ? 0.15 : 0.25,
-                                animationDelay: "0.5s",
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 170 : 150,
+                              top: width > ScreenSize.MEDIUM ? 280 : 175,
+                              width: width > ScreenSize.MEDIUM ? 45 : 35,
+                              opacity: hovering ? 0.15 : 0.25,
+                              animationDelay: '0.5s'
                             }}
                             className="animate-bounce"
                             alt="instagram"
@@ -134,12 +131,12 @@ export const Top = () => {
                         <img
                             src={FacebookLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 370 : 220,
-                                width: width > ScreenSize.MEDIUM ? 50 : 35,
-                                top: width > ScreenSize.MEDIUM ? 210 : 110,
-                                opacity: hovering ? 0.15 : 0.25,
-                                animationDelay: "0.2s",
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 370 : 220,
+                              width: width > ScreenSize.MEDIUM ? 50 : 35,
+                              top: width > ScreenSize.MEDIUM ? 210 : 110,
+                              opacity: hovering ? 0.15 : 0.25,
+                              animationDelay: '0.2s'
                             }}
                             className="animate-bounce"
                             alt="facebook"
@@ -147,12 +144,12 @@ export const Top = () => {
                         <img
                             src={GmailLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 450 : 30,
-                                top: width > ScreenSize.MEDIUM ? 60 : 210,
-                                width: width > ScreenSize.MEDIUM ? 50 : 35,
-                                opacity: hovering ? 0.15 : 0.25,
-                                animationDelay: "0.7s",
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 450 : 30,
+                              top: width > ScreenSize.MEDIUM ? 60 : 210,
+                              width: width > ScreenSize.MEDIUM ? 50 : 35,
+                              opacity: hovering ? 0.15 : 0.25,
+                              animationDelay: '0.7s'
                             }}
                             className="animate-bounce"
                             alt="gmail"
@@ -160,12 +157,12 @@ export const Top = () => {
                         <img
                             src={RedditLogo}
                             style={{
-                                position: "absolute",
-                                left: width > ScreenSize.MEDIUM ? 500 : 240,
-                                top: width > ScreenSize.MEDIUM ? 350 : 240,
-                                width: width > ScreenSize.MEDIUM ? 50 : 35,
-                                opacity: hovering ? 0.15 : 0.2,
-                                animationDelay: "0.1s",
+                              position: 'absolute',
+                              left: width > ScreenSize.MEDIUM ? 500 : 240,
+                              top: width > ScreenSize.MEDIUM ? 350 : 240,
+                              width: width > ScreenSize.MEDIUM ? 50 : 35,
+                              opacity: hovering ? 0.15 : 0.2,
+                              animationDelay: '0.1s'
                             }}
                             className="animate-bounce"
                             alt="reddit"
@@ -174,7 +171,7 @@ export const Top = () => {
                 </FadeIn>
             </div>
         </div>
-    )
+  )
 }
 
 export default Top

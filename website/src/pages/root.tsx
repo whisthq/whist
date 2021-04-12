@@ -1,20 +1,19 @@
-import React from "react"
-import { Route, Switch } from "react-router-dom"
+import React from 'react'
+import { Route, Switch } from 'react-router-dom'
 
-import About from "@app/pages/about"
-import Cookies from "@app/pages/legal/cookies"
+import About from '@app/pages/about'
+import Cookies from '@app/pages/legal/cookies'
 /* import Auth from "@app/pages/auth/auth" */
-import Privacy from "@app/pages/legal/privacy"
-import TermsOfService from "@app/pages/legal/tos"
+import Privacy from '@app/pages/legal/privacy'
+import TermsOfService from '@app/pages/legal/tos'
 /* import Verify from "@app/pages/auth/verify/verify" */
 /* import Reset from "@app/pages/auth/reset/reset" */
 /* import AuthCallback from "@app/pages/auth/callback/callback" */
 /* import Dashboard from "@app/pages/dashboard/dashboard" */
-import Landing from "@app/pages/home"
+import Landing from '@app/pages/home'
 
-import routes from "@app/shared/constants/routes"
-import withTracker from "@app/shared/utils/withTracker"
-
+import routes from '@app/shared/constants/routes'
+import withTracker from '@app/shared/utils/withTracker'
 
 /* const RoutePairs = [
 *     [routes.ABOUT, withTracker(About)],
@@ -31,12 +30,12 @@ import withTracker from "@app/shared/utils/withTracker"
 *  */
 
 const RootApp = () => {
-    /*
+  /*
         Highest-level React component, contains router and ApolloClient
         Arguments:
             accessToken(string): Access token, if any
     */
-    return (
+  return (
         <Switch>
             <Route exact path={routes.ABOUT} component={withTracker(About)} />
             <Route exact path={routes.COOKIES} component={withTracker(Cookies)} />
@@ -44,10 +43,7 @@ const RootApp = () => {
             <Route exact path={routes.TOS} component={withTracker(TermsOfService)} />
             <Route exact path={routes.LANDING} component={withTracker(Landing)} />
         </Switch>
-    )
+  )
 }
-
-
-
 
 export default RootApp
