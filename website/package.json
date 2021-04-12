@@ -9,7 +9,7 @@
         "tailwind": "./scripts/tailwind.sh",
         "postinstall": "./scripts/postinstall.sh",
         "lint-fix": "./scripts/lint-fix.sh",
-        "lint-check": "./scripts/lint-check.sh"
+        "lint-check": "chmod +x ./scripts/lint-check.sh && ./scripts/lint-check.sh"
     },
     "dependencies": {
         "@fortawesome/fontawesome-svg-core": "^1.2.35",
