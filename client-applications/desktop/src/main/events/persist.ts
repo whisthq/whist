@@ -42,10 +42,10 @@ export const fromEventPersist = (key: string) =>
     distinctUntilChanged()
   )
 
-// store.onDidAnyChange((newStore: any, _oldStore: any) => {
-//   persisted.next(newStore)
-// })
+store.onDidAnyChange((newStore: any, _oldStore: any) => {
+  persisted.next(newStore)
+})
 
-// eventAppReady.subscribe(() => {
-//   persisted.next(store.store)
-// })
+eventAppReady.subscribe(() => {
+  persisted.next(store.store)
+})

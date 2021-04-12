@@ -12,6 +12,7 @@
         "tailwind": "./scripts/tailwind.sh",
         "retrieve": "python3 scripts/retrieve.py",
         "postinstall": "./scripts/postinstall.sh",
+        "lint-check": "sh scripts/lint-check.sh",
         "lint-fix": "sh scripts/lint-fix.sh"
     },
     "dependencies": {

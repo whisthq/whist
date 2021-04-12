@@ -26,8 +26,9 @@
 // modules, it will be ignored.
 
 import { isObservable } from 'rxjs'
-import { identity, pick } from 'lodash'
-import { logDebug } from '@app/utils/logging'
+import { pick } from 'lodash'
+// import { identity } from 'lodash'
+// import { logDebug } from '@app/utils/logging'
 import * as login from '@app/main/observables/login'
 import * as host from '@app/main/observables/host'
 import * as signup from '@app/main/observables/signup'
@@ -110,6 +111,7 @@ const schema: DebugSchema = {
 }
 
 const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any
+console.log(schema)
 
 // For now, we're are printing the debug logs even when the app is packaged.
 // We are also commenting out the logs in main/effects/logging to avoid
@@ -117,13 +119,17 @@ const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any
 //
 // When we decide to return to standard logging, we should replace the
 // true below with !app.isPackaged.
-// for (const key in symbols) {
-//   if (isObservable(symbols[key]) && symbols[key]) {
-//       symbols[key].subscribe((...args: any) => {
-//           let [message, func] = schema[key]
-//           if (func === undefined) func = identity
-//           const data = func != null ? func(...args) : undefined
-//           logDebug(key, message, data)
-//       })
-//   }
-// }
+for (const key in symbols) {
+  try {
+    if (isObservable(symbols[key])) {
+      // symbols[key].subscribe((...args: any) => {
+      //   let [message, func] = schema[key]
+      //   if (func === undefined) func = identity
+      //   const data = func != null ? func(...args) : undefined
+      //   logDebug(key, message, data)
+      // })
+    }
+  } catch (err) {
+    console.error(err)
+  }
+}

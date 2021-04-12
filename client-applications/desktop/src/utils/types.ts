@@ -3,7 +3,7 @@ export type AsyncReturnType<
 > = T extends (...args: any) => Promise<infer R> ? R : any
 
 interface StateIPCIndex {
-    [index: string]: any
+  [index: string]: any
 }
 
 export interface StateIPC extends StateIPCIndex {

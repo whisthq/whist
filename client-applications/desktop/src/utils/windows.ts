@@ -1,15 +1,15 @@
 import path from 'path'
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from 'electron'
 import {
-    WindowHashAuth,
-    WindowHashUpdate,
-    WindowHashAuthError,
-    WindowHashProtocolError,
-    WindowHashCreateContainerErrorNoAccess,
-    WindowHashCreateContainerErrorUnauthorized,
-    WindowHashCreateContainerErrorInternal,
-    WindowHashAssignContainerError,
-} from "@app/utils/constants"
+  WindowHashAuth,
+  WindowHashUpdate,
+  WindowHashAuthError,
+  WindowHashProtocolError,
+  WindowHashCreateContainerErrorNoAccess,
+  WindowHashCreateContainerErrorUnauthorized,
+  WindowHashCreateContainerErrorInternal,
+  WindowHashAssignContainerError
+} from '@app/utils/constants'
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), 'build')
@@ -95,32 +95,32 @@ export const createAuthErrorWindow: CreateWindowFunction = () =>
   } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
-    createWindow(WindowHashCreateContainerErrorNoAccess, {
-        ...base,
-        ...screenWidth.wMd,
-        ...screenHeight.hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashCreateContainerErrorNoAccess, {
+    ...base,
+    ...screenWidth.wMd,
+    ...screenHeight.hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindowUnauthorized: CreateWindowFunction = () =>
-    createWindow(WindowHashCreateContainerErrorUnauthorized, {
-        ...base,
-        ...screenWidth.wMd,
-        ...screenHeight.hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashCreateContainerErrorUnauthorized, {
+    ...base,
+    ...screenWidth.wMd,
+    ...screenHeight.hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindowInternal: CreateWindowFunction = () =>
-    createWindow(WindowHashCreateContainerErrorInternal, {
-        ...base,
-        ...screenWidth.wMd,
-        ...screenHeight.hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashCreateContainerErrorInternal, {
+    ...base,
+    ...screenWidth.wMd,
+    ...screenHeight.hXs
+  } as BrowserWindowConstructorOptions)
 
 export const assignContainerErrorWindow: CreateWindowFunction = () =>
-    createWindow(WindowHashAssignContainerError, {
-        ...base,
-        ...screenWidth.wMd,
-        ...screenHeight.hXs,
-    } as BrowserWindowConstructorOptions)
+  createWindow(WindowHashAssignContainerError, {
+    ...base,
+    ...screenWidth.wMd,
+    ...screenHeight.hXs
+  } as BrowserWindowConstructorOptions)
 
 export const createProtocolErrorWindow: CreateWindowFunction = () =>
   createWindow(WindowHashProtocolError, {
