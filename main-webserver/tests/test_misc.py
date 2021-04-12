@@ -165,11 +165,12 @@ def test_check_developer_verified_mapping(app, make_user):
     Make sure a developer can make a test account with the format verified+anything@fractal.co
     where verified is the name of an already verified developer account.
     """
+    developer_name = "definitely_real_developer"
     # make verified developer account
-    make_user(user_id="developer@fractal.co", verified=True)
+    make_user(user_id=f"{developer_name}@fractal.co", verified=True)
 
-    # 1. valid new test account the developer wants to makes
-    username = "developer+test1@fractal.co"
+    # 1. valid new test account that the developer wants to make
+    username = f"{developer_name}+test1@fractal.co"
     make_user(user_id=username, verified=False)
     access_token = create_access_token(username)
 
@@ -177,8 +178,8 @@ def test_check_developer_verified_mapping(app, make_user):
         verify_jwt_in_request()
         assert check_developer() is True
 
-    # 2. invalid new test account the developer wants to makes
-    username = "test1+developer@fractal.co"  # test1 must come AFTER developer
+    # 2. invalid new test account that the developer wants to make
+    username = f"test1+{developer_name}@fractal.co"  # test1 must come AFTER developer
     make_user(user_id=username, verified=False)
     access_token = create_access_token(username)
 
@@ -186,8 +187,17 @@ def test_check_developer_verified_mapping(app, make_user):
         verify_jwt_in_request()
         assert check_developer() is False
 
-    # 3. invalid new test account because wrong domain
-    username = "developer+test1@gmail.com"
+    # 3. more pathalogical version of 2
+    username = f"test1+test1+*{developer_name}@fractal.co"  # test1 must come AFTER developer
+    make_user(user_id=username, verified=False)
+    access_token = create_access_token(username)
+
+    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
+        verify_jwt_in_request()
+        assert check_developer() is False
+
+    # 4. invalid new test account because wrong domain
+    username = f"{developer_name}+test1@gmail.com"
     make_user(user_id=username, verified=False)
     access_token = create_access_token(username)
 
