@@ -157,8 +157,24 @@ def test_check_developer(app, make_user, is_developer, username, verified):
 
     with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
         verify_jwt_in_request()
-
         assert check_developer() == is_developer
+
+
+def test_check_developer_verified_mapping(app, make_user):
+    """
+    Make sure a developer can make a test account with the format verified+anything@fractal.co
+    where verified is the name of an already verified developer account.
+    """
+    # make verified developer account
+    make_user(user_id="developer@fractal.co", verified=True)
+    # the new test account the developer wants to makes
+    username = "developer+test1@fractal.co"
+    make_user(user_id=username, verified=True)
+    access_token = create_access_token(username)
+
+    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
+        verify_jwt_in_request()
+        assert check_developer() is True
 
 
 def test_check_admin(app):
