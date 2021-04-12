@@ -84,18 +84,22 @@ def check_developer() -> bool:
     within a view function that is decorated with @jwt_required().
 
     Returns:
-        True iff the requester is a Fractal developer or the admin user.
+        True iff the requester is a verified Fractal developer or the admin user.
 
     Raises:
         RuntimeError: This function was called before @jwt_required() and verify_jwt_in_request().
     """
 
     current_user = get_jwt_identity()
-
-    return current_user is not None and (
-        current_app.config["DASHBOARD_USERNAME"] in current_user
-        or current_user.endswith("@fractal.co")
-    )
+    if current_user is None:
+        return False
+    elif current_app.config["DASHBOARD_USERNAME"] in current_user:
+        return True
+    elif current_user.endswith("@fractal.co"):
+        # make sure they are actually verified
+        user = User.query.get(current_user)
+        return user is not None and user.verified is True
+    return False
 
 
 def developer_required(func):
