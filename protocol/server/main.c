@@ -809,8 +809,13 @@ int multithreaded_manage_clients(void* opaque) {
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
     bool disable_timeout = false;
-    LOG_INFO("**************************************begin_time_to_exit: %d********************************", begin_time_to_exit);
-    if (begin_time_to_exit == -1){ // client has `begin_time_to_exit` seconds to connect when the server first goes up. If the variable is -1, disable auto-exit.
+    LOG_INFO(
+        "**************************************begin_time_to_exit: "
+        "%d********************************",
+        begin_time_to_exit);
+    if (begin_time_to_exit ==
+        -1) {  // client has `begin_time_to_exit` seconds to connect when the server first goes up.
+               // If the variable is -1, disable auto-exit.
         disable_timeout = true;
     }
     clock first_client_timer;  // start this now and then discard when first client has connected
@@ -849,9 +854,11 @@ int multithreaded_manage_clients(void* opaque) {
             //  doesn't matter if we disconnect
             //  * if no clients are connected, it isn't possible for another client to nongracefully
             //  exit and reset the grace period timer
-            if (((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) && !disable_timeout) &&
+            if (((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
+                 !disable_timeout) &&
                 (!client_exited_nongracefully ||
-                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period && !disable_timeout))) {
+                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period &&
+                  !disable_timeout))) {
                 exiting = true;
             }
         } else {
@@ -1034,7 +1041,8 @@ int parse_args(int argc, char* argv[]) {
             }
             case 't': {
                 printf("Timeout before autoexit passed in: %s\n", optarg);
-                if (sscanf(optarg, "%d", &begin_time_to_exit) != 1 || (begin_time_to_exit <=0 && begin_time_to_exit != -1)) {
+                if (sscanf(optarg, "%d", &begin_time_to_exit) != 1 ||
+                    (begin_time_to_exit <= 0 && begin_time_to_exit != -1)) {
                     printf("Timeout should be a positive double or -1\n");
                 }
                 break;
