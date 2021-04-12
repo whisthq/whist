@@ -176,7 +176,7 @@
             "efsVolumeConfiguration": null,
             "name": "userConfigs",
             "host": {
-                "sourcePath": "/fractal/%%FRACTAL_ID_PLACEHOLDER%%/userConfigs"
+                "sourcePath": "/fractal/%%FRACTAL_ID_PLACEHOLDER%%/userConfigs/unpacked_configs"
             },
             "dockerVolumeConfiguration": null
         },
