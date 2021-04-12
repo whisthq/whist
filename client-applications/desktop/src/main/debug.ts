@@ -117,13 +117,13 @@ const symbols = modules.reduce((acc, m) => ({ ...acc, ...m }), {}) as any
 //
 // When we decide to return to standard logging, we should replace the
 // true below with !app.isPackaged.
-for (const key in symbols) {
-  if (isObservable(symbols[key])) {
-    symbols[key].subscribe((...args: any) => {
-      let [message, func] = schema[key]
-      if (func === undefined) func = identity
-      const data = (func != null) ? func(...args) : undefined
-      logDebug(key, message, data)
-    })
-  }
-}
+// for (const key in symbols) {
+//   if (isObservable(symbols[key]) && symbols[key]) {
+//       symbols[key].subscribe((...args: any) => {
+//           let [message, func] = schema[key]
+//           if (func === undefined) func = identity
+//           const data = func != null ? func(...args) : undefined
+//           logDebug(key, message, data)
+//       })
+//   }
+// }

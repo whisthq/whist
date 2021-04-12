@@ -2,7 +2,11 @@ export type AsyncReturnType<
     T extends (...args: any) => Promise<any>
 > = T extends (...args: any) => Promise<infer R> ? R : any
 
-export interface StateIPC {
+interface StateIPCIndex {
+    [index: string]: any
+}
+
+export interface StateIPC extends StateIPCIndex {
   email: string
   password: string
   loginWarning: string
