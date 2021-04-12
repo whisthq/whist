@@ -1,15 +1,15 @@
-import React from "react"
+import React from 'react'
 
-import Typeform from "@app/pages/home/components/typeform"
+import Typeform from '@app/pages/home/components/typeform'
 
 export const ActionPrompt = () => {
-    /*
+  /*
         Colorful box component with Get Started prompt
- 
-        Arguments: 
+
+        Arguments:
             none
     */
-    return (
+  return (
         <div className="mt-48 text-center">
             <div className="rounded px-0 md:px-12 py-10 md:py-14">
                 <div className="text-4xl md:text-5xl tracking-wide leading-snug text-gray dark:text-gray-300">
@@ -21,7 +21,7 @@ export const ActionPrompt = () => {
                 <Typeform text="JOIN WAITLIST"/>
             </div>
         </div>
-    )
+  )
 }
 
 export default ActionPrompt

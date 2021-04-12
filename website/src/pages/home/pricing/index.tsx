@@ -1,25 +1,25 @@
-import React from "react"
-import { Link } from "react-router-dom"
+import React from 'react'
+import { Link } from 'react-router-dom'
 
-import PriceBox from "./priceBox"
-import { PLANS } from "@app/shared/constants/stripe"
-import { FractalPlan } from "@app/shared/types/payment"
+import PriceBox from './priceBox'
+import { PLANS } from '@app/shared/constants/stripe'
+import { FractalPlan } from '@app/shared/types/payment'
 
 export const Pricing = (props: { dark: boolean }) => {
-    /*
+  /*
         Pricing section of chrome product page
- 
-        Arguments: 
+
+        Arguments:
             dark (boolean): True/false dark mode
     */
 
-    const { dark } = props
+  const { dark } = props
 
-    return (
+  return (
         <div className="text-center mt-52 relative">
             <div className="flex justify-center text-5xl dark:text-gray-300">
                 <div>
-                    Try Fractal for{" "}
+                    Try Fractal for{' '}
                     <span className="text-blue dark:text-mint">free</span>
                 </div>
             </div>
@@ -42,12 +42,12 @@ export const Pricing = (props: { dark: boolean }) => {
                 />
                 <PriceBox
                     {...PLANS[FractalPlan.PRO]}
-                    background={dark ? "#00FFA2" : "#f6f9ff"}
+                    background={dark ? '#00FFA2' : '#f6f9ff'}
                     textColor="black"
                 />
             </div>
         </div>
-    )
+  )
 }
 
 export default Pricing

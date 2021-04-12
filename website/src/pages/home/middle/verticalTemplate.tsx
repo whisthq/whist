@@ -1,21 +1,21 @@
-import React, { useContext } from "react"
-import { Row, Col } from "react-bootstrap"
+import React, { useContext } from 'react'
+import { Row, Col } from 'react-bootstrap'
 
-import Geometric from "@app/pages/home/top/geometric"
-import MainContext from "@app/shared/context/mainContext"
-import { ScreenSize } from "@app/shared/constants/screenSizes"
+import Geometric from '@app/pages/home/top/geometric'
+import MainContext from '@app/shared/context/mainContext'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
 
 export const VerticalTemplate = (props: {
-    visible: boolean
-    title: JSX.Element
-    text: JSX.Element
-    image: JSX.Element
-    background?: boolean
+  visible: boolean
+  title: JSX.Element
+  text: JSX.Element
+  image: JSX.Element
+  background?: boolean
 }) => {
-    /*
+  /*
         Template for arranging text and images vertically
- 
-        Arguments: 
+
+        Arguments:
             visible (boolean): Should the image be visible
             title (Element): Title
             text (Element): Text under title
@@ -23,19 +23,19 @@ export const VerticalTemplate = (props: {
             background (boolean): Should the animated background be visible
     */
 
-    const { width } = useContext(MainContext)
-    const { title, text, image, visible } = props
+  const { width } = useContext(MainContext)
+  const { title, text, image, visible } = props
 
-    return (
+  return (
         <div className="mt-24 md:mt-52">
-            {props.background && width > ScreenSize.MEDIUM && (
+            {props.background !== undefined && width > ScreenSize.MEDIUM && (
                 <>
                     <div className="relative">
                         <div
                             style={{
-                                position: "absolute",
-                                top: 400,
-                                left: 425,
+                              position: 'absolute',
+                              top: 400,
+                              left: 425
                             }}
                         >
                             <Geometric scale={3} flip={false} />
@@ -44,9 +44,9 @@ export const VerticalTemplate = (props: {
                     <div className="relative">
                         <div
                             style={{
-                                position: "absolute",
-                                top: 400,
-                                right: -840,
+                              position: 'absolute',
+                              top: 400,
+                              right: -840
                             }}
                         >
                             <Geometric scale={3} flip={true} />
@@ -68,7 +68,7 @@ export const VerticalTemplate = (props: {
                 </Col>
             </Row>
         </div>
-    )
+  )
 }
 
 export default VerticalTemplate
