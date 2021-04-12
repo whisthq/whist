@@ -849,7 +849,7 @@ int multithreaded_manage_clients(void* opaque) {
             //  doesn't matter if we disconnect
             //  * if no clients are connected, it isn't possible for another client to nongracefully
             //  exit and reset the grace period timer
-            if ((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit && !disable_timeout)) &&
+            if (((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) && !disable_timeout) &&
                 (!client_exited_nongracefully ||
                  (get_timer(last_nongraceful_exit) > nongraceful_grace_period && !disable_timeout))) {
                 exiting = true;
