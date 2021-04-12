@@ -1,0 +1,20 @@
+{
+  "imports": {
+    "@fortawesome/free-solid-svg-icons": "./@fortawesome/free-solid-svg-icons.js",
+    "@fortawesome/react-fontawesome": "./@fortawesome/react-fontawesome.js",
+    "@fractal/core-ts": "./@fractal/core-ts.js",
+    "classnames": "./classnames.js",
+    "history": "./history.js",
+    "lodash": "./lodash.js",
+    "rc-progress": "./rc-progress.js",
+    "react": "./react.js",
+    "react-dom": "./react-dom.js",
+    "react-flip-toolkit": "./react-flip-toolkit.js",
+    "react-router": "./react-router.js",
+    "react-router-dom": "./react-router-dom.js",
+    "react-spring": "./react-spring.js",
+    "rxjs": "./rxjs.js",
+    "rxjs/operators": "./rxjs/operators.js",
+    "util": "./util.js"
+  }
+}
