@@ -107,7 +107,7 @@ jobs:
                   print(context.strip("\n"))
 
             - name: Set up Python 3.8
-              uses: actions/setup-python@v2
+              uses: actions/setup-python@v2.2.2
               with:
                   python-version: 3.8
 
