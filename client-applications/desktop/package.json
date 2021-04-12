@@ -154,7 +154,7 @@
         "ky-universal": "^0.9.1",
         "node-fetch": "^2.6.1",
         "node-forge": "^0.10.0",
-        "ping": "^0.4.0",
+        "ping": "^0.4.1",
         "png2icons": "^2.0.1",
         "popper.js": "^1.16.1",
         "postcss": "8",
