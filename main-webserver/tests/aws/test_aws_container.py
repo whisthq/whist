@@ -179,7 +179,7 @@ def test_delete_bad_cluster():
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_ensure_container_exists(container):
+def test_ensure_container_exists(container, monkeypatch):
     """Test that `ensure_container_exists` handles bad inputs correctly.
 
     This first tests that passing in an argument of `None` raises the
@@ -206,7 +206,7 @@ def test_ensure_container_exists(container):
         # this fake container doesn't exist in this real cluster.
         # To be clear, I am hardcoding this string based on the expectation
         # that the default cluster in us-east-1 will always be named "default".
-        dummy_container.cluster = "default"
+        monkeypatch.setattr(dummy_container, "cluster", "default")
 
         response_container = ensure_container_exists(dummy_container)
 
