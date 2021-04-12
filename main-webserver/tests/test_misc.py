@@ -169,7 +169,7 @@ def test_check_developer_verified_mapping(app, make_user):
     make_user(user_id="developer@fractal.co", verified=True)
     # the new test account the developer wants to makes
     username = "developer+test1@fractal.co"
-    make_user(user_id=username, verified=True)
+    make_user(user_id=username, verified=False)
     access_token = create_access_token(username)
 
     with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):

@@ -107,7 +107,6 @@ def check_developer() -> bool:
             # as the current user
             prefix_user = groups[0]
             current_user = f"{prefix_user}@fractal.co"
-            fractal_logger.info(f"CU: {current_user}")
         # make sure they are actually verified
         user = User.query.get(current_user)
         return user is not None and user.verified is True
