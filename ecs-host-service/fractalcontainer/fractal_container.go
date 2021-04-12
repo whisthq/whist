@@ -103,7 +103,7 @@ type FractalContainer interface {
 	// data are only known once a container is assigned to a user and are
 	// provided by the fractal webserver.
 	WriteStartValues(dpi int, containerARN string) error
-	// WriteDevValues() writes files containing the timeout assigned to a directory 
+	// WriteDevValues() writes files containing the timeout assigned to a directory
 	// accessible to only this container.
 	WriteDevValues(timeout int) error
 	// MarkReady tells the protocol inside the container that it is ready to
