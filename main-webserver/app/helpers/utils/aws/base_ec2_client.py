@@ -1,6 +1,6 @@
 import time
 
-from typing import Any, Literal, List, Optional, Union
+from typing import Any, Dict, Literal, List, Optional, Union
 import boto3  # type: ignore
 
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
@@ -46,15 +46,15 @@ class EC2Client:
         self.instances = dict()
 
         if starter_ec2_client is None:
-            self.ec2_client = self.make_client("ec2")
+            self.ec2_client = self._make_client("ec2")
         else:
             self.ec2_client = starter_ec2_client
         if starter_iam_client is None:
-            self.iam_client = self.make_client("iam")
+            self.iam_client = self._make_client("iam")
         else:
             self.iam_client = starter_iam_client
 
-    def make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
+    def _make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
         """
         Constructs an ECS client object with the given params
         Args:
@@ -76,7 +76,7 @@ class EC2Client:
         num_instances: int = 1,
         instance_type: str = "g3.4xlarge",
         instance_name: str = "Leor-test-instance",
-    ):
+    ) -> List[str]:
         """
         Starts AWS instances with the given properties, not returning until they're
         actively running
@@ -121,7 +121,7 @@ class EC2Client:
         self.ec2_client.terminate_instances(InstanceIds=instance_ids)
         self._spin_til_instances_down(instance_ids)
 
-    def _check_if_instances_up(self, instance_ids: List[str]):
+    def _check_if_instances_up(self, instance_ids: List[str]) -> bool:
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
@@ -131,7 +131,7 @@ class EC2Client:
             return True
         raise Exception(states)
 
-    def _check_if_instances_down(self, instance_ids: List[str]):
+    def _check_if_instances_down(self, instance_ids: List[str]) -> bool:
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
@@ -147,8 +147,27 @@ class EC2Client:
         while not self._check_if_instances_down(instance_ids):
             time.sleep(time_wait)
 
+    def get_ip_of_instances(self, instance_ids: List[str]) -> Dict[str, str]:
+        """
+        Gets the IP addresses of the passed in instances, by ID
+        Args:
+            instance_ids: what IDs to check
+
+        Returns: a dict mapping instance ID to IP address
+
+        """
+        if not self._check_if_instances_up(instance_ids):
+            raise Exception("instances must be up to check IPs")
+        resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
+        instance_info = resp["Reservations"][0]["Instances"]
+        resdict = dict()
+        for instance in instance_info:
+            resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
+        return resdict
+
 
 if __name__ == "__main__":
     ec2_client = EC2Client()
-    # print(ec2_client.start_instances("ami-037b96e43364db32c"))
-    ec2_client.stop_instances(["i-0e09c002ca88a268e"])
+    ids = ec2_client.start_instances("ami-037b96e43364db32c")
+    print(ids, ec2_client.get_ip_of_instances(ids))
+    ec2_client.stop_instances(ids)
