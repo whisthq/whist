@@ -227,8 +227,7 @@ type SpinUpContainerRequest struct {
 	AppName      string             `json:"app_name"`
 	AppImage     string             `json:"app_image"`
 	MountCommand string             `json:"mount_command"`
-	HostPort     int                `json:"host_port"`      // Port on the host to whose container this user corresponds
-	Timeout      int                `json:"timeout"`        // timeout to set for the container
+	Timeout      int                `json:"timeout"` // timeout to set for the container
 	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
 }
 

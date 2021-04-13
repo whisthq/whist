@@ -147,12 +147,12 @@ You first need to build the protocol and then build the base image before you ca
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
 
 ```
-[FRACTAL_DPI=96] ./run_local_container_image.sh APP [MOUNT]
+FRACTAL_DPI=96 ./run_local_container_image.sh APP MOUNT
 ```
 
 As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
 
-You can optionally override the default value of `96` for `FRACTAL_DPI` by setting the eponymous environment variable prior to running the container image. This might be useful if you are testing on a high-DPI screen.
+You can optionally override the default value of `96` for `FRACTAL_DPI` by setting the eponymous environment variable prior to running the container image. This might be useful if you are testing on a high-DPI screen. Likewise, you can override the default value of `60` seconds for `FRACTAL_TIMEOUT`, in case you don't want the protocol server to auto-shutdown after 60 seconds. Set it to any positive number for the timeout to be that number of seconds, or set it to `-1` to remove the timeout completely.
 
 ### Running Remote-Pushed Images
 
@@ -176,7 +176,7 @@ The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIR
 
 Before connecting to the server protocol that runs in the container, the host service needs to receive a `set_container_start_values` request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`. This request sets the DPI and User ID.
 
-If you are using a high-DPI screen, you may want to pass in the optional DPI argument by setting the `FRACTAL_DPI` environment variable on your host. Additionally, if you want to save your configs between sessions, then set the `FRACTAL_USER_ID` environment variable on your host.
+If you are using a high-DPI screen, you may want to pass in the optional DPI argument by setting the `FRACTAL_DPI` environment variable on your host. If you want to save your configs between sessions, then set the `FRACTAL_USER_ID` environment variable on your host. Additionally, you can set the `FRACTAL_TIMEOUT` environment variable, in case you don't want the protocol server to auto-shutdown after 60 seconds.
 
 Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
