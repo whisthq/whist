@@ -64,12 +64,12 @@ RUN echo export MOZ_USE_XINPUT2=1 | tee /etc/profile.d/use-xinput2.sh
 # Create default config paths
 RUN su - fractal -c "mkdir -p /home/fractal/.mozilla/firefox"
 
+# Copy custom user profile
+COPY fractal_profile/  /home/fractal/.mozilla/firefox/fractal_profile
+
+# Install Fractal wrapper script to run Firefox into /usr/bin
+COPY start-firefox.sh /usr/bin/start-firefox
+RUN chmod +x /usr/bin/start-firefox
+
 # Setup Fractal application symlink
-RUN ln -sf /usr/bin/firefox /usr/bin/fractal-application
-
-# Swap in custom userChrome.css file
-# ADD chrome /home/fractal/.mozilla/firefox
-# COPY user.js /home/fractal/.mozilla/firefox
-
-RUN mkdir /home/ubuntu/.mozilla/firefox/chrome
-COPY userChrome.css /home/ubuntu/.mozilla/firefox/chrome
+RUN ln -sf /usr/bin/start-firefox /usr/bin/fractal-application
