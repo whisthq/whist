@@ -79,7 +79,7 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 
 // SpinUpContainer will only be called in the localdev environment. It is also
 // currently only used in `run_container_image.sh`. Eventually, as we move off
-// ECS, this endpoint will become the canonical way to start containers. 
+// ECS, this endpoint will become the canonical way to start containers.
 // Also creates a file containing the timeout assigned to a specific container, and make
 // it accessible to that container.
 func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SpinUpContainerRequest) {
@@ -206,20 +206,6 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
-
-
-	// Verify identifying hostPort value
-	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort: %v", req.HostPort)
-		return
-	}
-	hostPort := uint16(req.HostPort)
-
-	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
 
 	err = fc.WriteDevValues(req.Timeout)
 	if err != nil {
@@ -611,9 +597,6 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				switch serverevent.(type) {
 				case *httpserver.SetContainerStartValuesRequest:
 					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
-
-				case *httpserver.SetContainerDevValuesRequest:
-					go handleDevValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerDevValuesRequest))
 
 				case *httpserver.SetConfigEncryptionTokenRequest:
 					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))

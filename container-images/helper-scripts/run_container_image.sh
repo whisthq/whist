@@ -88,25 +88,6 @@ send_start_values_request() {
     echo "Response to container start values request from host service: $response"
 }
 
-# Send a dev start value request to the Fractal ECS host service HTTP server running on localhost
-# This should only be called in the dev pipeline, and can be used to send in any protocol server variables (i.e. timeout)
-# Args: container_id, timeout
-send_dev_values_request() {
-    echo "Sending container dev values request to container $1!"
-    # Send the DPI/container-ready request
-    response=$(curl --insecure --silent --location --request PUT 'https://localhost:4678/set_container_dev_values' \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-      "auth_secret": "testwebserverauthsecretdev",
-      "host_port": 32262,
-      "timeout": '"$2"'
-    }') \
-        || (print_error_and_kill_container $1 "container dev values request to the host service failed!")
-
-    echo "Sent container dev values request to container $1!"
-    echo "Response to container dev values request from host service: $response"
-}
-
 # Send a set config encryption token request to the Fractal ECS host service HTTP server running on localhost
 # This is also necessary for the Fractal server protocol to think that it is ready to start. In production,
 # the client app would send this request to the Fractal host service, but for local development we need
@@ -141,7 +122,6 @@ send_spin_up_container_request() {
       "app_name": "'"$1"'",
       "app_image": "'"$2"'",
       "mount_command": "'"$3"'",
-      "host_port": 32262,
       "timeout": '"$4"'
     }') \
         || (echo "spin up request to the host service failed!" && exit 1)
