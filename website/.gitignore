@@ -14,6 +14,9 @@
 # production
 /build
 
+# dynamically generated css
+/public/css/tailwind.css
+
 # Python
 __pycache__
 .ipynb_checkpoints
@@ -33,4 +36,3 @@ scripts/.ipynb_checkpoints
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-yarn.lock
