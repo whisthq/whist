@@ -10,22 +10,22 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { fromEventIPC } from '@app/main/events/ipc'
-import { from } from 'rxjs'
-import { loadingFrom } from '@app/utils/observables'
+import { fromEventIPC } from "@app/main/events/ipc"
+import { from } from "rxjs"
+import { loadingFrom } from "@app/utils/observables"
 import {
   emailSignup,
   emailSignupValid,
-  emailSignupError
-} from '@app/utils/signup'
-import { createConfigToken, encryptConfigToken } from '@app/utils/crypto'
-import { filter, map, share, exhaustMap, switchMap } from 'rxjs/operators'
+  emailSignupError,
+} from "@app/utils/signup"
+import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
+import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
 
-export const signupRequest = fromEventIPC('signupRequest').pipe(
+export const signupRequest = fromEventIPC("signupRequest").pipe(
   filter(
     (req) =>
-      ((req?.email as string) ?? '') !== '' &&
-      ((req?.password as string) ?? '') !== ''
+      ((req?.email as string) ?? "") !== "" &&
+      ((req?.password as string) ?? "") !== ""
   ),
   switchMap((req) =>
     from(
@@ -35,7 +35,8 @@ export const signupRequest = fromEventIPC('signupRequest').pipe(
     )
   ),
   map(([req, token]) => [req?.email, req?.password, token]),
-  share()
+  share(),
+  debug(LogLevel.DEBUG, "signupRequest")
 )
 
 export const signupProcess = signupRequest.pipe(
@@ -49,15 +50,18 @@ export const signupProcess = signupRequest.pipe(
 
 export const signupWarning = signupProcess.pipe(
   filter((res) => !emailSignupError(res)),
-  filter((res) => !emailSignupValid(res))
+  filter((res) => !emailSignupValid(res)),
+  debug(LogLevel.WARNING, "signupWarning", "user already exists", null)
 )
 
 export const signupSuccess = signupProcess.pipe(
-  filter((res) => emailSignupValid(res))
+  filter((res) => emailSignupValid(res)),
+  debug(LogLevel.DEBUG, "signupSuccess", "json value:", ({ json }) => json)
 )
 
 export const signupFailure = signupProcess.pipe(
-  filter((res) => emailSignupError(res))
+  filter((res) => emailSignupError(res)),
+  debug(LogLevel.ERROR, "signupFailure", "error:")
 )
 
 export const signupLoading = loadingFrom(
@@ -65,4 +69,4 @@ export const signupLoading = loadingFrom(
   signupSuccess,
   signupFailure,
   signupWarning
-)
+).pipe(debug(LogLevel.DEBUG, "signupLoading"))
