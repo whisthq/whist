@@ -13,16 +13,19 @@ import {
 } from '@app/main/observables/protocol'
 import { hideAppDock } from '@app/utils/windows'
 
-// Streaming information to protocol
-// Stream the ip, secret_key, and ports info to the protocol when we
-// when we receive a successful container status response.
+// The current implementation of the protocol process shows its own loading
+// screen while a container is created and configured. To do this, we need it
+// the protocol to start and appear before its mandatory arguments are available.
+//
+// We solve this streaming the ip, secret_key, and ports info to the protocol
+// they become available from when a successful container status response.
 zip(
   protocolLaunchProcess,
   protocolLaunchSuccess
 ).subscribe(([protocol, info]) => protocolStreamInfo(protocol, info))
 
-// Protocol closing
-// If we have an error, close the protocol.
+// If we have an error, close the protocol. We expect that an effect elsewhere
+// this application will take care of showing an appropriate error message.
 zip(
   protocolLaunchProcess,
   protocolLaunchFailure

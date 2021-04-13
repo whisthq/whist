@@ -3,10 +3,12 @@
  * @file app.ts
  * @brief This file contains all RXJS observables created from Electron app event emitters.
  */
-
 import { app } from 'electron'
 import EventEmitter from 'events'
 import { fromEvent } from 'rxjs'
+
+// rxjs and Typescript are not fully agreeing on the type inference here,
+// so we coerce to EventEmitter to keep everyone happy.
 
 export const eventAppReady = fromEvent(app as EventEmitter, 'ready')
 
@@ -26,4 +28,5 @@ export const eventWindowCreated = fromEvent(
 // when the application closes with observables and Effects.
 // We subscribe to window-all-closed here and call preventDefault().
 // The event will still emit, but the app won't quit automatically.
+
 app.on('window-all-closed', (event: any) => event.preventDefault())

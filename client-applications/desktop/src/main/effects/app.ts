@@ -8,7 +8,11 @@ import { app } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
 
-import { eventAppReady, eventWindowsAllClosed, eventWindowCreated } from '@app/main/events/app'
+import {
+  eventAppReady,
+  eventWindowsAllClosed,
+  eventWindowCreated
+} from '@app/main/events/app'
 import { merge, race, zip } from 'rxjs'
 import { takeUntil } from 'rxjs/operators'
 import {
@@ -31,36 +35,35 @@ import {
 } from '@app/main/observables/user'
 import { protocolCloseSuccess } from '@app/main/observables/protocol'
 
-// Window opening
-//
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
-// we have all of [userEmail, userAccessToken, userConfigToken].
-//
-// It's possible to be in an incomplete state, only having one or two of
-// these tokens. This is mostly because of the async nature of userConfigToken,
-// which has some async decryption involved.
-//
-// If we don't have all three when the app opens, we force the user to log in
-// again.
+// we have all of [userEmail, userAccessToken, userConfigToken]. If we
+// don't have all three, we clear them all and force the user to log in again.
+
 eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
 
-// Application closing
+// Closing all the windows should simply quit the application entirely.
+// This event fires both when the user intentionally closes windows, and
+// also when windows automatically close (protocol launch, errors, etc.)
+// It's important that we don't fire this subscription on events that aren't
+// supposed to close the application, so we use takeUntil to listen for those.
+
 eventWindowsAllClosed
   .pipe(takeUntil(merge(loginSuccess, signupSuccess, errorWindowRequest)))
   .subscribe(() => app.quit())
 
-// Window closing
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
+
 merge(loginSuccess, signupSuccess).subscribe(() => closeWindows())
 
 // If the update is downloaded, quit the app and install the update
+
 eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
@@ -75,4 +78,5 @@ race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
 
 eventWindowCreated.subscribe(() => showAppDock())
 
+// When the protocol closes, we'll close the entire application.
 protocolCloseSuccess.subscribe(() => app?.quit())
