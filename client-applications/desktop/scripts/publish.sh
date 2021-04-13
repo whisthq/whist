@@ -103,10 +103,12 @@ else
     fi
 
     # Increase Yarn network timeout, to avoid ESOCKETTIMEDOUT on weaker devices (like GitHub Action VMs)
-    yarn config set network-timeout 2000000
+    yarn config set network-timeout 600000
 
     # Initialize yarn first
-    yarn
+    rm -rf /node_modules
+    yarn cache clean && yarn install
+
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket
