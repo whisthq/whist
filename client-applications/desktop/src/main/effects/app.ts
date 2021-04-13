@@ -4,36 +4,35 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from "electron"
-import { autoUpdater } from "electron-updater"
-import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
+import { app } from 'electron'
+import { autoUpdater } from 'electron-updater'
+import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
 
 import {
   eventAppReady,
   eventWindowsAllClosed,
-  eventWindowCreated,
-} from "@app/main/events/app"
-import { merge, race, zip } from "rxjs"
-import { takeUntil } from "rxjs/operators"
+  eventWindowCreated
+} from '@app/main/events/app'
+import { merge, race, zip } from 'rxjs'
+import { takeUntil } from 'rxjs/operators'
 import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
-  showAppDock,
-} from "@app/utils/windows"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
-import { errorWindowRequest } from "@app/main/observables/error"
+  showAppDock
+} from '@app/utils/windows'
+import { loginSuccess } from '@app/main/observables/login'
+import { signupSuccess } from '@app/main/observables/signup'
+import { errorWindowRequest } from '@app/main/observables/error'
 import {
   autoUpdateAvailable,
-  autoUpdateNotAvailable,
-} from "@app/main/observables/autoupdate"
+  autoUpdateNotAvailable
+} from '@app/main/observables/autoupdate'
 import {
   userEmail,
   userAccessToken,
-  userConfigToken,
-} from "@app/main/observables/user"
-import { protocolCloseSuccess } from "@app/main/observables/protocol"
+  userConfigToken
+} from '@app/main/observables/user'
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
