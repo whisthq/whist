@@ -1,14 +1,14 @@
-import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM, FaBars} from "react-icons/fa"
-import classNames from "classnames"
-
+import React from 'react'
+import { FaLinkedinIn, FaTwitter, FaInstagram, FaMediumM, FaBars } from 'react-icons/fa'
+import classNames from 'classnames'
 
 export const BarsIcon = (props: any) => (
     <button
         type="button"
         {...props}
         className={classNames(
-            "bg-none outline-none ",
-            props.className
+          'bg-none outline-none ',
+          props.className
         )}
     >
         <FaBars />
