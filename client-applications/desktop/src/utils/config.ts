@@ -68,7 +68,7 @@ const environment = {
       MacOS:
                 'https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg',
       Windows:
-                'https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe   '
+                'https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe'
     }
   },
   STAGING: {

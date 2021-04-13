@@ -70,8 +70,8 @@ else
 
     # Make FractalClient and create its app bundle
     cd ../../../protocol
-    mkdir -p build-publish
-    cd build-publish
+    mkdir -p build-clientapp
+    cd build-clientapp
     cmake -S .. -B . -DCMAKE_BUILD_TYPE=Release
     make -j FractalClient
     cd ../../client-applications/desktop
@@ -84,12 +84,12 @@ else
     cd ..
 
     # Move FractalClient and related files over to client-app build folder
-    cp -r ../../protocol/build-publish/client/build64/* ./protocol-build/client
+    cp -r ../../protocol/build-clientapp/client/build64/* ./protocol-build/client
     # Move loading png's out because Electron builder doesn't like them
     rm -rf loading
     mv ./protocol-build/client/loading ./loading
     # Rename FractalClient to Fractal
-    mv ./protocol-build/client/FractalClient "./protocol-build/client/ Fractal"
+    mv ./protocol-build/client/FractalClient "./protocol-build/client/_Fractal"
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
@@ -106,13 +106,12 @@ else
     yarn config set network-timeout 600000
 
     # Initialize yarn first
-    rm -rf /node_modules
-    yarn cache clean && yarn install
-
+    yarn cache clean
+    yarn install
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket
-        export S3_BUCKET=$bucket && yarn package-ci
+        export S3_BUCKET=$bucket && yarn package:ci
     else
         # Package the application locally, without uploading to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package
