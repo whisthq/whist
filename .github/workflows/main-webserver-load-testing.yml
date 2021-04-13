@@ -50,6 +50,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
               # install webserver scripting dependencies
@@ -91,20 +95,28 @@ jobs:
                     run_local_load_test(WEBSERVER_URL, TOKEN, NUM_USERS, LOAD_TEST_REGION)
 
             - name: Notify Slack on success
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ env.webserver_url }}
+                  from notifications import slack_post
 
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-staging\", \"username\": \"Fractal Bot\", \"text\": \"Successfully load tested webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL= "${{ env.webserver_url }}"
+                  BODY = f"Successfully load tested webserver at {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack on failure
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ env.webserver_url }}
+                  from notifications import slack_post
 
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-staging\", \"username\": \"Fractal Bot\", \"text\": \"Failed load testing webserver at $WEBSERVER_URL in github workflow \`${{ github.run_id }}\`.\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL= "${{ env.webserver_url }}"
+                  BODY = f"Failed load testing webserver at $WEBSERVER_URL {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

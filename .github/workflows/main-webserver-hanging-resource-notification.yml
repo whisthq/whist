@@ -40,6 +40,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
 
@@ -64,14 +68,18 @@ jobs:
 
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
-              working-directory: .github/workflows/helpers/aws
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.hanging_resource }}" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
+                  import os
+                  from notifications import slack_post
+
+                  if os.environ.get("hanging_resource") not in (None, ""):
+                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                    SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                    BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}."
+
+                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-ec2-notification:
         name: Main Webserver EC2 Resource Notification
@@ -92,6 +100,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Install boto3
               run: pip install boto3
 
@@ -105,21 +117,31 @@ jobs:
                   echo "$ec2_instances"
 
             - name: Notify Slack all instances
-              working-directory: .github/workflows/helpers/aws
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.ec2_instances }}" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
+                  import os
+                  from notifications import slack_post
+
+                  if os.environ.get("ec2_instances") not in (None, ""):
+                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                    SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                    BODY = "${{ env.ec2_instances }}"
+
+                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Scanning EC2 Instance failure"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
@@ -132,6 +154,10 @@ jobs:
               uses: actions/setup-python@v2
               with:
                   python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -166,8 +192,26 @@ jobs:
         if: failure()
         runs-on: ubuntu-20.04
         steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Notify Slack if Hanging Resource Workflow Fails
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Hanging Resource Notification Failed"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

@@ -58,6 +58,15 @@ jobs:
               with:
                   fetch-depth: 0 # Get the whole git history
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
             # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
             # twice and the second workflow could finish before the first one, due to variance in startup time, run
@@ -251,10 +260,16 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"fractal-publish-build-config failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "fractal-publish-build-config failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Container Infrastructure: Build & Publish Fractal Containers and AMIs
     # This job does:
@@ -285,6 +300,14 @@ jobs:
               uses: actions/checkout@v2
 
             ################### Stage 1 - Build & Publish Container Images to GHCR ###################
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
 
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
@@ -469,17 +492,29 @@ jobs:
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \":whale: Fractal Container Images & AMIs on Branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Uploaded to GHCR and Deployed to All Supported AWS Regions (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>). \", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = ":whale: Fractal Container Images & AMIs on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Uploaded to GHCR and Deployed to All Supported AWS Regions (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \":rotating_light: Container Images & AMIs on Branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` Failed to Deploy! (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = ":rotating_light: Container Images & AMIs on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Failed to Deploy! (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             ##########################################################################################
 
@@ -490,13 +525,10 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [
-                fractal-publish-build-config,
-                containers-and-ami-publish-ghcr-and-aws,
-            ]
+            [fractal-publish-build-config, container-images-publish-images-ghcr]
         strategy:
             matrix:
-                app: ${{ fromJSON(needs.containers-and-ami-publish-ghcr-and-aws.outputs.task-definitions-apps-json) }}
+                app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
                 aws-region:
                     - us-east-1
                     - us-east-2
@@ -509,6 +541,15 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -548,10 +589,16 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # ECS Task Definitions: Notify Slack
     # Notify Slack after rendering and deploying all the task definitions.
@@ -567,11 +614,28 @@ jobs:
             contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         runs-on: ubuntu-20.04
         steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Notify Slack
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>) :bezos:\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = ":spiral_note_pad: Task Definitions rendered and deployed to ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} via ECS upload (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>) :bezos:"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # AMI: Kill "Packer Builder" Instances
     # Kills all instances that are tagged as "Packer Builder" using aws-hashicorp-packer-reaper utility
@@ -591,6 +655,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
 
@@ -608,10 +676,16 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"AMI: Kill Packer instances failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "AMI: Kill Packer instances failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Uses webserver maintenance mode to update the following:
     # 1. new task definitions if new task defs have been pushed to ECS
@@ -639,6 +713,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
@@ -664,27 +742,32 @@ jobs:
 
             - name: Notify Slack started maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'success'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  from notifications import slack_post
 
-                  curl -X POST \
-                  --data-urlencode \
-                    "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL started maintenance mode due to deploy on branch \`$BRANCH_NAME\` in github workflow \`${{ github.run_id }}\` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} started maintenance mode due to deploy on branch `{BRANCH_NAME}` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack on failure to start maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'failure'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # this step only runs if starting maintenance mode fails
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
-                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+                  from notifications import slack_post
 
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to start maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} failed to start maintenance mode. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Update webserver task definitions if new ones were published
               id: update-webserver-taskdefs
@@ -708,15 +791,17 @@ jobs:
 
             - name: Notify Slack on failure to update webserver task definition
               if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # this step only runs if updating webserver task defs fails
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  from notifications import slack_post
 
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver taskdefs in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} failed to update webserver taskdefs. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Update webserver AMIs if new ones were built
               id: update-webserver-amis
@@ -758,15 +843,17 @@ jobs:
 
             - name: Notify Slack on failure to update webserver amis
               if: always() && steps.update-webserver-amis.outcome == 'failure'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # this step only runs if updating webserver amis fails
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  from notifications import slack_post
 
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to update webserver amis in workflow \`${{ github.run_id }}\`. Investigate immediately. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} failed to update webserver amis. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: end-maintenance-mode
               id: end-maintenance-mode
@@ -791,24 +878,31 @@ jobs:
 
             - name: Notify Slack ended maintenance mode
               if: always() && steps.end-maintenance-mode.outcome == 'success'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  from notifications import slack_post
 
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL ended maintenance mode in github workflow \`${{ github.run_id }}\` (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} ended maintenance mode in github workflow (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack on failure to end maintenance mode
               if: always() && steps.end-maintenance-mode.outcome == 'failure'
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  # this step only runs if starting maintenance mode fails
-                  WEBSERVER_URL=${{ needs.fractal-publish-build-config.outputs.webserver_url }}
+                  from notifications import slack_post
 
-                  # Notify slack of failure.
-                  curl -X POST \
-                    --data-urlencode \
-                    "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Webserver at $WEBSERVER_URL failed to end maintenance mode in workflow \`${{ github.run_id }}\`. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                    ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
+                  BODY = f"Webserver at {WEBSERVER_URL} failed to end maintenance mode. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Main Webserver: Deploy to Heroku
     # Push the main-webserver subtree to the appropriate Heroku app.
@@ -824,6 +918,15 @@ jobs:
               uses: actions/checkout@v2
               with:
                   fetch-depth: 0 # need to get full history for splitsh-lite
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
 
             - name: Authenticate Heroku
               run: |
@@ -869,17 +972,29 @@ jobs:
 
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = ":rocket: Webserver for branch \`${{ needs.fractal-publish-build-config.outputs.branch }}\` deployed to Heroku app \`$HEROKU_APP_NAME\` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Heroku deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Heroku deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Client Applications: Build & Publish to AWS S3
     # Build and publish the client applications to their respective AWS S3 bucket,
@@ -910,6 +1025,15 @@ jobs:
                   # client app calls `git describe` in order to bake the
                   # version number into the react frontend.
                   fetch-depth: 0
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
 
             # Necessary for Electron to upload packaged applications to AWS S3
             - name: Configure AWS S3 CLI
@@ -1126,41 +1250,38 @@ jobs:
                     https://config-database.fractal.co/v1/graphql
                   fi
 
+            - name: Notify Slack on success
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
+              run: |
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  if BRANCH_NAME == "prod":
+                    WEBSITE_URL="https://fractal.co"
+                  elif "BRANCH_NAME" == "staging":
+                    WEBSITE_URL="https://staging.fractal.co"
+                  else:
+                    WEBSITE_URL="https://dev.fractal.co"
+
+                  BODY = f"Windows and macOS Electron Applications Deployed to `{BRANCH_NAME}` via Upload to AWS S3. You can download them from {WEBSITE_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
 
-    # Client Applications: Notify Slack
-    # Notify Slack after building and publishing the client applications for all supported OSes.
-    # Runs if client-applications-publish-build-s3 succeeds.
-    client-applications-notify-slack:
-        name: "Client Applications: Notify Slack"
-        runs-on: ubuntu-20.04
-        needs:
-            [fractal-publish-build-config, client-applications-publish-build-s3]
-        if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-        steps:
-            - name: Notify Slack
-              run: |
-                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  # Retrieve Fractal website associated with current deployment
-                  if [ "$BRANCH_NAME" == "prod" ]; then
-                      WEBSITE_URL=https://fractal.co
-                  elif [ "$BRANCH_NAME" == "staging" ]; then
-                      WEBSITE_URL=https://staging.fractal.co
-                  else
-                      WEBSITE_URL=https://dev.fractal.co
-                  fi
-
-                  # Notify Slack
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Windows and macOS Electron Applications Deployed to \`$BRANCH_NAME\` via Upload to AWS S3. You can download them from $WEBSITE_URL (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>).\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Create GitHub Tag
     # Create a GitHub Tag when promoting to the `prod` branch
@@ -1181,6 +1302,15 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Retrieve Today's Date
               run: echo "date=$(date)" >> $GITHUB_ENV
 
@@ -1194,14 +1324,26 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Notify Slack
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Deployment of Fractal Version \`v${{ needs.client-applications-publish-build-s3.outputs.release_version }}\` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"
+                  BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack if error
               if: failure()
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"GitHub Release Creation failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-prod"
+                  BODY = "GitHub Release Creation failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

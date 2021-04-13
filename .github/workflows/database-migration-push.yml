@@ -24,7 +24,6 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
-            SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
             GITHUB_SHA: ${{ github.sha }}
             GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
@@ -188,6 +187,9 @@ jobs:
                   sys.path.append(os.environ["PATH_HELPERS"])
                   from notifications import slack_debug
 
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+
                   # No notifications if the migration diff
                   # is empty, so exit early
                   with open(os.environ["PATH_DIFF"]) as f:
@@ -215,6 +217,4 @@ jobs:
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
-                  slack_debug(os.environ["SLACK_CHANNEL"],
-                              body,
-                              title=title)
+                  slack_debug(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
