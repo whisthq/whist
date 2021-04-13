@@ -86,6 +86,10 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
             - name: Upgrade pip
               working-directory: main-webserver
               run: pip3 install --upgrade pip
@@ -170,15 +174,13 @@ jobs:
             # Perform the database migration if this pull request is being
             # merged.
             - name: Perform database migration
-              if: success()
               run: |
                   echo "MIGRA RETURN CODE: ${{ steps.db-diff.outputs.code }}"
                   echo "MIGRA SQL DIFF: $(cat $PATH_DIFF)"
                   psql --single-transaction --file ${PATH_DIFF} \
                   ${{ steps.db-url.outputs.url }}
 
-            - name: Notify Slack
-              if: success()
+            - name: Notify Slack on success
               shell: python3 {0}
               run: |
                   import os
@@ -218,3 +220,19 @@ jobs:
                           + slack_redirect)
 
                   slack_debug(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
+            
+            - name: Notify Slack on failure
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  GITHUB_BRANCH = os.environ["GITHUB_BRANCH"]
+                  BODY = f"@channel Failed to perform database migration. Schemas are out-of-sync on branch {GITHUB_BRANCH}."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
