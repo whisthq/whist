@@ -1,4 +1,6 @@
 import { app } from 'electron'
+import { tap } from 'rxjs/operators'
+import { identity } from 'lodash'
 import fs from 'fs'
 import os from 'os'
 import util from 'util'
@@ -26,6 +28,7 @@ const logzLogger = logzio.createLogger({
 // Logging base function
 export enum LogLevel {
   DEBUG = 'DEBUG',
+  WARNING = 'WARNING',
   ERROR = 'ERROR',
 }
 
@@ -53,6 +56,10 @@ const logBase = (
 
 export const logDebug = (title: string, message: string | null, data?: any) => {
   logBase(title, message, data, LogLevel.DEBUG)
+}
+
+export const logWarning = (title: string, message: string | null, data?: any) => {
+  logBase(title, message, data, LogLevel.WARNING)
 }
 
 export const logError = (title: string, message: string | null, data?: any) => {
@@ -119,4 +126,45 @@ export const uploadToS3 = async (
   })
 
   await Promise.all(uploadPromises)
+}
+
+export const debug = (
+  level: LogLevel,
+  title: string,
+  message: string = 'value:',
+  func?: null | ((...args: any[]) => any)
+) => {
+  /*
+    Description:
+        Returns a custom operator that logs values emitted by an observable
+
+    Arguments:
+        level (LogLevel): Level of log
+        title (string): Name of observable, written to log
+        message (string): Additional log message
+        func (function | null | undefined): Function that transforms values emitted by the observable.
+        If func is not defined, values are not modified before being logged. If null, values are not written to the log.
+    Returns:
+        MonoTypeOperatorFunction: logging operator
+    */
+
+  return tap<any>({
+    next (value) {
+      if (func === undefined) func = identity
+      const data = func != null ? func(value) : value
+      switch (level) {
+        case LogLevel.ERROR: {
+          logError(title, message, data)
+          break
+        }
+        case LogLevel.WARNING: {
+          logWarning(title, message, data)
+          break
+        }
+        default: {
+          logDebug(title, message, data)
+        }
+      }
+    }
+  })
 }

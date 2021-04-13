@@ -19,6 +19,7 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError
 } from '@app/utils/host'
+import { LogLevel, debug } from '@app/utils/logging'
 import { from } from 'rxjs'
 import {
   map,
@@ -32,13 +33,15 @@ import {
   exhaustMap,
   withLatestFrom
 } from 'rxjs/operators'
+import { pick } from 'lodash'
 
 export const hostInfoRequest = containerAssignPolling.pipe(
   skipWhile((res) => res?.json.state !== 'PENDING'),
   take(1),
   withLatestFrom(userEmail, userAccessToken),
   map(([_, email, token]) => [email, token]),
-  share()
+  share(),
+  debug(LogLevel.DEBUG, 'hostInfoRequest')
 )
 
 export const hostInfoPolling = hostInfoRequest.pipe(
@@ -54,12 +57,14 @@ hostInfoPolling.subscribe((res) =>
 
 export const hostInfoSuccess = hostInfoPolling.pipe(
   takeLast(1),
-  filter((res) => hostServiceInfoValid(res))
+  filter((res) => hostServiceInfoValid(res)),
+  debug(LogLevel.DEBUG, 'hostInfoSuccess')
 )
 
 export const hostInfoFailure = hostInfoPolling.pipe(
   takeLast(1),
-  filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res))
+  filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res)),
+  debug(LogLevel.ERROR, 'hostInfoFailure')
 )
 
 export const hostInfoLoading = loadingFrom(
@@ -81,22 +86,26 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     secret,
     email,
     token
-  ])
+  ]),
+  debug(LogLevel.DEBUG, 'hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')
 )
 
 export const hostConfigProcess = hostConfigRequest.pipe(
   exhaustMap(([ip, port, secret, email, token]) =>
     from(hostServiceConfig(ip, port, secret, email, token))
   ),
-  share()
+  share(),
+  debug(LogLevel.DEBUG, 'hostConfigRequest', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
 )
 
 export const hostConfigSuccess = hostConfigProcess.pipe(
-  filter((res) => hostServiceConfigValid(res))
+  filter((res) => hostServiceConfigValid(res)),
+  debug(LogLevel.DEBUG, 'hostConfigSuccess', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
 )
 
 export const hostConfigFailure = hostConfigProcess.pipe(
-  filter((res) => hostServiceConfigError(res))
+  filter((res) => hostServiceConfigError(res)),
+  debug(LogLevel.ERROR, 'hostConfigFailure', 'error:')
 )
 
 export const hostConfigLoading = loadingFrom(
