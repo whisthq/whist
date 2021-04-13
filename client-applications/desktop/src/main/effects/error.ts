@@ -12,12 +12,15 @@ import {
   errorWindowRequest
 } from '@app/main/observables/error'
 
+// Other parts of the application need to know that an error has happened,
+// which is why we have observables like "errorWindowRequest" defined outside
+// of the Effects module of the application.
+
 errorRelaunchRequest.subscribe(() => {
   app.relaunch()
   app.exit()
 })
 
-// Error windows
 errorWindowRequest.subscribe((windowFunction) => {
   closeWindows()
   windowFunction()
