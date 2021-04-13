@@ -147,7 +147,7 @@ You first need to build the protocol and then build the base image before you ca
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
 
 ```
-FRACTAL_DPI=96 ./run_local_container_image.sh APP MOUNT
+[FRACTAL_DPI=96] ./run_local_container_image.sh APP [MOUNT]
 ```
 
 As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
