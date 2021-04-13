@@ -35,7 +35,7 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
 
     try:
         # methods like .status, .result of AsyncResult are actually properties that are fetched
-        # on each request. This led to a race where we mix returns from a non-SUCCESS state
+        # on each invocation. This led to a race where we mix returns from a non-SUCCESS state
         # and a SUCCESS state. See https://github.com/fractal/fractal/pull/1725
         result = current_app.AsyncResult(task_id)._get_task_meta()
         if result["status"] == "SUCCESS":
