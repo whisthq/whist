@@ -12,10 +12,10 @@ for x in $(nvidia-smi -L); do
 done
 
 # Convert GPU IDs to JSON Array
-ID_JSON=$(printf '%s\n' "${{IDS[@]}}" | jq -R . | jq -s -c .)
+ID_JSON=$(printf '%s\n' "${IDS[@]}" | jq -R . | jq -s -c .)
 
 # Create JSON GPU Object and populate nvidia-gpu-info.json
-echo "{{\"DriverVersion\":\"${{DRIVER_VERSION}}\",\"GPUIDs\":${{ID_JSON}}}}" > /var/lib/ecs/gpu/nvidia-gpu-info.json
+echo "{{\"DriverVersion\":\"${DRIVER_VERSION}\",\"GPUIDs\":${ID_JSON}}}" > /var/lib/ecs/gpu/nvidia-gpu-info.json
 
 #Create ECS config
 sudo mkdir -p /etc/ecs && sudo touch /etc/ecs/ecs.config
