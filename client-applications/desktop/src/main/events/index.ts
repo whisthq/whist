@@ -1,3 +1,7 @@
+import '@app/main/events/app'
+import '@app/main/events/ipc'
+import '@app/main/events/persist'
+
 // Events tend to be event listeners on processes that are
 // outside the main thread's control, like Electron application events. These
 // event listeners are made into observables, which are subscribed to
@@ -16,7 +20,3 @@
 // flow. The observables in this file are "event sources", so they should not
 // subscribe to any observables in the rest of the application. Subscribing
 // to a "downstream" observable from here can cause circular dependencies.
-
-import '@app/main/events/app'
-import '@app/main/events/ipc'
-import '@app/main/events/persist'

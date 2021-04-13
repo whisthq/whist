@@ -21,12 +21,9 @@ import { signupFailure } from '@app/main/observables/signup'
 import { containerCreateFailure } from '@app/main/observables/container'
 import { protocolLaunchFailure } from '@app/main/observables/protocol'
 
-// Persistence
 // We create observables for each piece of state we want to persist.
 // Each observable subscribes to the parts of the application that provide
 // state updates.
-//
-// They are combined into a dictionary, which is persisted to local storage.
 
 const subscribed = {
   userEmail,
@@ -35,6 +32,8 @@ const subscribed = {
   userRefreshToken
 }
 
+// We combined the "subscribed" observables into a dictionary, using their names
+// as the dictionary keys. This is the object that is persisted to local storage.
 combineLatest(
   mapValues(subscribed, (o: any): any => o.pipe(startWith(undefined)))
 ).subscribe((state) => persist(state as Partial<StateIPC>))
@@ -46,10 +45,7 @@ merge(
   signupFailure,
   containerCreateFailure,
   protocolLaunchFailure
-).subscribe(() => {
-  console.log('Persistence Cleared!')
-  persistClear()
-})
+).subscribe(() => persistClear())
 
 // Uncomment this line to clear credentials in development.
 // persistClear()
