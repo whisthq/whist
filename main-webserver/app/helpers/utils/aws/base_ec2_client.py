@@ -43,7 +43,6 @@ class EC2Client:
         self.key_id = check_str_param(key_id, "key_id")
         self.region_name = check_str_param(region_name, "region_name")
         self.access_key = check_str_param(access_key, "access_key")
-        self.instances = dict()
 
         if starter_ec2_client is None:
             self.ec2_client = self._make_client("ec2")
