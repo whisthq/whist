@@ -29,7 +29,7 @@ const Logo = (props: { className?: string, dark: boolean }) => (
         <LogoLink className="w-6 transform md:-translate-y-0.5" dark={props.dark} />
         <WordmarkLink
             className={classNames(
-              'text-xl font-medium text-gray dark:text-gray-100 dark:hover:text-gray',
+              'text-xl font-medium text-gray dark:text-gray-100 hover:text-gray dark:hover:text-white',
               mobileHidden
             )}
         />
