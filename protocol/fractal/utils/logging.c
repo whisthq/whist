@@ -86,7 +86,7 @@ char* log_directory = NULL;
 size_t log_directory_length;
 char* log_file_name = NULL;
 size_t log_file_length = 100;
-char log_env[FRACTAL_ENVIRONMENT_MAXLEN];
+char log_env[FRACTAL_ARGS_MAXLEN];
 
 // This is written to in MultiThreaderPrintf
 #define LOG_CACHE_SIZE 1000000
