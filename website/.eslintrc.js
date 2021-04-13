@@ -18,4 +18,9 @@ module.exports = {
     "no-use-before-define": "off",
     "@typescript-eslint/explicit-function-return-type": "off"
   },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  }
 };
