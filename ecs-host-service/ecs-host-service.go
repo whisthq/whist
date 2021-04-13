@@ -79,7 +79,9 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 
 // SpinUpContainer will only be called in the localdev environment. It is also
 // currently only used in `run_container_image.sh`. Eventually, as we move off
-// ECS, this endpoint will become the canonical way to start containers.
+// ECS, this endpoint will become the canonical way to start containers. 
+// Also creates a file containing the timeout assigned to a specific container, and make
+// it accessible to that container.
 func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SpinUpContainerRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
@@ -205,6 +207,26 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
 
+
+	// Verify identifying hostPort value
+	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
+		logAndReturnError("Invalid HostPort: %v", req.HostPort)
+		return
+	}
+	hostPort := uint16(req.HostPort)
+
+	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
+	err = fc.WriteDevValues(req.Timeout)
+	if err != nil {
+		logAndReturnError(err.Error())
+		return
+	}
+
 	// Return dockerID of newly created container
 	req.ReturnResult(string(dockerID), nil)
 	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
@@ -279,39 +301,6 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 	}
 
 	err = fc.CompleteContainerSetup(fractalcontainer.UserID(req.UserID), fractalcontainer.ClientAppAccessToken(req.ClientAppAccessToken), fractalcontainer.SetupEndpoint("handleStartValuesRequest"))
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	req.ReturnResult("", nil)
-}
-
-// Creates a file containing the timeout assigned to a specific container, and make
-// it accessible to that container. We make this function send
-// back the result for the provided request so that we can run in its own
-// goroutine and not block the event loop goroutine.
-func handleDevValuesRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetContainerDevValuesRequest) {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleDevValuesRequest(): "+fmt, v...)
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
-
-	// Verify identifying hostPort value
-	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort: %v", req.HostPort)
-		return
-	}
-	hostPort := uint16(req.HostPort)
-
-	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
-	err = fc.WriteDevValues(req.Timeout)
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
