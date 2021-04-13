@@ -37,12 +37,13 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
         # methods like .status, .result of AsyncResult are actually properties that are fetched
         # on each invocation. This led to a race where we mix returns from a non-SUCCESS state
         # and a SUCCESS state. See https://github.com/fractal/fractal/pull/1725
-        result = current_app.AsyncResult(task_id)._get_task_meta()
-        if result["status"] == "SUCCESS":
-            response = {"state": result["status"], "output": result["result"]}
+        result = current_app.AsyncResult(task_id)
+        result_data = result._get_task_meta()  # pylint: disable=protected-access
+        if result_data["status"] == "SUCCESS":
+            response = {"state": result_data["status"], "output": result_data["result"]}
             return make_response(jsonify(response), SUCCESS)
-        elif result["status"] == "FAILURE":
-            if "MAINTENANCE ERROR" in result["result"]:
+        elif result_data["status"] == "FAILURE":
+            if "MAINTENANCE ERROR" in result_data["result"]:
                 # this is a special case: the request was accepted but the celery task
                 # started after the webserver was put into maintenance mode. We return
                 # that webserver is in maintenance mode so client app knows what happened.
@@ -61,19 +62,16 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
             msg = None
             if check_developer():
                 # give traceback to developers
-                msg = f"Experienced an error. Error trace: {result.get('traceback')}"
+                msg = f"Experienced an error. Error trace: {result_data.get('traceback')}"
             else:
                 # do not give details to non-developers
                 msg = "Experienced an error. Please try the request again."
 
-            response = {"state": result["status"], "output": msg}
+            response = {"state": result_data["status"], "output": msg}
             return make_response(jsonify(response), SUCCESS)
         else:
-            output = result["result"]
-            # if isinstance(result.info, dict):
-            #     if "msg" in result.info.keys():
-            #         output = result.info["msg"]
-            response = {"state": result.status, "output": output}
+            output = result_data["result"]
+            response = {"state": result_data.status, "output": output}
             return make_response(jsonify(response), SUCCESS)
     except Exception as e:
         response = {
