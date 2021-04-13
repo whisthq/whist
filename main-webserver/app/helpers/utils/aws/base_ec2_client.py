@@ -3,6 +3,8 @@ import time
 from typing import Any, Literal, List, Optional, Union
 import boto3  # type: ignore
 
+from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
+
 
 def check_str_param(val: str, name: str) -> str:
     """
@@ -100,6 +102,8 @@ class EC2Client:
                     ],
                 },
             ],
+            "UserData": userdata_template,
+            "IamInstanceProfile": {"Name": "auto_scaling_instance_profile"},
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
@@ -146,4 +150,5 @@ class EC2Client:
 
 if __name__ == "__main__":
     ec2_client = EC2Client()
-    print(ec2_client.stop_instances(["i-0e488436306abe103"]))
+    # print(ec2_client.start_instances("ami-037b96e43364db32c"))
+    ec2_client.stop_instances(["i-0e09c002ca88a268e"])
