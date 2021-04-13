@@ -174,48 +174,6 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	res.send(w)
 }
 
-// SetContainerDevValuesRequest defines the (unauthenticated) dev values endpoint
-type SetContainerDevValuesRequest struct {
-	HostPort   int                `json:"host_port"` // Port on the host to whose container the start values correspond
-	Timeout    int                `json:"timeout"`   // timeout to set for the container
-	resultChan chan requestResult // Channel to pass the start values setting result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
-func (s *SetContainerDevValuesRequest) ReturnResult(result string, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass start values setting request
-// result back to the HTTP request handler via ReturnResult
-func (s *SetContainerDevValuesRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go
-func processSetContainerDevValuesRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is an PUT request
-	if verifyRequestType(w, r, http.MethodPut) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata SetContainerDevValuesRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
 // SetConfigEncryptionTokenRequest defines the (unauthenticated) set config encryption token endpoint
 type SetConfigEncryptionTokenRequest struct {
 	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
@@ -269,6 +227,8 @@ type SpinUpContainerRequest struct {
 	AppName      string             `json:"app_name"`
 	AppImage     string             `json:"app_image"`
 	MountCommand string             `json:"mount_command"`
+	HostPort     int                `json:"host_port"`      // Port on the host to whose container this user corresponds
+	Timeout      int                `json:"timeout"`        // timeout to set for the container
 	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
@@ -431,7 +391,6 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
-	mux.HandleFunc("/set_container_dev_values", createHandler(processSetContainerDevValuesRequest))
 	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
 	if logger.GetAppEnvironment() == logger.EnvLocalDev {
 		mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
