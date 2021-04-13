@@ -28,14 +28,20 @@ export const MyAccountLink = (props: { className?: string }) => (
   </Link>
 );
 
-export const LogoLink = (props: { className?: string; dark: boolean }) => (
+export const LogoLink = (props: { className?: string; dark?: boolean }) => (
   <Link
     className={classNames(props.className)}
     style={{ minWidth: "1em" }}
     to="/"
   >
     <img
-      src={props.dark ? LogoWhite : LogoBlack}
+      src={
+        props.dark !== undefined
+          ? props.dark
+            ? LogoWhite
+            : LogoBlack
+          : LogoBlack
+      }
       className="w-full h-full"
       alt="Logo"
     />

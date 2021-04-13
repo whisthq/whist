@@ -1,32 +1,30 @@
-import React, { useContext } from "react";
-import { Row, Col, Carousel } from "react-bootstrap";
+import React, { useContext } from 'react'
+import { Row, Col, Carousel } from 'react-bootstrap'
 
-import InvestorBox from "./components/investorBox";
-import EmployeeBox from "./components/employeeBox";
+import InvestorBox from './components/investorBox'
+import EmployeeBox from './components/employeeBox'
 
-import Footer from "@app/shared/components/footer";
-import Header from "@app/shared/components/header";
-import { ScreenSize } from "@app/shared/constants/screenSizes";
-import MainContext from "@app/shared/context/mainContext";
+import Footer from '@app/shared/components/footer'
+import Header from '@app/shared/components/header'
+import { ScreenSize } from '@app/shared/constants/screenSizes'
+import MainContext from '@app/shared/context/mainContext'
 
-import { teamData } from "./constants/team";
-
-import sharedStyles from "@app/styles/global.module.css";
+import { teamData } from './constants/team'
 
 export const About = (props: { useWidth?: boolean }) => {
-  const { useWidth } = props;
+  const { useWidth } = props
 
-  const { width } = useContext(MainContext);
+  const { width } = useContext(MainContext)
 
-  const screenWidth = useWidth === true || useWidth === false ? 992 : width;
+  const screenWidth = useWidth === true || useWidth === false ? 992 : width
 
-  const teamCards = [];
+  const teamCards = []
   const shuffledTeamData = teamData
     .map((a) => ({ sort: Math.random(), value: a }))
     .sort((a, b) => a.sort - b.sort)
-    .map((a) => a.value);
+    .map((a) => a.value)
   for (let i = 0; i < shuffledTeamData.length; i += 3) {
-    const teamGroup = shuffledTeamData.slice(i, i + 3);
+    const teamGroup = shuffledTeamData.slice(i, i + 3)
     teamCards.push(
       <Carousel.Item key={i}>
         <Row>
@@ -40,7 +38,7 @@ export const About = (props: { useWidth?: boolean }) => {
           ))}
         </Row>
       </Carousel.Item>
-    );
+    )
   }
   return (
     <div>
@@ -56,22 +54,22 @@ export const About = (props: { useWidth?: boolean }) => {
           <Col
             md={12}
             style={{
-              textAlign: "left",
-              marginTop: screenWidth > ScreenSize.XLARGE ? 100 : 50,
+              textAlign: 'left',
+              marginTop: screenWidth > ScreenSize.XLARGE ? 100 : 50
             }}
           >
             <h2>Our Stories</h2>
             <p
               className="font-body .heading"
               style={{
-                marginTop: 25,
+                marginTop: 25
               }}
             >
               We’re computer scientists passionate about the future of personal
               computing. Here are a few of our stories.
             </p>
           </Col>
-          <Col md={12} style={{ marginTop: 50, textAlign: "left" }}>
+          <Col md={12} style={{ marginTop: 50, textAlign: 'left' }}>
             <div>
               <Carousel controls={false}>{teamCards}</Carousel>
             </div>
@@ -85,7 +83,7 @@ export const About = (props: { useWidth?: boolean }) => {
                 className="font-body"
                 style={{
                   marginTop: 30,
-                  marginBottom: 20,
+                  marginBottom: 20
                 }}
               >
                 We’re fortunate to be backed by amazing institutional and
@@ -95,9 +93,9 @@ export const About = (props: { useWidth?: boolean }) => {
                   target="__blank"
                   href="https://hacklodge.org/"
                   style={{
-                    textDecoration: "none",
-                    fontWeight: "bold",
-                    color: "#555555",
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    color: '#555555'
                   }}
                 >
                   &nbsp;Hack Lodge
@@ -109,7 +107,7 @@ export const About = (props: { useWidth?: boolean }) => {
             <Col
               md={{
                 span: screenWidth > ScreenSize.LARGE ? 6 : 7,
-                offset: screenWidth > ScreenSize.LARGE ? 1 : 0,
+                offset: screenWidth > ScreenSize.LARGE ? 1 : 0
               }}
               style={{ padding: 0 }}
             >
@@ -122,7 +120,7 @@ export const About = (props: { useWidth?: boolean }) => {
         <Footer />
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default About;
+export default About
