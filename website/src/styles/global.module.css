@@ -71,7 +71,7 @@
 
 
 .carousel-indicators li {
-    background-color: var(--primary-background-color);
+    background-color: #000000 !important;
 }
 
 @randomMargin: `Math.round(Math.random() * 100)`;
