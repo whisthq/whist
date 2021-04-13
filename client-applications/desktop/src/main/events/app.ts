@@ -17,6 +17,10 @@ export const eventWindowsAllClosed = fromEvent(
   'window-all-closed'
 )
 
+export const eventWindowCreated = fromEvent(
+  app as EventEmitter, 'browser-window-created'
+)
+
 // By default, the window-all-closed Electron event will cause the application
 // to close. We don't want this behavior, we want to control for ourselves
 // when the application closes with observables and Effects.
