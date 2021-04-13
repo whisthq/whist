@@ -37,7 +37,7 @@
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
         "react-router-hash-link": "^2.4.0",
-        "react-spring": "^9.1.0",
+        "react-spring": "^9.1.1",
         "react-typeform-embed": "^0.2.1",
         "reactjs-popup": "^2.0.4"
     },
