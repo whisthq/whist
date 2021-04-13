@@ -23,7 +23,7 @@ def check_str_param(val: str, name: str) -> str:
 
 class EC2Client:
     """
-    This class governs everything you need to interface with instances on EC2
+    This class governs everything you need to provision instances on EC2
     Args:
         region_name (str):  which AWS region you're running on
         key_id (str): the AWS access key ID to use
