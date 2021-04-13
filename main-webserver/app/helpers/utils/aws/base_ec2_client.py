@@ -72,7 +72,7 @@ class EC2Client:
 
     def start_instances(
         self,
-        ami_id: str = "",
+        ami_id: str,
         num_instances: int = 1,
         instance_type: str = "g3.4xlarge",
         instance_name: str = "Leor-test-instance",
