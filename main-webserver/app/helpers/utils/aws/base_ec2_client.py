@@ -1,9 +1,10 @@
-from typing import Any, Optional
-import boto3
+import time
+
+from typing import Any, Literal, List, Optional, Union
+import boto3  # type: ignore
 
 
-
-def check_str_param(val: Any, name: str) -> Any:
+def check_str_param(val: str, name: str) -> str:
     """
     Checks the incoming type of a parameter
     Args:
@@ -22,9 +23,9 @@ class EC2Client:
     """
     This class governs everything you need to interface with instances on EC2
     Args:
-        region_name (Optional[str]):  which AWS region you're running on
-        key_id (Optional[str]): the AWS access key ID to use
-        access_key (Optional[str]): the AWS access key going with that key_id
+        region_name (str):  which AWS region you're running on
+        key_id (str): the AWS access key ID to use
+        access_key (str): the AWS access key going with that key_id
         starter_ec2_client (boto3.client): starter log client, used for mocking
         starter_iam_client (boto3.client): starter iam client, used for mocking
     """
@@ -32,10 +33,10 @@ class EC2Client:
     def __init__(
         self,
         region_name: str = "us-east-1",
-        key_id: Optional[str] = "",
-        access_key: Optional[str] = "",
-        starter_ec2_client: Optional[boto3.client] = None,
-        starter_iam_client: Optional[boto3.client] = None,
+        key_id: str = "",
+        access_key: str = "",
+        starter_ec2_client: Optional[Any] = None,
+        starter_iam_client: Optional[Any] = None,
     ):
         self.key_id = check_str_param(key_id, "key_id")
         self.region_name = check_str_param(region_name, "region_name")
@@ -51,7 +52,7 @@ class EC2Client:
         else:
             self.iam_client = starter_iam_client
 
-    def make_client(self, client_type: str) -> Any:
+    def make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
         """
         Constructs an ECS client object with the given params
         Args:
@@ -67,14 +68,82 @@ class EC2Client:
         )
         return client
 
-    def start_instance(self):
-        pass
+    def start_instances(
+        self,
+        ami_id: str = "",
+        num_instances: int = 1,
+        instance_type: str = "g3.4xlarge",
+        instance_name: str = "Leor-test-instance",
+    ):
+        """
+        Starts AWS instances with the given properties, not returning until they're
+        actively running
+        Args:
+            ami_id: which AMI to use
+            num_instances: how many instances to start
+            instance_type: which type of instance (hardwarewise) to start
+            instance_name: what name the instance should have
 
-    def stop_instance(self):
-        pass
+        Returns: the IDs of the started instances
 
-    def spin_til_instance_up(self, instance_id):
-        pass
+        """
+        kwargs = {
+            "ImageId": ami_id,
+            "InstanceType": instance_type,
+            "MaxCount": num_instances,
+            "MinCount": num_instances,
+            "TagSpecifications": [
+                {
+                    "ResourceType": "instance",
+                    "Tags": [
+                        {"Key": "Name", "Value": instance_name},
+                    ],
+                },
+            ],
+        }
+        resp = self.ec2_client.run_instances(**kwargs)
+        instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
+        time.sleep(5)
+        self._spin_til_instances_up(instance_ids)
 
-    def spin_til_instance_down(self, instance_id):
-        pass
+        return instance_ids
+
+    def stop_instances(self, instance_ids: List[str]) -> None:
+        """
+        Turns off all instances passed in
+        Args:
+            instance_ids: which instances to disable
+        """
+        self.ec2_client.terminate_instances(InstanceIds=instance_ids)
+        self._spin_til_instances_down(instance_ids)
+
+    def _check_if_instances_up(self, instance_ids: List[str]):
+        resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
+        instance_info = resp["Reservations"][0]["Instances"]
+        states = [instance["State"]["Name"] for instance in instance_info]
+        if all(state == "pending" for state in states):
+            return False
+        if all(state == "running" for state in states):
+            return True
+        raise Exception(states)
+
+    def _check_if_instances_down(self, instance_ids: List[str]):
+        resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
+        instance_info = resp["Reservations"][0]["Instances"]
+        states = [instance["State"]["Name"] for instance in instance_info]
+        if any(state == "running" for state in states):
+            return False
+        return True
+
+    def _spin_til_instances_up(self, instance_ids: List[str], time_wait=10):
+        while not self._check_if_instances_up(instance_ids):
+            time.sleep(time_wait)
+
+    def _spin_til_instances_down(self, instance_ids: List[str], time_wait=10):
+        while not self._check_if_instances_down(instance_ids):
+            time.sleep(time_wait)
+
+
+if __name__ == "__main__":
+    ec2_client = EC2Client()
+    print(ec2_client.stop_instances(["i-0e488436306abe103"]))
