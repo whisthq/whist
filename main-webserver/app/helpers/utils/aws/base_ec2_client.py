@@ -103,7 +103,7 @@ class EC2Client:
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
-        time.sleep(5)
+        time.sleep(5)  # AWS takes a bit of time to recognize that these resources actually exist
         self._spin_til_instances_up(instance_ids)
 
         return instance_ids
