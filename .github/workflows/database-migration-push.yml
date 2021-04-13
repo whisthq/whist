@@ -233,6 +233,6 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   GITHUB_BRANCH = os.environ["GITHUB_BRANCH"]
-                  BODY = f"@channel Failed to perform database migration. Schemas are out-of-sync on branch {GITHUB_BRANCH}."
+                  BODY = f"@channel Failed to perform database migration. Schemas are out-of-sync on branch `{GITHUB_BRANCH}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

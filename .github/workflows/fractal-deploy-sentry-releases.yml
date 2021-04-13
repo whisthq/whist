@@ -86,18 +86,6 @@ jobs:
                   # Create new deploy for this Sentry release
                   sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
-            - name: Notify Slack on success
-              working-directory: .github/workflows/helpers
-              shell: python3 {0}
-              run: |
-                  from notifications import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
             - name: Notify Slack on failure
               if: failure()
               working-directory: .github/workflows/helpers
@@ -110,3 +98,32 @@ jobs:
                   BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+    notify-slack:
+        name: Notify Slack
+        runs-on: ubuntu-20.04
+        needs: [fractal-deploy-sentry-releases-main]
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
+            - name: Notify Slack on success
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
+              run: |
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                  

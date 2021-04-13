@@ -128,7 +128,7 @@ def slack_post(slack_webhook, channel, body, slack_username="Fractal Bot", title
 
     Args:
         slack_webhook: a string, Slack webhook to send messages to
-        channel: a string that represents the channel to post to
+        channel: a string, Slack channel to post to
         body: a string, the main content of the comment
         slack_username: an optional string, Name of account to post messages as
         title: an optional string, formatted at the top of the comment
@@ -136,12 +136,13 @@ def slack_post(slack_webhook, channel, body, slack_username="Fractal Bot", title
         lang: an optional string, used to format the comment's code block
     Returns
         None"""
-
-    slack_bot.create_post(channel=channel,
-                          body=fmt.default_message_slack(body, title, code, lang),
-                          slack_webhook=slack_webhook,
-                          username=slack_username,
-                          )
+    fmt_body = fmt.default_message_slack(body, title, code, lang)
+    slack_bot.create_post(
+        slack_webhook=slack_webhook,
+        slack_username=slack_username,
+        channel=channel,
+        body=fmt_body
+    )
 
 
 # The functions below represent the main logging API for each service.

@@ -171,16 +171,23 @@ jobs:
 
             - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
               working-directory: main-webserver
+              shell: python3 {0}
               run: |
-                  packer_instances=$(aws-hashicorp-packer-reaper list)
-                  while IFS= read -r line 
-                  do 
-                    if [ "$(echo $line | sed 's/.*- //')" = "running" ]; then
-                        curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \`${line}\`\", \"icon_emoji\": \":fractal:\"}" \
-                        ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                    fi
-                  done <<< "$packer_instances"
+                  import subprocess
+                  from notifications import slack_post
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+
+                  ret = subprocess.run(aws-hashicorp-packer-reaper list, capture_output=True, shell=True)
+                  assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
+                  # example output is shown here: https://pypi.org/project/aws-hashicorp-packer-reaper/
+                  reaper_output_lines = ret.stdout.decode("utf-8").strip().split("\n")
+
+                  for line in reaper_output_lines:
+                    if "running" in line:
+                      BODY = f"Dangling Packer Instance: `{line}`"
+                      slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                    
 
     notify-if-hanging-resource-fails:
         name: "Notify Slack if Hanging Resource Workflow Fails"

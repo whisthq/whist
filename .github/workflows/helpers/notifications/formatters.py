@@ -219,5 +219,5 @@ def default_message_slack(body, title=None, code=None, lang=None):
     lines.append(body)
     if code is not None:
          lines.append(code_block(code))
-    return join_newline(*lines)
+    return '\n'.join(lines)
 
