@@ -1,29 +1,29 @@
-import React, { useState } from 'react'
+import React, { useState } from "react";
 
-import useWindowDimensions from '@app/shared/utils/formatting'
+import useWindowDimensions from "@app/shared/utils/formatting";
 
 interface MainContextInterface {
-  width: number
-  height: number
-  referralCode: string
-  setReferralCode: (referralCode: string) => void
-  appHighlight: string
-  setAppHighlight: (appHighlight: string) => void
+  width: number;
+  height: number;
+  referralCode: string;
+  setReferralCode: (referralCode: string) => void;
+  appHighlight: string;
+  setAppHighlight: (appHighlight: string) => void;
 }
 
 const MainContext = React.createContext<MainContextInterface>({
   width: 1920,
   height: 1080,
-  referralCode: '',
+  referralCode: "",
   setReferralCode: () => {},
-  appHighlight: '',
-  setAppHighlight: () => {}
-})
+  appHighlight: "",
+  setAppHighlight: () => {},
+});
 
 export const MainProvider = ({ children }: any) => {
-  const { height, width } = useWindowDimensions()
-  const [referralCode, setReferralCode] = useState('')
-  const [appHighlight, setAppHighlight] = useState('')
+  const { height, width } = useWindowDimensions();
+  const [referralCode, setReferralCode] = useState("");
+  const [appHighlight, setAppHighlight] = useState("");
 
   // const [width, setWidth] = useState(width)
   // const [height, setHeight] = useState(height)
@@ -37,21 +37,21 @@ export const MainProvider = ({ children }: any) => {
   // }
 
   return (
-        <MainContext.Provider
-            value={{
-              width: width,
-              height: height,
-              referralCode: referralCode,
-              setReferralCode: setReferralCode,
-              appHighlight: appHighlight,
-              setAppHighlight: setAppHighlight
-            }}
-        >
-            {children}
-        </MainContext.Provider>
-  )
-}
+    <MainContext.Provider
+      value={{
+        width: width,
+        height: height,
+        referralCode: referralCode,
+        setReferralCode: setReferralCode,
+        appHighlight: appHighlight,
+        setAppHighlight: setAppHighlight,
+      }}
+    >
+      {children}
+    </MainContext.Provider>
+  );
+};
 
-export const MainConsumer = MainContext.Consumer
+export const MainConsumer = MainContext.Consumer;
 
-export default MainContext
+export default MainContext;
