@@ -28,7 +28,7 @@
         "classnames": "^2.3.1",
         "electron-store": "^7.0.3",
         "electron-updater": "^4.3.8",
-        "history": "^4.1.10",
+        "history": "^5.0.0",
         "lodash": "^4.17.21",
         "logzio-nodejs": "^2.0.2",
         "path": "^0.12.7",
