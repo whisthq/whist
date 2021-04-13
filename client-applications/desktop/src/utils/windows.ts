@@ -53,7 +53,7 @@ export const closeWindows = () => {
 }
 
 export const showAppDock = () => {
-  app.dock.show()
+  app.dock.show().catch(err => console.error(err))
 }
 
 export const hideAppDock = () => {
@@ -85,7 +85,7 @@ export const createWindow = (
     onReady != null ? onReady(win) : win.show()
   )
   win.on('close', () => onClose?.(win))
-  
+
   return win
 }
 

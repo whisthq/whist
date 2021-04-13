@@ -15,6 +15,7 @@ import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow
+  , showAppDock
 } from '@app/utils/windows'
 import { loginSuccess } from '@app/main/observables/login'
 import { signupSuccess } from '@app/main/observables/signup'
@@ -29,7 +30,6 @@ import {
   userConfigToken
 } from '@app/main/observables/user'
 import { protocolCloseSuccess } from '@app/main/observables/protocol'
-import { showAppDock } from "@app/utils/windows"
 
 // Window opening
 //
