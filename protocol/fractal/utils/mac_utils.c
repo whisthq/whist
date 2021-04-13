@@ -17,6 +17,8 @@ or to delete files/folders
 
 #include "logging.h"
 
+#ifdef __APPLE
+
 int remove_file(const char* fpath, const struct stat* sb, int typeflag, struct FTW* ftwbuf) {
     int err_code = remove(fpath);
     if (err_code < 0) {
@@ -73,3 +75,5 @@ int dir_exists(const char* path) {
         return -1;
     }
 }
+
+#endif // __APPLE__

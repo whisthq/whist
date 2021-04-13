@@ -18,6 +18,8 @@ DesktopContext: This type represents a Windows desktop object.
 
 #include "windows_utils.h"
 
+#ifdef _WIN32
+
 // @brief Attaches the current thread to the current input desktop.
 // @details Uses OpenInputDesktop and SetThreadDesktop from WinAPI.
 int set_current_input_desktop(HDESK current_input_desktop) {
@@ -129,3 +131,5 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
 
     return !failed;
 }
+
+#endif // _WIN32
