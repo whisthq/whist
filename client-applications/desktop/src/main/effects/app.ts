@@ -14,8 +14,8 @@ import { takeUntil } from 'rxjs/operators'
 import {
   closeWindows,
   createAuthWindow,
-  createUpdateWindow
-  , showAppDock
+  createUpdateWindow,
+  showAppDock
 } from '@app/utils/windows'
 import { loginSuccess } from '@app/main/observables/login'
 import { signupSuccess } from '@app/main/observables/signup'
