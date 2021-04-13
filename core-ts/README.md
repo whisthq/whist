@@ -1,6 +1,4 @@
-# core-ts
-
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
+# Fractal Core Typescript Library
 
 This project is an internal Fractal library for shared React components, Typescript functions, CSS modules, etc., which are used in various other projects within Fractal. If you write TypeScript code that you believe can be reused across various projects, then you should add it to this internal library and use the library within your project, for maximum code reusability.
 
@@ -113,13 +111,7 @@ Regardless of how you develop for this library, your additions should be properl
 
 ## Publishing
 
-This project is now published to an **npm** registry using GitHub packages!
-
-We're using [Semantic Versioning](https://semver.org), and the [semantic-release](https://github.com/semantic-release) project to help us automate version numbers. Every push to `prod` will trigger a new release if it contains a commit message with a matching "release type". To trigger a release, prefix your commit message with one of the following:
-
--   _fix:_ will create a _patch_ release, incrementing `1.0.0` to `1.0.1`
--   _feat:_ will create a _minor_ release, incrementing `1.0.0` to `1.1.0`
--   _BREAKING CHANGE_: will create a _major_ release, incremenetion `1.0.0` to `2.0.0`
+This project is not published to any **npm** registry, but is rather built and imported directly into other projects (i.e. `/client-applications/desktop`) thanks to our monorepo project structure. For an example of how to import `core-ts` into your project, see `/client-applications/desktop/package.json`.
 
 ## Style
 

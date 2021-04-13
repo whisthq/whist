@@ -7,3 +7,8 @@ protocol-packages/
 # yarn
 node_modules/
 desktop/node_modules/
+yarn-error.log
+
+# build
+build/
+dist/
