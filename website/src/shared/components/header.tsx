@@ -19,7 +19,7 @@ import {
 
 const mobileHidden = 'hidden md:inline'
 
-const Logo = (props: { className?: string, dark?: boolean }) => (
+const Logo = (props: { className?: string, dark: boolean }) => (
     <div
         className={classNames(
           'flex items-center translate-x-1 space-x-6 mr-10',
@@ -29,7 +29,7 @@ const Logo = (props: { className?: string, dark?: boolean }) => (
         <LogoLink className="w-6 transform md:-translate-y-0.5" dark={props.dark} />
         <WordmarkLink
             className={classNames(
-              'text-xl font-medium text-gray dark:text-gray-100',
+              'text-xl font-medium text-gray dark:text-gray-100 dark:hover:text-gray',
               mobileHidden
             )}
         />
@@ -63,7 +63,7 @@ const StartHeaderCol = (props: {
 const Header = (props: {
   onAccountPage?: boolean | false
   isSignedIn?: boolean | false
-  dark?: boolean
+  dark: boolean
 }) => {
   const [expanded, setExpanded] = useState(false)
 
