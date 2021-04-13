@@ -71,7 +71,7 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
             return make_response(jsonify(response), SUCCESS)
         else:
             output = result_data["result"]
-            response = {"state": result_data.status, "output": output}
+            response = {"state": result_data["status"], "output": output}
             return make_response(jsonify(response), SUCCESS)
     except Exception as e:
         response = {
