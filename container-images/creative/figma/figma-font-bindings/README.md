@@ -10,4 +10,4 @@ There is no active development on this project; we cloned it over and made a few
 
 ## Publishing
 
-This project gets built into the Figma container image, via `container-images/creative/figma/Dockerfile.20`. Therefore, it gets automatically deployed through the `fractal-publish-build.yml` GitHub Actions workflow, under the `container-images-publish-images-ghcr` job.
+This project gets built into the Figma container image, via `container-images/creative/figma/Dockerfile.20`. Therefore, it gets automatically deployed through the `fractal-publish-build.yml` GitHub Actions workflow, under the `containers-and-ami-publish-ghcr-and-aws` job.
