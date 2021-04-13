@@ -52,6 +52,14 @@ export const closeWindows = () => {
   BrowserWindow.getAllWindows().forEach((win) => win.close())
 }
 
+export const showAppDock = () => {
+  app.dock.show().catch(err => console.error(err))
+}
+
+export const hideAppDock = () => {
+  app.dock.hide()
+}
+
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,

@@ -11,6 +11,7 @@ import {
   protocolLaunchSuccess,
   protocolLaunchFailure
 } from '@app/main/observables/protocol'
+import { hideAppDock } from '@app/utils/windows'
 
 // Streaming information to protocol
 // Stream the ip, secret_key, and ports info to the protocol when we
@@ -26,5 +27,7 @@ zip(
   protocolLaunchProcess,
   protocolLaunchFailure
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))
+
+protocolLaunchProcess.subscribe(() => hideAppDock())
 
 // protocolCloseRequest.subscribe(() => uploadToS3())
