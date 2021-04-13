@@ -29,7 +29,7 @@ const withTracker = (WrappedComponent: any, options = {}) => {
   }
 
   const HOC = (props: any) => {
-    // every time the props change render hte page
+    // every time the props change render the page
     useEffect(() => {
       const {
         location: { pathname: page }
