@@ -39,6 +39,7 @@
         "nodemon": "^2.0.7",
         "npm": "^7.9.0",
         "prettier": "^2.2.1",
+        "rimraf": "^3.0.2",
         "ts-jest": "^26.5.4",
         "ts-node": "^9.1.1",
         "tsconfig-paths": "^3.9.0",
@@ -51,7 +52,7 @@
     },
     "scripts": {
         "compile": "tsc",
-        "clean": "rm -r -f dist",
+        "clean": "rimraf dist",
         "copy-package": "mkdir -p dist && cp package.json dist/package.json",
         "build": "npm run clean && npm run compile",
         "dev": "nodemon -r tsconfig-paths/register --watch src",

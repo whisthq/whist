@@ -1,23 +1,25 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 
 const cmdMainCompile = [
-    "esbuild",
-    "src/main/index.ts",
-    "--bundle",
-    "--platform=node",
-    "--outdir=build/dist/main",
-    "--external:electron",
+  "esbuild",
+  "src/main/index.ts",
+  "--bundle",
+  "--platform=node",
+  "--outdir=build/dist/main",
+  "--external:electron",
 ].join(" ")
 
 const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
 
 const cmdMainWatch = [
-    "nodemon",
-    "--watch ./src/main",
-    "--watch ./src/utils",
-    "--ext js,jsx,ts,tsx,svg",
-    "--exec '" + cmdElectron + "'",
+  "nodemon",
+  "--watch ./src/main",
+  "--watch ./src/utils",
+  "--ext js,jsx,ts,tsx,svg",
+  `--exec \"${cmdElectron}\"`,
 ].join(" ")
+
+console.log(cmdMainWatch)
 
 module.exports = {
   mount: {
@@ -44,6 +46,7 @@ module.exports = {
   },
   packageOptions: {
     external: [
+      "logzio-nodejs",
       "aws-sdk",
       "ping",
       "https",

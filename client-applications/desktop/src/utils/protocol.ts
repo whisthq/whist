@@ -9,7 +9,22 @@ import { spawn, ChildProcess } from 'child_process'
 //
 const getProtocolName = () => {
   if (process.platform === 'win32') return 'Fractal.exe'
-  return './ Fractal'
+  return './_Fractal'
+}
+
+const getProtocolFolder = () => {
+  console.log('app.isPackaged: ', app.isPackaged)
+  console.log('app.getAppPath(): ', app.getAppPath())
+
+  if (app.isPackaged) {
+    if (process.platform === 'darwin') {
+      return path.join(app.getAppPath(), '../..', 'MacOS')
+    } else {
+      return path.join(app.getAppPath(), '../..', 'protocol-build/client')
+    }
+  } else {
+    return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
+  }
 }
 
 let environment = ''
@@ -29,10 +44,7 @@ const protocolArguments = [
   '--read-pipe'
 ]
 
-export const protocolFolder = path
-  .join(app.getAppPath(), app.isPackaged ? 'MacOS' : 'protocol-build/client')
-  .replace('build/dist/main/', '')
-  .replace('Resources/app.asar/', '')
+export const protocolFolder = getProtocolFolder()
 
 export const protocolPath = path.join(protocolFolder, getProtocolName())
 
