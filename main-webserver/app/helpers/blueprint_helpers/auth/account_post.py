@@ -106,7 +106,7 @@ def register_helper(
     customer = stripe.Customer.create(email=username, name=name)
     subscription = stripe.Subscription.create(
         customer=customer["id"],
-        items=[{"price": "price_1I8SoeIOnFXg3A2jVqGwiWPG"}],
+        items=[{"price": current_app.config["STRIPE_PRICE_ID"]}],
         trial_period_days=7,
     )
 
