@@ -126,4 +126,3 @@ jobs:
                   BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-                  

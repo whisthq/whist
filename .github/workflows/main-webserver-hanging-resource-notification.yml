@@ -187,7 +187,6 @@ jobs:
                     if "running" in line:
                       BODY = f"Dangling Packer Instance: `{line}`"
                       slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-                    
 
     notify-if-hanging-resource-fails:
         name: "Notify Slack if Hanging Resource Workflow Fails"

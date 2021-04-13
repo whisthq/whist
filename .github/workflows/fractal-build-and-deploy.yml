@@ -1267,7 +1267,7 @@ jobs:
 
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
-    # Runs if client-applications-publish-build-s3 succeeds. We keep this separate from the 
+    # Runs if client-applications-publish-build-s3 succeeds. We keep this separate from the
     # client-applications-publish-build-s3 job because it is a matrix job
     client-applications-notify-slack:
         name: "Client Applications: Notify Slack"
