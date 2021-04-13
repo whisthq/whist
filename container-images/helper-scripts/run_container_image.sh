@@ -130,7 +130,7 @@ send_set_config_encryption_token_request() {
 }
 
 # Send a spin_up_container request to the host service (which must be running with `make run`).
-# Args: app_name, app_image, mount_command. Modifies container_id
+# Args: app_name, app_image, mount_command, timeout. Modifies container_id
 send_spin_up_container_request() {
     # Send the request
     echo "Sending spin up request to host service!"
@@ -140,7 +140,9 @@ send_spin_up_container_request() {
       "auth_secret": "testwebserverauthsecretdev",
       "app_name": "'"$1"'",
       "app_image": "'"$2"'",
-      "mount_command": "'"$3"'"
+      "mount_command": "'"$3"'",
+      "host_port": 32262,
+      "timeout": '"$4"'
     }') \
         || (echo "spin up request to the host service failed!" && exit 1)
     echo "Response to spin up request from host service: $response"
@@ -152,9 +154,8 @@ send_spin_up_container_request() {
 # Main executing thread
 container_id=""
 check_if_host_service_running
-send_spin_up_container_request "$app_name" "$image" "$mount_protocol"
+send_spin_up_container_request "$app_name" "$image" "$mount_protocol" "$timeout"
 send_start_values_request "$container_id" "$dpi" "$user_id" "$user_access_token"
-send_dev_values_request "$container_id" "$timeout"
 send_set_config_encryption_token_request "$container_id" "$user_id" "$config_encryption_token" "$user_access_token"
 
 # Run bash inside the Docker container
