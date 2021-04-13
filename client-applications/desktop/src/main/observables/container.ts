@@ -18,6 +18,7 @@ import {
   userAccessToken,
   userConfigToken
 } from '@app/main/observables/user'
+import { LogLevel, debug } from '@app/utils/logging'
 import { ContainerAssignTimeout } from '@app/utils/constants'
 import { loadingFrom, pollMap } from '@app/utils/observables'
 import { from, of, zip } from 'rxjs'
@@ -37,29 +38,37 @@ export const containerCreateRequest = zip(
   userEmail,
   userAccessToken,
   userConfigToken
-).pipe(map(([email, access, _]) => [email, access]))
+).pipe(
+  map(([email, access, _]) => [email, access]),
+  debug(LogLevel.DEBUG, 'containerCreateRequest')
+)
 
 export const containerCreateProcess = containerCreateRequest.pipe(
   exhaustMap(([email, token]) => from(containerCreate(email, token))),
   share()
 )
 export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? '') !== '')
+  filter((req) => (req?.json?.ID ?? '') !== ''),
+  debug(LogLevel.DEBUG, 'containerCreateSuccess', 'printing only taskID:', ({ json }) => json.ID)
 )
 
 export const containerCreateFailure = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? '') === '')
+  filter((req) => (req?.json?.ID ?? '') === ''),
+  debug(LogLevel.ERROR, 'containerCreateFailure', 'error:')
 )
 
 export const containerCreateLoading = loadingFrom(
   containerCreateRequest,
   containerCreateSuccess,
   containerCreateFailure
+).pipe(
+  debug(LogLevel.DEBUG, 'containerCreateLoading')
 )
 
 export const containerAssignRequest = containerCreateSuccess.pipe(
   withLatestFrom(userAccessToken),
-  map(([response, token]) => [response.json.ID, token])
+  map(([response, token]) => [response.json.ID, token]),
+  debug(LogLevel.DEBUG, 'containerAssignRequest')
 )
 
 export const containerAssignPolling = containerAssignRequest.pipe(
@@ -67,7 +76,8 @@ export const containerAssignPolling = containerAssignRequest.pipe(
   takeWhile((res) => containerInfoPending(res), true),
   takeWhile((res) => !containerInfoError(res), true),
   takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
-  share()
+  share(),
+  debug(LogLevel.DEBUG, 'containerAssignPolling', 'polling containerAssign:', null)
 )
 
 containerAssignPolling.subscribe((res) =>
@@ -76,7 +86,8 @@ containerAssignPolling.subscribe((res) =>
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
   takeLast(1),
-  filter((res) => containerInfoSuccess(res))
+  filter((res) => containerInfoSuccess(res)),
+  debug(LogLevel.DEBUG, 'containerAssignSuccess')
 )
 
 export const containerAssignFailure = containerAssignPolling.pipe(
@@ -86,11 +97,14 @@ export const containerAssignFailure = containerAssignPolling.pipe(
       containerInfoError(res) ||
       containerInfoPending(res) ||
       !containerInfoSuccess(res)
-  )
+  ),
+  debug(LogLevel.ERROR, 'containerAssignFailure', 'error:')
 )
 
 export const containerAssignLoading = loadingFrom(
   containerAssignRequest,
   containerAssignSuccess,
   containerAssignFailure
+).pipe(
+  debug(LogLevel.DEBUG, 'containerAssignLoading')
 )

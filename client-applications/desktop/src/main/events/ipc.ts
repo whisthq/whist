@@ -9,7 +9,8 @@ import { fromEvent } from 'rxjs'
 import { get } from 'lodash'
 import { map, share, startWith } from 'rxjs/operators'
 import { StateChannel } from '@app/utils/constants'
-import { StateIPC } from '@app/@types/state'
+import { StateIPC } from '@app/utils/types'
+import { LogLevel, debug } from '@app/utils/logging'
 
 // This file listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -37,7 +38,8 @@ import { StateIPC } from '@app/@types/state'
 export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
   map(([_event, state]) => state as Partial<StateIPC>),
   startWith({}),
-  share()
+  share(),
+  debug(LogLevel.DEBUG, 'eventIPC')
 )
 
 export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
