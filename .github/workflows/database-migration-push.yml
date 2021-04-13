@@ -220,7 +220,7 @@ jobs:
                           + slack_redirect)
 
                   slack_debug(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
-            
+
             - name: Notify Slack on failure
               if: failure()
               shell: python3 {0}
