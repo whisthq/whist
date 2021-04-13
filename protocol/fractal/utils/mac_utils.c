@@ -76,4 +76,4 @@ int dir_exists(const char* path) {
     }
 }
 
-#endif // __APPLE__
+#endif  // __APPLE__

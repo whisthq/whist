@@ -132,4 +132,4 @@ bool init_desktop(InputDevice* input_device, char* vm_password) {
     return !failed;
 }
 
-#endif // _WIN32
+#endif  // _WIN32

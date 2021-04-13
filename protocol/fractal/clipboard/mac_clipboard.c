@@ -220,4 +220,4 @@ void unsafe_set_clipboard(ClipboardData* cb) {
     }
 }
 
-#endif // __APPLE__
+#endif  // __APPLE__
