@@ -15,7 +15,7 @@
 /build
 
 # dynamically generated css
-/public/css/tailwind.css
+/public/css
 
 # Python
 __pycache__

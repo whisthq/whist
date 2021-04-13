@@ -75,7 +75,7 @@ export const About = (props: { useWidth?: boolean }) => {
                     </Col>
                     <Col md={12} style={{ marginTop: 50, textAlign: 'left' }}>
                         <div>
-                            <Carousel controls={false}>{teamCards}</Carousel>
+                            <Carousel controls={true}>{teamCards}</Carousel>
                         </div>
                     </Col>
                 </Row>
