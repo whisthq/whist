@@ -8,7 +8,7 @@ import { app } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
 
-import { eventAppReady, eventWindowsAllClosed } from '@app/main/events/app'
+import { eventAppReady, eventWindowsAllClosed, eventWindowCreated } from '@app/main/events/app'
 import { merge, race, zip } from 'rxjs'
 import { takeUntil } from 'rxjs/operators'
 import {
@@ -29,6 +29,7 @@ import {
   userConfigToken
 } from '@app/main/observables/user'
 import { protocolCloseSuccess } from '@app/main/observables/protocol'
+import { showAppDock } from "@app/utils/windows"
 
 // Window opening
 //
@@ -71,5 +72,7 @@ race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
     }
   }
 )
+
+eventWindowCreated.subscribe(() => showAppDock())
 
 protocolCloseSuccess.subscribe(() => app?.quit())
