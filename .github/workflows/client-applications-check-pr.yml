@@ -112,17 +112,18 @@ jobs:
 
             ############################# Unix Configuration Steps END #############################
 
+            # publish.bat expects to be run from /desktop, for consistency with yarn commands and manual testing
             # - name: Build the Windows Electron Application
             #   if: runner.os == 'Windows'
             #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-            #   working-directory: client-applications\desktop\scripts
-            #   run: .\publish.bat -version=1.0.0 -bucket=not-applicable -env=${{ env.DEPLOY_ENVIRONMENT }} -publish=false
+            #   working-directory: client-applications\desktop
+            #   run: .\scripts\publish.bat -version=1.0.0 -bucket=not-applicable -env=${{ env.DEPLOY_ENVIRONMENT }} -publish=false
 
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              working-directory: client-applications/desktop/scripts
+              working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
@@ -135,4 +136,5 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  ./publish.sh --version 1.0.0 --bucket not-applicable --env ${{ env.DEPLOY_ENVIRONMENT }} --publish false
+                  # publish.sh expects to be run from /desktop, for consistency with yarn commands and manual testing
+                  ./scripts/publish.sh --version 1.0.0 --bucket not-applicable --env ${{ env.DEPLOY_ENVIRONMENT }} --publish false
