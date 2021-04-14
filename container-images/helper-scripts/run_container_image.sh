@@ -35,7 +35,7 @@ dpi=${FRACTAL_DPI:-96}
 user_id=${FRACTAL_USER_ID:-''}
 
 # timeout to set the protocol server to inside the container, defaults to 60 seconds if not set
-timeout=${FRACTAL_TIMEOUT:-60}
+protocol_timeout=${FRACTAL_TIMEOUT:-60}
 
 # User config encryption token. This would normally be passed in by the client app,
 # but we'll use a fake key here.
@@ -122,7 +122,7 @@ send_spin_up_container_request() {
       "app_name": "'"$1"'",
       "app_image": "'"$2"'",
       "mount_command": "'"$3"'",
-      "timeout": '"$4"'
+      "protocol_timeout": '"$4"'
     }') \
         || (echo "spin up request to the host service failed!" && exit 1)
     echo "Response to spin up request from host service: $response"
@@ -134,7 +134,7 @@ send_spin_up_container_request() {
 # Main executing thread
 container_id=""
 check_if_host_service_running
-send_spin_up_container_request "$app_name" "$image" "$mount_protocol" "$timeout"
+send_spin_up_container_request "$app_name" "$image" "$mount_protocol" "$protocol_timeout"
 send_start_values_request "$container_id" "$dpi" "$user_id" "$user_access_token"
 send_set_config_encryption_token_request "$container_id" "$user_id" "$config_encryption_token" "$user_access_token"
 
