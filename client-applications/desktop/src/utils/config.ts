@@ -1,4 +1,4 @@
-import env from "@app/utils/env"
+import env from '@app/utils/env'
 
 enum FractalNodeEnvironment {
   DEVELOPMENT = 'development',
@@ -122,14 +122,14 @@ const getDevelopmentEnv = () => {
 
 const getProductionEnv = () => {
   switch (env.PACKAGED_ENV) {
-      case FractalCIEnvironment.DEVELOPMENT:
-          return environment.DEVELOPMENT
-      case FractalCIEnvironment.STAGING:
-          return environment.STAGING
-      case FractalCIEnvironment.PRODUCTION:
-          return environment.PRODUCTION
-      default:
-          return environment.PRODUCTION
+    case FractalCIEnvironment.DEVELOPMENT:
+      return environment.DEVELOPMENT
+    case FractalCIEnvironment.STAGING:
+      return environment.STAGING
+    case FractalCIEnvironment.PRODUCTION:
+      return environment.PRODUCTION
+    default:
+      return environment.PRODUCTION
   }
 }
 
