@@ -15,6 +15,8 @@ arrow, etc.).
 
 #include "cursor.h"
 
+#ifdef _WIN32
+
 typedef struct FractalCursorTypes {
     HCURSOR CursorAppStarting;
     HCURSOR CursorArrow;
@@ -107,3 +109,5 @@ FractalCursorImage get_current_cursor() {
 
     return image;
 }
+
+#endif  // _WIN32

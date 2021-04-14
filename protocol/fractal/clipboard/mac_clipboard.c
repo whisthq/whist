@@ -18,6 +18,8 @@ whatever files are in the SET_CLIPBOARD directory.
 #include <fractal/core/fractal.h>
 #include "clipboard.h"
 
+#ifdef __APPLE__
+
 void unsafe_init_clipboard(){};
 
 void unsafe_destroy_clipboard(){};
@@ -217,3 +219,5 @@ void unsafe_set_clipboard(ClipboardData* cb) {
         }
     }
 }
+
+#endif  // __APPLE__
