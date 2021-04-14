@@ -53,10 +53,14 @@ export const closeWindows = () => {
 }
 
 export const showAppDock = () => {
+  // On non-macOS systems, app.dock is null, so we
+  // do nothing here.
   app?.dock?.show().catch(err => console.error(err))
 }
 
 export const hideAppDock = () => {
+  // On non-macOS systems, app.dock is null, so we
+  // do nothing here.
   app?.dock?.hide()
 }
 

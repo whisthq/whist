@@ -13,9 +13,6 @@ const getProtocolName = () => {
 }
 
 const getProtocolFolder = () => {
-  console.log('app.isPackaged: ', app.isPackaged)
-  console.log('app.getAppPath(): ', app.getAppPath())
-
   if (app.isPackaged) {
     if (process.platform === 'darwin') {
       return path.join(app.getAppPath(), '../..', 'MacOS')
@@ -68,7 +65,15 @@ export const protocolLaunch = () => {
 
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
-    stdio: ['pipe', process.stdout, process.stderr]
+    stdio: ['pipe', process.stdout, process.stderr],
+
+    // On packaged macOS, the protocol is moved to the MacOS folder,
+    // but expects to be in the Fractal.app root alongside the loading
+    // animation PNG files.
+    ...(app.isPackaged &&
+        process.platform === 'darwin' && {
+      cwd: path.join(protocolFolder, '..')
+    })
   })
 
   return protocol
