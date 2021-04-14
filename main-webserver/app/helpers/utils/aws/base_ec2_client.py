@@ -75,6 +75,7 @@ class EC2Client:
         num_instances: int = 1,
         instance_type: str = "g3.4xlarge",
         instance_name: str = "Leor-test-instance",
+        poll_til_up: bool = False,
     ) -> List[str]:
         """
         Starts AWS instances with the given properties, not returning until they're
@@ -84,6 +85,7 @@ class EC2Client:
             num_instances: how many instances to start
             instance_type: which type of instance (hardwarewise) to start
             instance_name: what name the instance should have
+            poll_til_up: whether this call should block until instances are running
 
         Returns: the IDs of the started instances
 
@@ -106,21 +108,34 @@ class EC2Client:
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
-        time.sleep(5)  # AWS takes a bit of time to recognize that these resources actually exist
-        self._spin_til_instances_up(instance_ids)
+        if poll_til_up:
+            time.sleep(
+                5
+            )  # AWS takes a bit of time to recognize that these resources actually exist
+            self.spin_til_instances_up(instance_ids)
 
         return instance_ids
 
-    def stop_instances(self, instance_ids: List[str]) -> None:
+    def stop_instances(self, instance_ids: List[str], poll_til_down: bool = False) -> None:
         """
         Turns off all instances passed in
         Args:
             instance_ids: which instances to disable
+            poll_til_down: whether to block until instances terminate
         """
         self.ec2_client.terminate_instances(InstanceIds=instance_ids)
-        self._spin_til_instances_down(instance_ids)
+        if poll_til_down:
+            self.spin_til_instances_down(instance_ids)
 
-    def _check_if_instances_up(self, instance_ids: List[str]) -> bool:
+    def check_if_instances_up(self, instance_ids: List[str]) -> bool:
+        """
+        Checks whether a given set of instances are running
+        Args:
+            instance_ids: the instances to check
+
+        Returns: a boolean corresponding to whether every instance is live
+
+        """
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
@@ -130,7 +145,15 @@ class EC2Client:
             return True
         raise Exception(states)
 
-    def _check_if_instances_down(self, instance_ids: List[str]) -> bool:
+    def check_if_instances_down(self, instance_ids: List[str]) -> bool:
+        """
+        Checks whether a given set of instances are stopped
+            Args:
+                    instance_ids: the instances to check
+
+            Returns: a boolean corresponding to whether every instance is dead`
+
+        """
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
@@ -138,12 +161,30 @@ class EC2Client:
             return False
         return True
 
-    def _spin_til_instances_up(self, instance_ids: List[str], time_wait=10):
-        while not self._check_if_instances_up(instance_ids):
+    def spin_til_instances_up(self, instance_ids: List[str], time_wait=10) -> None:
+        """
+        Polls AWS every time_wait seconds until all specified instances are up
+        Args:
+            instance_ids: which instances to check
+            time_wait: how long to wait between polls
+
+        Returns: None
+
+        """
+        while not self.check_if_instances_up(instance_ids):
             time.sleep(time_wait)
 
-    def _spin_til_instances_down(self, instance_ids: List[str], time_wait=10):
-        while not self._check_if_instances_down(instance_ids):
+    def spin_til_instances_down(self, instance_ids: List[str], time_wait=10) -> None:
+        """
+        Polls AWS every time_wait seconds until all specified instances are up
+        Args:
+            instance_ids: which instances to check
+            time_wait: how long to wait between polls
+
+        Returns: None
+
+        """
+        while not self.check_if_instances_down(instance_ids):
             time.sleep(time_wait)
 
     def get_ip_of_instances(self, instance_ids: List[str]) -> Dict[str, str]:
@@ -155,7 +196,7 @@ class EC2Client:
         Returns: a dict mapping instance ID to IP address
 
         """
-        if not self._check_if_instances_up(instance_ids):
+        if not self.check_if_instances_up(instance_ids):
             raise Exception("instances must be up to check IPs")
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
