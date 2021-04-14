@@ -8,6 +8,7 @@ import RootApp from '@app/pages/root'
 
 import '@app/styles/global.module.css'
 import '@app/styles/bootstrap.css'
+import { MainProvider } from './shared/context/mainContext'
 
 if (import.meta.env.REACT_APP_ENVIRONMENT === 'production') {
   // the netlify build command is:
@@ -15,18 +16,22 @@ if (import.meta.env.REACT_APP_ENVIRONMENT === 'production') {
   // so this environment variable should be set on netlify deploys
   Sentry.init({
     dsn:
-            'https://4fbefcae900443d58c38489898773eea@o400459.ingest.sentry.io/5394481',
+      'https://4fbefcae900443d58c38489898773eea@o400459.ingest.sentry.io/5394481',
     environment: config.sentry_env,
-    release: `website@${import.meta.env.REACT_APP_VERSION as string ?? 'local'}`
+    release: `website@${
+      (import.meta.env.REACT_APP_VERSION as string) ?? 'local'
+    }`
   })
 }
 
 const RootComponent = () => (
-    <Sentry.ErrorBoundary fallback={'An error has occurred'}>
-        <Router history={history}>
-            <RootApp/>
-        </Router>
-    </Sentry.ErrorBoundary>
+  <Sentry.ErrorBoundary fallback={'An error has occurred'}>
+    <Router history={history}>
+      <MainProvider>
+        <RootApp />
+      </MainProvider>
+    </Router>
+  </Sentry.ErrorBoundary>
 )
 
 ReactDOM.render(<RootComponent />, document.getElementById('root'))
