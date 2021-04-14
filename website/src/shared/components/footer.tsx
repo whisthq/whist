@@ -11,6 +11,7 @@ import {
   SupportLink,
   CareersLink,
   SalesLink,
+  SecurityLink,
   BlogLink,
   DiscordLink,
   WordmarkLink
@@ -79,6 +80,7 @@ const Footer = () => {
                                 <SalesLink {...props} />
                                 <SupportLink {...props} />
                                 <CareersLink {...props} />
+                                <SecurityLink {...props} />
                             </>
                         )}
                     </FooterLinkList>
