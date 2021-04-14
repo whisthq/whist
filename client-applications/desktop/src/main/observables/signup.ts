@@ -13,11 +13,8 @@
 import { fromEventIPC } from "@app/main/events/ipc"
 import { from } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
-import {
-  emailSignup,
-  emailSignupValid,
-  emailSignupError,
-} from "@app/utils/signup"
+import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
+import { debug, error, warning } from "@app/utils/logging"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
 
@@ -36,7 +33,7 @@ export const signupRequest = fromEventIPC("signupRequest").pipe(
   ),
   map(([req, token]) => [req?.email, req?.password, token]),
   share(),
-  debug(LogLevel.DEBUG, "signupRequest")
+  debug("signupRequest")
 )
 
 export const signupProcess = signupRequest.pipe(
@@ -51,17 +48,17 @@ export const signupProcess = signupRequest.pipe(
 export const signupWarning = signupProcess.pipe(
   filter((res) => !emailSignupError(res)),
   filter((res) => !emailSignupValid(res)),
-  debug(LogLevel.WARNING, "signupWarning", "user already exists", null)
+  warning("signupWarning", "user already exists", null)
 )
 
 export const signupSuccess = signupProcess.pipe(
   filter((res) => emailSignupValid(res)),
-  debug(LogLevel.DEBUG, "signupSuccess", "json value:", ({ json }) => json)
+  debug("signupSuccess", "json value:", ({ json }) => json)
 )
 
 export const signupFailure = signupProcess.pipe(
   filter((res) => emailSignupError(res)),
-  debug(LogLevel.ERROR, "signupFailure", "error:")
+  error("signupFailure", "error:")
 )
 
 export const signupLoading = loadingFrom(
@@ -69,4 +66,4 @@ export const signupLoading = loadingFrom(
   signupSuccess,
   signupFailure,
   signupWarning
-).pipe(debug(LogLevel.DEBUG, "signupLoading"))
+).pipe(debug("signupLoading"))

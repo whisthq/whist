@@ -13,14 +13,15 @@
 import { fromEventIPC } from "@app/main/events/ipc"
 import { from } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
-import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
+import { debug, warning } from "@app/utils/logging"
+import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
 import { filter, map, share, exhaustMap } from "rxjs/operators"
 
 export const loginRequest = fromEventIPC("loginRequest").pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
   map(({ email, password }) => [email, password]),
   share(),
-  debug(LogLevel.DEBUG, "loginRequest")
+  debug("loginRequest")
 )
 
 export const loginProcess = loginRequest.pipe(
@@ -32,22 +33,17 @@ export const loginProcess = loginRequest.pipe(
 export const loginWarning = loginProcess.pipe(
   filter((res) => !emailLoginError(res)),
   filter((res) => !emailLoginValid(res)),
-  debug(
-    LogLevel.WARNING,
-    "loginWarning",
-    "logged in with invalid credentials",
-    null
-  )
+  warning("loginWarning", "logged in with invalid credentials", null)
 )
 
 export const loginSuccess = loginProcess.pipe(
   filter((res) => emailLoginValid(res)),
-  debug(LogLevel.DEBUG, "loginSuccess")
+  debug("loginSuccess")
 )
 
 export const loginFailure = loginProcess.pipe(
   filter((res) => emailLoginError(res)),
-  debug(LogLevel.DEBUG, "loginFailure")
+  debug("loginFailure")
 )
 
 export const loginLoading = loadingFrom(
@@ -55,4 +51,4 @@ export const loginLoading = loadingFrom(
   loginSuccess,
   loginFailure,
   loginWarning
-).pipe(debug(LogLevel.DEBUG, "loginLoading"))
+).pipe(debug("loginLoading"))
