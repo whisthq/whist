@@ -19,8 +19,8 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError
 } from '@app/utils/host'
-import { debug, error } from '@app/utils/logging'
-import { from, merge } from 'rxjs'
+import { debugObservables, error } from '@app/utils/logging'
+import { from, merge, LogProps } from 'rxjs'
 import {
   map,
   take,
@@ -108,12 +108,30 @@ export const hostConfigLoading = loadingFrom(
 )
 
 // Logging
+debugObservables([
+  { observable: hostInfoRequest, title: "hostInfoRequest" },
+  { observable: hostInfoSuccess, title: "hostInfoSuccess" },
+  {
+    observable: hostConfigRequest,
+    title: "hostConfigRequest",
+    message: "value:",
+    func: () => "hostConfigRequest emitted",
+  },
+  {
+    observable: hostConfigProcess,
+    title: "hostConfigProcess",
+    message: "printing only status, json:",
+    func: (obj: any) => pick(obj, ["status", "json"]),
+  },
+  {
+    observable: hostConfigSuccess,
+    title: "hostConfigSuccess",
+    message: "printing only status, json:",
+    func: (obj: any) => pick(obj, ["status", "json"]),
+  }
+] as LogProps)
+
 merge(
-  hostInfoRequest.pipe(debug('hostInfoRequest')),
-  hostInfoSuccess.pipe(debug('hostInfoSuccess')),
   hostInfoFailure.pipe(error('hostInfoFailure')),
-  hostConfigRequest.pipe(debug('hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')),
-  hostConfigProcess.pipe(debug('hostConfigRequest', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))),
-  hostConfigSuccess.pipe(debug('hostConfigSuccess', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))),
   hostConfigFailure.pipe(error('hostConfigFailure', 'error:'))
 ).subscribe()

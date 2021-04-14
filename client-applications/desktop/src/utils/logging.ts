@@ -7,6 +7,7 @@ import util from 'util'
 import path from 'path'
 import AWS from 'aws-sdk'
 import logzio from 'logzio-nodejs'
+import { merge, Observable } from "rxjs"
 
 import config from '@app/utils/config'
 
@@ -163,3 +164,22 @@ export const debug = log.bind(null, LogLevel.DEBUG)
 export const info = log.bind(null, LogLevel.INFO)
 export const warning = log.bind(null, LogLevel.WARNING)
 export const error = log.bind(null, LogLevel.ERROR)
+
+export interface LogProps {
+  observable: Observable<any>
+  title: string
+  message?: string
+  func?: null | ((...args: any[]) => any)
+}
+
+export const logObservables = (func: typeof debug, ...args: Array<LogProps>) =>
+  merge(
+    args.map((arg) =>
+      arg.observable.pipe(func(arg.title, arg.message, arg.func))
+    )
+  ).subscribe()
+
+export const debugObservables = logObservables.bind(null, debug)
+export const infoObservables = logObservables.bind(null, info)
+export const warningObservables = logObservables.bind(null, warning)
+export const errorObservables = logObservables.bind(null, error)
