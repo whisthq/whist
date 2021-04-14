@@ -4,20 +4,13 @@
   "license": "UNLICENSED",
   "main": "build/dist/main/index.js",
   "scripts": {
-    "about:start": "echo 'Builds the react project and starts the electron app for development and testing.'",
     "start": "node ./scripts/start.js",
-    "about:package": "echo 'Builds the react project and packages the electron app.'",
     "package": "./scripts/package.sh --publish never",
-    "about:package:ci": "echo 'Builds the react project and packages the electron app, publishing the package to S3.'",
     "package:ci": "./scripts/package.sh --publish always",
-    "about:package:local": "echo 'Builds the react project and packages the electron app, publishing the package to S3.'",
     "package:local": "./scripts/publish.sh",
-    "about:postinstall": "echo 'Builds core-ts and electron-notarize for the current development environment.'",
     "postinstall": "node ./scripts/postinstall.js",
-    "about:lint:check": "echo 'Checks that code is properly linted and formatted.'",
-    "lint:check": "eslint --max-warnings 0 './src/**/*.{js,jsx,ts,tsx}'",
-    "about:lint:fix": "echo 'Properly lints and formats code.'",
-    "lint:fix": "eslint --max-warnings 0 --fix './src/**/*.{js,jsx,ts,tsx}'"
+    "lint:check": "node ./scripts/lint",
+    "lint:fix": "node ./scripts/lint --fix"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
