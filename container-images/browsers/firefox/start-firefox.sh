@@ -9,4 +9,4 @@ exec firefox \
         -setDefaultBrowser \
         -url "google.com" \
         -MOZ_LOG="PlatformDecoderModule:5" \
-        -MOZ_LOG_FILE="firefox_log.txt"
+        -MOZ_LOG_FILE="/firefox_log.txt"

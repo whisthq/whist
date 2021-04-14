@@ -73,3 +73,6 @@ RUN chmod +x /usr/bin/start-firefox
 
 # Setup Fractal application symlink
 RUN ln -sf /usr/bin/start-firefox /usr/bin/fractal-application
+
+# Make Logfile
+RUN touch /firefox_log.txt
