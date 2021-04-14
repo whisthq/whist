@@ -103,7 +103,7 @@ export const SalesLink = (props: any) => (
 
 export const SecurityLink = (props: any) => (
     <a {...props} href="mailto: security@fractal.co">
-        Sales
+        Security
     </a>
 )
 
