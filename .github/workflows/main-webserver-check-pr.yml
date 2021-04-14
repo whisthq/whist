@@ -141,7 +141,7 @@ jobs:
               run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
 
     # Database Migration
-    # Compare the schema of the live database with main-webserver/db-migration/schema.sql, and 
+    # Compare the schema of the live database with main-webserver/db-migration/schema.sql, and
     # notify the PR if schema changes are detected
     main-webserver-check-migra-diff:
         name: Check Migra Diff
