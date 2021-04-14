@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# This script downloads pre-built Fractal protocol libraries from AWS S3, on Unix
+# This script downloads pre-built Fractal protocol libraries from AWS S3, on all OSes
 
 # Exit on errors and missing environment variables
 set -Eeuo pipefail
@@ -111,6 +111,43 @@ fi
 if has_updated "$SDL_LIB"; then
     mkdir -p "$SDL_LIB_DIR"
     aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$SDL_LIB" - | tar -xz -C "$SDL_LIB_DIR"
+fi
+
+###############################
+# Download OpenSSL headers
+###############################
+
+# If the include/openssl directory doesn't exist, make it and fill it
+# Or, if the lib has updated, refill the directory
+LIB="fractal-libcrypto-headers.tar.gz"
+OPENSSL_DIR="$SOURCE_DIR/include/openssl"
+if [[ ! -d "$OPENSSL_DIR" ]] || has_updated "$LIB"; then
+    mkdir -p "$OPENSSL_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$LIB" - | tar -xz -C "$OPENSSL_DIR"
+
+    # Pull all OpenSSL include files up a level and delete encapsulating folder
+    mv "$OPENSSL_DIR/include"/* "$OPENSSL_DIR"
+    rmdir "$OPENSSL_DIR/include"
+fi
+
+###############################
+# Download OpenSSL libraries
+###############################
+
+# Select OpenSSL lib dir and OpenSSL lib targz name based on OS
+OPENSSL_LIB_DIR="$SOURCE_DIR/lib/64/openssl/$OS"
+if [[ "$OS" =~ "Windows" ]]; then
+    OPENSSL_LIB="fractal-windows-libcrypto-static-lib.tar.gz"
+elif [[ "$OS" == "Darwin" ]]; then
+    OPENSSL_LIB="fractal-macos-libcrypto-static-lib.tar.gz"
+elif [[ "$OS" == "Linux" ]]; then
+    OPENSSL_LIB="fractal-linux-libcrypto-static-lib.tar.gz"
+fi
+
+# Check if OPENSSL_LIB has updated, and if so, create the dir and copy the libs into the source dir
+if has_updated "$OPENSSL_LIB"; then
+    mkdir -p "$OPENSSL_LIB_DIR"
+    aws s3 cp --only-show-errors "s3://fractal-protocol-shared-libs/$OPENSSL_LIB" - | tar -xz -C "$OPENSSL_LIB_DIR"
 fi
 
 ###############################
