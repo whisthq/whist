@@ -37,18 +37,18 @@ export const MainProvider = ({ children }: any) => {
   // }
 
   return (
-        <MainContext.Provider
-            value={{
-              width: width,
-              height: height,
-              referralCode: referralCode,
-              setReferralCode: setReferralCode,
-              appHighlight: appHighlight,
-              setAppHighlight: setAppHighlight
-            }}
-        >
-            {children}
-        </MainContext.Provider>
+    <MainContext.Provider
+      value={{
+        width: width,
+        height: height,
+        referralCode: referralCode,
+        setReferralCode: setReferralCode,
+        appHighlight: appHighlight,
+        setAppHighlight: setAppHighlight
+      }}
+    >
+      {children}
+    </MainContext.Provider>
   )
 }
 
