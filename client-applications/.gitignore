@@ -8,6 +8,7 @@ protocol-packages/
 node_modules/
 desktop/node_modules/
 yarn-error.log
+env.json
 
 # build
 build/
