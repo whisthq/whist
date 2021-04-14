@@ -19,7 +19,7 @@ import {
   checkConfirmPassword,
   checkConfirmPasswordVerbose
 } from '@app/utils/auth'
-/* import { emailSignup } from "@app/utils/api" */
+/* import { emailSignup } from "@app/utils/signup" */
 
 const Signup = (props: {
   loading: boolean
