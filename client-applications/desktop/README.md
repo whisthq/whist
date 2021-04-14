@@ -4,6 +4,51 @@ This repository contains the code for the Fractal client application, which is t
 
 At a high-level, this repository has two main functions. The first is that it's the home for all the source code related to the client application's GUI and background process. The second is that it's home to all the scripts and configuration involved in "packaging" the application for the user. This "packaging" involves bundling dependencies, notarization/certificates, and moving files to the correct place on the user's OS. Below, we'll discuss each of these functions in more detail.
 
+## Setting Up for Development
+
+We use `yarn` as the package manager for this project. All of the commands requried for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `desktop/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder. They should all be run with `desktop` as the working directory, and you should only need to interact with them using `yarn`.
+
+1. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
+
+2. `cd` into the `desktop` folder.
+
+3. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
+
+4. To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. Note: `yarn dev` will start the Electron application, but will not fetch the Fractal protocol, which is necessary to stream apps. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
+
+## How To Contribute
+
+Before making a pull request, ensure that the following steps are taken:
+
+1. Make sure the application is fully working both in `dev` (via `yarn start`) and packaged (see **Packaging for Production**). This is important because the Electron app can behave differently when packaged. For example, file paths will change.
+
+2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
+
+3. Lint your code by running `yarn lint-fix`. If this does not pass, your code will fail Github CI.
+
+4. Run all test files by running `yarn test`. If this does not pass, your code will fail Github CI. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
+
+5. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
+
+Finally, you can open PR to `dev`.
+
+### How To Clear The App's Cache
+
+Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting/modifying/reviewing the files at:
+
+- On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
+- On Windows, look in `C:\Users\<user>\AppData\Roaming\{Electron,Fractal}\Cache\config.json`
+
+The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
+
+## Testing the client app with the protocol
+
+The client app launches the protocol, but the protocol needs to be built first.
+
+1. Go to the `/protocol/` README to install all the necessary prerequisites.
+
+2. In the `client-applications/desktop` folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/desktop/release`. No cross-compilation is possible, e.g. you can only package the Windows application from a Windows computer.
+
 ## Client Application Source Code
 
 Our client application is built on [Electron](https://www.electronjs.org), which is a cross-platform GUI framework. It provides a consistent interface for interacting with different operating system functions (like window management), as well as a GUI rendering engine based on Chromium. This means that user interface work with Electron is very similar to modern web design. Electron windows simply render HTML pages, which are able to link to external CSS, images, and JavaScript.
@@ -85,6 +130,44 @@ Subscribers to observables can live anywhere in your codebase, which allows for 
 You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
 
 A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
+
+## Packaging
+
+### MacOS Notarizing
+
+Before you can package the MacOS application it needs to be notarized. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully. You can download the certificate from AWS S3 on [this link](https://fractal-dev-secrets.s3.amazonaws.com/fractal-apple-codesigning-certificate.p12) assuming you have access to the Fractal AWS organization, and then install it by double-clicking the `.p12` certificate file. The application will get notarized as part of the regular build script.
+
+In order for this to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it _at least_ once following installation, which will prompt you to install additional components. If your macOS version is too old to install Xcode directly from the macOS App Store, you can manually download the macOS SDK (which you'd normally obtain through Xcode) for your macOS version and place it in the right subfolder. Here's an example for macOS 10.14:
+
+```
+# Explicitly retrieve macOS 10.14 SDK
+wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+
+# Untar it
+xz -d MacOSX10.14.sdk.tar.xz
+tar -xf MacOSX10.14.sdk.tar
+
+# Move it to the right folder for building the protocol
+mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
+```
+
+Once those components are installed, you need to open up a terminal and run `xcode-select --install` to install the Xcode CLI, which is necessary for the notarizing to work. Once all of these are done, you should have no problem with the notarization process as part of the packaging of the application.
+
+### Publishing New Versions
+
+Fractal runs two update channels, `production` and `testing`. The `dev` branch should be published automatically to `testing`, while `production` should match `prod`. The build script has a special `noupdates` channel which should be used for any builds that aren't on one of these branches.
+
+Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
+
+#### Update Channels
+
+There is a channel for `testing` and `production` on each platform. These channels are backed by AWS S3 buckets ([here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#)) that follow a file structure and metadata schema specified by [electron-builder's publish system](https://www.electron.build/configuration/publish) (it's basically the executable installer + a well-known YAML file with metadata like file hash, file name, and release date which is used for knowing when an update is available).
+
+## Continous Integration
+
+This repository has basic continuous integration through GitHub Actions. For every PR to `dev`, `staging`, or `prod`, GitHub Actions will attempt to build the bundled application on Windows-64bit, macOS-64bit, and Linux-64bit. These will be uploaded to their respective s3 buckets: `s3://fractal-chromium-{windows,macos,ubuntu}-{dev,staging,prod}`. Each s3 bucket functions as a release channel and only stores the latest version. A YAML-formatted metadata file is present detailing the version and other info. See [electron-builder's publish documentation](https://www.electron.build/configuration/publish) for more info.
+
+Changes in the `protocol/` subrepo will also trigger the client-apps to be rebuilt.
 
 ## Traps!
 
