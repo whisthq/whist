@@ -325,7 +325,7 @@ jobs:
               if: failure()
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Container images push failure failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}\", \"username\": \"Fractal Bot\", \"text\": \"Container images push failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
 
     # ECS Task Definitions: Render & Deploy Task Definitions to ECS
