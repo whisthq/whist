@@ -26,7 +26,6 @@ export const userEmail = merge(
   fromEventIPC('signupRequest', 'email').pipe(sample(signupSuccess))
 ).pipe(filter(identity), share())
 
-
 export const userConfigToken = merge(
   fromEventPersist('userConfigToken'),
   fromEventIPC('loginRequest', 'password').pipe(

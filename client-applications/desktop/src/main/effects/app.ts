@@ -58,10 +58,7 @@ eventWindowsAllClosed
 // When the protocol closees, upload protocol logs to S3
 
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  ;(async (email: string) => {
-    await uploadToS3(email)
-    app.quit()
-  })(email)
+  uploadToS3(email).then(() => app.quit()).catch(err => console.error(err))
 })
 
 // If we have have successfully authorized, close the existing windows.
