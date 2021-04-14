@@ -17,7 +17,7 @@ We use `yarn` as the package manager for this project. All of the commands requr
 4. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
 
 5. To start the application in the `dev` environment, run `yarn start`. `yarn start` will install
-the protocol for you if it's not already installed.
+   the protocol for you if it's not already installed.
 
 ## How To Contribute
 
