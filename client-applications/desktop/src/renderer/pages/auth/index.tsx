@@ -3,7 +3,7 @@ import { Route } from 'react-router-dom'
 
 import Login from '@app/renderer/pages/auth/login'
 import Signup from '@app/renderer/pages/auth/signup'
-import { useMainState } from '@app/utils/state'
+import { useMainState } from '@app/utils/ipc'
 
 const Auth = () => {
   /*
