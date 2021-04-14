@@ -19,7 +19,7 @@ cd "$DIR"
 
 # run with option -c for CI check without replacement option
 OPTIND=1
-CICheck=0
+CICheck=
 
 while getopts "c" opt; do
     case "$opt" in
@@ -33,7 +33,7 @@ shift $((OPTIND-1))
 [ "${1:-}" = "--" ] && shift
 
 # find machine type (necessary for appropriate pwd behavior)
-isWindows=0
+isWindows=
 unameOut="$(uname -s)"
 case "${unameOut}" in
     CYGWIN*)    isWindows=1 ;;
@@ -72,6 +72,10 @@ fi
 filesToFix=()
 IFS=$'\n' # Break for-loop on newline rather than any whitespace
 for line in $(cat "$compileCommands" | jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
+    if [[ -n "$isWindows" ]]; then
+        # Replace Windows path with Linux path
+        line="$(echo "$line" | sed "s/\([^:]*\):/\/\1/g")"
+    fi
     filesToFix+=("$line")
 done
 unset IFS
@@ -88,8 +92,7 @@ fi
 if clang-tidy -p="$BUILD_DIR" --header-filter="$headerFilter" --quiet --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
     echo "clang-tidy successful"
 else
-    if [[ $CICheck == 1 ]]
-    then
+    if [[ -n "$CICheck" ]]; then
         # A yaml file with no format issues should have exactly 4 lines
         echo "Format issues found. See $fixesFile"
         exit 1
