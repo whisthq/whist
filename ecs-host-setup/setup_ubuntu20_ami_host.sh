@@ -55,7 +55,7 @@ sudo rm -rf /var/lib/cloud/instances/
 sudo rm -f /var/lib/ecs/data/*
 
 # The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
-# uploaded from this Git repository to the AMI during Packer via ami_config.json
+# uploaded from this Git repository to the AMI during Packer via ami_config.json.pkr.hcl
 # It gets enabled in base_userdata_template.sh
 
 # Here we pre-pull the desired container-images onto the AMI to speed up container startup.
