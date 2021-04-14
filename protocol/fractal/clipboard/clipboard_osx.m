@@ -22,32 +22,32 @@ respective "ClipboardGet___" or "ClipboardSet___".
 
 int get_clipboard_changecount() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSInteger changeCount = [pasteboard changeCount];
-    return (int)changeCount;
+    NSInteger change_count = [pasteboard changeCount];
+    return (int)change_count;
 }
 
 bool check_clipboard_has_string() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
+    NSArray *class_array = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
-    return [pasteboard canReadObjectForClasses:classArray options:options];
+    return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
 bool check_clipboard_has_image() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSArray *classArray = [NSArray arrayWithObject:[NSImage class]];
+    NSArray *class_array = [NSArray arrayWithObject:[NSImage class]];
     NSDictionary *options = [NSDictionary dictionary];
-    return [pasteboard canReadObjectForClasses:classArray options:options];
+    return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
 const char *clipboard_get_string() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSArray *classArray = [NSArray arrayWithObject:[NSString class]];
+    NSArray *class_array = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
 
-    if ([pasteboard canReadObjectForClasses:classArray options:options]) {
-        NSArray *objectsToPaste = [pasteboard readObjectsForClasses:classArray options:options];
-        NSString *text = [objectsToPaste firstObject];
+    if ([pasteboard canReadObjectForClasses:class_array options:options]) {
+        NSArray *objects_to_paste = [pasteboard readObjectsForClasses:class_array options:options];
+        NSString *text = [objects_to_paste firstObject];
         if (!text) {
             return "";  // empty string since there is no clipboard text data
         } else {
@@ -88,10 +88,10 @@ void clipboard_get_image(OSXImage *clipboard_image) {
 }
 
 void clipboard_set_image(char *img, int len) {
-    NSData *imageData = [[[NSData alloc] initWithBytes:img length:len] autorelease];
-    NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithData:imageData] autorelease];
-    NSImage *image = [[[NSImage alloc] initWithSize:[imageRep size]] autorelease];
-    [image addRepresentation:imageRep];
+    NSData *image_data = [[[NSData alloc] initWithBytes:img length:len] autorelease];
+    NSBitmapImageRep *image_rep = [[[NSBitmapImageRep alloc] initWithData:image_data] autorelease];
+    NSImage *image = [[[NSImage alloc] initWithSize:[image_rep size]] autorelease];
+    [image addRepresentation:image_rep];
 
     // clear clipboard and then set image data
     [[NSPasteboard generalPasteboard] clearContents];
@@ -102,30 +102,30 @@ void clipboard_set_image(char *img, int len) {
 
 bool check_clipboard_has_files() {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
+    NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
     NSDictionary *options =
         [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                                     forKey:NSPasteboardURLReadingFileURLsOnlyKey];
-    return [pasteboard canReadObjectForClasses:classArray options:options];
+    return [pasteboard canReadObjectForClasses:class_array options:options];
 }
 
 void clipboard_get_files(OSXFilenames *filenames[]) {
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-    NSArray *classArray = [NSArray arrayWithObject:[NSURL class]];
+    NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
 
     // only file URLs
     NSDictionary *options =
         [NSDictionary dictionaryWithObject:[NSNumber numberWithBool:YES]
                                     forKey:NSPasteboardURLReadingFileURLsOnlyKey];
 
-    if ([pasteboard canReadObjectForClasses:classArray options:options]) {
-        NSArray *fileURLs = [pasteboard readObjectsForClasses:classArray options:options];
-        for (NSUInteger i = 0; i < [fileURLs count]; i++) {
+    if ([pasteboard canReadObjectForClasses:class_array options:options]) {
+        NSArray *file_urls = [pasteboard readObjectsForClasses:class_array options:options];
+        for (NSUInteger i = 0; i < [file_urls count]; i++) {
             // TODO(anton) if it is possible that a file path can be longer than PATH_MAX, then we
             // may want to check the return value of safe_strncpy to see if the file path was
             // truncated
-            safe_strncpy(filenames[i]->fullPath, [fileURLs[i] fileSystemRepresentation], PATH_MAX);
-            safe_strncpy(filenames[i]->filename, [[fileURLs[i] lastPathComponent] UTF8String],
+            safe_strncpy(filenames[i]->fullPath, [file_urls[i] fileSystemRepresentation], PATH_MAX);
+            safe_strncpy(filenames[i]->filename, [[file_urls[i] lastPathComponent] UTF8String],
                          PATH_MAX);
         }
     } else {
@@ -140,20 +140,20 @@ void clipboard_set_files(char *filepaths[]) {
     [pasteboard clearContents];
 
     // create NSArray of NSURLs
-    NSMutableArray *mutableArrURLs = [NSMutableArray arrayWithCapacity:MAX_URLS];
+    NSMutableArray *mutable_arr_urls = [NSMutableArray arrayWithCapacity:MAX_URLS];
 
     // convert
     for (size_t i = 0; i < MAX_URLS; i++) {
         if (*filepaths[i] != '\0') {
-            NSString *urlString = [NSString stringWithUTF8String:filepaths[i]];
-            NSURL *url = [[NSURL fileURLWithPath:urlString] absoluteURL];
+            NSString *url_string = [NSString stringWithUTF8String:filepaths[i]];
+            NSURL *url = [[NSURL fileURLWithPath:url_string] absoluteURL];
             if (url == nil) {
                 printf("Error in converting C string relative path to NSURL.\n");
             }
-            [mutableArrURLs addObject:url];
+            [mutable_arr_urls addObject:url];
         } else {
             break;
         }
     }
-    [pasteboard writeObjects:mutableArrURLs];
+    [pasteboard writeObjects:mutable_arr_urls];
 }
