@@ -8,4 +8,5 @@ exec firefox \
         -profile /home/fractal/.mozilla/firefox/fractal_profile \
         -setDefaultBrowser \
         -url "google.com" \
-        -MOZ_LOG="PlatformDecoderModule:5"
+        -MOZ_LOG="PlatformDecoderModule:5" \
+        -MOZ_LOG_FILE="firefox_log.txt"
