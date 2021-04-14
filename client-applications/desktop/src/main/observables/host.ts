@@ -19,7 +19,7 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError
 } from '@app/utils/host'
-import { LogLevel, debug } from '@app/utils/logging'
+import { debug, error } from '@app/utils/logging'
 import { from } from 'rxjs'
 import {
   map,
@@ -41,7 +41,7 @@ export const hostInfoRequest = containerAssignPolling.pipe(
   withLatestFrom(userEmail, userAccessToken),
   map(([_, email, token]) => [email, token]),
   share(),
-  debug(LogLevel.DEBUG, 'hostInfoRequest')
+  debug('hostInfoRequest')
 )
 
 export const hostInfoPolling = hostInfoRequest.pipe(
@@ -58,13 +58,13 @@ hostInfoPolling.subscribe((res) =>
 export const hostInfoSuccess = hostInfoPolling.pipe(
   takeLast(1),
   filter((res) => hostServiceInfoValid(res)),
-  debug(LogLevel.DEBUG, 'hostInfoSuccess')
+  debug('hostInfoSuccess')
 )
 
 export const hostInfoFailure = hostInfoPolling.pipe(
   takeLast(1),
   filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res)),
-  debug(LogLevel.ERROR, 'hostInfoFailure')
+  error('hostInfoFailure')
 )
 
 export const hostInfoLoading = loadingFrom(
@@ -87,7 +87,7 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     email,
     token
   ]),
-  debug(LogLevel.DEBUG, 'hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')
+  debug('hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')
 )
 
 export const hostConfigProcess = hostConfigRequest.pipe(
@@ -95,17 +95,17 @@ export const hostConfigProcess = hostConfigRequest.pipe(
     from(hostServiceConfig(ip, port, secret, email, token))
   ),
   share(),
-  debug(LogLevel.DEBUG, 'hostConfigRequest', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
+  debug('hostConfigRequest', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
 )
 
 export const hostConfigSuccess = hostConfigProcess.pipe(
   filter((res) => hostServiceConfigValid(res)),
-  debug(LogLevel.DEBUG, 'hostConfigSuccess', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
+  debug('hostConfigSuccess', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))
 )
 
 export const hostConfigFailure = hostConfigProcess.pipe(
   filter((res) => hostServiceConfigError(res)),
-  debug(LogLevel.ERROR, 'hostConfigFailure', 'error:')
+  error('hostConfigFailure', 'error:')
 )
 
 export const hostConfigLoading = loadingFrom(

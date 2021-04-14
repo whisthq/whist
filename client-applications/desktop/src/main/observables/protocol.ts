@@ -11,7 +11,7 @@ import {
   containerInfoPorts,
   containerInfoSecretKey
 } from '@app/utils/container'
-import { LogLevel, debug } from '@app/utils/logging'
+import { debug, error } from '@app/utils/logging'
 import {
   containerAssignRequest,
   containerAssignSuccess,
@@ -26,7 +26,7 @@ import { pick } from 'lodash'
 export const protocolLaunchProcess = containerAssignRequest.pipe(
   map(() => protocolLaunch()),
   share(),
-  debug(LogLevel.DEBUG, 'protocolLaunchProcess', 'value:', ({
+  debug('protocolLaunchProcess', 'value:', ({
     connected, exitCode, pid
   }) => ({
     connected,
@@ -41,23 +41,23 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
     secret_key: containerInfoSecretKey(res),
     ports: containerInfoPorts(res)
   })),
-  debug(LogLevel.DEBUG, 'protocolLaunchSuccess')
+  debug('protocolLaunchSuccess')
 )
 
 export const protocolLaunchFailure = merge(
   hostConfigFailure,
   containerAssignFailure
-).pipe(debug(LogLevel.ERROR, 'protocolLaunchFailure', 'error:'))
+).pipe(error('protocolLaunchFailure', 'error:'))
 
 export const protocolLoading = loadingFrom(
   protocolLaunchProcess,
   protocolLaunchSuccess,
   protocolLaunchFailure
-).pipe(debug(LogLevel.DEBUG, 'protocolLoading'))
+).pipe(debug('protocolLoading'))
 
 export const protocolCloseRequest = protocolLaunchProcess.pipe(
   mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, 'close'))),
-  debug(LogLevel.DEBUG, 'protocolCloseRequest', 'printing subset of protocol object:', ([protocol]) =>
+  debug('protocolCloseRequest', 'printing subset of protocol object:', ([protocol]) =>
     pick(protocol, ['killed', 'connected', 'exitCode', 'signalCode', 'pid'])
   )
 )

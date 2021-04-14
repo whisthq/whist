@@ -2,7 +2,7 @@ import { fromEventIPC } from '@app/main/events/ipc'
 import { fromEventPersist } from '@app/main/events/persist'
 import { loginSuccess } from '@app/main/observables/login'
 import { signupRequest, signupSuccess } from '@app/main/observables/signup'
-import { LogLevel, debug } from '@app/utils/logging'
+import { debug } from '@app/utils/logging'
 import { merge, from } from 'rxjs'
 import { identity } from 'lodash'
 import {
@@ -30,7 +30,7 @@ export const userEmail = merge(
 ).pipe(
   filter(identity),
   share(),
-  debug(LogLevel.DEBUG, 'userEmail')
+  debug('userEmail')
 )
 
 export const userConfigToken = merge(
@@ -44,7 +44,7 @@ export const userConfigToken = merge(
 ).pipe(
   filter(identity),
   share(),
-  debug(LogLevel.DEBUG, 'userConfigToken', '', null)
+  debug('userConfigToken', '', null)
 )
 
 export const userAccessToken = merge(
@@ -54,7 +54,7 @@ export const userAccessToken = merge(
 ).pipe(
   filter(identity),
   share(),
-  debug(LogLevel.DEBUG, 'userAccessToken')
+  debug('userAccessToken')
 )
 
 export const userRefreshToken = merge(
@@ -64,5 +64,5 @@ export const userRefreshToken = merge(
 ).pipe(
   filter(identity),
   share(),
-  debug(LogLevel.DEBUG, 'userRefreshToken')
+  debug('userRefreshToken')
 )

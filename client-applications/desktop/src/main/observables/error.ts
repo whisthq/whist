@@ -21,7 +21,7 @@ import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized
 } from '@app/utils/container'
-import { LogLevel, debug } from '@app/utils/logging'
+import { debug } from '@app/utils/logging'
 import {
   containerAssignFailure,
   containerCreateFailure
@@ -31,7 +31,7 @@ import { protocolLaunchFailure } from '@app/main/observables/protocol'
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck('errorRelaunchRequest'),
   filter(identity),
-  debug(LogLevel.DEBUG, 'errorRelaunchRequest', 'relaunching due to error')
+  debug('errorRelaunchRequest', 'relaunching due to error')
 )
 
 export const errorWindowRequest = merge(
