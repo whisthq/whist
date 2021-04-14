@@ -224,11 +224,11 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
 type SpinUpContainerRequest struct {
-	AppName      string             `json:"app_name"`
-	AppImage     string             `json:"app_image"`
-	MountCommand string             `json:"mount_command"`
-	ProtocolTimeout      int        `json:"protocol_timeout"` // number of seconds the protocol server will be up for
-	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
+	AppName         string             `json:"app_name"`
+	AppImage        string             `json:"app_image"`
+	MountCommand    string             `json:"mount_command"`
+	ProtocolTimeout int                `json:"protocol_timeout"` // number of seconds the protocol server will be up for
+	resultChan      chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
