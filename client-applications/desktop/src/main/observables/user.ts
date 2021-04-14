@@ -26,7 +26,6 @@ export const userEmail = merge(
   fromEventIPC('signupRequest', 'email').pipe(sample(signupSuccess))
 ).pipe(filter(identity), share())
 
-userEmail.subscribe((email) => console.log('EMAIL HERE', email))
 
 export const userConfigToken = merge(
   fromEventPersist('userConfigToken'),

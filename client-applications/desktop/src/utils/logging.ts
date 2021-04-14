@@ -70,30 +70,19 @@ export const uploadToS3 = async (
   Returns:
       response from the s3 upload
   */
-
-  const accessKey = config.keys.AWS_ACCESS_KEY
-  const secretKey = config.keys.AWS_SECRET_KEY
-  const bucketName = 'fractal-protocol-logs'
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
-  const homeDir = os.homedir()
-  let localFilePath = `${homeDir}/.fractal`
+  logDebug('value: ', 'Protocol logs sent to', { fileName: s3FileName })
 
-  logDebug('value: ', 'Protocol logs uploaded', { fileName: s3FileName })
+  const uploadHelper = async (localFilePath: string) => {
+    const accessKey = config.keys.AWS_ACCESS_KEY
+    const secretKey = config.keys.AWS_SECRET_KEY
+    const bucketName = 'fractal-protocol-logs'
 
-  if (fs.existsSync(`${localFilePath}/log-dev.txt`)) {
-    localFilePath += '/log-dev.txt'
-  } else if (fs.existsSync(`${localFilePath}/log-staging.txt`)) {
-    localFilePath += '/log-staging.txt'
-  } else if (fs.existsSync(`${localFilePath}/log.txt`)) {
-    localFilePath += '/log.txt'
-  }
-
-  const s3 = new AWS.S3({
-    accessKeyId: accessKey,
-    secretAccessKey: secretKey
-  })
-  // Read file into buffer
-  try {
+    const s3 = new AWS.S3({
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey
+    })
+    // Read file into buffer
     const fileContent = fs.readFileSync(localFilePath)
     // Set up S3 upload parameters
     const params = {
@@ -102,7 +91,7 @@ export const uploadToS3 = async (
       Body: fileContent
     }
     // Upload files to the bucket
-    await new Promise((resolve, reject) => {
+    return await new Promise((resolve, reject) => {
       s3.upload(params, (err: Error, data: any) => {
         if (err !== null) {
           reject(err)
@@ -111,9 +100,23 @@ export const uploadToS3 = async (
         }
       })
     })
-
-    return
-  } catch (unknownErr) {
-    console.log(unknownErr)
   }
+
+  const homeDir = os.homedir()
+  const baseFilePath = `${homeDir}/.fractal`
+  const uploadPromises: Array<Promise<any>> = []
+
+  const logLocations = [
+    `${baseFilePath}/log-dev.txt`,
+    `${baseFilePath}/log-staging.txt`,
+    `${baseFilePath}/log.txt`
+  ]
+
+  logLocations.forEach((filePath: string) => {
+    if (fs.existsSync(filePath)) {
+      uploadPromises.push(uploadHelper(filePath))
+    }
+  })
+
+  await Promise.all(uploadPromises)
 }
