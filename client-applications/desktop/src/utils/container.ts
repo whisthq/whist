@@ -6,7 +6,7 @@ import { chooseRegion } from '@app/utils/region'
 import { containerRequest, regionRequest, taskStatus } from '@app/utils/api'
 import { AsyncReturnType } from '@app/utils/types'
 
-const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
+const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 export const regionGet = async (email: string, accessToken: string) => {
   const regions: Record<string, any> = await regionRequest(email, accessToken)
@@ -20,7 +20,6 @@ export const regionGet = async (email: string, accessToken: string) => {
 }
 
 export const containerCreate = async (email: string, accessToken: string) => {
-  console.log('creating', email, accessToken)
   const region = await regionGet(email, accessToken)
   const response = await containerRequest(email, accessToken, region, getDPI())
   return response

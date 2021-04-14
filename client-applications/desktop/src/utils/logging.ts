@@ -13,7 +13,7 @@ const logPath = path.join(
   app.getAppPath().replace('/Resources/app.asar', ''),
   'debug.log'
 )
-const logFile = fs.createWriteStream(logPath, { flags: 'w' })
+const logFile = fs.createWriteStream(logPath, { flags: 'a' })
 
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
@@ -85,8 +85,6 @@ export const uploadToS3 = async (
     localFilePath += '/log.txt'
   }
 
-  console.log(`Sending log ${s3FileName} from ${localFilePath}`)
-
   const s3 = new AWS.S3({
     accessKeyId: accessKey,
     secretAccessKey: secretKey
@@ -104,14 +102,15 @@ export const uploadToS3 = async (
     await new Promise((resolve, reject) => {
       s3.upload(params, (err: any | null, data: any) => {
         if (err !== null) {
-          console.log(`Error sending log ${s3FileName}: `, err)
+          logDebug("error: ", `${err.toString()}`)
           reject(err)
         } else {
-          console.log(`Uploaded log ${s3FileName} from ${localFilePath}`)
           resolve(data)
         }
       })
     })
+
+    logDebug("value: ", `Uploaded to ${s3FileName}`)
 
     return
   } catch (unknownErr) {
