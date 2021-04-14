@@ -123,15 +123,14 @@ jobs:
                       # install clang-tidy, coreutils for realpath, and perl
                       # we must hardcode this version, else we will install the overaggressive recent version
                       sudo apt-get install -y clang-tidy-6.0 coreutils perl cppcheck
-                      
+
                       # we also need to symlink it so it can be called as clang-tidy
                       sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
                   else
                       # llvm for clang-tidy, coreutils for realpath
-                      # llvm@7 is used so that clang-tidy reads "-p" argument correctly on MacOS
-                      brew install llvm@7 coreutils perl
-                      ln -s "/usr/local/opt/llvm@7/bin/clang-format" "/usr/local/bin/clang-format"
-                      ln -s "/usr/local/opt/llvm@7/bin/clang-tidy" "/usr/local/bin/clang-tidy"
+                      brew install llvm coreutils perl
+                      ln -s "/usr/local/opt/llvm/bin/clang-format" "/usr/local/bin/clang-format"
+                      ln -s "/usr/local/opt/llvm/bin/clang-tidy" "/usr/local/bin/clang-tidy"
                   fi
 
             ############################# Unix Configuration Steps END #############################
