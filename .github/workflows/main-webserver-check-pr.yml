@@ -147,6 +147,7 @@ jobs:
         name: Check Migra Diff
         runs-on: ubuntu-20.04
         env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
             GITHUB_ISSUE: ${{ github.event.number }}
             GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
             HEROKU_DB_KEY: "DATABASE_URL"
