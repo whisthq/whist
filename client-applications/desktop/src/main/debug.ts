@@ -80,7 +80,7 @@ const schema: DebugSchema = {
   protocolLaunchSuccess: ['value:'],
   protocolLaunchFailure: ['error:'],
   protocolCloseRequest: [
-    'printing subset of protocol object:',
+    'protocol closed, picking subset of protocol object:',
     ([protocol]) =>
       pick(protocol, ['killed', 'connected', 'exitCode', 'signalCode', 'pid'])
   ],

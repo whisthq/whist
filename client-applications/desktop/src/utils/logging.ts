@@ -18,8 +18,9 @@ const logFile = fs.createWriteStream(logPath, { flags: 'a' })
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
-  protocol: 'https',
-  port: '8071'
+  bufferSize: 1,
+  addTimestampWithNanoSecs: true,
+  sendIntervalMs: 50
 })
 
 // Logging base function
@@ -38,8 +39,6 @@ const logBase = (
     data !== undefined ? JSON.stringify(data, null, 2) : ''
   }`
 
-  logFile.write(`${util.format(debugLog)} \n`)
-
   if (app.isPackaged) {
     logzLogger.log({
       message: debugLog,
@@ -48,6 +47,8 @@ const logBase = (
   } else {
     console.log(debugLog)
   }
+
+  logFile.write(`${util.format(debugLog)} \n`)
 }
 
 export const logDebug = (title: string, message: string | null, data?: any) => {
@@ -59,10 +60,7 @@ export const logError = (title: string, message: string | null, data?: any) => {
 }
 
 export const uploadToS3 = async (
-  email: string,
-  accessKey = config.keys.AWS_ACCESS_KEY,
-  secretKey = config.keys.AWS_SECRET_KEY,
-  bucketName = 'fractal-protocol-logs'
+  email: string
 ) => {
   /*
   Description:
@@ -73,9 +71,14 @@ export const uploadToS3 = async (
       response from the s3 upload
   */
 
+  const accessKey = config.keys.AWS_ACCESS_KEY
+  const secretKey = config.keys.AWS_SECRET_KEY
+  const bucketName = 'fractal-protocol-logs'
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
   const homeDir = os.homedir()
   let localFilePath = `${homeDir}/.fractal`
+
+  logDebug('value: ', 'Protocol logs uploaded', { fileName: s3FileName })
 
   if (fs.existsSync(`${localFilePath}/log-dev.txt`)) {
     localFilePath += '/log-dev.txt'
@@ -100,17 +103,14 @@ export const uploadToS3 = async (
     }
     // Upload files to the bucket
     await new Promise((resolve, reject) => {
-      s3.upload(params, (err: any | null, data: any) => {
+      s3.upload(params, (err: Error, data: any) => {
         if (err !== null) {
-          logDebug("error: ", `${err.toString()}`)
           reject(err)
         } else {
           resolve(data)
         }
       })
     })
-
-    logDebug("value: ", `Uploaded to ${s3FileName}`)
 
     return
   } catch (unknownErr) {
