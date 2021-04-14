@@ -159,7 +159,7 @@ export const log = (
 }
 
 // Log level wrapper functions
-export const debug = log.bind(null, LogLevel.DEBUG);
-export const info = log.bind(null, LogLevel.INFO);
-export const warning = log.bind(null, LogLevel.WARNING);
-export const error = log.bind(null, LogLevel.ERROR);
+export const debug = log.bind(null, LogLevel.DEBUG)
+export const info = log.bind(null, LogLevel.INFO)
+export const warning = log.bind(null, LogLevel.WARNING)
+export const error = log.bind(null, LogLevel.ERROR)

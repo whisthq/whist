@@ -38,8 +38,7 @@ import { debug } from '@app/utils/logging'
 export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
   map(([_event, state]) => state as Partial<StateIPC>),
   startWith({}),
-  share(),
-  debug('eventIPC')
+  share()
 )
 
 export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
@@ -47,3 +46,6 @@ export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
     map((obj) => get(obj as Partial<StateIPC>, keys)),
     share()
   )
+
+// Logging
+eventIPC.pipe(debug('eventIPC')).subscribe()

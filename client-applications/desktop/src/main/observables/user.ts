@@ -27,8 +27,7 @@ export const userEmail = merge(
   fromEventIPC('signupRequest', 'email').pipe(sample(signupSuccess))
 ).pipe(
   filter(identity),
-  share(),
-  debug('userEmail')
+  share()
 )
 
 export const userConfigToken = merge(
@@ -41,8 +40,7 @@ export const userConfigToken = merge(
   signupRequest.pipe(map(([_email, _password, token]) => token))
 ).pipe(
   filter(identity),
-  share(),
-  debug('userConfigToken', '', null)
+  share()
 )
 
 export const userAccessToken = merge(
@@ -51,8 +49,7 @@ export const userAccessToken = merge(
   signupSuccess.pipe(map(emailSignupAccessToken))
 ).pipe(
   filter(identity),
-  share(),
-  debug('userAccessToken')
+  share()
 )
 
 export const userRefreshToken = merge(
@@ -61,6 +58,13 @@ export const userRefreshToken = merge(
   signupSuccess.pipe(map(emailSignupRefreshToken))
 ).pipe(
   filter(identity),
-  share(),
-  debug('userRefreshToken')
+  share()
 )
+
+// Logging
+merge(
+  userEmail.pipe(debug('userEmail')),
+  userConfigToken.pipe(debug('userConfigToken', '', null)),
+  userAccessToken.pipe(debug('userAccessToken')),
+  userRefreshToken.pipe(debug('userRefreshToken'))
+).subscribe()
