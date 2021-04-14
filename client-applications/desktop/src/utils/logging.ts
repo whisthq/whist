@@ -28,6 +28,7 @@ const logzLogger = logzio.createLogger({
 // Logging base function
 export enum LogLevel {
   DEBUG = 'DEBUG',
+  INFO = 'INFO',
   WARNING = 'WARNING',
   ERROR = 'ERROR',
 }
@@ -128,7 +129,7 @@ export const uploadToS3 = async (
   await Promise.all(uploadPromises)
 }
 
-export const debug = (
+export const log = (
   level: LogLevel,
   title: string,
   message: string = 'value:',
@@ -151,20 +152,14 @@ export const debug = (
   return tap<any>({
     next (value) {
       if (func === undefined) func = identity
-      const data = func != null ? func(value) : value
-      switch (level) {
-        case LogLevel.ERROR: {
-          logError(title, message, data)
-          break
-        }
-        case LogLevel.WARNING: {
-          logWarning(title, message, data)
-          break
-        }
-        default: {
-          logDebug(title, message, data)
-        }
-      }
+      const data = func != null ? func(value) : undefined
+      logBase(title, message, data, level)
     }
   })
 }
+
+// Log level wrapper functions
+export const debug = log.bind(null, LogLevel.DEBUG);
+export const info = log.bind(null, LogLevel.INFO);
+export const warning = log.bind(null, LogLevel.WARNING);
+export const error = log.bind(null, LogLevel.ERROR);
