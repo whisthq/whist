@@ -1,6 +1,5 @@
-import { AsyncReturnType } from '@app/utils/types'
-import { get } from '@app/utils/api'
-import { apiPut } from '@app/utils/misc'
+import { AsyncReturnType } from '@app/@types/state'
+import { get, apiPut } from '@app/utils/api'
 import { HostServicePort } from '@app/utils/constants'
 
 // This file directly interacts with data returned from the webserver, which

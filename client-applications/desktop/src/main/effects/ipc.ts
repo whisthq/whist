@@ -5,8 +5,8 @@
  */
 import { eventIPC } from '@app/main/events/ipc'
 import { mapValues } from 'lodash'
-import { ipcBroadcast } from '@app/utils/state'
-import { StateIPC } from '@app/utils/types'
+import { ipcBroadcast } from '@app/utils/ipc'
+import { StateIPC } from '@app/@types/state'
 import { combineLatest, Observable } from 'rxjs'
 import { startWith, mapTo, withLatestFrom } from 'rxjs/operators'
 import { WarningLoginInvalid, WarningSignupInvalid } from '@app/utils/constants'

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Line } from 'rc-progress'
 
-import { useMainState } from '@app/utils/state'
+import { useMainState } from '@app/utils/ipc'
 
 import { Logo } from '@app/components/html/logo'
 

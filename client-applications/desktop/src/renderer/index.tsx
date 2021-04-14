@@ -33,7 +33,7 @@ import {
 } from '@app/utils/constants'
 
 import { browserHistory } from '@app/utils/history'
-import { useMainState } from '@app/utils/state'
+import { useMainState } from '@app/utils/ipc'
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for

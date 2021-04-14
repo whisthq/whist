@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { every } from 'lodash'
 import { IpcRendererEvent, BrowserWindow } from 'electron'
-import { StateIPC } from '@app/utils/types'
+import { StateIPC } from '@app/@types/state'
 import { ErrorIPC, StateChannel } from '@app/utils/constants'
 
 export const useMainState = ():
@@ -17,8 +17,7 @@ export const useMainState = ():
   const [mainState, setState] = useState({} as StateIPC)
 
   useEffect(() => {
-    const listener = (_: IpcRendererEvent, state: StateIPC) =>
-      setState(state)
+    const listener = (_: IpcRendererEvent, state: StateIPC) => setState(state)
     ipc.on(StateChannel, listener)
     return () => {
       ipc.removeListener?.(StateChannel, listener)
