@@ -8,13 +8,16 @@ At a high-level, this repository has two main functions. The first is that it's 
 
 We use `yarn` as the package manager for this project. All of the commands requried for development are aliased in `package.json`, and can be called with `yarn`. For example, `yarn start` will boot up the development environment. We don't write commands out directly in the `scripts` section of `package.json`. Instead, each command has a corresponding file in the `desktop/scripts` folder. This allows us to more carefully comment our `yarn` commands, and it makes diffs more visible in PRs. You shouldn't `cd scripts` to run anything in the scripts folder. They should all be run with `desktop` as the working directory, and you should only need to interact with them using `yarn`.
 
-1. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
+1. Go to the `/protocol/` README to install all the necessary prerequisites.
 
-2. `cd` into the `desktop` folder.
+2. Make sure you have `yarn` installed on your computer. You can install it [here](https://classic.yarnpkg.com/en/docs/install/#mac-stable).
 
-3. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
+3. `cd` into the `desktop` folder.
 
-4. To start the application in the `dev` environment, run `yarn dev`. To start development with a custom port, run `yarn cross-env PORT={number} yarn dev`. Note: `yarn dev` will start the Electron application, but will not fetch the Fractal protocol, which is necessary to stream apps. If you're looking to test launching the Fractal protocol from the application, see **Packaging for Production** below.
+4. Run `yarn` to install all dependencies on your local machine. If dependency issues occur, try running `rm -rf node_modules/` and then `yarn` again.
+
+5. To start the application in the `dev` environment, run `yarn start`. `yarn start` will install
+the protocol for you if it's not already installed.
 
 ## How To Contribute
 
@@ -26,9 +29,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 3. Lint your code by running `yarn lint-fix`. If this does not pass, your code will fail Github CI.
 
-4. Run all test files by running `yarn test`. If this does not pass, your code will fail Github CI. NOTE: If you have written new functions, make sure it has a corresponding test, or code reviewers will request changes on your PR.
-
-5. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
+4. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
 
 Finally, you can open PR to `dev`.
 
@@ -40,14 +41,6 @@ Some pieces of state, such as the user's authentication token, are stored in the
 - On Windows, look in `C:\Users\<user>\AppData\Roaming\{Electron,Fractal}\Cache\config.json`
 
 The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
-
-## Testing the client app with the protocol
-
-The client app launches the protocol, but the protocol needs to be built first.
-
-1. Go to the `/protocol/` README to install all the necessary prerequisites.
-
-2. In the `client-applications/desktop` folder, run `publish --help` on Windows in an x86-x64 terminal (comes with Visual Studio) or `./publish.sh --help` on Mac for instructions on how to run the `publish` script. Once the script is run, the installer executable will be in `client-applications/desktop/release`. No cross-compilation is possible, e.g. you can only package the Windows application from a Windows computer.
 
 ## Client Application Source Code
 
