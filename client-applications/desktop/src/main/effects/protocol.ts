@@ -32,5 +32,3 @@ zip(
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))
 
 protocolLaunchProcess.subscribe(() => hideAppDock())
-
-// protocolCloseRequest.subscribe(() => uploadToS3())
