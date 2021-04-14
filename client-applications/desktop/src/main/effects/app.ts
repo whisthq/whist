@@ -13,7 +13,7 @@ import {
   eventWindowsAllClosed,
   eventWindowCreated
 } from '@app/main/events/app'
-import { merge, race, zip } from 'rxjs'
+import { merge, race, zip, combineLatest } from 'rxjs'
 import { takeUntil } from 'rxjs/operators'
 import {
   closeWindows,
@@ -33,7 +33,8 @@ import {
   userAccessToken,
   userConfigToken
 } from '@app/main/observables/user'
-import { protocolCloseSuccess } from '@app/main/observables/protocol'
+import { protocolCloseRequest } from '@app/main/observables/protocol'
+import { uploadToS3 } from '@app/utils/logging'
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -53,6 +54,12 @@ eventAppReady
 eventWindowsAllClosed
   .pipe(takeUntil(merge(loginSuccess, signupSuccess, errorWindowRequest)))
   .subscribe(() => app.quit())
+
+// When the protocol closees, upload protocol logs to S3
+
+combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
+  uploadToS3(email).then(() => app.quit()).catch(err => console.error(err))
+})
 
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
@@ -77,6 +84,3 @@ race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
 )
 
 eventWindowCreated.subscribe(() => showAppDock())
-
-// When the protocol closes, we'll close the entire application.
-protocolCloseSuccess.subscribe(() => app?.quit())
