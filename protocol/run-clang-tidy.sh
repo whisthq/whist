@@ -3,8 +3,10 @@
 # Exit on subcommand errors
 set -Eeuo pipefail
 
+# Use cwd as the build directory
 BUILD_DIR="$(pwd)"
 
+# cd into where run-clang-tidy.sh is (I.e., cd into the source directory)
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
@@ -50,76 +52,66 @@ yamlFolder="$BUILD_DIR/fixes"
 rm -rf "$yamlFolder" # -f to silence "no file found" error
 mkdir $yamlFolder
 fixesFilename=clang-tidy-fixes.yaml
+fixesFile="$yamlFolder/$fixesFilename"
 
 # run clang-tidy and output suggested fixes to clang-tidy-fixes.yaml
-echo "Running clang-tidy into ${yamlFolder}/${fixesFilename}"
+echo "Running clang-tidy into $fixesFile"
 
-# generate string of arguments to pass in for files to tidy
-filesToFix="client/main.c server/main.c"
-for folder in "${includeFolders[@]}"
-do
-    for cFilePath in $(find "$folder" -type f -regex ".*\.\c")
-    do
-        if [[ "$cFilePath" != *"client/main.c"* && "$cFilePath" != *"server/main.c"* ]]
-        then
-            filesToFix="${filesToFix} ${cFilePath}"
-        fi
-    done
-done
+FILES_EXCLUDE="include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch]|lodepng\.[ch]"
 
-# header files to be included in clang-tidy (we don't want to include third-party folders, only our code)
-headerFilter="client/|fractal/|server/"
-
-clang-tidy -p="$BUILD_DIR" --header-filter=$headerFilter --quiet --export-fixes=$yamlFolder/$fixesFilename $filesToFix || true
-
-# ---- clean up yaml file before running replacements ----
-
-# deletes all clang-diagnostic-error entries
-perl -i -p -000 -e 's/  - DiagnosticName:[ ]*(clang-diagnostic-error|clang-diagnostic-unknown-pragmas)[^\n]*\n(    [^\n]*\n)*//g' ${yamlFolder}/${fixesFilename}
-
-# get current directory path based on OS
-if [[ $isWindows == 1 ]]
-then
-    thisDirectory=$(cmd '/C echo %cd%
-    ')
-    thisDirectory=$(realpath "$thisDirectory")
-else
-    thisDirectory=$(pwd)
+# Generate list of files to pass into clang-tidy
+# We parse compile_commands ourselves, instead of just listing all of our .c files,
+# because new LLVM versions on Mac/Windows fail to parse compile_commands.json correctly
+# This causes it to not filter .c files from other OS's, which causes errors.
+compileCommands="$BUILD_DIR/compile_commands.json"
+if [[ ! -f "$compileCommands" ]]; then
+    echo "Hm, $compileCommands not found."
+    echo "Note that you must call $0 _from_ the build directory that you called \"make\" in"
+    exit 1
 fi
-thisDirectory="${thisDirectory}/"
+filesToFix=()
+IFS=$'\n' # Break for-loop on newline rather than any whitespace
+for line in $(cat "$compileCommands" | jq -r '.[].file' | grep -Ev "($FILES_EXCLUDE)"); do
+    filesToFix+=("$line")
+done
+unset IFS
 
-# remove any diagnostic entries with excluded folder paths - some remain because of roundabout access (..)
-perl -i -p -000 -e 's/  - DiagnosticName:[^\n]*\n(    [^\n]*\n)*[ ]*FilePath:[ ]*'"'"'?[:\/\\\w\.-]*(include|lib|docs|sentry-native|share|nvidia-linux|fractalgetopt\.[ch]|lodepng\.[ch])[:\/\\\w\.]*'"'"'?\n(    [^\n]*(\n|$))*//g' ${yamlFolder}/${fixesFilename}
+# header files to be included in clang-tidy (we don't want to include third-party headers, only our code)
+headerFilter="^((?!$FILES_EXCLUDE).)*$"
 
-if [[ $CICheck == 1 ]]
-then
-    numLines=$(cat ${yamlFolder}/${fixesFilename} | wc -l | tr -d ' ') # wc on mac has leading whitespace for god knows what reason
-    # A yaml file with no format issues should have exactly 4 lines
-    if [[ $numLines != 4 ]]
-    then
-        echo "Format issues found. See ${yamlFolder}/${fixesFilename}"
-        exit 1
-    fi
+# If clang-tidy succeeded and it didn't generate a fixesFile, then we're good to go
+# (clang-tidy will return error code 0 even if it puts warnings in the fixesFile)
+if [[ ! -f ".clang-tidy" ]]; then
+    echo "Hm, .clang-tidy not found, is run-clang-tidy.sh not in the source directory?"
+    exit 1
+fi
+if clang-tidy -p="$BUILD_DIR" --header-filter="$headerFilter" --quiet --export-fixes="$fixesFile" "${filesToFix[@]}" && [[ ! -f "$fixesFile" ]]; then
     echo "clang-tidy successful"
 else
-    echo "-----> CHECK PROPOSED REPLACEMENTS IN ${yamlFolder}/${fixesFilename} <-----"
-    echo "----->       THEN TYPE 'c' TO REPLACE. ANY OTHER KEY WILL QUIT       <-----"
-
-    read -r -n 1 -p "'c' to replace, any other key to quit without replacing: " k
-    if [[ $k == c ]]
+    if [[ $CICheck == 1 ]]
     then
-        echo
-        echo "Running clang-apply-replacements"
-
-        # run clang-tidy noted replacements
-        if command -v clang-apply-replacements &> /dev/null
-        then
-            clang-apply-replacements $yamlFolder
-        else
-            clang-apply-replacements-10 $yamlFolder
-        fi
+        # A yaml file with no format issues should have exactly 4 lines
+        echo "Format issues found. See $fixesFile"
+        exit 1
     else
-        exit
+        echo "-----> CHECK PROPOSED REPLACEMENTS IN ${fixesFile} <-----"
+        echo "----->       THEN TYPE 'r' TO REPLACE ALL OF THEM. ANY OTHER KEY WILL QUIT       <-----"
+
+        read -r -n 1 -p "'r' to replace, any other key to quit without replacing: " k
+        if [[ "$k" == "r" ]]; then
+            echo
+            echo "Running clang-apply-replacements"
+
+            # run clang-tidy noted replacements
+            if command -v clang-apply-replacements &> /dev/null
+            then
+                clang-apply-replacements $yamlFolder
+            else
+                clang-apply-replacements-10 $yamlFolder
+            fi
+        else
+            exit
+        fi
     fi
 fi
 

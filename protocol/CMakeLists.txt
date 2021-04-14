@@ -109,7 +109,7 @@ else()
     message(STATUS "cppcheck inactive")
 endif()
 
-# export compile commands database - comment this out if not running clang-tidy
+# export compile commands database - not needed if not running clang-tidy
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 message(STATUS "Exporting compile commands for clang-tidy")
 
@@ -138,7 +138,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             set(WSL "C:\\Windows\\System32\\wsl.exe")
             set(BASH "/bin/bash")
         else()
-            message(FATAL_ERROR "Git Bash and WSL Bash not found! For WSL bash, make sure to create a symlink from C:\\Windows\\SysWOW64\\wsl.exe to C:\\Windows\\System32\\wsl.exe if you are on a 32-bit CMake install.")
+            message(FATAL_ERROR "Neither Git Bash nor WSL Bash were found! For WSL bash, make sure to create a symlink from C:\\Windows\\SysWOW64\\wsl.exe to C:\\Windows\\System32\\wsl.exe if you are on a 32-bit CMake install.")
         endif()
     endif()
 else()
@@ -335,10 +335,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # Server does not make or compile
 endif()
 
 if (WSL)
-    add_custom_target(clang-tidy
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        COMMAND ${WSL} ${BASH} "wslpath `${CMAKE_SOURCE_DIR}/run-clang-tidy.sh`" -c
-        DEPENDS FractalClient ${SERV})
+    message(STATUS "Native bash not found (only WSL), clang-tidy will not be an option")
 else()
     add_custom_target(clang-tidy
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
