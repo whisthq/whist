@@ -30,8 +30,7 @@ import { protocolLaunchFailure } from '@app/main/observables/protocol'
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck('errorRelaunchRequest'),
-  filter(identity),
-  debug('errorRelaunchRequest', 'relaunching due to error')
+  filter(identity)
 )
 
 export const errorWindowRequest = merge(
@@ -54,3 +53,6 @@ export const errorWindowRequest = merge(
   withLatestFrom(eventAppReady),
   map(([f, _]) => f)
 )
+
+// Logging
+errorRelaunchRequest.pipe(debug('errorRelaunchRequest', 'relaunching due to error')).subscribe()

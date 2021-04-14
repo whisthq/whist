@@ -11,7 +11,7 @@
 // storage changes.
 
 import { fromEventIPC } from '@app/main/events/ipc'
-import { from } from 'rxjs'
+import { from, merge } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
 import { debug, warning } from '@app/utils/logging'
 import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/api'
@@ -20,8 +20,7 @@ import { filter, map, share, exhaustMap } from 'rxjs/operators'
 export const loginRequest = fromEventIPC('loginRequest').pipe(
   filter((req) => (req?.email ?? '') !== '' && (req?.password ?? '') !== ''),
   map(({ email, password }) => [email, password]),
-  share(),
-  debug('loginRequest')
+  share()
 )
 
 export const loginProcess = loginRequest.pipe(
@@ -32,18 +31,15 @@ export const loginProcess = loginRequest.pipe(
 
 export const loginWarning = loginProcess.pipe(
   filter((res) => !emailLoginError(res)),
-  filter((res) => !emailLoginValid(res)),
-  warning('loginWarning', 'logged in with invalid credentials', null)
+  filter((res) => !emailLoginValid(res))
 )
 
 export const loginSuccess = loginProcess.pipe(
-  filter((res) => emailLoginValid(res)),
-  debug('loginSuccess')
+  filter((res) => emailLoginValid(res))
 )
 
 export const loginFailure = loginProcess.pipe(
-  filter((res) => emailLoginError(res)),
-  debug('loginFailure')
+  filter((res) => emailLoginError(res))
 )
 
 export const loginLoading = loadingFrom(
@@ -51,6 +47,13 @@ export const loginLoading = loadingFrom(
   loginSuccess,
   loginFailure,
   loginWarning
-).pipe(
-  debug('loginLoading')
 )
+
+// Logging
+merge(
+  loginRequest.pipe(debug('loginRequest')),
+  loginWarning.pipe(warning('loginWarning', 'logged in with invalid credentials', null)),
+  loginSuccess.pipe(debug('loginSuccess')),
+  loginFailure.pipe(debug('loginFailure')),
+  loginLoading.pipe(debug('loginLoading'))
+).subscribe()

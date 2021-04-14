@@ -25,14 +25,7 @@ import { pick } from 'lodash'
 
 export const protocolLaunchProcess = containerAssignRequest.pipe(
   map(() => protocolLaunch()),
-  share(),
-  debug('protocolLaunchProcess', 'value:', ({
-    connected, exitCode, pid
-  }) => ({
-    connected,
-    exitCode,
-    pid
-  }))
+  share()
 )
 
 export const protocolLaunchSuccess = containerAssignSuccess.pipe(
@@ -40,26 +33,22 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
     ip: containerInfoIP(res),
     secret_key: containerInfoSecretKey(res),
     ports: containerInfoPorts(res)
-  })),
-  debug('protocolLaunchSuccess')
+  }))
 )
 
 export const protocolLaunchFailure = merge(
   hostConfigFailure,
   containerAssignFailure
-).pipe(error('protocolLaunchFailure', 'error:'))
+)
 
 export const protocolLoading = loadingFrom(
   protocolLaunchProcess,
   protocolLaunchSuccess,
   protocolLaunchFailure
-).pipe(debug('protocolLoading'))
+)
 
 export const protocolCloseRequest = protocolLaunchProcess.pipe(
-  mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, 'close'))),
-  debug('protocolCloseRequest', 'printing subset of protocol object:', ([protocol]) =>
-    pick(protocol, ['killed', 'connected', 'exitCode', 'signalCode', 'pid'])
-  )
+  mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, 'close')))
 )
 
 export const protocolCloseFailure = protocolCloseRequest.pipe(
@@ -67,5 +56,22 @@ export const protocolCloseFailure = protocolCloseRequest.pipe(
 )
 
 export const protocolCloseSuccess = protocolCloseRequest.pipe(
-  filter(([protocol]) => !(protocol.killed as boolean))
+  filter(([protocol]) => !(protocol.killed))
 )
+
+// Logging
+merge(
+  protocolLaunchProcess.pipe(debug('protocolLaunchProcess', 'value:', ({
+    connected, exitCode, pid
+  }) => ({
+    connected,
+    exitCode,
+    pid
+  }))),
+  protocolLaunchSuccess.pipe(debug('protocolLaunchSuccess')),
+  protocolLaunchFailure.pipe(error('protocolLaunchFailure', 'error:')),
+  protocolLoading.pipe(debug('protocolLoading')),
+  protocolCloseRequest.pipe(debug('protocolCloseRequest', 'printing subset of protocol object:', ([protocol]) =>
+    pick(protocol, ['killed', 'connected', 'exitCode', 'signalCode', 'pid'])
+  ))
+).subscribe()
