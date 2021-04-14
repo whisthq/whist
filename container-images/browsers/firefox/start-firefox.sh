@@ -7,4 +7,5 @@ set -Eeuo pipefail
 exec firefox \
         -profile /home/fractal/.mozilla/firefox/fractal_profile \
         -setDefaultBrowser \
-        -url "google.com"
+        -url "google.com" \
+        -MOZ_LOG="PlatformDecoderModule:5"
