@@ -6,7 +6,7 @@
 
 import { mapValues } from 'lodash'
 import { persist, persistClear } from '@app/utils/persist'
-import { StateIPC } from '@app/utils/types'
+import { StateIPC } from '@app/@types/state'
 import { combineLatest, merge } from 'rxjs'
 import { startWith } from 'rxjs/operators'
 import {

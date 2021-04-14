@@ -1,10 +1,10 @@
 import { screen } from 'electron'
 import { pick } from 'lodash'
 
+import { get, post } from '@app/utils/api'
 import { defaultAllowedRegions, AWSRegion } from '@app/@types/aws'
 import { chooseRegion } from '@app/utils/region'
-import { containerRequest, regionRequest, taskStatus } from '@app/utils/api'
-import { AsyncReturnType } from '@app/utils/types'
+import { AsyncReturnType } from '@app/@types/state'
 
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
 
@@ -65,3 +65,31 @@ export const containerInfoIP = (
 export const containerInfoSecretKey = (
   response: AsyncReturnType<typeof containerInfo>
 ) => response?.json?.output?.secret_key
+
+// Helper functions
+
+const taskStatus = async (taskID: string, accessToken: string) =>
+  get({ endpoint: '/status/' + taskID, accessToken })
+
+const containerRequest = async (
+  username: string,
+  accessToken: string,
+  region: string,
+  dpi: number
+) =>
+  post({
+    endpoint: '/container/assign',
+    accessToken,
+    body: {
+      username,
+      region,
+      dpi,
+      app: 'Google Chrome'
+    }
+  })
+
+const regionRequest = async (username: string, accessToken: string) =>
+  get({
+    endpoint: `/regions?username=${username}`,
+    accessToken
+  })

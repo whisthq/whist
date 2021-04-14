@@ -1,7 +1,7 @@
 import Store from 'electron-store'
 import { get } from 'lodash'
 
-import { StateIPC } from '@app/utils/types'
+import { StateIPC } from '@app/@types/state'
 
 export const store = new Store({ watch: true })
 

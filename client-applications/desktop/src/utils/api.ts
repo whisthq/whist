@@ -1,9 +1,6 @@
 import { configGet, configPost } from '@fractal/core-ts'
-import { createConfigToken, decryptConfigToken } from '@app/utils/crypto'
 import config from '@app/utils/config'
-import { AsyncReturnType } from '@app/utils/types'
-
-/* eslint-disable @typescript-eslint/naming-convention */
+import https from 'https'
 
 /*
  * @fractal/core-ts http functions like "get" and "post"
@@ -28,92 +25,65 @@ const httpConfig = {
 }
 
 export const get = configGet(httpConfig)
-
 export const post = configPost(httpConfig)
 
-export const emailLogin = async (username: string, password: string) =>
-  post({
-    endpoint: '/account/login',
-    body: { username, password }
+export const apiPut = async (
+  endpoint: string,
+  server: string | undefined,
+  body: Record<string, any>,
+  ignoreCertificate = false
+) => {
+  /*
+    Description:
+        Sends an HTTP put request.
+    NOTE: So far, we only make a PUT request when communicating with the host service, and the
+        host service uses a self-signed certificate. `fetch` with a custom agent doesn't seem to work
+        to `rejectUnauthorized`, so we use the lower-level `https` module and generate our own
+        Promise to handle the response from the host service.
+    Arguments:
+        endpoint (string) : HTTP endpoint (e.g. /account/login)
+        body (JSON) : PUT request body
+        server (string) : HTTP URL (e.g. https://prod-server.fractal.co)
+        ignoreCertificate (bool) : whether to ignore the endpoint host's certificate (used for self-signed).
+            This is `false` by default because we only want to not `rejectUnauthorized` when we are certain
+            about the host's certificate being self-signed or trusted.
+    Returns:
+        { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
+    */
+
+  const fullUrl = `${server ?? ''}${endpoint ?? ''}`
+
+  return await new Promise((resolve, reject) => {
+    // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
+    const request = https.request(
+      fullUrl,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        rejectUnauthorized: !ignoreCertificate
+      },
+      (response) => {
+        let responseText = ''
+        response.on('data', (data: string) => {
+          responseText = `${responseText}${data}`
+        })
+        response.on('end', () => {
+          const status = response?.statusCode ?? 400
+          const json = JSON.stringify(responseText)
+          resolve({ json, status, response })
+        })
+      }
+    )
+    request.write(JSON.stringify(body))
+    request.on('error', (e) => {
+      reject(e)
+    })
+    request.end()
   })
-
-type ResponseAuth = AsyncReturnType<typeof emailLogin>
-
-export const emailLoginValid = (response: ResponseAuth) =>
-  (response?.json?.access_token ?? '') !== ''
-
-export const emailLoginError = (response: ResponseAuth) =>
-  response.status !== 200
-
-export const emailLoginAccessToken = (response: ResponseAuth) =>
-  response.json?.access_token
-
-export const emailLoginRefreshToken = (response: ResponseAuth) =>
-  response.json?.refresh_token
-
-export const emailLoginConfigToken = async (
-  response: ResponseAuth,
-  password: string
-) =>
-  (response?.json?.encrypted_config_token ?? '') !== ''
-    ? decryptConfigToken(response.json.encrypted_config_token, password)
-    : await createConfigToken()
-
-export const emailSignup = async (
-  username: string,
-  password: string,
-  encrypted_config_token: string
-) =>
-  post({
-    endpoint: '/account/register',
-    body: {
-      username,
-      password,
-      encrypted_config_token,
-      name: '',
-      feedback: ''
-    }
-  })
-
-export const emailSignupValid = emailLoginValid
-
-export const emailSignupError = (response: ResponseAuth) => {
-  // A 400 bad response indicates that the user account exists,
-  // we consider this a warning, not a failure.
-  if (response.json.status === 400) return false
-  if (response.json.status === 200) return false
-  return true
 }
 
-export const emailSignupAccessToken = emailLoginAccessToken
-
-export const emailSignupRefreshToken = emailLoginRefreshToken
-
+// TODO: this needs to move somewhere else, but we're not using it yet
 export const tokenValidate = async (accessToken: string) =>
   get({ endpoint: '/token/validate', accessToken })
-
-export const taskStatus = async (taskID: string, accessToken: string) =>
-  get({ endpoint: '/status/' + taskID, accessToken })
-
-export const containerRequest = async (
-  username: string,
-  accessToken: string,
-  region: string,
-  dpi: number
-) =>
-  post({
-    endpoint: '/container/assign',
-    accessToken,
-    body: {
-      username,
-      region,
-      dpi,
-      app: 'Google Chrome'
-    }
-  })
-
-export const regionRequest = async (username: string, accessToken: string) =>
-  get({
-    endpoint: `/regions?username=${username}`,
-    accessToken
-  })
