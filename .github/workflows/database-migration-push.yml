@@ -26,11 +26,9 @@ jobs:
         env:
             SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
             SLACK_CHANNEL: "alerts"
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             GITHUB_SHA: ${{ github.sha }}
             GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
             HEROKU_DB_KEY: "DATABASE_URL"
-            HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
             SERVER_DEV: "fractal-dev-server"
             SERVER_STAGING: "fractal-staging-server"
             SERVER_PROD: "fractal-prod-server"
