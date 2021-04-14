@@ -227,7 +227,7 @@ type SpinUpContainerRequest struct {
 	AppName      string             `json:"app_name"`
 	AppImage     string             `json:"app_image"`
 	MountCommand string             `json:"mount_command"`
-	Timeout      int                `json:"timeout"` // timeout to set for the container
+	ProtocolTimeout      int        `json:"protocol_timeout"` // number of seconds the protocol server will be up for
 	resultChan   chan requestResult // Channel to pass the start values setting result between goroutines
 }
 

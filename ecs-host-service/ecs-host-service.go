@@ -79,9 +79,9 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 
 // SpinUpContainer will only be called in the localdev environment. It is also
 // currently only used in `run_container_image.sh`. Eventually, as we move off
-// ECS, this endpoint will become the canonical way to start containers.
-// Also creates a file containing the timeout assigned to a specific container, and make
-// it accessible to that container.
+// ECS, this endpoint will become the canonical way to start containers.  Also
+// creates a file containing the protocol server timeout assigned to a specific
+// container, and makes it accessible to that container.
 func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SpinUpContainerRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
@@ -207,7 +207,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
 
-	err = fc.WriteDevValues(req.Timeout)
+	err = fc.WriteLocalDevValues(req.ProtocolTimeout)
 	if err != nil {
 		logAndReturnError(err.Error())
 		return
