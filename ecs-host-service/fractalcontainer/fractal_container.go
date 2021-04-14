@@ -21,19 +21,20 @@ import (
 // of type safety, including making sure we never switch Docker and Fractal
 // IDs, for instance.
 
-// A FractalID is a random hex string that the ecs agent creates for each container. We
-// need some sort of identifier for each container, and we need it _before_
-// Docker gives us back the runtime Docker ID for the container to coordinate
-// communication between the host service and the ecs-agent. Currently,
-// `FractalID` is also used as the replacement for `FRACTAL_ID_PLACEHOLDER` in
-// the task definition for the mounted paths of this container on the host.
+// A FractalID is a random hex string that the ecs agent creates for each
+// container. We need some sort of identifier for each container, and we need
+// it _before_ Docker gives us back the runtime Docker ID for the container to
+// coordinate communication between the host service and the ecs-agent.
+// Currently, `FractalID` is also used as the replacement for
+// `FRACTAL_ID_PLACEHOLDER` in the task definition for the mounted paths of
+// this container on the host.
 type FractalID string
 
 // A DockerID is provided by Docker at container creation time.
 type DockerID string
 
-// AppName is defined as its own type so, in the future, we can always easily enforce
-// that it is part of a limited set of values.
+// AppName is defined as its own type so, in the future, we can always easily
+// enforce that it is part of a limited set of values.
 type AppName string
 
 // UserID is defined as its own type as well so the compiler can check argument
@@ -93,19 +94,20 @@ type FractalContainer interface {
 	GetDeviceMappings() []dockercontainer.DeviceMapping
 	InitializeUinputDevices(*sync.WaitGroup) error
 
-	// Writes files containing the TTY assignment and host port corresponding to
-	// port 32262/tcp in the container, in a directory accessible only to this
-	// container. These data are special because they are computed and written
-	// when the container is created.
+	// Writes files containing the TTY assignment and host port
+	// corresponding to port 32262/tcp in the container, in a directory
+	// accessible only to this container. These data are special because
+	// they are computed and written when the container is created.
 	WriteResourcesForProtocol() error
 	// WriteStartValues() writes files containing the DPI, ContainerARN, and
 	// UserID assigned to a directory accessible to only this container. These
 	// data are only known once a container is assigned to a user and are
 	// provided by the fractal webserver.
 	WriteStartValues(dpi int, containerARN string) error
-	// WriteDevValues() writes files containing the timeout assigned to a directory
-	// accessible to only this container.
-	WriteDevValues(timeout int) error
+	// WriteLocalDevValues() writes files containing the timeout assigned
+	// to a directory accessible to only this container. This only happens
+	// on local dev.
+	WriteLocalDevValues(protocolTimeout int) error
 	// MarkReady tells the protocol inside the container that it is ready to
 	// start and accept connections.
 	MarkReady() error
@@ -114,10 +116,12 @@ type FractalContainer interface {
 	// container's assigned user and running application.
 	PopulateUserConfigs() error
 
-	// If the user ID is not set for the given fractalID yet, that means that both necessary tasks have not
-	// been completed yet before setting the container as ready: these tasks are
-	// handleSetConfigEncryptionTokenRequest and handleStartValuesRequest. If both tasks have completed,
-	// then get the user's config and set the container as ready.
+	// If the user ID is not set for the given fractalID yet, that means
+	// that both necessary tasks have not been completed yet before setting
+	// the container as ready: these tasks are
+	// handleSetConfigEncryptionTokenRequest and handleStartValuesRequest.
+	// If both tasks have completed, then get the user's config and set the
+	// container as ready.
 	CompleteContainerSetup(userID UserID, clientAppAccessToken ClientAppAccessToken, callerFunction SetupEndpoint) error
 
 	AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
