@@ -272,14 +272,14 @@ jobs:
             amis: ${{ steps.build-new-amis.outputs.amis }}
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
-        
+
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
             aws_new_ami_instance_type: g3.4xlarge # The AWS EC2 instance type our new AMI gets built on (must be the EC2 instance type we run in production)
             aws_new_ami_subnet_id: subnet-3341731d # The subnetwork, within the VPC, within which the EC2 instance building our new AMI runs
             aws_new_ami_vpc_id: vpc-34aded4e # The ID of the Fractal-created VPC the EC2 instance building the AMI is part of
             aws_source_ami_id: ami-0885b1f6bd170450c # The base AWS-provided AMI we build our AMI from: AWS Ubuntu Server 20.04 LTS
-      
+
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -555,7 +555,10 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, containers-and-ami-publish-ghcr-and-aws]
+            [
+                fractal-publish-build-config,
+                containers-and-ami-publish-ghcr-and-aws,
+            ]
         strategy:
             matrix:
                 app: ${{ fromJSON(needs.containers-and-ami-publish-ghcr-and-aws.outputs.task-definitions-apps-json) }}
@@ -640,7 +643,11 @@ jobs:
     # Runs unconditionally after containers-and-ami-publish-ghcr-and-aws
     kill-packer-builder-instances:
         name: "Kill Packer Builder Tagged EC2 Instances"
-        needs: [fractal-publish-build-config, containers-and-ami-publish-ghcr-and-aws]
+        needs:
+            [
+                fractal-publish-build-config,
+                containers-and-ami-publish-ghcr-and-aws,
+            ]
         if: always()
         runs-on: ubuntu-20.04
         steps:
