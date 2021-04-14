@@ -1078,7 +1078,7 @@ jobs:
             - name: Publish the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              working-directory: client-applications\desktop
+              working-directory: client-applications\desktop\scripts
               run: .\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -env=${{ needs.fractal-publish-build-config.outputs.deploy_environment }} -publish=${{ needs.fractal-publish-build-config.outputs.publish }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
@@ -1086,7 +1086,7 @@ jobs:
               if: runner.os == 'macOS'
               env:
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
-              working-directory: client-applications/desktop
+              working-directory: client-applications/desktop/scripts
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
