@@ -11,7 +11,7 @@
 // storage changes.
 
 import { fromEventIPC } from "@app/main/events/ipc"
-import { from } from "rxjs"
+import { from, merge } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
 import { emailSignup, emailSignupValid, emailSignupError } from "@app/utils/api"
 import { debug, error, warning } from "@app/utils/logging"
@@ -32,8 +32,7 @@ export const signupRequest = fromEventIPC("signupRequest").pipe(
     )
   ),
   map(([req, token]) => [req?.email, req?.password, token]),
-  share(),
-  debug("signupRequest")
+  share()
 )
 
 export const signupProcess = signupRequest.pipe(
@@ -47,18 +46,15 @@ export const signupProcess = signupRequest.pipe(
 
 export const signupWarning = signupProcess.pipe(
   filter((res) => !emailSignupError(res)),
-  filter((res) => !emailSignupValid(res)),
-  warning("signupWarning", "user already exists", null)
+  filter((res) => !emailSignupValid(res))
 )
 
 export const signupSuccess = signupProcess.pipe(
-  filter((res) => emailSignupValid(res)),
-  debug("signupSuccess", "json value:", ({ json }) => json)
+  filter((res) => emailSignupValid(res))
 )
 
 export const signupFailure = signupProcess.pipe(
-  filter((res) => emailSignupError(res)),
-  error("signupFailure", "error:")
+  filter((res) => emailSignupError(res))
 )
 
 export const signupLoading = loadingFrom(
@@ -66,4 +62,13 @@ export const signupLoading = loadingFrom(
   signupSuccess,
   signupFailure,
   signupWarning
-).pipe(debug("signupLoading"))
+)
+
+// Logging
+merge(
+  signupRequest.pipe(debug("signupRequest")),
+  signupWarning.pipe(warning("signupWarning", "user already exists", null)),
+  signupSuccess.pipe(debug("signupSuccess", "json value:", ({ json }) => json)),
+  signupFailure.pipe(error("signupFailure", "error:")),
+  signupLoading.pipe(debug("signupLoading"))
+).subscribe()

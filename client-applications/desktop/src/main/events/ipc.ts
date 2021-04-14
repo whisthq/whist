@@ -47,3 +47,6 @@ export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
     map((obj) => get(obj as Partial<StateIPC>, keys)),
     share()
   )
+
+// Logging
+eventIPC.pipe(debug("eventIPC")).subscribe()
