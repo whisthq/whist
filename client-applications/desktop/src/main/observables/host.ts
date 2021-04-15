@@ -19,6 +19,7 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError
 } from '@app/utils/host'
+import { debugObservables, errorObservables } from '@app/utils/logging'
 import { from } from 'rxjs'
 import {
   map,
@@ -75,13 +76,7 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     hostServiceInfoSecret(res)
   ]),
   withLatestFrom(userEmail, userConfigToken),
-  map(([[ip, port, secret], email, token]) => [
-    ip,
-    port,
-    secret,
-    email,
-    token
-  ])
+  map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
 )
 
 export const hostConfigProcess = hostConfigRequest.pipe(
@@ -103,4 +98,19 @@ export const hostConfigLoading = loadingFrom(
   hostInfoRequest,
   hostInfoSuccess,
   hostInfoFailure
+)
+
+// Logging
+
+debugObservables(
+  [hostInfoRequest, 'hostInfoRequest'],
+  [hostInfoSuccess, 'hostInfoSuccess'],
+  [hostConfigRequest, 'hostConfigRequest'],
+  [hostConfigProcess, 'hostConfigProcess'],
+  [hostConfigSuccess, 'hostConfigSuccess']
+)
+
+errorObservables(
+  [hostInfoFailure, 'hostInfoFailure'],
+  [hostConfigFailure, 'hostConfigFailure']
 )

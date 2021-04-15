@@ -50,9 +50,9 @@ export const hostServiceInfoSecret = (res: hostServiceInfoResponse) =>
 
 export const hostServiceInfoValid = (res: hostServiceInfoResponse) =>
   res.status === 200 &&
-  hostServiceInfoIP(res) !== '' &&
-  hostServiceInfoPort(res) !== '' &&
-  hostServiceInfoSecret(res) !== ''
+  (hostServiceInfoIP(res) ?? '') !== '' &&
+  (hostServiceInfoPort(res) ?? '') !== '' &&
+  (hostServiceInfoSecret(res) ?? '') !== ''
 
 export const hostServiceInfoPending = (res: hostServiceInfoResponse) =>
   res.status === 200 && !hostServiceInfoValid(res)
@@ -61,4 +61,4 @@ export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
   res.status === 200
 
 export const hostServiceConfigError = (res: HostServiceConfigResponse) =>
-  !hostServiceInfoValid(res)
+  !hostServiceConfigValid(res)

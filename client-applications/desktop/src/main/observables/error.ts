@@ -21,6 +21,7 @@ import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized
 } from '@app/utils/container'
+import { warningObservables } from '@app/utils/logging'
 import {
   containerAssignFailure,
   containerCreateFailure
@@ -52,3 +53,9 @@ export const errorWindowRequest = merge(
   withLatestFrom(eventAppReady),
   map(([f, _]) => f)
 )
+
+// Logging
+
+warningObservables([
+  errorRelaunchRequest, 'errorRelaunchRequest'
+])

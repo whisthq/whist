@@ -13,11 +13,8 @@
 import { fromEventIPC } from '@app/main/events/ipc'
 import { from } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
-import {
-  emailSignup,
-  emailSignupValid,
-  emailSignupError
-} from '@app/utils/signup'
+import { emailSignup, emailSignupValid, emailSignupError } from '@app/utils/signup'
+import { debugObservables, errorObservables, warningObservables } from '@app/utils/logging'
 import { createConfigToken, encryptConfigToken } from '@app/utils/crypto'
 import { filter, map, share, exhaustMap, switchMap } from 'rxjs/operators'
 
@@ -65,4 +62,20 @@ export const signupLoading = loadingFrom(
   signupSuccess,
   signupFailure,
   signupWarning
+)
+
+// Logging
+
+debugObservables(
+  [signupRequest, 'signupRequest'],
+  [signupSuccess, 'signupSuccess'],
+  [signupLoading, 'signupLoading']
+)
+
+warningObservables(
+  [signupWarning, 'signupWarning']
+)
+
+errorObservables(
+  [signupFailure, 'signupFailure']
 )
