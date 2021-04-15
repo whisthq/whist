@@ -33,7 +33,7 @@ export const hostServiceConfig = async (
       config_encryption_token
     },
     true
-  )) as { status: number }
+  )) as Partial<{ status: number }>
 }
 
 type hostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
