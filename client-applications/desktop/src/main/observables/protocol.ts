@@ -11,6 +11,7 @@ import {
   containerInfoPorts,
   containerInfoSecretKey
 } from '@app/utils/container'
+import { debugObservables, errorObservables } from '@app/utils/logging'
 import {
   containerAssignRequest,
   containerAssignSuccess,
@@ -54,5 +55,18 @@ export const protocolCloseFailure = protocolCloseRequest.pipe(
 )
 
 export const protocolCloseSuccess = protocolCloseRequest.pipe(
-  filter(([protocol]) => !protocol.killed)
+  filter(([protocol]) => !(protocol.killed))
+)
+
+// Logging
+
+debugObservables(
+  [protocolLaunchProcess, 'protocolLaunchProcess'],
+  [protocolLaunchSuccess, 'protocolLaunchSuccess'],
+  [protocolLoading, 'protocolLaunchLoading'],
+  [protocolCloseRequest, 'protocolCloseRequest']
+)
+
+errorObservables(
+  [protocolLaunchFailure, 'protocolLaunchFailure']
 )

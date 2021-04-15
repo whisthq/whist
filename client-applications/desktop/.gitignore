@@ -57,3 +57,4 @@ public/css/tailwind.css
 release/
 build/
 yarn-error.log.*
+env.json

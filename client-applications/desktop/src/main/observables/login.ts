@@ -13,6 +13,7 @@
 import { fromEventIPC } from '@app/main/events/ipc'
 import { from } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
+import { debugObservables, warningObservables, errorObservables } from '@app/utils/logging'
 import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/login'
 import { filter, map, share, exhaustMap } from 'rxjs/operators'
 
@@ -47,3 +48,19 @@ export const loginLoading = loadingFrom(
   loginFailure,
   loginWarning
 )
+
+// Logging
+
+debugObservables(
+  [loginRequest, 'loginRequest'],
+  [loginSuccess, 'loginWarning'],
+  [loginLoading, 'loginLoading']
+)
+
+warningObservables([
+  loginWarning, 'loginWarning'
+])
+
+errorObservables([
+  loginFailure, 'loginFailure'
+])
