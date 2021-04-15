@@ -1,5 +1,7 @@
 {
   "name": "fractal",
+  "author": "Fractal",
+  "description": "Fractal desktop application",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "main": "build/dist/main/index.js",
