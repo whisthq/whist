@@ -61,6 +61,11 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
+              with:
+                  # Get the whole git history. We must do this because the
+                  # client app calls `git describe` in order to bake the
+                  # version number into the react frontend.
+                  fetch-depth: 0
 
             # To retrieve Fractal protocol libraries from AWS S3
             - name: Configure AWS S3 CLI
