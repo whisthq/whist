@@ -10,7 +10,8 @@
     "package:local": "./scripts/publish.sh",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
-    "lint:fix": "node ./scripts/lint --fix"
+    "lint:fix": "node ./scripts/lint --fix",
+    "prepackage": "node ./scripts/prepackage.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
