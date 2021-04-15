@@ -69,8 +69,8 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd
               run: |
-                  REM configure and build OpenSSL
-                  perl Configure
+                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version
+                  perl Configure VC-WIN32
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
@@ -89,16 +89,16 @@ jobs:
                   # Move it to the right folder for building SDL
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL for macOS on the GitHub Actions macOS OS Version
+                  ./Configure x86_64-apple-darwinDarwin
                   make
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
               if: runner.os == 'Linux'
               shell: bash
               run: |
-                  # configure and build OpenSSL
-                  ./config
+                  # configure and build OpenSSL for Linux Ubuntu on the GitHub Actions Linux Ubuntu OS Version
+                  ./Configure linux-x86_64
                   make
 
             - name: Tar libcrypto and Upload to AWS S3
