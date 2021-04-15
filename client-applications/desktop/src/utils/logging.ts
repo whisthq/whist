@@ -155,7 +155,7 @@ const debug = logObservable.bind(null, LogLevel.DEBUG)
 const warning = logObservable.bind(null, LogLevel.WARNING)
 const error = logObservable.bind(null, LogLevel.ERROR)
 
-export const logObservables = (
+const logObservables = (
   func: typeof debug,
   ...args: Array<[Observable<any>, string]>
 ) =>
