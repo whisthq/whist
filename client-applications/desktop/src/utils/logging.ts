@@ -1,12 +1,13 @@
 import { app } from 'electron'
 import { tap } from 'rxjs/operators'
-import { identity } from 'lodash'
+import { identity, truncate } from 'lodash'
 import fs from 'fs'
 import os from 'os'
 import util from 'util'
 import path from 'path'
 import AWS from 'aws-sdk'
 import logzio from 'logzio-nodejs'
+import stringify from 'json-stringify-safe'
 
 import config from '@app/utils/config'
 
@@ -39,9 +40,11 @@ const logBase = (
   data?: any,
   level?: LogLevel
 ) => {
-  const debugLog = `DEBUG: ${title} -- ${message ?? ''} \n ${
-    data !== undefined ? JSON.stringify(data, null, 2) : ''
+  const template = `DEBUG: ${title} -- ${message ?? ''} \n ${
+    data !== undefined ? stringify(data, null, 2) : ''
   }`
+
+  const debugLog = truncate(template, { length: 1000, omission: '...(logBase only prints 1000 characters per log)' })
 
   if (app.isPackaged) {
     logzLogger.log({
