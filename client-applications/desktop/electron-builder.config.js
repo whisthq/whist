@@ -29,7 +29,7 @@ const bundleConfig = {
         schemes: ["fractal"],
     },
 
-    extraFiles: ["loading/", "env.json"],
+    extraFiles: ["loading/"],
 
     mac: {
         category: "public.app-category.productivity",
@@ -50,6 +50,10 @@ const bundleConfig = {
                 from: "protocol-build/client",
                 to: "MacOS/",
             },
+            {
+                from: "env.json",
+                to: "Resources/"
+            }
         ],
     },
 

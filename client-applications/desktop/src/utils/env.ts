@@ -8,7 +8,7 @@ const getEnv = () => {
   const envFile = path
     .join(app.getAppPath(), 'env.json')
     .replace('build/dist/main/', '')
-    .replace('Resources/app.asar/', '')
+    .replace('app.asar/', '')
 
   return JSON.parse(fs.readFileSync(envFile, 'utf-8'))
 }
