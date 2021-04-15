@@ -148,11 +148,11 @@ export const error = logObservable.bind(null, LogLevel.ERROR)
 
 export const logObservables = (
   func: typeof debug,
-  ...args: any[]
+  ...args: [Observable<any>, string][]
 ) =>
   merge(
-    args.map((arg) =>
-      arg[0].pipe(func(arg[1]))
+    args.map(([obs, title]) =>
+      obs.pipe(tap(() => console.log("test")))
     )
   ).subscribe()
 
