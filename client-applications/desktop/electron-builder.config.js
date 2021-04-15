@@ -42,8 +42,8 @@ const bundleConfig = {
         gatekeeperAssess: false,
         hardenedRuntime: true,
         icon: "build/icon.png",
-        minimumSystemVersion: "10.13.0",
-        target: ["dmg", "zip"],
+        minimumSystemVersion: "10.14.0",
+        target: ["dmg"],
         type: "distribution",
         extraFiles: [
             {
