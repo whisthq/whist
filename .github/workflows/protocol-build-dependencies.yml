@@ -70,7 +70,7 @@ jobs:
               shell: cmd
               run: |
                   REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version
-                  perl Configure VC-WIN32
+                  perl Configure VC-WIN64A
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
