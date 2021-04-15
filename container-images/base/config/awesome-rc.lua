@@ -388,6 +388,12 @@ client.connect_signal("manage", function (c)
     -- i.e. put it at the end of others instead of setting it master.
     if not awesome.startup then awful.client.setslave(c) end
 
+    local numclients = compute_table_length(awful.screen.focused().all_clients)
+
+    readyfile = io.open("touch /fractal/resourceMappings/.displayready")
+    readyfile:write(numclients)
+    readyfile.close()
+
     manage_taskbar_visibility()
     awful.placement.no_offscreen(c, {honor_workarea=true})
 

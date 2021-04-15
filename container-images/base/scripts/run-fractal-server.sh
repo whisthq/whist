@@ -89,6 +89,11 @@ do
     sleep 0.1
 done
 
+until [ -f $FRACTAL_MAPPINGS_DIR/.displayready ]
+do
+    sleep 0.1
+done
+
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
