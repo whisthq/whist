@@ -17,6 +17,9 @@ if (args[0] === "--always") {
     publishFlag = "--publish always"
 }
 
+console.log("Building CSS with tailwind...")
+execCommand("tailwindcss build -o public/css/tailwind.css", ".")
+
 console.log("Getting current client-app version...")
 version = execCommand("git describe --abbrev=0", ".", {}, "pipe")
 
