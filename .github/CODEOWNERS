@@ -10,16 +10,16 @@
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
+/.github/               @philippemnoel @rpadaki @npip99
 /client-applications/   @neilyio @mingy98 @philippemnoel
 /container-images/      @djsavvy @rpadaki @philippemnoel
-/core-ts/               @neilyio @mingy98
+/core-ts/               @neilyio @mingy98 @janniezhong
 /ecs-host-service/      @djsavvy @sardination @rpadaki
 /ecs-host-setup/        @rpadaki @djsavvy @philippemnoel
 /ecs-task-definitions/  @rpadaki @sardination @FishmanL
 /main-webserver/        @FishmanL @owenniles @jmather625
 /protocol/              @npip99 @rpadaki @sardination
-/website/               @neilyio @mingy98
-/.github/               @philippemnoel @rpadaki
+/website/               @neilyio @mingy98 @janniezhong
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
