@@ -99,6 +99,12 @@ export const SalesLink = (props: any) => (
   </a>
 )
 
+export const SecurityLink = (props: any) => (
+    <a {...props} href="mailto: security@fractal.co">
+        Security
+    </a>
+)
+
 export const BlogLink = (props: any) => (
   /* Temporary eslint-disable due to eslint bug */
   /* Can remove on eslint-plugin-react@7.21.6 release */
