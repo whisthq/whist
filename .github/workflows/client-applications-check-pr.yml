@@ -137,4 +137,4 @@ jobs:
 
                   # Build the Fractal protocol and package the Electron application
                   # publish.sh expects to be run from /desktop, for consistency with yarn commands and manual testing
-                  ./scripts/publish.sh --version 1.0.0 --bucket not-applicable --env ${{ env.DEPLOY_ENVIRONMENT }} --publish false
+                  ./scripts/publish.sh --version 1.0.0 --bucket fractal-chromium-macos-dev --env dev --publish true

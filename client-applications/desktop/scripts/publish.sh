@@ -95,6 +95,7 @@ else
     if [[ "$publish" == "false" ]]; then
         export CSC_IDENTITY_AUTO_DISCOVERY=false
     else
+        unset CSC_IDENTITY_AUTO_DISCOVERY
         # On Mac,
         if [[ "$(uname -s)" == "Darwin" ]]; then
             # codesign everything in protocol-build/client
@@ -111,8 +112,10 @@ else
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket
+        echo "Publishing"
         export S3_BUCKET=$bucket && yarn package:ci
     else
+        echo "Just packaging"
         # Package the application locally, without uploading to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package
     fi
