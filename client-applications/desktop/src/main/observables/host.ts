@@ -33,7 +33,7 @@ import {
   exhaustMap,
   withLatestFrom
 } from 'rxjs/operators'
-import { pick } from 'lodash'
+import { pick, omit } from 'lodash'
 
 export const hostInfoRequest = containerAssignPolling.pipe(
   skipWhile((res) => res?.json.state !== 'PENDING'),
@@ -77,19 +77,14 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     hostServiceInfoSecret(res)
   ]),
   withLatestFrom(userEmail, userConfigToken),
-  map(([[ip, port, secret], email, token]) => [
-    ip,
-    port,
-    secret,
-    email,
-    token
-  ])
+  map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
 )
 
 export const hostConfigProcess = hostConfigRequest.pipe(
   exhaustMap(([ip, port, secret, email, token]) =>
     from(hostServiceConfig(ip, port, secret, email, token))
   ),
+  map((res) => omit(res, ['response'])),
   share()
 )
 
@@ -112,8 +107,22 @@ merge(
   hostInfoRequest.pipe(debug('hostInfoRequest')),
   hostInfoSuccess.pipe(debug('hostInfoSuccess')),
   hostInfoFailure.pipe(error('hostInfoFailure')),
-  hostConfigRequest.pipe(debug('hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')),
-  hostConfigProcess.pipe(debug('hostConfigRequest', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))),
-  hostConfigSuccess.pipe(debug('hostConfigSuccess', 'printing only status, json:', (obj) => pick(obj, ['status', 'json']))),
-  hostConfigFailure.pipe(error('hostConfigFailure', 'error:'))
+  hostConfigRequest.pipe(
+    debug('hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')
+  ),
+  hostConfigProcess.pipe(
+    debug('hostConfigRequest', 'printing only status, json:', (obj) =>
+      pick(obj, ['status', 'json'])
+    )
+  ),
+  hostConfigSuccess.pipe(
+    debug('hostConfigSuccess', 'printing only status, json:', (obj) =>
+      pick(obj, ['status', 'json'])
+    )
+  ),
+  hostConfigFailure.pipe(
+    error('hostConfigFailure', 'error: omitting response key', (obj) =>
+      omit(obj, ['response'])
+    )
+  )
 ).subscribe()
