@@ -972,9 +972,8 @@ int parse_args(int argc, char* argv[]) {
         "                                  e.g prod, staging. Default: none\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
-        "  -t, --timeout                 Pass in the number of seconds before the server should\n"
-        "                                  auto exit request as an integer. Pass in -1\n"
-        "                                  to disable auto exit completely. Default: 60\n"
+        "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
+        "                                  is -1, disable auto exit completely. Default: 60\n"
         // special options should be indented further to the left
         "      --help     Display this help and exit\n"
         "      --version  Output version information and exit\n";
@@ -1035,7 +1034,7 @@ int parse_args(int argc, char* argv[]) {
                 printf("Timeout before autoexit passed in: %s\n", optarg);
                 if (sscanf(optarg, "%d", &begin_time_to_exit) != 1 ||
                     (begin_time_to_exit <= 0 && begin_time_to_exit != -1)) {
-                    printf("Timeout should be a positive double or -1\n");
+                    printf("Timeout should be a positive integer or -1\n");
                 }
                 break;
             }
