@@ -19,7 +19,7 @@ This repository contains the end-to-end code for the Fractal Application Streami
 - [Publishing](#publishing)
 - [Styling](#styling)
 - [Appendix](#appendix)
-  - [Useful Monorepo git Tricks](#useful-monorepo-git-tricks)
+  - [Useful Monorepo Git Tricks](#useful-monorepo-git-tricks)
   - [Example of Bad Commit History](#example-of-bad-commit-history)
 
 ## Introduction
@@ -39,12 +39,13 @@ At a high-level, Fractal works the following way:
 
 ### Repository Structure
 
-The Fractal monorepository contains 7 Fractal subrepositories:
+The Fractal monorepository contains 8 Fractal subrepositories:
 
 | Subrepository        | Description                                                                                              |
 | -------------------- | -------------------------------------------------------------------------------------------------------- |
 | client-applications  | The client-side Electron-based applicaiton users download and use to launch a streamed application.      |
 | container-images     | The Dockerfiles defining the container images and helper scripts for the applications we stream.         |
+| core-ts              | The Fractal internal TypeScript library of utilities and reusable components.                            |
 | ecs-host-service     | The Fractal service which runs on EC2 instance hosts and orchestrates container management.              |
 | ecs-host-setup       | The scripts to setup an EC2 innstance into a Fractal-optimized host ready to run Fractal containers.     |
 | ecs-task-definitions | The JSONs needed by AWS Elastic Container Service (ECS) for defining how container tasks are run.        |
