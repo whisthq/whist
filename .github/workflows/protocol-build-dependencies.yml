@@ -7,8 +7,7 @@
 
 name: "Protocol: Build Dependencies"
 
-# We deploy new dependencies on modifications to this file (i.e. building a new version) or
-# manual dispatch on our default repository branch, which is `dev`
+# We deploy new dependencies on modifications to this file (i.e. building a new version) or manual dispatch
 on:
     push:
         branches:
@@ -42,7 +41,7 @@ jobs:
             s3-bucket-region: us-east-1
 
         steps:
-            - name: Checkout OpenSSL Git Repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
               with:
                   repository: openssl/openssl
@@ -113,7 +112,6 @@ jobs:
                       tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
                       aws s3 cp ${{ env.macos-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.macos-tar-name }}
                   fi
-
             - name: Tar OpenSSL headers and Upload to AWS S3
               if: runner.os == 'Linux' # Only run once, as headers are identical on every OS
               shell: bash
@@ -125,7 +123,7 @@ jobs:
                   mv include/openssl/* include/
                   rmdir include/openssl
 
-                  # tar and upload the OpenSSL headers only
+                  # tar and upload the openssl headers only
                   tar -zcvf ${{ env.headers-tar-name }} include
                   aws s3 cp ${{ env.headers-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.headers-tar-name }}
 
@@ -134,9 +132,10 @@ jobs:
         needs: [build-and-publish-openssl]
         if: success()
         runs-on: ubuntu-20.04
+
         steps:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto.[a/lib]\` Static Build Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto\` Static Build Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
