@@ -13,7 +13,6 @@ on:
     push:
         branches:
             - dev
-            - phil/workflows/fix-openssl-build
         paths:
             - ".github/workflows/protocol-build-dependencies.yml"
     workflow_dispatch:
