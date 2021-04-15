@@ -100,17 +100,17 @@ export const containerAssignLoading = loadingFrom(
 
 // Logging
 
-debugObservables([
-  [containerCreateRequest, "containerCreateRequest"],
-  [containerCreateSuccess, "containerCreateSuccess"],
-  [containerCreateLoading, "containerCreateLoading"],
-  [containerAssignRequest, "containerAssignRequest"],
-  [containerAssignPolling, "containerAssignPolling"],
-  [containerAssignSuccess, "containerAssignSuccess"],
-  [containerAssignLoading, "containerAssignLoading"]
-])
+debugObservables(
+  [containerCreateRequest, 'containerCreateRequest'],
+  [containerCreateSuccess, 'containerCreateSuccess'],
+  [containerCreateLoading, 'containerCreateLoading'],
+  [containerAssignRequest, 'containerAssignRequest'],
+  [containerAssignPolling, 'containerAssignPolling'],
+  [containerAssignSuccess, 'containerAssignSuccess'],
+  [containerAssignLoading, 'containerAssignLoading']
+)
 
-errorObservables([
-  [containerCreateFailure, "containerCreateFailure"],
-  [containerAssignFailure, "containerAssignFailure"]
-])
+errorObservables(
+  [containerCreateFailure, 'containerCreateFailure'],
+  [containerAssignFailure, 'containerAssignFailure']
+)

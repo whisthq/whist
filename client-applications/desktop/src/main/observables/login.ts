@@ -51,16 +51,16 @@ export const loginLoading = loadingFrom(
 
 // Logging
 
-debugObservables([
-  [loginRequest, "loginRequest"],
-  [loginSuccess, "loginWarning"],
-  [loginLoading, "loginLoading"]
-])
+debugObservables(
+  [loginRequest, 'loginRequest'],
+  [loginSuccess, 'loginWarning'],
+  [loginLoading, 'loginLoading']
+)
 
 warningObservables([
-  loginWarning, "loginWarning"
+  loginWarning, 'loginWarning'
 ])
 
 errorObservables([
-  loginFailure, "loginFailure"
+  loginFailure, 'loginFailure'
 ])

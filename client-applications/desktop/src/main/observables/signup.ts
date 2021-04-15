@@ -11,7 +11,7 @@
 // storage changes.
 
 import { fromEventIPC } from '@app/main/events/ipc'
-import { from, merge } from 'rxjs'
+import { from } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
 import { emailSignup, emailSignupValid, emailSignupError } from '@app/utils/api'
 import { debugObservables, errorObservables, warningObservables } from '@app/utils/logging'
@@ -66,16 +66,16 @@ export const signupLoading = loadingFrom(
 
 // Logging
 
-debugObservables([
-  [signupRequest, "signupRequest"],
-  [signupSuccess, "signupSuccess"],
-  [signupLoading, "signupLoading"]
-])
+debugObservables(
+  [signupRequest, 'signupRequest'],
+  [signupSuccess, 'signupSuccess'],
+  [signupLoading, 'signupLoading']
+)
 
-warningObservables([
-  [signupWarning, "signupWarning"]
-])
+warningObservables(
+  [signupWarning, 'signupWarning']
+)
 
-errorObservables([
-  [signupFailure, "signupFailure"]
-])
+errorObservables(
+  [signupFailure, 'signupFailure']
+)

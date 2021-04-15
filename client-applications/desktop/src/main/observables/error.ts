@@ -57,5 +57,5 @@ export const errorWindowRequest = merge(
 // Logging
 
 warningObservables([
-  errorRelaunchRequest, "errorRelaunchRequest"
+  errorRelaunchRequest, 'errorRelaunchRequest'
 ])

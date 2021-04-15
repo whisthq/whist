@@ -65,9 +65,9 @@ export const userRefreshToken = merge(
 
 // Logging
 
-debugObservables([
-  [userEmail, "userEmail"],
-  [userConfigToken, "userConfigToken"],
-  [userAccessToken, "userAccessToken"],
-  [userRefreshToken, "userRefreshToken"]
-])
+debugObservables(
+  [userEmail, 'userEmail'],
+  [userConfigToken, 'userConfigToken'],
+  [userAccessToken, 'userAccessToken'],
+  [userRefreshToken, 'userRefreshToken']
+)
