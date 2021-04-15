@@ -8,10 +8,10 @@
     "package": "./scripts/package.sh --publish never",
     "package:ci": "./scripts/package.sh --publish always",
     "package:local": "./scripts/publish.sh",
+    "package:set-env": "node ./scripts/setPackageEnv.js",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
-    "lint:fix": "node ./scripts/lint --fix",
-    "prepackage": "node ./scripts/prepackage.js"
+    "lint:fix": "node ./scripts/lint --fix"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
