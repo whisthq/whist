@@ -7,7 +7,7 @@
 
 name: "Protocol: Build Dependencies"
 
-# We deploy new dependencies on modifications to this file (i.e. building a new version) or 
+# We deploy new dependencies on modifications to this file (i.e. building a new version) or
 # manual dispatch on our default repository branch, which is `dev`
 on:
     push:
