@@ -62,4 +62,4 @@ export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
   res.status === 200
 
 export const hostServiceConfigError = (res: HostServiceConfigResponse) =>
-  !hostServiceInfoValid(res)
+  !hostServiceConfigValid(res)
