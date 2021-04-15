@@ -108,6 +108,7 @@ else
     # Initialize yarn first
     yarn cache clean
     yarn install
+    yarn package:set-env ${env}
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket

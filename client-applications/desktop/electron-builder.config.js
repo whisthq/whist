@@ -29,7 +29,7 @@ const bundleConfig = {
         schemes: ["fractal"],
     },
 
-    extraFiles: ["loading/"],
+    extraFiles: ["loading/", "env.json"],
 
     mac: {
         category: "public.app-category.productivity",
