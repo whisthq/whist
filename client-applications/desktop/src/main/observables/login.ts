@@ -14,7 +14,7 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { from, merge } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
 import { debug, warning } from "@app/utils/logging"
-import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/api"
+import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
 import { filter, map, share, exhaustMap } from "rxjs/operators"
 
 export const loginRequest = fromEventIPC("loginRequest").pipe(
