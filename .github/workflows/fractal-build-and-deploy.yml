@@ -470,6 +470,7 @@ jobs:
               run: make build
 
             ###########################################################################
+            ############################## Building AMIs ##############################
 
             - name: Retrieve Current Git Hash as Environment Variable
               run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -572,6 +573,8 @@ jobs:
 
                   print(f"AMI array is set to {amis_str}")
                   print(f"::set-output name=amis::{amis_str}")
+
+            ###########################################################################
 
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
