@@ -1,8 +1,15 @@
 {
   "name": "fractal",
+  "productName": "Fractal",
+  "homepage": "https://www.fractal.co",
   "version": "1.0.0",
   "license": "UNLICENSED",
   "main": "build/dist/main/index.js",
+  "author": {
+    "email": "support@fractal.co",
+    "name": "Fractal Computers, Inc.",
+    "url": "https://www.fractal.co"
+  },
   "scripts": {
     "start": "node ./scripts/start.js",
     "package": "./scripts/package.sh --publish never",
@@ -76,5 +83,10 @@
     "snowpack": "^3.2.2",
     "tailwindcss": "^2.1.1",
     "typescript": "^4.2.4"
+  },
+  "engines": {
+    "node": ">=14.x",
+    "npm": "use-yarn",
+    "yarn": ">=1.19.x"
   }
 }
