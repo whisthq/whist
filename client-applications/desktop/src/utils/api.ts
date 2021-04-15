@@ -18,7 +18,7 @@ import https from 'https'
  *
  */
 
- console.log("A FAKE CHANGE")
+console.log("A FAKE CHANGE")
 
 const httpConfig = {
   server: config.url.WEBSERVER_URL,
