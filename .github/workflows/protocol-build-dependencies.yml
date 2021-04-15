@@ -70,7 +70,7 @@ jobs:
               shell: cmd
               run: |
                   REM configure and build OpenSSL
-                  perl config
+                  perl Configure
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
