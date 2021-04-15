@@ -10,15 +10,15 @@
 # Order is important. The last matching pattern has the most precedence.
 # The folders are ordered as follows:
 
-/client-applications/   @fractal/code-standard-reviewers @mingy98 @npip99 @philippemnoel
+/client-applications/   @fractal/code-standard-reviewers @neilyio @mingy98 @philippemnoel
 /container-images/      @fractal/code-standard-reviewers @djsavvy @rpadaki @philippemnoel
-/ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @sardination @rpadaki
+/core-ts/               @fractal/code-standard-reviewers @neilyio @mingy98 @rpadaki
+/ecs-host-service/      @fractal/code-standard-reviewers @djsavvy @rpadaki @sardination
 /ecs-host-setup/        @fractal/code-standard-reviewers @rpadaki @djsavvy @philippemnoel
-/ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @FishmanL @philippemnoel
+/ecs-task-definitions/  @fractal/code-standard-reviewers @rpadaki @sardination @FishmanL
 /main-webserver/        @fractal/code-standard-reviewers @FishmanL @owenniles @jmather625
 /protocol/              @fractal/code-standard-reviewers @npip99 @rpadaki @sardination
-/website/               @fractal/code-standard-reviewers @mingy98 @neilyio @rpadaki
-/core-ts/               @fractal/code-standard-reviewers @neilyio @mingy98 @rpadaki
+/website/               @fractal/code-standard-reviewers @neilyio @mingy98 @rpadaki
 
 # In each subsection folders are ordered first by depth, then alphabetically.
 # This should make it easy to add new rules without breaking existing ones.
