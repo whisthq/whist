@@ -2,11 +2,18 @@
   "name": "fractal",
   "version": "1.0.0",
   "license": "UNLICENSED",
+  "author": {
+    "email": "support@fractal.co",
+    "name": "Fractal Computers, Inc.",
+    "url": "https://www.fractal.co"
+  },
+  "description": "Fractal Desktop App",
   "main": "build/dist/main/index.js",
+  "homepage": "https://fractal.co",
   "scripts": {
     "start": "node ./scripts/start.js",
-    "package": "./scripts/package.sh --publish never",
-    "package:ci": "./scripts/package.sh --publish always",
+    "package": "node ./scripts/package.js --never",
+    "package:ci": "node ./scripts/package.js --always",
     "package:local": "./scripts/publish.sh",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
@@ -76,5 +83,10 @@
     "snowpack": "^3.2.2",
     "tailwindcss": "^2.1.1",
     "typescript": "^4.2.4"
+  },
+  "engines": {
+    "node": ">=14.x",
+    "npm": "use-yarn",
+    "yarn": ">=1.19.x"
   }
 }
