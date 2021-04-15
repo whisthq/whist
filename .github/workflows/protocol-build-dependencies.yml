@@ -13,6 +13,7 @@ on:
     push:
         branches:
             - dev
+            - phil/workflows/fix-openssl-build
         paths:
             - ".github/workflows/protocol-build-dependencies.yml"
     workflow_dispatch:
@@ -69,7 +70,7 @@ jobs:
               shell: cmd
               run: |
                   REM configure and build OpenSSL
-                  perl Configure
+                  perl config
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
@@ -89,7 +90,7 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # configure and build OpenSSL
-                  ./Configure
+                  ./config
                   make
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
@@ -97,7 +98,7 @@ jobs:
               shell: bash
               run: |
                   # configure and build OpenSSL
-                  ./Configure
+                  ./config
                   make
 
             - name: Tar libcrypto and Upload to AWS S3
