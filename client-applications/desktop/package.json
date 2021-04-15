@@ -12,8 +12,8 @@
   "homepage": "https://fractal.co",
   "scripts": {
     "start": "node ./scripts/start.js",
-    "package": "./scripts/package.sh never",
-    "package:ci": "./scripts/package.sh always",
+    "package": "node ./scripts/package.js --never",
+    "package:ci": "node ./scripts/package.js --always",
     "package:local": "./scripts/publish.sh",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
