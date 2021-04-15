@@ -6,7 +6,11 @@ import { chooseRegion } from '@app/utils/region'
 import { containerRequest, regionRequest, taskStatus } from '@app/utils/api'
 import { AsyncReturnType } from '@app/utils/types'
 
-const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 72
+// For the purposes of the low-level rendering which is performed by the
+// protocol, the default DPI is always 96; this is modified by a scale factor
+// on high-resolution monitors, as they scale up assets to keep sizes
+// consistent with their low-resolution counterparts.
+const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
 export const regionGet = async (email: string, accessToken: string) => {
   const regions: Record<string, any> = await regionRequest(email, accessToken)
