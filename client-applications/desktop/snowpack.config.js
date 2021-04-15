@@ -1,13 +1,18 @@
 /** @type {import("snowpack").SnowpackUserConfig } */
 
-const cmdMainCompile = [
+const esbuildCommand = [
   "esbuild",
   "src/main/index.ts",
   "--bundle",
   "--platform=node",
   "--outdir=build/dist/main",
   "--external:electron",
-].join(" ")
+]
+if (process.env.NODE_ENV === "production") {
+  esbuildCommand.push("--minify")
+}
+
+const cmdMainCompile = esbuildCommand.join(" ")
 
 const cmdElectron = [cmdMainCompile, "&&", "electron build/dist/main"].join(" ")
 
