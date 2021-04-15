@@ -68,8 +68,8 @@ jobs:
               if: runner.os == 'Windows'
               shell: cmd
               run: |
-                  REM configure and build OpenSSL
-                  perl Configure
+                  REM configure and build OpenSSL for Windows on the GitHub Actions Windows OS Version
+                  perl Configure VC-WIN64A
                   nmake
 
             - name: Build Fractal OpenSSL on macOS
@@ -89,7 +89,7 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # configure and build OpenSSL
-                  ./Configure
+                  ./config
                   make
 
             - name: Build Fractal OpenSSL on Linux Ubuntu
@@ -97,7 +97,7 @@ jobs:
               shell: bash
               run: |
                   # configure and build OpenSSL
-                  ./Configure
+                  ./config
                   make
 
             - name: Tar libcrypto and Upload to AWS S3
@@ -138,5 +138,5 @@ jobs:
             - name: Notify Slack
               run: |
                   curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto.[a/lib]\` Static Build Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
+                  --data-urlencode "payload={\"channel\": \"#alerts-prod\", \"username\": \"Fractal Bot\", \"text\": \"Fractal OpenSSL \`libcrypto\` Static Build Deployed to Production via Upload to AWS S3.\", \"icon_emoji\": \":fractal:\"}" \
                   ${{ secrets.SLACK_HOOKS_ENDPOINT }}
