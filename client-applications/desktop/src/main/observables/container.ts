@@ -18,10 +18,10 @@ import {
   userAccessToken,
   userConfigToken
 } from '@app/main/observables/user'
-import { debug, error } from '@app/utils/logging'
+import { debugObservables, errorObservables } from '@app/utils/logging'
 import { ContainerAssignTimeout } from '@app/utils/constants'
 import { loadingFrom, pollMap } from '@app/utils/observables'
-import { from, of, zip, merge } from 'rxjs'
+import { from, of, zip } from 'rxjs'
 import {
   map,
   share,
@@ -99,14 +99,18 @@ export const containerAssignLoading = loadingFrom(
 )
 
 // Logging
-merge(
-  containerCreateRequest.pipe(debug('containerCreateRequest')),
-  containerCreateSuccess.pipe(debug('containerCreateSuccess', 'printing only taskID:', ({ json }) => json.ID)),
-  containerCreateFailure.pipe(error('containerCreateFailure', 'error:')),
-  containerCreateLoading.pipe(debug('containerCreateLoading')),
-  containerAssignRequest.pipe(debug('containerAssignRequest')),
-  containerAssignPolling.pipe(debug('containerAssignPolling', 'polling containerAssign:', null)),
-  containerAssignSuccess.pipe(debug('containerAssignSuccess')),
-  containerAssignFailure.pipe(error('containerAssignFailure', 'error:')),
-  containerAssignLoading.pipe(debug('containerAssignLoading'))
-).subscribe()
+
+debugObservables([
+  [containerCreateRequest, "containerCreateRequest"],
+  [containerCreateSuccess, "containerCreateSuccess"],
+  [containerCreateLoading, "containerCreateLoading"],
+  [containerAssignRequest, "containerAssignRequest"],
+  [containerAssignPolling, "containerAssignPolling"],
+  [containerAssignSuccess, "containerAssignSuccess"],
+  [containerAssignLoading, "containerAssignLoading"]
+])
+
+errorObservables([
+  [containerCreateFailure, "containerCreateFailure"],
+  [containerAssignFailure, "containerAssignFailure"]
+])

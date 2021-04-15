@@ -1,13 +1,13 @@
 import {
   userEmail,
   userAccessToken,
-  userConfigToken
-} from '@app/main/observables/user'
+  userConfigToken,
+} from "@app/main/observables/user"
 import {
   containerAssignPolling,
-  containerAssignFailure
-} from '@app/main/observables/container'
-import { loadingFrom, pollMap } from '@app/utils/observables'
+  containerAssignFailure,
+} from "@app/main/observables/container"
+import { loadingFrom, pollMap } from "@app/utils/observables"
 import {
   hostServiceInfo,
   hostServiceInfoValid,
@@ -17,10 +17,10 @@ import {
   hostServiceInfoSecret,
   hostServiceConfig,
   hostServiceConfigValid,
-  hostServiceConfigError
-} from '@app/utils/host'
-import { debugObservables, error } from '@app/utils/logging'
-import { from, merge, LogProps } from 'rxjs'
+  hostServiceConfigError,
+} from "@app/utils/host"
+import { debugObservables, errorObservables } from "@app/utils/logging"
+import { from } from "rxjs"
 import {
   map,
   take,
@@ -31,12 +31,11 @@ import {
   takeWhile,
   takeUntil,
   exhaustMap,
-  withLatestFrom
-} from 'rxjs/operators'
-import { pick } from 'lodash'
+  withLatestFrom,
+} from "rxjs/operators"
 
 export const hostInfoRequest = containerAssignPolling.pipe(
-  skipWhile((res) => res?.json.state !== 'PENDING'),
+  skipWhile((res) => res?.json.state !== "PENDING"),
   take(1),
   withLatestFrom(userEmail, userAccessToken),
   map(([_, email, token]) => [email, token]),
@@ -51,7 +50,7 @@ export const hostInfoPolling = hostInfoRequest.pipe(
 )
 
 hostInfoPolling.subscribe((res) =>
-  console.log('host poll', res?.status, res?.json)
+  console.log("host poll", res?.status, res?.json)
 )
 
 export const hostInfoSuccess = hostInfoPolling.pipe(
@@ -74,16 +73,10 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
   map((res) => [
     hostServiceInfoIP(res),
     hostServiceInfoPort(res),
-    hostServiceInfoSecret(res)
+    hostServiceInfoSecret(res),
   ]),
   withLatestFrom(userEmail, userConfigToken),
-  map(([[ip, port, secret], email, token]) => [
-    ip,
-    port,
-    secret,
-    email,
-    token
-  ])
+  map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
 )
 
 export const hostConfigProcess = hostConfigRequest.pipe(
@@ -108,30 +101,16 @@ export const hostConfigLoading = loadingFrom(
 )
 
 // Logging
-debugObservables([
-  { observable: hostInfoRequest, title: "hostInfoRequest" },
-  { observable: hostInfoSuccess, title: "hostInfoSuccess" },
-  {
-    observable: hostConfigRequest,
-    title: "hostConfigRequest",
-    message: "value:",
-    func: () => "hostConfigRequest emitted",
-  },
-  {
-    observable: hostConfigProcess,
-    title: "hostConfigProcess",
-    message: "printing only status, json:",
-    func: (obj: any) => pick(obj, ["status", "json"]),
-  },
-  {
-    observable: hostConfigSuccess,
-    title: "hostConfigSuccess",
-    message: "printing only status, json:",
-    func: (obj: any) => pick(obj, ["status", "json"]),
-  }
-] as LogProps)
 
-merge(
-  hostInfoFailure.pipe(error('hostInfoFailure')),
-  hostConfigFailure.pipe(error('hostConfigFailure', 'error:'))
-).subscribe()
+debugObservables([
+  [hostInfoRequest, "hostInfoRequest"],
+  [hostInfoSuccess, "hostInfoSuccess"],
+  [hostConfigRequest, "hostConfigRequest"],
+  [hostConfigProcess, "hostConfigProcess"],
+  [hostConfigSuccess, "hostConfigSuccess"],
+])
+
+errorObservables([
+  [hostInfoFailure, "hostInfoFailure"],
+  [hostConfigFailure, "hostConfigFailure"],
+])

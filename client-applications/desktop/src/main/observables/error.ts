@@ -21,7 +21,7 @@ import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized
 } from '@app/utils/container'
-import { debug } from '@app/utils/logging'
+import { warningObservables } from '@app/utils/logging'
 import {
   containerAssignFailure,
   containerCreateFailure
@@ -55,4 +55,7 @@ export const errorWindowRequest = merge(
 )
 
 // Logging
-errorRelaunchRequest.pipe(debug('errorRelaunchRequest', 'relaunching due to error')).subscribe()
+
+warningObservables([
+  errorRelaunchRequest, "errorRelaunchRequest"
+])

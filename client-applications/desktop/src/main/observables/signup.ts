@@ -14,7 +14,7 @@ import { fromEventIPC } from '@app/main/events/ipc'
 import { from, merge } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
 import { emailSignup, emailSignupValid, emailSignupError } from '@app/utils/api'
-import { debug, error, warning } from '@app/utils/logging'
+import { debugObservables, errorObservables, warningObservables } from '@app/utils/logging'
 import { createConfigToken, encryptConfigToken } from '@app/utils/crypto'
 import { filter, map, share, exhaustMap, switchMap } from 'rxjs/operators'
 
@@ -65,10 +65,17 @@ export const signupLoading = loadingFrom(
 )
 
 // Logging
-merge(
-  signupRequest.pipe(debug('signupRequest')),
-  signupWarning.pipe(warning('signupWarning', 'user already exists', null)),
-  signupSuccess.pipe(debug('signupSuccess', 'json value:', ({ json }) => json)),
-  signupFailure.pipe(error('signupFailure', 'error:')),
-  signupLoading.pipe(debug('signupLoading'))
-).subscribe()
+
+debugObservables([
+  [signupRequest, "signupRequest"],
+  [signupSuccess, "signupSuccess"],
+  [signupLoading, "signupLoading"]
+])
+
+warningObservables([
+  [signupWarning, "signupWarning"]
+])
+
+errorObservables([
+  [signupFailure, "signupFailure"]
+])

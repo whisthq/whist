@@ -11,9 +11,9 @@
 // storage changes.
 
 import { fromEventIPC } from '@app/main/events/ipc'
-import { from, merge } from 'rxjs'
+import { from } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
-import { debug, warning } from '@app/utils/logging'
+import { debugObservables, warningObservables, errorObservables } from '@app/utils/logging'
 import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/api'
 import { filter, map, share, exhaustMap } from 'rxjs/operators'
 
@@ -50,10 +50,17 @@ export const loginLoading = loadingFrom(
 )
 
 // Logging
-merge(
-  loginRequest.pipe(debug('loginRequest')),
-  loginWarning.pipe(warning('loginWarning', 'logged in with invalid credentials', null)),
-  loginSuccess.pipe(debug('loginSuccess')),
-  loginFailure.pipe(debug('loginFailure')),
-  loginLoading.pipe(debug('loginLoading'))
-).subscribe()
+
+debugObservables([
+  [loginRequest, "loginRequest"],
+  [loginSuccess, "loginWarning"],
+  [loginLoading, "loginLoading"]
+])
+
+warningObservables([
+  loginWarning, "loginWarning"
+])
+
+errorObservables([
+  loginFailure, "loginFailure"
+])

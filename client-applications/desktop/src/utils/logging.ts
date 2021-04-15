@@ -1,53 +1,51 @@
-import { app } from 'electron'
-import { tap } from 'rxjs/operators'
-import { identity } from 'lodash'
-import fs from 'fs'
-import os from 'os'
-import util from 'util'
-import path from 'path'
-import AWS from 'aws-sdk'
-import logzio from 'logzio-nodejs'
+import { app } from "electron"
+import { tap } from "rxjs/operators"
+import { identity } from "lodash"
+import fs from "fs"
+import os from "os"
+import util from "util"
+import path from "path"
+import AWS from "aws-sdk"
+import logzio from "logzio-nodejs"
 import { merge, Observable } from "rxjs"
 
-import config from '@app/utils/config'
+import config from "@app/utils/config"
 
 // Where to send .log file
 const logPath = path.join(
-  app.getAppPath().replace('/Resources/app.asar', ''),
-  'debug.log'
+  app.getAppPath().replace("/Resources/app.asar", ""),
+  "debug.log"
 )
-const logFile = fs.createWriteStream(logPath, { flags: 'a' })
+const logFile = fs.createWriteStream(logPath, { flags: "a" })
 
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
   bufferSize: 1,
   addTimestampWithNanoSecs: true,
-  sendIntervalMs: 50
+  sendIntervalMs: 50,
 })
 
 // Logging base function
 export enum LogLevel {
-  DEBUG = 'DEBUG',
-  INFO = 'INFO',
-  WARNING = 'WARNING',
-  ERROR = 'ERROR',
+  DEBUG = "DEBUG",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
 }
 
 const logBase = (
   title: string,
-  message: string | null,
   data?: any,
   level?: LogLevel
 ) => {
-  const debugLog = `DEBUG: ${title} -- ${message ?? ''} \n ${
-    data !== undefined ? JSON.stringify(data, null, 2) : ''
+  const debugLog = `DEBUG: ${title} -- ${
+    data !== undefined ? JSON.stringify(data, null, 2) : ""
   }`
 
   if (app.isPackaged) {
     logzLogger.log({
       message: debugLog,
-      level: level
+      level: level,
     })
   } else {
     console.log(debugLog)
@@ -56,21 +54,7 @@ const logBase = (
   logFile.write(`${util.format(debugLog)} \n`)
 }
 
-export const logDebug = (title: string, message: string | null, data?: any) => {
-  logBase(title, message, data, LogLevel.DEBUG)
-}
-
-export const logWarning = (title: string, message: string | null, data?: any) => {
-  logBase(title, message, data, LogLevel.WARNING)
-}
-
-export const logError = (title: string, message: string | null, data?: any) => {
-  logBase(title, message, data, LogLevel.ERROR)
-}
-
-export const uploadToS3 = async (
-  email: string
-) => {
+export const uploadToS3 = async (email: string) => {
   /*
   Description:
       Uploads a local file to S3
@@ -80,16 +64,17 @@ export const uploadToS3 = async (
       response from the s3 upload
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
-  logDebug('value: ', 'Protocol logs sent to', { fileName: s3FileName })
+
+  logBase("Logs upload to S3", {s3FileName: s3FileName}, LogLevel.DEBUG)
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
     const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = 'fractal-protocol-logs'
+    const bucketName = "fractal-protocol-logs"
 
     const s3 = new AWS.S3({
       accessKeyId: accessKey,
-      secretAccessKey: secretKey
+      secretAccessKey: secretKey,
     })
     // Read file into buffer
     const fileContent = fs.readFileSync(localFilePath)
@@ -97,7 +82,7 @@ export const uploadToS3 = async (
     const params = {
       Bucket: bucketName,
       Key: s3FileName,
-      Body: fileContent
+      Body: fileContent,
     }
     // Upload files to the bucket
     return await new Promise((resolve, reject) => {
@@ -118,7 +103,7 @@ export const uploadToS3 = async (
   const logLocations = [
     `${baseFilePath}/log-dev.txt`,
     `${baseFilePath}/log-staging.txt`,
-    `${baseFilePath}/log.txt`
+    `${baseFilePath}/log.txt`,
   ]
 
   logLocations.forEach((filePath: string) => {
@@ -130,11 +115,9 @@ export const uploadToS3 = async (
   await Promise.all(uploadPromises)
 }
 
-export const log = (
+export const logObservable = (
   level: LogLevel,
-  title: string,
-  message: string = 'value:',
-  func?: null | ((...args: any[]) => any)
+  title: string
 ) => {
   /*
     Description:
@@ -151,35 +134,28 @@ export const log = (
     */
 
   return tap<any>({
-    next (value) {
-      if (func === undefined) func = identity
-      const data = func != null ? func(value) : undefined
-      logBase(title, message, data, level)
-    }
+    next(value) {
+      const data = identity(value)
+      logBase(title, data, level)
+    },
   })
 }
 
 // Log level wrapper functions
-export const debug = log.bind(null, LogLevel.DEBUG)
-export const info = log.bind(null, LogLevel.INFO)
-export const warning = log.bind(null, LogLevel.WARNING)
-export const error = log.bind(null, LogLevel.ERROR)
+export const debug = logObservable.bind(null, LogLevel.DEBUG)
+export const warning = logObservable.bind(null, LogLevel.WARNING)
+export const error = logObservable.bind(null, LogLevel.ERROR)
 
-export interface LogProps {
-  observable: Observable<any>
-  title: string
-  message?: string
-  func?: null | ((...args: any[]) => any)
-}
-
-export const logObservables = (func: typeof debug, ...args: Array<LogProps>) =>
+export const logObservables = (
+  func: typeof debug,
+  ...args: any[]
+) =>
   merge(
     args.map((arg) =>
-      arg.observable.pipe(func(arg.title, arg.message, arg.func))
+      arg[0].pipe(func(arg[1]))
     )
   ).subscribe()
 
 export const debugObservables = logObservables.bind(null, debug)
-export const infoObservables = logObservables.bind(null, info)
 export const warningObservables = logObservables.bind(null, warning)
 export const errorObservables = logObservables.bind(null, error)

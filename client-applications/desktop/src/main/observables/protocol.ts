@@ -11,7 +11,7 @@ import {
   containerInfoPorts,
   containerInfoSecretKey
 } from '@app/utils/container'
-import { debug, error } from '@app/utils/logging'
+import { debugObservables, errorObservables } from '@app/utils/logging'
 import {
   containerAssignRequest,
   containerAssignSuccess,
@@ -21,7 +21,6 @@ import { hostConfigFailure } from '@app/main/observables/host'
 import { loadingFrom } from '@app/utils/observables'
 import { zip, of, fromEvent, merge } from 'rxjs'
 import { map, filter, share, mergeMap } from 'rxjs/operators'
-import { pick } from 'lodash'
 
 export const protocolLaunchProcess = containerAssignRequest.pipe(
   map(() => protocolLaunch()),
@@ -60,18 +59,14 @@ export const protocolCloseSuccess = protocolCloseRequest.pipe(
 )
 
 // Logging
-merge(
-  protocolLaunchProcess.pipe(debug('protocolLaunchProcess', 'value:', ({
-    connected, exitCode, pid
-  }) => ({
-    connected,
-    exitCode,
-    pid
-  }))),
-  protocolLaunchSuccess.pipe(debug('protocolLaunchSuccess')),
-  protocolLaunchFailure.pipe(error('protocolLaunchFailure', 'error:')),
-  protocolLoading.pipe(debug('protocolLoading')),
-  protocolCloseRequest.pipe(debug('protocolCloseRequest', 'printing subset of protocol object:', ([protocol]) =>
-    pick(protocol, ['killed', 'connected', 'exitCode', 'signalCode', 'pid'])
-  ))
-).subscribe()
+
+debugObservables([
+  [protocolLaunchProcess, "protocolLaunchProcess"],
+  [protocolLaunchSuccess, "protocolLaunchSuccess"],
+  [protocolLoading, "protocolLaunchLoading"],
+  [protocolCloseRequest, "protocolCloseRequest"]
+])
+
+errorObservables([
+  [protocolLaunchFailure, "protocolLaunchFailure"]
+])
