@@ -111,7 +111,7 @@ merge(
     debug('hostConfigRequest', 'value:', () => 'hostConfigRequest emitted')
   ),
   hostConfigProcess.pipe(
-    debug('hostConfigRequest', 'printing only status, json:', (obj) =>
+    debug('hostConfigProcess', 'printing only status, json:', (obj) =>
       pick(obj, ['status', 'json'])
     )
   ),
