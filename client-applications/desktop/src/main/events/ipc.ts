@@ -4,12 +4,12 @@
  * @brief This file contains all RXJS observables created from IPC event emitters.
  */
 
-import { ipcMain } from "electron"
-import { fromEvent } from "rxjs"
-import { get } from "lodash"
-import { map, share, startWith } from "rxjs/operators"
-import { StateChannel } from "@app/utils/constants"
-import { StateIPC } from "@app/@types/state"
+import { ipcMain } from 'electron'
+import { fromEvent } from 'rxjs'
+import { get } from 'lodash'
+import { map, share, startWith } from 'rxjs/operators'
+import { StateChannel } from '@app/utils/constants'
+import { StateIPC } from '@app/@types/state'
 
 // This file listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent

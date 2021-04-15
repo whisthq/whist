@@ -10,15 +10,15 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { fromEventIPC } from "@app/main/events/ipc"
-import { from, merge } from "rxjs"
-import { loadingFrom } from "@app/utils/observables"
-import { debug, warning } from "@app/utils/logging"
-import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
+import { fromEventIPC } from '@app/main/events/ipc'
+import { from, merge } from 'rxjs'
+import { loadingFrom } from '@app/utils/observables'
+import { debug, warning } from '@app/utils/logging'
+import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/login'
+import { filter, map, share, exhaustMap } from 'rxjs/operators'
 
-export const loginRequest = fromEventIPC("loginRequest").pipe(
-  filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
+export const loginRequest = fromEventIPC('loginRequest').pipe(
+  filter((req) => (req?.email ?? '') !== '' && (req?.password ?? '') !== ''),
   map(({ email, password }) => [email, password]),
   share()
 )
@@ -51,11 +51,11 @@ export const loginLoading = loadingFrom(
 
 // Logging
 merge(
-  loginRequest.pipe(debug("loginRequest")),
+  loginRequest.pipe(debug('loginRequest')),
   loginWarning.pipe(
-    warning("loginWarning", "logged in with invalid credentials", null)
+    warning('loginWarning', 'logged in with invalid credentials', null)
   ),
-  loginSuccess.pipe(debug("loginSuccess")),
-  loginFailure.pipe(debug("loginFailure")),
-  loginLoading.pipe(debug("loginLoading"))
+  loginSuccess.pipe(debug('loginSuccess')),
+  loginFailure.pipe(debug('loginFailure')),
+  loginLoading.pipe(debug('loginLoading'))
 ).subscribe()
