@@ -15,6 +15,7 @@
     "package": "node ./scripts/package.js --never",
     "package:ci": "node ./scripts/package.js --always",
     "package:local": "./scripts/publish.sh",
+    "package:set-env": "node ./scripts/setPackageEnv.js",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
     "lint:fix": "node ./scripts/lint --fix"

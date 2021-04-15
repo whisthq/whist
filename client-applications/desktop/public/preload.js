@@ -4,7 +4,6 @@ const { contextBridge, ipcRenderer } = require("electron")
 // because they are inherited from EventEmitter. This requires that they
 // be wrapped in a new function object so they can correctly be passed
 // to the renderer process.
-process.env.PRODUCTION_ENV = "dev"
 process.env.VERSION = "v2.1.0"
 
 contextBridge.exposeInMainWorld("ipcRenderer", {
@@ -19,6 +18,3 @@ contextBridge.exposeInMainWorld("ipcRenderer", {
 
 // The version number to be displayed on the renderer window.
 contextBridge.exposeInMainWorld("VERSION", process.env.VERSION)
-
-// The production environment
-contextBridge.exposeInMainWorld("PRODUCTION_ENV", process.env.PRODUCTION_ENV)
