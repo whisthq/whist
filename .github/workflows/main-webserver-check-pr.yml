@@ -1,7 +1,9 @@
 # workflows/main-webserver-check-pr.yml
 #
 # Main Webserver: Check PR
-# Checks a main-webserver PR for linting and unit testing success.
+# Checks a main-webserver PR for linting and unit/integration testing success, and
+# compare the schema of the live database with main-webserver/db-migration/schema.sql,
+# notifying the PR if schema changes are detected
 
 name: "Main Webserver: Check PR"
 
@@ -14,6 +16,7 @@ on:
         paths:
             - "main-webserver/**"
             - "!main-webserver/README.md"
+            - "main-webserver/db_migration/schema.sql"
             - ".github/workflows/main-webserver-check-pr.yml"
     workflow_dispatch:
 
@@ -77,10 +80,10 @@ jobs:
               run: pip install -r scripts/requirements.txt
 
             - name: Start Local Deploy
+              working-directory: main-webserver
               shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
               run: |
                   bash docker/retrieve_config.sh
                   bash docker/local_deploy.sh
@@ -125,15 +128,274 @@ jobs:
                   docker logs docker_celery_1
 
             - name: End Local Deploy
+              working-directory: main-webserver
               shell: bash -e {0}
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
-              run: |
-                  bash docker/local_deploy.sh --down
+              run: bash docker/local_deploy.sh --down
 
             - name: Run Tests on Heroku
+              working-directory: main-webserver
               env:
                   HEROKU_API_KEY: ${{ secrets.HEROKU_DEVELOPER_API_KEY }}
-              working-directory: main-webserver
               run: heroku ci:run --pipeline ${{ secrets.HEROKU_PIPELINE_NAME }}
+
+    # Database Migration
+    # Compare the schema of the live database with main-webserver/db-migration/schema.sql, and
+    # notify the PR if schema changes are detected
+    main-webserver-check-migra-diff:
+        name: Check Migra Diff
+        runs-on: ubuntu-20.04
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
+            GITHUB_ISSUE: ${{ github.event.number }}
+            GITHUB_PR_URL: "https://github.com/fractal/fractal/pull/"
+            HEROKU_DB_KEY: "DATABASE_URL"
+            HEROKU_API_TOKEN: ${{ secrets.HEROKU_DEVELOPER_API_KEY }} # needed to retrieve config vars from Heroku
+            SERVER_DEV: "fractal-dev-server"
+            SERVER_STAGING: "fractal-staging-server"
+            SERVER_PROD: "fractal-prod-server"
+            PATH_HELPERS: ".github/workflows/helpers"
+            PATH_SCRIPTS: "main-webserver/db_migration"
+            PATH_CURRENT: "../temporary_db_schema.sql"
+            PATH_MERGING: "main-webserver/db_migration/schema.sql"
+            PATH_DIFF: "../temporary_diff_file.sql"
+            TITLE_ERROR: >-
+                An error occured while comparing the database schema.
+            TITLE_NO_CHANGES: >-
+                Schema is unchanged, no database migration needed.
+            TITLE_SAFE_CHANGES: >-
+                There's some changes to be made to the schema!
+            TITLE_UNSAFE_CHANGES: >-
+                This PR introduces destructive changes to the schema!
+            TITLE_INVALID_CHANGES: >-
+                This PR will not migrate successfully.
+            BODY_ERROR: >-
+                The diff tool `migra` exited with an error.
+            BODY_NO_CHANGES: >-
+                Carry on!
+            BODY_SAFE_CHANGES: >-
+                The SQL commands below will perform the migration.
+            BODY_UNSAFE_CHANGES: >-
+                The schema diff produced some unsafe commands, which can be
+                dangerous to run on the database.
+
+
+                Remember these will be run automatically upon merge, so be sure
+                to review these changes extra carefully.
+
+
+                The SQL commands below will perform the migration.
+            BODY_INVALID_CHANGES: >-
+                The schema diff did not pass the migration test. The following
+                SQL commands will not be applied properly to the database.
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            # A non-pull_request event does not have a github.base_ref set
+            # We have to dig into the event object, which has a ref string
+            # such as "refs/heads/dev". We trim "refs/heads/" to get the
+            # substring that is the name of the branch.
+            - name: Set GITHUB_BRANCH Environment Variable
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+                  else
+                      echo "GITHUB_BRANCH=${{github.base_ref}}" >> $GITHUB_ENV
+                  fi
+
+            - name: Log GitHub Context
+              shell: python3 {0}
+              run: |
+                  import os
+                  context = """
+                  GITHUB CONTEXT:
+                  ${{ toJSON(github) }}
+                  JOB CONTEXT:
+                  ${{ toJSON(job) }}
+                  STEPS CONTEXT:
+                  ${{ toJSON(steps) }}
+                  RUNNER CONTEXT:
+                  ${{ toJSON(runner) }}
+                  STRATEGY CONTEXT:
+                  ${{ toJSON(strategy) }}
+                  MATRIX CONTEXT:
+                  ${{ toJSON(matrix) }}
+                  """
+                  print("GITHUB_BRANCH VARIABLE:")
+                  print(os.environ.get("GITHUB_BRANCH"))
+                  print(context.strip("\n"))
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: main-webserver
+              run: pip3 install --upgrade pip
+
+            - name: Install Python Dependencies
+              working-directory: main-webserver
+              run: |
+                  pip3 install \
+                  SQLAlchemy==1.3.23 \
+                  docker==4.4.4 \
+                  migra==3.0.1615968929 \
+                  pretty-errors==1.2.19 \
+                  toolz==0.11.1 \
+                  rich==9.13.0 \
+                  psycopg2==2.8.6 \
+                  requests==2.25.1 \
+                  stopit==1.1.2 \
+                  PyGithub==1.54.1 \
+                  packaging==20.9
+
+            # Use the name of the branch to determine which database url
+            # to use for the migration
+            # github.base_ref is the name of the branch that is being
+            # "merged into", so we'll use it to choose the Heroku App name
+            - name: Retrieve Branch Database URL from Heroku
+              id: db-url
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  from resources import heroku_config
+
+                  base_ref = os.environ["GITHUB_BRANCH"]
+                  appnames = {
+                      "dev":     os.environ["SERVER_DEV"],
+                      "staging": os.environ["SERVER_STAGING"],
+                      "prod":  os.environ["SERVER_PROD"]
+                  }
+                  app = appnames.get(base_ref, "dev")
+
+                  config = heroku_config(app)
+                  db_url = config[os.environ["HEROKU_DB_KEY"]]
+
+                  print(f"::set-output name=url::{db_url}")
+
+            # Writing the "current" database schema to a file here,
+            # as downstream steps use commands that require a file path
+            - name: Dump Current Database Schema to File
+              run: pg_dump --no-owner --no-privileges --schema-only ${{ steps.db-url.outputs.url }} >> $PATH_CURRENT
+
+            # The exit codes for this step will mimic the 'migra' diff tool
+            # that it depends on.
+            #
+            # migra uses the following exit codes:
+            # 0 is successful run, producing no diff (identical schemas)
+            # 1 is error
+            # 2 is successful run, producing a diff (non-identical schemas)
+            # 3 is successful run, but producing no diff, meaning the diff is "unsafe"
+            #
+            # We'll introduce one exit code of our own:
+            # 4 is a successful run, but producing a diff that does not result in
+            #   identical databases upon application.
+            - name: Diff Current and Merging Schema Files
+              id: db-diff
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  sys.path.append(os.environ["PATH_SCRIPTS"])
+                  from schema_diff import schema_diff
+
+                  code, diff = schema_diff(os.environ["PATH_CURRENT"],
+                                           os.environ["PATH_MERGING"])
+
+                  print(f"::set-output name=code::{code}")
+                  with open(os.environ["PATH_DIFF"], "w") as f:
+                    f.write(diff or "")
+
+            # Using the workflow notifcation helpers, we'll send out
+            # formatted alerts based on the error code response from the
+            # previous step.
+            #
+            # Actual messages are defined in the environment configuration at
+            # the top of this job.
+            - name: Send Alerts on Diff Result
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  from notifications import (github_debug_update,
+                                             github_info_update,
+                                             github_warning_update,
+                                             github_critical_update,
+                                             github_error_update)
+
+
+                  return_code = int(${{ steps.db-diff.outputs.code }})
+                  with open(os.environ["PATH_DIFF"]) as f:
+                      sql_diff = f.read().strip("\n")
+
+                  print("MIGRA RETURN CODE:", return_code)
+                  print("MIGRA SQL DIFF:", sql_diff)
+
+                  # If this is no issue number, then we're merging
+                  # and there is nowhere to post to, so quit early
+                  github_issue = os.environ.get("GITHUB_ISSUE")
+                  if not github_issue:
+                      print("No GitHub Issue number, exiting early!")
+                      print("Environment variable GITHUB_ISSUE has value:",
+                             github_issue or "None")
+                      sys.exit(0)
+
+                  identifier = "AUTOMATED_DB_MIGRATION_MESSAGE"
+                  if return_code == 0:
+                    title = os.environ["TITLE_NO_CHANGES"]
+                    body = os.environ["BODY_NO_CHANGES"]
+                    github_info_update(github_issue,
+                                       identifier,
+                                       body,
+                                       title=title,
+                                       code=sql_diff,
+                                       lang="sql")
+
+                  elif return_code == 2:
+                    title = os.environ["TITLE_SAFE_CHANGES"]
+                    body = os.environ["BODY_SAFE_CHANGES"]
+                    github_debug_update(github_issue,
+                                        identifier,
+                                        body,
+                                        title=title,
+                                        code=sql_diff,
+                                        lang="sql")
+
+                  elif return_code == 3:
+                    title = os.environ["TITLE_UNSAFE_CHANGES"]
+                    body = os.environ["BODY_UNSAFE_CHANGES"]
+                    github_warning_update(github_issue,
+                                          identifier,
+                                          body,
+                                          title=title,
+                                          code=sql_diff,
+                                          lang="sql")
+
+                  elif return_code == 4:
+                    title = os.environ["TITLE_INVALID_CHANGES"],
+                    body = os.environ["BODY_INVALID_CHANGES"]
+                    github_critical_update(github_issue,
+                                           identifier,
+                                           body,
+                                           title=title,
+                                           code=sql_diff,
+                                           lang="sql")
+                    raise Exception(os.environ["TITLE_INVALID_CHANGES"])
+
+                  else:
+                    title = os.environ["TITLE_ERROR"]
+                    body = os.environ["BODY_ERROR"]
+                    github_error_update(github_issue,
+                                        identifier,
+                                        body,
+                                        title=title,
+                                        code=sql_diff,
+                                        lang="python")
+                    raise Exception(os.environ["TITLE_ERROR"])
