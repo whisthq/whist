@@ -72,7 +72,7 @@ source "amazon-ebs" "Fractal_AWS_AMI_Builder" {
   access_key           = "${var.access_key}"
   ami_description      = "Fractal-optimized Ubuntu 20.04 AWS Machine Image."
   ami_name             = "${var.ami_name}"
-  ami_regions          = "${var.destination_regions}"
+  ami_regions          = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
   ebs_optimized        = true
   iam_instance_profile = "PackerAMIBuilder"
   instance_type        = "${var.instance_type}"
