@@ -42,7 +42,6 @@ RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/
   && apt install -y /tmp/chrome.deb \
   && rm /tmp/chrome.deb
 
-
 # Set default browser
 RUN su - fractal -c \
     "xdg-mime default google-chrome.desktop text/html \
