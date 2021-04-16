@@ -1188,7 +1188,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}-${{ needs.fractal-publish-build-config.outputs.branch }}
-                  body: "Fractal Promotion to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` on ${{ env.date }}."
+                  body: \"Fractal Promotion to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` on ${{ env.date }}.\"
                   draft: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
