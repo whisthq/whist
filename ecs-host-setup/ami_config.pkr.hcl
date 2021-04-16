@@ -5,7 +5,7 @@ variable "access_key" {
   sensitive = true
 }
 
-variable "ami-name" {
+variable "ami_name" {
   type    = string
   default = ""
 }
