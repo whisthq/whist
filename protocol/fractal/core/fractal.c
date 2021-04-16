@@ -347,3 +347,57 @@ char* fractal_git_revision() {
     return "none";
 #endif
 }
+
+#ifdef _WIN32
+// https://stackoverflow.com/questions/43786383/analogy-to-mmapnull-sz-prot-read-prot-write-map-private-map-anonymous
+// https://docs.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information
+#include <windows.h>
+#else
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
+int get_page_size() {
+#ifdef _WIN32
+    SYSTEM_INFO sys_info;
+
+    // Copy the hardware information to the SYSTEM_INFO structure.
+    GetSystemInfo(&sys_info);
+    return sys_info.dwPageSize;
+#else
+    return getpagesize();
+#endif
+}
+
+void* allocate_block(size_t block_size) {
+    int page_size = get_page_size();
+    // Use a byte to hold the size
+    block_size++;
+    // Round up to the nearest page size
+    block_size = block_size + (page_size - (block_size % page_size)) % page_size;
+#ifdef _WIN32
+    // TODO: Implement for Windows
+#else
+    size_t* p = mmap(0, block_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (p == NULL) {
+        LOG_FATAL("mmap failed!");
+    }
+    // Mark the first byte
+    *p = block_size;
+    p++;
+#endif
+    return p;
+}
+
+void free_block(void* block) {
+#ifdef _WIN32
+    // TODO: Implement for Windows
+#else
+    size_t* p = block;
+    p -= 1;
+    size_t block_size = *p;
+    if (munmap(p, block_size) != 0) {
+        LOG_FATAL("munmap failed!");
+    }
+#endif
+}

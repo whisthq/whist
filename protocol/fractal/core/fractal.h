@@ -668,6 +668,16 @@ void* safe_malloc(size_t size);
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
 /**
+ * @brief                          Allocates a large block of memory, without fragmenting our heap
+ */
+void* allocate_block(size_t block_size);
+
+/**
+ * @brief                          Frees data allocated by allocate_block
+ */
+void free_block(void* block);
+
+/**
  * @brief                          Returns a short string representing the current git commit
  *                                 of fractal at the time of compilation
  *
