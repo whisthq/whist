@@ -1176,7 +1176,7 @@ jobs:
                 main-webserver-update-fractal-services,
             ]
         if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && (contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch) || contains(fromJSON('["staging"]'), needs.fractal-publish-build-config.outputs.branch))
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -1187,8 +1187,8 @@ jobs:
             - name: Create GitHub Tag
               uses: softprops/action-gh-release@v1
               with:
-                  tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
-                  body: Fractal Promotion to Production on ${{ env.date }}.
+                  tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}-${{ needs.fractal-publish-build-config.outputs.branch }}
+                  body: "Fractal Promotion to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` on ${{ env.date }}."
                   draft: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
