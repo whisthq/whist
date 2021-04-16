@@ -11,7 +11,7 @@ variable "ami_name" {
 }
 
 variable "destination_regions" {
-  type    = list[string]
+  type    = list(string)
   default = []
 }
 
