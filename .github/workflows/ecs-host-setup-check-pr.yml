@@ -81,7 +81,7 @@ jobs:
               working-directory: ecs-host-setup
               run: echo 'APP_ENV=DEV' > app_env.env
 
-            - name: Generate packer_vars.pkr.hcl Packer Variables File for Building New AMI
+            - name: Generate packer_vars.json Packer Variables File for Building New AMI
               working-directory: ecs-host-setup
               shell: python3 {0}
               run: |
