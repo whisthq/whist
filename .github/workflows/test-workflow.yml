@@ -19,7 +19,4 @@ jobs:
               shell: python3 {0}
               run: |
                   import os
-                  import sys
-                  import urllib.parse
-                  sys.path.append(os.environ["PATH_HELPERS"])
                   print(os.environ["SLACK_CHANNEL"])
