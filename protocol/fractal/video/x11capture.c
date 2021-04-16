@@ -92,12 +92,20 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
         runcmd(cmd, NULL);
         snprintf(cmd, sizeof(cmd), "xrandr --output %s --mode %s", display_name, modename);
         runcmd(cmd, NULL);
+
+        // For the single-monitor case, we no longer need to do the below; we instead
+        // assume the display server has been created with the correct DPI. The below
+        // approach does not handle this case well because Linux does not yet support
+        // changing DPI on the fly. For getting seamless performance on multi-monitor
+        // setups, we may eventually need to instead get already-running X11
+        // applications to respect DPI changes to the X server.
+
         // I believe this command sets the DPI, as checked by `xdpyinfo | grep resolution`
-        snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
-        runcmd(cmd, NULL);
+        // snprintf(cmd, sizeof(cmd), "xrandr --dpi %d", dpi);
+        // runcmd(cmd, NULL);
         // while this command sets the font DPI setting
-        snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
-        runcmd(cmd, NULL);
+        // snprintf(cmd, sizeof(cmd), "echo Xft.dpi: %d | xrdb -merge", dpi);
+        // runcmd(cmd, NULL);
 
         free(display_name);
 
