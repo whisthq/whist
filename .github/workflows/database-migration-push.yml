@@ -58,8 +58,7 @@ jobs:
                   fi
 
             - name: Set Slack channel based on branch
-              run: |
-                  echo "SLACK_CHANNEL=alerts-${{ env.GITHUB_BRANCH }}" >> $GITHUB_ENV
+              run: echo "SLACK_CHANNEL=alerts-${{ env.GITHUB_BRANCH }}" >> $GITHUB_ENV
 
             - name: Log GitHub context
               shell: python3 {0}
