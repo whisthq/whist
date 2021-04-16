@@ -13,7 +13,7 @@ jobs:
         env:
             SLACK_CHANNEL: "alerts-${{ steps.detect-branch.outputs.branch }}"
 
-        jobs:
+        steps:
             - name: Notify Slack
               if: success()
               shell: python3 {0}
