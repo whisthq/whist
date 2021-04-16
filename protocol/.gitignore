@@ -77,11 +77,12 @@ fixes/
 build.ninja
 
 # SDL
-include/SDL2/*
-lib/64/SDL2/Darwin/*
-lib/64/SDL2/Linux/*
-lib/64/SDL2/Windows/*
+include/SDL2
+include/openssl
+lib/64/SDL2/Darwin
+lib/64/SDL2/Linux
+lib/64/SDL2/Windows
 
 # Docs
-docs/html/
-docs/latex/
+docs/html
+docs/latex
