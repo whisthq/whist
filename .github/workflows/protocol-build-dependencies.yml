@@ -107,7 +107,7 @@ jobs:
                       tar -zcvf ${{ env.linux-tar-name }} libcrypto.a
                       aws s3 cp ${{ env.linux-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.linux-tar-name }}
                   elif [ "$RUNNER_OS" == "Windows" ]; then
-                      tar -zcvf ${{ env.windows-tar-name }} libcrypto.lib
+                      tar -zcvf ${{ env.windows-tar-name }} libcrypto-1_1-x64.dll libcrypto.lib
                       aws s3 cp ${{ env.windows-tar-name }} ${{ env.s3-bucket-uri }}/${{ env.windows-tar-name }}
                   else
                       tar -zcvf ${{ env.macos-tar-name }} libcrypto.a
