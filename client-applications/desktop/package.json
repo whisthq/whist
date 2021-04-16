@@ -18,7 +18,8 @@
     "package:set-env": "node ./scripts/setPackageEnv.js",
     "postinstall": "node ./scripts/postinstall.js",
     "lint:check": "node ./scripts/lint",
-    "lint:fix": "node ./scripts/lint --fix"
+    "lint:fix": "node ./scripts/lint --fix",
+    "cache:clear": "electron ./scripts/clearAppData.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
