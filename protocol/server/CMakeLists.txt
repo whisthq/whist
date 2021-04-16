@@ -133,7 +133,7 @@ if (${WIN32})
 
     # Link to system libs
     target_link_libraries(FractalServer
-            ${STATIC_OPENSSL}
+            ${LIB_OPENSSL}
             libvcruntime
             libcmt
             kernel32
