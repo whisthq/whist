@@ -66,12 +66,6 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/container-images/creative/figma" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
     directory: "/container-images/creative/gimp" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
@@ -79,20 +73,6 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/container-images/productivity/slack" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  # Helper project for Figma on Linux
-  - package-ecosystem: "npm"
-    directory: "/container-images/creative/figma/figma-font-bindings" # looks for package.json and package-lock.json in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  # Helper project for Figma on Linux
-  - package-ecosystem: "cargo"
-    directory: "/container-images/creative/figma/figma-font-bindings/native" # looks for cargo.toml and cargo.lock in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
