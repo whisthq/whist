@@ -82,6 +82,7 @@ include/openssl
 lib/64/SDL2/Darwin
 lib/64/SDL2/Linux
 lib/64/SDL2/Windows
+lib/64/**
 
 # Docs
 docs/html
