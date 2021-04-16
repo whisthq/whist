@@ -59,7 +59,7 @@ jobs:
               run: |
                 pip install -r notifications/requirements.txt
                 # allows us to import from notifications package anywhere in this job
-                echo "PYTHONPATH=$PYTHONPATH:$(pwd)/notifications" >> $GITHUB_ENV
+                echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Slack test
               shell: python3 {0}
