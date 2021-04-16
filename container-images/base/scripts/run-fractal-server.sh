@@ -89,7 +89,7 @@ do
     sleep 0.1
 done
 
-until [ -f $FRACTAL_MAPPINGS_DIR/.displayready ]
+until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
     sleep 0.1
 done
