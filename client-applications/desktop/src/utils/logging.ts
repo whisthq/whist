@@ -1,22 +1,21 @@
-import { app } from "electron"
-import { tap } from "rxjs/operators"
-import { identity, truncate } from "lodash"
-import fs from "fs"
-import os from "os"
-import util from "util"
-import path from "path"
-import AWS from "aws-sdk"
-import logzio from "logzio-nodejs"
-import { merge, Observable } from "rxjs"
-import stringify from "json-stringify-safe"
+import { app } from 'electron'
+import { tap } from 'rxjs/operators'
+import { identity, truncate } from 'lodash'
+import fs from 'fs'
+import os from 'os'
+import util from 'util'
+import AWS from 'aws-sdk'
+import logzio from 'logzio-nodejs'
+import { merge, Observable } from 'rxjs'
+import stringify from 'json-stringify-safe'
 
-import config from "@app/utils/config"
+import config from '@app/utils/config'
 
 // Logging base function
 export enum LogLevel {
-  DEBUG = "DEBUG",
-  WARNING = "WARNING",
-  ERROR = "ERROR",
+  DEBUG = 'DEBUG',
+  WARNING = 'WARNING',
+  ERROR = 'ERROR',
 }
 
 // Where to send log files, located in ~/.fractal
@@ -30,7 +29,7 @@ const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
   bufferSize: 1,
   addTimestampWithNanoSecs: true,
-  sendIntervalMs: 50,
+  sendIntervalMs: 50
 })
 
 // We use a special stringify function below before converting an object
@@ -49,22 +48,22 @@ const logBase = (title: string, data?: any, level?: LogLevel) => {
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-  const logPath = getBaseFilePath("debug.log")
-  const logFile = fs.createWriteStream(logPath, { flags: "a" })
+  const logPath = getBaseFilePath('debug.log')
+  const logFile = fs.createWriteStream(logPath, { flags: 'a' })
 
   const template = `DEBUG: ${title} -- \n ${
-    data !== undefined ? stringify(data, null, 2) : ""
+    data !== undefined ? stringify(data, null, 2) : ''
   }`
 
   const debugLog = truncate(template, {
     length: 1000,
-    omission: "...**logBase only prints 1000 characters per log**",
+    omission: '...**logBase only prints 1000 characters per log**'
   })
 
   if (app.isPackaged) {
     logzLogger.log({
       message: debugLog,
-      level: level,
+      level: level
     })
   } else {
     console.log(debugLog)
@@ -84,16 +83,16 @@ export const uploadToS3 = async (email: string) => {
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-  logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
+  logBase('Logs upload to S3', { s3FileName: s3FileName }, LogLevel.DEBUG)
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
     const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = "fractal-protocol-logs"
+    const bucketName = 'fractal-protocol-logs'
 
     const s3 = new AWS.S3({
       accessKeyId: accessKey,
-      secretAccessKey: secretKey,
+      secretAccessKey: secretKey
     })
     // Read file into buffer
     const fileContent = fs.readFileSync(localFilePath)
@@ -101,7 +100,7 @@ export const uploadToS3 = async (email: string) => {
     const params = {
       Bucket: bucketName,
       Key: s3FileName,
-      Body: fileContent,
+      Body: fileContent
     }
     // Upload files to the bucket
     return await new Promise((resolve, reject) => {
@@ -118,9 +117,9 @@ export const uploadToS3 = async (email: string) => {
   const uploadPromises: Array<Promise<any>> = []
 
   const logLocations = [
-    getBaseFilePath("log-dev.txt"),
-    getBaseFilePath("log-staging.txt"),
-    getBaseFilePath("log.txt"),
+    getBaseFilePath('log-dev.txt'),
+    getBaseFilePath('log-staging.txt'),
+    getBaseFilePath('log.txt')
   ]
 
   logLocations.forEach((filePath: string) => {
@@ -148,10 +147,10 @@ export const logObservable = (level: LogLevel, title: string) => {
     */
 
   return tap<any>({
-    next(value) {
+    next (value) {
       const data = identity(value)
       logBase(title, data, level)
-    },
+    }
   })
 }
 
