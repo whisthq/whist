@@ -1,0 +1,25 @@
+name: "Database Migration Push"
+
+on:
+    push:
+        branches:
+            - mia/fctl-395-make-db-migration-slack-notif-go-to
+
+jobs:
+    run-migra-diff:
+        name: Run Migra Diff
+        runs-on: ubuntu-20.04
+
+        env:
+            SLACK_CHANNEL: "alerts-${{ steps.detect-branch.outputs.branch }}"
+
+        jobs:
+            - name: Notify Slack
+              if: success()
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  import urllib.parse
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  print(os.environ["SLACK_CHANNEL"])
