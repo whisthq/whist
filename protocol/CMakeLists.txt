@@ -218,7 +218,7 @@ endif ()
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -226,7 +226,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
 
-    if (NOT STATIC_OPENSSL)
+    if (NOT LIB_OPENSSL)
         message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
     endif()
 else()

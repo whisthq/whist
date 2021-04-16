@@ -139,7 +139,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework QuartzCore"
         objc
         iconv
-        ${STATIC_OPENSSL}
+        ${LIB_OPENSSL}
         )
 endif()
 
@@ -162,7 +162,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     # Link to system libs
     target_link_libraries(FractalClient
-            ${STATIC_OPENSSL}
+            ${LIB_OPENSSL}
             libvcruntime
             libucrt
             libcmt
