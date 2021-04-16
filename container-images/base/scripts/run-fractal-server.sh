@@ -89,6 +89,8 @@ do
     sleep 0.1
 done
 
+# Wait until the application has created its display before launching FractalServer.
+#    This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
 do
     sleep 0.1
