@@ -19,8 +19,12 @@ import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
-  showAppDock
+  showAppDock,
+  hideAppDock
 } from '@app/utils/windows'
+import {
+  protocolLaunchSuccess,
+} from "@app/main/observables/protocol"
 import { loginSuccess } from '@app/main/observables/login'
 import { signupSuccess } from '@app/main/observables/signup'
 import { errorWindowRequest } from '@app/main/observables/error'
@@ -67,7 +71,10 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 
-merge(loginSuccess, signupSuccess).subscribe(() => closeWindows())
+// protocolLaunchSuccess.subscribe(() => {
+//   closeWindows()
+//   hideAppDock()
+// })
 
 // If the update is downloaded, quit the app and install the update
 

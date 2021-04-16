@@ -3,17 +3,19 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { eventIPC } from '@app/main/events/ipc'
-import { mapValues } from 'lodash'
-import { ipcBroadcast } from '@app/utils/ipc'
-import { StateIPC } from '@app/@types/state'
-import { combineLatest, Observable } from 'rxjs'
-import { startWith, mapTo, withLatestFrom } from 'rxjs/operators'
-import { WarningLoginInvalid, WarningSignupInvalid } from '@app/utils/constants'
-import { getWindows } from '@app/utils/windows'
-import { loginLoading, loginWarning } from '@app/main/observables/login'
-import { signupLoading, signupWarning } from '@app/main/observables/signup'
-import { autoUpdateDownloadProgress } from '@app/main/observables/autoupdate'
+import { eventIPC } from "@app/main/events/ipc"
+import { mapValues } from "lodash"
+import { ipcBroadcast } from "@app/utils/ipc"
+import { StateIPC } from "@app/@types/state"
+import { combineLatest, Observable, merge } from "rxjs"
+import { startWith, mapTo, withLatestFrom, map } from "rxjs/operators"
+import { toPairs } from "lodash"
+
+import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
+import { getWindows } from "@app/utils/windows"
+import { loginLoading, loginWarning } from "@app/main/observables/login"
+import { signupLoading, signupWarning } from "@app/main/observables/signup"
+import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -42,8 +44,37 @@ const subscribed: SubscriptionMap = {
   signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid))
 }
 
-combineLatest(mapValues(subscribed, (o) => o.pipe(startWith(undefined))))
-  .pipe(withLatestFrom(eventIPC))
-  .subscribe(([subs, state]) =>
+merge(loginLoading.pipe(map((val) => ({ loginLoading: val }))))
+  .subscribe((subs) => {
+    // ipcBroadcast({ ...subs } as Partial<StateIPC>, getWindows())
+    console.log("COMBINE LATEST!")
+    console.log({ ...subs })
+  }
+)
+
+
+merge(
+  loginLoading.pipe(
+    map((val) => ({
+      loginLoading: val,
+    }))
+  ),
+  loginWarning.pipe(mapTo({ loginWarning: WarningLoginInvalid }))
+)
+  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+  .subscribe(([subs, state]) => {
     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-  )
+    console.log("NEW TEST 5")
+    console.log({ ...state, ...subs })
+  })
+
+
+// loginLoading.subscribe((x) => console.log("LOGIN LOADING IS", x))
+
+// merge(subscribed)
+//   // .pipe(withLatestFrom(eventIPC))
+//   .subscribe((subs) => {
+//     ipcBroadcast({ ...subs } as Partial<StateIPC>, getWindows())
+//     console.log("NEW TEST 4")
+//     console.log({...subs})
+//   })

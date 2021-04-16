@@ -6,7 +6,7 @@ export const loadingFrom = (
   ...ends: Array<Observable<any>>
 ) =>
   merge(
-    request.pipe(mapTo(true), startWith(false)),
+    request.pipe(mapTo(true)),
     race(...ends.map((o) => o.pipe(mapTo(false))))
   )
 
