@@ -43,6 +43,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             $<TARGET_FILE_DIR:FractalServer>)
 endif()
 
+# OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
+# location to prevent a crash.
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(
+            TARGET FractalServer POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
+            $<TARGET_FILE_DIR:FractalServer>)
+endif()
+
 #Print out compile flags in verbose mode of CMake
 message(VERBOSE "c base flags ${CMAKE_C_FLAGS}")
 message(VERBOSE "c release flags ${CMAKE_C_FLAGS_RELEASE}")
