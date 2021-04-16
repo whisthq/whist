@@ -114,7 +114,7 @@ def flag_instances(region):
             elif test:
                 if compare_hours(launch_time) and state not in shutting_down_states:
                     message += f"     - \\`{name}\\` - id: \\`{instance_id}\\` - *TEST INSTANCE OVERDUE* \n"
-            elif len(name) == 0:
+            elif len(name) == 0 and state not in shutting_down_states:
                 message += f"     - id: \\`{instance_id}\\` - *UNTAGGED/UNNAMED* \n"
 
     return message
