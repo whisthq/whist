@@ -24,8 +24,8 @@ jobs:
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
-              with:
-                  ref: "staging" # use staging version of load testing scripts
+              # with:
+              #     ref: "staging" # use staging version of load testing scripts
 
             # - name: Configure AWS CLI
             #   uses: aws-actions/configure-aws-credentials@v1
