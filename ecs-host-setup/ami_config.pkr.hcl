@@ -11,6 +11,8 @@ variable "ami_name" {
 }
 
 variable "destination_regions" {
+  type    = list(string)
+  default = []
 }
 
 variable "git_branch" {
