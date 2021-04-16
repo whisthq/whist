@@ -39,7 +39,7 @@ rm -f /var/lib/ecs/data/*
 cd /home/ubuntu
 
 # The ECS Host Service gets built in the `fractal-build-and-deploy.yml` workflow and
-# uploaded from this Git repository to the AMI during Packer via ami_config.json.pkr.hcl
+# uploaded from this Git repository to the AMI during Packer via ami_config.pkr.hcl
 # Here, we write the systemd unit file for the Fractal ECS Host Service.
 # Note that we do not restart the host service. This is because if the host
 # service dies for some reason, it is not safe to restart it, since we cannot
