@@ -518,7 +518,7 @@ jobs:
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
                   # defined as a string of comma-separated values (no spaces) as required by Packer.
                   data["destination_regions"] = "us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1"
-                  fp = open("packer_vars.pkr.hcl", "w")
+                  fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
 
@@ -535,7 +535,7 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable build -var-file=packer_vars.pkr.hcl ami_config.pkr.hcl", shell=True)
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
