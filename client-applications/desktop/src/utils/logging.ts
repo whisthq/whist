@@ -2,9 +2,7 @@ import { app } from 'electron'
 import { tap } from 'rxjs/operators'
 import { identity, truncate } from 'lodash'
 import fs from 'fs'
-import os from 'os'
 import util from 'util'
-import path from 'path'
 import AWS from 'aws-sdk'
 import logzio from 'logzio-nodejs'
 import { merge, Observable } from 'rxjs'
@@ -19,13 +17,12 @@ export enum LogLevel {
   ERROR = 'ERROR',
 }
 
-// Where to send .log file
-const logPath = path.join(
-  app.getAppPath().replace('/Resources/app.asar', ''),
-  'debug.log'
-)
-const logFile = fs.createWriteStream(logPath, { flags: 'a' })
-
+// Where to send log files, located in ~/.fractal
+const getBaseFilePath = (fileName: string) => {
+  const homeDir = app.getPath('home')
+  const baseFilePath = `${homeDir}/.fractal`
+  return `${baseFilePath}/${fileName}`
+}
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
@@ -50,18 +47,17 @@ const logBase = (title: string, data?: any, level?: LogLevel) => {
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
+  const logPath = getBaseFilePath('debug.log')
+  const logFile = fs.createWriteStream(logPath, { flags: 'a' })
 
   const template = `DEBUG: ${title} -- \n ${
-     data !== undefined ? stringify(data, null, 2) : ''
-   }`
+    data !== undefined ? stringify(data, null, 2) : ''
+  }`
 
-  const debugLog = truncate(
-    template,
-    {
-      length: 1000,
-      omission: '...**logBase only prints 1000 characters per log**'
-    }
-  )
+  const debugLog = truncate(template, {
+    length: 1000,
+    omission: '...**logBase only prints 1000 characters per log**'
+  })
 
   if (app.isPackaged) {
     logzLogger.log({
@@ -117,14 +113,12 @@ export const uploadToS3 = async (email: string) => {
     })
   }
 
-  const homeDir = os.homedir()
-  const baseFilePath = `${homeDir}/.fractal`
   const uploadPromises: Array<Promise<any>> = []
 
   const logLocations = [
-    `${baseFilePath}/log-dev.txt`,
-    `${baseFilePath}/log-staging.txt`,
-    `${baseFilePath}/log.txt`
+    getBaseFilePath('log-dev.txt'),
+    getBaseFilePath('log-staging.txt'),
+    getBaseFilePath('log.txt')
   ]
 
   logLocations.forEach((filePath: string) => {
