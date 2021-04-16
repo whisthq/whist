@@ -1,0 +1,35 @@
+name: "Main Webserver: Test Notifs"
+on:
+    workflow_dispatch:
+
+jobs:
+    main-webserver-notif-testing:
+        name: Main Webserver Test
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+              with:
+                  ref: "staging" # use staging version of load testing scripts
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Install notification dependencies
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
+            - name: Notify Slack
+              working-directory: .github/workflows/helpers
+              shell: python3 {0}
+              run: |
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-staging"
+                  BODY = "Hello from GHA"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
