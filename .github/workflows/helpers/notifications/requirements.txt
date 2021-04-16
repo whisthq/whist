@@ -1,3 +1,2 @@
-# requirements for notifications folder
 requests==2.25.1
 PyGithub==1.54.1

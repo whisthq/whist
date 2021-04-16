@@ -52,7 +52,7 @@ jobs:
 
             - name: Install notification dependencies
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: ls && ls notifications && pip install -r notifications/requirements.txt
 
             - name: Slack test
               working-directory: .github/workflows/helpers
