@@ -11,7 +11,7 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
-            SLACK_CHANNEL: "alerts-${{ github.event.inputs.branch-name }}"
+            SLACK_CHANNEL: "alerts-${GITHUB_REF##*/}"
 
         steps:
             - name: Notify Slack
