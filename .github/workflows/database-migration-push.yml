@@ -25,7 +25,7 @@ jobs:
 
         env:
             SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-            SLACK_CHANNEL: "alerts"
+            SLACK_CHANNEL: "alerts-${{ steps.detect-branch.outputs.branch }}"
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
             GITHUB_SHA: ${{ github.sha }}
             GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
