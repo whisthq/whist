@@ -2,7 +2,6 @@ import { app } from 'electron'
 import { tap } from 'rxjs/operators'
 import { identity, truncate } from 'lodash'
 import fs from 'fs'
-import os from 'os'
 import util from 'util'
 import AWS from 'aws-sdk'
 import logzio from 'logzio-nodejs'
@@ -20,7 +19,7 @@ export enum LogLevel {
 
 // Where to send log files, located in ~/.fractal
 const getBaseFilePath = (fileName: string) => {
-  const homeDir = os.homedir()
+  const homeDir = app.getPath('home')
   const baseFilePath = `${homeDir}/.fractal`
   return `${baseFilePath}/${fileName}`
 }
