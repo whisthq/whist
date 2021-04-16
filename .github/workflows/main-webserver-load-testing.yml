@@ -58,6 +58,7 @@ jobs:
               working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
+                  import sys; sys.path.append(".") # allows us to import from notifications
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
