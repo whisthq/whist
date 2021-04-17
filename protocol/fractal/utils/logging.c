@@ -442,11 +442,16 @@ int multi_threaded_printf(void* opaque) {
 
 /**
  * This function escapes certain escape sequences in a log. It allocates heap
- * memory that must be later freed
- * @param old_string a string with sequences we want escaped, e.g "some json
- * stuff \r\n\r\n"
- * @return the same string, but possible longer e.g "some json stuff
- * \\r\\n\\r\\n"
+ * memory that must be later freed. Specifically, it by-default escapes "\b", "\f", "\r", "\t"
+ * (Note: This comment is finicky with doxygen when it comes to escape sequences,
+ * so double-check the doxygen docs if you're changing this documentation comment)
+ *
+ * @param old_string               A string with sequences we want escaped,
+ *                                 e.g "some\tstring\r\n\r\n"
+ * @param escape_all               If true, also escapes ", \, and newlines
+ * @return                         The same string, escaped using only basic ASCII,
+ *                                 "some\\\tstuff\\\r\n\\\r\n"
+ *                                 "some\\\tstuff\\\r\\\n\\\r\\\n" <- escape_all=true
  */
 char* escape_string(char* old_string, bool escape_all) {
     size_t old_string_len = strlen(old_string);

@@ -242,6 +242,9 @@ int get_last_network_error();
  *                                 bound of how long CreateXContext will take is
  *                                 some small constant times
  *                                 connection_timeout_ms
+ * @param using_stun               True/false for whether or not to use the STUN server for this
+ * context
+ * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
  *
  * @returns                        Will return -1 on failure, will return 0 on
  *                                 success
@@ -330,6 +333,9 @@ int ack(SocketContext* context);
  *                                 if any such packet exists
  *
  * @param context                  The socket context
+ * @param should_recvp             If false, this function will only pop buffered packets
+ *                                 If true, this function will pull data from the TCP socket,
+ *                                 but that might take a while
  *
  * @returns                        A pointer to the FractalPacket on success,
  *                                 NULL on failure
