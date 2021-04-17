@@ -4,12 +4,10 @@
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
 import { eventIPC } from "@app/main/events/ipc"
-import { mapValues } from "lodash"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { combineLatest, Observable, merge } from "rxjs"
-import { startWith, mapTo, withLatestFrom, map } from "rxjs/operators"
-import { toPairs } from "lodash"
+import { Observable, merge } from "rxjs"
+import { mapTo, withLatestFrom, map } from "rxjs/operators"
 
 import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
@@ -35,46 +33,22 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 interface SubscriptionMap {
   [key: string]: Observable<string | number | boolean | SubscriptionMap>
 }
+  
+const emitJSON = (observable: Observable<string | number | boolean | SubscriptionMap>, str: string) =>
+  observable.pipe(map(val => ({[str]: val})))
 
-const subscribed: SubscriptionMap = {
-  loginLoading: loginLoading,
-  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: autoUpdateDownloadProgress,
-  signupLoading: signupLoading,
-  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid))
-}
-
-merge(loginLoading.pipe(map((val) => ({ loginLoading: val }))))
-  .subscribe((subs) => {
-    // ipcBroadcast({ ...subs } as Partial<StateIPC>, getWindows())
-    console.log("COMBINE LATEST!")
-    console.log({ ...subs })
-  }
-)
-
+loginLoading.subscribe(x => console.log("LOGIN LOADING IS", x))
 
 merge(
-  loginLoading.pipe(
-    map((val) => ({
-      loginLoading: val,
-    }))
-  ),
-  loginWarning.pipe(mapTo({ loginWarning: WarningLoginInvalid }))
+  emitJSON(loginLoading, "loginLoading"),
+  emitJSON(loginWarning.pipe(mapTo(WarningLoginInvalid)), "loginWarning"),
+  emitJSON(signupLoading, "signupLoading"),
+  emitJSON(signupWarning.pipe(mapTo(WarningSignupInvalid)), "signupWarning"),
+  emitJSON(autoUpdateDownloadProgress, "updateInfo"),
 )
-  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+  .pipe(withLatestFrom(eventIPC))
   .subscribe(([subs, state]) => {
-    ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-    console.log("NEW TEST 5")
+    console.log("MERGE RESULT IS")
     console.log({ ...state, ...subs })
+    ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
   })
-
-
-// loginLoading.subscribe((x) => console.log("LOGIN LOADING IS", x))
-
-// merge(subscribed)
-//   // .pipe(withLatestFrom(eventIPC))
-//   .subscribe((subs) => {
-//     ipcBroadcast({ ...subs } as Partial<StateIPC>, getWindows())
-//     console.log("NEW TEST 4")
-//     console.log({...subs})
-//   })
