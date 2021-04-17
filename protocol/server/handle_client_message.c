@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_message_handler.c
+ * @file handle_client_message.c
  * @brief This file contains all the code for server-side processing of messages
  *        received from a client
 ============================

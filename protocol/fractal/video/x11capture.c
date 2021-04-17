@@ -18,7 +18,7 @@ You must release each frame you capture via ReleaseScreen before calling
 CaptureScreen again.
 */
 
-#include "x11capture.h"
+#include "screencapture.h"
 
 #include <X11/extensions/Xdamage.h>
 #include <stdio.h>
