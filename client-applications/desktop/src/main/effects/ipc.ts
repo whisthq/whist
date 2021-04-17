@@ -8,7 +8,7 @@ import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { Observable, merge } from "rxjs"
 import { mapTo, withLatestFrom, map, startWith } from "rxjs/operators"
-import { toPair } from "lodash"
+import { toPairs } from "lodash"
 
 import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
@@ -34,34 +34,30 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 interface SubscriptionMap {
   [key: string]: Observable<string | number | boolean | SubscriptionMap>
 }
-  
+
 const emitJSON = (observable: Observable<string | number | boolean | SubscriptionMap>, str: string) =>
   observable.pipe(map(val => ({[str]: val})))
 
 const jsonMerge = (obj: SubscriptionMap) =>
   merge(
-    ...toPair(
+    ...toPairs(
       obj
     ).map(
-      ([name, obs]: [
-        string,
-        Observable<string | number | boolean | SubscriptionMap>
-      ]) => emitJSON(obs, name)
+      ([name, obs]) => emitJSON(obs, name)
     )
   )
 
-loginLoading.subscribe(x => console.log("LOGIN LOADING IS", x))
+const subscribed: SubscriptionMap = {
+  loginLoading: loginLoading,
+  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
+  updateInfo: autoUpdateDownloadProgress,
+  signupLoading: signupLoading,
+  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+}
 
-merge(
-  emitJSON(loginLoading, "loginLoading"),
-  emitJSON(loginWarning.pipe(mapTo(WarningLoginInvalid)), "loginWarning"),
-  emitJSON(signupLoading, "signupLoading"),
-  emitJSON(signupWarning.pipe(mapTo(WarningSignupInvalid)), "signupWarning"),
-  emitJSON(autoUpdateDownloadProgress, "updateInfo")
-)
+jsonMerge(subscribed)
   .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
   .subscribe(([subs, state]) => {
-    console.log("MERGE RESULT IS")
     console.log({ ...state, ...subs })
     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
   })
