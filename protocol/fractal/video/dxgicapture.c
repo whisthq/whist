@@ -3,7 +3,7 @@
  *
  * Copyright Fractal Computers, Inc. 2020
  **/
-#include "dxgicapture.h"
+#include "screencapture.h"
 
 #include "dxgicudatransfercapture.h"
 

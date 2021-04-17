@@ -1,8 +1,8 @@
-#ifndef CLIENT_MESSAGE_HANDLER_H
-#define CLIENT_MESSAGE_HANDLER_H
+#ifndef HANDLE_CLIENT_MESSAGE_H
+#define HANDLE_CLIENT_MESSAGE_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_message_handler.h
+ * @file handle_client_message.h
  * @brief This file contains all the code for server-side processing of messages
  *        received from a client
 ============================
@@ -45,4 +45,4 @@ Public Functions
  */
 int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_controlling);
 
-#endif  // CLIENT_MESSAGE_HANDLER_H
+#endif  // HANDLE_CLIENT_MESSAGE_H
