@@ -25,7 +25,6 @@ jobs:
 
         env:
             SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-            SLACK_CHANNEL: "alerts"
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
             GITHUB_SHA: ${{ github.sha }}
             GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
@@ -57,6 +56,9 @@ jobs:
                       ref="${{ github.event.ref }}"
                       echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
                   fi
+
+            - name: Set Slack channel based on branch
+              run: echo "SLACK_CHANNEL=alerts-${{ env.GITHUB_BRANCH }}" >> $GITHUB_ENV
 
             - name: Log GitHub context
               shell: python3 {0}
