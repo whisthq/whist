@@ -20,7 +20,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "sdlscreeninfo.h"
 #include "video.h"
 
 /*
@@ -66,5 +66,47 @@ int resizing_event_watcher(void* data, SDL_Event* event);
  * @param window                   The SDL window to destroy
  */
 void destroy_sdl(SDL_Window* window);
+
+/**
+ * @brief                          Load a PNG file to an SDL surface using lodepng.
+ *
+ * @param filename                 PNG image file path
+ *
+ * @returns                        the loaded surface on success, and NULL on failure
+ *
+ * @note                           After a successful call to sdl_surface_from_png_file,
+ *                                 remember to call `SDL_FreeSurface(surface)` to free memory.
+ */
+SDL_Surface* sdl_surface_from_png_file(char* filename);
+
+/**
+ * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
+ *                                 protocol when SDL_LockMutex fails
+ */
+SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
+ *                                 protocol when SDL_LockMutex fails
+ */
+void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_TryLockMutex that will correctly exit the
+ *                                 protocol when SDL_TryLockMutex fails
+ */
+int safe_SDL_TryLockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
+ * protocol when SDL_UnlockMutex fails
+ */
+void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
+
+/**
+ * @brief                          Wrapper around SDL_CondWait that will correctly exit the
+ *                                 protocol when SDL_LockMutex fails
+ */
+void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
 
 #endif  // SDL_UTILS_H

@@ -71,10 +71,4 @@ void init_cursors();
  */
 FractalCursorImage get_current_cursor();
 
-int init_peer_cursors(void);
-
-int destroy_peer_cursors(void);
-
-int draw_peer_cursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b);
-
 #endif  // CURSOR_H

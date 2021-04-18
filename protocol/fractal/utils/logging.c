@@ -57,8 +57,8 @@ extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
 
 // logger Semaphores and Mutexes
-static volatile SDL_sem* logger_semaphore;
-static volatile SDL_mutex* logger_mutex;
+static volatile FractalSemaphore logger_semaphore;
+static volatile FractalMutex logger_mutex;
 
 // logger queue
 
@@ -74,7 +74,7 @@ static volatile int logger_queue_size = 0;
 static volatile int logger_global_id = 0;
 
 // logger global variables
-SDL_Thread* mprintf_thread = NULL;
+FractalThread mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int multi_threaded_printf(void* opaque);
 void mprintf(bool log, const char* fmt_str, va_list args);
@@ -144,10 +144,10 @@ void init_logger(char* log_dir) {
     }
 
     run_multithreaded_printf = true;
-    logger_mutex = safe_SDL_CreateMutex();
-    logger_semaphore = SDL_CreateSemaphore(0);
+    logger_mutex = fractal_create_mutex();
+    logger_semaphore = fractal_create_semaphore(0);
     mprintf_thread =
-        SDL_CreateThread((SDL_ThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
+        fractal_create_thread((FractalThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", log_file_name);
     //    start_timer(&mprintf_timer);
 }
@@ -221,7 +221,7 @@ void rename_log_file() {
 
 // Sets up logs for a new connection, overwriting previous
 void start_connection_log() {
-    safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
+    fractal_lock_mutex((FractalMutex)logger_mutex);
 
     if (mprintf_log_connection_file) {
         fclose(mprintf_log_connection_file);
@@ -232,21 +232,21 @@ void start_connection_log() {
     mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
     log_connection_log_id = logger_global_id;
 
-    safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
+    fractal_unlock_mutex((FractalMutex)logger_mutex);
 
     LOG_INFO("Beginning connection log");
 }
 
 void destroy_logger() {
     // Wait for any remaining printfs to execute
-    SDL_Delay(50);
+    fractal_sleep(50);
     if (using_sentry) {
         sentry_shutdown();
     }
     run_multithreaded_printf = false;
-    SDL_SemPost((SDL_sem*)logger_semaphore);
+    fractal_post_semaphore((FractalSemaphore)logger_semaphore);
 
-    SDL_WaitThread(mprintf_thread, NULL);
+    fractal_wait_thread(mprintf_thread, NULL);
     mprintf_thread = NULL;
 
     if (mprintf_log_file) {
@@ -302,7 +302,7 @@ int multi_threaded_printf(void* opaque) {
 
     while (true) {
         // Wait until signaled by printf to begin running
-        SDL_SemWait((SDL_sem*)logger_semaphore);
+        fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
 
         if (!run_multithreaded_printf) {
             break;
@@ -312,7 +312,7 @@ int multi_threaded_printf(void* opaque) {
 
         // Clear the queue into the cache,
         // And then let go of the mutex so that printf can continue accumulating
-        safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
+        fractal_lock_mutex((FractalMutex)logger_mutex);
         cache_size = logger_queue_size;
         for (int i = 0; i < logger_queue_size; i++) {
             safe_strncpy((char*)logger_queue_cache[i].buf,
@@ -323,11 +323,11 @@ int multi_threaded_printf(void* opaque) {
             logger_queue_index++;
             logger_queue_index %= LOGGER_QUEUE_SIZE;
             if (i != 0) {
-                SDL_SemWait((SDL_sem*)logger_semaphore);
+                fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
             }
         }
         logger_queue_size = 0;
-        safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
+        fractal_unlock_mutex((FractalMutex)logger_mutex);
 
         // Print all of the data into the cache
         // int last_printf = -1;
@@ -518,7 +518,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
         return;
     }
 
-    safe_SDL_LockMutex((SDL_mutex*)logger_mutex);
+    fractal_lock_mutex((FractalMutex)logger_mutex);
 
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
     char* buf = NULL;
@@ -537,7 +537,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
                 buf[0] = '\0';
             }
             logger_queue_size++;
-            SDL_SemPost((SDL_sem*)logger_semaphore);
+            fractal_post_semaphore((FractalSemaphore)logger_semaphore);
         } else {
             // After calls to function which invoke VA args, the args are
             // undefined so we copy
@@ -560,7 +560,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
             snprintf(buf, LOGGER_BUF_SIZE, "%s \n", san_line);
             free(san_line);
             logger_queue_size++;
-            SDL_SemPost((SDL_sem*)logger_semaphore);
+            fractal_post_semaphore((FractalSemaphore)logger_semaphore);
 
             index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
             buf = (char*)logger_queue[index].buf;
@@ -572,7 +572,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
                 logger_queue[index].log = log;
                 logger_queue[index].id = logger_global_id++;
                 logger_queue_size++;
-                SDL_SemPost((SDL_sem*)logger_semaphore);
+                fractal_post_semaphore((FractalSemaphore)logger_semaphore);
                 index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
                 buf = (char*)logger_queue[index].buf;
                 line = strtok_r(NULL, "\n", &strtok_context);
@@ -587,16 +587,16 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
         logger_queue[index].log = log;
         logger_queue[index].id = logger_global_id++;
         logger_queue_size++;
-        SDL_SemPost((SDL_sem*)logger_semaphore);
+        fractal_post_semaphore((FractalSemaphore)logger_semaphore);
     }
 
-    safe_SDL_UnlockMutex((SDL_mutex*)logger_mutex);
+    fractal_unlock_mutex((FractalMutex)logger_mutex);
 }
 
-SDL_mutex* crash_handler_mutex;
+FractalMutex crash_handler_mutex;
 
 void print_stacktrace() {
-    safe_SDL_LockMutex(crash_handler_mutex);
+    fractal_lock_mutex(crash_handler_mutex);
 
 #ifdef _WIN32
     unsigned int i;
@@ -643,12 +643,12 @@ void print_stacktrace() {
     fprintf(stderr, "\n\n");
 #endif
 
-    safe_SDL_UnlockMutex(crash_handler_mutex);
+    fractal_unlock_mutex(crash_handler_mutex);
 }
 
 #ifdef _WIN32
 LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
-    SDL_Delay(250);
+    fractal_sleep(250);
     fprintf(stderr, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
         case EXCEPTION_ACCESS_VIOLATION:
@@ -729,13 +729,13 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
 void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     print_stacktrace();
-    SDL_Delay(100);
+    fractal_sleep(100);
     exit(-1);
 }
 #endif
 
 void init_backtrace_handler() {
-    crash_handler_mutex = safe_SDL_CreateMutex();
+    crash_handler_mutex = fractal_create_mutex();
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
@@ -830,7 +830,7 @@ void update_server_status(bool is_connected, char* host, char* identifier,
     d->host = host;
     d->identifier = identifier;
     d->hex_aes_private_key = hex_aes_private_key;
-    SDL_Thread* update_status =
-        SDL_CreateThread(multithreaded_update_server_status, "update_server_status", d);
-    SDL_DetachThread(update_status);
+    FractalThread update_status =
+        fractal_create_thread(multithreaded_update_server_status, "update_server_status", d);
+    fractal_detach_thread(update_status);
 }

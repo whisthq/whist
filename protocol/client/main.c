@@ -34,7 +34,7 @@ Includes
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"

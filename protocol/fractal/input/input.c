@@ -1,7 +1,7 @@
 #include "input_driver.h"
 
-#define KeyUp(input_device, sdl_keycode) emit_key_event(input_device, sdl_keycode, 0)
-#define KeyDown(input_device, sdl_keycode) emit_key_event(input_device, sdl_keycode, 1)
+#define KeyUp(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 0)
+#define KeyDown(input_device, fractal_keycode) emit_key_event(input_device, fractal_keycode, 1)
 
 unsigned int last_input_fmsg_id = 0;
 
@@ -27,18 +27,18 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
     bool client_caps_lock_holding = fmsg->keyboard_state[FK_CAPSLOCK];
     bool client_num_lock_holding = fmsg->keyboard_state[FK_NUMLOCK];
 
-    for (int sdl_keycode = 0; sdl_keycode < fmsg->num_keycodes; ++sdl_keycode) {
-        if (!fmsg->keyboard_state[sdl_keycode] &&
-            get_keyboard_key_state(input_device, sdl_keycode)) {
-            KeyUp(input_device, sdl_keycode);
-        } else if (fmsg->keyboard_state[sdl_keycode] &&
-                   !get_keyboard_key_state(input_device, sdl_keycode)) {
-            KeyDown(input_device, sdl_keycode);
+    for (int fractal_keycode = 0; fractal_keycode < fmsg->num_keycodes; ++fractal_keycode) {
+        if (!fmsg->keyboard_state[fractal_keycode] &&
+            get_keyboard_key_state(input_device, fractal_keycode)) {
+            KeyUp(input_device, fractal_keycode);
+        } else if (fmsg->keyboard_state[fractal_keycode] &&
+                   !get_keyboard_key_state(input_device, fractal_keycode)) {
+            KeyDown(input_device, fractal_keycode);
 
-            if (sdl_keycode == FK_CAPSLOCK) {
+            if (fractal_keycode == FK_CAPSLOCK) {
                 server_caps_lock = !server_caps_lock;
             }
-            if (sdl_keycode == FK_NUMLOCK) {
+            if (fractal_keycode == FK_NUMLOCK) {
                 server_num_lock = !server_num_lock;
             }
         }
