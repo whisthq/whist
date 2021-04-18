@@ -259,8 +259,8 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 #download and install Sentry CMake project
-# This is fixed to sdk version 0.4.4
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.4/sentry-native.zip)
+# This is fixed to sdk version 0.4.8
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.8/sentry-native.zip)
 set(sentry_dir sentry-native)
 MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
