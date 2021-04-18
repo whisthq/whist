@@ -60,7 +60,6 @@ else
 endif
 
 build: checkCI
-	go mod tidy
 	$(GOBUILD) -ldflags "\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.gitCommit=$(GIT_COMMIT)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/fractallogger.logzioShippingToken=$(LOGZIO_SHIPPING_TOKEN)' \
