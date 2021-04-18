@@ -259,7 +259,7 @@ bool handshake_private_key(SocketContext *context) {
                   get_last_network_error());
         return false;
     }
-    SDL_Delay(50);
+    fractal_sleep(50);
 
     // Receive, sign, and send back their private key request data
     while (
@@ -281,7 +281,7 @@ bool handshake_private_key(SocketContext *context) {
                   get_last_network_error());
         return false;
     }
-    SDL_Delay(50);
+    fractal_sleep(50);
 
     // Wait for and verify their signed private key request data
     recv_size = recvp(context, &our_signed_priv_key_data, sizeof(our_signed_priv_key_data));
@@ -393,7 +393,7 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
         // Delay distribution of packets as needed
         while (burst_bitrate > 0 &&
                curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
-            SDL_Delay(1);
+            fractal_sleep(1);
         }
 
         // local packet and len for when nack buffer isn't needed
@@ -434,10 +434,10 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
                                          (unsigned char *)context->binary_aes_private_key);
 
         // Send it off
-        safe_SDL_LockMutex(context->mutex);
+        fractal_lock_mutex(context->mutex);
         // LOG_INFO("Sending UDP Packet of length %d", encrypt_len);
         int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-        safe_SDL_UnlockMutex(context->mutex);
+        fractal_unlock_mutex(context->mutex);
 
         if (sent_size < 0) {
             int error = get_last_network_error();
@@ -474,10 +474,10 @@ int replay_packet(SocketContext *context, FractalPacket *packet, size_t len) {
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
                                      (unsigned char *)context->binary_aes_private_key);
 
-    safe_SDL_LockMutex(context->mutex);
+    fractal_lock_mutex(context->mutex);
     LOG_INFO("Replay Packet of length %d", encrypt_len);
     int sent_size = sendp(context, &encrypted_packet, encrypt_len);
-    safe_SDL_UnlockMutex(context->mutex);
+    fractal_unlock_mutex(context->mutex);
 
     if (sent_size < 0) {
         LOG_WARNING("Could not replay packet!");
@@ -1049,7 +1049,7 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
 
     LOG_INFO("Connecting to server...");
 
-    SDL_Delay(200);
+    fractal_sleep(200);
 
     // Connect to TCP server
     if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
@@ -1229,7 +1229,7 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
         return -1;
     }
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = safe_SDL_CreateMutex();
+    context->mutex = fractal_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 
@@ -1404,7 +1404,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
         LOG_ERROR("sendp(3) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
-    SDL_Delay(150);
+    fractal_sleep(150);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -1459,7 +1459,7 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
         return -1;
     }
 
-    SDL_Delay(stun_timeout_ms);
+    fractal_sleep(stun_timeout_ms);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -1544,7 +1544,7 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
         LOG_ERROR("sendp(3) failed! Could not open up port! %d", get_last_network_error());
         return false;
     }
-    SDL_Delay(150);
+    fractal_sleep(150);
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
@@ -1572,7 +1572,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 
     context->timeout = recvfrom_timeout_ms;
-    context->mutex = safe_SDL_CreateMutex();
+    context->mutex = fractal_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
 

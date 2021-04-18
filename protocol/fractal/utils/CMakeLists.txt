@@ -2,13 +2,11 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         logging.h
-        sdlscreeninfo.h
         json.h
         window_name.h
         aes.c
         clock.c
         logging.c
-        sdlscreeninfo.c
         json.c
         window_name.c
         sysinfo.c
@@ -17,6 +15,7 @@ add_library(fractalUtils STATIC
         mouse.c
         rwlock.c
         color.c
+        threads.c
         )
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")

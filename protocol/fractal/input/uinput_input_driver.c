@@ -18,14 +18,14 @@
 // annoying overflow issues if this is on the order of magnitude 0xffff
 #define UINPUT_MOUSE_COORDINATE_RANGE 0xfff
 
-// @brief Linux keycodes for replaying SDL user inputs on server
-// @details index is SDL keycode, value is Linux keycode.
+// @brief Linux keycodes for replaying Fractal user inputs on server
+// @details index is Fractal keycode, value is Linux keycode.
 // To debug specific keycodes, use 'sudo showkey --keycodes'.
 const int linux_keycodes[NUM_KEYCODES] = {
-    0,                 // SDL keycodes start at index 4
-    0,                 // SDL keycodes start at index 4
-    0,                 // SDL keycodes start at index 4
-    0,                 // SDL keycodes start at index 4
+    0,                 // Fractal keycodes start at index 4
+    0,                 // Fractal keycodes start at index 4
+    0,                 // Fractal keycodes start at index 4
+    0,                 // Fractal keycodes start at index 4
     KEY_A,             // 4 -> A
     KEY_B,             // 5 -> B
     KEY_C,             // 6 -> C
@@ -72,7 +72,7 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_LEFTBRACE,     // 47 -> Left Bracket
     KEY_RIGHTBRACE,    // 48 -> Right Bracket
     KEY_BACKSLASH,     // 49 -> Backslash
-    0,                 // 50 -> no SDL keycode at index 50
+    0,                 // 50 -> no Fractal keycode at index 50
     KEY_SEMICOLON,     // 51 -> Semicolon
     KEY_APOSTROPHE,    // 52 -> Apostrophe
     KEY_GRAVE,         // 53 -> Backtick
@@ -122,10 +122,10 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_KP9,           // 97 -> Numeric Keypad 9
     KEY_KP0,           // 98 -> Numeric Keypad 0
     KEY_KPDOT,         // 99 -> Numeric Keypad Period
-    0,                 // 100 -> no SDL keycode at index 100
+    0,                 // 100 -> no Fractal keycode at index 100
     KEY_COMPOSE,       // 101 -> Application
-    0,                 // 102 -> no SDL keycode at index 102
-    0,                 // 103 -> no SDL keycode at index 103
+    0,                 // 102 -> no Fractal keycode at index 102
+    0,                 // 103 -> no Fractal keycode at index 103
     KEY_F13,           // 104 -> F13
     KEY_F14,           // 105 -> F14
     KEY_F15,           // 106 -> F15
@@ -142,110 +142,110 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_HELP,          // 117 -> Help
     KEY_MENU,          // 118 -> Menu
     KEY_SELECT,        // 119 -> Select
-    0,                 // 120 -> no SDL keycode at index 120
-    0,                 // 121 -> no SDL keycode at index 121
-    0,                 // 122 -> no SDL keycode at index 122
-    0,                 // 123 -> no SDL keycode at index 123
-    0,                 // 124 -> no SDL keycode at index 124
-    0,                 // 125 -> no SDL keycode at index 125
-    0,                 // 126 -> no SDL keycode at index 126
+    0,                 // 120 -> no Fractal keycode at index 120
+    0,                 // 121 -> no Fractal keycode at index 121
+    0,                 // 122 -> no Fractal keycode at index 122
+    0,                 // 123 -> no Fractal keycode at index 123
+    0,                 // 124 -> no Fractal keycode at index 124
+    0,                 // 125 -> no Fractal keycode at index 125
+    0,                 // 126 -> no Fractal keycode at index 126
     KEY_MUTE,          // 127 -> Mute
     KEY_VOLUMEUP,      // 128 -> Volume Up
     KEY_VOLUMEDOWN,    // 129 -> Volume Down
-    0,                 // 130 -> no SDL keycode at index 130
-    0,                 // 131 -> no SDL keycode at index 131
-    0,                 // 132 -> no SDL keycode at index 132
-    0,                 // 133 -> no SDL keycode at index 133
-    0,                 // 134 -> no SDL keycode at index 134
-    0,                 // 135 -> no SDL keycode at index 135
-    0,                 // 136 -> no SDL keycode at index 136
-    0,                 // 137 -> no SDL keycode at index 137
-    0,                 // 138 -> no SDL keycode at index 138
-    0,                 // 139 -> no SDL keycode at index 139
-    0,                 // 140 -> no SDL keycode at index 140
-    0,                 // 141 -> no SDL keycode at index 141
-    0,                 // 142 -> no SDL keycode at index 142
-    0,                 // 143 -> no SDL keycode at index 143
-    0,                 // 144 -> no SDL keycode at index 144
-    0,                 // 145 -> no SDL keycode at index 145
-    0,                 // 146 -> no SDL keycode at index 146
-    0,                 // 147 -> no SDL keycode at index 147
-    0,                 // 148 -> no SDL keycode at index 148
-    0,                 // 149 -> no SDL keycode at index 149
-    0,                 // 150 -> no SDL keycode at index 150
-    0,                 // 151 -> no SDL keycode at index 151
-    0,                 // 152 -> no SDL keycode at index 152
-    0,                 // 153 -> no SDL keycode at index 153
-    0,                 // 154 -> no SDL keycode at index 154
-    0,                 // 155 -> no SDL keycode at index 155
-    0,                 // 156 -> no SDL keycode at index 156
-    0,                 // 157 -> no SDL keycode at index 157
-    0,                 // 158 -> no SDL keycode at index 158
-    0,                 // 159 -> no SDL keycode at index 159
-    0,                 // 160 -> no SDL keycode at index 160
-    0,                 // 161 -> no SDL keycode at index 161
-    0,                 // 162 -> no SDL keycode at index 162
-    0,                 // 163 -> no SDL keycode at index 163
-    0,                 // 164 -> no SDL keycode at index 164
-    0,                 // 165 -> no SDL keycode at index 165
-    0,                 // 166 -> no SDL keycode at index 166
-    0,                 // 167 -> no SDL keycode at index 167
-    0,                 // 168 -> no SDL keycode at index 168
-    0,                 // 169 -> no SDL keycode at index 169
-    0,                 // 170 -> no SDL keycode at index 170
-    0,                 // 171 -> no SDL keycode at index 171
-    0,                 // 172 -> no SDL keycode at index 172
-    0,                 // 173 -> no SDL keycode at index 173
-    0,                 // 174 -> no SDL keycode at index 174
-    0,                 // 175 -> no SDL keycode at index 175
-    0,                 // 176 -> no SDL keycode at index 176
-    0,                 // 177 -> no SDL keycode at index 177
-    0,                 // 178 -> no SDL keycode at index 178
-    0,                 // 179 -> no SDL keycode at index 179
-    0,                 // 180 -> no SDL keycode at index 180
-    0,                 // 181 -> no SDL keycode at index 181
-    0,                 // 182 -> no SDL keycode at index 182
-    0,                 // 183 -> no SDL keycode at index 183
-    0,                 // 184 -> no SDL keycode at index 184
-    0,                 // 185 -> no SDL keycode at index 185
-    0,                 // 186 -> no SDL keycode at index 186
-    0,                 // 187 -> no SDL keycode at index 187
-    0,                 // 188 -> no SDL keycode at index 188
-    0,                 // 189 -> no SDL keycode at index 189
-    0,                 // 190 -> no SDL keycode at index 190
-    0,                 // 191 -> no SDL keycode at index 191
-    0,                 // 192 -> no SDL keycode at index 192
-    0,                 // 193 -> no SDL keycode at index 193
-    0,                 // 194 -> no SDL keycode at index 194
-    0,                 // 195 -> no SDL keycode at index 195
-    0,                 // 196 -> no SDL keycode at index 196
-    0,                 // 197 -> no SDL keycode at index 197
-    0,                 // 198 -> no SDL keycode at index 198
-    0,                 // 199 -> no SDL keycode at index 199
-    0,                 // 200 -> no SDL keycode at index 200
-    0,                 // 201 -> no SDL keycode at index 201
-    0,                 // 202 -> no SDL keycode at index 202
-    0,                 // 203 -> no SDL keycode at index 203
-    0,                 // 204 -> no SDL keycode at index 204
-    0,                 // 205 -> no SDL keycode at index 205
-    0,                 // 206 -> no SDL keycode at index 206
-    0,                 // 207 -> no SDL keycode at index 207
-    0,                 // 208 -> no SDL keycode at index 208
-    0,                 // 209 -> no SDL keycode at index 209
-    0,                 // 210 -> no SDL keycode at index 210
-    0,                 // 211 -> no SDL keycode at index 211
-    0,                 // 212 -> no SDL keycode at index 212
-    0,                 // 213 -> no SDL keycode at index 213
-    0,                 // 214 -> no SDL keycode at index 214
-    0,                 // 215 -> no SDL keycode at index 215
-    0,                 // 216 -> no SDL keycode at index 216
-    0,                 // 217 -> no SDL keycode at index 217
-    0,                 // 218 -> no SDL keycode at index 218
-    0,                 // 219 -> no SDL keycode at index 219
-    0,                 // 220 -> no SDL keycode at index 220
-    0,                 // 221 -> no SDL keycode at index 221
-    0,                 // 222 -> no SDL keycode at index 222
-    0,                 // 223 -> no SDL keycode at index 223
+    0,                 // 130 -> no Fractal keycode at index 130
+    0,                 // 131 -> no Fractal keycode at index 131
+    0,                 // 132 -> no Fractal keycode at index 132
+    0,                 // 133 -> no Fractal keycode at index 133
+    0,                 // 134 -> no Fractal keycode at index 134
+    0,                 // 135 -> no Fractal keycode at index 135
+    0,                 // 136 -> no Fractal keycode at index 136
+    0,                 // 137 -> no Fractal keycode at index 137
+    0,                 // 138 -> no Fractal keycode at index 138
+    0,                 // 139 -> no Fractal keycode at index 139
+    0,                 // 140 -> no Fractal keycode at index 140
+    0,                 // 141 -> no Fractal keycode at index 141
+    0,                 // 142 -> no Fractal keycode at index 142
+    0,                 // 143 -> no Fractal keycode at index 143
+    0,                 // 144 -> no Fractal keycode at index 144
+    0,                 // 145 -> no Fractal keycode at index 145
+    0,                 // 146 -> no Fractal keycode at index 146
+    0,                 // 147 -> no Fractal keycode at index 147
+    0,                 // 148 -> no Fractal keycode at index 148
+    0,                 // 149 -> no Fractal keycode at index 149
+    0,                 // 150 -> no Fractal keycode at index 150
+    0,                 // 151 -> no Fractal keycode at index 151
+    0,                 // 152 -> no Fractal keycode at index 152
+    0,                 // 153 -> no Fractal keycode at index 153
+    0,                 // 154 -> no Fractal keycode at index 154
+    0,                 // 155 -> no Fractal keycode at index 155
+    0,                 // 156 -> no Fractal keycode at index 156
+    0,                 // 157 -> no Fractal keycode at index 157
+    0,                 // 158 -> no Fractal keycode at index 158
+    0,                 // 159 -> no Fractal keycode at index 159
+    0,                 // 160 -> no Fractal keycode at index 160
+    0,                 // 161 -> no Fractal keycode at index 161
+    0,                 // 162 -> no Fractal keycode at index 162
+    0,                 // 163 -> no Fractal keycode at index 163
+    0,                 // 164 -> no Fractal keycode at index 164
+    0,                 // 165 -> no Fractal keycode at index 165
+    0,                 // 166 -> no Fractal keycode at index 166
+    0,                 // 167 -> no Fractal keycode at index 167
+    0,                 // 168 -> no Fractal keycode at index 168
+    0,                 // 169 -> no Fractal keycode at index 169
+    0,                 // 170 -> no Fractal keycode at index 170
+    0,                 // 171 -> no Fractal keycode at index 171
+    0,                 // 172 -> no Fractal keycode at index 172
+    0,                 // 173 -> no Fractal keycode at index 173
+    0,                 // 174 -> no Fractal keycode at index 174
+    0,                 // 175 -> no Fractal keycode at index 175
+    0,                 // 176 -> no Fractal keycode at index 176
+    0,                 // 177 -> no Fractal keycode at index 177
+    0,                 // 178 -> no Fractal keycode at index 178
+    0,                 // 179 -> no Fractal keycode at index 179
+    0,                 // 180 -> no Fractal keycode at index 180
+    0,                 // 181 -> no Fractal keycode at index 181
+    0,                 // 182 -> no Fractal keycode at index 182
+    0,                 // 183 -> no Fractal keycode at index 183
+    0,                 // 184 -> no Fractal keycode at index 184
+    0,                 // 185 -> no Fractal keycode at index 185
+    0,                 // 186 -> no Fractal keycode at index 186
+    0,                 // 187 -> no Fractal keycode at index 187
+    0,                 // 188 -> no Fractal keycode at index 188
+    0,                 // 189 -> no Fractal keycode at index 189
+    0,                 // 190 -> no Fractal keycode at index 190
+    0,                 // 191 -> no Fractal keycode at index 191
+    0,                 // 192 -> no Fractal keycode at index 192
+    0,                 // 193 -> no Fractal keycode at index 193
+    0,                 // 194 -> no Fractal keycode at index 194
+    0,                 // 195 -> no Fractal keycode at index 195
+    0,                 // 196 -> no Fractal keycode at index 196
+    0,                 // 197 -> no Fractal keycode at index 197
+    0,                 // 198 -> no Fractal keycode at index 198
+    0,                 // 199 -> no Fractal keycode at index 199
+    0,                 // 200 -> no Fractal keycode at index 200
+    0,                 // 201 -> no Fractal keycode at index 201
+    0,                 // 202 -> no Fractal keycode at index 202
+    0,                 // 203 -> no Fractal keycode at index 203
+    0,                 // 204 -> no Fractal keycode at index 204
+    0,                 // 205 -> no Fractal keycode at index 205
+    0,                 // 206 -> no Fractal keycode at index 206
+    0,                 // 207 -> no Fractal keycode at index 207
+    0,                 // 208 -> no Fractal keycode at index 208
+    0,                 // 209 -> no Fractal keycode at index 209
+    0,                 // 210 -> no Fractal keycode at index 210
+    0,                 // 211 -> no Fractal keycode at index 211
+    0,                 // 212 -> no Fractal keycode at index 212
+    0,                 // 213 -> no Fractal keycode at index 213
+    0,                 // 214 -> no Fractal keycode at index 214
+    0,                 // 215 -> no Fractal keycode at index 215
+    0,                 // 216 -> no Fractal keycode at index 216
+    0,                 // 217 -> no Fractal keycode at index 217
+    0,                 // 218 -> no Fractal keycode at index 218
+    0,                 // 219 -> no Fractal keycode at index 219
+    0,                 // 220 -> no Fractal keycode at index 220
+    0,                 // 221 -> no Fractal keycode at index 221
+    0,                 // 222 -> no Fractal keycode at index 222
+    0,                 // 223 -> no Fractal keycode at index 223
     KEY_LEFTCTRL,      // 224 -> Left Ctrl
     KEY_LEFTSHIFT,     // 225 -> Left Shift
     KEY_LEFTALT,       // 226 -> Left Alt
@@ -254,31 +254,31 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_RIGHTSHIFT,    // 229 -> Right Shift
     KEY_RIGHTALT,      // 230 -> Right Alt
     KEY_RIGHTMETA,     // 231 -> Right GUI (Windows Key)
-    0,                 // 232 -> no SDL keycode at index 232
-    0,                 // 233 -> no SDL keycode at index 233
-    0,                 // 234 -> no SDL keycode at index 234
-    0,                 // 235 -> no SDL keycode at index 235
-    0,                 // 236 -> no SDL keycode at index 236
-    0,                 // 237 -> no SDL keycode at index 237
-    0,                 // 238 -> no SDL keycode at index 238
-    0,                 // 239 -> no SDL keycode at index 239
-    0,                 // 240 -> no SDL keycode at index 240
-    0,                 // 241 -> no SDL keycode at index 241
-    0,                 // 242 -> no SDL keycode at index 242
-    0,                 // 243 -> no SDL keycode at index 243
-    0,                 // 244 -> no SDL keycode at index 244
-    0,                 // 245 -> no SDL keycode at index 245
-    0,                 // 246 -> no SDL keycode at index 246
-    0,                 // 247 -> no SDL keycode at index 247
-    0,                 // 248 -> no SDL keycode at index 248
-    0,                 // 249 -> no SDL keycode at index 249
-    0,                 // 250 -> no SDL keycode at index 250
-    0,                 // 251 -> no SDL keycode at index 251
-    0,                 // 252 -> no SDL keycode at index 252
-    0,                 // 253 -> no SDL keycode at index 253
-    0,                 // 254 -> no SDL keycode at index 254
-    0,                 // 255 -> no SDL keycode at index 255
-    0,                 // 256 -> no SDL keycode at index 256
+    0,                 // 232 -> no Fractal keycode at index 232
+    0,                 // 233 -> no Fractal keycode at index 233
+    0,                 // 234 -> no Fractal keycode at index 234
+    0,                 // 235 -> no Fractal keycode at index 235
+    0,                 // 236 -> no Fractal keycode at index 236
+    0,                 // 237 -> no Fractal keycode at index 237
+    0,                 // 238 -> no Fractal keycode at index 238
+    0,                 // 239 -> no Fractal keycode at index 239
+    0,                 // 240 -> no Fractal keycode at index 240
+    0,                 // 241 -> no Fractal keycode at index 241
+    0,                 // 242 -> no Fractal keycode at index 242
+    0,                 // 243 -> no Fractal keycode at index 243
+    0,                 // 244 -> no Fractal keycode at index 244
+    0,                 // 245 -> no Fractal keycode at index 245
+    0,                 // 246 -> no Fractal keycode at index 246
+    0,                 // 247 -> no Fractal keycode at index 247
+    0,                 // 248 -> no Fractal keycode at index 248
+    0,                 // 249 -> no Fractal keycode at index 249
+    0,                 // 250 -> no Fractal keycode at index 250
+    0,                 // 251 -> no Fractal keycode at index 251
+    0,                 // 252 -> no Fractal keycode at index 252
+    0,                 // 253 -> no Fractal keycode at index 253
+    0,                 // 254 -> no Fractal keycode at index 254
+    0,                 // 255 -> no Fractal keycode at index 255
+    0,                 // 256 -> no Fractal keycode at index 256
     KEY_MODE,          // 257 -> ModeSwitch
     KEY_NEXTSONG,      // 258 -> Audio/Media Next
     KEY_PREVIOUSSONG,  // 259 -> Audio/Media Prev
@@ -288,7 +288,7 @@ const int linux_keycodes[NUM_KEYCODES] = {
     KEY_SELECT         // 263 -> Media Select
 };
 
-// SDL only supports these 5 mouse buttons.
+// Fractal only supports these 5 mouse buttons.
 const int linux_mouse_buttons[6] = {
     0,           // 0 -> no FractalMouseButton
     BTN_LEFT,    // 1 -> Left Button
@@ -298,8 +298,8 @@ const int linux_mouse_buttons[6] = {
     BTN_EXTRA    // 5 -> Extra Mouse Button 2
 };
 
-#define GetLinuxKeyCode(sdl_keycode) linux_keycodes[sdl_keycode]
-#define GetLinuxMouseButton(sdl_button) linux_mouse_buttons[sdl_button]
+#define GetLinuxKeyCode(fractal_keycode) linux_keycodes[fractal_keycode]
+#define GetLinuxMouseButton(fractal_button) linux_mouse_buttons[fractal_button]
 
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
 int recv_fds(int sock, int* fds, unsigned n_fds) {
@@ -419,8 +419,8 @@ void emit_input_event(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
-    switch (sdl_keycode) {
+int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+    switch (fractal_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
         case FK_NUMLOCK:
@@ -431,20 +431,20 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_ke
     }
 }
 
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode) {
-    return input_device->keyboard_state[sdl_keycode];
+int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
+    return input_device->keyboard_state[fractal_keycode];
     return -1;
 }
 
-int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed) {
-    emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(sdl_keycode), pressed);
+int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
+    emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fractal_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
-    input_device->keyboard_state[sdl_keycode] = pressed;
+    input_device->keyboard_state[fractal_keycode] = pressed;
 
-    if (sdl_keycode == FK_CAPSLOCK && pressed) {
+    if (fractal_keycode == FK_CAPSLOCK && pressed) {
         input_device->caps_lock = !input_device->caps_lock;
     }
-    if (sdl_keycode == FK_NUMLOCK && pressed) {
+    if (fractal_keycode == FK_NUMLOCK && pressed) {
         input_device->num_lock = !input_device->num_lock;
     }
 

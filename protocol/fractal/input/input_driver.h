@@ -62,13 +62,13 @@ void destroy_input_device(InputDevice* input_device);
  *
  * @param input_device             The initialized input device to query
  *
- * @param sdl_keycode              The SDL keycode of the modifier to
+ * @param fractal_keycode          The Fractal keycode of the modifier to
  *                                 query (`FK_CAPSLOCK` or `FK_NUMLOCK`)
  *
  * @returns                        1 if the queried modifier is active,
  *                                 0 if inactive, and -1 on error
  */
-int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_keycode);
+int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode);
 
 /**
  * @brief                          Get the pressed/unpressed state of a
@@ -76,25 +76,25 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode sdl_ke
  *
  * @param input_device             The initialized input device to query
  *
- * @param sdl_keycode              The SDL keycode to query
+ * @param fractal_keycode          The Fractal keycode to query
  *
  * @returns                        1 if the queried key is pressed,
  *                                 0 if unpressed, and -1 on error
  */
-int get_keyboard_key_state(InputDevice* input_device, FractalKeycode sdl_keycode);
+int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode);
 
 /**
  * @brief                          Emit a keyboard press/unpress event
  *
  * @param input_device             The initialized input device to write
  *
- * @param sdl_keycode              The SDL keycode to modify
+ * @param fractal_keycode              The Fractal keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_key_event(InputDevice* input_device, FractalKeycode sdl_keycode, int pressed);
+int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed);
 
 /**
  * @brief                          Emit a relative/absolute mouse motion event

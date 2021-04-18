@@ -143,7 +143,7 @@ typedef struct SocketContext {
     SOCKET s;
     struct sockaddr_in addr;
     int ack;
-    SDL_mutex* mutex;
+    FractalMutex mutex;
     char binary_aes_private_key[16];
 } SocketContext;
 

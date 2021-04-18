@@ -372,7 +372,7 @@ int capture_screen(CaptureDevice* device) {
                 "CaptureScreen returned DXGI_ERROR_ACCESS_LOST or "
                 "DXGI_ERROR_INVALID_CALL (0x%X)! Recreating device",
                 hr);
-            SDL_Delay(1);
+            fractal_sleep(1);
             return -1;
         } else {
             LOG_ERROR("Failed to Acquire Next Frame! 0x%X %d", hr, GetLastError());
