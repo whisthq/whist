@@ -175,6 +175,8 @@ Downloading precompiled binaries from S3 will require the AWS CLI to be installe
 
 The sentry-native SDK gets automatically built by our CMake build system.
 
+To start the protocol with a given sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
+
 #### IDE
 
 We use CMake to build. If you are using VS code, VS or Clion, this is pretty easy to use. You need to either open the root repo folder as a project, or open the root `CMakelist.txt` as a project. On CLion and VS there is a menu to build at the top, on VS code you need the CMake extension and the build command is at the bottom. CMake currently has two types of builds, Debug and Release. You probably want to be building debug builds while developing, since they log more aggressively (Warning levels: Info and above).
