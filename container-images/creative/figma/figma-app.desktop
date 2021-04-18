@@ -1,7 +1,0 @@
-[Desktop Entry]
-Exec=/usr/bin/figma %u
-Type=Application
-Name=Figma
-Categories=Utility;
-StartupNotify=true
-MimeType=x-scheme-handler/figma

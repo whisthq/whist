@@ -5,28 +5,8 @@
         "type": "folder"
     },
     {
-        "source": "Blockbench",
-        "destination": "/home/fractal/.config/Blockbench",
-        "type": "folder"
-    },
-    {
         "source": "brave-BraveSoftware",
         "destination": "/home/fractal/.config/BraveSoftware",
-        "type": "folder"
-    },
-    {
-        "source": "darktable",
-        "destination": "/home/fractal/.config/darktable",
-        "type": "folder"
-    },
-    {
-        "source": "discord",
-        "destination": "/home/fractal/.config/discord",
-        "type": "folder"
-    },
-    {
-        "source": "Figma",
-        "destination": "/home/fractal/.config/Figma",
         "type": "folder"
     },
     {
@@ -35,103 +15,13 @@
         "type": "folder"
     },
     {
-        "source": "FreeCAD",
-        "destination": "/home/fractal/.FreeCAD",
-        "type": "folder"
-    },
-    {
-        "source": "gegl-0.4",
-        "destination": "/home/fractal/.local/share/gegl-0.4",
-        "type": "folder"
-    },
-    {
         "source": "GIMP",
         "destination": "/home/fractal/.config/GIMP",
         "type": "folder"
     },
     {
-        "source": "godot",
-        "destination": "/home/fractal/.config/godot",
-        "type": "folder"
-    },
-    {
-        "source": "godot-localshare",
-        "destination": "/home/fractal/.local/share/godot",
-        "type": "folder"
-    },
-    {
         "source": "google-chrome",
         "destination": "/home/fractal/.config/google-chrome",
-        "type": "folder"
-    },
-    {
-        "source": "inkscape",
-        "destination": "/home/fractal/.config/inkscape",
-        "type": "folder"
-    },
-    {
-        "source": "kdenlive",
-        "destination": "/home/fractal/.local/share/kdenlive",
-        "type": "folder"
-    },
-    {
-        "source": "kdenliverc",
-        "destination": "/home/fractal/.config/kdenliverc",
-        "type": "file"
-    },
-    {
-        "source": "kdenlive-layoutsrc",
-        "destination": "/home/fractal/.config/kdenlive-layoutsrc",
-        "type": "file"
-    },
-    {
-        "source": "krita",
-        "destination": "/home/fractal/.local/share/krita",
-        "type": "folder"
-    },
-    {
-        "source": "kritadisplayrc",
-        "destination": "/home/fractal/.config/kritadisplayrc",
-        "type": "file"
-    },
-    {
-        "source": "kritarc",
-        "destination": "/home/fractal/.config/kritarc",
-        "type": "file"
-    },
-    {
-        "source": "Lightworks",
-        "destination": "/home/fractal/Lightworks",
-        "type": "folder"
-    },
-    {
-        "source": "Notion",
-        "destination": "/home/fractal/.config/Notion",
-        "type": "folder"
-    },
-    {
-        "source": "rstudio",
-        "destination": "/home/fractal/.config/rstudio",
-        "type": "folder"
-    },
-    {
-        "source": "rstudio-desktop",
-        "destination": "/home/fractal/.rstudio-desktop",
-        "type": "folder"
-    },
-    {
-        "source": "rstudio-localshare",
-        "destination": "/home/fractal/.local/share/rstudio",
-        "type": "folder"
-    },
-    {
-        "source": "shotcut-Meltytech",
-        "destination": "/home/fractal/.config/Meltytech",
-        "type": "folder"
-    },
-    {
-        "source": "shotcut-Meltytech-localshare",
-        "destination": "/home/fractal/.local/share/Meltytech",
         "type": "folder"
     },
     {
@@ -142,11 +32,6 @@
     {
         "source": "Slack",
         "destination": "/home/fractal/.config/Slack",
-        "type": "folder"
-    },
-    {
-        "source": "texturelab",
-        "destination": "/home/fractal/.config/texturelab",
         "type": "folder"
     }
 ]
