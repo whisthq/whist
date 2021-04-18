@@ -747,7 +747,7 @@ def _assign_container(
                 num_tries,
             )
 
-    time.sleep(1)
+    cluster_name = base_container.cluster
 
     # Now we inform the client app that the container is ready and
     # it needs to communicate with the host service to finish container startup
