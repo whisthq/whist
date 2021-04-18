@@ -103,7 +103,7 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
         // Delay distribution of packets as needed
         while (burst_bitrate > 0 &&
                curr_index - 5000 > get_timer(packet_timer) * max_bytes_per_second) {
-            SDL_Delay(1);
+            fractal_sleep(1);
         }
 
         // local packet and len for when nack buffer isn't needed
@@ -147,9 +147,9 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
                     encrypt_packet(packet, packet_size, &encrypted_packet,
                                    (unsigned char *)clients[j].UDP_context.binary_aes_private_key);
 
-                safe_SDL_LockMutex(clients[j].UDP_context.mutex);
+                fractal_lock_mutex(clients[j].UDP_context.mutex);
                 int sent_size = sendp(&(clients[j].UDP_context), &encrypted_packet, encrypt_len);
-                safe_SDL_UnlockMutex(clients[j].UDP_context.mutex);
+                fractal_unlock_mutex(clients[j].UDP_context.mutex);
                 if (sent_size < 0) {
                     int error = get_last_network_error();
                     LOG_INFO("Unexpected Packet Error: %d", error);

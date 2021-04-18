@@ -16,7 +16,6 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#include "../utils/sdlscreeninfo.h"
 
 /*
 ============================

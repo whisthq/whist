@@ -23,8 +23,8 @@ Includes
 
 #include <stdio.h>
 
-#include <fractal/cursor/peercursor.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "peercursor.h"
+#include "sdlscreeninfo.h"
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>

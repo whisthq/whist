@@ -105,7 +105,7 @@ int video_buffer_packet_len[VIDEO_BUFFER_SIZE][MAX_VIDEO_INDEX];
 FractalPacket audio_buffer[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 int audio_buffer_packet_len[AUDIO_BUFFER_SIZE][MAX_NUM_AUDIO_INDICES];
 
-SDL_mutex* packet_mutex;
+FractalMutex packet_mutex;
 
 volatile bool wants_iframe;
 volatile bool update_encoder;
@@ -176,11 +176,11 @@ int xioerror_handler(Display* d) {
 
     // Kick all clients
     write_lock(&is_active_rwlock);
-    safe_SDL_LockMutex(state_lock);
+    fractal_lock_mutex(state_lock);
     if (quit_clients() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-    safe_SDL_UnlockMutex(state_lock);
+    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
 
     return 0;
@@ -206,8 +206,8 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 
 int32_t send_video(void* opaque) {
     UNUSED(opaque);
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-    SDL_Delay(500);
+    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+    fractal_sleep(500);
 
 #if defined(_WIN32)
     // set Windows DPI
@@ -251,7 +251,7 @@ int32_t send_video(void* opaque) {
 
     while (!exiting) {
         if (num_active_clients == 0 || client_width < 0 || client_height < 0 || client_dpi < 0) {
-            SDL_Delay(5);
+            fractal_sleep(5);
             continue;
         }
 
@@ -277,7 +277,7 @@ int32_t send_video(void* opaque) {
                 device = NULL;
                 update_device = true;
 
-                SDL_Delay(100);
+                fractal_sleep(100);
                 continue;
             }
 
@@ -298,12 +298,12 @@ int32_t send_video(void* opaque) {
                         pending_encoder = false;
                         break;
                     }
-                    SDL_Delay(1);
+                    fractal_sleep(1);
                 }
                 // If an encoder exists, then we should destroy it since the capture device is being
                 // created now
                 if (encoder) {
-                    SDL_CreateThread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
+                    fractal_create_thread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
                                      encoder);
                     encoder = NULL;
                 }
@@ -331,7 +331,7 @@ int32_t send_video(void* opaque) {
                         // Once encoder_finished, we'll destroy the old one that we've been using,
                         // and replace it with the result of multithreaded_encoder_factory
                         if (encoder) {
-                            SDL_CreateThread(multithreaded_destroy_encoder,
+                            fractal_create_thread(multithreaded_destroy_encoder,
                                              "multithreaded_destroy_encoder", encoder);
                         }
                         encoder = encoder_factory_result;
@@ -362,7 +362,7 @@ int32_t send_video(void* opaque) {
 
                         new_encoder_used = true;
                     } else {
-                        SDL_CreateThread(multithreaded_encoder_factory,
+                        fractal_create_thread(multithreaded_encoder_factory,
                                          "multithreaded_encoder_factory", NULL);
                         pending_encoder = true;
                     }
@@ -392,7 +392,7 @@ int32_t send_video(void* opaque) {
             device = NULL;
             update_device = true;
 
-            SDL_Delay(100);
+            fractal_sleep(100);
             continue;
         }
 
@@ -552,7 +552,7 @@ int32_t send_video(void* opaque) {
 
                     size_t num_msgs;
                     read_lock(&is_active_rwlock);
-                    safe_SDL_LockMutex(state_lock);
+                    fractal_lock_mutex(state_lock);
 
                     if (fill_peer_update_messages(peer_update_msgs, &num_msgs) != 0) {
                         LOG_ERROR("Failed to copy peer update messages.");
@@ -572,7 +572,7 @@ int32_t send_video(void* opaque) {
                         // Only increment ID if the send succeeded
                         id++;
                     }
-                    safe_SDL_UnlockMutex(state_lock);
+                    fractal_unlock_mutex(state_lock);
                     read_unlock(&is_active_rwlock);
 
                     // LOG_INFO( "Send Frame Time: %f, Send Frame Size: %d\n",
@@ -605,7 +605,7 @@ static int sample_rate = -1;
 
 int32_t send_audio(void* opaque) {
     UNUSED(opaque);
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
     int id = 1;
 
     AudioDevice* audio_device = create_audio_device();
@@ -707,7 +707,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     start_timer(&timer);
     do {
         packet = read_tcp_packet(context, true);
-        SDL_Delay(5);
+        fractal_sleep(5);
     } while (packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
@@ -1115,8 +1115,7 @@ int main(int argc, char* argv[]) {
     LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", fractal_git_revision());
 
-    SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-    SDL_Init(SDL_INIT_VIDEO);
+    fractal_init_multithreading();
 
 // initialize the windows socket library if this is a windows client
 #ifdef _WIN32
@@ -1158,12 +1157,12 @@ int main(int argc, char* argv[]) {
     update_encoder = false;
     exiting = false;
 
-    SDL_Thread* manage_clients_thread =
-        SDL_CreateThread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
-    SDL_Delay(500);
+    FractalThread manage_clients_thread =
+        fractal_create_thread(multithreaded_manage_clients, "MultithreadedManageClients", NULL);
+    fractal_sleep(500);
 
-    SDL_Thread* send_video_thread = SDL_CreateThread(send_video, "send_video", NULL);
-    SDL_Thread* send_audio_thread = SDL_CreateThread(send_audio, "send_audio", NULL);
+    FractalThread send_video_thread = fractal_create_thread(send_video, "send_video", NULL);
+    FractalThread send_audio_thread = fractal_create_thread(send_audio, "send_audio", NULL);
     LOG_INFO("Sending video and audio...");
 
     clock totaltime;
@@ -1285,9 +1284,9 @@ int main(int argc, char* argv[]) {
             }
 
             // HANDLE FRACTAL CLIENT MESSAGE
-            safe_SDL_LockMutex(state_lock);
+            fractal_lock_mutex(state_lock);
             bool is_controlling = clients[id].is_controlling;
-            safe_SDL_UnlockMutex(state_lock);
+            fractal_unlock_mutex(state_lock);
             if (handle_client_message(fmsg, id, is_controlling) != 0) {
                 LOG_ERROR(
                     "Failed to handle message from client. "
@@ -1306,18 +1305,18 @@ int main(int argc, char* argv[]) {
     destroy_clipboard_synchronizer();
     destroy_window_name_getter();
 
-    SDL_WaitThread(send_video_thread, NULL);
-    SDL_WaitThread(send_audio_thread, NULL);
-    SDL_WaitThread(manage_clients_thread, NULL);
+    fractal_wait_thread(send_video_thread, NULL);
+    fractal_wait_thread(send_audio_thread, NULL);
+    fractal_wait_thread(manage_clients_thread, NULL);
 
-    SDL_DestroyMutex(packet_mutex);
+    fractal_destroy_mutex(packet_mutex);
 
     write_lock(&is_active_rwlock);
-    safe_SDL_LockMutex(state_lock);
+    fractal_lock_mutex(state_lock);
     if (quit_clients() != 0) {
         LOG_ERROR("Failed to quit clients.");
     }
-    safe_SDL_UnlockMutex(state_lock);
+    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
 
 #ifdef _WIN32

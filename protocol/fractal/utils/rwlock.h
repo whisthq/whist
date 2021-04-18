@@ -39,16 +39,16 @@ Custom types
 
 typedef struct RWLock {
     int num_active_readers;
-    SDL_mutex *num_active_readers_lock;
-    SDL_cond *no_active_readers_cond;
+    FractalMutex num_active_readers_lock;
+    FractalCondition no_active_readers_cond;
 
     int num_writers;
-    SDL_mutex *num_writers_lock;
-    SDL_cond *no_writers_cond;
+    FractalMutex num_writers_lock;
+    FractalCondition no_writers_cond;
 
     bool is_active_writer;
-    SDL_mutex *is_active_writer_lock;
-    SDL_cond *no_active_writer_cond;
+    FractalMutex is_active_writer_lock;
+    FractalCondition no_active_writer_cond;
 } RWLock;
 
 /*

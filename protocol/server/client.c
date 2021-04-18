@@ -19,7 +19,7 @@ Includes
 #include "client.h"
 #include "network.h"
 
-SDL_mutex *state_lock;
+FractalMutex state_lock;
 RWLock is_active_rwlock;
 
 Client clients[MAX_NUM_CLIENTS];
@@ -49,7 +49,7 @@ int init_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
-    state_lock = safe_SDL_CreateMutex();
+    state_lock = fractal_create_mutex();
     init_rw_lock(&is_active_rwlock);
     for (int id = 0; id < MAX_NUM_CLIENTS; id++) {
         clients[id].is_active = false;
@@ -74,7 +74,7 @@ int destroy_clients(void) {
             (int): -1 on failure, 0 on success
     */
 
-    SDL_DestroyMutex(state_lock);
+    fractal_destroy_mutex(state_lock);
     destroy_rw_lock(&is_active_rwlock);
     return 0;
 }

@@ -11,6 +11,8 @@ add_executable(FractalClient
         sdl_utils.c
         handle_server_message.c
         video.c
+        sdlscreeninfo.c
+        peercursor.c
         )
 
 # On Windows during client app packaging, FractalClient should have icon set
@@ -103,7 +105,6 @@ endif()
 target_link_libraries(FractalClient
         fractalCore
         fractalAudio
-        fractalCursor
         fractalVideo
         fractalClipboard
         fractalNetwork

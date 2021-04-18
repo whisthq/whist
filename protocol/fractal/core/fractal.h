@@ -61,8 +61,8 @@ Includes
 #include <libswscale/swscale.h>
 
 #define SDL_MAIN_HANDLED
-#include "../../include/SDL2/SDL.h"
-#include "../../include/SDL2/SDL_thread.h"
+#include <SDL2/SDL.h>
+#include <fractal/utils/threads.h>
 #include "../clipboard/clipboard_synchronizer.h"
 #include "../utils/color.h"
 #include "../cursor/cursor.h"
@@ -656,36 +656,6 @@ NORETURN void terminate_protocol();
  *                                 protocol when malloc fails
  */
 void* safe_malloc(size_t size);
-
-/**
- * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-SDL_mutex* safe_SDL_CreateMutex();  // NOLINT(readability-identifier-naming)
-
-/**
- * @brief                          Wrapper around SDL_LockMutex that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-void safe_SDL_LockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
-
-/**
- * @brief                          Wrapper around SDL_TryLockMutex that will correctly exit the
- *                                 protocol when SDL_TryLockMutex fails
- */
-int safe_SDL_TryLockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
-
-/**
- * @brief                          Wrapper around SDL_UnlockMutex that will correctly exit the
- * protocol when SDL_UnlockMutex fails
- */
-void safe_SDL_UnlockMutex(SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
-
-/**
- * @brief                          Wrapper around SDL_CondWait that will correctly exit the
- *                                 protocol when SDL_LockMutex fails
- */
-void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex);  // NOLINT(readability-identifier-naming)
 
 /**
  * @brief                          Safely copy a string from source to destination.

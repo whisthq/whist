@@ -202,7 +202,7 @@ bool unsafe_has_clipboard_updated() {
 
 ClipboardData* unsafe_get_clipboard() {
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
-    SDL_Delay(15);
+    fractal_sleep(15);
 
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 
