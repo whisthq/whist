@@ -40,8 +40,7 @@ RUN wget -qO - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key a
 ARG CHROME_VERSION="89.0.4389.128-1"
 RUN wget --no-verbose -O /tmp/chrome.deb https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_${CHROME_VERSION}_amd64.deb \
   && apt-get install --no-install-recommends -y /tmp/chrome.deb \
-  && rm /tmp/chrome.deb \
-  && rm -rf /var/lib/apt/lists/*
+  && rm /tmp/chrome.deb
 
 # Set default browser
 RUN su - fractal -c \

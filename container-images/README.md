@@ -50,21 +50,6 @@ A tree structure is provided below:
 │   ├── blender
 │   │   ├── Dockerfile.20 <- Container image for Blender
 │   │   └── userpref.blend <- Fractal-provided default Blender user settings
-│   ├── figma
-│   │   ├── Dockerfile.20 <- Container image for the Figma desktop application
-│   │   ├── figma-app.desktop <- Desktop shortcut file associated with the Figma desktop application
-│   │   ├── figma-font-bindings
-│   │   │   ├── index.d.ts <- Module file for the Figma font bindings
-│   │   │   ├── native
-│   │   │   │   ├── Cargo.lock <- Rust Figma font bindings lock file
-│   │   │   │   ├── Cargo.toml <- Rust Figma font bindings project file
-│   │   │   │   ├── build.rs <- Main build file for generating fonts object
-│   │   │   │   └── src
-│   │   │   │       ├── async_font.rs <- Main file to generate font objects
-│   │   │   │       └── lib.rs <- Helper functions to generate font objects
-│   │   │   ├── package-lock.json <- Figma font bindings module lock file
-│   │   │   └── package.json <- Figma font bindings module project file
-│   │   └── run-figma.sh <- Helper script to start the Figma desktop application
 │   ├── gimp
 │   │   ├── Dockerfile.20 <- Container image for Gimp
 │   │   └── gimprc <- Fractal Gimp configuration file
