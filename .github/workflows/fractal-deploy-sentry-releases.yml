@@ -95,7 +95,7 @@ jobs:
                   BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-                  
+
     notify-slack:
         name: Notify Slack
         runs-on: ubuntu-20.04
