@@ -504,7 +504,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = ":rotating_light: Container Images & AMIs on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Failed to Deploy! (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+                  BODY = "@channel :rotating_light: Container Images & AMIs on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Failed to Deploy! (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -588,7 +588,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-                  BODY = "ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = "@channel ECS Task definitions deployment failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -835,7 +835,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  BODY = f"@channel Webserver at {WEBSERVER_URL} failed to update webserver amis. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
+                  BODY = f"@channel Webserver at {WEBSERVER_URL} failed to update webserver AMIs. Investigate immediately (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
