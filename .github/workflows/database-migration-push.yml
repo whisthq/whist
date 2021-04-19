@@ -50,18 +50,18 @@ jobs:
                   # allows us to import from notifications package anywhere in this job
                   echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
-            # # A non-pull_request event does not have a github.base_ref set
-            # # We have to dig into the event object, which has a ref string
-            # # such as "refs/heads/dev". We trim "refs/heads/" to get the
-            # # substring that is the name of the branch.
-            # - name: Set GITHUB_BRANCH environment variable
-            #   run: |
-            #       if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            #           echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
-            #       else
-            #           ref="${{ github.event.ref }}"
-            #           echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
-            #       fi
+            # A non-pull_request event does not have a github.base_ref set
+            # We have to dig into the event object, which has a ref string
+            # such as "refs/heads/dev". We trim "refs/heads/" to get the
+            # substring that is the name of the branch.
+            - name: Set GITHUB_BRANCH environment variable
+              run: |
+                  if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+                      echo "GITHUB_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+                  else
+                      ref="${{ github.event.ref }}"
+                      echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
+                  fi
 
             # - name: Set Slack channel based on branch
             #   run: echo "SLACK_CHANNEL=alerts-${{ env.GITHUB_BRANCH }}" >> $GITHUB_ENV
@@ -177,9 +177,6 @@ jobs:
             #       echo "MIGRA SQL DIFF: $(cat $PATH_DIFF)"
             #       psql --single-transaction --file ${PATH_DIFF} \
             #       ${{ steps.db-url.outputs.url }}
-
-            - name: success
-              run: exit 0
 
             - name: Notify Slack on success
               shell: python3 {0}
