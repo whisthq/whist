@@ -518,10 +518,10 @@ jobs:
         name: "ECS Task Definitions: Render & Deploy Task Definitions to ECS"
         runs-on: ubuntu-20.04
         needs:
-            [fractal-publish-build-config, container-images-publish-images-ghcr]
+            [fractal-publish-build-config, containers-and-ami-publish-ghcr-and-aws]
         strategy:
             matrix:
-                app: ${{ fromJSON(needs.container-images-publish-images-ghcr.outputs.task-definitions-apps-json) }}
+                app: ${{ fromJSON(needs.containers-and-ami-publish-ghcr-and-aws.outputs.task-definitions-apps-json) }}
                 aws-region:
                     - us-east-1
                     - us-east-2
