@@ -1,10 +1,11 @@
+import time
+from datetime import timedelta
 from typing import Any, Dict, Optional, Union
 
 import stripe
 
 from pyzipcode import ZipCodeDatabase
 
-from app.helpers.utils.general.time import date_to_unix, get_today
 
 from app.models import db, User
 from app.serializers.public import UserSchema
@@ -103,45 +104,55 @@ class StripeClient:
                 raise e
         return True
 
-    def get_customer_info(self, email: str) -> Dict[str, Union[str, bool, Dict[str, Any]]]:
+    @staticmethod
+    def get_customer_info(customer_id: str) -> Dict[str, Optional[time.struct_time]]:
         """Retrieves the information for a user regarding stripe. Returns in the following format:
         {
-            "subscription": a subscription object per the stripe api (json format),
-            "cards": cards object per stripe api (also json format),
-            "account_locked": whether your account is account_locked,
-            "customer": customer as a json - the schema dump,
+            "trial_end": returns the end of the most recent free trial
+            "access_end": returns the end of the current subscription period
         } or None if the customer does not exist
 
         This will throw an exception of unknown type if the subscription fetching fails.
 
         Args:
-            email (str): The email for the user.
+            customer_id (str): The user's stripe customer ID.
         """
+        res_dict: Dict[str, Optional[Union[time.struct_time, Dict[str, Any]]]] = {
+            "customer": None,
+            "trial_end": None,
+            "access_end": None,
+        }
+        client_info = stripe.Customer.retrieve(customer_id, expand=["subscriptions"])
+        subscriptions = client_info["subscriptions"]
+        if len(subscriptions["data"]) > 0:
+            curr_subscription = subscriptions["data"][0]
+            trial_end: time.struct_time = time.localtime(curr_subscription["trial_end"])
+            curr_end: time.struct_time = time.localtime(curr_subscription["current_period_end"])
+            res_dict["trial_end"] = trial_end
+            res_dict["access_end"] = curr_end
+        return res_dict
 
-        # get the user if they are valid/exist
-        user = User.query.get(email)
-        if not user:
-            raise NonexistentUser
+    def is_paying(self, customer_id: str) -> bool:
+        access_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["access_end"]
+        return access_val is not None and access_val > time.localtime(time.time())
 
-        customer = self.user_schema.dump(user)
-        stripe_customer_id = customer["stripe_customer_id"]
+    def is_trialed(self, customer_id: str) -> bool:
+        trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["trial_end"]
+        return trial_val is not None and trial_val > time.localtime(time.time())
 
-        # return a valid object if they exist else None
-        if stripe_customer_id and self.validate_customer_id(stripe_customer_id, user):
+    def time_left_in_trial(self, customer_id: str) -> str:
+        trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["trial_end"]
+        if trial_val is None or trial_val <= time.localtime(time.time()):
+            return "0 days"
+        return str(timedelta(seconds=time.mktime(trial_val) - time.time()))
 
-            subscription = stripe.Subscription.list(customer=stripe_customer_id)
+    def time_left_in_paid_access(self, customer_id: str) -> str:
+        trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["access_end"]
+        if trial_val is None or trial_val <= time.localtime(time.time()):
+            return "0 days"
+        return str(timedelta(seconds=time.mktime(trial_val) - time.time()))
 
-            if subscription and subscription["data"] and len(subscription["data"]) > 0:
-                subscription = subscription["data"][0]
-                account_locked = subscription["trial_end"] < date_to_unix(get_today())
-            else:
-                subscription = None
-                account_locked = False
 
-            return {
-                "subscription": subscription,
-                "account_locked": account_locked,
-                "customer": customer,
-            }
-        else:
-            return None
+if __name__ == "__main__":
+    cli = StripeClient("sk_test_6ndCgv5edtzMuyqMoBbt1gXj00xy90yd4L")
+    print(cli.time_left_in_paid_access("cus_J2NZ6LS5vuCqsh"))
