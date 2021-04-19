@@ -267,8 +267,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── mail
 │   │   │   ├── mail_blueprint.py --> endpoints for generating and sending emails
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
-│   │   └── payment
-│   │       └── stripe_blueprint.py --> endpoints for handling stripe transactions/subscriptions
 │   ├── celery
 │   │   ├── aws_celery_exceptions.py --> Exceptions that are unique to AWS tasks
 │   │   ├── aws_ecs_creation.py --> Celery tasks related to creating AWS containers and clusters
@@ -305,8 +303,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   │   └── container_state.py --> helpers that retrieve the current state of user containers (for client-app)
 │   │   │   ├── mail
 │   │   │   │   └── mail_post.py --> helpers that generate emails to send to users
-│   │   │   └── payment
-│   │   │       └── stripe_post.py --> helpers that execute stripe operations
 │   │   ├── helpers_tests
 │   │   │   ├── aws_tests
 │   │   │   │   └── test_ecs_client.py --> basic tests of ECSClient functionality
@@ -339,8 +335,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   └── location_helper.py --> script to find client app location from IP address
 │   │       ├── mail
 │   │       │   └── mail_client.py --> helpers for mail generation
-│   │       └── payment
-│   │           └── stripe_client.py --> helpers for stripe
 │   ├── maintenance
 │   │   └── maintenance_manager.py --> helpers for webserver maintenance mode
 │   ├── models --> Python classes, on which arbitrary methods may be defined, corresponding to our DB tables
@@ -410,8 +404,6 @@ Note that all conftest files contain test fixtures for their respective director
     ├── misc
     │   └── test_rate_limiter.py
     ├── patches.py --> useful monkeypatches for all our tests
-    ├── payment
-    │   └── test_stripe_client.py
     ├── run_tests.sh --> shell script that runs our tests with all desired setup/settings/teardown
     ├── setup
     │   ├── docker-compose.yml --> stands up all docker containers you need for local testing
