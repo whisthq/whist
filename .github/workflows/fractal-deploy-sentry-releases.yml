@@ -86,10 +86,10 @@ jobs:
             #       sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
             - name: fail-project
-              shell: python3 {0}  
+              shell: python3 {0}
               run: |
-                import os
-                assert os.environ["SENTRY_PROJECT"] != "main-webserver":
+                  import os
+                  assert os.environ["SENTRY_PROJECT"] != "main-webserver"
 
     notify-slack:
         name: Notify Slack
@@ -120,7 +120,7 @@ jobs:
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack on failure
-            if: needs.fractal-deploy-sentry-releases-main.result == 'failure'
+              if: needs.fractal-deploy-sentry-releases-main.result == 'failure'
               shell: python3 {0}
               run: |
                   from notifications import slack_post
