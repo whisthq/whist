@@ -737,7 +737,7 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 int main(int argc, char* argv[]) {
     handle_single_icon_launch_client_app(argc, argv);
 
-    init_default_port_mappings();
+    init_networking();
 
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
