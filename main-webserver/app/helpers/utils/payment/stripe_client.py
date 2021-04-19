@@ -117,7 +117,7 @@ class StripeClient:
         Args:
             customer_id (str): The user's stripe customer ID.
         """
-        res_dict: Dict[str, Optional[Union[time.struct_time, Dict[str, Any]]]] = {
+        res_dict: Dict[str, Optional[time.struct_time]] = {
             "customer": None,
             "trial_end": None,
             "access_end": None,
