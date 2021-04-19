@@ -1,6 +1,6 @@
 import time
 from datetime import timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Dict, Optional
 
 import stripe
 
@@ -133,20 +133,54 @@ class StripeClient:
         return res_dict
 
     def is_paying(self, customer_id: str) -> bool:
+        """
+        Returns whether a customer is currently paying for fractal
+        Args:
+            customer_id: the stripe customer ID
+
+        Returns: True IFF the customer is on a paid subscription
+
+        """
         access_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["access_end"]
         return access_val is not None and access_val > time.localtime(time.time())
 
     def is_trialed(self, customer_id: str) -> bool:
+        """
+        Returns whether a customer is currently trialed for fractal
+        Args:
+            customer_id: the stripe customer ID
+
+        Returns: True IFF the customer is on a free trial
+
+        """
         trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["trial_end"]
         return trial_val is not None and trial_val > time.localtime(time.time())
 
     def time_left_in_trial(self, customer_id: str) -> str:
+        """
+        Returns how long a customer has left in their free trial
+        Args:
+            customer_id: the stripe customer ID
+
+        Returns: a string-formatted version of the amount of time
+                 left in their trial
+
+        """
         trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["trial_end"]
         if trial_val is None or trial_val <= time.localtime(time.time()):
             return "0 days"
         return str(timedelta(seconds=time.mktime(trial_val) - time.time()))
 
     def time_left_in_paid_access(self, customer_id: str) -> str:
+        """
+        Returns how long a customer has left in their paid subscription
+        Args:
+            customer_id: the stripe customer ID
+
+        Returns: a string-formatted version of the amount of time
+                 left in their subscription
+
+        """
         trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["access_end"]
         if trial_val is None or trial_val <= time.localtime(time.time()):
             return "0 days"
