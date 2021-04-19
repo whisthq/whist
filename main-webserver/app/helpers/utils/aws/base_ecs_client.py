@@ -624,6 +624,7 @@ class ECSClient:
             https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_task_definition
             for the response syntax.
         """
+        fractal_logger.info(f"Getting task info for {self.task_definition_arn}.")
         return self.ecs_client.describe_task_definition(taskDefinition=self.task_definition_arn)
 
     def run_task(self, use_launch_type=True, **kwargs):
