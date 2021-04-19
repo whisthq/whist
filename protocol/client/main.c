@@ -29,6 +29,8 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 #include <fractal/core/fractal.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>

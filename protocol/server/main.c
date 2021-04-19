@@ -89,7 +89,6 @@ volatile int client_height = -1;
 volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
-volatile FractalCursorID last_cursor;
 InputDevice* input_device = NULL;
 extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
@@ -303,8 +302,8 @@ int32_t send_video(void* opaque) {
                 // If an encoder exists, then we should destroy it since the capture device is being
                 // created now
                 if (encoder) {
-                    fractal_create_thread(multithreaded_destroy_encoder, "multithreaded_destroy_encoder",
-                                     encoder);
+                    fractal_create_thread(multithreaded_destroy_encoder,
+                                          "multithreaded_destroy_encoder", encoder);
                     encoder = NULL;
                 }
                 // Next, we should update our ffmpeg encoder
@@ -332,7 +331,7 @@ int32_t send_video(void* opaque) {
                         // and replace it with the result of multithreaded_encoder_factory
                         if (encoder) {
                             fractal_create_thread(multithreaded_destroy_encoder,
-                                             "multithreaded_destroy_encoder", encoder);
+                                                  "multithreaded_destroy_encoder", encoder);
                         }
                         encoder = encoder_factory_result;
                         pending_encoder = false;
@@ -363,7 +362,7 @@ int32_t send_video(void* opaque) {
                         new_encoder_used = true;
                     } else {
                         fractal_create_thread(multithreaded_encoder_factory,
-                                         "multithreaded_encoder_factory", NULL);
+                                              "multithreaded_encoder_factory", NULL);
                         pending_encoder = true;
                     }
                 }
@@ -586,13 +585,7 @@ int32_t send_video(void* opaque) {
             }
         }
     }
-#ifdef _WIN32
-    HCURSOR new_cursor = LoadCursor(NULL, IDC_ARROW);
 
-    SetSystemCursor(new_cursor, last_cursor);
-#else
-// TODO: Linux cursor instead
-#endif
     destroy_capture_device(device);
     device = NULL;
     multithreaded_destroy_encoder(encoder);

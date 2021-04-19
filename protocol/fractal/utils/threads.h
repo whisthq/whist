@@ -1,6 +1,7 @@
 #ifndef FRACTAL_THREADS_H
 #define FRACTAL_THREADS_H
 
+#define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_thread.h>
 
@@ -12,9 +13,10 @@ typedef int (*FractalThreadFunction)(void*);
 typedef SDL_Thread* FractalThread;
 
 void fractal_init_multithreading();
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name, void *data);
+FractalThread fractal_create_thread(FractalThreadFunction thread_function, char* thread_name,
+                                    void* data);
 void fractal_detach_thread(FractalThread thread);
-void fractal_wait_thread(FractalThread thread, int *ret);
+void fractal_wait_thread(FractalThread thread, int* ret);
 
 void fractal_sleep(uint32_t ms);
 
@@ -46,7 +48,7 @@ void fractal_unlock_mutex(FractalMutex mutex);
  * @brief                          Wrapper around SDL_CondWait that will correctly exit the
  *                                 protocol when SDL_LockMutex fails
  */
- 
+
 FractalCondition fractal_create_cond();
 void fractal_wait_cond(FractalCondition cond, FractalMutex mutex);
 void fractal_broadcast_cond(FractalCondition cond);

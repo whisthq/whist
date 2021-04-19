@@ -146,8 +146,8 @@ void init_logger(char* log_dir) {
     run_multithreaded_printf = true;
     logger_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
-    mprintf_thread =
-        fractal_create_thread((FractalThreadFunction)multi_threaded_printf, "MultiThreadedPrintf", NULL);
+    mprintf_thread = fractal_create_thread((FractalThreadFunction)multi_threaded_printf,
+                                           "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", log_file_name);
     //    start_timer(&mprintf_timer);
 }
