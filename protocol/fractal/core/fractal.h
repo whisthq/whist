@@ -668,19 +668,19 @@ void* safe_malloc(size_t size);
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
 // Dummy typedef for block allocator since only pointers are used anyway
-typedef char block_allocator;
+typedef char BlockAllocator;
 
-block_allocator* create_block_allocator(size_t block_size);
+BlockAllocator* create_block_allocator(size_t block_size);
 
 /**
  * @brief                          Allocates a large block of memory, without fragmenting our heap
  */
-void* allocate_block(block_allocator* block_allocator);
+void* allocate_block(BlockAllocator* BlockAllocator);
 
 /**
  * @brief                          Frees data allocated by allocate_block
  */
-void free_block(block_allocator* block_allocator, void* block);
+void free_block(BlockAllocator* BlockAllocator, void* block);
 
 void* allocate_custom_block(size_t block_size);
 void* realloc_custom_block(void* block, size_t block_size);
