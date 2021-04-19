@@ -6,6 +6,27 @@ void fractal_init_multithreading() {
     SDL_Init(SDL_INIT_VIDEO);
 }
 
+FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name,
+                                    void *data) {
+    FractalThread ret = SDL_CreateThread(thread_function, thread_name, data);
+    if (ret == NULL) {
+        LOG_FATAL("Failure creating thread: %s", SDL_GetError());
+    }
+    return ret;
+}
+
+void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
+
+void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
+
+void fractal_set_thread_priority(FractalThreadPriority priority) {
+    if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
+        LOG_FATAL("Failure setting thread priority: %s", SDL_GetError());
+    }
+}
+
+void fractal_sleep(uint32_t ms) { SDL_Delay(ms); }
+
 FractalMutex fractal_create_mutex() {
     FractalMutex ret = SDL_CreateMutex();
     if (ret == NULL) {
@@ -35,6 +56,8 @@ void fractal_unlock_mutex(FractalMutex mutex) {
     }
 }
 
+void fractal_destroy_mutex(FractalMutex mutex) { SDL_DestroyMutex(mutex); }
+
 FractalCondition fractal_create_cond() {
     FractalCondition ret = SDL_CreateCond();
     if (ret == NULL) {
@@ -42,8 +65,6 @@ FractalCondition fractal_create_cond() {
     }
     return ret;
 }
-
-void fractal_destroy_cond(FractalCondition cond) { SDL_DestroyCond(cond); }
 
 void fractal_wait_cond(FractalCondition cond, FractalMutex mutex) {
     if (SDL_CondWait(cond, mutex) < 0) {
@@ -57,7 +78,7 @@ void fractal_broadcast_cond(FractalCondition cond) {
     }
 }
 
-void fractal_destroy_mutex(FractalMutex mutex) { SDL_DestroyMutex(mutex); }
+void fractal_destroy_cond(FractalCondition cond) { SDL_DestroyCond(cond); }
 
 FractalSemaphore fractal_create_semaphore(uint32_t initial_value) {
     FractalSemaphore ret = SDL_CreateSemaphore(initial_value);
@@ -79,21 +100,4 @@ void fractal_wait_semaphore(FractalSemaphore semaphore) {
     }
 }
 
-FractalThread fractal_create_thread(FractalThreadFunction thread_function, char *thread_name,
-                                    void *data) {
-    FractalThread ret = SDL_CreateThread(thread_function, thread_name, data);
-    if (ret == NULL) {
-        LOG_FATAL("Failure creating thread: %s", SDL_GetError());
-    }
-    return ret;
-}
-
-void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
-void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
-void fractal_sleep(uint32_t ms) { SDL_Delay(ms); }
-
-void fractal_set_thread_priority(FractalThreadPriority priority) {
-    if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
-        LOG_FATAL("Failure setting thread priority: %s", SDL_GetError());
-    }
-}
+void fractal_destroy_semaphore(FractalSemaphore semaphore) { SDL_DestroySemaphore(semaphore); }

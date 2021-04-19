@@ -339,6 +339,9 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
     unsigned char* image;
 
     // decode to 32-bit RGBA
+    // TODO: We need to free image after destroying the SDL_Surface!
+    // Perhaps we should simply return a PNG buffer and have the caller
+    // manage memory allocation.
     error = lodepng_decode32_file(&image, &w, &h, filename);
     if (error) {
         LOG_ERROR("decoder error %u: %s\n", error, lodepng_error_text(error));
