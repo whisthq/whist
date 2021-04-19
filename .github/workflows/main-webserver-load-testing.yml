@@ -98,7 +98,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-staging"
                   WEBSERVER_URL= "${{ env.webserver_url }}"
                   BODY = f"Successfully load tested webserver at {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
@@ -111,7 +111,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-staging"
                   WEBSERVER_URL= "${{ env.webserver_url }}"
                   BODY = f"Failed load testing webserver at {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
