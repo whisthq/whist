@@ -165,7 +165,7 @@ SDL_mutex* render_mutex;
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
 FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-block_allocator* frame_buf_allocator;
+BlockAllocator* frame_buf_allocator;
 
 bool has_rendered_yet = false;
 

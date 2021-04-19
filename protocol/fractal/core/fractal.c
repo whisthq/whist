@@ -379,21 +379,21 @@ typedef struct {
     // Free blocks
     int num_free_blocks;
     char* free_blocks[MAX_FREES];
-} internal_block_allocator;
+} InternalBlockAllocator;
 
-block_allocator* create_block_allocator(size_t block_size) {
-    internal_block_allocator* blk_allocator = safe_malloc(sizeof(internal_block_allocator));
+BlockAllocator* create_block_allocator(size_t block_size) {
+    InternalBlockAllocator* blk_allocator = safe_malloc(sizeof(InternalBlockAllocator));
 
     // Set block allocator values
     blk_allocator->num_allocated_blocks = 0;
     blk_allocator->block_size = block_size;
     blk_allocator->num_free_blocks = 0;
 
-    return (block_allocator*)blk_allocator;
+    return (BlockAllocator*)blk_allocator;
 }
 
-void* allocate_block(block_allocator* blk_allocator_in) {
-    internal_block_allocator* blk_allocator = (internal_block_allocator*)blk_allocator_in;
+void* allocate_block(BlockAllocator* blk_allocator_in) {
+    InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     LOG_INFO("!! MEMORY USAGE !!: %0.2f MB",
              blk_allocator->num_allocated_blocks * blk_allocator->block_size / 1024.0 / 1024);
@@ -411,8 +411,8 @@ void* allocate_block(block_allocator* blk_allocator_in) {
     return p;
 }
 
-void free_block(block_allocator* blk_allocator_in, void* block) {
-    internal_block_allocator* blk_allocator = (internal_block_allocator*)blk_allocator_in;
+void free_block(BlockAllocator* blk_allocator_in, void* block) {
+    InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     // If there's room in the free block list, just store the free block there instead
     if (blk_allocator->num_free_blocks < MAX_FREES) {
