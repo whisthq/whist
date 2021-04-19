@@ -314,7 +314,6 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
 }
 #endif
 
-
 // masks for little-endian RGBA
 #define RGBA_MASK_A 0xff000000
 #define RGBA_MASK_B 0x00ff0000

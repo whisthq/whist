@@ -90,7 +90,8 @@ void init_clipboard_synchronizer(bool is_client) {
     start_timer((clock*)&last_clipboard_update);
     clipboard_semaphore = fractal_create_semaphore(0);
 
-    clipboard_synchronizer_thread = fractal_create_thread(update_clipboard, "update_clipboard", NULL);
+    clipboard_synchronizer_thread =
+        fractal_create_thread(update_clipboard, "update_clipboard", NULL);
 
     pending_update_clipboard = true;
 }
@@ -229,7 +230,8 @@ int update_clipboard(void* opaque) {
             // spam
             const int spam_time_ms = 500;
             if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-                fractal_sleep(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
+                fractal_sleep(
+                    max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
             }
         }
 
