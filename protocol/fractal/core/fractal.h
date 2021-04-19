@@ -60,8 +60,6 @@ Includes
 #include <libavutil/imgutils.h>
 #include <libswscale/swscale.h>
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
 #include <fractal/utils/threads.h>
 #include "../clipboard/clipboard_synchronizer.h"
 #include "../utils/color.h"
@@ -193,23 +191,6 @@ typedef enum CodecType {
     CODEC_TYPE_H265 = 265,
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
-
-typedef enum FractalCursorID {
-    CURSOR_ID_APPSTARTING = 32650,
-    CURSOR_ID_NORMAL = 32512,
-    CURSOR_ID_CROSS = 32515,
-    CURSOR_ID_HAND = 32649,
-    CURSOR_ID_HELP = 32651,
-    CURSOR_ID_IBEAM = 32513,
-    CURSOR_ID_NO = 32648,
-    CURSOR_ID_SIZEALL = 32646,
-    CURSOR_ID_SIZENESW = 32643,
-    CURSOR_ID_SIZENS = 32645,
-    CURSOR_ID_SIZENWSE = 32642,
-    CURSOR_ID_SIZEWE = 32644,
-    CURSOR_ID_UP = 32516,
-    CURSOR_ID_WAIT = 32514
-} FractalCursorID;
 
 typedef enum FractalKeycode {
     FK_A = 4,              ///< 4
@@ -444,6 +425,14 @@ typedef struct FractalDiscoveryRequestMessage {
     char user_email[FRACTAL_ARGS_MAXLEN + 1];
 } FractalDiscoveryRequestMessage;
 
+typedef struct FractalMultigestureMessage {
+    float d_theta;         ///< The amount the fingers rotated.
+    float d_dist;          ///< The amount the fingers pinched.
+    float x;               ///< Normalized gesture x-axis center.
+    float y;               ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;  ///< Number of fingers used in the gesture.
+} FractalMultigestureMessage;
+
 typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 typedef enum FractalClientMessageType {
@@ -486,7 +475,7 @@ typedef struct FractalClientMessage {
         FractalDiscoveryRequestMessage discoveryRequest;  ///< Discovery request message.
 
         // MESSAGE_MULTIGESTURE
-        SDL_MultiGestureEvent multigestureData;
+        FractalMultigestureMessage multigesture;  ///< Multigesture message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;

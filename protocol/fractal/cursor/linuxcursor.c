@@ -25,7 +25,7 @@ void init_cursors() { disp = XOpenDisplay(NULL); }
 
 FractalCursorImage get_current_cursor() {
     FractalCursorImage image = {0};
-    image.cursor_id = SDL_SYSTEM_CURSOR_ARROW;
+    image.cursor_id = FRACTAL_CURSOR_ARROW;
     image.cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
         XLockDisplay(disp);
