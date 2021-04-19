@@ -1,6 +1,7 @@
 import logging
 
 from celery._state import get_current_task
+from celery.signals import task_prerun
 
 
 class _ExtraHandler(logging.StreamHandler):
@@ -89,3 +90,15 @@ fractal_logger.error("oh no")
 fractal_logger.error("oh no", extra={"label": "you done goofed"})
 """
 fractal_logger = _create_fractal_logger()
+
+
+@task_prerun.connect
+def fractal_task_prerun(task_id, task, **kwargs):  # pylint: disable=unused-argument
+    """
+    See https://docs.celeryproject.org/en/stable/userguide/signals.html#task-prerun.
+    This is run before any celery task is executed. We use this to print out the args
+    and kwargs of every celery task so its input state is clear.
+    """
+    task_args = kwargs["args"]
+    task_kwargs = kwargs["kwargs"]
+    fractal_logger.info(f"args: {task_args}, kwargs: {task_kwargs}")
