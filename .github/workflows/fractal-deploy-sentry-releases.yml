@@ -64,43 +64,38 @@ jobs:
                   else
                       SENTRY_DEPLOY_ENVIRONMENT=dev
                   fi
+                  SENTRY_DEPLOY_ENVIRONMENT=test
 
                   echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
                   echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
-            - name: Create New Sentry Release
-              env:
-                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
+            # - name: Create New Sentry Release
+            #   env:
+            #       SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
+            #   run: |
+            #       # Install Sentry CLI
+            #       curl -sL https://sentry.io/get-cli/ | bash
+
+            #       # Create new Sentry release
+            #       export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+            #       sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
+            #       sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+            #       sentry-cli releases finalize $SENTRY_RELEASE
+
+            #       # Create new deploy for this Sentry release
+            #       sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+
+            - name: fail-project
+              shell: python3 {0}  
               run: |
-                  # Install Sentry CLI
-                  curl -sL https://sentry.io/get-cli/ | bash
-
-                  # Create new Sentry release
-                  export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
-                  sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
-                  sentry-cli releases finalize $SENTRY_RELEASE
-
-                  # Create new deploy for this Sentry release
-                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
-
-            - name: Notify Slack on failure
-              if: failure()
-              shell: python3 {0}
-              run: |
-                  from notifications import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
-                  BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                import os
+                assert os.environ["SENTRY_PROJECT"] != "main-webserver":
 
     notify-slack:
         name: Notify Slack
         runs-on: ubuntu-20.04
         needs: [fractal-deploy-sentry-releases-main]
-        if: success()
+        if: always() && ( needs.fractal-deploy-sentry-releases-main.result == 'success' || needs.fractal-deploy-sentry-releases-main.result == 'failure' )
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -113,6 +108,7 @@ jobs:
                   echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack on success
+              if: needs.fractal-deploy-sentry-releases-main.result == 'success'
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -120,5 +116,17 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+
+            - name: Notify Slack on failure
+            if: needs.fractal-deploy-sentry-releases-main.result == 'failure'
+              shell: python3 {0}
+              run: |
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
+                  BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
