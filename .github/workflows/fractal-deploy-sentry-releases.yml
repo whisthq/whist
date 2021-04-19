@@ -86,7 +86,6 @@ jobs:
 
             - name: Notify Slack on failure
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -113,7 +112,6 @@ jobs:
                   echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack on success
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post

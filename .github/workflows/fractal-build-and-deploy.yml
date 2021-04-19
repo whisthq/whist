@@ -258,7 +258,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -487,7 +486,6 @@ jobs:
             # Notify Slack after building and deploying the Fractal AMI to all supported AWS regions.
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -500,7 +498,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -537,14 +534,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -584,7 +579,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -612,14 +606,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack
               shell: python3 {0}
@@ -669,7 +661,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -733,7 +724,6 @@ jobs:
 
             - name: Notify Slack started maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'success'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -748,7 +738,6 @@ jobs:
 
             - name: Notify Slack on failure to start maintenance mode
               if: always() && steps.start-maintenance-mode.outcome == 'failure'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -782,7 +771,6 @@ jobs:
 
             - name: Notify Slack on failure to update webserver task definition
               if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -834,7 +822,6 @@ jobs:
 
             - name: Notify Slack on failure to update webserver amis
               if: always() && steps.update-webserver-amis.outcome == 'failure'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -869,7 +856,6 @@ jobs:
 
             - name: Notify Slack ended maintenance mode
               if: always() && steps.end-maintenance-mode.outcome == 'success'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -883,7 +869,6 @@ jobs:
 
             - name: Notify Slack on failure to end maintenance mode
               if: always() && steps.end-maintenance-mode.outcome == 'failure'
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -961,7 +946,6 @@ jobs:
 
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   import os
@@ -976,7 +960,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -1241,7 +1224,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -1275,7 +1257,6 @@ jobs:
                   echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack on success
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -1333,7 +1314,6 @@ jobs:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
             - name: Notify Slack
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -1346,7 +1326,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post

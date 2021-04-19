@@ -43,6 +43,13 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+
             # A non-pull_request event does not have a github.base_ref set
             # We have to dig into the event object, which has a ref string
             # such as "refs/heads/dev". We trim "refs/heads/" to get the
@@ -80,13 +87,6 @@ jobs:
                   print("GITHUB_BRANCH VARIABLE:")
                   print(os.environ.get("GITHUB_BRANCH"))
                   print(context.strip("\n"))
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  # allows us to import from notifications package anywhere in this job
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Upgrade pip
               working-directory: main-webserver

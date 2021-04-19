@@ -66,7 +66,6 @@ jobs:
 
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   import os
@@ -113,7 +112,6 @@ jobs:
                   echo "$ec2_instances"
 
             - name: Notify Slack all instances
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   import os
@@ -128,7 +126,6 @@ jobs:
 
             - name: Notify Slack if error
               if: failure()
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
@@ -203,7 +200,6 @@ jobs:
                   echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack if Hanging Resource Workflow Fails
-              working-directory: .github/workflows/helpers
               shell: python3 {0}
               run: |
                   from notifications import slack_post
