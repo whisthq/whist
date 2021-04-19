@@ -1176,7 +1176,7 @@ jobs:
                 main-webserver-update-fractal-services,
             ]
         if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && (contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch) || contains(fromJSON('["staging"]'), needs.fractal-publish-build-config.outputs.branch))
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
