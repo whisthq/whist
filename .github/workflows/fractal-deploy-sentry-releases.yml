@@ -44,14 +44,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
@@ -94,7 +92,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -102,18 +100,17 @@ jobs:
         name: Notify Slack
         runs-on: ubuntu-20.04
         needs: [fractal-deploy-sentry-releases-main]
+        if: success()
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack on success
               working-directory: .github/workflows/helpers
@@ -122,7 +119,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

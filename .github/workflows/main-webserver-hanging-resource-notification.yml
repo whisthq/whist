@@ -35,14 +35,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
@@ -76,7 +74,7 @@ jobs:
 
                   if os.environ.get("hanging_resource") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                    SLACK_CHANNEL = "#alerts-dev"
                     BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}."
 
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -95,14 +93,12 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Install boto3
               run: pip install boto3
@@ -125,7 +121,7 @@ jobs:
 
                   if os.environ.get("ec2_instances") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                    SLACK_CHANNEL = "#alerts-dev"
                     BODY = "${{ env.ec2_instances }}"
 
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -138,7 +134,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-dev"
                   BODY = "Scanning EC2 Instance failure"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -150,14 +146,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -176,7 +170,7 @@ jobs:
                   import subprocess
                   from notifications import slack_post
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-dev"
 
                   ret = subprocess.run(aws-hashicorp-packer-reaper list, capture_output=True, shell=True)
                   assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
@@ -201,14 +195,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack if Hanging Resource Workflow Fails
               working-directory: .github/workflows/helpers
@@ -217,7 +209,7 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-dev"
                   BODY = "@channel Hanging Resource Notification Failed"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

@@ -58,14 +58,12 @@ jobs:
               with:
                   fetch-depth: 0 # Get the whole git history
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
             # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
@@ -299,15 +297,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            ################### Stage 1 - Build & Publish Container Images to GHCR ###################
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
@@ -650,14 +645,12 @@ jobs:
         if: always()
         runs-on: ubuntu-20.04
         steps:
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -708,14 +701,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
@@ -919,14 +910,12 @@ jobs:
               with:
                   fetch-depth: 0 # need to get full history for splitsh-lite
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Authenticate Heroku
               run: |
@@ -1028,14 +1017,12 @@ jobs:
                   # version number into the react frontend.
                   fetch-depth: 0
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             # Necessary for Electron to upload packaged applications to AWS S3
             - name: Configure AWS S3 CLI
@@ -1280,14 +1267,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Notify Slack on success
               working-directory: .github/workflows/helpers
@@ -1328,14 +1313,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Retrieve Today's Date
               run: echo "date=$(date)" >> $GITHUB_ENV

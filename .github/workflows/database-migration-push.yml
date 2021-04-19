@@ -81,14 +81,12 @@ jobs:
                   print(os.environ.get("GITHUB_BRANCH"))
                   print(context.strip("\n"))
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
-
-            - name: Install notification dependencies
+            - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: |
+                  pip install -r notifications/requirements.txt
+                  # allows us to import from notifications package anywhere in this job
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
 
             - name: Upgrade pip
               working-directory: main-webserver
@@ -189,9 +187,6 @@ jobs:
                   sys.path.append(os.environ["PATH_HELPERS"])
                   from notifications import slack_debug
 
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
-
                   # No notifications if the migration diff
                   # is empty, so exit early
                   with open(os.environ["PATH_DIFF"]) as f:
@@ -202,6 +197,8 @@ jobs:
                   github_sha = os.environ["GITHUB_SHA"]
                   github_branch = os.environ["GITHUB_BRANCH"]
 
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = f"#alerts-{github_branch}"
 
                   def issue_url(number):
                       return urllib.parse.urljoin(os.environ["GITHUB_SHA_URL"],
@@ -231,8 +228,8 @@ jobs:
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   GITHUB_BRANCH = os.environ["GITHUB_BRANCH"]
+                  SLACK_CHANNEL = f"#alerts-{GITHUB_BRANCH}"
                   BODY = f"@channel Failed to perform database migration. Schemas are out-of-sync on branch `{GITHUB_BRANCH}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
