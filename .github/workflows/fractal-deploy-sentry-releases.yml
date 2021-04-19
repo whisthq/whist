@@ -54,19 +54,24 @@ jobs:
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
 
-            - name: Set SENTRY_DEPLOY_ENVIRONMENT Environment Variable Based on Git Branch
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
               id: detect-sentry-environment
               run: |
                   if [ "${GITHUB_REF##*/}" == "prod" ]; then
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=prod
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=staging
                   else
-                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
+                      SENTRY_DEPLOY_ENVIRONMENT=dev
                   fi
-                  echo "SENTRY_DEPLOY_ENVIRONMENT=test" >> $GITHUB_ENV # TODO: remove
+                  SENTRY_DEPLOY_ENVIRONMENT=test # TODO: remove
+
+                  echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
+                  echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
             # - name: Create New Sentry Release
+            #   env:
+            #       SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
             #   run: |
             #       # Install Sentry CLI
             #       curl -sL https://sentry.io/get-cli/ | bash
@@ -90,13 +95,11 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  import os
                   from notifications import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SENTRY_DEPLOY_ENVIRONMENT = os.environ["SENTRY_DEPLOY_ENVIRONMENT"]
-                  SLACK_CHANNEL = f"#alerts-{SENTRY_DEPLOY_ENVIRONMENT}"
-                  BODY = f"@channel Failed to deploy Fractal Sentry Releases for Environment `{SENTRY_DEPLOY_ENVIRONMENT}`."
+                  SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
+                  BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
 
                   print("channel", SLACK_CHANNEL)
                   print("body", BODY)
