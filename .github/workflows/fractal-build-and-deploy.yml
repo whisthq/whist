@@ -1223,14 +1223,16 @@ jobs:
 
     # Client Applications: Notify Slack
     # Notify Slack after building and publishing the client applications for all supported OSes.
-    # Runs if client-applications-publish-build-s3 succeeds. We keep this separate from the
-    # client-applications-publish-build-s3 job because it is a matrix job
+    # Runs if client-applications-publish-build-s3 runs. We keep this separate from the
+    # client-applications-publish-build-s3 job because it is a matrix job. If any matrix iteration
+    # fails, client-applications-publish-build-s3 is marked as failed.
     client-applications-notify-slack:
         name: "Client Applications: Notify Slack"
         runs-on: ubuntu-20.04
         needs:
             [fractal-publish-build-config, client-applications-publish-build-s3]
-        if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+        # run if client-applications-publish-build-s3 succeeds or fails (but not skipped)
+        if: always() && (needs.client-applications-publish-build-s3.result == 'success' || needs.client-applications-publish-build-s3.result == 'failure' )
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
