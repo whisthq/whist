@@ -1088,7 +1088,7 @@ int main(int argc, char* argv[]) {
     rename_log_file();
     LOG_INFO("Server protocol started.");
 
-    init_default_port_mappings();
+    init_networking();
 
 #if defined(_WIN32)
     // set Windows DPI

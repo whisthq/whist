@@ -165,7 +165,7 @@ SDL_mutex* render_mutex;
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
 FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-char frame_bufs[RECV_FRAMES_BUFFER_SIZE][LARGEST_FRAME_SIZE];
+block_allocator* frame_buf_allocator;
 
 bool has_rendered_yet = false;
 
@@ -190,7 +190,6 @@ void update_pixel_format();
 void update_texture();
 static int render_peers(SDL_Renderer* renderer, PeerUpdateMessage* msgs, size_t num_msgs);
 void clear_sdl(SDL_Renderer* renderer);
-int init_multithreaded_video(void* opaque);
 
 /*
 ============================
@@ -327,6 +326,9 @@ int render_video() {
 
         if (!video_decoder_decode(video_context.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
+            free_block(frame_buf_allocator, render_context.frame_buffer);
+            // rendering = false is set to false last,
+            // since that can trigger the next frame render
             rendering = false;
             return -1;
         }
@@ -504,8 +506,11 @@ int render_video() {
         }
 
         video_data.last_rendered_id = render_context.id;
-        rendering = false;
+        free_block(frame_buf_allocator, render_context.frame_buffer);
         has_rendered_yet = true;
+        // rendering = false is set to false last,
+        // since that can trigger the next frame render
+        rendering = false;
     } else {
         // If rendering == false,
         // Then we potentially render the loading screen
@@ -755,6 +760,8 @@ int init_video_renderer() {
         LOG_ERROR("Failed to init peer cursors.");
     }
 
+    frame_buf_allocator = create_block_allocator(LARGEST_FRAME_SIZE);
+
     can_render = true;
 
     LOG_INFO("Creating renderer for %dx%d display", output_width, output_height);
@@ -982,20 +989,27 @@ void update_video() {
                 // LOG_INFO("Rendering %d (Age %f)", ctx->id,
                 // get_timer(ctx->frame_creation_timer));
 
+                // Now render_context will own the frame_buffer memory block
                 render_context = *ctx;
-                rendering = true;
+                // So we make sure that ctx->frame_buffer no longer owns the memory block
+                ctx->frame_buffer = NULL;
 
-                skip_render = false;
+                // Get the FrameData for the next frame
+                int next_frame_render_id = next_render_id + 1;
+                int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
+                FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
 
-                int after_render_id = next_render_id + 1;
-                int after_index = after_render_id % RECV_FRAMES_BUFFER_SIZE;
-                FrameData* after_ctx = &receiving_frames[after_index];
-
-                if (after_ctx->id == after_render_id &&
-                    after_ctx->packets_received == after_ctx->num_packets) {
+                // If the next frame has been received,
+                // lets skip the rendering so we can render the next frame faster
+                if (next_frame_ctx->id == next_frame_render_id &&
+                    next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
                     LOG_INFO("Skip this render");
+                } else {
+                    skip_render = false;
                 }
+
+                rendering = true;
             } else {
                 if ((get_timer(ctx->last_packet_timer) > latency) &&
                     get_timer(ctx->last_nacked_timer) > latency + latency * ctx->num_times_nacked) {
@@ -1099,7 +1113,10 @@ int32_t receive_video(FractalPacket* packet) {
             return 0;
         }
         ctx->id = packet->id;
-        ctx->frame_buffer = (char*)&frame_bufs[index];
+        if (ctx->frame_buffer == NULL) {
+            char* p = allocate_block(frame_buf_allocator);
+            ctx->frame_buffer = p;
+        }
         ctx->packets_received = 0;
         ctx->num_packets = packet->num_indices;
         ctx->last_nacked_index = -1;
