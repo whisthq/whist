@@ -7,7 +7,7 @@ enum FractalNodeEnvironment {
   PRODUCTION = 'production',
 }
 
-enum FractalCIEnvironment {
+export enum FractalCIEnvironment {
   LOCAL = 'local',
   DEVELOPMENT = 'dev',
   STAGING = 'staging',

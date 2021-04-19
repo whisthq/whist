@@ -10,6 +10,7 @@ import {
   WindowHashCreateContainerErrorInternal,
   WindowHashAssignContainerError
 } from '@app/utils/constants'
+import config, { FractalCIEnvironment } from '@app/utils/config'
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), 'build')
@@ -64,13 +65,22 @@ export const hideAppDock = () => {
   app?.dock?.hide()
 }
 
+export const getWindowTitle = () => {
+  const { deployEnv } = config
+  if (deployEnv === FractalCIEnvironment.PRODUCTION) {
+    return 'Fractal'
+  }
+  return `Fractal (${deployEnv})`
+}
+
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,
   onReady?: (win: BrowserWindow) => any,
   onClose?: (win: BrowserWindow) => any
 ) => {
-  const win = new BrowserWindow({ ...options, show: false })
+  const title = getWindowTitle()
+  const win = new BrowserWindow({ ...options, show: false, title })
 
   const params = '?show=' + show
 
