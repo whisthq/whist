@@ -54,24 +54,19 @@ jobs:
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
 
-            - name: Set SENTRY_DEPLOY_ENVIRONMENT Based on Git Branch
+            - name: Set SENTRY_DEPLOY_ENVIRONMENT Environment Variable Based on Git Branch
               id: detect-sentry-environment
               run: |
                   if [ "${GITHUB_REF##*/}" == "prod" ]; then
-                      SENTRY_DEPLOY_ENVIRONMENT=prod
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=prod" >> $GITHUB_ENV
                   elif [ "${GITHUB_REF##*/}" == "staging" ]; then
-                      SENTRY_DEPLOY_ENVIRONMENT=staging
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=staging" >> $GITHUB_ENV
                   else
-                      SENTRY_DEPLOY_ENVIRONMENT=dev
+                      echo "SENTRY_DEPLOY_ENVIRONMENT=dev" >> $GITHUB_ENV
                   fi
-                  SENTRY_DEPLOY_ENVIRONMENT=test # TODO: remove
-
-                  echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
-                  echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
+                  echo "SENTRY_DEPLOY_ENVIRONMENT=test" >> $GITHUB_ENV # TODO: remove
 
             # - name: Create New Sentry Release
-            #   env:
-            #       SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
             #   run: |
             #       # Install Sentry CLI
             #       curl -sL https://sentry.io/get-cli/ | bash
