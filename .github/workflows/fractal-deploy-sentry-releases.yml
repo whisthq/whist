@@ -64,32 +64,25 @@ jobs:
                   else
                       SENTRY_DEPLOY_ENVIRONMENT=dev
                   fi
-                  SENTRY_DEPLOY_ENVIRONMENT=test # TODO: remove
 
                   echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
                   echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
-            # - name: Create New Sentry Release
-            #   env:
-            #       SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
-            #   run: |
-            #       # Install Sentry CLI
-            #       curl -sL https://sentry.io/get-cli/ | bash
-
-            #       # Create new Sentry release
-            #       export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-            #       sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
-            #       sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
-            #       sentry-cli releases finalize $SENTRY_RELEASE
-
-            #       # Create new deploy for this Sentry release
-            #       sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
-
-            - name: fail specific
-              shell: python3 {0}
+            - name: Create New Sentry Release
+              env:
+                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
               run: |
-                import os
-                assert os.environ["SENTRY_PROJECT"] != "main-webserver"
+                  # Install Sentry CLI
+                  curl -sL https://sentry.io/get-cli/ | bash
+
+                  # Create new Sentry release
+                  export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
+                  sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+                  sentry-cli releases finalize $SENTRY_RELEASE
+
+                  # Create new deploy for this Sentry release
+                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
             - name: Notify Slack on failure
               if: failure()
@@ -101,8 +94,6 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
                   BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
 
-                  print("channel", SLACK_CHANNEL)
-                  print("body", BODY)
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     notify-slack:
