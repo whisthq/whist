@@ -83,12 +83,20 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #include "../utils/aes.h"
 #include "../utils/json.h"
 
-#define STUN_IP "52.5.240.234"
+// Defines
+
+#define STUN_IP "0.0.0.0"
 #define STUN_PORT 48800
 
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
+#define LARGEST_TCP_PACKET 10000000
+#define PACKET_ENCRYPTION_PADDING \
+    16  // encryption can make packets a bit bigger, this pads to avoid overflow
+#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + PACKET_ENCRYPTION_PADDING)
+
+// Global data
 unsigned short port_mappings[USHRT_MAX + 1];
 
 /*
@@ -120,7 +128,7 @@ typedef struct {
  *                              request as it is being received.
  */
 typedef struct {
-    char *buffer;       // Buffer that contains received response data
+    char* buffer;       // Buffer that contains received response data
     size_t filled_len;  // How much of the buffer is full so far
     size_t max_len;     // How much the buffer can be filled, at most
 } CurlResponseBuffer;
@@ -162,7 +170,7 @@ SOCKET socketp_udp();
 
 @returns                        The new socket file descriptor, -1 on failure
 */
-SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len);
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len);
 
 /*
 @brief                          This will send or receive data over a socket
@@ -176,8 +184,8 @@ from the socket
 @returns                        The number of bytes that have been read or
 written to or from the buffer
 */
-int recvp(SocketContext *context, void *buf, int len);
-int sendp(SocketContext *context, void *buf, int len);
+int recvp(SocketContext* context, void* buf, int len);
+int sendp(SocketContext* context, void* buf, int len);
 
 /*
 @brief                          This will initialize and clear the TCP reader
@@ -186,14 +194,14 @@ packet when the entire packet is received
 
 @param context                  The socket context
 */
-void clear_reading_tcp(SocketContext *context);
+void clear_reading_tcp(SocketContext* context);
 
 /*
 @brief                          This will prepare the private key data
 
 @param priv_key_data            The private key data buffer
 */
-void prepare_private_key_request(PrivateKeyData *priv_key_data);
+void prepare_private_key_request(PrivateKeyData* priv_key_data);
 
 /*
 @brief                          This will sign the other connection's private key data
@@ -204,7 +212,7 @@ void prepare_private_key_request(PrivateKeyData *priv_key_data);
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *private_key);
+bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key);
 
 /*
 @brief                          This will verify the given private key
@@ -216,9 +224,9 @@ bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *privat
 
 @returns                        True if the verification succeeds, false if it fails
 */
-bool confirm_private_key(PrivateKeyData *our_priv_key_data,
-                         PrivateKeyData *our_signed_priv_key_data, int recv_size,
-                         void *private_key);
+bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                         void* private_key);
 
 /*
 ============================
@@ -229,7 +237,7 @@ Public Function Implementations
 /*
 @brief                          Initialize default port mappings (i.e. the identity)
 */
-void init_default_port_mappings() {
+void init_networking() {
     for (int i = 0; i <= USHRT_MAX; i++) {
         port_mappings[i] = (unsigned short)i;
     }
@@ -243,7 +251,7 @@ int get_last_network_error() {
 #endif
 }
 
-bool handshake_private_key(SocketContext *context) {
+bool handshake_private_key(SocketContext* context) {
     set_timeout(context->socket, 1000);
 
     PrivateKeyData our_priv_key_data;
@@ -263,8 +271,8 @@ bool handshake_private_key(SocketContext *context) {
 
     // Receive, sign, and send back their private key request data
     while ((recv_size =
-                recvfrom(context->socket, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
-                         0, (struct sockaddr *)(&context->addr), &slen)) == 0)
+                recvfrom(context->socket, (char*)&their_priv_key_data, sizeof(their_priv_key_data),
+                         0, (struct sockaddr*)(&context->addr), &slen)) == 0)
         ;
     if (recv_size < 0) {
         LOG_WARNING("Did not receive other connection's private key request: %d",
@@ -296,12 +304,7 @@ bool handshake_private_key(SocketContext *context) {
     }
 }
 
-#define LARGEST_TCP_PACKET 10000000
-#define PACKET_ENCRYPTION_PADDING \
-    16  // encryption can make packets a bit bigger, this pads to avoid overflow
-#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + PACKET_ENCRYPTION_PADDING)
-
-int send_tcp_packet(SocketContext *context, FractalPacketType type, void *data, int len) {
+int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
     // Verify packet size can fit
     if (PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
         LOG_WARNING("Packet too large!");
@@ -312,10 +315,13 @@ int send_tcp_packet(SocketContext *context, FractalPacketType type, void *data, 
         return -1;
     }
 
-    static char packet_buffer[LARGEST_TCP_PACKET];
-    static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
+    // Use 256kb static buffer for sending smaller TCP packets
+    // But use our block allocator for sending large TCP packets
+    // This function fragments the heap too much to use malloc here
+    char* packet_buffer = allocate_custom_block(sizeof(FractalPacket) + len + 64);
+    char* encrypted_packet_buffer = allocate_custom_block(sizeof(FractalPacket) + len + 128);
 
-    FractalPacket *packet = (FractalPacket *)packet_buffer;
+    FractalPacket* packet = (FractalPacket*)packet_buffer;
 
     // Contruct packet metadata
     packet->id = -1;
@@ -331,11 +337,11 @@ int send_tcp_packet(SocketContext *context, FractalPacketType type, void *data, 
     // Encrypt the packet using aes encryption
     int unencrypted_len = PACKET_HEADER_SIZE + packet->payload_size;
     int encrypted_len = encrypt_packet(packet, unencrypted_len,
-                                       (FractalPacket *)(sizeof(int) + encrypted_packet_buffer),
-                                       (unsigned char *)context->binary_aes_private_key);
+                                       (FractalPacket*)(sizeof(int) + encrypted_packet_buffer),
+                                       (unsigned char*)context->binary_aes_private_key);
 
     // Pass the length of the packet as the first byte
-    *((int *)encrypted_packet_buffer) = encrypted_len;
+    *((int*)encrypted_packet_buffer) = encrypted_len;
 
     // Send the packet
     LOG_INFO("Sending TCP Packet of length %d", encrypted_len);
@@ -345,12 +351,15 @@ int send_tcp_packet(SocketContext *context, FractalPacketType type, void *data, 
         failed = true;
     }
 
+    free_custom_block(packet_buffer);
+    free_custom_block(encrypted_packet_buffer);
+
     // Return success code
     return failed ? -1 : 0;
 }
 
-int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, int len, int id,
-                    int burst_bitrate, FractalPacket *packet_buffer, int *packet_len_buffer) {
+int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
+                    int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer) {
     if (id <= 0) {
         LOG_WARNING("IDs must be positive!");
         return -1;
@@ -400,8 +409,8 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
         FractalPacket l_packet = {0};
         int l_len = 0;
 
-        int *packet_len = &l_len;
-        FractalPacket *packet = &l_packet;
+        int* packet_len = &l_len;
+        FractalPacket* packet = &l_packet;
 
         // Based on packet type, the packet to one of the buffers to serve later
         // nacks
@@ -417,7 +426,7 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
 
         // Construct packet
         packet->type = type;
-        memcpy(packet->data, (uint8_t *)data + curr_index, payload_size);
+        memcpy(packet->data, (uint8_t*)data + curr_index, payload_size);
         packet->index = (short)i;
         packet->payload_size = payload_size;
         packet->id = id;
@@ -431,7 +440,7 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
         // Encrypt the packet with AES
         FractalPacket encrypted_packet;
         int encrypt_len = encrypt_packet(packet, packet_size, &encrypted_packet,
-                                         (unsigned char *)context->binary_aes_private_key);
+                                         (unsigned char*)context->binary_aes_private_key);
 
         // Send it off
         fractal_lock_mutex(context->mutex);
@@ -454,7 +463,7 @@ int send_udp_packet(SocketContext *context, FractalPacketType type, void *data, 
     return 0;
 }
 
-int replay_packet(SocketContext *context, FractalPacket *packet, size_t len) {
+int replay_packet(SocketContext* context, FractalPacket* packet, size_t len) {
     if (len > sizeof(FractalPacket)) {
         LOG_WARNING("Len too long!");
         return -1;
@@ -472,7 +481,7 @@ int replay_packet(SocketContext *context, FractalPacket *packet, size_t len) {
 
     FractalPacket encrypted_packet;
     int encrypt_len = encrypt_packet(packet, (int)len, &encrypted_packet,
-                                     (unsigned char *)context->binary_aes_private_key);
+                                     (unsigned char*)context->binary_aes_private_key);
 
     fractal_lock_mutex(context->mutex);
     LOG_INFO("Replay Packet of length %d", encrypt_len);
@@ -555,7 +564,7 @@ SOCKET socketp_udp() {
     return sock_fd;
 }
 
-SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) {
+SOCKET acceptp(SOCKET sock_fd, struct sockaddr* sock_addr, socklen_t* sock_len) {
     /*
         Accept a connection on `sock_fd` and return a new socket fd
 
@@ -591,7 +600,7 @@ SOCKET acceptp(SOCKET sock_fd, struct sockaddr *sock_addr, socklen_t *sock_len) 
     return new_socket;
 }
 
-int recvp(SocketContext *context, void *buf, int len) {
+int recvp(SocketContext* context, void* buf, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -599,7 +608,7 @@ int recvp(SocketContext *context, void *buf, int len) {
     return recv(context->socket, buf, len, 0);
 }
 
-int sendp(SocketContext *context, void *buf, int len) {
+int sendp(SocketContext* context, void* buf, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -612,18 +621,18 @@ int sendp(SocketContext *context, void *buf, int len) {
     if (context->is_tcp) {
         return send(context->socket, buf, len, 0);
     } else {
-        return sendto(context->socket, buf, len, 0, (struct sockaddr *)(&context->addr),
+        return sendto(context->socket, buf, len, 0, (struct sockaddr*)(&context->addr),
                       sizeof(context->addr));
     }
 }
 
-int ack(SocketContext *context) { return sendp(context, NULL, 0); }
+int ack(SocketContext* context) { return sendp(context, NULL, 0); }
 
 bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
     int ret;
     set_timeout(socket, 0);
-    if ((ret = connect(socket, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
+    if ((ret = connect(socket, (struct sockaddr*)(&addr), sizeof(addr))) < 0) {
         bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
 
         if (!worked) {
@@ -660,7 +669,7 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     return true;
 }
 
-FractalPacket *read_udp_packet(SocketContext *context) {
+FractalPacket* read_udp_packet(SocketContext* context) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return NULL;
@@ -675,14 +684,14 @@ FractalPacket *read_udp_packet(SocketContext *context) {
     // If the packet was successfully received, then decrypt it
     if (encrypted_len > 0) {
         int decrypted_len = decrypt_packet(&encrypted_packet, encrypted_len, &decrypted_packet,
-                                           (unsigned char *)context->binary_aes_private_key);
+                                           (unsigned char*)context->binary_aes_private_key);
 
         // If there was an issue decrypting it, post warning and then
         // ignore the problem
         if (decrypted_len < 0) {
             if (encrypted_len == sizeof(StunEntry)) {
-                StunEntry *e;
-                e = (void *)&encrypted_packet;
+                StunEntry* e;
+                e = (void*)&encrypted_packet;
                 LOG_INFO("Maybe a map from public %d to private %d?", ntohs(e->private_port),
                          ntohs(e->private_port));
             }
@@ -710,14 +719,20 @@ FractalPacket *read_udp_packet(SocketContext *context) {
     }
 }
 
+// NOTE: The following global variable code only works when reading from one TCP socket.
+// Will need to be adjusted if multiple TCP sockets are used
 static int reading_packet_len;
+#define SMALLEST_TCP_BUFFER_SIZE (64 * 1024)
+static int packet_capacity = SMALLEST_TCP_BUFFER_SIZE;
+static char* encrypted_packet_buffer = NULL;
 
-void clear_reading_tcp(SocketContext *context) {
+void clear_reading_tcp(SocketContext* context) {
     UNUSED(context);
     reading_packet_len = 0;
+    encrypted_packet_buffer = allocate_custom_block(packet_capacity);
 }
 
-FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
+FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return NULL;
@@ -727,14 +742,16 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
         return NULL;
     }
 
-    // NOTE: The following code only works when reading from one TCP socket.
-    // Will need to be adjusted if multiple TCP sockets are used
-    static char encrypted_packet_buffer[LARGEST_ENCRYPTED_TCP_PACKET];
-    static char decrypted_packet_buffer[LARGEST_TCP_PACKET];
+#define TCP_SEGMENT_SIZE 4096
 
     int len = TCP_SEGMENT_SIZE;
-
     while (should_recvp && len == TCP_SEGMENT_SIZE) {
+        // Make the tcp buffer larger if needed
+        if (reading_packet_len + TCP_SEGMENT_SIZE >= packet_capacity) {
+            packet_capacity *= 2;
+            encrypted_packet_buffer =
+                realloc_custom_block(encrypted_packet_buffer, packet_capacity);
+        }
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len = recvp(context, encrypted_packet_buffer + reading_packet_len,
@@ -759,16 +776,22 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);
-        int target_len = *((int *)encrypted_packet_buffer);
+        int target_len = *((int*)encrypted_packet_buffer);
+
+        static char* decrypted_packet_buffer = NULL;
+        if (decrypted_packet_buffer != NULL) {
+            free_custom_block(decrypted_packet_buffer);
+        }
+        decrypted_packet_buffer = allocate_custom_block(target_len);
 
         // If the target len is valid, and actual len > target len, then we're
         // good to go
         if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
-            int decrypted_len = decrypt_packet_n(
-                (FractalPacket *)(encrypted_packet_buffer + sizeof(int)), target_len,
-                (FractalPacket *)decrypted_packet_buffer, LARGEST_TCP_PACKET,
-                (unsigned char *)context->binary_aes_private_key);
+            int decrypted_len =
+                decrypt_packet_n((FractalPacket*)(encrypted_packet_buffer + sizeof(int)),
+                                 target_len, (FractalPacket*)decrypted_packet_buffer, target_len,
+                                 (unsigned char*)context->binary_aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
             // continue
@@ -778,12 +801,19 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
             }
             reading_packet_len = actual_len - target_len;
 
+            if (reading_packet_len < packet_capacity / 4 &&
+                packet_capacity > 2 * SMALLEST_TCP_BUFFER_SIZE) {
+                packet_capacity /= 2;
+                encrypted_packet_buffer =
+                    realloc_custom_block(encrypted_packet_buffer, packet_capacity);
+            }
+
             if (decrypted_len < 0) {
                 LOG_WARNING("Could not decrypt TCP message");
                 return NULL;
             } else {
                 // Return the decrypted packet
-                return (FractalPacket *)decrypted_packet_buffer;
+                return (FractalPacket*)decrypted_packet_buffer;
             }
         }
     }
@@ -791,7 +821,7 @@ FractalPacket *read_tcp_packet(SocketContext *context, bool should_recvp) {
     return NULL;
 }
 
-int create_tcp_server_context(SocketContext *context, int port, int recvfrom_timeout_ms,
+int create_tcp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -814,8 +844,7 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
-        0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -826,7 +855,7 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
     origin_addr.sin_port = htons((unsigned short)port);
 
     // Bind to port
-    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -866,7 +895,7 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->socket, (struct sockaddr *)(&context->addr), &slen)) ==
+    if ((new_socket = acceptp(context->socket, (struct sockaddr*)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
         return -1;
     }
@@ -884,7 +913,7 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
     return 0;
 }
 
-int create_tcp_server_context_stun(SocketContext *context, int port, int recvfrom_timeout_ms,
+int create_tcp_server_context_stun(SocketContext* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -914,7 +943,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     }
 
     // cppcheck-suppress nullPointer
-    sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
+    sendto(udp_s, NULL, 0, 0, (struct sockaddr*)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
 
     // Server connection protocol
@@ -922,8 +951,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
-        0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -937,7 +965,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     }
 
     socklen_t slen = sizeof(origin_addr);
-    if (getsockname(context->socket, (struct sockaddr *)&origin_addr, &slen) < 0) {
+    if (getsockname(context->socket, (struct sockaddr*)&origin_addr, &slen) < 0) {
         LOG_WARNING("Could not get sock name");
         closesocket(context->socket);
         return -1;
@@ -963,7 +991,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
+        if ((single_recv_size = recvp(context, ((char*)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
@@ -999,14 +1027,13 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     }
 
     opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
-        0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -1027,7 +1054,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     return 0;
 }
 
-int create_tcp_client_context(SocketContext *context, char *destination, int port,
+int create_tcp_client_context(SocketContext* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     UNUSED(stun_timeout_ms);
     if (context == NULL) {
@@ -1071,7 +1098,7 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
     return 0;
 }
 
-int create_tcp_client_context_stun(SocketContext *context, char *destination, int port,
+int create_tcp_client_context_stun(SocketContext* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -1104,15 +1131,14 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     }
 
     // cppcheck-suppress nullPointer
-    sendto(udp_s, NULL, 0, 0, (struct sockaddr *)&stun_addr, sizeof(stun_addr));
+    sendto(udp_s, NULL, 0, 0, (struct sockaddr*)&stun_addr, sizeof(stun_addr));
     closesocket(udp_s);
     // Client connection protocol
     context->is_server = false;
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
-        0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -1125,7 +1151,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
-    if (getsockname(context->socket, (struct sockaddr *)&origin_addr, &slen) < 0) {
+    if (getsockname(context->socket, (struct sockaddr*)&origin_addr, &slen) < 0) {
         LOG_WARNING("Could not get sock name");
         closesocket(context->socket);
         return -1;
@@ -1152,7 +1178,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     while (recv_size < (int)sizeof(entry) && get_timer(t) < stun_timeout_ms) {
         int single_recv_size;
-        if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
+        if ((single_recv_size = recvp(context, ((char*)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
             closesocket(context->socket);
@@ -1198,14 +1224,13 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
-        0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)) < 0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -1226,8 +1251,8 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     return 0;
 }
 
-int create_tcp_context(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
+int create_tcp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1273,7 +1298,7 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
     return ret;
 }
 
-int create_udp_server_context(SocketContext *context, int port, int recvfrom_timeout_ms,
+int create_udp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -1296,7 +1321,7 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
     origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     origin_addr.sin_port = htons((unsigned short)port);
 
-    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr*)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -1306,7 +1331,7 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
 
     socklen_t slen = sizeof(context->addr);
     int recv_size;
-    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr *)(&context->addr),
+    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr*)(&context->addr),
                               &slen)) != 0) {
         LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
         closesocket(context->socket);
@@ -1327,7 +1352,7 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
     return 0;
 }
 
-int create_udp_server_context_stun(SocketContext *context, int port, int recvfrom_timeout_ms,
+int create_udp_server_context_stun(SocketContext* context, int port, int recvfrom_timeout_ms,
                                    int stun_timeout_ms) {
     context->is_tcp = false;
 
@@ -1352,8 +1377,8 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending stun entry to STUN...");
-    if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
-               (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
+    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
+               (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -1372,15 +1397,15 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     socklen_t slen = sizeof(context->addr);
     StunEntry entry = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->socket, (char *)&entry, sizeof(entry), 0,
-                                 (struct sockaddr *)(&context->addr), &slen)) < 0) {
+    while ((recv_size = recvfrom(context->socket, (char*)&entry, sizeof(entry), 0,
+                                 (struct sockaddr*)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
             (get_last_network_error() == FRACTAL_ETIMEDOUT ||
              get_last_network_error() == FRACTAL_EAGAIN)) {
-            if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
-                       (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
+            if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
+                       (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
                 LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
                 closesocket(context->socket);
                 return -1;
@@ -1442,7 +1467,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     return 0;
 }
 
-int create_udp_client_context(SocketContext *context, char *destination, int port,
+int create_udp_client_context(SocketContext* context, char* destination, int port,
                               int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
@@ -1484,7 +1509,7 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
     return 0;
 }
 
-int create_udp_client_context_stun(SocketContext *context, char *destination, int port,
+int create_udp_client_context_stun(SocketContext* context, char* destination, int port,
                                    int recvfrom_timeout_ms, int stun_timeout_ms) {
     context->is_tcp = false;
 
@@ -1509,8 +1534,8 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending info request to STUN...");
-    if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
-               (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
+    if (sendto(context->socket, (const char*)&stun_request, sizeof(stun_request), 0,
+               (struct sockaddr*)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
         closesocket(context->socket);
         return -1;
@@ -1568,8 +1593,8 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     return 0;
 }
 
-int create_udp_context(SocketContext *context, char *destination, int port, int recvfrom_timeout_ms,
-                       int stun_timeout_ms, bool using_stun, char *binary_aes_private_key) {
+int create_udp_context(SocketContext* context, char* destination, int port, int recvfrom_timeout_ms,
+                       int stun_timeout_ms, bool using_stun, char* binary_aes_private_key) {
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
@@ -1600,7 +1625,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     }
 }
 
-size_t write_curl_response_callback(char *ptr, size_t size, size_t nmemb, CurlResponseBuffer *crb) {
+size_t write_curl_response_callback(char* ptr, size_t size, size_t nmemb, CurlResponseBuffer* crb) {
     /*
     Writes CURL request response data to the CurlResponseBuffer buffer up to `crb->max_len`
 
@@ -1629,7 +1654,7 @@ size_t write_curl_response_callback(char *ptr, size_t size, size_t nmemb, CurlRe
     return size * nmemb;
 }
 
-bool send_http_request(char *type, char *host_s, char *path, char *payload, char **response_body,
+bool send_http_request(char* type, char* host_s, char* path, char* payload, char** response_body,
                        size_t max_response_size) {
     /*
     Send an HTTP (over HTTPS protocol) to a host
@@ -1648,7 +1673,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     */
 
     // verify that we're requesting from a valid host
-    struct hostent *host;
+    struct hostent* host;
     host = gethostbyname(host_s);
     if (host == NULL) {
         LOG_ERROR("Error %d: Could not resolve host %s", h_errno, host_s);
@@ -1657,7 +1682,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
 
 #ifndef _WIN32
     // use CURL to send a request and process response buffer
-    CURL *curl;
+    CURL* curl;
     curl = curl_easy_init();
 
     if (!curl) {
@@ -1672,7 +1697,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     // create target URL
 #ifdef CURLUPART_URL
     // when curl's urlapi is not available
-    CURLU *curl_url_handle = curl_url();
+    CURLU* curl_url_handle = curl_url();
     if (!curl_url_handle) {
         return false;
     }
@@ -1682,7 +1707,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     curl_easy_setopt(curl, CURLOPT_CURLU, curl_url_handle);
 #else
     // with no urlapi, build our own URL (path must begin with '/' when passed in)
-    char *full_url = safe_malloc(strlen(host_s) + strlen(path) + 2);
+    char* full_url = safe_malloc(strlen(host_s) + strlen(path) + 2);
     sprintf(full_url, "%s%s", host_s, path);
     curl_easy_setopt(curl, CURLOPT_URL, full_url);
     free(full_url);
@@ -1692,10 +1717,10 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
         // add request headers:
         //       "Content-Type: application/json"
         //       "Content-Length: payload_len"
-        struct curl_slist *headers = NULL;
+        struct curl_slist* headers = NULL;
         headers = curl_slist_append(headers, "Content-Type: application/json");
         // create content-length header
-        char *content_length_header = safe_malloc(64);
+        char* content_length_header = safe_malloc(64);
         sprintf(content_length_header, "Content-Length: %lu", strlen(payload));
         headers = curl_slist_append(headers, content_length_header);
         free(content_length_header);
@@ -1717,7 +1742,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     }
 
     // LOG_ERROR curl's error if it fails
-    char *error_buf = safe_malloc(CURL_ERROR_SIZE);
+    char* error_buf = safe_malloc(CURL_ERROR_SIZE);
     curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error_buf);
     if (curl_easy_perform(curl) != 0) {
         LOG_ERROR("curl to %s/%s failed: %s", host_s, path, error_buf);
@@ -1765,7 +1790,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
             // add request headers:
             //       "Content-Type: application/json\r\n"
             //       "Content-Length: %d\r\n"
-            char *headers = safe_malloc(128);
+            char* headers = safe_malloc(128);
             sprintf(headers,
                     "Content-Type: application/json\r\n"
                     "Content-Length: %d",
@@ -1833,7 +1858,7 @@ bool send_http_request(char *type, char *host_s, char *path, char *payload, char
     return true;
 }
 
-bool send_post_request(char *host_s, char *path, char *payload, char **response_body,
+bool send_post_request(char* host_s, char* path, char* payload, char** response_body,
                        size_t max_response_size) {
     /*
         Send post request to `host_s` with body `payload`
@@ -1861,7 +1886,7 @@ bool send_post_request(char *host_s, char *path, char *payload, char **response_
     return send_http_request("POST", host_s, path, payload, response_body, max_response_size);
 }
 
-bool send_get_request(char *host_s, char *path, char **response_body, size_t max_response_size) {
+bool send_get_request(char* host_s, char* path, char** response_body, size_t max_response_size) {
     /*
         Send get request to `host_s`
 
@@ -1918,7 +1943,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
 
         clock read_timeout = create_clock(timeout_ms);
 
-        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
+        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&read_timeout,
                        sizeof(read_timeout)) < 0) {
             int err = get_last_network_error();
             LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
@@ -1928,7 +1953,7 @@ void set_timeout(SOCKET socket, int timeout_ms) {
     }
 }
 
-void prepare_private_key_request(PrivateKeyData *priv_key_data) {
+void prepare_private_key_request(PrivateKeyData* priv_key_data) {
     // Generate the IV, so that someone else can sign it
     gen_iv(priv_key_data->iv);
     // Clear priv_key_data so that PrivateKeyData is entirely initialized
@@ -1941,7 +1966,7 @@ typedef struct {
     char private_key[16];
 } SignatureData;
 
-bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *private_key) {
+bool sign_private_key(PrivateKeyData* priv_key_data, int recv_size, void* private_key) {
     if (recv_size == sizeof(PrivateKeyData)) {
         SignatureData sig_data;
         memcpy(sig_data.iv, priv_key_data->iv, sizeof(priv_key_data->iv));
@@ -1955,9 +1980,9 @@ bool sign_private_key(PrivateKeyData *priv_key_data, int recv_size, void *privat
     }
 }
 
-bool confirm_private_key(PrivateKeyData *our_priv_key_data,
-                         PrivateKeyData *our_signed_priv_key_data, int recv_size,
-                         void *private_key) {
+bool confirm_private_key(PrivateKeyData* our_priv_key_data,
+                         PrivateKeyData* our_signed_priv_key_data, int recv_size,
+                         void* private_key) {
     if (recv_size == sizeof(PrivateKeyData)) {
         if (memcmp(our_priv_key_data->iv, our_signed_priv_key_data->iv, 16) != 0) {
             LOG_ERROR("IV is incorrect!");
