@@ -7,10 +7,6 @@ from app import fractal_pre_process
 from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
 
 from app.helpers.blueprint_helpers.payment.stripe_post import (
-    addSubscriptionHelper,
-    deleteSubscriptionHelper,
-    addCardHelper,
-    deleteCardHelper,
     retrieveHelper,
 )
 from app.helpers.utils.general.auth import fractal_auth
@@ -72,18 +68,7 @@ def payment(action, **kwargs):
     """
     body = kwargs["body"]
 
-    # these add a subscription or remove (or modify)
-    if action == "addSubscription" or action == "modifySubscription":
-        return addSubscriptionHelper(body["email"], body["plan"])
-    elif action == "deleteSubscription":
-        return deleteSubscriptionHelper(body["email"])
-    # these will add a card as a source or remove (or modify) for future payment
-    elif action == "addCard" or action == "modifyCard":
-        return addCardHelper(body["email"], body["source"])
-    elif action == "deleteCard":
-        return deleteCardHelper(body["email"], body["source"])
-    # Retrieves the stripe subscription of the customer so we can tell them some basic info
-    elif action == "retrieve":
+    if action == "retrieve":
         return retrieveHelper(body["email"])
     return jsonify({"status": FORBIDDEN}), FORBIDDEN
 
