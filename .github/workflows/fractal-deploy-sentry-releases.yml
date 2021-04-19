@@ -101,6 +101,8 @@ jobs:
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
                   BODY = "@channel Failed to deploy Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}`."
 
+                  print("channel", SLACK_CHANNEL)
+                  print("body", BODY)
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     notify-slack:
