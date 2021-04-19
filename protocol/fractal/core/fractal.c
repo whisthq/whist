@@ -353,8 +353,8 @@ char* fractal_git_revision() {
 // https://docs.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information
 #include <windows.h>
 #else
-#include <sys/mman.h>
 #include <unistd.h>
+#include <sys/mman.h>
 #endif
 
 int get_page_size() {
@@ -369,33 +369,109 @@ int get_page_size() {
 #endif
 }
 
-void* allocate_block(size_t block_size) {
-    int page_size = get_page_size();
-    // Use a byte to hold the size
-    block_size++;
+#define MAX_FREES 1024
+
+typedef struct {
+    size_t block_size;
+
+    int num_allocated_blocks;
+
+    // Free blocks
+    int num_free_blocks;
+    char* free_blocks[MAX_FREES];
+} internal_block_allocator;
+
+block_allocator* create_block_allocator(size_t block_size) {
+    internal_block_allocator* blk_allocator = safe_malloc(sizeof(internal_block_allocator));
+
+    // Set block allocator values
+    blk_allocator->num_allocated_blocks = 0;
+    blk_allocator->block_size = block_size;
+    blk_allocator->num_free_blocks = 0;
+
+    return (block_allocator*)blk_allocator;
+}
+
+void* allocate_block(block_allocator* blk_allocator_in) {
+    internal_block_allocator* blk_allocator = (internal_block_allocator*)blk_allocator_in;
+
+    LOG_INFO("!! MEMORY USAGE !!: %0.2f MB",
+             blk_allocator->num_allocated_blocks * blk_allocator->block_size / 1024.0 / 1024);
+
+    // If a free block already exists, just use that one instead
+    if (blk_allocator->num_free_blocks > 0) {
+        char* p = blk_allocator->free_blocks[--blk_allocator->num_free_blocks];
+        return p;
+    }
+
+    // Otherwise, create a new block
+    blk_allocator->num_allocated_blocks++;
+    char* p = allocate_custom_block(blk_allocator->block_size);
+    // Return the newly allocated block
+    return p;
+}
+
+void free_block(block_allocator* blk_allocator_in, void* block) {
+    internal_block_allocator* blk_allocator = (internal_block_allocator*)blk_allocator_in;
+
+    // If there's room in the free block list, just store the free block there instead
+    if (blk_allocator->num_free_blocks < MAX_FREES) {
+        blk_allocator->free_blocks[blk_allocator->num_free_blocks++] = block;
+        return;
+    }
+
+    // Otherwise, actually free the block at an OS-level
+    free_custom_block(block);
+    blk_allocator->num_allocated_blocks--;
+}
+
+void* allocate_custom_block(size_t block_size) {
+    size_t page_size = get_page_size();
+    // Use sizeof(size_t) space for holding the size of the custom block
+    block_size += sizeof(size_t);
     // Round up to the nearest page size
     block_size = block_size + (page_size - (block_size % page_size)) % page_size;
+
+    LOG_INFO("Allocating block of %d", block_size);
+    print_stacktrace();
+
 #ifdef _WIN32
     // TODO: Implement for Windows
 #else
     size_t* p = mmap(0, block_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    *p = block_size;
+    p++;
     if (p == NULL) {
         LOG_FATAL("mmap failed!");
     }
-    // Mark the first byte
-    *p = block_size;
-    p++;
 #endif
     return p;
 }
 
-void free_block(void* block) {
+void* realloc_custom_block(void* block, size_t new_block_size) {
+    size_t* p = (size_t*)block;
+    p--;
+    size_t block_size = *p;
+
+    LOG_INFO("Allocating block of %d", new_block_size);
+    print_stacktrace();
+
+    // Allocate new block
+    size_t* new_p = allocate_custom_block(new_block_size);
+    // Copy the previous data over (Not the size tag though)
+    memcpy(new_p, block, min(block_size - sizeof(size_t), new_block_size));
+    free_custom_block(block);
+
+    return new_p;
+}
+
+void free_custom_block(void* block) {
+    size_t* p = (size_t*)block;
+    p--;
+    size_t block_size = *p;
 #ifdef _WIN32
     // TODO: Implement for Windows
 #else
-    size_t* p = block;
-    p -= 1;
-    size_t block_size = *p;
     if (munmap(p, block_size) != 0) {
         LOG_FATAL("munmap failed!");
     }

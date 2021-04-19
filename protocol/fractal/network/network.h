@@ -128,7 +128,6 @@ Constants
 
 #define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
-#define TCP_SEGMENT_SIZE 1024
 
 /*
 ============================
@@ -205,9 +204,10 @@ Public Functions
 */
 
 /*
-@brief                          Initialize default port mappings (i.e. the identity)
-*/
-void init_default_port_mappings();
+ * @brief                          Initialize networking system
+ *                                 Must be called before calling any other function in this file
+ */
+void init_networking();
 
 /**
  * @brief                          This will set the socket s to have timeout
