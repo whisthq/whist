@@ -59,6 +59,16 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             ${CMAKE_BINARY_DIR})
 endif()
 
+# OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
+# location to prevent a crash.
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    add_custom_command(
+            TARGET FractalClient POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/lib/64/openssl/Windows/libcrypto-1_1-x64.dll
+            $<TARGET_FILE_DIR:FractalClient>)
+endif()
+
 # move necessary files into the build directory
 add_custom_command(TARGET FractalClient PRE_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -139,7 +149,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         "-framework QuartzCore"
         objc
         iconv
-        ${STATIC_OPENSSL}
+        ${LIB_OPENSSL}
         )
 endif()
 
@@ -162,7 +172,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     # Link to system libs
     target_link_libraries(FractalClient
-            ${STATIC_OPENSSL}
+            ${LIB_OPENSSL}
             libvcruntime
             libucrt
             libcmt

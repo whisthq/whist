@@ -61,8 +61,6 @@ Public Functions
  * @brief                          Initializes read-write lock.
  *
  * @param rwlock                   Lock to be initialized.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void init_rw_lock(RWLock *rwlock);
 
@@ -74,8 +72,6 @@ void init_rw_lock(RWLock *rwlock);
  *                                 in init_rw_lock.
  *
  * @param rwlock                   Lock to be destroyed.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void destroy_rw_lock(RWLock *rwlock);
 
@@ -85,8 +81,6 @@ void destroy_rw_lock(RWLock *rwlock);
  * @details                        Blocks until the lock is acquired.
  *
  * @param rwlock                   Lock to be acquired.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void write_lock(RWLock *rwlock);
 
@@ -96,8 +90,6 @@ void write_lock(RWLock *rwlock);
  * @details                        Blocks until the lock is acquired.
  *
  * @param rwlock                   Lock to be acquired.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void read_lock(RWLock *rwlock);
 
@@ -105,8 +97,6 @@ void read_lock(RWLock *rwlock);
  * @brief                          Write-releases read-write lock.
  *
  * @param rwlock                   Lock to be released.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void write_unlock(RWLock *rwlock);
 
@@ -114,8 +104,6 @@ void write_unlock(RWLock *rwlock);
  * @brief                          Read-releases read-write lock.
  *
  * @param rwlock                   Lock to be released.
- *
- * @returns                        Returns -1 on failure, 0 success.
  */
 void read_unlock(RWLock *rwlock);
 

@@ -2,9 +2,9 @@
 #define CPU_CAPTURE_TRANSFER_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file cpucapturetransfer.h
+ * @file transfercapture.h
  * @brief This code handles the data transfer from a video capture device to a
- *        video encoder via the CPU.
+ *        video encoder.
 ============================
 Usage
 ============================

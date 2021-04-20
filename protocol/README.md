@@ -173,7 +173,9 @@ Downloading precompiled binaries from S3 will require the AWS CLI to be installe
 
 #### Sentry
 
-To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. The SDK is a CMake project which we load in our root CMakeLists.txt.
+The sentry-native SDK gets automatically built by our CMake build system.
+
+To start the protocol with a given sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
 
 #### IDE
 

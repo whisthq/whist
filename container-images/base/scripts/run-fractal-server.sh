@@ -131,6 +131,20 @@ LOGS_TASK_ID=$(curl \
 END
 )
 
+# After sending the logs request, but before we get deep into our polling loop,
+# we should safely shut down the running application by properly stopping our
+# X server. Note that systemd unit dependency relationships are such that
+# After and Requires dependencies only apply to startup, and not to shutdown;
+# hence, we can safely stop an ancestor service. This would not be the case
+# if we were to use the PartOf relationship.
+#
+# Also note that this will have to be reworked if the service that calls
+# this script starts doing so as a user instead of as root. The rework would
+# involve adding a root service whose only job is to listen for a signal
+# emitted here and to perform the same actions on receipt of the signal.
+systemctl stop fractal-display
+
+
 get_task_state() {
     # GET $WEBSERVER_URL/status/$1
     #   Get the status of the provided task.

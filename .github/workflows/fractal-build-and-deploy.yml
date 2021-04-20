@@ -423,7 +423,7 @@ jobs:
                   data["source_ami"] = "${{ env.aws_source_ami_id }}"
                   # The regions our new AMI gets cloned to (should be all our other supported AWS regions)
                   # defined as a string of comma-separated values (no spaces) as required by Packer.
-                  data["destination_regions"] = "us-east-2,us-west-1,us-west-2,ca-central-1,eu-west-1,eu-central-1"
+                  data["destination_regions"] = ["us-east-2", "us-west-1", "us-west-2", "ca-central-1", "eu-west-1", "eu-central-1"]
                   fp = open("packer_vars.json", "w")
                   json.dump(data, fp)
                   fp.close()
@@ -441,7 +441,7 @@ jobs:
                   import json
 
                   # stdout will be shared with the subprocess so we can see what is happening
-                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.json", shell=True)
+                  subprocess.run("packer -machine-readable build -var-file=packer_vars.json ami_config.pkr.hcl", shell=True)
 
                   # if packer fails, manifest.json does not get created and the entire workflow fails here
                   assert os.path.exists("manifest.json")
@@ -1290,7 +1290,7 @@ jobs:
                 main-webserver-update-fractal-services,
             ]
         if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod"]'), needs.fractal-publish-build-config.outputs.branch)
+            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -1309,7 +1309,7 @@ jobs:
               uses: softprops/action-gh-release@v1
               with:
                   tag_name: v${{ needs.client-applications-publish-build-s3.outputs.release_version }}
-                  body: Fractal Promotion to Production on ${{ env.date }}.
+                  body: \"Fractal Promotion to \`${{ needs.fractal-publish-build-config.outputs.branch }}\` on ${{ env.date }}.\"
                   draft: false
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

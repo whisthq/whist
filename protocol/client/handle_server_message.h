@@ -2,7 +2,7 @@
 #define SERVER_MESSAGE_HANDLER_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file server_message_handler.h
+ * @file handle_server_message.h
  * @brief This file contains all the code for client-side processing of messages
  *        received from the server
 ============================

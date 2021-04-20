@@ -218,7 +218,7 @@ endif ()
 # the NO_* paramaters tell cmake to only look for our included libs and not system wide ones.
 # For linux we use the system openssl/libcrypto. For mac and windows we bundle our own because is not included with the os
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    find_library(STATIC_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
+    find_library(LIB_OPENSSL NAMES crypto libcrypto PATHS "${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/"
             NO_DEFAULT_PATH
             NO_CMAKE_ENVIRONMENT PATH
             NO_CMAKE_PATH
@@ -226,7 +226,7 @@ if (NOT ${CMAKE_SYSTEM_NAME} MATCHES "Linux")
             NO_CMAKE_SYSTEM_PATH
             NO_CMAKE_FIND_ROOT_PATH)
 
-    if (NOT STATIC_OPENSSL)
+    if (NOT LIB_OPENSSL)
         message(FATAL_ERROR "Library openssl was not found! ${CMAKE_SOURCE_DIR}/lib/${arch}/openssl/${CMAKE_SYSTEM_NAME}/")
     endif()
 else()
@@ -259,8 +259,8 @@ if ((NOT LIBMFX AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
 endif()
 
 #download and install Sentry CMake project
-# This is fixed to sdk version 0.4.4
-set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.4/sentry-native.zip)
+# This is fixed to sdk version 0.4.8
+set(sentry_url https://github.com/getsentry/sentry-native/releases/download/0.4.8/sentry-native.zip)
 set(sentry_dir sentry-native)
 MESSAGE(VERBOSE ${CMAKE_SOURCE_DIR}/${sentry_dir})
 if(NOT EXISTS ${CMAKE_SOURCE_DIR}/${sentry_dir})
@@ -342,3 +342,13 @@ else()
         COMMAND ${BASH} ${CMAKE_SOURCE_DIR}/run-clang-tidy.sh -c
         DEPENDS FractalClient ${SERV})
 endif()
+
+if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    add_custom_target(docs
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND mkdir -p ${CMAKE_BINARY_DIR}/docs
+        COMMAND cp ${CMAKE_SOURCE_DIR}/docs/Doxyfile ${CMAKE_BINARY_DIR}/docs
+        COMMAND ${CMAKE_COMMAND} -E echo "OUTPUT_DIRECTORY = ${CMAKE_BINARY_DIR}/docs" >> ${CMAKE_BINARY_DIR}/docs/Doxyfile
+        COMMAND doxygen ${CMAKE_BINARY_DIR}/docs/Doxyfile
+        )
+endif ()

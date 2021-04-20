@@ -82,8 +82,6 @@ Public Functions
  *                                 encoder will encode to
  * @param codec_type               Which codec type (h264 or h265) to use
  *
- * @param using_capture_encoder    Whether or not the given frame will already be encoded
- *
  * @returns                        The newly created encoder
  */
 VideoEncoder* create_video_encoder(int in_width, int in_height, int out_width, int out_height,
