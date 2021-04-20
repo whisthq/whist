@@ -89,7 +89,7 @@ export const uploadToS3 = async (email: string) => {
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-  logBase('Logs upload to S3', { s3FileName: s3FileName }, LogLevel.DEBUG)
+  logBase(logFile, 'Logs upload to S3', { s3FileName: s3FileName }, LogLevel.DEBUG)
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
