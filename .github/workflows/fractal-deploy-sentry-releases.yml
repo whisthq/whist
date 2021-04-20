@@ -109,7 +109,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  tmpfolder = `mktemp -d`
+                  tmpfolder=`mktemp -d`
                   mv notifications $tmpfolder # even if git repo changes, package is available
                   echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 

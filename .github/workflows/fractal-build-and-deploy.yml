@@ -943,8 +943,6 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               run: git push -f heroku-fractal-server workflows-private/main-webserver:master
 
-            - name: Switch back to
-
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
