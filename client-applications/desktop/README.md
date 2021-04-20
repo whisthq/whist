@@ -45,7 +45,7 @@ The unpackaged app will have `Electron` in the path while the packaged app will 
 
 Note the locations of the logfiles as well:
 
-- On macOS/Linux, `~/.Fractal/log{,-dev,staging}.txt`
+- On macOS/Linux, `~/.fractal/log{,-dev,staging}.txt`
 - On Windows, `%APPDATA%\Fractal\log{,-dev,staging}.txt`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
 
 ## Client Application Source Code
