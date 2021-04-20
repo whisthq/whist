@@ -14,7 +14,7 @@ export const emailLoginValid = (response: ResponseAuth) =>
   (response?.json?.access_token ?? '') !== ''
 
 export const emailLoginError = (response: ResponseAuth) =>
-  response.status !== 200
+  response?.status !== 200
 
 export const emailLoginAccessToken = (response: ResponseAuth) =>
   response.json?.access_token
@@ -27,5 +27,5 @@ export const emailLoginConfigToken = async (
   password: string
 ) =>
   (response?.json?.encrypted_config_token ?? '') !== ''
-    ? decryptConfigToken(response.json.encrypted_config_token, password)
+    ? decryptConfigToken(response?.json?.encrypted_config_token, password)
     : await createConfigToken()

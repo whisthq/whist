@@ -53,7 +53,7 @@ export const loginLoading = loadingFrom(
 
 debugObservables(
   [loginRequest, 'loginRequest'],
-  [loginSuccess, 'loginWarning'],
+  [loginSuccess, 'loginSuccess'],
   [loginLoading, 'loginLoading']
 )
 

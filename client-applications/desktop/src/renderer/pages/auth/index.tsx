@@ -44,8 +44,8 @@ const Auth = () => {
                     <Login
                         email={email}
                         password={password}
-                        warning={mainState.loginWarning}
-                        loading={mainState.loginLoading}
+                        warning={mainState?.loginWarning}
+                        loading={mainState?.loginLoading}
                         onLogin={onLogin}
                         onNavigate={clearPassword}
                         onChangeEmail={setEmail}
@@ -61,8 +61,8 @@ const Auth = () => {
                         email={email}
                         password={password}
                         confirmPassword={confirmPassword}
-                        warning={mainState.signupWarning}
-                        loading={mainState.signupLoading}
+                        warning={mainState?.signupWarning}
+                        loading={mainState?.signupLoading}
                         onSignup={onSignup}
                         onNavigate={clearPassword}
                         onChangeEmail={setEmail}

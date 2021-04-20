@@ -43,22 +43,22 @@ type HostServiceConfigResponse = AsyncReturnType<typeof hostServiceConfig>
 export const hostServiceInfoIP = (res: hostServiceInfoResponse) => res.json?.ip
 
 export const hostServiceInfoPort = (res: hostServiceInfoResponse) =>
-  res.json?.port
+  res?.json?.port
 
 export const hostServiceInfoSecret = (res: hostServiceInfoResponse) =>
-  res.json?.client_app_auth_secret
+  res?.json?.client_app_auth_secret
 
 export const hostServiceInfoValid = (res: hostServiceInfoResponse) =>
-  res.status === 200 &&
+  res?.status === 200 &&
   (hostServiceInfoIP(res) ?? '') !== '' &&
   (hostServiceInfoPort(res) ?? '') !== '' &&
   (hostServiceInfoSecret(res) ?? '') !== ''
 
 export const hostServiceInfoPending = (res: hostServiceInfoResponse) =>
-  res.status === 200 && !hostServiceInfoValid(res)
+  res?.status === 200 && !hostServiceInfoValid(res)
 
 export const hostServiceConfigValid = (res: HostServiceConfigResponse) =>
-  res.status === 200
+  res?.status === 200
 
 export const hostServiceConfigError = (res: HostServiceConfigResponse) =>
   !hostServiceConfigValid(res)
