@@ -348,26 +348,11 @@ char* fractal_git_revision() {
 #endif
 }
 
-#ifdef _WIN32
-// https://stackoverflow.com/questions/43786383/analogy-to-mmapnull-sz-prot-read-prot-write-map-private-map-anonymous
-// https://docs.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information
-#include <windows.h>
-#else
-#include <unistd.h>
-#include <sys/mman.h>
-#endif
-
-int get_page_size() {
-#ifdef _WIN32
-    SYSTEM_INFO sys_info;
-
-    // Copy the hardware information to the SYSTEM_INFO structure.
-    GetSystemInfo(&sys_info);
-    return sys_info.dwPageSize;
-#else
-    return getpagesize();
-#endif
-}
+// ------------------------------------
+// Implementation of a block allocator
+// that allocates blocks of constant size
+// and maintains a free list of recently freed blocks
+// ------------------------------------
 
 #define MAX_FREES 1024
 
@@ -425,54 +410,116 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
     blk_allocator->num_allocated_blocks--;
 }
 
+// ------------------------------------
+// Implementation of a direct allocator
+// that allocates directly from mmap/MapViewOfFile
+// ------------------------------------
+
+#ifdef _WIN32
+// https://stackoverflow.com/questions/43786383/analogy-to-mmapnull-sz-prot-read-prot-write-map-private-map-anonymous
+// https://docs.microsoft.com/en-us/windows/win32/sysinfo/getting-hardware-information
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/mman.h>
+#endif
+
+// Get the page size
+int get_page_size() {
+#ifdef _WIN32
+    SYSTEM_INFO sys_info;
+
+    // Copy the hardware information to the SYSTEM_INFO structure.
+    GetSystemInfo(&sys_info);
+    return sys_info.dwPageSize;
+#else
+    return getpagesize();
+#endif
+}
+
+// Declare the BlockHeader struct
+#ifdef _WIN32
+typedef struct {
+    size_t size;
+    HANDLE h_mapping;
+} BlockHeader;
+#else
+typedef struct {
+    size_t size;
+} BlockHeader;
+#endif
+// Macros to go between the data and the header of a block
+#define TO_BLOCK_HEADER(a) ((void*)(((char*)a) - sizeof(BlockHeader)))
+#define TO_BLOCK_DATA(a) ((void*)(((char*)a) + sizeof(BlockHeader)))
+
 void* allocate_custom_block(size_t block_size) {
     size_t page_size = get_page_size();
-    // Use sizeof(size_t) space for holding the size of the custom block
-    block_size += sizeof(size_t);
+    // Make space for the block header as well
+    block_size += sizeof(BlockHeader);
     // Round up to the nearest page size
     block_size = block_size + (page_size - (block_size % page_size)) % page_size;
 
-    LOG_INFO("Allocating block of %d", block_size);
-    print_stacktrace();
-
 #ifdef _WIN32
-    // TODO: Implement for Windows
+    DWORD bytes_count_to_map = block_size;
+    HANDLE h_mapping = CreateFileMappingW(INVALID_HANDLE_VALUE,         // not binded to actual file
+                                          nullptr,                      // default security
+                                          PAGE_READWRITE | SEC_COMMIT,  // access flags
+                                          0u,                           // map high
+                                          bytes_count_to_map,           // map low
+                                          nullptr                       // no name
+    );
+    if (h_mapping == NULL) {
+        LOG_FATAL("Could not CreateFileMapping");
+    }
+    void* p = MapViewOfFile(h_mapping,                       // mapping handle
+                            FILE_MAP_READ | FILE_MAP_WRITE,  // map flags
+                            0,                               // offset high
+                            0,                               // offset low
+                            bytes_count_to_map               // size
+    );
+    if (p == NULL) {
+        LOG_FATAL("Could not MapViewOfFile");
+    }
+    ((BlockHeader*)p)->size = block_size;
+    ((BlockHeader*)p)->h_mapping = block_size;
 #else
-    size_t* p = mmap(0, block_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
-    *p = block_size;
-    p++;
+    void* p = mmap(0, block_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (p == NULL) {
         LOG_FATAL("mmap failed!");
     }
+    ((BlockHeader*)p)->size = block_size;
 #endif
-    return p;
+    return TO_BLOCK_DATA(p);
 }
 
 void* realloc_custom_block(void* block, size_t new_block_size) {
-    size_t* p = (size_t*)block;
-    p--;
-    size_t block_size = *p;
-
-    LOG_INFO("Allocating block of %d", new_block_size);
-    print_stacktrace();
+    BlockHeader* p = TO_BLOCK_HEADER(block);
+    size_t block_size = p->size;
 
     // Allocate new block
-    size_t* new_p = allocate_custom_block(new_block_size);
-    // Copy the previous data over (Not the size tag though)
-    memcpy(new_p, block, min(block_size - sizeof(size_t), new_block_size));
+    void* new_p = allocate_custom_block(new_block_size);
+    // Copy the actual data over, truncating to new_block_size if there's not enough space
+    memcpy(new_p, block, min(block_size - sizeof(BlockHeader), new_block_size));
+    // Allocate the old block
     free_custom_block(block);
 
+    // Return the new block
     return new_p;
 }
 
 void free_custom_block(void* block) {
-    size_t* p = (size_t*)block;
-    p--;
-    size_t block_size = *p;
+    BlockHeader* p = TO_BLOCK_HEADER(block);
+
 #ifdef _WIN32
-    // TODO: Implement for Windows
+    HANDLE h_mapping = p->h_mapping;
+    if (UnmapViewOfFile(p) == FALSE) {
+        LOG_FATAL("Could not UnmapViewOfFile")
+    }
+    if (CloseHandle(h_mapping) == FALSE) {
+        LOG_FATAL("Could not CloseHandle")
+    }
 #else
-    if (munmap(p, block_size) != 0) {
+    if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }
 #endif
