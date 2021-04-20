@@ -38,7 +38,7 @@ interface SubscriptionMap {
 const emitJSON = (observable: Observable<string | number | boolean | SubscriptionMap>, str: string) =>
   observable.pipe(map(val => ({[str]: val})))
 
-const jsonMerge = (obj: SubscriptionMap) =>
+const objectCombine = (obj: SubscriptionMap) =>
   merge(
     ...toPairs(
       obj
@@ -55,7 +55,7 @@ const subscribed: SubscriptionMap = {
   signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
 
-jsonMerge(subscribed)
+objectCombine(subscribed)
   .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
   .subscribe(([subs, state]) => {
     console.log({ ...state, ...subs })
