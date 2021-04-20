@@ -75,7 +75,7 @@ def _clean_up_task(container: UserContainer) -> None:
 
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(
-            reason="Failure to mount cloud storage or pass start values to instance", offset=0
+            reason="Container failed to properly initialize", offset=0
         )
         # delete base container from db
     fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
