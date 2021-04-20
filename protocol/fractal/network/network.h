@@ -213,7 +213,7 @@ void init_default_port_mappings();
  * @brief                          This will set the socket s to have timeout
  *                                 timeout_ms. Use 0 to have a non-blocking
  *                                 socket, and -1 for an indefinitely blocking
- * socket
+ *                                 socket
  *
  * @returns                        The network error that most recently occured,
  *                                 through WSAGetLastError on Windows or errno
@@ -243,7 +243,7 @@ int get_last_network_error();
  *                                 some small constant times
  *                                 connection_timeout_ms
  * @param using_stun               True/false for whether or not to use the STUN server for this
- * context
+ *                                 context
  * @param binary_aes_private_key   The AES private key used to encrypt the socket communication
  *
  * @returns                        Will return -1 on failure, will return 0 on
