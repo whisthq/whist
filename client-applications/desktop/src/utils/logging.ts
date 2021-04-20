@@ -162,9 +162,9 @@ export const logObservable = (logFile: fs.WriteStream, level: LogLevel, title: s
 }
 
 // Log level wrapper functions
-const debug = logObservable.bind(logFile, null, LogLevel.DEBUG)
-const warning = logObservable.bind(logFile, null, LogLevel.WARNING)
-const error = logObservable.bind(logFile, null, LogLevel.ERROR)
+const debug = logObservable.bind(null, logFile, LogLevel.DEBUG)
+const warning = logObservable.bind(null, logFile, LogLevel.WARNING)
+const error = logObservable.bind(null, logFile, LogLevel.ERROR)
 
 const logObservables = (
   func: typeof debug,
