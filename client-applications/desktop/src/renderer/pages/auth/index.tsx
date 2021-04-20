@@ -35,8 +35,6 @@ const Auth = () => {
     })
   }
 
-  console.log("MAIN STATE IS", mainState)
-
   return (
         <>
             <Route

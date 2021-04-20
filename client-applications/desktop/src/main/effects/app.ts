@@ -23,14 +23,13 @@ import {
   hideAppDock
 } from '@app/utils/windows'
 import {
-  loginSuccess 
+  loginSuccess
 } from '@app/main/observables/login'
 import {
-  signupSuccess 
+  signupSuccess
 } from '@app/main/observables/signup'
-import {
-  protocolLaunchProcess,
-} from "@app/main/observables/protocol"
+import { protocolLaunchProcess, protocolCloseRequest }
+  from '@app/main/observables/protocol'
 import { errorWindowRequest } from '@app/main/observables/error'
 import {
   autoUpdateAvailable,
@@ -41,7 +40,7 @@ import {
   userAccessToken,
   userConfigToken
 } from '@app/main/observables/user'
-import { protocolCloseRequest } from '@app/main/observables/protocol'
+
 import { uploadToS3 } from '@app/utils/logging'
 
 // appReady only fires once, at the launch of the application.
