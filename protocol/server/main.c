@@ -1015,16 +1015,7 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
             case 'e': {
-                // only log "production" and "staging" env sentry events
-                if (strcmp(optarg, "production") == 0 || strcmp(optarg, "staging") == 0) {
-                    if (!safe_strncpy(sentry_environment, optarg, sizeof(sentry_environment))) {
-                        printf("Sentry environment is too long: %s\n", optarg);
-                        return -1;
-                    }
-                    sentry_set_tag("runner", "server");
-                    using_sentry = true;
-                    init_sentry();
-                }
+                using_sentry = init_sentry(optarg, "server")
                 break;
             }
             case 't': {

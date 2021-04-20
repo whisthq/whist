@@ -183,15 +183,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'e': {  // sentry environment
-            // only log "production" and "staging" env sentry events
-            if (strcmp(eval_optarg, "production") == 0 || strcmp(eval_optarg, "staging") == 0) {
-                if (!safe_strncpy(sentry_environment, eval_optarg, sizeof(sentry_environment))) {
-                    printf("Sentry environment is too long: %s\n", eval_optarg);
-                    return -1;
-                }
-                using_sentry = true;
-                init_sentry();
-            }
+            using_sentry = init_sentry(optarg, "client")
             break;
         }
         case 'i': {  // protocol window icon
