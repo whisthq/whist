@@ -33,14 +33,20 @@ Before making a pull request, ensure that the following steps are taken:
 
 Finally, you can open PR to `dev`.
 
-### How To Clear The App's Cache
+### App State and Logging
 
 Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting/modifying/reviewing the files at:
 
 - On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
-- On Windows, look in `C:\Users\<user>\AppData\Roaming\{Electron,Fractal}\Cache\config.json`
+- On Linux, look in `~/.config/{Electron,Fractal}/Cache/config.json`
+- On Windows, look in `%APPDATA%\{Electron,Fractal}\Cache\config.json`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
 
 The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
+
+Note the locations of the logfiles as well:
+
+- On macOS/Linux, `~/.Fractal/log{,-dev,staging}.txt`
+- On Windows, `%APPDATA%\Fractal\log{,-dev,staging}.txt`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
 
 ## Client Application Source Code
 
