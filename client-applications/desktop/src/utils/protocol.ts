@@ -8,8 +8,13 @@ import { spawn, ChildProcess } from 'child_process'
 // const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 //
 const getProtocolName = () => {
-  if (process.platform === 'win32') return 'Fractal.exe'
-  return './_Fractal'
+  if (process.platform === 'win32') {
+    return 'Fractal.exe'
+  } else if (process.platform === 'darwin') {
+    return '_Fractal'
+  } else {
+    return 'Fractal'
+  }
 }
 
 const getProtocolFolder = () => {
