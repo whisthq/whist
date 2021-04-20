@@ -58,6 +58,5 @@ const subscribed: SubscriptionMap = {
 objectCombine(subscribed)
   .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
   .subscribe(([subs, state]) => {
-    console.log({ ...state, ...subs })
     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
   })
