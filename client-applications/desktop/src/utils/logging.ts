@@ -2,6 +2,7 @@ import { app } from 'electron'
 import { tap } from 'rxjs/operators'
 import { identity, truncate } from 'lodash'
 import fs from 'fs'
+import path from 'path'
 import util from 'util'
 import AWS from 'aws-sdk'
 import logzio from 'logzio-nodejs'
@@ -18,11 +19,8 @@ export enum LogLevel {
 }
 
 // Where to send log files, located in ~/.fractal
-const getBaseFilePath = (fileName: string) => {
-  const homeDir = app.getPath('home')
-  const baseFilePath = `${homeDir}/.fractal`
-  return `${baseFilePath}/${fileName}`
-}
+const baseFilePath = path.join(app.getPath('home'), '.fractal')
+
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
@@ -31,6 +29,16 @@ const logzLogger = logzio.createLogger({
   sendIntervalMs: 50
 })
 
+// Open a file handle to append to the logs file.
+// Create the ~/.fractal directory if it does not exist.
+const openLogFile = () => {
+  fs.mkdirSync(baseFilePath, { recursive: true })
+  const logPath = path.join(baseFilePath, 'debug.log')
+  return fs.createWriteStream(logPath, { flags: 'a' })
+}
+
+const logFile = openLogFile()
+
 // We use a special stringify function below before converting an object
 // to JSON. This is because certain objects in our application, like HTTP
 // responses and ChildProcess objects, have circular references in their
@@ -38,17 +46,16 @@ const logzLogger = logzio.createLogger({
 // if you blindly try to turn these objects into JSON. Our special stringify
 // function strips these circular references from the object.
 
-const logBase = (title: string, data?: any, level?: LogLevel) => {
+const logBase = (logFile: fs.WriteStream, title: string, data?: any, level?: LogLevel) => {
   /*
   Description:
       Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
   Arguments:
+      logFile (fs.WriteStream): The file handle to which to append the logs
       title (string): Log title
       data (any): JSON or list
       level (LogLevel): Log level, see enum LogLevel above
   */
-  const logPath = getBaseFilePath('debug.log')
-  const logFile = fs.createWriteStream(logPath, { flags: 'a' })
 
   const template = `DEBUG: ${title} -- \n ${
     data !== undefined ? stringify(data, null, 2) : ''
@@ -116,9 +123,9 @@ export const uploadToS3 = async (email: string) => {
   const uploadPromises: Array<Promise<any>> = []
 
   const logLocations = [
-    getBaseFilePath('log-dev.txt'),
-    getBaseFilePath('log-staging.txt'),
-    getBaseFilePath('log.txt')
+    path.join(baseFilePath, 'log-dev.txt'),
+    path.join(baseFilePath, 'log-staging.txt'),
+    path.join(baseFilePath, 'log.txt')
   ]
 
   logLocations.forEach((filePath: string) => {
@@ -130,12 +137,13 @@ export const uploadToS3 = async (email: string) => {
   await Promise.all(uploadPromises)
 }
 
-export const logObservable = (level: LogLevel, title: string) => {
+export const logObservable = (logFile: fs.WriteStream, level: LogLevel, title: string) => {
   /*
     Description:
         Returns a custom operator that logs values emitted by an observable
 
     Arguments:
+        logFile (fs.WriteStream): The file handle to which to append the logs
         level (LogLevel): Level of log
         title (string): Name of observable, written to log
         message (string): Additional log message
@@ -148,15 +156,15 @@ export const logObservable = (level: LogLevel, title: string) => {
   return tap<any>({
     next (value) {
       const data = identity(value)
-      logBase(title, data, level)
+      logBase(logFile, title, data, level)
     }
   })
 }
 
 // Log level wrapper functions
-const debug = logObservable.bind(null, LogLevel.DEBUG)
-const warning = logObservable.bind(null, LogLevel.WARNING)
-const error = logObservable.bind(null, LogLevel.ERROR)
+const debug = logObservable.bind(logFile, null, LogLevel.DEBUG)
+const warning = logObservable.bind(logFile, null, LogLevel.WARNING)
+const error = logObservable.bind(logFile, null, LogLevel.ERROR)
 
 const logObservables = (
   func: typeof debug,
