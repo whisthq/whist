@@ -47,7 +47,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             # A non-pull_request event does not have a github.base_ref set
             # We have to dig into the event object, which has a ref string
