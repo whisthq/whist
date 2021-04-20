@@ -3,7 +3,7 @@ user_pref("browser.startup.page", 0);
 user_pref("datareporting.policy.firstRunURL", "");
 
 // Enable General Hardware Acceleration
-// user_pref("layers.acceleration.force-enabled", true);
+user_pref("layers.acceleration.force-enabled", true);
 user_pref("gfx.webrender.all", true);
 
 // Enable Hardware Video Acceleration
