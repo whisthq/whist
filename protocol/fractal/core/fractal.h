@@ -683,6 +683,8 @@ void* allocate_block(BlockAllocator* BlockAllocator);
 void free_block(BlockAllocator* BlockAllocator, void* block);
 
 void* allocate_custom_block(size_t block_size);
+void mark_unused_custom_block(void* block);
+void mark_used_custom_block(void* block);
 void* realloc_custom_block(void* block, size_t block_size);
 void free_custom_block(void* block);
 
