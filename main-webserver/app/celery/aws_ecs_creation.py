@@ -58,6 +58,29 @@ user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
 
+def _clean_up_task(container: UserContainer) -> None:
+    """
+    Stops a running task and deletes it from the DB
+    Args:
+        container: the userContainer object to stop
+
+    Returns: None
+
+    """
+    # stop base container task if it is running
+    ecs_client = ECSClient(
+        base_cluster=container.cluster, region_name=container.location, grab_logs=False
+    )
+    ecs_client.add_task(container.container_id)
+
+    if not ecs_client.check_if_done(offset=0):
+        ecs_client.stop_task(
+            reason="Failure to mount cloud storage or pass start values to instance", offset=0
+        )
+        # delete base container from db
+    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
+
+
 def _clean_tasks_and_create_new_container(
     container: UserContainer,
     task_version: int,
@@ -78,16 +101,7 @@ def _clean_tasks_and_create_new_container(
         After cleaning resources, returns the result of recursive call to assign_container,
         which is a generated container, in json form
     """
-    # stop base container task if it is running
-    ecs_client = ECSClient(
-        base_cluster=container.cluster, region_name=container.location, grab_logs=False
-    )
-    ecs_client.add_task(container.container_id)
-
-    if not ecs_client.check_if_done(offset=0):
-        ecs_client.stop_task(
-            reason="Failure to mount cloud storage or pass start values to instance", offset=0
-        )
+    _clean_up_task(container)
 
     # delete every task that is unassigned with that instance IP in the DB
     all_tasks = UserContainer.query.filter_by(ip=container.ip, user_id=None).all()
@@ -105,9 +119,6 @@ def _clean_tasks_and_create_new_container(
 
         # delete from db
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), task)
-
-    # delete base container from db
-    fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
     # assign a new container for that user
     return assign_container(
@@ -776,6 +787,7 @@ def _assign_container(
             state="FAILURE",
             meta={"msg": f"Container {str(base_container.container_id)} failed to ping."},
         )
+        _clean_up_task(base_container)
 
         raise Ignore
 
