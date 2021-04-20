@@ -48,8 +48,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  # allows us to import from notifications package anywhere in this job
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
@@ -109,8 +108,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  # allows us to import from notifications package anywhere in this job
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Notify Slack on success
               shell: python3 {0}

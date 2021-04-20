@@ -31,8 +31,7 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  # allows us to import from notifications package anywhere in this job
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
