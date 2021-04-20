@@ -123,25 +123,26 @@ def github_comment_once(issue, identifier, body, title=None, code=None, lang=Non
     github_bot.create_comment(issue, fmt.concat_id(identifier, content))
 
 
-def slack_post(channel, body, title=None, code=None, lang=None):
+def slack_post(slack_webhook, channel, body, slack_username="Fractal Bot", title=None, code=None, lang=None):
     """Creates a post on a Slack channel
 
-    Requires the environment variable SLACK_TOKEN to be set.
-
-    Defaults to using the Fractal Bot as username. The environment variable
-    SLACK_USERNAME can be set to choose a different username.
-
     Args:
-        channel: a string that represents the channel to post to
+        slack_webhook: a string, Slack webhook to send messages to
+        channel: a string, Slack channel to post to
         body: a string, the main content of the comment
-        title: a optional string, formatted at the top of the comment
-        code: a optional string, placed in a block at the bottom of the comment
-        lang: a optional string, used to format the comment's code block
+        slack_username: an optional string, Name of account to post messages as
+        title: an optional string, formatted at the top of the comment
+        code: an optional string, placed in a block at the bottom of the comment
+        lang: an optional string, used to format the comment's code block
     Returns
         None"""
-    slack_bot.create_post(channel,
-                          fmt.default_message_slack(body, title, code, lang),
-                          text=(title or body))
+    fmt_body = fmt.default_message_slack(body, title, code, lang)
+    slack_bot.create_post(
+        slack_webhook=slack_webhook,
+        slack_username=slack_username,
+        channel=channel,
+        body=fmt_body
+    )
 
 
 # The functions below represent the main logging API for each service.

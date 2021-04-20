@@ -35,10 +35,11 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: |
+                  pip install -r notifications/requirements.txt
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
@@ -64,14 +65,17 @@ jobs:
 
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
-              working-directory: .github/workflows/helpers/aws
+              shell: python3 {0}
               run: |
-                  # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.hanging_resource }}" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
+                  import os
+                  from notifications import slack_post
+
+                  if os.environ.get("hanging_resource") not in (None, ""):
+                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                    SLACK_CHANNEL = "#alerts-dev"
+                    BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}."
+
+                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-ec2-notification:
         name: Main Webserver EC2 Resource Notification
@@ -87,10 +91,11 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: |
+                  pip install -r notifications/requirements.txt
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Install boto3
               run: pip install boto3
@@ -105,21 +110,29 @@ jobs:
                   echo "$ec2_instances"
 
             - name: Notify Slack all instances
-              working-directory: .github/workflows/helpers/aws
+              shell: python3 {0}
               run: |
-                  # notify slack if there are hanging resources
-                  if [ ! -z "${{ env.ec2_instances }}" ]; then
-                      curl -X POST \
-                      --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"${{ env.ec2_instances }}\", \"icon_emoji\": \":fractal:\"}" \
-                      ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                  fi
+                  import os
+                  from notifications import slack_post
+
+                  if os.environ.get("ec2_instances") not in (None, ""):
+                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                    SLACK_CHANNEL = "#alerts-dev"
+                    BODY = "${{ env.ec2_instances }}"
+
+                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
             - name: Notify Slack if error
-              if: ${{ failure() }}
+              if: failure()
+              shell: python3 {0}
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Scanning EC2 Instance failure\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-dev"
+                  BODY = "@channel Scanning EC2 Instance failure"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
@@ -128,10 +141,11 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: |
+                  pip install -r notifications/requirements.txt
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -145,16 +159,22 @@ jobs:
 
             - name: Check for Dangling Packer Instances and Notify in Slack if There Are Any
               working-directory: main-webserver
+              shell: python3 {0}
               run: |
-                  packer_instances=$(aws-hashicorp-packer-reaper list)
-                  while IFS= read -r line 
-                  do 
-                    if [ "$(echo $line | sed 's/.*- //')" = "running" ]; then
-                        curl -X POST \
-                        --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Dangling Packer Instance: \`${line}\`\", \"icon_emoji\": \":fractal:\"}" \
-                        ${{ secrets.SLACK_HOOKS_ENDPOINT }}
-                    fi
-                  done <<< "$packer_instances"
+                  import subprocess
+                  from notifications import slack_post
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-dev"
+
+                  ret = subprocess.run(aws-hashicorp-packer-reaper list, capture_output=True, shell=True)
+                  assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
+                  # example output is shown here: https://pypi.org/project/aws-hashicorp-packer-reaper/
+                  reaper_output_lines = ret.stdout.decode("utf-8").strip().split("\n")
+
+                  for line in reaper_output_lines:
+                    if "running" in line:
+                      BODY = f"Dangling Packer Instance: `{line}`"
+                      slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     notify-if-hanging-resource-fails:
         name: "Notify Slack if Hanging Resource Workflow Fails"
@@ -166,8 +186,22 @@ jobs:
         if: failure()
         runs-on: ubuntu-20.04
         steps:
-            - name: Notify Slack if Hanging Resource Workflow Fails
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
               run: |
-                  curl -X POST \
-                  --data-urlencode "payload={\"channel\": \"#alerts-dev\", \"username\": \"Fractal Bot\", \"text\": \"Hanging Resource Notification Failed\", \"icon_emoji\": \":fractal:\"}" \
-                  ${{ secrets.SLACK_HOOKS_ENDPOINT }}
+                  pip install -r notifications/requirements.txt
+                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+
+            - name: Notify Slack if Hanging Resource Workflow Fails
+              shell: python3 {0}
+              run: |
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-dev"
+                  BODY = "@channel Hanging Resource Notification Failed"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
