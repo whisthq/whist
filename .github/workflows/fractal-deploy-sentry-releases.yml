@@ -48,7 +48,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
@@ -63,26 +65,25 @@ jobs:
                   else
                       SENTRY_DEPLOY_ENVIRONMENT=dev
                   fi
-                  SENTRY_DEPLOY_ENVIRONMENT=test
 
                   echo "Sentry environment is set to: $SENTRY_DEPLOY_ENVIRONMENT"
                   echo "::set-output name=sentry-deploy-environment::$SENTRY_DEPLOY_ENVIRONMENT"
 
-            # - name: Create New Sentry Release
-            #   env:
-            #       SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
-            #   run: |
-            #       # Install Sentry CLI
-            #       curl -sL https://sentry.io/get-cli/ | bash
+            - name: Create New Sentry Release
+              env:
+                  SENTRY_DEPLOY_ENVIRONMENT: ${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}
+              run: |
+                  # Install Sentry CLI
+                  curl -sL https://sentry.io/get-cli/ | bash
 
-            #       # Create new Sentry release
-            #       export SENTRY_RELEASE=$(sentry-cli releases propose-version)
-            #       sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
-            #       sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
-            #       sentry-cli releases finalize $SENTRY_RELEASE
+                  # Create new Sentry release
+                  export SENTRY_RELEASE=$(sentry-cli releases propose-version)
+                  sentry-cli releases new $SENTRY_RELEASE --project $SENTRY_PROJECT
+                  sentry-cli releases set-commits --auto $SENTRY_RELEASE --log-level=debug
+                  sentry-cli releases finalize $SENTRY_RELEASE
 
-            #       # Create new deploy for this Sentry release
-            #       sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
+                  # Create new deploy for this Sentry release
+                  sentry-cli releases deploys $SENTRY_RELEASE new -e $SENTRY_DEPLOY_ENVIRONMENT
 
             - name: Notify Slack on failure
               if: failure()

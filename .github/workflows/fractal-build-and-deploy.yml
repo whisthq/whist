@@ -62,7 +62,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
             # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
@@ -299,7 +301,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
@@ -539,7 +543,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -610,7 +616,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Notify Slack
               shell: python3 {0}
@@ -643,7 +651,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -697,7 +707,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
@@ -899,7 +911,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Authenticate Heroku
               run: |
@@ -1234,7 +1248,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Notify Slack on success
               shell: python3 {0}
@@ -1291,7 +1307,9 @@ jobs:
               working-directory: .github/workflows/helpers
               run: |
                   pip install -r notifications/requirements.txt
-                  echo "PYTHONPATH=$PYTHONPATH:$(pwd)" >> $GITHUB_ENV # allows us to import from notifications
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
 
             - name: Retrieve Today's Date
               run: echo "date=$(date)" >> $GITHUB_ENV
