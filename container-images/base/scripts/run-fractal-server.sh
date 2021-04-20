@@ -106,6 +106,18 @@ if [[ ! ${WEBSERVER_URL+x} ]]; then
     exit 0
 fi
 
+case $SENTRY_ENV in
+    "production" )
+        LOG_FILENAME="log.txt"
+        ;;
+    "staging" )
+        LOG_FILENAME="log-staging.txt"
+        ;;
+    * )
+        LOG_FILENAME="log-dev.txt"
+        ;;
+esac
+
 # POST $WEBSERVER_URL/logs
 #   Upload the logs from the protocol run to S3.
 # JSON Parameters:
@@ -126,7 +138,7 @@ LOGS_TASK_ID=$(curl \
     "sender": "server",
     "identifier": "$CONTAINER_ID",
     "secret_key": "$FRACTAL_AES_KEY",
-    "logs": $(jq -Rs . </usr/share/fractal/log.txt)
+    "logs": $(jq -Rs . </usr/share/fractal/$LOG_FILENAME)
 }
 END
 )

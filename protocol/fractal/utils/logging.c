@@ -116,9 +116,9 @@ void init_logger(char* log_dir) {
         log_directory_length = strlen(log_dir);
         log_directory = (char*)safe_malloc(log_directory_length + 2);
         log_file_name = (char*)safe_malloc(log_directory_length +
-                                           log_file_length);  // assuming the longest file name is
+                                           log_file_length + 2);  // assuming the longest file name is
                                                               // {log_directory}log-staging_prev.txt
-        strncpy(log_directory, log_dir, log_directory_length);
+        safe_strncpy(log_directory, log_dir, log_directory_length + 1);
 #if defined(_WIN32)
         log_directory[log_directory_length] = '\\';
 #else
@@ -128,7 +128,7 @@ void init_logger(char* log_dir) {
 
         // name the initial log file before we know what environment we're in
         safe_strncpy(log_env, "-init", sizeof(log_env));
-        snprintf(log_file_name, log_directory_length + log_file_length, "%s%s%s%s", log_directory,
+        snprintf(log_file_name, log_directory_length + log_file_length + 2, "%s%s%s%s", log_directory,
                  "log", log_env, ".txt");
 
 #if defined(_WIN32)
@@ -152,26 +152,41 @@ void init_logger(char* log_dir) {
     //    start_timer(&mprintf_timer);
 }
 
-void init_sentry() {
+bool init_sentry(char* environment, const char* runner_type) {
     /*
-        Initializes sentry based on the sentry_environment variable set in parsed_args
+        Initializes sentry based on the environment passed in as an arg
 
         Arguments:
-            None
+            environment (char*): production/staging/development
+            runner_type (const char*): client or server
 
         Returns:
-            None
+            bool: whether sentry was initialized
     */
-    sentry_options_t* options = sentry_options_new();
-    // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
-    sentry_options_set_dsn(options, SENTRY_DSN);
-    // These are used by sentry to classify events and so we can keep track of version specific
-    // issues.
-    char release[200];
-    sprintf(release, "fractal-protocol@%s", fractal_git_revision());
-    sentry_options_set_release(options, release);
-    sentry_options_set_environment(options, sentry_environment);
-    sentry_init(options);
+
+    // only log "production" and "staging" env sentry events
+    if (strcmp(environment, "production") == 0 || strcmp(environment, "staging") == 0) {
+        if (!safe_strncpy(sentry_environment, environment, sizeof(sentry_environment))) {
+            printf("Sentry environment is too long: %s\n", environment);
+            return -1;
+        }
+        sentry_set_tag("runner", runner_type);
+
+        sentry_options_t* options = sentry_options_new();
+        // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this
+        sentry_options_set_dsn(options, SENTRY_DSN);
+        // These are used by sentry to classify events and so we can keep track of version specific
+        // issues.
+        char release[200];
+        sprintf(release, "fractal-protocol@%s", fractal_git_revision());
+        sentry_options_set_release(options, release);
+        sentry_options_set_environment(options, sentry_environment);
+        sentry_init(options);
+
+        return true;
+    }
+
+    return false;
 }
 
 void rename_log_file() {
@@ -193,7 +208,7 @@ void rename_log_file() {
 
     // use sentry_environment to set new log file name
     char new_log_file_name[1000] = "";
-    if (strcmp(sentry_environment, "production") == 0) {
+    if (strcmp(sentry_environment, "prod") == 0) {
         safe_strncpy(log_env, "", sizeof(log_env));
     } else if (strcmp(sentry_environment, "staging") == 0) {
         safe_strncpy(log_env, "-staging", sizeof(log_env));
@@ -210,7 +225,7 @@ void rename_log_file() {
     }
 
     // replace old log name with new name
-    safe_strncpy(log_file_name, new_log_file_name, log_directory_length + log_file_length);
+    safe_strncpy(log_file_name, new_log_file_name, log_directory_length + log_file_length + 1);
 
     // reopen log file to write to
     mprintf_log_file = fopen(log_file_name, "ab");
