@@ -71,4 +71,4 @@ debugObservables(
   [protocolCloseRequest, "protocolCloseRequest"]
 )
 
-errorObservables([protocolLaunchFailure, "protocolLaunchFailure"])
+errorObservables([protocolLaunchFailure, 'protocolLaunchFailure'])
