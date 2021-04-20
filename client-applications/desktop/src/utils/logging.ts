@@ -18,8 +18,15 @@ export enum LogLevel {
   ERROR = 'ERROR',
 }
 
-// Where to send log files, located in ~/.fractal
-const baseFilePath = path.join(app.getPath('home'), '.fractal')
+// Where to send log files, located in ~/.fractal on Unixes and %APPDATA%\Fractal on Windows systems
+const getBaseFilePath = () => {
+  if (process.platform === 'win32') {
+    return path.join(app.getPath('appData'), 'Fractal')
+  } else {
+    return path.join(app.getPath('home'), '.fractal')
+  }
+}
+const baseFilePath = getBaseFilePath()
 
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
@@ -30,7 +37,7 @@ const logzLogger = logzio.createLogger({
 })
 
 // Open a file handle to append to the logs file.
-// Create the ~/.fractal directory if it does not exist.
+// Create the baseFilePath directory if it does not exist.
 const openLogFile = () => {
   fs.mkdirSync(baseFilePath, { recursive: true })
   const logPath = path.join(baseFilePath, 'debug.log')
@@ -46,7 +53,12 @@ const logFile = openLogFile()
 // if you blindly try to turn these objects into JSON. Our special stringify
 // function strips these circular references from the object.
 
-const logBase = (logFile: fs.WriteStream, title: string, data?: any, level?: LogLevel) => {
+const logBase = (
+  logFile: fs.WriteStream,
+  title: string,
+  data?: any,
+  level?: LogLevel
+) => {
   /*
   Description:
       Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
@@ -89,7 +101,12 @@ export const uploadToS3 = async (email: string) => {
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-  logBase(logFile, 'Logs upload to S3', { s3FileName: s3FileName }, LogLevel.DEBUG)
+  logBase(
+    logFile,
+    'Logs upload to S3',
+    { s3FileName: s3FileName },
+    LogLevel.DEBUG
+  )
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
@@ -137,7 +154,11 @@ export const uploadToS3 = async (email: string) => {
   await Promise.all(uploadPromises)
 }
 
-export const logObservable = (logFile: fs.WriteStream, level: LogLevel, title: string) => {
+export const logObservable = (
+  logFile: fs.WriteStream,
+  level: LogLevel,
+  title: string
+) => {
   /*
     Description:
         Returns a custom operator that logs values emitted by an observable
