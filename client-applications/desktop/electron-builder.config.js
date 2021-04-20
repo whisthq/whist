@@ -80,6 +80,15 @@ const bundleConfig = {
         icon: "build/icon.ico",
         target: ["nsis"],
     },
+
+    linux: {
+        extraFiles: [
+            {
+                from: "env.json",
+                to: "resources/"
+            }
+        ],
+    }
 }
 
 // This configuration specifies to where and how we publish
