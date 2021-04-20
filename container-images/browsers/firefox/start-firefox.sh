@@ -10,4 +10,4 @@ export MOZ_X11_EGL=1
 exec firefox \
         -profile /home/fractal/.mozilla/firefox/fractal_profile \
         -setDefaultBrowser \
-        -url "google.com" \
+        -url "google.com"
