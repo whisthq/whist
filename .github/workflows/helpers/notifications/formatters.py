@@ -213,6 +213,11 @@ def default_message_slack(body, title=None, code=None, lang=None):
     # Slack doesn't support most markdown formatting, so we need to keep the
     # message very simple.
     # It also doesn't support the language argument, so we'll just omit it.
-    return join_newline("*" + title + "*",
-                        body,
-                        code_block(code))
+    lines = []
+    if title is not None:
+        lines.append("*" + title + "*")
+    lines.append(body)
+    if code is not None:
+         lines.append(code_block(code))
+    return '\n'.join(lines)
+
