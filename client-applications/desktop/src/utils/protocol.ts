@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import config from '@app/utils/config'
 import path from 'path'
 import { spawn, ChildProcess } from 'child_process'
 
@@ -29,14 +30,9 @@ const getProtocolFolder = () => {
   }
 }
 
-let environment = ''
-if (process.env.NODE_ENV != null) {
-  environment = process.env.NODE_ENV.trim()
-}
-
 // Protocol arguments
 const protocolParameters = {
-  environment: environment
+  environment: config.sentryEnv
 }
 
 const protocolArguments = [

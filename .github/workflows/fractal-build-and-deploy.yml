@@ -134,7 +134,7 @@ jobs:
                   # on dev branch, we don't set Sentry environment as we don't want to
                   # log to Sentry in development
                   if [ "$BRANCH_NAME" == "prod" ]; then
-                      SENTRY_ENVIRONMENT=prod
+                      SENTRY_ENVIRONMENT=production
                   elif [ "$BRANCH_NAME" == "staging" ]; then
                       SENTRY_ENVIRONMENT=staging
                   else
