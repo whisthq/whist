@@ -89,7 +89,11 @@ else
     rm -rf loading
     mv ./protocol-build/client/loading ./loading
     # Rename FractalClient to Fractal
-    mv ./protocol-build/client/FractalClient "./protocol-build/client/_Fractal"
+    if [ "$(uname)" == "Darwin" ]; then
+        mv ./protocol-build/client/FractalClient ./protocol-build/client/_Fractal
+    else
+        mv ./protocol-build/client/FractalClient ./protocol-build/client/Fractal
+    fi
 
     # Codesign if publishing, or don't codesign at all if not publishing
     if [[ "$publish" == "false" ]]; then
