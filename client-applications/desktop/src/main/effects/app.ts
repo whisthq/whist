@@ -23,10 +23,14 @@ import {
   hideAppDock
 } from '@app/utils/windows'
 import {
-  protocolLaunchSuccess,
+  loginSuccess 
+} from '@app/main/observables/login'
+import {
+  signupSuccess 
+} from '@app/main/observables/signup'
+import {
+  protocolLaunchProcess,
 } from "@app/main/observables/protocol"
-import { loginSuccess } from '@app/main/observables/login'
-import { signupSuccess } from '@app/main/observables/signup'
 import { errorWindowRequest } from '@app/main/observables/error'
 import {
   autoUpdateAvailable,
@@ -56,11 +60,10 @@ eventAppReady
 // supposed to close the application, so we use takeUntil to listen for those.
 
 eventWindowsAllClosed
-  .pipe(takeUntil(merge(loginSuccess, signupSuccess, errorWindowRequest)))
+  .pipe(takeUntil(merge(protocolLaunchProcess, loginSuccess, signupSuccess, errorWindowRequest)))
   .subscribe(() => app.quit())
 
 // When the protocol closees, upload protocol logs to S3
-
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
   uploadToS3(email).then(() => app.quit()).catch(err => console.error(err))
 })
@@ -71,10 +74,10 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 
-// protocolLaunchSuccess.subscribe(() => {
-//   closeWindows()
-//   hideAppDock()
-// })
+merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
+  closeWindows()
+  hideAppDock()
+})
 
 // If the update is downloaded, quit the app and install the update
 

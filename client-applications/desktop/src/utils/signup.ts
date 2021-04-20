@@ -27,13 +27,13 @@ export const emailSignupValid = (response: ResponseAuth) =>
 export const emailSignupError = (response: ResponseAuth) => {
   // A 400 bad response indicates that the user account exists,
   // we consider this a warning, not a failure.
-  if (response.json.status === 400) return false
-  if (response.json.status === 200) return false
+  if (response?.status === 500) return false
+  if (response?.status === 200) return false
   return true
 }
 
 export const emailSignupAccessToken = (response: ResponseAuth) =>
-  response.json?.access_token
+  response?.json?.access_token
 
 export const emailSignupRefreshToken = (response: ResponseAuth) =>
-  response.json?.refresh_token
+  response?.json?.refresh_token
