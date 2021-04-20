@@ -77,7 +77,7 @@ def _clean_up_task(container: UserContainer) -> None:
         ecs_client.stop_task(
             reason="Container failed to properly initialize", offset=0
         )
-        # delete base container from db
+    # delete base container from db
     fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
 
