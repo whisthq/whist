@@ -67,6 +67,7 @@ def _clean_up_task(container: UserContainer) -> None:
     Returns: None
 
     """
+    fractal_logger.info(f"cleaning up container {container.container_id}")
     # stop base container task if it is running
     ecs_client = ECSClient(
         base_cluster=container.cluster, region_name=container.location, grab_logs=False
@@ -74,9 +75,7 @@ def _clean_up_task(container: UserContainer) -> None:
     ecs_client.add_task(container.container_id)
 
     if not ecs_client.check_if_done(offset=0):
-        ecs_client.stop_task(
-            reason="Container failed to properly initialize", offset=0
-        )
+        ecs_client.stop_task(reason="Container failed to properly initialize", offset=0)
     # delete base container from db
     fractal_sql_commit(db, lambda db, x: db.session.delete(x), container)
 
@@ -106,19 +105,7 @@ def _clean_tasks_and_create_new_container(
     # delete every task that is unassigned with that instance IP in the DB
     all_tasks = UserContainer.query.filter_by(ip=container.ip, user_id=None).all()
     for task in all_tasks:
-        # stop the task if it is running
-        ecs_client = ECSClient(
-            base_cluster=task.cluster, region_name=task.location, grab_logs=False
-        )
-        ecs_client.add_task(task.container_id)
-
-        if not ecs_client.check_if_done(offset=0):
-            ecs_client.stop_task(
-                reason="Failure to mount cloud storage or pass start values to instance", offset=0
-            )
-
-        # delete from db
-        fractal_sql_commit(db, lambda db, x: db.session.delete(x), task)
+        _clean_up_task(task)
 
     # assign a new container for that user
     return assign_container(
