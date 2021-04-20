@@ -27,7 +27,7 @@ Before making a pull request, ensure that the following steps are taken:
 
 2. Make sure that your code follows the guidelines outlined in our [React coding philsophy](https://www.notion.so/tryfractal/Typescript-Coding-Philosophy-984288f157fa47f7894c886c6a95e289).
 
-3. Lint your code by running `yarn lint-fix`. If this does not pass, your code will fail Github CI.
+3. Lint your code by running `yarn lint:fix`. If this does not pass, your code will fail Github CI.
 
 4. Rebase against `dev` by pulling `dev` and running `git rebase dev`.
 
