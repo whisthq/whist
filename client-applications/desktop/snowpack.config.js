@@ -34,6 +34,7 @@ module.exports = {
   exclude: ["**/node_modules/**/*", "**/src/main/**/*"],
   alias: {
     "@app": "./src",
+    "@app/assets": "./public/assets",
   },
   plugins: [
     "@snowpack/plugin-react-refresh",
