@@ -59,6 +59,7 @@ extern bool using_sentry;
 // logger Semaphores and Mutexes
 static volatile FractalSemaphore logger_semaphore;
 static volatile FractalMutex logger_mutex;
+static volatile FractalMutex log_file_mutex;
 
 // logger queue
 
@@ -146,6 +147,7 @@ void init_logger(char* log_dir) {
     run_multithreaded_printf = true;
     logger_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
+    log_file_mutex = fractal_create_mutex();
     mprintf_thread = fractal_create_thread((FractalThreadFunction)multi_threaded_printf,
                                            "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", log_file_name);
@@ -186,6 +188,7 @@ void rename_log_file() {
         Returns:
             None
     */
+    fractal_lock_mutex((FractalMutex)log_file_mutex);
     // close the log file before renaming
     if (mprintf_log_file) {
         fclose(mprintf_log_file);
@@ -217,11 +220,12 @@ void rename_log_file() {
     if (mprintf_log_file == NULL) {
         printf("Couldn't open up logfile\n");
     }
+    fractal_unlock_mutex((FractalMutex)log_file_mutex);
 }
 
 // Sets up logs for a new connection, overwriting previous
 void start_connection_log() {
-    fractal_lock_mutex((FractalMutex)logger_mutex);
+    fractal_lock_mutex((FractalMutex)log_file_mutex);
 
     if (mprintf_log_connection_file) {
         fclose(mprintf_log_connection_file);
@@ -232,7 +236,7 @@ void start_connection_log() {
     mprintf_log_connection_file = fopen(log_connection_directory, "w+b");
     log_connection_log_id = logger_global_id;
 
-    fractal_unlock_mutex((FractalMutex)logger_mutex);
+    fractal_unlock_mutex((FractalMutex)log_file_mutex);
 
     LOG_INFO("Beginning connection log");
 }
@@ -328,9 +332,8 @@ int multi_threaded_printf(void* opaque) {
         }
         logger_queue_size = 0;
         fractal_unlock_mutex((FractalMutex)logger_mutex);
-
+        fractal_lock_mutex((FractalMutex)log_file_mutex);
         // Print all of the data into the cache
-        // int last_printf = -1;
         for (int i = 0; i < cache_size; i++) {
             if (logger_queue_cache[i].log) {
                 if (mprintf_log_file) {
@@ -341,20 +344,12 @@ int multi_threaded_printf(void* opaque) {
                     fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
                 }
             }
-            // if (i + 6 < cache_size) {
-            //  printf("%s%s%s%s%s%s%s", logger_queue_cache[i].buf,
-            // logger_queue_cache[i+1].buf, logger_queue_cache[i+2].buf,
-            // logger_queue_cache[i+3].buf, logger_queue_cache[i+4].buf,
-            // logger_queue_cache[i+5].buf,  logger_queue_cache[i+6].buf);
-            //    last_printf = i + 6;
-            //} else if (i > last_printf) {
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
             logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
             fprintf(stdout, "%s", logger_queue_cache[i].buf);
-
             int chars_written =
                 sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
             logger_history_len += chars_written;
@@ -436,6 +431,7 @@ int multi_threaded_printf(void* opaque) {
                 free(original_buf);
             }
         }
+        fractal_unlock_mutex((FractalMutex)log_file_mutex);
     }
     return 0;
 }
