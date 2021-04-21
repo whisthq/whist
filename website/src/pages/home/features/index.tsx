@@ -35,8 +35,8 @@ export const Features = () => {
                             alt="cloud"
                         />
                     }
-                    title="Cloud Storage Sync"
-                    text="Fractal syncs with your Google Drive account so you can download files directly to Google Drive."
+                    title="4K Resolution Support"
+                    text="Fractal is compatible with any screen with up to 4K resolution."
                 />
                 <FeatureBox
                     icon={
@@ -47,9 +47,8 @@ export const Features = () => {
                         />
                     }
                     title="Security and Privacy"
-                    text="Fractal never tracks your sessions, and all
-                            information sent over the Internet is end-to-end AES
-                            encrypted."
+                    text="Fractal never tracks your sessions. All information sent over the Internet,
+                    including your browsing session, is end-to-end encrypted."
                 />
                 <FeatureBox
                     icon={
