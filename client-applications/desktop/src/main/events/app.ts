@@ -29,4 +29,4 @@ export const eventWindowCreated = fromEvent(
 // We subscribe to window-all-closed here and call preventDefault().
 // The event will still emit, but the app won't quit automatically.
 
-app.on('window-all-closed', (event: any) => event.preventDefault())
+// app.on('window-all-closed', (event: any) => event.preventDefault())

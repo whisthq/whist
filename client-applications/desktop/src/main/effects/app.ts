@@ -14,7 +14,7 @@ import {
   eventWindowCreated,
 } from "@app/main/events/app"
 import { merge, race, zip, combineLatest } from "rxjs"
-import { takeUntil } from "rxjs/operators"
+import { takeUntil, take } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
@@ -49,10 +49,11 @@ eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
 
-eventAppReady.subscribe(() => {
+eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false 
-  autoUpdater.autoDownload = false
+  autoUpdater.autoDownload = true
+  autoUpdater.logger = console
   // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
   // and fires an update if the current version is less than the version in latest.yml
   autoUpdater.checkForUpdatesAndNotify()
@@ -63,6 +64,11 @@ eventAppReady.subscribe(() => {
 // also when windows automatically close (protocol launch, errors, etc.)
 // It's important that we don't fire this subscription on events that aren't
 // supposed to close the application, so we use takeUntil to listen for those.
+
+// eventWindowsAllClosed.pipe(
+
+// )
+
 
 eventWindowsAllClosed
   .pipe(
@@ -99,14 +105,14 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
 // If the update is downloaded, quit the app and install the update
 
 eventUpdateDownloaded.subscribe(() => {
+  console.log("QUITTING AND INSTALLING!!!")
   autoUpdater.quitAndInstall()
 })
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
   (available: boolean) => {
     if (available) {
-      closeWindows()
-      createUpdateWindow((win: any) => win.show())
+      // createUpdateWindow((win: any) => win.show())
       autoUpdater.downloadUpdate().catch((err) => console.error(err))
     }
   }
