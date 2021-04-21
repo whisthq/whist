@@ -77,7 +77,7 @@ jobs:
 
                   if os.environ.get("hanging_resource") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#alerts-dev"
+                    SLACK_CHANNEL = "#alerts-test"
                     BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}."
 
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
