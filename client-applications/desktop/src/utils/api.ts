@@ -1,6 +1,6 @@
-import { configGet, configPost } from "@fractal/core-ts"
-import config from "@app/utils/config"
-import https from "https"
+import { configGet, configPost } from '@fractal/core-ts'
+import config from '@app/config'
+import https from 'https'
 
 /*
  * @fractal/core-ts http functions like "get" and "post"
