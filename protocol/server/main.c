@@ -751,6 +751,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 
     FractalServerMessage* fsmsg = safe_malloc(fsmsg_size);
+    memset(fsmsg, 0, sizeof(*FractalServerMessage));
     fsmsg->type = MESSAGE_DISCOVERY_REPLY;
 
     FractalDiscoveryReplyMessage* reply_msg = (FractalDiscoveryReplyMessage*)fsmsg->discovery_reply;
@@ -1175,6 +1176,7 @@ int main(int argc, char* argv[]) {
             LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
             FractalServerMessage* fmsg_response =
                 safe_malloc(sizeof(FractalServerMessage) + cb->size);
+            memset(fmsg_response, 0, sizeof(*FractalServerMessage));
             fmsg_response->type = SMESSAGE_CLIPBOARD;
             memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
             read_lock(&is_active_rwlock);
@@ -1194,6 +1196,7 @@ int main(int argc, char* argv[]) {
                     LOG_INFO("Window title changed. Broadcasting window title message.");
                     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(name);
                     FractalServerMessage* fmsg_response = safe_malloc(fsmsg_size);
+                    memset(fmsg_response, 0, sizeof(*FractalServerMessage));
                     fmsg_response->type = SMESSAGE_WINDOW_TITLE;
                     memcpy(&fmsg_response->window_title, name, sizeof(name));
                     read_lock(&is_active_rwlock);
