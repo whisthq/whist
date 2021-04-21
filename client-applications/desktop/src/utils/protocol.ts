@@ -1,34 +1,9 @@
-import { app } from "electron"
-import config from "@app/utils/config"
-import path from "path"
-import { spawn, ChildProcess } from "child_process"
+import { app } from 'electron'
+import path from 'path'
+import { spawn, ChildProcess } from 'child_process'
+import config from '@app/config'
 
-// Temporarily pointing to the executable already installed in my applications
-// folder so that I have something to launch.
-//
-// const iconPath = path.join(app.getAppPath(), "build/icon64.png")
-//
-const getProtocolName = () => {
-  if (process.platform === "win32") {
-    return "Fractal.exe"
-  } else if (process.platform === "darwin") {
-    return "_Fractal"
-  } else {
-    return "Fractal"
-  }
-}
-
-const getProtocolFolder = () => {
-  if (app.isPackaged) {
-    if (process.platform === "darwin") {
-      return path.join(app.getAppPath(), "../..", "MacOS")
-    } else {
-      return path.join(app.getAppPath(), "../..", "protocol-build/client")
-    }
-  } else {
-    return path.join(app.getAppPath(), "../../..", "protocol-build/client")
-  }
-}
+const { protocolName, protocolFolder } = config
 
 // Protocol arguments
 const protocolParameters = {
@@ -42,9 +17,7 @@ const protocolArguments = [
   "--read-pipe",
 ]
 
-export const protocolFolder = getProtocolFolder()
-
-export const protocolPath = path.join(protocolFolder, getProtocolName())
+export const protocolPath = path.join(protocolFolder, protocolName)
 
 export const serializePorts = (ps: {
   port_32262: number
