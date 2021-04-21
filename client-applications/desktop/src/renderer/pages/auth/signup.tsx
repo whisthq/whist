@@ -32,6 +32,7 @@ const Signup = (props: {
   onChangeEmail: (s: string) => void
   onChangePassword: (s: string) => void
   onChangeConfirmPassword: (s: string) => void
+  getCustomerSession: () => Object
 }) => {
   /*
         Description:

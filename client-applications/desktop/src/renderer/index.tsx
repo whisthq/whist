@@ -3,6 +3,8 @@ import { Switch, Route } from "react-router-dom"
 import { Router } from "react-router"
 import { chain } from "lodash"
 import ReactDOM from "react-dom"
+import { loadStripe } from "@stripe/stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
 
 import Auth from "@app/renderer/pages/auth"
 import Update from "@app/renderer/pages/update"
@@ -144,10 +146,13 @@ const WindowBackground = (props: any) => {
     </div>
   )
 }
+const stripePromise = loadStripe("pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb")
 
 ReactDOM.render(
-  <WindowBackground>
-    <RootComponent />
-  </WindowBackground>,
+  <Elements stripe={stripePromise}>
+    <WindowBackground>
+      <RootComponent />
+    </WindowBackground>
+  </Elements>,
   document.getElementById("root")
 )
