@@ -33,6 +33,7 @@ const Signup = (props: {
   onChangePassword: (s: string) => void
   onChangeConfirmPassword: (s: string) => void
   getCustomerSession: () => Object
+  getPortalSession: () => Object
 }) => {
   /*
         Description:

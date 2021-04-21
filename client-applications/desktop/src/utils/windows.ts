@@ -71,17 +71,8 @@ export const getWindowTitle = () => {
   return `Fractal (${deployEnv})`
 }
 
-export const createWindow = (
-  show: string,
-  options: Partial<BrowserWindowConstructorOptions>,
-  onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any
-) => {
-  const { title } = config
-  const win = new BrowserWindow({ ...options, show: false, title })
-
-  const params = "?show=" + show
-
+// ability to add in custom params for stripe navigation
+const loadWindow = (params: string, win: BrowserWindow) => {
   if (app.isPackaged) {
     win
       .loadFile("build/index.html", { search: params })
@@ -94,10 +85,33 @@ export const createWindow = (
       })
       .catch((err) => console.error(err))
   }
+}
+export const createWindow = (
+  show: string,
+  options: Partial<BrowserWindowConstructorOptions>,
+  onReady?: (win: BrowserWindow) => any,
+  onClose?: (win: BrowserWindow) => any
+) => {
+  const win = new BrowserWindow({ ...options, show: false })
+
+  const params = "?show=" + show
+
+  loadWindow(params, win)
 
   win.webContents.on("did-finish-load", () =>
     onReady != null ? onReady(win) : win.show()
   )
+
+  win.webContents.on("did-navigate", (event, url) => {
+    event.preventDefault()
+    /*
+      place url handling here for stripe navigation. 
+      call loadWindow with params
+    */
+    console.log(url)
+    if (url === "https://www.fractal.co/") loadWindow(params, win)
+  })
+
   win.on("close", () => onClose?.(win))
 
   return win
