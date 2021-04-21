@@ -597,7 +597,7 @@ void nack(int id, int index) {
     }
     video_data.num_nacked++;
     LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
-    FractalClientMessage fmsg;
+    FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_VIDEO_NACK;
     fmsg.nack_data.id = id;
     fmsg.nack_data.index = index;
@@ -613,7 +613,7 @@ bool request_iframe() {
     */
 
     if (get_timer(video_data.last_iframe_request_timer) > 1500.0 / 1000.0) {
-        FractalClientMessage fmsg;
+        FractalClientMessage fmsg = {0};
         fmsg.type = MESSAGE_IFRAME_REQUEST;
         if (video_data.last_rendered_id == 0) {
             fmsg.reinitialize_encoder = true;

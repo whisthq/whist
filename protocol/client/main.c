@@ -205,7 +205,7 @@ void update() {
         LOG_ERROR("Tried to update, but updater not initialized!");
     }
 
-    FractalClientMessage fmsg;
+    FractalClientMessage fmsg = {0};
 
     // Check for a new clipboard update from the server, if it's been 25ms since
     // the last time we checked the TCP socket, and the clipboard isn't actively
@@ -327,6 +327,8 @@ int send_clipboard_packets(void* opaque) {
         if (clipboard) {
             FractalClientMessage* fmsg_clipboard =
                 safe_malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+            // Init metadata to 0 to prevent sending uninitialized packets over the network
+            memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             send_fmsg(fmsg_clipboard);
