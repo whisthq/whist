@@ -36,7 +36,6 @@ const subscribed = combineLatest(
     (obs) => concat(of(undefined), obs)
   )
 )
-
 combineLatest([
   subscribed,
   fromTrigger("eventIPC").pipe(startWith({})),
