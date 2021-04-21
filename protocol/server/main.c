@@ -852,8 +852,8 @@ int multithreaded_manage_clients(void* opaque) {
             //  exit and reset the grace period timer
             if (!disable_timeout &&
                 (first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
-                (!client_exited_nongracefully || (get_timer(last_nongraceful_exit) > nongraceful_grace_period))
-            ) {
+                (!client_exited_nongracefully ||
+                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period))) {
                 exiting = true;
             }
         } else {
