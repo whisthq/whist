@@ -967,7 +967,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
-                  BODY = ":rocket: Webserver for branch `${{ needs.fractal-publish-build-config.outputs.branch }}` deployed to Heroku app `{HEROKU_APP_NAME}` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f":rocket: Webserver for branch `${{ needs.fractal-publish-build-config.outputs.branch }}` deployed to Heroku app `{HEROKU_APP_NAME}` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
