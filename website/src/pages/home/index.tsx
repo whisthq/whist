@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { FaMoon, FaSun } from 'react-icons/fa'
 import classNames from 'classnames'
-
 import { Switch, Route } from 'react-router-dom'
 
 import withTracker from '@app/shared/utils/withTracker'
+import { withContext } from '@app/shared/utils/context'
 
 import Header from '@app/shared/components/header'
 import Footer from '@app/shared/components/footer'
@@ -34,7 +34,7 @@ export const Chrome = () => {
 
         Arguments: none
     */
-  const [dark, setDark] = useState(true)
+  const { dark, setDark } = withContext()
 
   return (
     <div

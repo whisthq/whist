@@ -1,7 +1,7 @@
-import React, { useContext } from 'react'
+import React from 'react'
 
-import MainContext from '@app/shared/context/mainContext'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
+import { withContext } from '@app/shared/utils/context'
 
 import ChromeBackground from '@app/assets/largeGraphics/speedTestBackground.svg'
 import SpeedTest from '@app/assets/gifs/speedTest.gif'
@@ -18,7 +18,7 @@ export const Middle = () => {
 
         Arguments: none
     */
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
 
   return (
         <div>

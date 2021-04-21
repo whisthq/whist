@@ -1,8 +1,8 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import FadeIn from 'react-fade-in'
 import { TypeWriter } from '@app/shared/components/typewriter'
 
-import MainContext from '@app/shared/context/mainContext'
+import { withContext } from '@app/shared/utils/context'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import Geometric from './geometric'
 import YoutubeLogo from '@app/assets/icons/youtubeLogo.svg'
@@ -51,7 +51,7 @@ export const Top = () => {
 
         Arguments: none
     */
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
   const hovering = false
 
   const adjectives = ['faster', 'lighter', 'private']

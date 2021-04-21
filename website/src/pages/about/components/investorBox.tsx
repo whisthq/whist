@@ -1,9 +1,9 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Row, Col } from 'react-bootstrap'
 import Popup from 'reactjs-popup'
 
 import { ScreenSize } from '@app/shared/constants/screenSizes'
-import MainContext from '@app/shared/context/mainContext'
+import { withContext } from '@app/shared/utils/context'
 
 import BSV from '@app/assets/investorPhotos/bsv.svg'
 import DC from '@app/assets/investorPhotos/dc.svg'
@@ -18,7 +18,7 @@ import Slow from '@app/assets/investorPhotos/slow.svg'
 import styles from '@app/styles/global.module.css'
 
 const InvestorBox = () => {
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
   return (
         <Row
             style={{
