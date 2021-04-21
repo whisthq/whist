@@ -1015,7 +1015,7 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
             case 'e': {
-                using_sentry = init_sentry(optarg, "server")
+                using_sentry = init_sentry(optarg, "server");
                 break;
             }
             case 't': {
