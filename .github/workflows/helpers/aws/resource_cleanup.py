@@ -171,7 +171,7 @@ def get_hanging_clusters(urls, secrets, region):
         db_clusters |= set(get_db_clusters(url, secret, region))
 
     # return list of cluster names in aws but not in db, ignoring the 'default' cluster
-    return list(aws_clusters - db_clusters)
+    return [list(aws_clusters - db_clusters), list(db_clusters - aws_clusters)]
 
 
 # Determines if provided task is older than one day and stops it using the AWS CLI
@@ -209,12 +209,12 @@ def get_hanging_tasks(urls, secrets, region):
     aws_tasks = set()
     aws_tasks_and_times = {}
     for cluster in db_clusters:
-        # get all tasks in a cluster
-        tasks, _ = subprocess.Popen(
+        # verify cluster exists in aws (prevents later exception)
+        response, _ = subprocess.Popen(
             [
                 "aws",
                 "ecs",
-                "list-tasks",
+                "describe-clusters",
                 "--no-paginate",
                 "--region",
                 region,
@@ -223,30 +223,45 @@ def get_hanging_tasks(urls, secrets, region):
             ],
             stdout=subprocess.PIPE,
         ).communicate()
-        tasks = json.loads(tasks)["taskArns"]
-        aws_tasks |= set(tasks)
-        # if there are tasks in a cluster, get created time
-        if len(tasks) > 0:
-            task_times, _ = subprocess.Popen(
+        if len(json.loads(response)["clusters"]) > 0:
+            # get all tasks in a cluster (if it exists)
+            tasks, _ = subprocess.Popen(
                 [
                     "aws",
                     "ecs",
-                    "describe-tasks",
+                    "list-tasks",
                     "--no-paginate",
                     "--region",
                     region,
                     "--cluster",
                     cluster,
-                    "--tasks",
-                ]
-                + tasks,
+                ],
                 stdout=subprocess.PIPE,
             ).communicate()
-            tasks_and_times = (
-                (task["taskArn"], (cluster, task["createdAt"]))
-                for task in json.loads(task_times)["tasks"]
-            )
-            aws_tasks_and_times.update(dict(tasks_and_times))
+            tasks = json.loads(tasks)["taskArns"]
+            aws_tasks |= set(tasks)
+            # if there are tasks in a cluster, get created time
+            if len(tasks) > 0:
+                task_times, _ = subprocess.Popen(
+                    [
+                        "aws",
+                        "ecs",
+                        "describe-tasks",
+                        "--no-paginate",
+                        "--region",
+                        region,
+                        "--cluster",
+                        cluster,
+                        "--tasks",
+                    ]
+                    + tasks,
+                    stdout=subprocess.PIPE,
+                ).communicate()
+                tasks_and_times = (
+                    (task["taskArn"], (cluster, task["createdAt"]))
+                    for task in json.loads(task_times)["tasks"]
+                )
+                aws_tasks_and_times.update(dict(tasks_and_times))
 
     # determine which tasks are in aws but not in the db and return them (and their creation time)
     hanging_tasks = list(aws_tasks - db_tasks)
@@ -274,17 +289,29 @@ def main():
             print("\\n- \\`" + "\\`\\n- \\`".join([str(x) for x in asgs]) + "\\`")
     elif component == "Clusters":
         output = []
-        clusters = get_hanging_clusters(urls, secrets, region)
-        for cluster in clusters:
+        aws_clusters, db_clusters = get_hanging_clusters(urls, secrets, region)
+        for cluster in aws_clusters:
             output.append((str(cluster), get_num_instances(cluster, region)))
-        if len(clusters) > 0:
+        if len(aws_clusters) > 0:
             print(
                 "\\n- "
                 + "\\n- ".join(
                     [
-                        "\\`" + c + "\\`" + " (" + str(n) + " instances)"
+                        "\\`"
+                        + c
+                        + "\\`"
+                        + " in AWS but not in any DB ("
+                        + str(n)
+                        + " instances)"
                         for c, n in output
                     ]
+                )
+            )
+        if len(db_clusters) > 0:
+            print(
+                "\\n- "
+                + "\\n- ".join(
+                    ["\\`" + c + "\\`" + " in a DB but not AWS" for c in db_clusters]
                 )
             )
     elif component == "Tasks":
