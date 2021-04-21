@@ -39,6 +39,10 @@ const Login = (props: {
     return FractalButtonState.DISABLED
   }
 
+  const handleSubmit = () => {
+    if (loginEnabled(props.email, props.password)) props.onLogin()
+  }
+
   return (
         <div className="flex flex-col justify-center items-center h-screen text-center">
             <div className="w-full max-w-xs m-auto">
@@ -59,7 +63,7 @@ const Login = (props: {
                         type="email"
                         placeholder="Email"
                         onChange={props.onChangeEmail}
-                        onEnterKey={props.onLogin}
+                        onEnterKey={handleSubmit}
                         value={props.email}
                         state={
                             checkEmail(props.email)
@@ -75,7 +79,7 @@ const Login = (props: {
                         type="password"
                         placeholder="Password"
                         onChange={props.onChangePassword}
-                        onEnterKey={props.onLogin}
+                        onEnterKey={handleSubmit}
                         value={props.password}
                         state={
                             loginEnabled(props.email, props.password)
@@ -88,7 +92,7 @@ const Login = (props: {
                         contents="Log In"
                         className="mt-4 w-full"
                         state={buttonState()}
-                        onClick={props.onLogin}
+                        onClick={handleSubmit}
                     />
                     <FractalNavigation
                         url="/"
