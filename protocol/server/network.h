@@ -17,6 +17,8 @@ Public Functions
 ============================
 */
 
+#define USING_STUN 0
+
 /**
  * @brief                          Broadcasts acks to all active clients
  *

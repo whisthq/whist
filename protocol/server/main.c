@@ -861,7 +861,7 @@ int multithreaded_manage_clients(void* opaque) {
         }
 
         if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               get_using_stun(), binary_aes_private_key) < 0) {
+                               USING_STUN, binary_aes_private_key) < 0) {
             continue;
         }
 
@@ -1170,7 +1170,7 @@ int main(int argc, char* argv[]) {
 
     while (!exiting) {
         if (get_timer(ack_timer) > 5) {
-            if (get_using_stun()) {
+            if (USING_STUN) {
                 // Broadcast ack
                 read_lock(&is_active_rwlock);
                 if (broadcast_ack() != 0) {
