@@ -7,7 +7,7 @@ import { app } from 'electron'
 import EventEmitter from 'events'
 import { fromEvent } from 'rxjs'
 import path from 'path'
-import config from '@app/config'
+import config from '@app/config/environment'
 
 // rxjs and Typescript are not fully agreeing on the type inference here,
 // so we coerce to EventEmitter to keep everyone happy.
