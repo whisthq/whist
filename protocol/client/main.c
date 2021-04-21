@@ -95,7 +95,7 @@ volatile int running_ci = 0;
 char user_email[FRACTAL_ARGS_MAXLEN + 1];
 char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
-bool using_stun = false;  // deprecated. TODO deprecate STUN code and make deprecated feature commit
+bool using_stun = true;  // deprecated. TODO deprecate STUN code and make deprecated feature commit
 
 int udp_port = -1;  // given by server
 int tcp_port = -1;  // given by server

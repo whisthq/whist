@@ -141,7 +141,7 @@ calls will take for that socket (0 to return immediately, -1 to never return)
                                 Set 0 to have a non-blocking socket, and -1 for
 an indefinitely blocking socket
 */
-void set_timeout(SOCKET s, int timeout_ms);
+void set_timeout(SOCKET socket, int timeout_ms);
 
 /*
 @brief                          Perform socket syscalls and set fds to
@@ -615,11 +615,12 @@ int sendp(SocketContext *context, void *buf, int len) {
 
 int ack(SocketContext *context) { return sendp(context, NULL, 0); }
 
-bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
+bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
     int ret;
-    set_timeout(s, 0);
-    if ((ret = connect(s, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
+    LOG_INFO("Setting timeout...");
+    set_timeout(socket, 0);
+    if ((ret = connect(socket, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
 
         if (!worked) {
@@ -627,7 +628,7 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
                 "Could not connect() over TCP to server: Returned %d, Error "
                 "Code %d",
                 ret, get_last_network_error());
-            closesocket(s);
+            closesocket(socket);
             return false;
         }
     }
@@ -635,11 +636,11 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
     // Select connection
     fd_set set;
     FD_ZERO(&set);
-    FD_SET(s, &set);
+    FD_SET(socket, &set);
     struct timeval tv;
     tv.tv_sec = timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (timeout_ms % MS_IN_SECOND) * MS_IN_SECOND;
-    if ((ret = select((int)s + 1, NULL, &set, NULL, &tv)) <= 0) {
+    if ((ret = select((int)socket + 1, NULL, &set, NULL, &tv)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
@@ -648,11 +649,12 @@ bool tcp_connect(SOCKET s, struct sockaddr_in addr, int timeout_ms) {
                 "%d\n",
                 ret, get_last_network_error());
         }
-        closesocket(s);
+        closesocket(socket);
         return false;
     }
 
-    set_timeout(s, timeout_ms);
+    LOG_INFO("setting timeout...");
+    set_timeout(socket, timeout_ms);
     return true;
 }
 
@@ -1041,6 +1043,7 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
         return -1;
     }
 
+    LOG_INFO("Setting timeout...");
     set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
@@ -1880,7 +1883,7 @@ bool send_get_request(char *host_s, char *path, char **response_body, size_t max
     return send_http_request("GET", host_s, path, NULL, response_body, max_response_size);
 }
 
-void set_timeout(SOCKET s, int timeout_ms) {
+void set_timeout(SOCKET socket, int timeout_ms) {
     // Sets the timeout for SOCKET s to be timeout_ms in milliseconds
     // Any recv calls will wait this long before timing out
     // -1 means that it will block indefinitely until a packet is received
@@ -1892,19 +1895,26 @@ void set_timeout(SOCKET s, int timeout_ms) {
             "able to recover if a packet is never received");
         unsigned long mode = 0;
 
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_WARNING("Failed to make socket blocking.");
+        }
 
     } else if (timeout_ms == 0) {
         unsigned long mode = 1;
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_WARNING("Failed to make socket return immediately.");
+        }
     } else {
         // Set to blocking when setting a timeout
         unsigned long mode = 0;
-        FRACTAL_IOCTL_SOCKET(s, FIONBIO, &mode);
+        if (FRACTAL_IOCTL_SOCKET(socket, FIONBIO, &mode) != 0) {
+            LOG_WARNING("Failed to make socket blocking.");
+            return;
+        }
 
         clock read_timeout = create_clock(timeout_ms);
 
-        if (setsockopt(s, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
+        if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&read_timeout,
                        sizeof(read_timeout)) < 0) {
             int err = get_last_network_error();
             LOG_WARNING("Failed to set timeout: %d. Msg: %s\n", err, strerror(err));
