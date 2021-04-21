@@ -410,6 +410,7 @@ void update_audio() {
                     (FractalClientMessage*)(fmsg_buffer +
                                             num_nacked * sizeof(FractalClientMessage));
                 // Populate FractalClientMessage
+                memset(fmsg[num_nacked], 0, sizeof(*fmsg[num_nacked]));
                 fmsg[num_nacked]->type = MESSAGE_AUDIO_NACK;
                 fmsg[num_nacked]->nack_data.id = i / MAX_NUM_AUDIO_INDICES;
                 fmsg[num_nacked]->nack_data.index = i % MAX_NUM_AUDIO_INDICES;
