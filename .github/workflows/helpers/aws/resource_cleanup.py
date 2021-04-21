@@ -170,7 +170,7 @@ def get_hanging_clusters(urls, secrets, region):
     for url, secret in zip(urls, secrets):
         db_clusters |= set(get_db_clusters(url, secret, region))
 
-    # return list of cluster names in aws but not in db, ignoring the 'default' cluster
+    # return list of cluster names in aws but not in db (and vice versa), ignoring the 'default' cluster
     return [list(aws_clusters - db_clusters), list(db_clusters - aws_clusters)]
 
 
