@@ -105,27 +105,42 @@ export const createWindow = (
   // the server's localhost port as opposed to our build folder.
   // Electron's API for passing query parameters is inconsistent, so we must
   // be careful to pass them correctly for each environment.
-  if (app.isPackaged) {
-    win
-      .loadFile("build/index.html", { search: params })
-      .catch((err) => console.log(err))
-  } else {
-    win
-      .loadURL("http://localhost:8080" + params)
-      .then(() => {
-        // We manually open devTools, because we want to make sure that
-        // both the main/renderer processes are in a "ready" state before we
-        // show.
-        win.webContents.openDevTools({ mode: "undocked" })
-      })
-      .catch((err) => console.error(err))
+  // ability to add in custom params for stripe navigation
+  const loadWindow = (params: string, win: BrowserWindow) => {
+    if (app.isPackaged) {
+      win
+        .loadFile("build/index.html", { search: params })
+        .catch((err) => console.log(err))
+    } else {
+      win
+        .loadURL("http://localhost:8080" + params)
+        .then(() => {
+          // We manually open devTools, because we want to make sure that
+          // both the main/renderer processes are in a "ready" state before we
+          // show.
+          win.webContents.openDevTools({ mode: "undocked" })
+        })
+        .catch((err) => console.error(err))
+    }
   }
+  loadWindow(params, win)
 
   // We accept some callbacks in case the caller needs to run some additional
   // functions on open/close.
   win.webContents.on("did-finish-load", () =>
     onReady != null ? onReady(win) : win.show()
   )
+
+  win.webContents.on("did-navigate", (event, url) => {
+    event.preventDefault()
+    /*
+      place url handling here for stripe navigation. 
+      call loadWindow with params
+    */
+    console.log(url)
+    if (url === "https://www.fractal.co/") loadWindow(params, win)
+  })
+
   win.on("close", () => onClose?.(win))
 
   return win

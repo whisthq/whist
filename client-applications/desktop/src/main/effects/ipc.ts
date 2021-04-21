@@ -14,6 +14,7 @@ import { SubscriptionMap, objectCombine } from "@app/utils/observables"
 import { loginLoading, loginWarning } from "@app/main/observables/login"
 import { signupLoading, signupWarning } from "@app/main/observables/signup"
 import { eventDownloadProgress } from "@app/main/events/autoupdate"
+import { stripeAction } from "@app/main/observables/payment"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -36,9 +37,7 @@ const subscribed: SubscriptionMap = {
   updateInfo: eventDownloadProgress.pipe(map((obj) => JSON.stringify(obj))),
   signupLoading: signupLoading,
   signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
-  stripeCheckoutId: stripeCheckoutSuccess.pipe(
-    map((req) => req.json.sessionId)
-  ),
+  stripeAction: stripeAction,
 }
 
 objectCombine(subscribed)
