@@ -286,7 +286,7 @@ def main():
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
-            print("\n- \`" + "\`\n- \`".join([str(x) for x in asgs]) + "\`")
+            print("\\n- \`" + "\`\\n- \`".join([str(x) for x in asgs]) + "\`")
     elif component == "Clusters":
         output = []
         aws_clusters, db_clusters = get_hanging_clusters(urls, secrets, region)
@@ -294,8 +294,8 @@ def main():
             output.append((str(cluster), get_num_instances(cluster, region)))
         if len(aws_clusters) > 0:
             print(
-                "\n- "
-                + "\n- ".join(
+                "\\n- "
+                + "\\n- ".join(
                     [
                         "\`"
                         + c
@@ -309,15 +309,15 @@ def main():
             )
         if len(db_clusters) > 0:
             print(
-                "\n- "
-                + "\n- ".join(
+                "\\n- "
+                + "\\n- ".join(
                     ["\`" + c + "\`" + " in a DB but not AWS" for c in db_clusters]
                 )
             )
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
-            print("\n- " + "\n- ".join(["\`" + str(t) + "\`" + d for t, d in tasks]))
+            print("\\n- " + "\\n- ".join(["\`" + str(t) + "\`" + d for t, d in tasks]))
 
 
 if __name__ == "__main__":
