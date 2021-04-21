@@ -25,7 +25,6 @@ Includes
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
-#include "webserver.h"
 
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
