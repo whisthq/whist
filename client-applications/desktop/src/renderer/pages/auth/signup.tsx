@@ -61,6 +61,10 @@ const Signup = (props: {
     }
   }
 
+  const handleSubmit = () => {
+    if (signupEnabled(props.email, props.password, props.confirmPassword)) props.onSignup()
+  }
+
   return (
         <div className="flex flex-col justify-center items-center h-screen text-center">
             <div className="w-full max-w-xs m-auto">
@@ -88,7 +92,7 @@ const Signup = (props: {
                                         type="email"
                                         placeholder="Email"
                                         onChange={props.onChangeEmail}
-                                        onEnterKey={props.onSignup}
+                                        onEnterKey={handleSubmit}
                                         value={props.email}
                                         state={
                                             checkEmail(props.email)
@@ -113,7 +117,7 @@ const Signup = (props: {
                                         type="password"
                                         placeholder="Password"
                                         onChange={props.onChangePassword}
-                                        onEnterKey={props.onSignup}
+                                        onEnterKey={handleSubmit}
                                         value={props.password}
                                         state={
                                             checkPassword(props.password)
@@ -143,7 +147,7 @@ const Signup = (props: {
                                                 onChange={
                                                     props.onChangeConfirmPassword
                                                 }
-                                                onEnterKey={props.onSignup}
+                                                onEnterKey={handleSubmit}
                                                 value={props.confirmPassword}
                                                 state={
                                                     checkConfirmPassword(
@@ -165,7 +169,7 @@ const Signup = (props: {
                         contents="Sign up"
                         className="mt-4 w-full"
                         state={buttonState()}
-                        onClick={props.onSignup}
+                        onClick={handleSubmit}
                     />
                     <FractalNavigation
                         url="/login"
