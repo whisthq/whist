@@ -4,53 +4,59 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from 'electron'
-import { autoUpdater } from 'electron-updater'
-import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+import { eventUpdateAvailable, eventUpdateDownloaded } from "@app/main/events/autoupdate"
 
 import {
   eventAppReady,
   eventWindowsAllClosed,
-  eventWindowCreated
-} from '@app/main/events/app'
-import { merge, race, zip, combineLatest } from 'rxjs'
-import { takeUntil } from 'rxjs/operators'
+  eventWindowCreated,
+} from "@app/main/events/app"
+import { merge, race, zip, combineLatest } from "rxjs"
+import { takeUntil } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
   showAppDock,
-  hideAppDock
-} from '@app/utils/windows'
+  hideAppDock,
+} from "@app/utils/windows"
+import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
 import {
-  loginSuccess
-} from '@app/main/observables/login'
-import {
-  signupSuccess
-} from '@app/main/observables/signup'
-import { protocolLaunchProcess, protocolCloseRequest }
-  from '@app/main/observables/protocol'
-import { errorWindowRequest } from '@app/main/observables/error'
+  protocolLaunchProcess,
+  protocolCloseRequest,
+} from "@app/main/observables/protocol"
+import { errorWindowRequest } from "@app/main/observables/error"
 import {
   autoUpdateAvailable,
-  autoUpdateNotAvailable
-} from '@app/main/observables/autoupdate'
+  autoUpdateNotAvailable,
+} from "@app/main/observables/autoupdate"
 import {
   userEmail,
   userAccessToken,
-  userConfigToken
-} from '@app/main/observables/user'
+  userConfigToken,
+} from "@app/main/observables/user"
 
-import { uploadToS3 } from '@app/utils/logging'
+import { uploadToS3 } from "@app/utils/logging"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
-
 eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
+
+eventAppReady.subscribe(() => {
+  // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
+  // so we need to set autoDownload = false 
+  autoUpdater.autoDownload = false
+  // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
+  // and fires an update if the current version is less than the version in latest.yml
+  autoUpdater.checkForUpdatesAndNotify()
+})
 
 // Closing all the windows should simply quit the application entirely.
 // This event fires both when the user intentionally closes windows, and
@@ -59,12 +65,24 @@ eventAppReady
 // supposed to close the application, so we use takeUntil to listen for those.
 
 eventWindowsAllClosed
-  .pipe(takeUntil(merge(protocolLaunchProcess, loginSuccess, signupSuccess, errorWindowRequest)))
+  .pipe(
+    takeUntil(
+      merge(
+        protocolLaunchProcess,
+        loginSuccess,
+        signupSuccess,
+        errorWindowRequest,
+        eventUpdateAvailable
+      )
+    )
+  )
   .subscribe(() => app.quit())
 
 // When the protocol closees, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  uploadToS3(email).then(() => app.quit()).catch(err => console.error(err))
+  uploadToS3(email)
+    .then(() => app.quit())
+    .catch((err) => console.error(err))
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -80,7 +98,9 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
 
 // If the update is downloaded, quit the app and install the update
 
-eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
+eventUpdateDownloaded.subscribe(() => {
+  autoUpdater.quitAndInstall()
+})
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
   (available: boolean) => {

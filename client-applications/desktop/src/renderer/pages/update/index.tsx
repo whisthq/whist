@@ -17,12 +17,13 @@ const Update = () => {
 
   useEffect(() => {
     if (mainState.updateInfo !== '') {
-      const updateInfo = JSON.parse(mainState.updateInfo)
+      console.log(mainState.updateInfo)
+      // const updateInfo = JSON.parse(mainState.updateInfo)
 
-      setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
-      setPercentageDownloaded(Number(updateInfo.percent))
-      setDownloadedSize(sanitizeBytes(updateInfo.transferred))
-      setTotalDownloadSize(sanitizeBytes(updateInfo.total))
+      // setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
+      // setPercentageDownloaded(Number(updateInfo.percent))
+      // setDownloadedSize(sanitizeBytes(updateInfo.transferred))
+      // setTotalDownloadSize(sanitizeBytes(updateInfo.total))
     }
   }, [mainState])
 
