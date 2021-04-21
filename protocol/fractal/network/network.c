@@ -609,8 +609,12 @@ int sendp(SocketContext *context, void *buf, int len) {
         return -1;
     }
     // cppcheck-suppress nullPointer
-    return sendto(context->socket, buf, len, 0, (struct sockaddr *)(&context->addr),
-                  sizeof(context->addr));
+    if (context->is_tcp) {
+        return send(context->socket, buf, len, 0);
+    } else {
+        return sendto(context->socket, buf, len, 0, (struct sockaddr *)(&context->addr),
+                      sizeof(context->addr));
+    }
 }
 
 int ack(SocketContext *context) { return sendp(context, NULL, 0); }
@@ -940,7 +944,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     }
 
     // Send STUN request
-    StunRequest stun_request;
+    StunRequest stun_request = {0};
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
@@ -1128,7 +1132,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     }
 
     // Make STUN request
-    StunRequest stun_request;
+    StunRequest stun_request = {0};
     stun_request.type = ASK_INFO;
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
@@ -1343,7 +1347,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
-    StunRequest stun_request;
+    StunRequest stun_request = {0};
     stun_request.type = POST_INFO;
     stun_request.entry.public_port = htons((unsigned short)port);
 
@@ -1499,7 +1503,7 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     stun_addr.sin_addr.s_addr = inet_addr(STUN_IP);
     stun_addr.sin_port = htons(STUN_PORT);
 
-    StunRequest stun_request;
+    StunRequest stun_request = {0};
     stun_request.type = ASK_INFO;
     stun_request.entry.ip = inet_addr(destination);
     stun_request.entry.public_port = htons((unsigned short)port);
@@ -1924,7 +1928,13 @@ void set_timeout(SOCKET socket, int timeout_ms) {
     }
 }
 
-void prepare_private_key_request(PrivateKeyData *priv_key_data) { gen_iv(priv_key_data->iv); }
+void prepare_private_key_request(PrivateKeyData *priv_key_data) {
+    // Generate the IV, so that someone else can sign it
+    gen_iv(priv_key_data->iv);
+    // Clear priv_key_data so that PrivateKeyData is entirely initialized
+    // (For valgrind)
+    memset(priv_key_data->signature, 0, sizeof(priv_key_data->signature));
+}
 
 typedef struct {
     char iv[16];
