@@ -1,4 +1,6 @@
+import { app } from 'electron'
 import env from '@app/utils/env'
+import path from 'path'
 
 enum FractalNodeEnvironment {
   DEVELOPMENT = 'development',
@@ -137,6 +139,11 @@ export const config =
     process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
       ? getDevelopmentEnv()
       : getProductionEnv()
+
+export const loggingBaseFilePath =
+  process.platform === 'win32'
+    ? path.join(app.getPath('appData'), 'Fractal')
+    : path.join(app.getPath('home'), '.fractal')
 
 // default export until we have multiple exports
 export default config
