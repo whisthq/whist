@@ -172,7 +172,7 @@ bool init_sentry(char* environment, const char* runner_type) {
             printf("Sentry environment is too long: %s\n", environment);
             return -1;
         }
-        sentry_set_tag("runner", runner_type);
+        sentry_set_tag("protocol-type", runner_type);
 
         sentry_options_t* options = sentry_options_new();
         // sentry_options_set_debug(options, true);  // if sentry is playing up uncomment this

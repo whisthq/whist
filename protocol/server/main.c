@@ -843,11 +843,10 @@ int multithreaded_manage_clients(void* opaque) {
             //  doesn't matter if we disconnect
             //  * if no clients are connected, it isn't possible for another client to nongracefully
             //  exit and reset the grace period timer
-            if (((first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
-                 !disable_timeout) &&
-                (!client_exited_nongracefully ||
-                 (get_timer(last_nongraceful_exit) > nongraceful_grace_period &&
-                  !disable_timeout))) {
+            if (!disable_timeout &&
+                (first_client_connected || (get_timer(first_client_timer) > begin_time_to_exit)) &&
+                (!client_exited_nongracefully || (get_timer(last_nongraceful_exit) > nongraceful_grace_period))
+            ) {
                 exiting = true;
             }
         } else {
@@ -1092,7 +1091,6 @@ int main(int argc, char* argv[]) {
     connection_id = rand();
 
     if (using_sentry) {
-        sentry_set_tag("protocol-type", "server");
         sentry_set_tag("connection_id", "no connection yet");
     }
 
