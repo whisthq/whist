@@ -23,6 +23,7 @@ import {
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
+import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
 import {
@@ -94,10 +95,7 @@ merge(
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
   uploadToS3(email)
     .then(() => app.quit())
-    .catch((err) => {
-      console.error(err)
-      app.quit()
-    })
+    .catch((err) => console.error(err))
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -110,6 +108,7 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
   .subscribe(() => {
     closeWindows()
     hideAppDock()
+    createTray()
   })
 
 // If the update is downloaded, quit the app and install the update
