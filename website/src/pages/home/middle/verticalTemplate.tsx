@@ -1,8 +1,8 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Row, Col } from 'react-bootstrap'
 
 import Geometric from '@app/pages/home/top/geometric'
-import MainContext from '@app/shared/context/mainContext'
+import { withContext } from '@app/shared/utils/context'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 
 export const VerticalTemplate = (props: {
@@ -23,7 +23,7 @@ export const VerticalTemplate = (props: {
             background (boolean): Should the animated background be visible
     */
 
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
   const { title, text, image, visible } = props
 
   return (
