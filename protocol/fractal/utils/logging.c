@@ -116,9 +116,9 @@ void init_logger(char* log_dir) {
     if (log_dir) {
         log_directory_length = strlen(log_dir);
         log_directory = (char*)safe_malloc(log_directory_length + 2);
-        log_file_name = (char*)safe_malloc(log_directory_length +
-                                           log_file_length + 2);  // assuming the longest file name is
-                                                              // {log_directory}log-staging_prev.txt
+        log_file_name = (char*)safe_malloc(log_directory_length + log_file_length +
+                                           2);  // assuming the longest file name is
+                                                // {log_directory}log-staging_prev.txt
         safe_strncpy(log_directory, log_dir, log_directory_length + 1);
 #if defined(_WIN32)
         log_directory[log_directory_length] = '\\';
@@ -129,8 +129,8 @@ void init_logger(char* log_dir) {
 
         // name the initial log file before we know what environment we're in
         safe_strncpy(log_env, "-init", sizeof(log_env));
-        snprintf(log_file_name, log_directory_length + log_file_length + 2, "%s%s%s%s", log_directory,
-                 "log", log_env, ".txt");
+        snprintf(log_file_name, log_directory_length + log_file_length + 2, "%s%s%s%s",
+                 log_directory, "log", log_env, ".txt");
 
 #if defined(_WIN32)
         CreateDirectoryA(log_directory, 0);
