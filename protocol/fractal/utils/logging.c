@@ -208,7 +208,7 @@ void rename_log_file() {
 
     // use sentry_environment to set new log file name
     char new_log_file_name[1000] = "";
-    if (strcmp(sentry_environment, "prod") == 0) {
+    if (strcmp(sentry_environment, "production") == 0) {
         safe_strncpy(log_env, "", sizeof(log_env));
     } else if (strcmp(sentry_environment, "staging") == 0) {
         safe_strncpy(log_env, "-staging", sizeof(log_env));
