@@ -10,7 +10,7 @@ import {
 import { FractalButton, FractalButtonState } from '@app/components/html/button'
 import { FractalNavigation } from '@app/components/custom/navigation'
 
-import { loginEnabled, checkEmail, checkPassword } from '@app/utils/auth'
+import { loginEnabled, checkEmail } from '@app/utils/auth'
 
 const Login = (props: {
   loading: boolean
@@ -78,7 +78,7 @@ const Login = (props: {
                         onEnterKey={props.onLogin}
                         value={props.password}
                         state={
-                            checkPassword(props.password)
+                            loginEnabled(props.email, props.password)
                               ? FractalInputState.SUCCESS
                               : FractalInputState.DEFAULT
                         }

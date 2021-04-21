@@ -81,9 +81,8 @@ export const signupEnabled = (
   )
 }
 
-export const loginEnabled = (email: string, password: string): boolean => {
-  return checkEmail(email) && checkPassword(password)
-}
+export const loginEnabled = (email: string, password: string): boolean =>
+  checkEmail(email) && (password.length >= MINIMUM_PASSWORD_LENGTH)
 
 export const checkConfirmPassword = (
   password: string,
