@@ -618,7 +618,6 @@ int ack(SocketContext *context) { return sendp(context, NULL, 0); }
 bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
     // Connect to TCP server
     int ret;
-    LOG_INFO("Setting timeout...");
     set_timeout(socket, 0);
     if ((ret = connect(socket, (struct sockaddr *)(&addr), sizeof(addr))) < 0) {
         bool worked = get_last_network_error() == FRACTAL_EINPROGRESS;
@@ -653,7 +652,6 @@ bool tcp_connect(SOCKET socket, struct sockaddr_in addr, int timeout_ms) {
         return false;
     }
 
-    LOG_INFO("setting timeout...");
     set_timeout(socket, timeout_ms);
     return true;
 }
@@ -1043,7 +1041,6 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
         return -1;
     }
 
-    LOG_INFO("Setting timeout...");
     set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
@@ -1234,6 +1231,8 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
         LOG_ERROR("Context is NULL");
         return -1;
     }
+    port = port_mappings[port];
+
     context->timeout = recvfrom_timeout_ms;
     context->mutex = safe_SDL_CreateMutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
@@ -1574,6 +1573,7 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
         LOG_ERROR("Context is NULL");
         return -1;
     }
+    port = port_mappings[port];
 
     context->timeout = recvfrom_timeout_ms;
     context->mutex = safe_SDL_CreateMutex();
