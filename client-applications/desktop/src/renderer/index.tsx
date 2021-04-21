@@ -1,6 +1,8 @@
 import React from "react"
 import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
+import { loadStripe } from "@stripe/stripe-js"
+import { Elements } from "@stripe/react-stripe-js"
 
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
@@ -79,10 +81,13 @@ const WindowBackground = (props: any) => {
     </div>
   )
 }
+const stripePromise = loadStripe("pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb")
 
 ReactDOM.render(
-  <WindowBackground>
-    <RootComponent />
-  </WindowBackground>,
+  <Elements stripe={stripePromise}>
+    <WindowBackground>
+      <RootComponent />
+    </WindowBackground>
+  </Elements>,
   document.getElementById("root")
 )
