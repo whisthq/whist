@@ -146,8 +146,15 @@ void init_logger(char* log_directory);
 
 /**
  * @brief                          Initialize the sentry logger
+ *
+ * @param environment              Sentry environment
+ *
+ * @param runner_type              Whether it is client or server
+ *
+ * @returns                        Whether sentry was set up or not
+ *
  */
-void init_sentry();
+bool init_sentry(char* environment, const char* runner_type);
 
 /**
  * @brief                          Rename the file that logs are being written to

@@ -183,7 +183,7 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             break;
         }
         case 'e': {  // sentry environment
-            using_sentry = init_sentry(optarg, "client")
+            using_sentry = init_sentry(optarg, "client");
             break;
         }
         case 'i': {  // protocol window icon
