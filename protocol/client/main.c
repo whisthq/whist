@@ -786,7 +786,6 @@ int main(int argc, char* argv[]) {
     // We do this here instead of in initLogger because initLogger is used both by the client and
     // the server so we have to do it for both in their respective main.c files.
     if (using_sentry) {
-        sentry_set_tag("protocol-type", "client");
         sentry_set_tag("connection_id", "no connection yet");
 
         if (strcmp(user_email, "None") != 0) {

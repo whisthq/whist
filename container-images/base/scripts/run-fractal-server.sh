@@ -106,7 +106,8 @@ if [[ ! ${WEBSERVER_URL+x} ]]; then
     exit 0
 fi
 
-case $SENTRY_ENV in
+# Find the correctly named log file
+case ${SENTRY_ENV:-"dev"} in
     "production" )
         LOG_FILENAME="log.txt"
         ;;
