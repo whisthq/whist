@@ -459,6 +459,9 @@ int read_piped_arguments(bool *keep_waiting) {
         }
 #endif  // _WIN32
 
+        // Reset `incoming` so that it is at the very least initialized.
+        memset(&incoming, 0, MAX_INCOMING_LENGTH);
+
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
             read_char = (char)fgetc(stdin);
@@ -483,13 +486,20 @@ int read_piped_arguments(bool *keep_waiting) {
                 continue;
             }
 
-            // Splits the incoming string from STDIN into arg_name and arg_value
-            char *arg_name = strtok(incoming, "?");
+            // We could use `strsep`, but it sadly is not cross-platform.
+            // We split at the first occurence of '?'; the first part becomes
+            // the name, and the last part becomes the value.
+            char *c;
+            for (c = incoming; *c && *c != '?'; ++c)
+                ;
+            *c = '\0';
+            char *arg_name = incoming;
+            char *arg_value = c;
+
             if (!arg_name) {
                 goto completed_line_eval;
             }
 
-            char *arg_value = strtok(NULL, "?");
             if (arg_value) {
                 arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
                 arg_value[strcspn(arg_value, "\r")] =
