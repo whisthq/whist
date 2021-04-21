@@ -14,6 +14,42 @@ export enum FractalCIEnvironment {
   PRODUCTION = "prod",
 }
 
+const getBaseFilePath = () => {
+  if (process.platform === 'win32') {
+    return path.join(app.getPath('appData'), 'Fractal')
+  } else {
+    return path.join(app.getPath('home'), '.fractal')
+  }
+}
+const baseFilePath = getBaseFilePath()
+
+const getProtocolName = () => {
+  if (process.platform === 'win32') {
+    return 'Fractal.exe'
+  } else if (process.platform === 'darwin') {
+    return '_Fractal'
+  } else {
+    return 'Fractal'
+  }
+}
+const getProtocolFolder = () => {
+  if (app.isPackaged) {
+    if (process.platform === 'darwin') {
+      return path.join(app.getAppPath(), '../..', 'MacOS')
+    } else {
+      return path.join(app.getAppPath(), '../..', 'protocol-build/client')
+    }
+  } else {
+    return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
+  }
+}
+const protocolName = getProtocolName()
+const protocolFolder = getProtocolFolder()
+
+const buildRoot = app.isPackaged
+  ? path.join(app.getAppPath(), 'build')
+  : path.resolve('public')
+
 /*
     Webserver URLs
 */
@@ -41,6 +77,10 @@ const keys = {
 const environment = {
   LOCAL: {
     keys,
+    baseFilePath,
+    protocolName,
+    protocolFolder,
+    buildRoot,
     url: {
       ...url,
       WEBSERVER_URL: webservers.local,
@@ -52,12 +92,16 @@ const environment = {
     sentryEnv: "development",
     clientDownloadURLs: {
       MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
-      Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+      Windows: "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
     },
+    title: 'Fractal (local)'
   },
   DEVELOPMENT: {
     keys,
+    baseFilePath,
+    protocolName,
+    protocolFolder,
+    buildRoot,
     url: {
       ...url,
       WEBSERVER_URL: webservers.dev,
@@ -70,11 +114,16 @@ const environment = {
     clientDownloadURLs: {
       MacOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
       Windows:
-        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-dev.s3.amazonaws.com/Fractal.exe"
     },
+    title: 'Fractal (development)'
   },
   STAGING: {
     keys,
+    baseFilePath,
+    protocolName,
+    protocolFolder,
+    buildRoot,
     url: {
       ...url,
       WEBSERVER_URL: webservers.staging,
@@ -88,11 +137,16 @@ const environment = {
       MacOS:
         "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
       Windows:
-        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-staging.s3.amazonaws.com/Fractal.exe"
     },
+    title: 'Fractal (staging)'
   },
   PRODUCTION: {
     keys,
+    baseFilePath,
+    protocolName,
+    protocolFolder,
+    buildRoot,
     url: {
       ...url,
       WEBSERVER_URL: webservers.production,
@@ -105,9 +159,10 @@ const environment = {
     clientDownloadURLs: {
       MacOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
       Windows:
-        "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe",
+        "https://fractal-chromium-windows-base.s3.amazonaws.com/Fractal.exe"
     },
-  },
+    title: 'Fractal'
+  }
 }
 
 const getDevelopmentEnv = () => {
