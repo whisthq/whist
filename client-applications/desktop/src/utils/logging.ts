@@ -9,7 +9,7 @@ import logzio from 'logzio-nodejs'
 import { merge, Observable } from 'rxjs'
 import stringify from 'json-stringify-safe'
 
-import config, { loggingBaseFilePath }  from '@app/config'
+import config, { loggingBaseFilePath } from '@app/config/environment'
 
 // Logging base function
 export enum LogLevel {

@@ -1,5 +1,5 @@
 import { configGet, configPost } from '@fractal/core-ts'
-import config from '@app/config'
+import config from '@app/config/environment'
 import https from 'https'
 
 /*
