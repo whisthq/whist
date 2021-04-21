@@ -101,6 +101,8 @@ OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 /usr/share/fractal/FractalServer $OPTIONS
 
+echo "FractalServer has exited"
+
 # If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
 if [[ ! ${WEBSERVER_URL+x} ]]; then
     exit 0
