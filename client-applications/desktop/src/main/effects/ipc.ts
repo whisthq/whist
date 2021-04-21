@@ -36,6 +36,9 @@ const subscribed: SubscriptionMap = {
   updateInfo: autoUpdateDownloadProgress,
   signupLoading: signupLoading,
   signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+  stripeCheckoutId: stripeCheckoutSuccess.pipe(
+    map((req) => req.json.sessionId)
+  ),
 }
 
 objectCombine(subscribed)
