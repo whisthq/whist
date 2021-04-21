@@ -122,7 +122,6 @@ Of course, input must also be sent from client to server. This is handled in the
     ├── handle_client_message.c <- Handle client fmsg's
     ├── main.c <- Initialite server, receive packets and pass to where it needs to go
     ├── network.c <- Networking code for multiclient
-    └── webserver.c <- Handles webserver communication over http JSON
 ```
 
 The above files are fairly static. If you add or remove a file, or change what a file does, please update this directory so we can keep track of it all!

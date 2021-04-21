@@ -244,7 +244,7 @@ int get_last_network_error() {
 }
 
 bool handshake_private_key(SocketContext *context) {
-    set_timeout(context->s, 1000);
+    set_timeout(context->socket, 1000);
 
     PrivateKeyData our_priv_key_data;
     PrivateKeyData our_signed_priv_key_data;
@@ -262,9 +262,9 @@ bool handshake_private_key(SocketContext *context) {
     SDL_Delay(50);
 
     // Receive, sign, and send back their private key request data
-    while (
-        (recv_size = recvfrom(context->s, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
-                              0, (struct sockaddr *)(&context->addr), &slen)) == 0)
+    while ((recv_size =
+                recvfrom(context->socket, (char *)&their_priv_key_data, sizeof(their_priv_key_data),
+                         0, (struct sockaddr *)(&context->addr), &slen)) == 0)
         ;
     if (recv_size < 0) {
         LOG_WARNING("Did not receive other connection's private key request: %d",
@@ -291,7 +291,7 @@ bool handshake_private_key(SocketContext *context) {
         return false;
     } else {
         LOG_INFO("Private key confirmed");
-        set_timeout(context->s, context->timeout);
+        set_timeout(context->socket, context->timeout);
         return true;
     }
 }
@@ -596,7 +596,7 @@ int recvp(SocketContext *context, void *buf, int len) {
         LOG_WARNING("Context is NULL");
         return -1;
     }
-    return recv(context->s, buf, len, 0);
+    return recv(context->socket, buf, len, 0);
 }
 
 int sendp(SocketContext *context, void *buf, int len) {
@@ -609,7 +609,7 @@ int sendp(SocketContext *context, void *buf, int len) {
         return -1;
     }
     // cppcheck-suppress nullPointer
-    return sendto(context->s, buf, len, 0, (struct sockaddr *)(&context->addr),
+    return sendto(context->socket, buf, len, 0, (struct sockaddr *)(&context->addr),
                   sizeof(context->addr));
 }
 
@@ -800,17 +800,18 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
 
     // Create TCP socket
     LOG_INFO("Creating TCP Socket");
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
+        0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -821,39 +822,39 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
     origin_addr.sin_port = htons((unsigned short)port);
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     // Set listen queue
     LOG_INFO("Waiting for TCP Connection");
-    if (listen(context->s, 3) < 0) {
+    if (listen(context->socket, 3) < 0) {
         LOG_WARNING("Could not listen(2)! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     fd_set fd_read, fd_write;
     FD_ZERO(&fd_read);
     FD_ZERO(&fd_write);
-    FD_SET(context->s, &fd_read);
-    FD_SET(context->s, &fd_write);
+    FD_SET(context->socket, &fd_read);
+    FD_SET(context->socket, &fd_write);
 
     struct timeval tv;
     tv.tv_sec = stun_timeout_ms / MS_IN_SECOND;
     tv.tv_usec = (stun_timeout_ms % MS_IN_SECOND) * 1000;
 
     int ret;
-    if ((ret = select((int)context->s + 1, &fd_read, &fd_write, NULL,
+    if ((ret = select((int)context->socket + 1, &fd_read, &fd_write, NULL,
                       stun_timeout_ms > 0 ? &tv : NULL)) <= 0) {
         if (ret == 0) {
             LOG_INFO("No TCP Connection Retrieved, ending TCP connection attempt.");
         } else {
             LOG_WARNING("Could not select! %d", get_last_network_error());
         }
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -861,20 +862,20 @@ int create_tcp_server_context(SocketContext *context, int port, int recvfrom_tim
     LOG_INFO("Accepting TCP Connection");
     socklen_t slen = sizeof(context->addr);
     SOCKET new_socket;
-    if ((new_socket = acceptp(context->s, (struct sockaddr *)(&context->addr), &slen)) ==
+    if ((new_socket = acceptp(context->socket, (struct sockaddr *)(&context->addr), &slen)) ==
         INVALID_SOCKET) {
         return -1;
     }
 
     LOG_INFO("PORT: %d", context->addr.sin_port);
 
-    closesocket(context->s);
-    context->s = new_socket;
+    closesocket(context->socket);
+    context->socket = new_socket;
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -896,11 +897,11 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     int opt;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Create UDP socket
     SOCKET udp_s = socketp_udp();
@@ -917,7 +918,8 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
+        0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
@@ -925,15 +927,15 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     struct sockaddr_in origin_addr;
     // Connect over TCP to STUN
     LOG_INFO("Connecting to STUN TCP...");
-    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+    if (!tcp_connect(context->socket, stun_addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to STUN Server over TCP");
         return -1;
     }
 
     socklen_t slen = sizeof(origin_addr);
-    if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
+    if (getsockname(context->socket, (struct sockaddr *)&origin_addr, &slen) < 0) {
         LOG_WARNING("Could not get sock name");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -944,7 +946,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -960,7 +962,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
-            closesocket(context->s);
+            closesocket(context->socket);
             return -1;
         }
         recv_size += single_recv_size;
@@ -968,7 +970,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
 
     if (recv_size != sizeof(entry)) {
         LOG_WARNING("TCP STUN Response packet of wrong size! %d\n", recv_size);
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -980,35 +982,36 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     LOG_INFO("TCP STUN notified of desired request from %s:%d\n", inet_ntoa(client_addr.sin_addr),
              ntohs(client_addr.sin_port));
 
-    closesocket(context->s);
+    closesocket(context->socket);
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    if (context->s <= 0) {  // Windows & Unix cases
+    if (context->socket <= 0) {  // Windows & Unix cases
         LOG_WARNING("Could not create TCP socket %d\n", get_last_network_error());
         return -1;
     }
 
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
+        0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     LOG_INFO("WAIT");
 
     // Connect to client
-    if (!tcp_connect(context->s, client_addr, stun_timeout_ms)) {
+    if (!tcp_connect(context->socket, client_addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to Client over TCP");
         return -1;
     }
@@ -1016,7 +1019,7 @@ int create_tcp_server_context_stun(SocketContext *context, int port, int recvfro
     context->addr = client_addr;
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
     return 0;
 }
 
@@ -1034,11 +1037,11 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
     context->is_tcp = true;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
     context->is_server = false;
@@ -1052,14 +1055,14 @@ int create_tcp_client_context(SocketContext *context, char *destination, int por
     SDL_Delay(200);
 
     // Connect to TCP server
-    if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
+    if (!tcp_connect(context->socket, context->addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to server over TCP");
         return -1;
     }
 
     LOG_INFO("Connected on %s:%d!\n", destination, port);
 
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -1084,11 +1087,11 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     int opt;
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Tell the STUN to use UDP
     SOCKET udp_s = socketp_udp();
@@ -1104,22 +1107,23 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
+        0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Connect to STUN server
-    if (!tcp_connect(context->s, stun_addr, stun_timeout_ms)) {
+    if (!tcp_connect(context->socket, stun_addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to STUN Server over TCP");
         return -1;
     }
 
     struct sockaddr_in origin_addr;
     socklen_t slen = sizeof(origin_addr);
-    if (getsockname(context->s, (struct sockaddr *)&origin_addr, &slen) < 0) {
+    if (getsockname(context->socket, (struct sockaddr *)&origin_addr, &slen) < 0) {
         LOG_WARNING("Could not get sock name");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1131,7 +1135,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     if (sendp(context, &stun_request, sizeof(stun_request)) < 0) {
         LOG_WARNING("Could not send STUN request to connected STUN server!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1147,7 +1151,7 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
         if ((single_recv_size = recvp(context, ((char *)&entry) + recv_size,
                                       max(0, (int)sizeof(entry) - recv_size))) < 0) {
             LOG_WARNING("Did not receive STUN response %d\n", get_last_network_error());
-            closesocket(context->s);
+            closesocket(context->socket);
             return -1;
         }
         recv_size += single_recv_size;
@@ -1155,16 +1159,16 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
 
     if (recv_size != sizeof(entry)) {
         LOG_WARNING("STUN Response of wrong size! %d", recv_size);
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else if (entry.ip != stun_request.entry.ip ||
                entry.public_port != stun_request.entry.public_port) {
         LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else if (entry.private_port == 0) {
         LOG_WARNING("STUN reported no such IP Address");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
@@ -1181,39 +1185,40 @@ int create_tcp_client_context_stun(SocketContext *context, char *destination, in
     LOG_WARNING("TCP STUN responded that the TCP server is located at %s:%d\n", inet_ntoa(a),
                 ntohs(entry.private_port));
 
-    closesocket(context->s);
+    closesocket(context->socket);
 
     // Create TCP socket
-    if ((context->s = socketp_tcp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_tcp()) == INVALID_SOCKET) {
         return -1;
     }
 
     // Reuse addr
     opt = 1;
-    if (setsockopt(context->s, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) < 0) {
+    if (setsockopt(context->socket, SOL_SOCKET, SO_REUSEADDR, (const char *)&opt, sizeof(opt)) <
+        0) {
         LOG_WARNING("Could not setsockopt SO_REUSEADDR");
         return -1;
     }
 
     // Bind to port
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     LOG_INFO("Connecting to server...");
 
     // Connect to TCP server
-    if (!tcp_connect(context->s, context->addr, stun_timeout_ms)) {
+    if (!tcp_connect(context->socket, context->addr, stun_timeout_ms)) {
         LOG_WARNING("Could not connect to server over TCP");
         return -1;
     }
 
     LOG_INFO("Connected on %s:%d!\n", destination, port);
 
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
     return 0;
 }
 
@@ -1222,8 +1227,6 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
-    port = port_mappings[port];
-
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
@@ -1256,7 +1259,7 @@ int create_tcp_context(SocketContext *context, char *destination, int port, int 
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1273,11 +1276,11 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
 
     context->is_tcp = false;
     // Create UDP socket
-    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
     // Server connection protocol
     context->is_server = true;
 
@@ -1287,9 +1290,9 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
     origin_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     origin_addr.sin_port = htons((unsigned short)port);
 
-    if (bind(context->s, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
+    if (bind(context->socket, (struct sockaddr *)(&origin_addr), sizeof(origin_addr)) < 0) {
         LOG_WARNING("Failed to bind to port! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1297,23 +1300,23 @@ int create_udp_server_context(SocketContext *context, int port, int recvfrom_tim
 
     socklen_t slen = sizeof(context->addr);
     int recv_size;
-    if ((recv_size =
-             recvfrom(context->s, NULL, 0, 0, (struct sockaddr *)(&context->addr), &slen)) != 0) {
+    if ((recv_size = recvfrom(context->socket, NULL, 0, 0, (struct sockaddr *)(&context->addr),
+                              &slen)) != 0) {
         LOG_WARNING("Failed to receive ack! %d %d", recv_size, get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     LOG_INFO("Client received at %s:%d!\n", inet_ntoa(context->addr.sin_addr),
              ntohs(context->addr.sin_port));
 
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -1323,11 +1326,11 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Server connection protocol
     context->is_server = true;
@@ -1343,10 +1346,10 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending stun entry to STUN...");
-    if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
+    if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1354,7 +1357,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
 
     // Receive client's connection attempt
     // Update the STUN every 100ms
-    set_timeout(context->s, 100);
+    set_timeout(context->socket, 100);
 
     // But keep track of time to compare against stun_timeout_ms
     clock recv_timer;
@@ -1363,31 +1366,31 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
     socklen_t slen = sizeof(context->addr);
     StunEntry entry = {0};
     int recv_size;
-    while ((recv_size = recvfrom(context->s, (char *)&entry, sizeof(entry), 0,
+    while ((recv_size = recvfrom(context->socket, (char *)&entry, sizeof(entry), 0,
                                  (struct sockaddr *)(&context->addr), &slen)) < 0) {
         // If we haven't spent too much time waiting, and our previous 100ms
         // poll failed, then send another STUN update
         if (get_timer(recv_timer) * MS_IN_SECOND < stun_timeout_ms &&
             (get_last_network_error() == FRACTAL_ETIMEDOUT ||
              get_last_network_error() == FRACTAL_EAGAIN)) {
-            if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
+            if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
                        (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
                 LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
-                closesocket(context->s);
+                closesocket(context->socket);
                 return -1;
             }
             continue;
         }
         LOG_WARNING("Did not receive response from client! %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
-    set_timeout(context->s, 350);
+    set_timeout(context->socket, 350);
 
     if (recv_size != sizeof(entry)) {
         LOG_WARNING("STUN response was not the size of an entry!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1408,10 +1411,10 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     // Check that confirmation matches STUN's claimed client
     if (context->addr.sin_addr.s_addr != entry.ip || context->addr.sin_port != entry.private_port) {
@@ -1423,7 +1426,7 @@ int create_udp_server_context_stun(SocketContext *context, int port, int recvfro
         context->addr.sin_port = entry.private_port;
         LOG_WARNING("Should have been %s:%d!\n", inet_ntoa(context->addr.sin_addr),
                     ntohs(context->addr.sin_port));
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1438,11 +1441,11 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
     context->is_server = false;
@@ -1455,7 +1458,7 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
     // Send Ack
     if (ack(context) < 0) {
         LOG_WARNING("Could not send ack to server %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1463,14 +1466,14 @@ int create_udp_client_context(SocketContext *context, char *destination, int por
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
              port, ntohs(context->addr.sin_port));
 
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -1480,11 +1483,11 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     context->is_tcp = false;
 
     // Create UDP socket
-    if ((context->s = socketp_udp()) == INVALID_SOCKET) {
+    if ((context->socket = socketp_udp()) == INVALID_SOCKET) {
         return -1;
     }
 
-    set_timeout(context->s, stun_timeout_ms);
+    set_timeout(context->socket, stun_timeout_ms);
 
     // Client connection protocol
     context->is_server = false;
@@ -1500,10 +1503,10 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     stun_request.entry.public_port = htons((unsigned short)port);
 
     LOG_INFO("Sending info request to STUN...");
-    if (sendto(context->s, (const char *)&stun_request, sizeof(stun_request), 0,
+    if (sendto(context->socket, (const char *)&stun_request, sizeof(stun_request), 0,
                (struct sockaddr *)&stun_addr, sizeof(stun_addr)) < 0) {
         LOG_WARNING("Could not send message to STUN %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -1511,22 +1514,22 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
     int recv_size;
     if ((recv_size = recvp(context, &entry, sizeof(entry))) < 0) {
         LOG_WARNING("Could not receive message from STUN %d\n", get_last_network_error());
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     if (recv_size != sizeof(entry)) {
         LOG_WARNING("STUN Response of wrong size! %d", recv_size);
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else if (entry.ip != stun_request.entry.ip ||
                entry.public_port != stun_request.entry.public_port) {
         LOG_WARNING("STUN Response IP and/or Public Port is incorrect!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else if (entry.private_port == 0) {
         LOG_WARNING("STUN reported no such IP Address");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     } else {
         LOG_WARNING("Received STUN response! Public %d is mapped to private %d\n",
@@ -1548,13 +1551,13 @@ int create_udp_client_context_stun(SocketContext *context, char *destination, in
 
     if (!handshake_private_key(context)) {
         LOG_WARNING("Could not complete handshake!");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
     LOG_INFO("Connected to server on %s:%d! (Private %d)\n", inet_ntoa(context->addr.sin_addr),
              port, ntohs(context->addr.sin_port));
-    set_timeout(context->s, recvfrom_timeout_ms);
+    set_timeout(context->socket, recvfrom_timeout_ms);
 
     return 0;
 }
@@ -1564,8 +1567,6 @@ int create_udp_context(SocketContext *context, char *destination, int port, int 
     if ((int)((unsigned short)port) != port) {
         LOG_ERROR("Port invalid: %d", port);
     }
-    port = port_mappings[port];
-
     if (context == NULL) {
         LOG_ERROR("Context is NULL");
         return -1;
