@@ -74,9 +74,6 @@ int last_nacked_id = -1;
 int most_recent_audio_id = -1;
 int last_played_id = -1;
 
-// Audio flush happens when the audio buffer gets too large, and we need to clear it out
-bool audio_flush_triggered = false;
-
 // Audio refresh happens when the user plugs in a new audio device,
 // or unplugs their current audio device
 bool audio_refresh = false;
@@ -224,7 +221,7 @@ void render_audio() {
 
                 // Play decoded audio
                 res =
-                    SDL_QueueAudio(audio_context.dev, &decoded_data,
+                    SDL_QueueAudio(audio_context.dev, decoded_data,
                                    audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
                 if (res < 0) {
@@ -273,8 +270,6 @@ void update_audio() {
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);
 #endif
-    bool still_more_audio_packets = true;
-
     // Catch up to most recent ID if nothing has played yet
     if (last_played_id == -1 && has_rendered_yet && most_recent_audio_id > 0) {
         last_played_id = most_recent_audio_id - 1;
@@ -319,115 +314,112 @@ void update_audio() {
 
     int next_to_play_id;
 
-    while (still_more_audio_packets) {
-        next_to_play_id = last_played_id + 1;
+    next_to_play_id = last_played_id + 1;
 
-        if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
-            LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
-            return;
-        }
+    if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
+        LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
+        return;
+    }
 
-        bool valid = true;
-        for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-            if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
-                valid = false;
-            }
-        }
-
-        still_more_audio_packets = false;
-        if (valid) {
-            // dont keep checking for more audio packets
-            // still_more_audio_packets = true;
-
-            // If an audio flush is triggered,
-            // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
-            int real_limit =
-                audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
-
-            if (audio_device_queue > real_limit) {
-                LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
-                            next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
-                // Clear out audio instead of playing it
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    packet->id = -1;
-                    packet->nacked_amount = 0;
-                }
-                // Trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
-                if (!audio_flush_triggered) {
-                    audio_flush_triggered = true;
-                }
-            } else {
-                // When the audio queue is no longer full, we stop flushing the audio queue
-                audio_flush_triggered = false;
-
-                // Store the audio render context information
-                render_context.encoded = USING_AUDIO_ENCODE_DECODE;
-                for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                    int buffer_index = next_to_play_id + i;
-                    // Save buffer in render context
-                    // fprintf(stderr, "%p %p %ld\n", &render_context.audio_data[i],
-                    // &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
-                    // sizeof(AudioPacket));
-                    memcpy((AudioPacket*)&render_context.audio_data[i],
-                           &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
-                           sizeof(AudioPacket));
-                    // Reset packet in receiving audio buffer
-                    AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
-                    packet->id = -1;
-                    packet->nacked_amount = 0;
-                }
-
-                // Render audio on audio thread
-                rendering = true;
-            }
-
-            last_played_id += MAX_NUM_AUDIO_INDICES;
+    bool valid = true;
+    for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+        if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
+            valid = false;
         }
     }
 
-    //         }
+    // Audio flush happens when the audio buffer gets too large, and we need to clear it out
+    // Only this function needs to know about this variable, hence it is static
+    static bool audio_flush_triggered = false;
+    if (valid) {
+        // dont keep checking for more audio packets
 
-    //         last_played_id += MAX_NUM_AUDIO_INDICES;
-    //     }
-    // }
+        // If an audio flush is triggered,
+        // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
+        int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-    // Find pending audio packets and NACK them
+        if (audio_device_queue > real_limit) {
+            LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
+                        next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
+            // Clear out audio instead of playing it
+            for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+                AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                packet->id = -1;
+                packet->nacked_amount = 0;
+            }
+            // Trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
+            if (!audio_flush_triggered) {
+                audio_flush_triggered = true;
+            }
+        } else {
+            // When the audio queue is no longer full, we stop flushing the audio queue
+            audio_flush_triggered = false;
+
+            // Store the audio render context information
+            render_context.encoded = USING_AUDIO_ENCODE_DECODE;
+            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+                int buffer_index = next_to_play_id + i;
+                // Save buffer in render context
+                // fprintf(stderr, "%p %p %ld\n", &render_context.audio_data[i],
+                // &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
+                // sizeof(AudioPacket));
+                memcpy((AudioPacket*)&render_context.audio_data[i],
+                       &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
+                       sizeof(AudioPacket));
+                // Reset packet in receiving audio buffer
+                AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
+                packet->id = -1;
+                packet->nacked_amount = 0;
+            }
+
+            // Render audio on audio thread
+            rendering = true;
+        }
+
+        last_played_id += MAX_NUM_AUDIO_INDICES;
+    }
+}
+
+//         }
+
+//         last_played_id += MAX_NUM_AUDIO_INDICES;
+//     }
+// }
+
+// Find pending audio packets and NACK them
 #define MAX_NACKED 1
-    unsigned char fmsg_buffer[MAX_NACKED * sizeof(FractalClientMessage)];
-    FractalClientMessage* fmsg[MAX_NACKED];
-    int num_nacked = 0;
-    if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
-        last_nacked_id = max(last_played_id, last_nacked_id);
-        for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < MAX_NACKED;
-             i++) {
-            int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
-            AudioPacket* i_packet = &receiving_audio[i_buffer_index];
-            if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
-                i_packet->nacked_amount++;
-                // Set fmsg pointer to location in buffer
-                fmsg[num_nacked] =
-                    (FractalClientMessage*)(fmsg_buffer +
-                                            num_nacked * sizeof(FractalClientMessage));
-                // Populate FractalClientMessage
-                fmsg[num_nacked]->type = MESSAGE_AUDIO_NACK;
-                fmsg[num_nacked]->nack_data.id = i / MAX_NUM_AUDIO_INDICES;
-                fmsg[num_nacked]->nack_data.index = i % MAX_NUM_AUDIO_INDICES;
-                i_packet->nacked_for = i;
-                num_nacked++;
+unsigned char fmsg_buffer[MAX_NACKED * sizeof(FractalClientMessage)];
+FractalClientMessage* fmsg[MAX_NACKED];
+int num_nacked = 0;
+if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
+    last_nacked_id = max(last_played_id, last_nacked_id);
+    for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < MAX_NACKED; i++) {
+        int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
+        AudioPacket* i_packet = &receiving_audio[i_buffer_index];
+        if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
+            i_packet->nacked_amount++;
+            // Set fmsg pointer to location in buffer
+            fmsg[num_nacked] =
+                (FractalClientMessage*)(fmsg_buffer + num_nacked * sizeof(FractalClientMessage));
+            // Populate FractalClientMessage
+            fmsg[num_nacked]->type = MESSAGE_AUDIO_NACK;
+            fmsg[num_nacked]->nack_data.id = i / MAX_NUM_AUDIO_INDICES;
+            fmsg[num_nacked]->nack_data.index = i % MAX_NUM_AUDIO_INDICES;
+            i_packet->nacked_for = i;
+            num_nacked++;
 
-                start_timer(&nack_timer);
-            }
-            last_nacked_id = i;
+            start_timer(&nack_timer);
         }
+        last_nacked_id = i;
     }
+}
 
-    // Send nacks out
-    for (int i = 0; i < num_nacked; i++) {
-        LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg[i]->nack_data.id,
-                 fmsg[i]->nack_data.index);
-        send_fmsg(fmsg[i]);
-    }
+// Send nacks out
+for (int i = 0; i < num_nacked; i++) {
+    LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", fmsg[i]->nack_data.id,
+             fmsg[i]->nack_data.index);
+    send_fmsg(fmsg[i]);
+}
 }
 
 // NOTE that this function is in the hotpath.
