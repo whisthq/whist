@@ -9,7 +9,7 @@ import logzio from 'logzio-nodejs'
 import { merge, Observable } from 'rxjs'
 import stringify from 'json-stringify-safe'
 
-import config from '@app/utils/config'
+import config, { loggingBaseFilePath } from '@app/utils/config'
 
 // Logging base function
 export enum LogLevel {
@@ -17,16 +17,6 @@ export enum LogLevel {
   WARNING = 'WARNING',
   ERROR = 'ERROR',
 }
-
-// Where to send log files, located in ~/.fractal on Unixes and %APPDATA%\Fractal on Windows systems
-const getBaseFilePath = () => {
-  if (process.platform === 'win32') {
-    return path.join(app.getPath('appData'), 'Fractal')
-  } else {
-    return path.join(app.getPath('home'), '.fractal')
-  }
-}
-const baseFilePath = getBaseFilePath()
 
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
@@ -37,10 +27,10 @@ const logzLogger = logzio.createLogger({
 })
 
 // Open a file handle to append to the logs file.
-// Create the baseFilePath directory if it does not exist.
+// Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
-  fs.mkdirSync(baseFilePath, { recursive: true })
-  const logPath = path.join(baseFilePath, 'debug.log')
+  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
+  const logPath = path.join(loggingBaseFilePath, 'debug.log')
   return fs.createWriteStream(logPath, { flags: 'a' })
 }
 
@@ -140,9 +130,9 @@ export const uploadToS3 = async (email: string) => {
   const uploadPromises: Array<Promise<any>> = []
 
   const logLocations = [
-    path.join(baseFilePath, 'log-dev.txt'),
-    path.join(baseFilePath, 'log-staging.txt'),
-    path.join(baseFilePath, 'log.txt')
+    path.join(loggingBaseFilePath, 'log-dev.txt'),
+    path.join(loggingBaseFilePath, 'log-staging.txt'),
+    path.join(loggingBaseFilePath, 'log.txt')
   ]
 
   logLocations.forEach((filePath: string) => {
