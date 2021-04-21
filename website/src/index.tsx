@@ -8,7 +8,7 @@ import RootApp from '@app/pages/root'
 
 import '@app/styles/global.module.css'
 import '@app/styles/bootstrap.css'
-import { MainProvider } from './shared/context/mainContext'
+import { MainProvider } from '@app/shared/utils/context'
 
 if (import.meta.env.REACT_APP_ENVIRONMENT === 'production') {
   // the netlify build command is:

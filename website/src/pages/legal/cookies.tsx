@@ -1,13 +1,13 @@
 /* eslint-disable react/no-unescaped-entities */
 
-import React, { useContext } from 'react'
+import React from 'react'
 import { HashLink } from 'react-router-hash-link'
 
 import { ScreenSize } from '@app/shared/constants/screenSizes'
-import MainContext from '@app/shared/context/mainContext'
+import { withContext } from '@app/shared/utils/context'
 
 const Cookies = () => {
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
 
   return (
         <div style={{ overflowX: 'hidden' }} id="top">

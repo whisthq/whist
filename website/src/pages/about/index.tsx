@@ -1,4 +1,4 @@
-import React, { useContext } from 'react'
+import React from 'react'
 import { Row, Col, Carousel } from 'react-bootstrap'
 
 import InvestorBox from './components/investorBox'
@@ -7,14 +7,14 @@ import EmployeeBox from './components/employeeBox'
 import Footer from '@app/shared/components/footer'
 import Header from '@app/shared/components/header'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
-import MainContext from '@app/shared/context/mainContext'
+import { withContext } from '@app/shared/utils/context'
 
 import { teamData } from './constants/team'
 
 export const About = (props: { useWidth?: boolean }) => {
   const { useWidth } = props
 
-  const { width } = useContext(MainContext)
+  const { width } = withContext()
 
   const screenWidth = useWidth === true || useWidth === false ? 992 : width
 
