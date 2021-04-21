@@ -29,8 +29,8 @@ def create_checkout_session(**kwargs):
         # the actual Session ID is returned in the query parameter when your customer
         # is redirected to the success page.
         checkout_session = stripe.checkout.Session.create(
-            success_url="http://localhost:8080?show=AUTH",
-            cancel_url="http://localhost:8080?show=AUTH",
+            success_url="http://example.com/success",
+            cancel_url="http://example.com/cancel",
             payment_method_types=["card"],
             mode="subscription",
             customer=body["customerId"],
