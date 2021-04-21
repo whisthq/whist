@@ -8,13 +8,11 @@ import {
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError,
-} from "@app/utils/constants"
-import config, { FractalCIEnvironment } from "@app/utils/config"
+  WindowHashAssignContainerError
+} from '@app/utils/constants'
+import config, { FractalCIEnvironment } from '@app/config'
 
-const buildRoot = app.isPackaged
-  ? path.join(app.getAppPath(), "build")
-  : path.resolve("public")
+const { buildRoot } = config
 
 const base = {
   webPreferences: { preload: path.join(buildRoot, "preload.js") },
@@ -79,7 +77,7 @@ export const createWindow = (
   onReady?: (win: BrowserWindow) => any,
   onClose?: (win: BrowserWindow) => any
 ) => {
-  const title = getWindowTitle()
+  const { title } = config
   const win = new BrowserWindow({ ...options, show: false, title })
 
   const params = "?show=" + show
