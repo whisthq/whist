@@ -45,12 +45,6 @@ export const protocolFolder = getProtocolFolder()
 
 export const protocolPath = path.join(protocolFolder, getProtocolName())
 
-export const serializePorts = (ps: {
-  port_32262: number
-  port_32263: number
-  port_32273: number
-}) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
-
 export const writeStream = (process: ChildProcess, message: string) => {
   process.stdin?.write(message)
   process.stdin?.write('\n')
@@ -91,7 +85,7 @@ export const protocolStreamInfo = (
     ip: string
   }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.ports)}`)
+  writeStream(protocol, `port?${info.ports.port_32262}`)
   writeStream(protocol, `private-key?${info.secret_key}`)
   writeStream(protocol, `ip?${info.ip}`)
   writeStream(protocol, 'finished?0')

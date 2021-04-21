@@ -140,7 +140,7 @@ typedef struct SocketContext {
     bool is_server;
     bool is_tcp;
     int timeout;
-    SOCKET s;
+    SOCKET socket;
     struct sockaddr_in addr;
     int ack;
     SDL_mutex* mutex;
@@ -203,11 +203,6 @@ typedef struct FractalPacket {
 Public Functions
 ============================
 */
-
-/*
-@brief                          Initialize default port mappings (i.e. the identity)
-*/
-void init_default_port_mappings();
 
 /**
  * @brief                          This will set the socket s to have timeout

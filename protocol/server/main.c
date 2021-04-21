@@ -71,6 +71,7 @@ Includes
 #define TCP_CONNECTION_WAIT 5000
 #define CLIENT_PING_TIMEOUT_SEC 3.0
 
+extern port_discovery;
 extern Client clients[MAX_NUM_CLIENTS];
 
 char binary_aes_private_key[16];
@@ -711,7 +712,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     } while (packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
-        closesocket(context->s);
+        closesocket(context->socket);
         return -1;
     }
 
@@ -739,7 +740,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
         ret = get_available_client_id(client_id);
         if (ret != 0) {
             LOG_ERROR("Failed to find available client ID.");
-            closesocket(context->s);
+            closesocket(context->socket);
         }
         read_unlock(&is_active_rwlock);
         if (ret != 0) return -1;
@@ -783,12 +784,12 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
     if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
         LOG_ERROR("Failed to send send discovery reply message.");
-        closesocket(context->s);
+        closesocket(context->socket);
         free(fsmsg);
         return -1;
     }
 
-    closesocket(context->s);
+    closesocket(context->socket);
     free(fsmsg);
     return 0;
 }
@@ -799,7 +800,6 @@ int multithreaded_manage_clients(void* opaque) {
     SocketContext discovery_context;
     int client_id;
 
-    bool trying_to_update = false;
     clock last_update_timer;
     start_timer(&last_update_timer);
 
@@ -830,16 +830,6 @@ int multithreaded_manage_clients(void* opaque) {
             connection_id = rand();
             start_connection_log();
 
-            if (trying_to_update) {
-                if (get_timer(last_update_timer) > 10.0) {
-                    update_webserver_parameters();
-                    start_timer(&last_update_timer);
-                }
-            } else {
-                start_timer(&last_update_timer);
-                trying_to_update = true;
-            }
-
             // container exit logic -
             //  * clients have connected before but now none are connected
             //  * no clients have connected in `begin_time_to_exit` secs of server being up
@@ -858,12 +848,9 @@ int multithreaded_manage_clients(void* opaque) {
                 exiting = true;
             }
         } else {
-            trying_to_update = false;
-
             // client has connected to server for the first time
             // update webserver parameters the first time a client connects
             if (!first_client_connected) {
-                update_webserver_parameters();
                 first_client_connected = true;
             }
 
@@ -875,7 +862,7 @@ int multithreaded_manage_clients(void* opaque) {
             }
         }
 
-        if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
+        if (create_tcp_context(&discovery_context, NULL, port_discovery, 1, TCP_CONNECTION_WAIT,
                                get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }
@@ -1097,8 +1084,6 @@ int main(int argc, char* argv[]) {
     rename_log_file();
     LOG_INFO("Server protocol started.");
 
-    init_default_port_mappings();
-
 #if defined(_WIN32)
     // set Windows DPI
     SetProcessDpiAwareness(PROCESS_SYSTEM_DPI_AWARE);
@@ -1146,9 +1131,6 @@ int main(int argc, char* argv[]) {
 #endif
 
     update_server_status(false, webserver_url, identifier, hex_aes_private_key);
-
-    // webserver will not know about this container until update_server_status is called above
-    update_webserver_parameters();
 
     clock startup_time;
     start_timer(&startup_time);

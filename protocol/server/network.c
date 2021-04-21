@@ -25,15 +25,15 @@ int connect_client(int id, char *binary_aes_private_key) {
     if (create_tcp_context(&(clients[id].TCP_context), NULL, clients[id].TCP_port, 1,
                            TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
-        closesocket(clients[id].UDP_context.s);
+        closesocket(clients[id].UDP_context.socket);
         return -1;
     }
     return 0;
 }
 
 int disconnect_client(int id) {
-    closesocket(clients[id].UDP_context.s);
-    closesocket(clients[id].TCP_context.s);
+    closesocket(clients[id].UDP_context.socket);
+    closesocket(clients[id].TCP_context.socket);
     return 0;
 }
 

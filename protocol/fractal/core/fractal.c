@@ -12,6 +12,12 @@
 
 #include "../utils/sysinfo.h"
 
+// port to discover containers at. On server side, containers always bind to port 32262. However,
+// this is typically NOT port 32262 on the host. Clients need to connect to a dynamic port that
+// is provided as command-line args or via stdin (that's how the client app currently does it)
+// this variable will be overriden on client-side to be the container port on the host.
+int port_discovery = 32262;
+
 char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 bool using_sentry = false;
 

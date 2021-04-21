@@ -31,6 +31,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/core/fractalgetopt.h>
 
+extern int port_discovery;
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 extern volatile char *server_ip;
@@ -57,8 +58,6 @@ extern bool using_stun;
 extern MouseMotionAccumulation mouse_state;
 extern volatile SDL_Window *window;
 
-extern unsigned short port_mappings[USHRT_MAX];
-
 volatile bool using_piped_arguments;
 const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"height", required_argument, NULL, 'h'},
@@ -69,7 +68,7 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"environment", required_argument, NULL, 'e'},
                                      {"icon", required_argument, NULL, 'i'},
                                      {"connection-method", required_argument, NULL, 'z'},
-                                     {"ports", required_argument, NULL, 'p'},
+                                     {"port", required_argument, NULL, 'p'},
                                      {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      {"read-pipe", no_argument, NULL, 'r'},
@@ -201,35 +200,12 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             }
             break;
         }
-        case 'p': {  // port mappings
-            char separator = '.';
-            char c = separator;
-            unsigned short origin_port;
-            unsigned short destination_port;
-            const char *str = eval_optarg;
-            while (c == separator) {
-                int bytes_read;
-                int args_read =
-                    sscanf(str, "%hu:%hu%c%n", &origin_port, &destination_port, &c, &bytes_read);
-                // If we read port arguments, then map them
-                if (args_read >= 2) {
-                    LOG_INFO("Mapping port: origin=%hu, destination=%hu", origin_port,
-                             destination_port);
-                    port_mappings[origin_port] = destination_port;
-                } else {
-                    char invalid_s[13];
-                    unsigned short invalid_s_len = (unsigned short)min(bytes_read + 1, 13);
-                    safe_strncpy(invalid_s, str, invalid_s_len);
-                    LOG_ERROR("Unable to parse the port mapping \"%s\"", invalid_s);
-                    break;
-                }
-                // if %c was the end of the string, exit
-                if (args_read < 3) {
-                    break;
-                }
-                // Progress the string forwards
-                str += bytes_read;
+        case 'p': {  // container port
+            int container_port = atoi(eval_optarg);
+            if (container_port == 0) {
+                LOG_FATAL("Invalid container port: %s", eval_optarg);
             }
+            port_discovery = container_port;
             break;
         }
         case 'x': {  // use CI
@@ -489,13 +465,7 @@ int read_piped_arguments(bool *keep_waiting) {
                 goto completed_line_eval;
             }
 
-            char *arg_value = strtok(NULL, "?");
-            if (arg_value) {
-                arg_value[strcspn(arg_value, "\n")] = 0;  // removes trailing newline, if exists
-                arg_value[strcspn(arg_value, "\r")] =
-                    0;  // removes trailing carriage return, if exists
-            }
-
+            char *arg_value = strtok(NULL, "?");    // guarenteed to be "\0" at least
             arg_name[strcspn(arg_name, "\n")] = 0;  // removes trailing newline, if exists
             arg_name[strcspn(arg_name, "\r")] = 0;  // removes trailing carriage return, if exists
 

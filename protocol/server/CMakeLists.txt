@@ -7,7 +7,6 @@ add_executable(FractalServer
         main.c
         handle_client_message.c
         network.c
-        webserver.c
         )
 
 set_target_properties(FractalServer PROPERTIES

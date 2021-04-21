@@ -19,6 +19,9 @@ Includes
 #include "client.h"
 #include "network.h"
 
+#define BASE_UDP_PORT 32263
+#define BASE_TCP_PORT (BASE_UDP_PORT + MAX_NUM_CLIENTS)
+
 SDL_mutex *state_lock;
 RWLock is_active_rwlock;
 
