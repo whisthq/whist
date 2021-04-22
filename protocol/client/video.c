@@ -563,7 +563,7 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     SDL_Texture* loading_screen_texture = SDL_CreateTextureFromSurface(renderer, loading_screen);
 
     // surface can now be freed
-    SDL_FreeSurface(loading_screen);
+    free_sdl_surface(loading_screen);
 
     int w = 200;
     int h = 200;
