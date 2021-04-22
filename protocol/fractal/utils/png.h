@@ -30,8 +30,8 @@ Public Functions
 ============================
 */
 
-int bmp_to_png(unsigned char* bmp, unsigned int size, AVPacket* pkt);
+int bmp_to_png(char* bmp, int size, char* png, int* size);
 
-int png_char_to_bmp(char* png, int size, AVPacket* pkt);
+int png_to_bmp(char* png, int size, char* bmp, int* size);
 
 #endif

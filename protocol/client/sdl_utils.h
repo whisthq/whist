@@ -75,9 +75,11 @@ void destroy_sdl(SDL_Window* window);
  * @returns                        the loaded surface on success, and NULL on failure
  *
  * @note                           After a successful call to sdl_surface_from_png_file,
- *                                 remember to call `SDL_FreeSurface(surface)` to free memory.
+ *                                 remember to call `free(surface.pixels)` and `SDL_FreeSurface(surface)`
  */
 SDL_Surface* sdl_surface_from_png_file(char* filename);
+
+void free_sdl_surface(SDL_Surface* surface);
 
 /**
  * @brief                          Wrapper around SDL_CreateMutex that will correctly exit the
