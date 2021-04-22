@@ -194,15 +194,3 @@ def default_message_slack(body, title=None, code=None, lang=None):
     if code is not None:
         lines.append(code_block(code))
     return "\n".join(lines)
-
-
-github_comment_update(
-    github_token,
-    github_repo,
-    github_issue,
-    identifier,
-    body,
-    title=title,
-    code=sql_diff,
-    lang="python",
-)
