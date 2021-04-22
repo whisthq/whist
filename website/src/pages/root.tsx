@@ -18,7 +18,6 @@ const RootApp = () => {
     */
   return (
     <Switch>
-      <Route exact path={routes.LOADING} component={withTracker(Loading)} />
       <Route exact path={routes.ABOUT} component={withTracker(About)} />
       <Route exact path={routes.COOKIES} component={withTracker(Cookies)} />
       <Route exact path={routes.PRIVACY} component={withTracker(Privacy)} />
