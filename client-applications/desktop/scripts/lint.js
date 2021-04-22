@@ -1,7 +1,7 @@
 /* scripts/lint.js
  *
  * This script triggers lint checking and/or fixing for all of
- * our source files, using ESLint.
+ * our source files, using ESLint and Prettier.
  *
  * This should be invoked via:
  *   $ yarn lint:check
@@ -14,6 +14,7 @@
 const { execute } = require("../node_modules/eslint/lib/cli")
 const execCommand = require("./execCommand").execCommand
 
+// The first argument after the first 2 the prettier flag, either check or write
 execCommand(`yarn prettier ${process.argv.slice(2, 3)} .`, ".")
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 execute([
