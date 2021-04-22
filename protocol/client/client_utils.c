@@ -126,6 +126,9 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
     long int ret;
     char *endptr;
 
+    // reset errno so that previous timeouts and errors don't interfere with arg parsing
+    errno = 0;
+
     switch (eval_opt) {
         case 'w': {  // width
             ret = strtol(eval_optarg, &endptr, 10);
@@ -347,7 +350,6 @@ int parse_args(int argc, char *argv[]) {
                    strlen(optarg), FRACTAL_ARGS_MAXLEN);
             return -1;
         }
-        errno = 0;
 
         // For arguments that are not `help` and `version`, evaluate option
         //    and argument via `evaluate_arg`
@@ -452,7 +454,7 @@ int read_piped_arguments(bool *keep_waiting) {
 #endif  // _WIN32
 
         // Reset `incoming` so that it is at the very least initialized.
-        memset(&incoming, 0, MAX_INCOMING_LENGTH);
+        memset(incoming, 0, MAX_INCOMING_LENGTH);
 
         for (int char_idx = 0; char_idx < (int)available_chars; char_idx++) {
             // Read a character from stdin
@@ -481,12 +483,16 @@ int read_piped_arguments(bool *keep_waiting) {
             // We could use `strsep`, but it sadly is not cross-platform.
             // We split at the first occurence of '?'; the first part becomes
             // the name, and the last part becomes the value.
+            // If there is no '?', the value is set to NULL.
             char *c;
             for (c = incoming; *c && *c != '?'; ++c)
                 ;
-            *c = '\0';
             char *arg_name = incoming;
-            char *arg_value = c;
+            char *arg_value = NULL;
+            if (*c == '?') {
+                *c = '\0';
+                arg_value = c + 1;
+            }
 
             if (!arg_name) {
                 goto completed_line_eval;
@@ -549,7 +555,7 @@ int read_piped_arguments(bool *keep_waiting) {
             if (finished_line) {
                 // Reset finished_line after evaluating a line
                 finished_line = false;
-                memset(&incoming, 0, MAX_INCOMING_LENGTH);
+                memset(incoming, 0, MAX_INCOMING_LENGTH);
             }
         }
     end_of_eval_loop:
