@@ -35,6 +35,7 @@
     "electron-store": "^7.0.3",
     "electron-updater": "^4.3.8",
     "history": "^4.1.10",
+    "json": "^10.0.0",
     "json-stringify-safe": "^5.0.1",
     "lodash": "^4.17.21",
     "logzio-nodejs": "^2.0.2",

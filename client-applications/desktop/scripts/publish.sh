@@ -67,6 +67,7 @@ else
     done
 
     export BUILD_NUMBER=$version
+    yarn run json -I -f package.json -e "this.version=\"$version\""
 
     # Make FractalClient and create its app bundle
     cd ../../../protocol
@@ -121,4 +122,6 @@ else
         # Package the application locally, without uploading to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package
     fi
+
+    yarn run json -I -f package.json -e "this.version=\"1.0.0\""
 fi

@@ -6,8 +6,6 @@ const appDetails = {
     productName: "Fractal",
 }
 
-console.log(process.env.BUILD_NUMBER)
-
 // This configuration controls how the application is bundled,
 // including OS-specific details, icons, and ASAR packing.
 const bundleConfig = {
@@ -16,8 +14,6 @@ const bundleConfig = {
     artifactName: "Fractal.${ext}",
 
     asar: true,
-
-    buildVersion: process.env.BUILD_NUMBER ?? "1.0.1",
 
     directories: {
         buildResources: "build",

@@ -105,14 +105,13 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
 // If the update is downloaded, quit the app and install the update
 
 eventUpdateDownloaded.subscribe(() => {
-  console.log("QUITTING AND INSTALLING!!!")
   autoUpdater.quitAndInstall()
 })
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
   (available: boolean) => {
     if (available) {
-      // createUpdateWindow((win: any) => win.show())
+      createUpdateWindow((win: any) => win.show())
       autoUpdater.downloadUpdate().catch((err) => console.error(err))
     }
   }
