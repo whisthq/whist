@@ -1,14 +1,14 @@
-import React from "react"
-import { Switch, Route } from "react-router-dom"
-import { Router } from "react-router"
-import { chain } from "lodash"
-import ReactDOM from "react-dom"
-import { loadStripe } from "@stripe/stripe-js"
-import { Elements } from "@stripe/react-stripe-js"
+import React from 'react'
+import { Switch, Route } from 'react-router-dom'
+import { Router } from 'react-router'
+import { chain } from 'lodash'
+import ReactDOM from 'react-dom'
+import { loadStripe } from '@stripe/stripe-js'
+import { Elements } from '@stripe/react-stripe-js'
 
-import Auth from "@app/renderer/pages/auth"
-import Update from "@app/renderer/pages/update"
-import Error from "@app/renderer/pages/error"
+import Auth from '@app/renderer/pages/auth'
+import Update from '@app/renderer/pages/update'
+import Error from '@app/renderer/pages/error'
 import {
   AuthErrorTitle,
   AuthErrorText,
@@ -31,12 +31,12 @@ import {
   WindowHashAssignContainerError,
   WindowHashProtocolError,
   NavigationErrorTitle,
-  NavigationErrorText,
-} from "@app/utils/constants"
+  NavigationErrorText
+} from '@app/utils/constants'
 
-import { browserHistory } from "@app/utils/history"
-import { useMainState } from "@app/utils/ipc"
-import { StripeProvider } from "@app/renderer/shared/payment"
+import { browserHistory } from '@app/utils/history'
+import { useMainState } from '@app/utils/ipc'
+import { StripeProvider } from '@app/renderer/context/payment'
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -47,10 +47,10 @@ import { StripeProvider } from "@app/renderer/shared/payment"
 // If no query parameter match is found, we default to a
 // generic navigation error window.
 const show = chain(window.location.search.substring(1))
-  .split("=")
+  .split('=')
   .chunk(2)
   .fromPairs()
-  .get("show")
+  .get('show')
   .value()
 
 const RootComponent = () => {
@@ -147,7 +147,7 @@ const WindowBackground = (props: any) => {
     </div>
   )
 }
-const stripePromise = loadStripe("pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb")
+const stripePromise = loadStripe('pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb')
 
 ReactDOM.render(
   <Elements stripe={stripePromise}>
@@ -157,5 +157,5 @@ ReactDOM.render(
       </StripeProvider>
     </WindowBackground>
   </Elements>,
-  document.getElementById("root")
+  document.getElementById('root')
 )

@@ -134,7 +134,7 @@ export const createWindow = (
   win.webContents.on("did-navigate", (event, url) => {
     event.preventDefault()
     /*
-      place url handling here for stripe navigation. 
+      place url handling here for stripe navigation.
       call loadWindow with params
     */
     console.log(url)

@@ -17,6 +17,9 @@ const Auth = () => {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
 
+  // how one would use the stripe functions for example
+  // const { getCheckoutSession, getPortalSession } = useContext(StripeContext)
+
   const clearPassword = () => {
     setPassword("")
     setConfirmPassword("")

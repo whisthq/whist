@@ -18,49 +18,6 @@ from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 stripe_bp = Blueprint("stripe_bp", __name__)
 
 
-@stripe_bp.route("/stripe/customer-portal", methods=["POST"])
-@fractal_pre_process
-def customer_portal(**kwargs):
-    # This is the URL to which the customer will be redirected after they are
-    # done managing their billing with the portal.
-
-    body = kwargs["body"]
-
-    session = stripe.billing_portal.Session.create(
-        customer=body["customerId"], return_url=body["returnUrl"]
-    )
-    return jsonify({"url": session.url})
-
-
-@stripe_bp.route("/stripe/create-checkout-session", methods=["POST"])
-@fractal_pre_process
-def create_checkout_session(**kwargs):
-    body = kwargs["body"]
-    try:
-        # See https://stripe.com/docs/api/checkout/sessions/create
-        # for additional parameters to pass.
-        # {CHECKOUT_SESSION_ID} is a string literal; do not change it!
-        # the actual Session ID is returned in the query parameter when your customer
-        # is redirected to the success page.
-        checkout_session = stripe.checkout.Session.create(
-            success_url=body["successUrl"],
-            cancel_url=body["cancelUrl"],
-            payment_method_types=["card"],
-            mode="subscription",
-            customer=body["customerId"],
-            line_items=[
-                {
-                    "price": body["priceId"],
-                    # For metered billing, do not pass quantity
-                    "quantity": 1,
-                }
-            ],
-        )
-        return jsonify({"sessionId": checkout_session["id"]})
-    except Exception as e:
-        return jsonify({"error": {"message": str(e)}}), 400
-
-
 @stripe_bp.route("/stripe/<action>", methods=["POST"])
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
