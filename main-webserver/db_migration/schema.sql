@@ -261,7 +261,7 @@ CREATE VIEW hardware.cluster_sorted AS
 CREATE TABLE hardware.region_to_ami (
     region_name character varying NOT NULL,
     ami_id character varying NOT NULL,
-    allowed boolean DEFAULT true NOT NULL,
+    -- allowed boolean DEFAULT true NOT NULL,
     region_being_updated boolean DEFAULT false NOT NULL
 );
 
