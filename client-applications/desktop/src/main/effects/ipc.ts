@@ -17,7 +17,7 @@ import { mapValues } from "lodash"
 // single observable subscription that calls ipcBroadcast whenever it emits.
 //
 // This subscription takes the latest object sent back from the renderer thread,
-// and merges it with the latest data from the observables in the "subscribed"
+// and merges it with the latest data frgit rom the observables in the "subscribed"
 // map below. It sends the result to all windows with ipcBroadcast.
 //
 // Note that combineLatest doesn't emit until each of its observable arguments
@@ -40,5 +40,10 @@ combineLatest([
   subscribed,
   fromTrigger("eventIPC").pipe(startWith({})),
 ]).subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
+<<<<<<< HEAD
   ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getElectronWindows())
 })
+=======
+  ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
+})
+>>>>>>> 3d341a5f8 (removed body arguments)
