@@ -167,8 +167,8 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		`--cap-add`, `CAP_NET_BIND_SERVICE`,
 		`--cap-add`, `CAP_SYS_CHROOT`,
 		`--cap-add`, `CAP_SETFCAP`,
-		// NOTE THAT CAP_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
-		`--cap-add`, `SYS_NICE`,
+		// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
+		`--cap-add`, `CAP_SYS_NICE`,
 		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[0].HostPort, portBindings[0].ContainerPort, portBindings[0].Protocol),
 		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[1].HostPort, portBindings[1].ContainerPort, portBindings[1].Protocol),
 		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[2].HostPort, portBindings[2].ContainerPort, portBindings[2].Protocol),
