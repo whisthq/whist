@@ -105,9 +105,7 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
 
     SDL_Surface* icon_surface = sdl_surface_from_png_file(filename);
     SDL_SetWindowIcon(sdl_window, icon_surface);
-
-    // surface can now be freed
-    SDL_FreeSurface(icon_surface);
+    free_sdl_surface(icon_surface);
 }
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
@@ -355,10 +353,17 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
 
     if (surface == NULL) {
         LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
+        free(image);
         return NULL;
     }
 
     return surface;
+}
+
+void free_sdl_surface(SDL_Surface* surface) {
+    char* pixels = surface.pixels;
+    SDL_FreeSurface(surface);
+    free(pixels);
 }
 
 SDL_mutex* safe_SDL_CreateMutex() {  // NOLINT(readability-identifier-naming)
