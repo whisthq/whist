@@ -12,8 +12,8 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is fractal/.github/workflows/helpers
 cd "$DIR/.."
 
-# Install the Python dependencies
-pip install -r notifications/requirements.txt
+# For now, we don't install notifications
+# pip install -r notifications/requirements.txt
 
 # Create a temporary folder, and copy the notifications module to that folder.
 # We copy instead of move to avoid mutating our repository.
