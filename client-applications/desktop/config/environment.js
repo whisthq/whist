@@ -59,12 +59,7 @@ export const webservers = {
   production: 'https://prod-server.fractal.co'
 }
 
-const url = {
-  GOOGLE_REDIRECT_URI: 'com.tryfractal.app:/oauth2Callback'
-}
-
 const keys = {
-  GOOGLE_ANALYTICS_TRACKING_CODES: ['UA-180615646-1'],
   AWS_ACCESS_KEY: 'AKIA24A776SSHLVMSAVU',
   AWS_SECRET_KEY: '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',
   LOGZ_API_KEY: 'IroqVsvNytmNricZSTLUSVtJbxNYBgxp'
@@ -81,11 +76,8 @@ export const environment = {
     protocolFolder,
     buildRoot,
     url: {
-      ...url,
       WEBSERVER_URL: webservers.local,
-      FRONTEND_URL: 'http://localhost:3000',
-      GRAPHQL_HTTP_URL: 'https://dev-database.fractal.co/v1/graphql',
-      GRAPHQL_WS_URL: 'wss://dev-database.fractal.co/v1/graphql'
+      FRONTEND_URL: 'http://localhost:3000'
     },
     deployEnv: 'dev',
     sentryEnv: 'development',
@@ -104,11 +96,8 @@ export const environment = {
     protocolFolder,
     buildRoot,
     url: {
-      ...url,
       WEBSERVER_URL: webservers.dev,
-      FRONTEND_URL: 'https://dev.fractal.co',
-      GRAPHQL_HTTP_URL: 'https://dev-database.fractal.co/v1/graphql',
-      GRAPHQL_WS_URL: 'wss://dev-database.fractal.co/v1/graphql'
+      FRONTEND_URL: 'https://dev.fractal.co'
     },
     deployEnv: 'dev',
     sentryEnv: 'development',
@@ -127,11 +116,8 @@ export const environment = {
     protocolFolder,
     buildRoot,
     url: {
-      ...url,
       WEBSERVER_URL: webservers.staging,
-      FRONTEND_URL: 'https://staging.fractal.co',
-      GRAPHQL_HTTP_URL: 'https://staging-database.fractal.co/v1/graphql',
-      GRAPHQL_WS_URL: 'wss://staging-database.fractal.co/v1/graphql'
+      FRONTEND_URL: 'https://staging.fractal.co'
     },
     deployEnv: 'staging',
     sentryEnv: 'staging',
@@ -150,11 +136,8 @@ export const environment = {
     protocolFolder,
     buildRoot,
     url: {
-      ...url,
       WEBSERVER_URL: webservers.production,
-      FRONTEND_URL: 'https://fractal.co',
-      GRAPHQL_HTTP_URL: 'https://prod-database.fractal.co/v1/graphql',
-      GRAPHQL_WS_URL: 'wss://prod-database.fractal.co/v1/graphql'
+      FRONTEND_URL: 'https://fractal.co'
     },
     deployEnv: 'prod',
     sentryEnv: 'production',
