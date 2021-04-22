@@ -8,7 +8,7 @@
 
 set -Eeuo pipefail
 
-INSTALL_DEPS=${1:"false"}
+INSTALL_DEPS=${1-"false"}
 
 # Retrieve relative subfolder path
 # https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself

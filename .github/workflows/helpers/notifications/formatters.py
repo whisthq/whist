@@ -53,7 +53,7 @@ def collapsed(func):
 
 
 def surround_base(spacing, wrap_text, text):
-    return wrap_text + (" " * spacing) + text + (" " * spacing) + wrap_text
+    return wrap_text + " " * spacing + text + " " * spacing + wrap_text
 
 
 def surround_xs(wrap_text, text):
