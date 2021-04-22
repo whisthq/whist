@@ -1,6 +1,6 @@
-import { post } from "@app/utils/api"
-import { AsyncReturnType } from "@app/@types/state"
-import { string1To1000 } from "aws-sdk/clients/customerprofiles"
+import { post } from '@app/utils/api'
+import { AsyncReturnType } from '@app/@types/state'
+import { string1To1000 } from 'aws-sdk/clients/customerprofiles'
 
 export const stripeCheckoutCreate = async (
   customerId: string,
@@ -9,8 +9,8 @@ export const stripeCheckoutCreate = async (
   cancelUrl: string1To1000
 ) =>
   post({
-    endpoint: "/stripe/create-checkout-session",
-    body: { customerId, priceId, successUrl, cancelUrl },
+    endpoint: '/stripe/create-checkout-session',
+    body: { customerId, priceId, successUrl, cancelUrl }
   })
 
 export const stripePortalCreate = async (
@@ -18,14 +18,14 @@ export const stripePortalCreate = async (
   returnUrl: string
 ) =>
   post({
-    endpoint: "/stripe/customer-portal",
-    body: { customerId, returnUrl },
+    endpoint: '/stripe/customer-portal',
+    body: { customerId, returnUrl }
   })
 
 type CheckoutResponseAuth = AsyncReturnType<typeof stripeCheckoutCreate>
 
 export const stripeCheckoutValid = (response: CheckoutResponseAuth) =>
-  (response?.json?.sessionId ?? "") !== ""
+  (response?.json?.sessionId ?? '') !== ''
 
 export const stripeCheckoutError = (response: CheckoutResponseAuth) =>
   response.status !== 200
@@ -33,7 +33,7 @@ export const stripeCheckoutError = (response: CheckoutResponseAuth) =>
 type PortalResponseAuth = AsyncReturnType<typeof stripePortalCreate>
 
 export const stripePortalValid = (response: PortalResponseAuth) =>
-  (response?.json?.url ?? "") !== ""
+  (response?.json?.url ?? '') !== ''
 
 export const stripePortalError = (response: PortalResponseAuth) =>
   response.status !== 200
