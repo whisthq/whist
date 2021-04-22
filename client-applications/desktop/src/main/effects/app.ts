@@ -6,15 +6,19 @@
 
 import { app } from "electron"
 import { autoUpdater } from "electron-updater"
-import { eventUpdateAvailable, eventUpdateDownloaded } from "@app/main/events/autoupdate"
+import EventEmitter from "events"
+import { fromEvent } from "rxjs"
 
 import {
+  eventUpdateAvailable,
+  eventUpdateDownloaded,
+} from "@app/main/events/autoupdate"
+import {
   eventAppReady,
-  eventWindowsAllClosed,
   eventWindowCreated,
 } from "@app/main/events/app"
-import { merge, race, zip, combineLatest } from "rxjs"
-import { takeUntil, take } from "rxjs/operators"
+import { merge, zip, combineLatest } from "rxjs"
+import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
@@ -51,9 +55,8 @@ eventAppReady
 
 eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
-  // so we need to set autoDownload = false 
+  // so we need to set autoDownload = false
   autoUpdater.autoDownload = true
-  autoUpdater.logger = console
   // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
   // and fires an update if the current version is less than the version in latest.yml
   autoUpdater.checkForUpdatesAndNotify()
@@ -65,26 +68,17 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 // It's important that we don't fire this subscription on events that aren't
 // supposed to close the application, so we use takeUntil to listen for those.
 
-// eventWindowsAllClosed.pipe(
+merge(
+    protocolLaunchProcess,
+    loginSuccess,
+    signupSuccess,
+    errorWindowRequest,
+    eventUpdateAvailable
+).pipe(
+  concatMap(() => fromEvent(app as EventEmitter,'window-all-closed').pipe(take(1)))
+).subscribe((event) => event.preventDefault())
 
-// )
-
-
-eventWindowsAllClosed
-  .pipe(
-    takeUntil(
-      merge(
-        protocolLaunchProcess,
-        loginSuccess,
-        signupSuccess,
-        errorWindowRequest,
-        eventUpdateAvailable
-      )
-    )
-  )
-  .subscribe(() => app.quit())
-
-// When the protocol closees, upload protocol logs to S3
+// When the protocol closes, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
   uploadToS3(email)
     .then(() => app.quit())
@@ -97,10 +91,12 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 
-merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
-  closeWindows()
-  hideAppDock()
-})
+merge(protocolLaunchProcess, loginSuccess, signupSuccess)
+  .pipe(take(1))
+  .subscribe(() => {
+    closeWindows()
+    hideAppDock()
+  })
 
 // If the update is downloaded, quit the app and install the update
 
@@ -108,13 +104,10 @@ eventUpdateDownloaded.subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
-  (available: boolean) => {
-    if (available) {
-      createUpdateWindow((win: any) => win.show())
-      autoUpdater.downloadUpdate().catch((err) => console.error(err))
-    }
-  }
-)
+autoUpdateAvailable.subscribe(() => {
+  closeWindows()
+  createUpdateWindow((win: any) => win.show())
+  autoUpdater.downloadUpdate().catch((err) => console.error(err))
+})
 
 eventWindowCreated.subscribe(() => showAppDock())

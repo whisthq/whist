@@ -113,6 +113,8 @@ else
     # Initialize yarn first
     yarn cache clean
     yarn install
+
+    # Set the packaged environment to dev/staging/prod
     yarn package:set-env ${env}
 
     if [[ "$publish" == "true" ]]; then

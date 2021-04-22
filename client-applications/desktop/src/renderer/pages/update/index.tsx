@@ -16,14 +16,16 @@ const Update = () => {
   const sanitizeBytes = (fl: number) => Math.round((fl / 1000000) * 100) / 100
 
   useEffect(() => {
-    if ((mainState.updateInfo ?? '') !== '') {
-      const updateInfo = JSON.parse(mainState.updateInfo)
+    if ((mainState.updateInfo ?? '') === '') return
+    
+    const updateInfo = JSON.parse(mainState.updateInfo)
 
-      setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
-      setPercentageDownloaded(Number(updateInfo.percent))
-      setDownloadedSize(sanitizeBytes(updateInfo.transferred))
-      setTotalDownloadSize(sanitizeBytes(updateInfo.total))
-    }
+    if(Number(updateInfo.percent) < percentageDownloaded) return
+
+    setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
+    setPercentageDownloaded(Number(updateInfo.percent))
+    setDownloadedSize(sanitizeBytes(updateInfo.transferred))
+    setTotalDownloadSize(sanitizeBytes(updateInfo.total))
   }, [mainState])
 
   return (

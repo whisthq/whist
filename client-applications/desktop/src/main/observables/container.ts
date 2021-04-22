@@ -18,6 +18,9 @@ import {
   userAccessToken,
   userConfigToken
 } from '@app/main/observables/user'
+import {
+  eventUpdateAvailable
+} from '@app/main/events/autoupdate'
 import { debugObservables, errorObservables } from '@app/utils/logging'
 import { ContainerAssignTimeout } from '@app/utils/constants'
 import { loadingFrom, pollMap } from '@app/utils/observables'
@@ -39,6 +42,7 @@ export const containerCreateRequest = zip(
   userAccessToken,
   userConfigToken
 ).pipe(
+  takeUntil(eventUpdateAvailable),
   map(([email, access, _]) => [email, access])
 )
 
@@ -46,6 +50,7 @@ export const containerCreateProcess = containerCreateRequest.pipe(
   exhaustMap(([email, token]) => from(containerCreate(email, token))),
   share()
 )
+
 export const containerCreateSuccess = containerCreateProcess.pipe(
   filter((req) => (req?.json?.ID ?? '') !== '')
 )
