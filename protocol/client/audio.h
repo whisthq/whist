@@ -69,4 +69,22 @@ void render_audio();
  */
 void destroy_audio();
 
+/*
+============================
+Public Variables
+============================
+*/
+
+/**
+ * @brief                          Inform audio that an audio refresh event happened.
+ *                                 This is either adding a new audio device or removing
+ *                                 an old one.
+ */
+extern bool audio_refresh;
+
+/**
+ * @brief                          Sample rate of audio signal.
+ */
+extern volatile int audio_frequency;
+
 #endif  // CLIENT_AUDIO_H

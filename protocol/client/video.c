@@ -167,7 +167,7 @@ SDL_mutex* render_mutex;
 FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
 BlockAllocator* frame_buffer_allocator;
 
-bool has_rendered_yet = false;
+bool has_video_rendered_yet = false;
 
 // END VIDEO VARIABLES
 
@@ -509,7 +509,7 @@ int render_video() {
         video_data.last_rendered_id = render_context.id;
         // Since we're done, we free the frame buffer
         free_block(frame_buffer_allocator, render_context.frame_buffer);
-        has_rendered_yet = true;
+        has_video_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render
         rendering = false;
@@ -804,7 +804,7 @@ int init_video_renderer() {
 
     // True if RenderScreen is currently rendering a frame
     rendering = false;
-    has_rendered_yet = false;
+    has_video_rendered_yet = false;
 
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     // Allocate a place to put our YUV image on that screen.
@@ -1251,7 +1251,7 @@ void destroy_video() {
     SDL_DestroyMutex(render_mutex);
     render_mutex = NULL;
 
-    has_rendered_yet = false;
+    has_video_rendered_yet = false;
 }
 
 void set_video_active_resizing(bool is_resizing) {

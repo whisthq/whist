@@ -21,8 +21,10 @@ Includes
 #include "audio.h"
 #include "network.h"
 
-extern volatile int audio_frequency;
-extern bool has_rendered_yet;
+volatile int audio_frequency;
+bool audio_refresh = false;
+
+extern bool has_video_rendered_yet;
 
 // Hold information about audio data as the packets come in
 typedef struct AudioPacket {
@@ -63,31 +65,24 @@ typedef struct RenderContext {
     // Whether or not the audio is encoded
     bool encoded;
     // Raw audio packets
-    AudioPacket audio_data[MAX_NUM_AUDIO_INDICES];
+    AudioPacket audio_packets[MAX_NUM_AUDIO_INDICES];
 } RenderContext;
 
 AudioContext volatile audio_context;
 
-clock nack_timer;
+static clock nack_timer;
 
-int last_nacked_id = -1;
-int most_recent_audio_id = -1;
-int last_played_id = -1;
-
-// Audio flush happens when the audio buffer gets too large, and we need to clear it out
-bool audio_flush_triggered = false;
-
-// Audio refresh happens when the user plugs in a new audio device,
-// or unplugs their current audio device
-bool audio_refresh = false;
+static int last_nacked_id = -1;
+static int most_recent_audio_id = -1;
+static int last_played_id = -1;
 
 #define MAX_FREQ 128000
 
-clock test_timer;
-double test_time;
+static clock test_timer;
+static double test_time;
 
-static RenderContext volatile render_context;
-static bool volatile rendering = false;
+static RenderContext volatile audio_render_context;
+static bool volatile rendering_audio = false;
 
 /*
 ============================
@@ -110,6 +105,10 @@ void destroy_audio_device() {
 }
 
 void reinit_audio_device() {
+    /*
+        Recreate an audio decoder with @global audio_frequency and use SDL
+        to open a new audio device.
+    */
     LOG_INFO("Reinitializing audio device");
     destroy_audio_device();
 
@@ -160,20 +159,25 @@ void init_audio() {
     }
     // Set audio to be reinit'ed
     audio_refresh = true;
-    rendering = false;
+    rendering_audio = false;
 }
 
 void destroy_audio() {
     LOG_INFO("Destroying audio system");
     // Ensure is thread-safe against arbitrary calls to render_audio
-    while (rendering) {
+    while (rendering_audio) {
         SDL_Delay(5);
     }
     destroy_audio_device();
 }
 
 void render_audio() {
-    if (rendering) {
+    /*
+        Actually renders audio frames. Called in multithreaded_renderer. update_audio should
+        configure @global audio_render_context to contain the latest audio packet to render.
+        This function simply decodes and renders it.
+    */
+    if (rendering_audio) {
         if (audio_frequency > MAX_FREQ) {
             LOG_ERROR("Frequency received was too large: %d, silencing audio now.",
                       audio_frequency);
@@ -182,7 +186,7 @@ void render_audio() {
 
         // If no audio frequency has been received yet, then don't render the audio
         if (audio_frequency < 0) {
-            rendering = false;
+            rendering_audio = false;
             return;
         }
 
@@ -199,14 +203,14 @@ void render_audio() {
             reinit_audio_device();
         }
 
-        if (render_context.encoded) {
+        if (audio_render_context.encoded) {
             AVPacket encoded_packet;
             av_init_packet(&encoded_packet);
             encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
             encoded_packet.size = 0;
 
             for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                AudioPacket* packet = (AudioPacket*)&render_context.audio_data[i];
+                AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
                 memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
                 encoded_packet.size += packet->size;
             }
@@ -217,24 +221,29 @@ void render_audio() {
             av_packet_unref(&encoded_packet);
 
             if (res == 0) {
-                uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+                // repeatedly use this buffer for holding decoded data
+                static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
 
                 // Get decoded data
                 audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
 
                 // Play decoded audio
                 res =
-                    SDL_QueueAudio(audio_context.dev, &decoded_data,
+                    SDL_QueueAudio(audio_context.dev, decoded_data,
                                    audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
                 if (res < 0) {
                     LOG_ERROR("Could not play audio!");
+                } else {
+                    // Update last played id to be the last audio packet played
+                    last_played_id =
+                        audio_render_context.audio_packets[MAX_NUM_AUDIO_INDICES - 1].id;
                 }
             }
         } else {
             // Play raw audio
             for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                AudioPacket* packet = (AudioPacket*)&render_context.audio_data[i];
+                AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
                 if (packet->size > 0) {
 #if LOG_AUDIO
                     LOG_DEBUG("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
@@ -242,12 +251,15 @@ void render_audio() {
 #endif
                     if (SDL_QueueAudio(audio_context.dev, packet->data, packet->size) < 0) {
                         LOG_ERROR("Could not play audio!\n");
+                    } else {
+                        // Update last played id to be the last audio packet played
+                        last_played_id = packet->id;
                     }
                 }
             }
         }
         // No longer rendering audio
-        rendering = false;
+        rendering_audio = false;
     }
 }
 
@@ -258,8 +270,8 @@ void update_audio() {
     */
 
     // If we're currently rendering an audio packet, don't update audio
-    if (rendering) {
-        // Additionally, if rendering == true, the audio_context struct is being used,
+    if (rendering_audio) {
+        // Additionally, if rendering_audio == true, the audio_context struct is being used,
         // so a race condition will occur if we call SDL_GetQueuedAudioSize at the same time
         return;
     }
@@ -273,10 +285,9 @@ void update_audio() {
 #if LOG_AUDIO
     LOG_DEBUG("Queue: %d", audio_device_queue);
 #endif
-    bool still_more_audio_packets = true;
 
     // Catch up to most recent ID if nothing has played yet
-    if (last_played_id == -1 && has_rendered_yet && most_recent_audio_id > 0) {
+    if (last_played_id == -1 && has_video_rendered_yet && most_recent_audio_id > 0) {
         last_played_id = most_recent_audio_id - 1;
         while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
             last_played_id++;
@@ -319,78 +330,61 @@ void update_audio() {
 
     int next_to_play_id;
 
-    while (still_more_audio_packets) {
-        next_to_play_id = last_played_id + 1;
+    next_to_play_id = last_played_id + 1;
 
-        if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
-            LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
-            return;
-        }
+    if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
+        LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
+        return;
+    }
 
-        bool valid = true;
-        for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-            if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
-                valid = false;
-            }
-        }
-
-        still_more_audio_packets = false;
-        if (valid) {
-            // dont keep checking for more audio packets
-            // still_more_audio_packets = true;
-
-            // If an audio flush is triggered,
-            // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
-            int real_limit =
-                audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
-
-            if (audio_device_queue > real_limit) {
-                LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
-                            next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
-                // Clear out audio instead of playing it
-                for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                    AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                    packet->id = -1;
-                    packet->nacked_amount = 0;
-                }
-                // Trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
-                if (!audio_flush_triggered) {
-                    audio_flush_triggered = true;
-                }
-            } else {
-                // When the audio queue is no longer full, we stop flushing the audio queue
-                audio_flush_triggered = false;
-
-                // Store the audio render context information
-                render_context.encoded = USING_AUDIO_ENCODE_DECODE;
-                for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                    int buffer_index = next_to_play_id + i;
-                    // Save buffer in render context
-                    // fprintf(stderr, "%p %p %ld\n", &render_context.audio_data[i],
-                    // &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
-                    // sizeof(AudioPacket));
-                    memcpy((AudioPacket*)&render_context.audio_data[i],
-                           &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
-                           sizeof(AudioPacket));
-                    // Reset packet in receiving audio buffer
-                    AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
-                    packet->id = -1;
-                    packet->nacked_amount = 0;
-                }
-
-                // Render audio on audio thread
-                rendering = true;
-            }
-
-            last_played_id += MAX_NUM_AUDIO_INDICES;
+    bool valid = true;
+    for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+        if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
+            valid = false;
         }
     }
 
-    //         }
+    // Audio flush happens when the audio buffer gets too large, and we need to clear it out
+    static bool audio_flush_triggered = false;
+    if (valid) {
+        // If an audio flush is triggered,
+        // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
+        int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
-    //         last_played_id += MAX_NUM_AUDIO_INDICES;
-    //     }
-    // }
+        if (audio_device_queue > real_limit) {
+            LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
+                        next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
+            // Clear out audio instead of playing it
+            for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+                AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                packet->id = -1;
+                packet->nacked_amount = 0;
+            }
+            // Trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
+            if (!audio_flush_triggered) {
+                audio_flush_triggered = true;
+            }
+        } else {
+            // When the audio queue is no longer full, we stop flushing the audio queue
+            audio_flush_triggered = false;
+
+            // Store the audio render context information
+            audio_render_context.encoded = USING_AUDIO_ENCODE_DECODE;
+            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+                int buffer_index = next_to_play_id + i;
+                memcpy((AudioPacket*)&audio_render_context.audio_packets[i],
+                       &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
+                       sizeof(AudioPacket));
+                // Reset packet in receiving audio buffer
+                AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
+                packet->id = -1;
+                packet->nacked_amount = 0;
+            }
+
+            // Render audio on audio thread
+            rendering_audio = true;
+        }
+    }
 
     // Find pending audio packets and NACK them
 #define MAX_NACKED 1
@@ -456,25 +450,25 @@ int32_t receive_audio(FractalPacket* packet) {
     }
 
     int audio_id = packet->id * MAX_NUM_AUDIO_INDICES + packet->index;
-    AudioPacket* audio_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
+    AudioPacket* receieved_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
-    if (audio_id == audio_pkt->id) {
+    if (audio_id == receieved_pkt->id) {
         //         LOG_WARNING("Already received audio packet: %d", audio_id);
-    } else if (audio_id < audio_pkt->id || audio_id <= last_played_id) {
+    } else if (audio_id < receieved_pkt->id || audio_id <= last_played_id) {
         // LOG_INFO("Old audio packet received: %d, last played id is %d",
         // audio_id, last_played_id);
     }
-    // audio_id > audio_pkt->id && audio_id > last_played_id
+    // audio_id > receieved_pkt->id && audio_id > last_played_id
     else {
         // If a packet already exists there, we're forced to skip it
-        if (audio_pkt->id != -1) {
+        if (receieved_pkt->id != -1) {
             int old_last_played_id = last_played_id;
 
-            if (last_played_id < audio_pkt->id && last_played_id > 0) {
+            if (last_played_id < receieved_pkt->id && last_played_id > 0) {
                 // We'll make it like we already played this packet
-                last_played_id = audio_pkt->id;
-                audio_pkt->id = -1;
-                audio_pkt->nacked_amount = 0;
+                last_played_id = receieved_pkt->id;
+                receieved_pkt->id = -1;
+                receieved_pkt->nacked_amount = 0;
 
                 // And we'll skip the whole frame
                 while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
@@ -485,19 +479,17 @@ int32_t receive_audio(FractalPacket* packet) {
                 }
             }
 
-            if (last_played_id > 0) {
-                LOG_INFO(
-                    "Audio packet being overwritten before being played! ID %d "
-                    "replaced with ID %d, when the Last Played ID was %d. Last "
-                    "Played ID is Now %d",
-                    audio_pkt->id, audio_id, old_last_played_id, last_played_id);
-            }
+            LOG_INFO(
+                "Audio packet being overwritten before being played! ID %d "
+                "replaced with ID %d, when the Last Played ID was %d. Last "
+                "Played ID is Now %d",
+                receieved_pkt->id, audio_id, old_last_played_id, last_played_id);
         }
 
         if (packet->is_a_nack) {
-            if (audio_pkt->nacked_for == audio_id) {
+            if (receieved_pkt->nacked_for == audio_id) {
                 LOG_INFO("NACK for Audio ID %d, Index %d Received!", packet->id, packet->index);
-            } else if (audio_pkt->nacked_for == -1) {
+            } else if (receieved_pkt->nacked_for == -1) {
                 LOG_INFO(
                     "NACK for Audio ID %d, Index %d Received! But not "
                     "needed.",
@@ -508,22 +500,22 @@ int32_t receive_audio(FractalPacket* packet) {
             }
         }
 
-        if (audio_pkt->nacked_for == audio_id) {
+        if (receieved_pkt->nacked_for == audio_id) {
             LOG_INFO(
                 "Packet for Audio ID %d, Index %d Received! But it was already "
                 "NACK'ed!",
                 packet->id, packet->index);
         }
-        audio_pkt->nacked_for = -1;
+        receieved_pkt->nacked_for = -1;
 
 #if LOG_AUDIO
         LOG_DEBUG("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id,
                   packet->payload_size, last_played_id + 1, audio_device_queue);
 #endif
-        audio_pkt->id = audio_id;
-        most_recent_audio_id = max(audio_pkt->id, most_recent_audio_id);
-        audio_pkt->size = packet->payload_size;
-        memcpy(audio_pkt->data, packet->data, packet->payload_size);
+        receieved_pkt->id = audio_id;
+        most_recent_audio_id = max(receieved_pkt->id, most_recent_audio_id);
+        receieved_pkt->size = packet->payload_size;
+        memcpy(receieved_pkt->data, packet->data, packet->payload_size);
 
         if (packet->index + 1 == packet->num_indices) {
             // LOG_INFO("Audio Packet %d Received! Last Played: %d",

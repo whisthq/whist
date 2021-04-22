@@ -56,8 +56,6 @@ Includes
 #include <fractal/utils/mac_utils.h>
 #endif  // __APPLE__
 
-volatile int audio_frequency = -1;
-
 // Width and Height
 volatile int server_width = -1;
 volatile int server_height = -1;
