@@ -60,11 +60,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
             # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
@@ -297,14 +294,6 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
-
             - name: Configure AWS CLI # To get and install GRID driver
               uses: aws-actions/configure-aws-credentials@v1
               with:
@@ -379,6 +368,11 @@ jobs:
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
+
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Retrieve Current Git Hash as Environment Variable
               run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -541,11 +535,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -614,11 +605,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Notify Slack
               shell: python3 {0}
@@ -649,11 +637,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -705,11 +690,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
@@ -909,11 +891,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Authenticate Heroku
               run: |
@@ -1246,11 +1225,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Notify Slack on success
               shell: python3 {0}
@@ -1305,11 +1281,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Retrieve Today's Date
               run: echo "date=$(date)" >> $GITHUB_ENV

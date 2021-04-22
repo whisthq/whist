@@ -37,11 +37,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
@@ -95,11 +92,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Install boto3
               run: pip install boto3
@@ -147,11 +141,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -197,11 +188,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Notify Slack if Hanging Resource Workflow Fails
               shell: python3 {0}
