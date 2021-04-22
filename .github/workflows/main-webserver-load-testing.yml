@@ -29,11 +29,8 @@ jobs:
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
-              run: |
-                  pip install -r notifications/requirements.txt
-                  tmpfolder=`mktemp -d`
-                  mv notifications $tmpfolder # even if git repo changes, package is available
-                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+              shell: bash
+              run: ./notifications/install.sh
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1

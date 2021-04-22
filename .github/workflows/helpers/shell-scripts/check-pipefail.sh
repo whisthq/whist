@@ -6,9 +6,9 @@ set -Eeuo pipefail
 while read file
 do
     if grep -q \
-            -e "^set -Eeuo pipefail$" \
-            -e "^# @fractal-skip-check-pipefail$" \
-            "$file"
+        -e "^set -Eeuo pipefail$" \
+        -e "^# @fractal-skip-check-pipefail$" \
+        "$file"
     then
         echo "[set -Eeuo pipefail -> Present] $file"
     else
