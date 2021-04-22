@@ -25,32 +25,6 @@ from app.celery_utils import make_celery
 from tests.client import FractalAPITestClient
 
 
-@pytest.fixture
-def _retrieve_user():
-    """Instruct the user fixture to retrieve the saved user_id.
-
-    Don't use this fixture because it is a temporary hack.
-
-    This fixture should be used very rarely in conjunction with the _save_user
-    test fixture to instruct the user fixture to retrieve from the global
-    pytest object the user_id of the saved user rather than creating a new
-    user.
-    """
-
-
-@pytest.fixture
-def _save_user():
-    """Instruct the user fixture to save the test user instead of deleting it.
-
-    Don't use this fixture because it is a temporary hack.
-
-    This fixture should be used very rarely in conjunction with the
-    _retrieve_user test fixture to instruct the user fixture to save the test
-    user's user_id to the global pytest object instead of deleting the user
-    during teardown.
-    """
-
-
 @pytest.fixture(scope="session")
 def app():
     """Flask application test fixture required by pytest-flask.
@@ -340,32 +314,26 @@ def task_def_env(app):
 
 
 @pytest.fixture
-def user(request):
+def user():
     """Create a test user.
 
     Returns:
         An instance of the User model.
     """
 
-    if "_retrieve_user" not in request.fixturenames:
-        u = User(
-            user_id=f"test-user+{uuid.uuid4()}@fractal.co",
-            password="",
-            encrypted_config_token="",
-        )
+    u = User(
+        user_id=f"test-user+{uuid.uuid4()}@fractal.co",
+        password="",
+        encrypted_config_token="",
+    )
 
-        db.session.add(u)
-        db.session.commit()
-    else:
-        u = User.query.get(pytest._user_id)
+    db.session.add(u)
+    db.session.commit()
 
     yield u
 
-    if "_save_user" not in request.fixturenames:
-        db.session.delete(u)
-        db.session.commit()
-    else:
-        pytest._user_id = u.user_id
+    db.session.delete(u)
+    db.session.commit()
 
 
 @pytest.fixture
