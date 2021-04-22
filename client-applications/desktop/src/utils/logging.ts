@@ -64,7 +64,7 @@ const logBase = (
   }`
 
   const debugLog = truncate(template, {
-    length: 5000,
+    length: 1000,
     omission: '...**logBase only prints 1000 characters per log**'
   })
 

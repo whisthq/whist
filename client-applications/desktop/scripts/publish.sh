@@ -13,9 +13,7 @@ Usage: $0 [OPTION 1] [OPTION 2] ...
 
 Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu.
 
-  --version VERSION         set the version number of the client app
-                            must be greater than the current version
-                            in S3 bucket
+  --version VERSION         DEPRECATED: this no longer does anything and will be removed when migrating to JS
 
   --bucket BUCKET           set the S3 bucket to upload to (if -publish=true)
                             options are:
@@ -65,8 +63,6 @@ else
         shift
         shift
     done
-
-    export BUILD_NUMBER=$version
 
     # Make FractalClient and create its app bundle
     cd ../../../protocol
