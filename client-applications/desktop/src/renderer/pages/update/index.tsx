@@ -17,10 +17,10 @@ const Update = () => {
 
   useEffect(() => {
     if ((mainState.updateInfo ?? '') === '') return
-    
+
     const updateInfo = JSON.parse(mainState.updateInfo)
 
-    if(Number(updateInfo.percent) < percentageDownloaded) return
+    if (Number(updateInfo.percent) < percentageDownloaded) return
 
     setDownloadSpeed(sanitizeBytes(updateInfo.bytesPerSecond))
     setPercentageDownloaded(Number(updateInfo.percent))

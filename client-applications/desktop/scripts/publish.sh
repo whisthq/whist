@@ -119,7 +119,7 @@ else
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket
-        export S3_BUCKET=$bucket && yarn package
+        export S3_BUCKET=$bucket && yarn package:publish
     else
         # Package the application locally, without uploading to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package
