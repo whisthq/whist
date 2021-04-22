@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react'
-import { every } from 'lodash'
-import { IpcRendererEvent, BrowserWindow } from 'electron'
-import { StateIPC } from '@app/@types/state'
-import { ErrorIPC, StateChannel } from '@app/utils/constants'
+import { useEffect, useState } from "react"
+import { every } from "lodash"
+import { IpcRendererEvent, BrowserWindow } from "electron"
+import { StateIPC } from "@app/@types/state"
+import { ErrorIPC, StateChannel } from "@app/utils/constants"
 
 export const useMainState = ():
-| [StateIPC, (s: Partial<StateIPC>) => void]
-| never => {
+  | [StateIPC, (s: Partial<StateIPC>) => void]
+  | never => {
   // the window type doesn't have ipcRenderer, but we've manually
   // added that in preload.js with electron.contextBridge
   // so we ignore the type error in the next line
@@ -38,7 +38,7 @@ export const ipcBroadcast = (
   const contents = windows.map((win) => win.webContents)
   contents.forEach((c) => {
     c.isLoading()
-      ? c.on('did-finish-load', () => c.send(StateChannel, state))
+      ? c.on("did-finish-load", () => c.send(StateChannel, state))
       : c.send(StateChannel, state)
   })
 }

@@ -1,12 +1,12 @@
-import React from 'react'
-import { Switch, Route } from 'react-router-dom'
-import { Router } from 'react-router'
-import { chain } from 'lodash'
-import ReactDOM from 'react-dom'
+import React from "react"
+import { Switch, Route } from "react-router-dom"
+import { Router } from "react-router"
+import { chain } from "lodash"
+import ReactDOM from "react-dom"
 
-import Auth from '@app/renderer/pages/auth'
-import Update from '@app/renderer/pages/update'
-import Error from '@app/renderer/pages/error'
+import Auth from "@app/renderer/pages/auth"
+import Update from "@app/renderer/pages/update"
+import Error from "@app/renderer/pages/error"
 import {
   AuthErrorTitle,
   AuthErrorText,
@@ -29,11 +29,11 @@ import {
   WindowHashAssignContainerError,
   WindowHashProtocolError,
   NavigationErrorTitle,
-  NavigationErrorText
-} from '@app/utils/constants'
+  NavigationErrorText,
+} from "@app/utils/constants"
 
-import { browserHistory } from '@app/utils/history'
-import { useMainState } from '@app/utils/ipc'
+import { browserHistory } from "@app/utils/history"
+import { useMainState } from "@app/utils/ipc"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -44,113 +44,110 @@ import { useMainState } from '@app/utils/ipc'
 // If no query parameter match is found, we default to a
 // generic navigation error window.
 const show = chain(window.location.search.substring(1))
-  .split('=')
+  .split("=")
   .chunk(2)
   .fromPairs()
-  .get('show')
+  .get("show")
   .value()
 
 const RootComponent = () => {
   const [, setMainState] = useMainState()
 
-  const errorContinue = () =>
-    setMainState({ errorRelaunchRequest: Date.now() })
+  const errorContinue = () => setMainState({ errorRelaunchRequest: Date.now() })
 
   if (show === WindowHashAuth) {
     return (
-            <Router history={browserHistory}>
-                <Switch>
-                    <Route path="/" component={Auth} />
-                </Switch>
-            </Router>
+      <Router history={browserHistory}>
+        <Switch>
+          <Route path="/" component={Auth} />
+        </Switch>
+      </Router>
     )
   }
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashAuthError) {
     return (
-            <Error
-                title={AuthErrorTitle}
-                text={AuthErrorText}
-                onClick={errorContinue}
-            />
+      <Error
+        title={AuthErrorTitle}
+        text={AuthErrorText}
+        onClick={errorContinue}
+      />
     )
   }
   if (show === WindowHashCreateContainerErrorNoAccess) {
     return (
-            <Error
-                title={ContainerCreateErrorTitleNoAccess}
-                text={ContainerCreateErrorTextNoAccess}
-                onClick={errorContinue}
-            />
+      <Error
+        title={ContainerCreateErrorTitleNoAccess}
+        text={ContainerCreateErrorTextNoAccess}
+        onClick={errorContinue}
+      />
     )
   }
   if (show === WindowHashCreateContainerErrorUnauthorized) {
     return (
-            <Error
-                title={ContainerCreateErrorTitleUnauthorized}
-                text={ContainerCreateErrorTextUnauthorized}
-                onClick={errorContinue}
-            />
+      <Error
+        title={ContainerCreateErrorTitleUnauthorized}
+        text={ContainerCreateErrorTextUnauthorized}
+        onClick={errorContinue}
+      />
     )
   }
   if (show === WindowHashCreateContainerErrorInternal) {
     return (
-            <Error
-                title={ContainerCreateErrorTitleInternal}
-                text={ContainerCreateErrorTextInternal}
-                onClick={errorContinue}
-            />
+      <Error
+        title={ContainerCreateErrorTitleInternal}
+        text={ContainerCreateErrorTextInternal}
+        onClick={errorContinue}
+      />
     )
   }
   if (show === WindowHashAssignContainerError) {
     return (
-            <Error
-                title={ContainerAssignErrorTitle}
-                text={ContainerAssignErrorText}
-                onClick={errorContinue}
-            />
+      <Error
+        title={ContainerAssignErrorTitle}
+        text={ContainerAssignErrorText}
+        onClick={errorContinue}
+      />
     )
   }
   if (show === WindowHashProtocolError) {
     return (
-            <Error
-                title={ProtocolErrorTitle}
-                text={ProtocolErrorText}
-                onClick={errorContinue}
-            />
+      <Error
+        title={ProtocolErrorTitle}
+        text={ProtocolErrorText}
+        onClick={errorContinue}
+      />
     )
   }
   return (
-        <Error
-            title={NavigationErrorTitle}
-            text={NavigationErrorText}
-            onClick={errorContinue}
-        />
+    <Error
+      title={NavigationErrorTitle}
+      text={NavigationErrorText}
+      onClick={errorContinue}
+    />
   )
 }
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
-  const win = window as unknown as { VERSION: number }
+  const win = (window as unknown) as { VERSION: number }
   const version = win.VERSION
   return (
-        <div className="relative w-full h-full">
-            <div
-                className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
-                style={{ zIndex: -10 }}
-            >
-                <p className="font-body font-light text-gray-200 py-4">
-                    {version}
-                </p>
-            </div>
-            {props.children}
-        </div>
+    <div className="relative w-full h-full">
+      <div
+        className="bg-white absolute flex flex-col-reverse items-center w-full h-full"
+        style={{ zIndex: -10 }}
+      >
+        <p className="font-body font-light text-gray-200 py-4">{version}</p>
+      </div>
+      {props.children}
+    </div>
   )
 }
 
 ReactDOM.render(
-    <WindowBackground>
-        <RootComponent />
-    </WindowBackground>,
-    document.getElementById('root')
+  <WindowBackground>
+    <RootComponent />
+  </WindowBackground>,
+  document.getElementById("root")
 )

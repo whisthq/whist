@@ -4,10 +4,10 @@
  * @brief This file contains RXJS observables that deal with state persistence (i.e. shared state).
  */
 
-import { eventAppReady } from '@app/main/events/app'
-import { Subject } from 'rxjs'
-import { distinctUntilChanged, map } from 'rxjs/operators'
-import { store } from '@app/utils/persist'
+import { eventAppReady } from "@app/main/events/app"
+import { Subject } from "rxjs"
+import { distinctUntilChanged, map } from "rxjs/operators"
+import { store } from "@app/utils/persist"
 
 // We create the persistence observables slightly differently from the
 // others across the project.

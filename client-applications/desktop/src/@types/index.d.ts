@@ -1,29 +1,29 @@
-declare module '*.svg' {
+declare module "*.svg" {
   const content: any
   export default content
 }
 
-declare module '*.jpg' {
+declare module "*.jpg" {
   const content: string
   export default content
 }
 
-declare module '*.png' {
+declare module "*.png" {
   const content: string
   export default content
 }
 
-declare module '*.json' {
+declare module "*.json" {
   const content: string
   export default content
 }
 
-declare module '*.gif' {
+declare module "*.gif" {
   const content: string
   export default content
 }
 
-declare module '*.css' {
+declare module "*.css" {
   interface IClassNames {
     [className: string]: string
   }

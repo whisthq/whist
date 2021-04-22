@@ -1,0 +1,8 @@
+# ignore directories 
+build/
+public/ 
+release/ 
+
+# ignore css 
+*.css
+

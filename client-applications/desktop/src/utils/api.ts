@@ -1,6 +1,6 @@
-import { configGet, configPost } from '@fractal/core-ts'
-import config from '@app/utils/config'
-import https from 'https'
+import { configGet, configPost } from "@fractal/core-ts"
+import config from "@app/utils/config"
+import https from "https"
 
 /*
  * @fractal/core-ts http functions like "get" and "post"
@@ -21,7 +21,7 @@ import https from 'https'
 const httpConfig = {
   server: config.url.WEBSERVER_URL,
   // handleAuth: (_: any) => goTo("/auth"),
-  endpointRefreshToken: '/token/refresh'
+  endpointRefreshToken: "/token/refresh",
 }
 
 export const get = configGet(httpConfig)
@@ -51,25 +51,25 @@ export const apiPut = async (
         { json, success, response } (JSON) : Returned JSON of PUT request, success True/False, and HTTP response
     */
 
-  const fullUrl = `${server ?? ''}${endpoint ?? ''}`
+  const fullUrl = `${server ?? ""}${endpoint ?? ""}`
 
   return await new Promise((resolve, reject) => {
     // If we want to ignore the host certificate, then `rejectUnauthorized` should be false
     const request = https.request(
       fullUrl,
       {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
-        rejectUnauthorized: !ignoreCertificate
+        rejectUnauthorized: !ignoreCertificate,
       },
       (response) => {
-        let responseText = ''
-        response.on('data', (data: string) => {
+        let responseText = ""
+        response.on("data", (data: string) => {
           responseText = `${responseText}${data}`
         })
-        response.on('end', () => {
+        response.on("end", () => {
           const status = response?.statusCode ?? 400
           const json = JSON.stringify(responseText)
           resolve({ json, status, response })
@@ -77,7 +77,7 @@ export const apiPut = async (
       }
     )
     request.write(JSON.stringify(body))
-    request.on('error', (e) => {
+    request.on("error", (e) => {
       reject(e)
     })
     request.end()
@@ -86,4 +86,4 @@ export const apiPut = async (
 
 // TODO: this needs to move somewhere else, but we're not using it yet
 export const tokenValidate = async (accessToken: string) =>
-  get({ endpoint: '/token/validate', accessToken })
+  get({ endpoint: "/token/validate", accessToken })

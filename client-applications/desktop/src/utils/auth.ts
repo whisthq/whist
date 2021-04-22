@@ -35,37 +35,31 @@ export const checkPassword = (password: string): boolean => {
 
 export const checkPasswordVerbose = (password: string): string => {
   if (password.length === 0) {
-    return ''
+    return ""
   }
   if (password.length < MINIMUM_PASSWORD_LENGTH && password.length > 0) {
-    return 'Too short'
-  } else if (
-    !passwordLowercase.test(password) &&
-        PASSWORD_REQUIRE_LOWERCASE
-  ) {
-    return 'Needs lowercase letter'
-  } else if (
-    !passwordUppercase.test(password) &&
-        PASSWORD_REQUIRE_UPPERCASE
-  ) {
-    return 'Needs uppercase letter'
+    return "Too short"
+  } else if (!passwordLowercase.test(password) && PASSWORD_REQUIRE_LOWERCASE) {
+    return "Needs lowercase letter"
+  } else if (!passwordUppercase.test(password) && PASSWORD_REQUIRE_UPPERCASE) {
+    return "Needs uppercase letter"
   } else if (!passwordNumber.test(password) && PASSWORD_REQUIRE_NUMBER) {
-    return 'Needs number'
+    return "Needs number"
   } else {
-    return ''
+    return ""
   }
 }
 
 export const checkEmailVerbose = (email: string): string => {
   if (
     email.length === 0 ||
-        (email.length >= MINIMUM_EMAIL_LENGTH &&
-            email.includes('@') &&
-            email.includes('.'))
+    (email.length >= MINIMUM_EMAIL_LENGTH &&
+      email.includes("@") &&
+      email.includes("."))
   ) {
-    return ''
+    return ""
   } else {
-    return 'Invalid email'
+    return "Invalid email"
   }
 }
 
@@ -75,23 +69,21 @@ export const signupEnabled = (
   confirmPassword: string
 ): boolean => {
   return (
-    checkEmail(email) &&
-        checkPassword(password) &&
-        password === confirmPassword
+    checkEmail(email) && checkPassword(password) && password === confirmPassword
   )
 }
 
 export const loginEnabled = (email: string, password: string): boolean =>
-  checkEmail(email) && (password.length >= MINIMUM_PASSWORD_LENGTH)
+  checkEmail(email) && password.length >= MINIMUM_PASSWORD_LENGTH
 
 export const checkConfirmPassword = (
   password: string,
   confirmPassword: string
 ) => {
   const valid =
-        confirmPassword === password &&
-        password.length > 0 &&
-        confirmPassword.length > 0
+    confirmPassword === password &&
+    password.length > 0 &&
+    confirmPassword.length > 0
   return valid
 }
 
@@ -100,9 +92,7 @@ export const checkConfirmPasswordVerbose = (
   confirmPassword: string
 ) => {
   if (confirmPassword.length === 0) {
-    return ''
+    return ""
   }
-  return checkConfirmPassword(password, confirmPassword)
-    ? ''
-    : "Doesn't match"
+  return checkConfirmPassword(password, confirmPassword) ? "" : "Doesn't match"
 }
