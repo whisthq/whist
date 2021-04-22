@@ -223,7 +223,7 @@ CREATE TABLE hardware.cluster_info (
     "runningTasksCount" bigint,
     "registeredContainerInstancesCount" bigint,
     "minContainers" bigint,
-    -- "maxContainers" bigint,
+    "maxContainers" bigint,
     status character varying,
     location character varying
 );
