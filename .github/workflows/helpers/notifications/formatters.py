@@ -195,9 +195,7 @@ def default_message_github(body, title=None, code=None, lang=None):
     Returns:
         A string containing the parameters, formatted to post as a comment
     """
-    return join_newline(h2(title),
-                        body,
-                        code_overflow_collapsed(code, lang=lang))
+    return join_newline(h2(title), body, code_overflow_collapsed(code, lang=lang))
 
 
 def default_message_slack(body, title=None, code=None, lang=None):
@@ -218,6 +216,5 @@ def default_message_slack(body, title=None, code=None, lang=None):
         lines.append("*" + title + "*")
     lines.append(body)
     if code is not None:
-         lines.append(code_block(code))
-    return '\n'.join(lines)
-
+        lines.append(code_block(code))
+    return "\n".join(lines)
