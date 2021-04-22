@@ -269,35 +269,34 @@ ClipboardData* unsafe_get_clipboard() {
             case CF_DIB:
                 LOG_INFO("Clipboard bitmap received! Size: %d", cb->size);
 
+                int bmp_size = cb->size + 14;
+
                 // windows clipboard saves bitmap data without header -
                 //      add BMP header and then convert from bmp to png
                 //      before saving to clipboard data to be sent to peer
-                char* bmp_data = safe_malloc(cb->size + 14);
+                char* bmp_data = allocate_custom_block(bmp_size);
                 if (!bmp_data) {
                     break;
                 }
                 *((char*)(&bmp_data[0])) = 'B';
                 *((char*)(&bmp_data[1])) = 'M';
-                *((int*)(&bmp_data[2])) = cb->size + 14;
+                *((int*)(&bmp_data[2])) = bmp_size;
                 *((int*)(&bmp_data[6])) = 0;
                 *((int*)(&bmp_data[10])) = 54;
                 memcpy(bmp_data + 14, cb->data, cb->size);
 
-                // convert BMP to PNG
-                AVPacket packet;
-                if (bmp_to_png((unsigned char*)bmp_data, (unsigned)(cb->size + 14), &packet) != 0) {
+                // convert BMP to PNG, and save it into the Clipboard
+                cb->size = sizeof(clipboard_buf); // Tell bmp_to_png the max size of the buffer
+                if (bmp_to_png(bmp_data, bmp_size, cb->data, &cb->size) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
                     free(bmp_data);
                     break;
                 }
-                free(bmp_data);
+                free_custom_block(bmp_data);
 
-                // copy converted PNG data to clipboard struct
-                memcpy(cb->data, packet.data, packet.size);
-                cb->size = packet.size;
+                // Mark as CLIPBOARD IMAGE
                 cb->type = CLIPBOARD_IMAGE;
 
-                av_packet_unref(&packet);
                 break;
             case CF_HDROP:
                 LOG_WARNING("GetClipboard: FILE CLIPBOARD NOT BEING IMPLEMENTED");
@@ -482,22 +481,24 @@ void unsafe_set_clipboard(ClipboardData* cb) {
         case CLIPBOARD_IMAGE:
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
-                AVPacket pkt;
-                if (png_char_to_bmp(cb->data, cb->size, &pkt) != 0) {
+                // Store max size on bmp_size, png_to_bmp will read this
+                int bmp_size = sizeof(clipboard_buf) + 14;
+                char* bmp_buf = allocate_custom_block(bmp_size);
+                if (png_to_bmp(cb->data, cb->size, bmp_buf, &bmp_size) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
+                    free_custom_block(bmp_buf);
                     return;
                 }
-                if (pkt.size - 14 > (int)sizeof(clipboard_buf)) {
-                    av_packet_unref(&pkt);
-                    LOG_WARNING("Could not copy, clipboard too large! %d bytes", pkt.size - 14);
+                if (bmp_size - 14 > (int)sizeof(clipboard_buf)) {
+                    LOG_WARNING("Could not copy, clipboard too large! %d bytes", bmp_size - 14);
+                    free_custom_block(bmp_buf);
                     return;
                 }
-                memcpy(cb->data, pkt.data + 14, pkt.size - 14);
-                cb->size = pkt.size - 14;
                 cf_type = CF_DIB;
-                h_mem = get_global_alloc(cb->data, cb->size, false);  // no null char at end (false)
+                // Create a global allocation of the BMP
+                h_mem = get_global_alloc(bmp_buf + 14, bmp_size - 14, false);  // no null char at end (false)
 
-                av_packet_unref(&pkt);
+                free_custom_block(bmp_buf);
             }
             break;
         case CLIPBOARD_FILES:
