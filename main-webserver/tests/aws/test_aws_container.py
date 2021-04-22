@@ -1,13 +1,10 @@
-import logging
-import os
 import uuid
 
 import pytest
 
-from flask import current_app
 from app.celery import aws_ecs_creation
 from app.celery.aws_ecs_deletion import delete_cluster
-from app.celery.aws_ecs_modification import update_cluster
+from app.celery.aws_ecs_modification import manual_scale_cluster, update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
 from app.helpers.utils.general.logs import fractal_logger
@@ -21,15 +18,10 @@ from app.models import (
 )
 from app.constants.http_codes import (
     SUCCESS,
-    ACCEPTED,
     BAD_REQUEST,
 )
-
-from ..helpers.general.progress import queryStatus
-from ..patches import function
-
-from app.helpers.utils.aws.base_ecs_client import ECSClient
-from app.celery.aws_ecs_modification import manual_scale_cluster
+from tests.helpers.general.progress import queryStatus
+from tests.patches import function
 
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 
@@ -43,10 +35,10 @@ def ecs_data(app):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
+@pytest.mark.usefixtures("ecs_data")
 @pytest.mark.usefixtures("_save_user")
-def test_create_cluster(ecs_data, client, authorized):
+def test_create_cluster(client, authorized):
     cluster_name = pytest.cluster_name
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
@@ -74,7 +66,6 @@ def test_create_cluster(ecs_data, client, authorized):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("_save_user")
@@ -112,10 +103,8 @@ def test_assign_container(client, task_def_env, authorized, monkeypatch):
     return task["result"]
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_cluster(client):
+def test_update_cluster():
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
@@ -131,10 +120,8 @@ def test_update_cluster(client):
     assert res.state == "SUCCESS"
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_bad_cluster(client, cluster):
+def test_update_bad_cluster(cluster):
     # Regression test for PR 665, tests that a dead cluster doesn't brick
     res = update_cluster.delay(
         region_name="us-east-1",
@@ -150,7 +137,6 @@ def test_update_bad_cluster(client, cluster):
     assert res.state == "SUCCESS"
 
 
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_delete_bad_cluster():
     """Test that `delete_cluster` handles invalid clusters.
@@ -176,9 +162,6 @@ def test_delete_bad_cluster():
     assert task.successful()
 
 
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
-@pytest.mark.usefixtures("celery_worker")
 def test_ensure_container_exists(container, monkeypatch):
     """Test that `ensure_container_exists` handles bad inputs correctly.
 
@@ -228,7 +211,6 @@ def test_ensure_container_exists(container, monkeypatch):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_delete_container(client, monkeypatch):
     fractal_logger.info("Starting to delete container {}".format(pytest.container_name))
@@ -271,11 +253,8 @@ def test_delete_container(client, monkeypatch):
     assert getattr(mock_set_capacity, "test_passed")  # make sure function passed
 
 
-@pytest.mark.container_serial
 @pytest.mark.usefixtures("authorized")
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-@pytest.mark.usefixtures("_save_user")
 def test_update_region(client, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
@@ -373,7 +352,6 @@ def test_update_region(client, monkeypatch):
 
 
 @pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("_retrieve_user")
 @pytest.mark.usefixtures("authorized")
@@ -401,10 +379,9 @@ def test_delete_cluster(client):
 
 
 # this test does not need AWS resources or any cluster/container setup
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("authorized")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_single_taskdef(client, authorized, monkeypatch):
+def test_update_single_taskdef(client, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
@@ -460,10 +437,9 @@ def test_update_single_taskdef(client, authorized, monkeypatch):
 
 
 # this test does not need AWS resources or any cluster/container setup
-@pytest.mark.container_serial
-@pytest.mark.usefixtures("celery_app")
+@pytest.mark.usefixtures("authorized")
 @pytest.mark.usefixtures("celery_worker")
-def test_update_all_taskdefs(client, authorized, monkeypatch):
+def test_update_all_taskdefs(client, monkeypatch):
     # mock describe_task so we don't unnecesarily call AWS API
     # this also stops races between someone running tests and task definition updates that
     # are incompatible with the AMIs that the test suite started with.
@@ -514,8 +490,7 @@ def test_update_all_taskdefs(client, authorized, monkeypatch):
     db.session.commit()
 
 
-@pytest.mark.container_serial
-def test_update_taskdef_fk_regression(bulk_container, task_def_env):
+def test_update_taskdef_fk_regression(bulk_container):
     """
     A regression test to make sure task definitions versions can be updated
     independent of user containers that use an old taskdef version. This used
@@ -538,7 +513,6 @@ def test_update_taskdef_fk_regression(bulk_container, task_def_env):
     db.session.commit()
 
 
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
     """
@@ -572,7 +546,6 @@ def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
     assert getattr(mock_set_asg_capacity, "test_passed")
 
 
-@pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
 def test_manual_scale_cluster_down(bulk_cluster, monkeypatch):
     """
