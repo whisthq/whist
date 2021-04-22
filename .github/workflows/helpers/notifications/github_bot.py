@@ -87,7 +87,7 @@ def github_comment_update(issue, identifier, body, title=None, code=None, lang=N
     Returns:
         None"""
     content = fmt.default_message_github(body, title, code, lang)
-    github_bot.edit_comments_by(
+    edit_comments_by(
         issue,
         partial(filter_identifier, identifier),
         fmt.concat_id(identifier, content),
@@ -120,8 +120,8 @@ def github_comment_once(issue, identifier, body, title=None, code=None, lang=Non
     Returns:
         None"""
     content = fmt.default_message_github(body, title, code, lang)
-    github_bot.delete_comments_by(issue, partial(filter_identifier, identifier))
-    github_bot.create_comment(issue, fmt.concat_id(identifier, content))
+    delete_comments_by(issue, partial(filter_identifier, identifier))
+    create_comment(issue, fmt.concat_id(identifier, content))
 
 
 # The functions below represent the main logging API for each service.

@@ -324,7 +324,7 @@ jobs:
                   import os
                   import sys
                   sys.path.append(os.environ["PATH_HELPERS"])
-                  from notifications import (github_debug_update,
+                  from notifications.github_bot import (github_debug_update,
                                              github_info_update,
                                              github_warning_update,
                                              github_critical_update,

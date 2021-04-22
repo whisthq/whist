@@ -38,7 +38,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
@@ -67,7 +67,7 @@ jobs:
               shell: python3 {0}
               run: |
                   import os
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   if os.environ.get("hanging_resource") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
@@ -93,7 +93,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install boto3
               run: pip install boto3
@@ -111,7 +111,7 @@ jobs:
               shell: python3 {0}
               run: |
                   import os
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   if os.environ.get("ec2_instances") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
@@ -124,7 +124,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-dev"
@@ -142,7 +142,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -159,7 +159,7 @@ jobs:
               shell: python3 {0}
               run: |
                   import subprocess
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-dev"
 
@@ -189,12 +189,12 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack if Hanging Resource Workflow Fails
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-dev"
