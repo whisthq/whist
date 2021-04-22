@@ -80,7 +80,10 @@ merge(
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
   uploadToS3(email)
     .then(() => app.quit())
-    .catch((err) => console.error(err))
+    .catch((err) => {
+      console.error(err)
+      app.quit()
+    })
 })
 
 // If we have have successfully authorized, close the existing windows.
