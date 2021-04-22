@@ -53,15 +53,12 @@ def github_comment_update(
     issue = repo.get_issue(issue_number)
     matching_comments = []
     for comment in issue.get_comments():
-        print("comment:", comment, end="\n----\n")
         if fmt.startswith_id(identifier, comment.body):
             matching_comments.append(comment)
 
     if not matching_comments and create:
         # create a comment if none exist
-        print('creating comment')
         issue.create_comment(body)
     else:
-        print('editing')
         for comment in matching_comments:
             comment.edit(body)
