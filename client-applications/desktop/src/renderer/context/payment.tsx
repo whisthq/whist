@@ -52,12 +52,6 @@ export const StripeProvider = ({ children }: any) => {
     successUrl: string,
     cancelUrl: string
   ) => {
-    const body = {
-      priceId: "plan_J632kqGTMkcro6",
-      customerId: "cus_JKiqEsRwvk9gds",
-      successUrl: "https://www.fractal.co/",
-      cancelUrl: "https://www.fractal.co/",
-    }
     setMainState({
       stripeCheckoutRequest: { priceId, customerId, successUrl, cancelUrl },
       stripeAction: {},
@@ -65,10 +59,6 @@ export const StripeProvider = ({ children }: any) => {
   }
 
   const getPortalSession = async (customerId: string, returnUrl: string) => {
-    const body = {
-      customerId: "cus_JKiqEsRwvk9gds",
-      returnUrl: "https://www.fractal.co/",
-    }
     setMainState({
       stripePortalRequest: { customerId, returnUrl },
       stripeAction: {},
@@ -76,8 +66,8 @@ export const StripeProvider = ({ children }: any) => {
   }
 
   useEffect(() => {
-    if (mainState.stripeAction) {
-      setAction(mainState.stripeAction.action ?? "")
+    if (mainState.stripeAction && mainState.stripeAction.action != null) {
+      setAction(mainState.stripeAction.action)
       mainState.stripeAction.action === "CHECKOUT"
         ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
         : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
