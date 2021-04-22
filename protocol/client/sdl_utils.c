@@ -361,7 +361,7 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
 }
 
 void free_sdl_surface(SDL_Surface* surface) {
-    char* pixels = surface.pixels;
+    char* pixels = surface->pixels;
     SDL_FreeSurface(surface);
     free(pixels);
 }

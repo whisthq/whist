@@ -25,6 +25,10 @@ include(CheckLanguage)
 
 project(FractalProtocol LANGUAGES C)
 
+if (CMAKE_CONFIGURATION_TYPES)
+    message(FATAL_ERROR "Detected multi-configuration generator! This CMake file does not support multi-configuration generators.")
+endif ()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     check_language(CUDA)
     # CMAKE_CUDA_COMPILER will be set only if check_language(CUDA) succeeded
