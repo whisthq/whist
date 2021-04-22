@@ -86,6 +86,7 @@ const loadWindow = (params: string, win: BrowserWindow) => {
       .catch((err) => console.error(err))
   }
 }
+
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,

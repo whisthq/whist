@@ -36,7 +36,7 @@ import {
 
 import { browserHistory } from "@app/utils/history"
 import { useMainState } from "@app/utils/ipc"
-import { StripeProvider } from "@app/renderer/shared/payment"
+import { StripeProvider } from "@app/renderer/context/payment"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
