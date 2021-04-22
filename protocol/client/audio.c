@@ -78,9 +78,6 @@ static int last_played_id = -1;
 
 #define MAX_FREQ 128000
 
-static clock test_timer;
-static double test_time;
-
 static RenderContext volatile audio_render_context;
 static bool volatile rendering_audio = false;
 
