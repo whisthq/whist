@@ -46,7 +46,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/setup_notifications.sh true # need the full requirements installed
+              run: ./notifications/setup_notifications.sh
 
             # A non-pull_request event does not have a github.base_ref set
             # We have to dig into the event object, which has a ref string
