@@ -4,42 +4,42 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from "electron"
-import { autoUpdater } from "electron-updater"
-import { eventUpdateDownloaded } from "@app/main/events/autoupdate"
+import { app } from 'electron'
+import { autoUpdater } from 'electron-updater'
+import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
 
 import {
-  eventAppReady,
-  eventWindowsAllClosed,
-  eventWindowCreated,
-} from "@app/main/events/app"
-import { merge, race, zip, combineLatest } from "rxjs"
-import { takeUntil } from "rxjs/operators"
+    eventAppReady,
+    eventWindowsAllClosed,
+    eventWindowCreated,
+} from '@app/main/events/app'
+import { merge, race, zip, combineLatest } from 'rxjs'
+import { takeUntil } from 'rxjs/operators'
 import {
-  closeWindows,
-  createAuthWindow,
-  createUpdateWindow,
-  showAppDock,
-  hideAppDock,
-} from "@app/utils/windows"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
+    closeWindows,
+    createAuthWindow,
+    createUpdateWindow,
+    showAppDock,
+    hideAppDock,
+} from '@app/utils/windows'
+import { loginSuccess } from '@app/main/observables/login'
+import { signupSuccess } from '@app/main/observables/signup'
 import {
-  protocolLaunchProcess,
-  protocolCloseRequest,
-} from "@app/main/observables/protocol"
-import { errorWindowRequest } from "@app/main/observables/error"
+    protocolLaunchProcess,
+    protocolCloseRequest,
+} from '@app/main/observables/protocol'
+import { errorWindowRequest } from '@app/main/observables/error'
 import {
-  autoUpdateAvailable,
-  autoUpdateNotAvailable,
-} from "@app/main/observables/autoupdate"
+    autoUpdateAvailable,
+    autoUpdateNotAvailable,
+} from '@app/main/observables/autoupdate'
 import {
-  userEmail,
-  userAccessToken,
-  userConfigToken,
-} from "@app/main/observables/user"
+    userEmail,
+    userAccessToken,
+    userConfigToken,
+} from '@app/main/observables/user'
 
-import { uploadToS3 } from "@app/utils/logging"
+import { uploadToS3 } from '@app/utils/logging'
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -47,8 +47,8 @@ import { uploadToS3 } from "@app/utils/logging"
 // don't have all three, we clear them all and force the user to log in again.
 
 eventAppReady
-  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-  .subscribe(() => createAuthWindow((win: any) => win.show()))
+    .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
+    .subscribe(() => createAuthWindow((win: any) => win.show()))
 
 // Closing all the windows should simply quit the application entirely.
 // This event fires both when the user intentionally closes windows, and
@@ -57,23 +57,23 @@ eventAppReady
 // supposed to close the application, so we use takeUntil to listen for those.
 
 eventWindowsAllClosed
-  .pipe(
-    takeUntil(
-      merge(
-        protocolLaunchProcess,
-        loginSuccess,
-        signupSuccess,
-        errorWindowRequest
-      )
+    .pipe(
+        takeUntil(
+            merge(
+                protocolLaunchProcess,
+                loginSuccess,
+                signupSuccess,
+                errorWindowRequest
+            )
+        )
     )
-  )
-  .subscribe(() => app.quit())
+    .subscribe(() => app.quit())
 
 // When the protocol closees, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  uploadToS3(email)
-    .then(() => app.quit())
-    .catch((err) => console.error(err))
+    uploadToS3(email)
+        .then(() => app.quit())
+        .catch((err) => console.error(err))
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -83,8 +83,8 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // can launch.
 
 merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
-  closeWindows()
-  hideAppDock()
+    closeWindows()
+    hideAppDock()
 })
 
 // If the update is downloaded, quit the app and install the update
@@ -92,13 +92,13 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
 eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
 
 race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
-  (available: boolean) => {
-    if (available) {
-      closeWindows()
-      createUpdateWindow((win: any) => win.show())
-      autoUpdater.downloadUpdate().catch((err) => console.error(err))
+    (available: boolean) => {
+        if (available) {
+            closeWindows()
+            createUpdateWindow((win: any) => win.show())
+            autoUpdater.downloadUpdate().catch((err) => console.error(err))
+        }
     }
-  }
 )
 
 eventWindowCreated.subscribe(() => showAppDock())

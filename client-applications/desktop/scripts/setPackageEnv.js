@@ -5,14 +5,14 @@
 //   $ yarn package:set-env -- [dev|staging|prod]
 // before calling `yarn package` or `yarn package:ci`.
 
-const fs = require("fs")
+const fs = require('fs')
 
-const packagedEnv = process.argv[2] ?? "dev"
+const packagedEnv = process.argv[2] ?? 'dev'
 
 const env = {
-  PACKAGED_ENV: packagedEnv,
+    PACKAGED_ENV: packagedEnv,
 }
 
 const envString = JSON.stringify(env)
 
-fs.writeFileSync("env.json", envString)
+fs.writeFileSync('env.json', envString)

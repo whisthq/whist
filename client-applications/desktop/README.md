@@ -37,9 +37,9 @@ Finally, you can open PR to `dev`.
 
 Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the following locations:
 
-- On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
-- On Linux, look in `~/.config/{Electron,Fractal}/Cache/config.json`
-- On Windows, look in `%APPDATA%\{Electron,Fractal}\Cache\config.json`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
+-   On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
+-   On Linux, look in `~/.config/{Electron,Fractal}/Cache/config.json`
+-   On Windows, look in `%APPDATA%\{Electron,Fractal}\Cache\config.json`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
 
 The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
 
@@ -47,8 +47,8 @@ You can clear these files to re-trigger behavior, such as a re-running the login
 
 Note the locations of the logfiles as well:
 
-- On macOS/Linux, `~/.fractal/log{,-dev,staging}.txt`
-- On Windows, `%APPDATA%\Fractal\log{,-dev,staging}.txt`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
+-   On macOS/Linux, `~/.fractal/log{,-dev,staging}.txt`
+-   On Windows, `%APPDATA%\Fractal\log{,-dev,staging}.txt`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
 
 ## Client Application Source Code
 
@@ -112,14 +112,14 @@ A good indication of well-organized functions is visual consistency. Functions o
 
 ```js
 import {
-  containerInfoRequest,
-  containerInfoSuccess,
-  containerInfoFailure,
-  containerInfoLoading,
-  containerInfoWarning,
-  containerInfoProcess,
-  containerInfoPolling,
-} from "@app/observables/container"
+    containerInfoRequest,
+    containerInfoSuccess,
+    containerInfoFailure,
+    containerInfoLoading,
+    containerInfoWarning,
+    containerInfoProcess,
+    containerInfoPolling,
+} from '@app/observables/container'
 ```
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.

@@ -1,16 +1,16 @@
-import path from "path"
-import fs from "fs"
-import { app } from "electron"
+import path from 'path'
+import fs from 'fs'
+import { app } from 'electron'
 
 const getEnv = () => {
-  if (!app.isPackaged) return {}
+    if (!app.isPackaged) return {}
 
-  const envFile = path
-    .join(app.getAppPath(), "env.json")
-    .replace("build/dist/main/", "")
-    .replace("app.asar/", "")
+    const envFile = path
+        .join(app.getAppPath(), 'env.json')
+        .replace('build/dist/main/', '')
+        .replace('app.asar/', '')
 
-  return JSON.parse(fs.readFileSync(envFile, "utf-8"))
+    return JSON.parse(fs.readFileSync(envFile, 'utf-8'))
 }
 
 export default getEnv()
