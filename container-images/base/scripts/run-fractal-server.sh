@@ -199,3 +199,5 @@ curl \
 }
 END
 
+# Once the server has exited, we should just shutdown the container so it doesn't hang
+sudo shutdown now
