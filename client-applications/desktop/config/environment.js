@@ -1,18 +1,6 @@
 const { app } = require('electron');
 const path = require('path');
 
-export const FractalNodeEnvironment = {
-  DEVELOPMENT: 'development',
-  PRODUCTION: 'production'
-}
-
-export const FractalCIEnvironment = {
-  LOCAL: 'local',
-  DEVELOPMENT: 'dev',
-  STAGING: 'staging',
-  PRODUCTION: 'prod'
-}
-
 const getBaseFilePath = () => {
   if (process.platform === 'win32') {
     return path.join(app.getPath('appData'), 'Fractal')
@@ -31,6 +19,7 @@ const getProtocolName = () => {
     return 'Fractal'
   }
 }
+
 const getProtocolFolder = () => {
   if (app.isPackaged) {
     if (process.platform === 'darwin') {
@@ -42,8 +31,21 @@ const getProtocolFolder = () => {
     return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
   }
 }
+
 const protocolName = getProtocolName()
 const protocolFolder = getProtocolFolder()
+
+const FractalNodeEnvironment = {
+  DEVELOPMENT: 'development',
+  PRODUCTION: 'production'
+}
+
+const FractalCIEnvironment = {
+  LOCAL: 'local',
+  DEVELOPMENT: 'dev',
+  STAGING: 'staging',
+  PRODUCTION: 'prod'
+}
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), 'build')
@@ -52,7 +54,7 @@ const buildRoot = app.isPackaged
 /*
     Webserver URLs
 */
-export const webservers = {
+const webservers = {
   local: 'http://127.0.0.1:7730',
   dev: 'http://dev-server.fractal.co',
   staging: 'https://staging-server.fractal.co',
@@ -65,10 +67,20 @@ const keys = {
   LOGZ_API_KEY: 'IroqVsvNytmNricZSTLUSVtJbxNYBgxp'
 }
 
+const loggingBaseFilePath =
+  process.platform === 'win32'
+    ? path.join(app.getPath('appData'), 'Fractal')
+    : path.join(app.getPath('home'), '.fractal')
+
+const userDataFolderNames = {
+  development: 'Electron',
+  production: 'Fractal'
+}
+
 /*
     All environment variables. All secret keys have permission restrictions.
 */
-export const environment = {
+const environment = {
   LOCAL: {
     keys,
     baseFilePath,
@@ -151,8 +163,11 @@ export const environment = {
   }
 }
 
-export const loggingBaseFilePath =
-  process.platform === 'win32'
-    ? path.join(app.getPath('appData'), 'Fractal')
-    : path.join(app.getPath('home'), '.fractal')
-
+module.exports = {
+  FractalNodeEnvironment,
+  FractalCIEnvironment,
+  webservers,
+  environment,
+  loggingBaseFilePath,
+  userDataFolderNames
+}

@@ -1,4 +1,4 @@
-import { environment, FractalCIEnvironment, FractalNodeEnvironment, loggingBaseFilePath } from '../../config/environment'
+import { environment, FractalCIEnvironment, FractalNodeEnvironment } from '../../config/environment'
 import env from '@app/utils/env'
 
 const getDevelopmentEnv = () => {
@@ -31,4 +31,4 @@ export const config =
 export default config
 
 // Re-exporting
-export { loggingBaseFilePath  }from '../../config/environment'
+export { loggingBaseFilePath } from '../../config/environment'
