@@ -1,3 +1,6 @@
+// This file is home to observables that manage tray events.
+// Their responsibilities are to listen events that will trigger tray actions.
+
 import { fromEventTray } from '@app/main/events/tray'
 import { debugObservables } from '@app/utils/logging'
 import { identity } from 'lodash'
