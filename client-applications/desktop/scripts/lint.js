@@ -17,7 +17,7 @@ const { execute } = require('../node_modules/eslint/lib/cli')
 const execCommand = require('./execCommand').execCommand
 
 // The third argument is the flag for prettier, either --check or --write
-execCommand(`yarn prettier ${process.argv.slice(2, 3)} .`, '.')
+// execCommand(`yarn prettier ${process.argv.slice(2, 3)} .`, '.')
 
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 // wWe start on the 4th argument as the first 3 are reserved for placeholders/prettier
