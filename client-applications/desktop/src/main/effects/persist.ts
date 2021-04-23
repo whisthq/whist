@@ -16,11 +16,11 @@ import {
   userRefreshToken,
 } from "@app/main/observables/user"
 
-import { loginFailure } from '@app/main/observables/login'
-import { signupFailure } from '@app/main/observables/signup'
-import { containerCreateFailure } from '@app/main/observables/container'
-import { protocolLaunchFailure } from '@app/main/observables/protocol'
-import { signoutProcess } from '@app/main/observables/signout'
+import { loginFailure } from "@app/main/observables/login"
+import { signupFailure } from "@app/main/observables/signup"
+import { containerCreateFailure } from "@app/main/observables/container"
+import { protocolLaunchFailure } from "@app/main/observables/protocol"
+import { signoutRequest } from "@app/main/observables/tray"
 
 // We create observables for each piece of state we want to persist.
 // Each observable subscribes to the parts of the application that provide
@@ -46,7 +46,7 @@ merge(
   signupFailure,
   containerCreateFailure,
   protocolLaunchFailure,
-  signoutProcess
+  signoutRequest
 ).subscribe(() => persistClear())
 
 // Uncomment this line to clear credentials in development.
