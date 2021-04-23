@@ -99,7 +99,8 @@ done
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
-/usr/share/fractal/FractalServer $OPTIONS
+# The ||: syntax allows the command to fail without the script exiting, since we want to send logs/clean up the container.
+/usr/share/fractal/FractalServer $OPTIONS ||:
 
 echo "FractalServer has exited"
 
