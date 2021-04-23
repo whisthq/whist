@@ -20,5 +20,12 @@ export interface StateIPC {
   errorRelaunchRequest: number
   updateInfo: string
   action: Action
+  stripeCheckoutRequest: {
+    customerId: string
+    priceId: string
+    successUrl: string
+    cancelUrl: string
+  }
+  stripePortalRequest: { customerId: string; returnUrl: string }
   stripeAction: StripeAction
 }

@@ -1,25 +1,25 @@
-import { fromEventIPC } from "@app/main/events/ipc"
-import { from, merge } from "rxjs"
-import { debugObservables, errorObservables } from "@app/utils/logging"
+import { fromEventIPC } from '@app/main/events/ipc'
+import { from, merge } from 'rxjs'
+import { debugObservables, errorObservables } from '@app/utils/logging'
 import {
   stripeCheckoutCreate,
   stripeCheckoutValid,
   stripeCheckoutError,
   stripePortalCreate,
   stripePortalValid,
-  stripePortalError,
-} from "@app/utils/payment"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
+  stripePortalError
+} from '@app/utils/payment'
+import { filter, map, share, exhaustMap } from 'rxjs/operators'
 
-export const stripeCheckoutRequest = fromEventIPC("stripeCheckoutRequest").pipe(
+export const stripeCheckoutRequest = fromEventIPC('stripeCheckoutRequest').pipe(
   filter(
-    (req) => (req?.customerId ?? "") !== "" && (req?.priceId ?? "") !== ""
+    (req) => (req?.customerId ?? '') !== '' && (req?.priceId ?? '') !== ''
   ),
   map(({ customerId, priceId, successUrl, cancelUrl }) => [
     customerId,
     priceId,
     successUrl,
-    cancelUrl,
+    cancelUrl
   ]),
   share()
 )
@@ -41,9 +41,9 @@ export const stripeCheckoutFailure = stripeCheckoutProcess.pipe(
   filter((res) => stripeCheckoutError(res))
 )
 
-export const stripePortalRequest = fromEventIPC("stripePortalRequest").pipe(
+export const stripePortalRequest = fromEventIPC('stripePortalRequest').pipe(
   filter(
-    (req) => (req?.customerId ?? "") !== "" && (req?.returnUrl ?? "") !== ""
+    (req) => (req?.customerId ?? '') !== '' && (req?.returnUrl ?? '') !== ''
   ),
   map(({ customerId, returnUrl }) => [customerId, returnUrl]),
   share()
@@ -68,26 +68,26 @@ export const stripePortalFailure = stripePortalProcess.pipe(
 
 export const stripeAction = merge(
   stripeCheckoutSuccess.pipe(
-    map((req) => ({ action: "CHECKOUT", stripeCheckoutId: req.json.sessionId }))
+    map((req) => ({ action: 'CHECKOUT', stripeCheckoutId: req.json.sessionId }))
   ),
   stripePortalSuccess.pipe(
-    map((req) => ({ action: "PORTAL", stripePortalUrl: req.json.url }))
+    map((req) => ({ action: 'PORTAL', stripePortalUrl: req.json.url }))
   )
 )
 
 // IDEA: merge the two successes together
 
 debugObservables(
-  [stripeCheckoutRequest, "stripeCheckoutRequest"],
-  [stripeCheckoutProcess, "stripeCheckoutProcess"],
-  [stripeCheckoutSuccess, "stripeCheckoutSuccess"],
-  [stripePortalRequest, "stripePortalRequest"],
-  [stripePortalProcess, "stripePortalProcess"],
-  [stripePortalSuccess, "stripePortalSuccess"],
-  [stripeAction, "stripeAction"]
+  [stripeCheckoutRequest, 'stripeCheckoutRequest'],
+  [stripeCheckoutProcess, 'stripeCheckoutProcess'],
+  [stripeCheckoutSuccess, 'stripeCheckoutSuccess'],
+  [stripePortalRequest, 'stripePortalRequest'],
+  [stripePortalProcess, 'stripePortalProcess'],
+  [stripePortalSuccess, 'stripePortalSuccess'],
+  [stripeAction, 'stripeAction']
 )
 
 errorObservables(
-  [stripeCheckoutFailure, "stripeCheckoutFailure"],
-  [stripePortalFailure, "stripePortalFailure"]
+  [stripeCheckoutFailure, 'stripeCheckoutFailure'],
+  [stripePortalFailure, 'stripePortalFailure']
 )

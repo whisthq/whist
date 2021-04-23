@@ -1,15 +1,15 @@
-import React from "react"
-import { Flipped, Flipper } from "react-flip-toolkit"
+import React from 'react'
+import { Flipped, Flipper } from 'react-flip-toolkit'
 
-import { FractalFadeIn } from "@app/components/custom/fade"
-import { Logo } from "@app/components/html/logo"
-import { FractalInput, FractalInputState } from "@app/components/html/input"
+import { FractalFadeIn } from '@app/components/custom/fade'
+import { Logo } from '@app/components/html/logo'
+import { FractalInput, FractalInputState } from '@app/components/html/input'
 import {
   FractalWarning,
-  FractalWarningType,
-} from "@app/components/custom/warning"
-import { FractalButton, FractalButtonState } from "@app/components/html/button"
-import { FractalNavigation } from "@app/components/custom/navigation"
+  FractalWarningType
+} from '@app/components/custom/warning'
+import { FractalButton, FractalButtonState } from '@app/components/html/button'
+import { FractalNavigation } from '@app/components/custom/navigation'
 
 import {
   signupEnabled,
@@ -17,8 +17,8 @@ import {
   checkPassword,
   checkPasswordVerbose,
   checkConfirmPassword,
-  checkConfirmPasswordVerbose,
-} from "@app/utils/auth"
+  checkConfirmPasswordVerbose
+} from '@app/utils/auth'
 /* import { emailSignup } from "@app/utils/signup" */
 
 const Signup = (props: {
