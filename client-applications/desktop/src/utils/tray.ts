@@ -1,5 +1,5 @@
-import { app, Menu, Tray, nativeTheme, nativeImage } from 'electron'
-import path from 'path'
+import { app, Menu, Tray, nativeTheme, nativeImage } from "electron"
+import path from "path"
 let tray: Tray | null = null
 
 export const createTray = (eventTrayActions: {
@@ -14,17 +14,17 @@ export const createTray = (eventTrayActions: {
   tray.setPressedImage(createPressedImage())
   const menu = Menu.buildFromTemplate([
     {
-      label: 'Sign out',
+      label: "Sign out",
       click: () => {
         eventTrayActions.signout()
-      }
+      },
     },
     {
-      label: 'Quit',
+      label: "Quit",
       click: () => {
         eventTrayActions.quit()
-      }
-    }
+      },
+    },
   ])
   tray.setContextMenu(menu)
 }
@@ -34,20 +34,20 @@ export const doesTrayExist = () => {
 }
 
 const getIcon = () => {
-  let iconPath = ''
+  let iconPath = ""
   if (app.isPackaged) {
-    iconPath = path.join(app.getAppPath(), '../..')
+    iconPath = path.join(app.getAppPath(), "../..")
   } else {
-    iconPath = path.join(app.getAppPath(), '../../..')
+    iconPath = path.join(app.getAppPath(), "../../..")
   }
 
-  if (process.platform === 'win32') {
-    return path.join(iconPath, 'public/assets/images/trayIconPurple.ico')
+  if (process.platform === "win32") {
+    return path.join(iconPath, "public/assets/images/trayIconPurple.ico")
   } else {
     if (!nativeTheme.shouldUseDarkColors) {
-      return path.join(iconPath, 'public/assets/images/trayIconBlack.png')
+      return path.join(iconPath, "public/assets/images/trayIconBlack.png")
     } else {
-      return path.join(iconPath, 'public/assets/images/trayIconWhite.png')
+      return path.join(iconPath, "public/assets/images/trayIconWhite.png")
     }
   }
 }
@@ -61,14 +61,14 @@ const createNativeImage = () => {
 
 const createPressedImage = () => {
   // on Mac, pressing on the tray icon should invert the colors
-  let iconPath = ''
+  let iconPath = ""
   if (app.isPackaged) {
-    iconPath = path.join(app.getAppPath(), '../..')
+    iconPath = path.join(app.getAppPath(), "../..")
   } else {
-    iconPath = path.join(app.getAppPath(), '../../..')
+    iconPath = path.join(app.getAppPath(), "../../..")
   }
   let image = nativeImage.createFromPath(
-    path.join(iconPath, 'public/assets/images/trayIconWhite.png')
+    path.join(iconPath, "public/assets/images/trayIconWhite.png")
   )
   image = image.resize({ width: 16 })
   return image
