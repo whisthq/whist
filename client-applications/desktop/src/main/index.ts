@@ -12,3 +12,6 @@
 import "@app/main/observables"
 import "@app/main/events"
 import "@app/main/effects"
+
+import { app } from "electron"
+console.log("path: " + app.getAppPath())
