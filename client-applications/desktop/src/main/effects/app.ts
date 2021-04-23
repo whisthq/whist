@@ -50,7 +50,6 @@ eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => {
     createAuthWindow((win: any) => win.show())
-    createTray(eventTrayActions)
   })
 
 eventAppReady.pipe(take(1)).subscribe(() => {
@@ -97,9 +96,7 @@ merge(
 
 // When the protocol closes, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  uploadToS3(email)
-    .then(() => app.quit())
-    .catch((err) => console.error(err))
+  uploadToS3(email).catch((err) => console.error(err))
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -134,7 +131,6 @@ quitRequest.subscribe(() => {
 })
 
 signoutRequest.subscribe(() => {
-  console.log("rawr")
   app.relaunch()
   app.exit()
 })
