@@ -1,65 +1,55 @@
-import { app, Menu, Tray, nativeTheme, nativeImage } from 'electron'
+import { app, Menu, Tray, nativeTheme, nativeImage } from "electron"
 // import path from "path"
-// import TrayIconDark from "@app/utils/assets/icon_bw2.svg"
-// import TrayIconWhite from "@app/utils/assets/trayIconWhite.png"
-// import TrayIconPurple from "assets/trayIconPurple.ico"
-// import LogoPurple from "@app/renderer/assets/logoPurple.svg"
+let tray = null
 
-import { useMainState } from '@app/utils/ipc'
-const [mainState, setMainState] = useMainState()
-
-export const createTray = () => {
-  const tray = new Tray(createNativeImage())
-  if (process.platform === 'win32') {
-    tray.on('right-click', () => {
-      tray.popUpContextMenu()
-    })
-  }
-  // tray.setPressedImage(TrayIconWhite)
-
+export const createTray = (eventTrayActions: {
+  signout: () => any
+  quit: () => any
+}) => {
+  tray = new Tray(createNativeImage())
+  tray.setPressedImage(createPressedImage())
   const menu = Menu.buildFromTemplate([
     {
-      label: 'Sign out',
+      label: "Sign out",
       click: () => {
-        onSignout()
-      }
+        eventTrayActions.signout()
+      },
     },
     {
-      label: 'Quit',
+      label: "Quit",
       click: () => {
-        app.quit()
-      }
-    }
+        eventTrayActions.quit()
+      },
+    },
   ])
   tray.setContextMenu(menu)
 }
 
 const getIcon = () => {
-  if (process.platform === 'win32') {
-    return './assets/trayIconPurple.ico'
+  if (process.platform === "win32") {
+    return "/Users/janniezhong/Projects/fractal/fractal/client-applications/desktop/public/assets/images/trayIconPurple.ico"
   } else {
     if (!nativeTheme.shouldUseDarkColors) {
-      return './assets/trayIconDark.png'
+      return "/Users/janniezhong/Projects/fractal/fractal/client-applications/desktop/public/assets/images/trayIconBlack.png"
     } else {
-      return './assets/trayIconWhite.png'
+      return "/Users/janniezhong/Projects/fractal/fractal/client-applications/desktop/public/assets/images/trayIconWhite.png"
     }
   }
 }
 
 const createNativeImage = () => {
-  // Since we never know where the app is installed,
-  // we need to add the app base path to it.
-  // const path = `${app.getAppPath()}/assets/trayIconDark.png`
   const path = getIcon()
-
-  const image = nativeImage.createFromPath(path)
-  // Marks the image as a template image.
-  image.setTemplateImage(true)
+  let image = nativeImage.createFromPath(path)
+  console.log(image.isEmpty())
+  image = image.resize({ width: 16 })
   return image
 }
 
-const onSignout = () => {
-  setMainState({
-    signoutRequest: '1'
-  })
+const createPressedImage = () => {
+  // on Mac, pressing on the tray icon should invert the colors
+  let image = nativeImage.createFromPath(
+    "/Users/janniezhong/Projects/fractal/fractal/client-applications/desktop/public/assets/images/trayIconWhite.png"
+  )
+  image = image.resize({ width: 16 })
+  return image
 }
