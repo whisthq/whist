@@ -13,7 +13,7 @@
   "scripts": {
     "start": "node ./scripts/start.js",
     "package": "node ./scripts/package.js --never",
-    "package:ci": "node ./scripts/package.js --always",
+    "package:publish": "node ./scripts/package.js --always",
     "package:local": "./scripts/publish.sh",
     "package:set-env": "node ./scripts/setPackageEnv.js",
     "postinstall": "node ./scripts/postinstall.js",

@@ -6,15 +6,19 @@
 
 import { app } from 'electron'
 import { autoUpdater } from 'electron-updater'
-import { eventUpdateDownloaded } from '@app/main/events/autoupdate'
+import EventEmitter from 'events'
+import { fromEvent, merge, zip, combineLatest } from 'rxjs'
 
 import {
+  eventUpdateAvailable,
+  eventUpdateDownloaded
+} from '@app/main/events/autoupdate'
+import {
   eventAppReady,
-  eventWindowsAllClosed,
   eventWindowCreated
 } from '@app/main/events/app'
-import { merge, race, zip, combineLatest } from 'rxjs'
-import { takeUntil } from 'rxjs/operators'
+
+import { takeUntil, take, concatMap } from 'rxjs/operators'
 import {
   closeWindows,
   createAuthWindow,
@@ -22,18 +26,15 @@ import {
   showAppDock,
   hideAppDock
 } from '@app/utils/windows'
+import { loginSuccess } from '@app/main/observables/login'
+import { signupSuccess } from '@app/main/observables/signup'
 import {
-  loginSuccess
-} from '@app/main/observables/login'
-import {
-  signupSuccess
-} from '@app/main/observables/signup'
-import { protocolLaunchProcess, protocolCloseRequest }
-  from '@app/main/observables/protocol'
+  protocolLaunchProcess,
+  protocolCloseRequest
+} from '@app/main/observables/protocol'
 import { errorWindowRequest } from '@app/main/observables/error'
 import {
-  autoUpdateAvailable,
-  autoUpdateNotAvailable
+  autoUpdateAvailable
 } from '@app/main/observables/autoupdate'
 import {
   userEmail,
@@ -47,24 +48,42 @@ import { uploadToS3 } from '@app/utils/logging'
 // We use takeUntil to make sure that the auth window only fires when
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
-
 eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
 
-// Closing all the windows should simply quit the application entirely.
-// This event fires both when the user intentionally closes windows, and
-// also when windows automatically close (protocol launch, errors, etc.)
-// It's important that we don't fire this subscription on events that aren't
-// supposed to close the application, so we use takeUntil to listen for those.
+eventAppReady.pipe(take(1)).subscribe(() => {
+  // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
+  // so we need to set autoDownload = false
+  autoUpdater.autoDownload = false
+  // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
+  // and fires an update if the current version is less than the version in latest.yml
+  autoUpdater.checkForUpdatesAndNotify().catch(err => console.error(err))
+})
 
-eventWindowsAllClosed
-  .pipe(takeUntil(merge(protocolLaunchProcess, loginSuccess, signupSuccess, errorWindowRequest)))
-  .subscribe(() => app.quit())
+// By default, the window-all-closed Electron event will cause the application
+// to close. We don't want this behavior for certain observables. For example,
+// when the protocol launches, we close all the windows, but we don't want the app
+// to quit.
 
-// When the protocol closees, upload protocol logs to S3
+merge(
+  protocolLaunchProcess,
+  loginSuccess,
+  signupSuccess,
+  errorWindowRequest,
+  eventUpdateAvailable
+).pipe(
+  concatMap(() => fromEvent(app as EventEmitter, 'window-all-closed').pipe(take(1)))
+).subscribe((event) => event.preventDefault())
+
+// When the protocol closes, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  uploadToS3(email).then(() => app.quit()).catch(err => console.error(err))
+  uploadToS3(email)
+    .then(() => app.quit())
+    .catch((err) => {
+      console.error(err)
+      app.quit()
+    })
 })
 
 // If we have have successfully authorized, close the existing windows.
@@ -72,24 +91,23 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-
-merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
-  closeWindows()
-  hideAppDock()
-})
+merge(protocolLaunchProcess, loginSuccess, signupSuccess)
+  .pipe(take(1))
+  .subscribe(() => {
+    closeWindows()
+    hideAppDock()
+  })
 
 // If the update is downloaded, quit the app and install the update
 
-eventUpdateDownloaded.subscribe(() => autoUpdater.quitAndInstall())
+eventUpdateDownloaded.subscribe(() => {
+  autoUpdater.quitAndInstall()
+})
 
-race(autoUpdateAvailable, autoUpdateNotAvailable).subscribe(
-  (available: boolean) => {
-    if (available) {
-      closeWindows()
-      createUpdateWindow((win: any) => win.show())
-      autoUpdater.downloadUpdate().catch((err) => console.error(err))
-    }
-  }
-)
+autoUpdateAvailable.subscribe(() => {
+  closeWindows()
+  createUpdateWindow((win: any) => win.show())
+  autoUpdater.downloadUpdate().catch((err) => console.error(err))
+})
 
 eventWindowCreated.subscribe(() => showAppDock())

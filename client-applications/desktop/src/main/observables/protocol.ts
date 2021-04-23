@@ -13,17 +13,18 @@ import {
 } from '@app/utils/container'
 import { debugObservables, errorObservables } from '@app/utils/logging'
 import {
-  containerAssignRequest,
+  containerCreateRequest,
   containerAssignSuccess,
   containerAssignFailure
 } from '@app/main/observables/container'
 import { hostConfigFailure } from '@app/main/observables/host'
 import { loadingFrom } from '@app/utils/observables'
 import { zip, of, fromEvent, merge } from 'rxjs'
-import { map, filter, share, mergeMap } from 'rxjs/operators'
+import { map, filter, share, mergeMap, take } from 'rxjs/operators'
 import { EventEmitter } from 'events'
 
-export const protocolLaunchProcess = containerAssignRequest.pipe(
+export const protocolLaunchProcess = containerCreateRequest.pipe(
+  take(1),
   map(() => protocolLaunch()),
   share()
 )

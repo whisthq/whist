@@ -13,9 +13,7 @@ Usage: $0 [OPTION 1] [OPTION 2] ...
 
 Note: Make sure to run this script in a terminal on macOS or Linux Ubuntu.
 
-  --version VERSION         set the version number of the client app
-                            must be greater than the current version
-                            in S3 bucket
+  --version VERSION         DEPRECATED: this no longer does anything and will be removed when migrating to JS
 
   --bucket BUCKET           set the S3 bucket to upload to (if -publish=true)
                             options are:
@@ -66,8 +64,6 @@ else
         shift
     done
 
-    export BUILD_NUMBER=$version
-
     # Make FractalClient and create its app bundle
     cd ../../../protocol
     mkdir -p build-clientapp
@@ -112,11 +108,13 @@ else
     # Initialize yarn first
     yarn cache clean
     yarn install
+
+    # Set the packaged environment to dev/staging/prod
     yarn package:set-env ${env}
 
     if [[ "$publish" == "true" ]]; then
         # Package the application and upload to AWS S3 bucket
-        export S3_BUCKET=$bucket && yarn package:ci
+        export S3_BUCKET=$bucket && yarn package:publish
     else
         # Package the application locally, without uploading to AWS S3 bucket
         export S3_BUCKET=$bucket && yarn package

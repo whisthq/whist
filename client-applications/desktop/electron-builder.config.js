@@ -43,7 +43,7 @@ const bundleConfig = {
         hardenedRuntime: true,
         icon: "build/icon.png",
         minimumSystemVersion: "10.14.0",
-        target: ["dmg"],
+        target: ["dmg", "zip"],
         type: "distribution",
         extraFiles: [
             {

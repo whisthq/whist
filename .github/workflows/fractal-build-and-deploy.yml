@@ -1149,6 +1149,16 @@ jobs:
                     fi
                   fi
 
+            # Bump the package version in package.json using jq
+            - name: Update Package Version
+              shell: bash
+              working-directory: client-applications/desktop
+              run: |
+                  mv package.json packageOld.json
+                  # String substitution works here because of the GitHub Actions ${{ variable }} "pre-processor" notation
+                  cat packageOld.json | jq '.version = "${{ env.desktop_app_new_version }}"' > package.json
+                  rm packageOld.json
+
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             # publish.bat expects to be run from /desktop, for consistency with yarn commands and manual testing
             # - name: Publish the Windows Electron Application
