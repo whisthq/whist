@@ -109,7 +109,7 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
   .subscribe(() => {
     closeWindows()
     hideAppDock()
-    //createTray(eventTrayActions)
+    createTray(eventTrayActions)
   })
 
 // If the update is downloaded, quit the app and install the update
