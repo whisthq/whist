@@ -13,4 +13,5 @@ export interface StateIPC {
   signupRequest: { email: string; password: string }
   errorRelaunchRequest: number
   updateInfo: string
+  refreshToken: string
 }

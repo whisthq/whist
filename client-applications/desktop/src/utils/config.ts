@@ -138,9 +138,15 @@ export const config =
     : getProductionEnv()
 
 export const loggingBaseFilePath =
-  process.platform === "win32"
-    ? path.join(app.getPath("appData"), "Fractal")
-    : path.join(app.getPath("home"), ".fractal")
+  process.platform === 'win32'
+    ? path.join(app.getPath('appData'), 'Fractal')
+    : path.join(app.getPath('home'), '.fractal')
+  
+export const auth0Config = {
+  "auth0Domain": "dev-bfl3r3vh.us.auth0.com",
+  "clientId": "3f8qBMQgHmnL58uUrGa9QC42i9tnrqYG",
+  "apiIdentifier": "<API_IDENTIFIER>"
+}
 
 // default export until we have multiple exports
 export default config

@@ -12,6 +12,8 @@ import { FractalNavigation } from "@app/components/custom/navigation"
 
 import { loginEnabled, checkEmail } from "@app/utils/auth"
 
+import { auth0Config } from '@app/utils/config'
+
 const Login = (props: {
   loading: boolean
   warning: string

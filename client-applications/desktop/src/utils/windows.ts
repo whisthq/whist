@@ -8,9 +8,10 @@ import {
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError,
-} from "@app/utils/constants"
-import config, { FractalCIEnvironment } from "@app/utils/config"
+  WindowHashAssignContainerError
+} from '@app/utils/constants'
+import config, { FractalCIEnvironment } from '@app/utils/config'
+import { getAuthenticationURL } from '@app/utils/auth0'
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), "build")
@@ -76,8 +77,9 @@ export const getWindowTitle = () => {
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,
+  customUrl?: string,
   onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any
+  onClose?: (win: BrowserWindow) => any,
 ) => {
   const title = getWindowTitle()
   const win = new BrowserWindow({ ...options, show: false, title })
@@ -85,12 +87,13 @@ export const createWindow = (
   const params = "?show=" + show
 
   if (app.isPackaged) {
+    // TODO: make this work with auth0
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
-      .loadURL("http://localhost:8080" + params)
+      .loadURL(customUrl ? customUrl : 'http://localhost:8080' + params)
       .catch((err) => console.error(err))
     win.webContents.openDevTools({ mode: "undocked" })
   }
@@ -100,15 +103,24 @@ export const createWindow = (
   )
   win.on("close", () => onClose?.(win))
 
+  // Authentication
+  const {session: {webRequest}} = win.webContents;
+
+  const filter = {
+    urls: [
+      'http://localhost/callback*'
+    ]
+  };
+
   return win
 }
 
 export const createAuthWindow: CreateWindowFunction = () =>
   createWindow(WindowHashAuth, {
     ...base,
-    ...width.sm,
-    ...height.md,
-  } as BrowserWindowConstructorOptions)
+    ...width.md,
+    ...height.lg
+  } as BrowserWindowConstructorOptions, getAuthenticationURL())
 
 export const createAuthErrorWindow: CreateWindowFunction = () =>
   createWindow(WindowHashAuthError, {
