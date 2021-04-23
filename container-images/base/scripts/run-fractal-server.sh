@@ -81,6 +81,8 @@ done
 # Delete broken symlinks from config
 find $USER_CONFIGS_DIR -xtype l -delete
 
+echo "Sleeping until .configready is gone..."
+
 # Create a .configready file that forces the display to wait until configs are synced
 #     We are also forced to wait until the display has started
 touch $USER_CONFIGS_DIR/.configready
@@ -89,6 +91,9 @@ do
     sleep 0.1
 done
 
+echo "Done sleeping until .configready is gone..."
+echo "Now sleeping until there are X clients..."
+
 # Wait until the application has created its display before launching FractalServer.
 #    This prevents a black no input window from appearing when a user connects.
 until [ $(xlsclients -display :10 | wc -l) != 0 ]
@@ -96,15 +101,17 @@ do
     sleep 0.1
 done
 
+echo "Done sleeping until there are X clients..."
+
 # Send in identifier
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # Allow the command to fail without the script exiting, since we want to send logs/clean up the container.
 if ! /usr/share/fractal/FractalServer $OPTIONS ; then
   echo "FractalServer exited with bad code $?"
+else
+  echo "FractalServer exited with good code 0"
 fi
-
-echo "FractalServer has exited"
 
 # If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
 if [[ ! ${WEBSERVER_URL+x} ]]; then
@@ -162,6 +169,7 @@ END
 # emitted here and to perform the same actions on receipt of the signal.
 systemctl stop fractal-display
 
+echo "We just ran 'systemctl stop fractal-display'"
 
 get_task_state() {
     # GET $WEBSERVER_URL/status/$1
@@ -170,6 +178,8 @@ get_task_state() {
     #   state: The status for the task, "SUCCESS" on completion
     curl -L -X GET "$WEBSERVER_URL/status/$1" | jq -e ".state"
 }
+
+echo "About to poll for log upload to finish..."
 
 # Poll for logs upload to finish
 state=$(get_task_state $LOGS_TASK_ID)
@@ -181,6 +191,8 @@ while [[ $state =~ PENDING ]] || [[ $state =~ STARTED ]]; do
 
     state=$(get_task_state $LOGS_TASK_ID)
 done
+
+echo "Done polling for logs upload to finish. Sending a container/delete request to the webserver..."
 
 # POST $WEBSERVER_URL/container/delete
 #   Trigger the container deletion request in AWS.
@@ -198,6 +210,8 @@ curl \
     "private_key":  "$FRACTAL_AES_KEY"
 }
 END
+
+echo "Done sending a container/delete request to the websever. Shutting down the container..."
 
 # Once the server has exited, we should just shutdown the container so it doesn't hang
 sudo shutdown now
