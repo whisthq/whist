@@ -12,7 +12,6 @@
  */
 
 const { execute } = require('../node_modules/eslint/lib/cli')
-const execCommand = require('./execCommand').execCommand
 
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 execute([
