@@ -3,7 +3,7 @@ const { app } = require('electron');
 const fs = require('fs-extra');
 const appName = app.getName();
 
-// Get app directory
+// Get app directory -- "Electron" for local development, "Fractal" for packaged
 const devAppPath = path.join(app.getPath('appData'), "Electron");
 const prodAppPath = path.join(app.getPath('appData'), "Fractal");
 
