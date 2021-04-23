@@ -14,7 +14,7 @@ import {
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
-
+import { eventTrayActions } from "@app/main/events/tray"
 import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
@@ -26,6 +26,7 @@ import {
 import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
+import { quitRequest, signoutRequest } from "@app/main/observables/tray"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -47,7 +48,10 @@ import { FractalCIEnvironment } from "@app/config/environment"
 // don't have all three, we clear them all and force the user to log in again.
 eventAppReady
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-  .subscribe(() => createAuthWindow((win: any) => win.show()))
+  .subscribe(() => {
+    createAuthWindow((win: any) => win.show())
+    createTray(eventTrayActions)
+  })
 
 eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
@@ -108,7 +112,7 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
   .subscribe(() => {
     closeWindows()
     hideAppDock()
-    createTray()
+    //createTray(eventTrayActions)
   })
 
 // If the update is downloaded, quit the app and install the update
@@ -124,3 +128,13 @@ autoUpdateAvailable.subscribe(() => {
 })
 
 eventWindowCreated.subscribe(() => showAppDock())
+
+quitRequest.subscribe(() => {
+  app.quit()
+})
+
+signoutRequest.subscribe(() => {
+  console.log("rawr")
+  app.relaunch()
+  app.exit()
+})
