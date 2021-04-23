@@ -9,9 +9,8 @@ export interface StateIPC {
   loginLoading: boolean
   signupWarning: string
   signupLoading: boolean
-  loginRequest: { email: string, password: string }
-  signupRequest: { email: string, password: string }
-  signoutRequest: string
+  loginRequest: { email: string; password: string }
+  signupRequest: { email: string; password: string }
   errorRelaunchRequest: number
   updateInfo: string
 }
