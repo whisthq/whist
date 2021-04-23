@@ -3,7 +3,7 @@
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
-import { zip } from "rxjs"
+import { zip, merge } from "rxjs"
 
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import {
@@ -28,7 +28,5 @@ zip(
 // this application will take care of showing an appropriate error message.
 zip(
   protocolLaunchProcess,
-  protocolLaunchFailure,
-  signoutRequest,
-  quitRequest
+  merge(signoutRequest, quitRequest, protocolLaunchFailure)
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))
