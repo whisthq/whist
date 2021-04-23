@@ -1,11 +1,15 @@
 import { app, Menu, Tray, nativeTheme, nativeImage } from "electron"
 // import path from "path"
-let tray = null
+let tray: Tray | null = null
 
 export const createTray = (eventTrayActions: {
   signout: () => any
   quit: () => any
 }) => {
+  // we should only have one tray at any given time
+  if (tray) {
+    tray.destroy()
+  }
   tray = new Tray(createNativeImage())
   tray.setPressedImage(createPressedImage())
   const menu = Menu.buildFromTemplate([
@@ -25,7 +29,12 @@ export const createTray = (eventTrayActions: {
   tray.setContextMenu(menu)
 }
 
+export const doesTrayExist = () => {
+  return tray ? !tray.isDestroyed() : false
+}
+
 const getIcon = () => {
+  console.log("path: " + app.getAppPath())
   if (process.platform === "win32") {
     return "/Users/janniezhong/Projects/fractal/fractal/client-applications/desktop/public/assets/images/trayIconPurple.ico"
   } else {
@@ -40,7 +49,7 @@ const getIcon = () => {
 const createNativeImage = () => {
   const path = getIcon()
   let image = nativeImage.createFromPath(path)
-  console.log(image.isEmpty())
+  //console.log(image.isEmpty())
   image = image.resize({ width: 16 })
   return image
 }
