@@ -13,8 +13,8 @@ type ResponseAuth = AsyncReturnType<typeof emailLogin>
 export const emailLoginValid = (response: ResponseAuth) =>
   (response?.json?.access_token ?? '') !== ''
 
-export const emailLoginError = (response: ResponseAuth) => false
-// response?.status !== 200
+export const emailLoginError = (response: ResponseAuth) =>
+  response?.status !== 200
 
 export const emailLoginAccessToken = (response: ResponseAuth) =>
   response.json?.access_token

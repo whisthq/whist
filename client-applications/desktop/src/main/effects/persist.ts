@@ -39,7 +39,7 @@ combineLatest(
   mapValues(subscribed, (o: any): any => o.pipe(startWith(undefined)))
 ).subscribe((state) => persist(state as Partial<StateIPC>))
 
-// On certain kinds of failures, we clear persistence to force the user
+// On certain kinds of failures (or on signout), we clear persistence to force the user
 // to login again.
 merge(
   loginFailure,
