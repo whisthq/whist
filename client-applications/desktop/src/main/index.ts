@@ -9,9 +9,6 @@
 // If you've created a new file in "main/" and you're not seeing it run, you
 // probably haven't imported it here.
 
-import "@app/main/observables"
-import "@app/main/events"
-import "@app/main/effects"
-
-import { app } from "electron"
-console.log("path: " + app.getAppPath())
+import '@app/main/observables'
+import '@app/main/events'
+import '@app/main/effects'
