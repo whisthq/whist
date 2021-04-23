@@ -4,13 +4,13 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { app } from "electron"
-import { closeWindows } from "@app/utils/windows"
+import { app } from 'electron'
+import { closeWindows } from '@app/utils/windows'
 
 import {
   errorRelaunchRequest,
-  errorWindowRequest,
-} from "@app/main/observables/error"
+  errorWindowRequest
+} from '@app/main/observables/error'
 
 // Other parts of the application need to know that an error has happened,
 // which is why we have observables like "errorWindowRequest" defined outside
