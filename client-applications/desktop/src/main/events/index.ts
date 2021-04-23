@@ -1,7 +1,7 @@
-import "@app/main/events/app"
-import "@app/main/events/ipc"
-import "@app/main/events/persist"
-import "@app/main/events/tray"
+import '@app/main/events/app'
+import '@app/main/events/ipc'
+import '@app/main/events/persist'
+import '@app/main/events/tray'
 
 // Events tend to be event listeners on processes that are
 // outside the main thread's control, like Electron application events. These

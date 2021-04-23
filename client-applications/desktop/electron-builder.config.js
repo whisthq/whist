@@ -99,7 +99,7 @@ const publishConfig = {
 // electron-builder expects CommonJS syntax
 // via dependency on read-config-file
 module.exports.default = {
-    ...appDetails,
-    ...bundleConfig,
-    ...publishConfig,
+  ...appDetails,
+  ...bundleConfig,
+  ...publishConfig,
 }
