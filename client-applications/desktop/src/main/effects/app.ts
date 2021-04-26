@@ -36,8 +36,10 @@ import {
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
-
 import { uploadToS3 } from "@app/utils/logging"
+import env from "@app/utils/env"
+import { FractalCIEnvironment } from "@app/utils/config"
+
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -51,6 +53,20 @@ eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false
+  // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the 
+  // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
+  // we don't need to set it.
+  switch(env.PACKAGED_ENV) {
+    case FractalCIEnvironment.STAGING:
+      autoUpdater.channel = "staging-rc"
+      break
+    case FractalCIEnvironment.DEVELOPMENT:
+      autoUpdater.channel = "dev-rc"
+      break
+    default:
+      break
+  }
+
   // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
   // and fires an update if the current version is less than the version in latest.yml
   autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
