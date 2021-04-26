@@ -152,8 +152,13 @@ func (event *sendableEvent) send(
 	seelog.Infof("TaskHandler: Sending %s change: %s", eventType, event.toString())
 	// Try submitting the change to ECS
 	if err := sendStatusToECS(client, event); err != nil {
-		seelog.Errorf("TaskHandler: Unretriable error submitting %s state change [%s]: %v",
-			eventType, event.toString(), err)
+		if err.Error() != "ServerException: Service Unavailable. Please try again later." {
+			seelog.Errorf("TaskHandler: Unretriable error submitting %s state change [%s]: %v",
+				eventType, event.toString(), err)
+		} else {
+			seelog.Warnf("TaskHandler: Unretriable error submitting %s state change [%s]: %v",
+				eventType, event.toString(), err)
+		}
 		return err
 	}
 	// submitted; ensure we don't retry it
