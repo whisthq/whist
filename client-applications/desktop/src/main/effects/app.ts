@@ -38,7 +38,7 @@ import {
 } from "@app/main/observables/user"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
-import { FractalCIEnvironment } from "@app/utils/config"
+import { FractalCIEnvironment } from "@app/config/environment"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when

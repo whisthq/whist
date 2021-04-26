@@ -1,7 +1,7 @@
-import { app } from 'electron'
-import path from 'path'
-import { spawn, ChildProcess } from 'child_process'
-import config from '@app/config/environment'
+import { app } from "electron"
+import path from "path"
+import { spawn, ChildProcess } from "child_process"
+import config from "@app/config/environment"
 
 const { protocolName, protocolFolder } = config
 
