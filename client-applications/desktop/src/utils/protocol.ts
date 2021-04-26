@@ -9,37 +9,37 @@ import { spawn, ChildProcess } from 'child_process'
 // const iconPath = path.join(app.getAppPath(), "build/icon64.png")
 //
 const getProtocolName = () => {
-  if (process.platform === 'win32') {
-    return 'Fractal.exe'
-  } else if (process.platform === 'darwin') {
-    return '_Fractal'
-  } else {
-    return 'Fractal'
-  }
+    if (process.platform === 'win32') {
+        return 'Fractal.exe'
+    } else if (process.platform === 'darwin') {
+        return '_Fractal'
+    } else {
+        return 'Fractal'
+    }
 }
 
 const getProtocolFolder = () => {
-  if (app.isPackaged) {
-    if (process.platform === 'darwin') {
-      return path.join(app.getAppPath(), '../..', 'MacOS')
+    if (app.isPackaged) {
+        if (process.platform === 'darwin') {
+            return path.join(app.getAppPath(), '../..', 'MacOS')
+        } else {
+            return path.join(app.getAppPath(), '../..', 'protocol-build/client')
+        }
     } else {
-      return path.join(app.getAppPath(), '../..', 'protocol-build/client')
+        return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
     }
-  } else {
-    return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
-  }
 }
 
 // Protocol arguments
 const protocolParameters = {
-  environment: config.sentryEnv
+    environment: config.sentryEnv,
 }
 
 const protocolArguments = [
-  ...Object.entries(protocolParameters)
-    .map(([flag, arg]) => [`--${flag}`, arg])
-    .flat(),
-  '--read-pipe'
+    ...Object.entries(protocolParameters)
+        .map(([flag, arg]) => [`--${flag}`, arg])
+        .flat(),
+    '--read-pipe',
 ]
 
 export const protocolFolder = getProtocolFolder()
@@ -47,58 +47,58 @@ export const protocolFolder = getProtocolFolder()
 export const protocolPath = path.join(protocolFolder, getProtocolName())
 
 export const serializePorts = (ps: {
-  port_32262: number
-  port_32263: number
-  port_32273: number
+    port_32262: number
+    port_32263: number
+    port_32273: number
 }) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
 
 export const writeStream = (process: ChildProcess, message: string) => {
-  process.stdin?.write(message)
-  process.stdin?.write('\n')
+    process.stdin?.write(message)
+    process.stdin?.write('\n')
 }
 
 export const endStream = (process: ChildProcess, message: string) => {
-  process.stdin?.end(message)
+    process.stdin?.end(message)
 }
 
 export const protocolLaunch = () => {
-  if (process.platform !== 'win32') spawn('chmod', ['+x', protocolPath])
+    if (process.platform !== 'win32') spawn('chmod', ['+x', protocolPath])
 
-  const protocol = spawn(protocolPath, protocolArguments, {
-    detached: false,
-    stdio: ['pipe', process.stdout, process.stderr],
+    const protocol = spawn(protocolPath, protocolArguments, {
+        detached: false,
+        stdio: ['pipe', process.stdout, process.stderr],
 
-    // On packaged macOS, the protocol is moved to the MacOS folder,
-    // but expects to be in the Fractal.app root alongside the loading
-    // animation PNG files.
-    ...(app.isPackaged &&
-        process.platform === 'darwin' && {
-      cwd: path.join(protocolFolder, '..')
+        // On packaged macOS, the protocol is moved to the MacOS folder,
+        // but expects to be in the Fractal.app root alongside the loading
+        // animation PNG files.
+        ...(app.isPackaged &&
+            process.platform === 'darwin' && {
+                cwd: path.join(protocolFolder, '..'),
+            }),
     })
-  })
 
-  return protocol
+    return protocol
 }
 
 export const protocolStreamInfo = (
-  protocol: ChildProcess,
-  info: {
-    ports: {
-      port_32262: number
-      port_32263: number
-      port_32273: number
+    protocol: ChildProcess,
+    info: {
+        ports: {
+            port_32262: number
+            port_32263: number
+            port_32273: number
+        }
+        secret_key: string
+        ip: string
     }
-    secret_key: string
-    ip: string
-  }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.ports)}`)
-  writeStream(protocol, `private-key?${info.secret_key}`)
-  writeStream(protocol, `ip?${info.ip}`)
-  writeStream(protocol, 'finished?0')
+    writeStream(protocol, `ports?${serializePorts(info.ports)}`)
+    writeStream(protocol, `private-key?${info.secret_key}`)
+    writeStream(protocol, `ip?${info.ip}`)
+    writeStream(protocol, 'finished?0')
 }
 
 export const protocolStreamKill = (protocol: ChildProcess) => {
-  writeStream(protocol, 'kill?0')
-  protocol.kill('SIGINT')
+    writeStream(protocol, 'kill?0')
+    protocol.kill('SIGINT')
 }

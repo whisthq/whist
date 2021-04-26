@@ -10,52 +10,50 @@ import { pluck, filter, map, mapTo, withLatestFrom } from 'rxjs/operators'
 import { loginFailure } from '@app/main/observables/login'
 import { signupFailure } from '@app/main/observables/signup'
 import {
-  createAuthErrorWindow,
-  createContainerErrorWindowNoAccess,
-  createContainerErrorWindowUnauthorized,
-  createContainerErrorWindowInternal,
-  assignContainerErrorWindow,
-  createProtocolErrorWindow
+    createAuthErrorWindow,
+    createContainerErrorWindowNoAccess,
+    createContainerErrorWindowUnauthorized,
+    createContainerErrorWindowInternal,
+    assignContainerErrorWindow,
+    createProtocolErrorWindow,
 } from '@app/utils/windows'
 import {
-  containerCreateErrorNoAccess,
-  containerCreateErrorUnauthorized
+    containerCreateErrorNoAccess,
+    containerCreateErrorUnauthorized,
 } from '@app/utils/container'
 import { warningObservables } from '@app/utils/logging'
 import {
-  containerAssignFailure,
-  containerCreateFailure
+    containerAssignFailure,
+    containerCreateFailure,
 } from '@app/main/observables/container'
 import { protocolLaunchFailure } from '@app/main/observables/protocol'
 
 export const errorRelaunchRequest = eventIPC.pipe(
-  pluck('errorRelaunchRequest'),
-  filter(identity)
+    pluck('errorRelaunchRequest'),
+    filter(identity)
 )
 
 export const errorWindowRequest = merge(
-  loginFailure.pipe(mapTo(createAuthErrorWindow)),
-  signupFailure.pipe(mapTo(createAuthErrorWindow)),
-  containerCreateFailure.pipe(
-    map((response) => {
-      if (containerCreateErrorNoAccess(response)) {
-        return createContainerErrorWindowNoAccess
-      }
-      if (containerCreateErrorUnauthorized(response)) {
-        return createContainerErrorWindowUnauthorized
-      }
-      return createContainerErrorWindowInternal
-    })
-  ),
-  containerAssignFailure.pipe(mapTo(assignContainerErrorWindow)),
-  protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
+    loginFailure.pipe(mapTo(createAuthErrorWindow)),
+    signupFailure.pipe(mapTo(createAuthErrorWindow)),
+    containerCreateFailure.pipe(
+        map((response) => {
+            if (containerCreateErrorNoAccess(response)) {
+                return createContainerErrorWindowNoAccess
+            }
+            if (containerCreateErrorUnauthorized(response)) {
+                return createContainerErrorWindowUnauthorized
+            }
+            return createContainerErrorWindowInternal
+        })
+    ),
+    containerAssignFailure.pipe(mapTo(assignContainerErrorWindow)),
+    protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
 ).pipe(
-  withLatestFrom(eventAppReady),
-  map(([f, _]) => f)
+    withLatestFrom(eventAppReady),
+    map(([f, _]) => f)
 )
 
 // Logging
 
-warningObservables([
-  errorRelaunchRequest, 'errorRelaunchRequest'
-])
+warningObservables([errorRelaunchRequest, 'errorRelaunchRequest'])

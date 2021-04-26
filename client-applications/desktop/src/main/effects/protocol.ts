@@ -7,9 +7,9 @@ import { zip } from 'rxjs'
 
 import { protocolStreamInfo, protocolStreamKill } from '@app/utils/protocol'
 import {
-  protocolLaunchProcess,
-  protocolLaunchSuccess,
-  protocolLaunchFailure
+    protocolLaunchProcess,
+    protocolLaunchSuccess,
+    protocolLaunchFailure,
 } from '@app/main/observables/protocol'
 
 // The current implementation of the protocol process shows its own loading
@@ -19,13 +19,13 @@ import {
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful container status response.
 zip(
-  protocolLaunchProcess,
-  protocolLaunchSuccess
+    protocolLaunchProcess,
+    protocolLaunchSuccess
 ).subscribe(([protocol, info]) => protocolStreamInfo(protocol, info))
 
 // If we have an error, close the protocol. We expect that an effect elsewhere
 // this application will take care of showing an appropriate error message.
 zip(
-  protocolLaunchProcess,
-  protocolLaunchFailure
+    protocolLaunchProcess,
+    protocolLaunchFailure
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))

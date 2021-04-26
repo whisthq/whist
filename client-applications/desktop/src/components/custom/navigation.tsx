@@ -8,11 +8,11 @@ import { goTo } from '@app/utils/history'
 */
 
 interface BaseNavigationProps {
-  url: string
-  text: string
-  linkText?: string
-  className?: string
-  onClick?: (e: any) => any
+    url: string
+    text: string
+    linkText?: string
+    className?: string
+    onClick?: (e: any) => any
 }
 
 interface FractalNavigationProps extends BaseNavigationProps {}
@@ -22,9 +22,9 @@ interface FractalNavigationProps extends BaseNavigationProps {}
 */
 
 const BaseNavigation: FC<BaseNavigationProps> = (
-  props: BaseNavigationProps
+    props: BaseNavigationProps
 ) => {
-  /*
+    /*
         Description:
             Returns a hyperlink component with custom text and URL
         Arguments:
@@ -34,39 +34,39 @@ const BaseNavigation: FC<BaseNavigationProps> = (
             className(string): Optional additional Tailwind styling
     */
 
-  const [textList, setTextList] = useState([props.text])
+    const [textList, setTextList] = useState([props.text])
 
-  const onClick = (text: string) => {
-    if (text === props.linkText) {
-      goTo(props.url)
+    const onClick = (text: string) => {
+        if (text === props.linkText) {
+            goTo(props.url)
+        }
     }
-  }
 
-  useEffect(() => {
-    if ((props.linkText ?? '') !== '') {
-      if (!props.text.includes(props.linkText as string)) {
-        throw new Error(
-          'prop linkText must be a substring of prop text'
-        )
-      } else {
-        const textListTemp = props.text.split(
-          new RegExp(`(${props.linkText as string})`)
-        )
-        setTextList(textListTemp)
-      }
-    }
-  }, [props.linkText, props.text])
+    useEffect(() => {
+        if ((props.linkText ?? '') !== '') {
+            if (!props.text.includes(props.linkText as string)) {
+                throw new Error(
+                    'prop linkText must be a substring of prop text'
+                )
+            } else {
+                const textListTemp = props.text.split(
+                    new RegExp(`(${props.linkText as string})`)
+                )
+                setTextList(textListTemp)
+            }
+        }
+    }, [props.linkText, props.text])
 
-  return (
+    return (
         <>
             {textList.map((text: string, index: number) => (
                 <div key={`${index.toString()}`} className="inline">
                     <span
                         className={classNames(
-                          text === props.linkText
-                            ? 'font-body text-blue font-medium cursor-pointer'
-                            : 'font-body font-medium',
-                          props.className
+                            text === props.linkText
+                                ? 'font-body text-blue font-medium cursor-pointer'
+                                : 'font-body font-medium',
+                            props.className
                         )}
                         onClick={() => onClick(text)}
                     >
@@ -75,13 +75,13 @@ const BaseNavigation: FC<BaseNavigationProps> = (
                 </div>
             ))}
         </>
-  )
+    )
 }
 
 export const FractalNavigation: FC<FractalNavigationProps> = (
-  props: FractalNavigationProps
+    props: FractalNavigationProps
 ) => {
-  /*
+    /*
         Description:
             Returns a hyperlink component with custom text and URL
         Arguments:
@@ -91,5 +91,5 @@ export const FractalNavigation: FC<FractalNavigationProps> = (
             className(string): Optional additional Tailwind styling
     */
 
-  return <BaseNavigation {...props} />
+    return <BaseNavigation {...props} />
 }

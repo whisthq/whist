@@ -10,10 +10,10 @@ import { StateIPC } from '@app/@types/state'
 import { combineLatest, merge } from 'rxjs'
 import { startWith } from 'rxjs/operators'
 import {
-  userEmail,
-  userConfigToken,
-  userAccessToken,
-  userRefreshToken
+    userEmail,
+    userConfigToken,
+    userAccessToken,
+    userRefreshToken,
 } from '@app/main/observables/user'
 
 import { loginFailure } from '@app/main/observables/login'
@@ -26,25 +26,25 @@ import { protocolLaunchFailure } from '@app/main/observables/protocol'
 // state updates.
 
 const subscribed = {
-  userEmail,
-  userConfigToken,
-  userAccessToken,
-  userRefreshToken
+    userEmail,
+    userConfigToken,
+    userAccessToken,
+    userRefreshToken,
 }
 
 // We combined the "subscribed" observables into a dictionary, using their names
 // as the dictionary keys. This is the object that is persisted to local storage.
 combineLatest(
-  mapValues(subscribed, (o: any): any => o.pipe(startWith(undefined)))
+    mapValues(subscribed, (o: any): any => o.pipe(startWith(undefined)))
 ).subscribe((state) => persist(state as Partial<StateIPC>))
 
 // On certain kinds of failures, we clear persistence to force the user
 // to login again.
 merge(
-  loginFailure,
-  signupFailure,
-  containerCreateFailure,
-  protocolLaunchFailure
+    loginFailure,
+    signupFailure,
+    containerCreateFailure,
+    protocolLaunchFailure
 ).subscribe(() => persistClear())
 
 // Uncomment this line to clear credentials in development.

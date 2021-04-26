@@ -32,31 +32,27 @@ import { autoUpdateDownloadProgress } from '@app/main/observables/autoupdate'
 // constrained to observables that emit serializable values.
 
 interface SubscriptionMap {
-  [key: string]: Observable<string | number | boolean | SubscriptionMap>
+    [key: string]: Observable<string | number | boolean | SubscriptionMap>
 }
 
-const emitJSON = (observable: Observable<string | number | boolean | SubscriptionMap>, str: string) =>
-  observable.pipe(map(val => ({ [str]: val })))
+const emitJSON = (
+    observable: Observable<string | number | boolean | SubscriptionMap>,
+    str: string
+) => observable.pipe(map((val) => ({ [str]: val })))
 
 const objectCombine = (obj: SubscriptionMap) =>
-  merge(
-    ...toPairs(
-      obj
-    ).map(
-      ([name, obs]) => emitJSON(obs, name)
-    )
-  )
+    merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
 
 const subscribed: SubscriptionMap = {
-  loginLoading: loginLoading,
-  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: autoUpdateDownloadProgress,
-  signupLoading: signupLoading,
-  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid))
+    loginLoading: loginLoading,
+    loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
+    updateInfo: autoUpdateDownloadProgress,
+    signupLoading: signupLoading,
+    signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
 
 objectCombine(subscribed)
-  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
-  .subscribe(([subs, state]) => {
-    ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-  })
+    .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+    .subscribe(([subs, state]) => {
+        ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
+    })

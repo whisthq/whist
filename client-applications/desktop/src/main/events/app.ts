@@ -17,7 +17,8 @@ export const eventAppReady = fromEvent(app as EventEmitter, 'ready')
 export const eventAppActivation = fromEvent(app as EventEmitter, 'activate')
 
 export const eventWindowCreated = fromEvent(
-  app as EventEmitter, 'browser-window-created'
+    app as EventEmitter,
+    'browser-window-created'
 )
 
 // By default, the window-all-closed Electron event will cause the application

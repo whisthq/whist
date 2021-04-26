@@ -5,35 +5,35 @@ import { FractalFadeIn } from '@app/components/custom/fade'
 import { Logo } from '@app/components/html/logo'
 import { FractalInput, FractalInputState } from '@app/components/html/input'
 import {
-  FractalWarning,
-  FractalWarningType
+    FractalWarning,
+    FractalWarningType,
 } from '@app/components/custom/warning'
 import { FractalButton, FractalButtonState } from '@app/components/html/button'
 import { FractalNavigation } from '@app/components/custom/navigation'
 
 import {
-  signupEnabled,
-  checkEmail,
-  checkPassword,
-  checkPasswordVerbose,
-  checkConfirmPassword,
-  checkConfirmPasswordVerbose
+    signupEnabled,
+    checkEmail,
+    checkPassword,
+    checkPasswordVerbose,
+    checkConfirmPassword,
+    checkConfirmPasswordVerbose,
 } from '@app/utils/auth'
 /* import { emailSignup } from "@app/utils/signup" */
 
 const Signup = (props: {
-  loading: boolean
-  warning: string
-  email: string
-  password: string
-  confirmPassword: string
-  onSignup: () => void
-  onNavigate: (s: string) => void
-  onChangeEmail: (s: string) => void
-  onChangePassword: (s: string) => void
-  onChangeConfirmPassword: (s: string) => void
+    loading: boolean
+    warning: string
+    email: string
+    password: string
+    confirmPassword: string
+    onSignup: () => void
+    onNavigate: (s: string) => void
+    onChangeEmail: (s: string) => void
+    onChangePassword: (s: string) => void
+    onChangeConfirmPassword: (s: string) => void
 }) => {
-  /*
+    /*
         Description:
             Component for signing up for Fractal. Contains the signup form UI and
             dispatches signup API call
@@ -43,29 +43,30 @@ const Signup = (props: {
                 is passed in as argument
     */
 
-  const buttonState = () => {
-    if (props.loading) {
-      return FractalButtonState.PROCESSING
-    } else {
-      if (
-        signupEnabled(
-          props.email,
-          props.password,
-          props.confirmPassword
-        )
-      ) {
-        return FractalButtonState.DEFAULT
-      } else {
-        return FractalButtonState.DISABLED
-      }
+    const buttonState = () => {
+        if (props.loading) {
+            return FractalButtonState.PROCESSING
+        } else {
+            if (
+                signupEnabled(
+                    props.email,
+                    props.password,
+                    props.confirmPassword
+                )
+            ) {
+                return FractalButtonState.DEFAULT
+            } else {
+                return FractalButtonState.DISABLED
+            }
+        }
     }
-  }
 
-  const handleSubmit = () => {
-    if (signupEnabled(props.email, props.password, props.confirmPassword)) props.onSignup()
-  }
+    const handleSubmit = () => {
+        if (signupEnabled(props.email, props.password, props.confirmPassword))
+            props.onSignup()
+    }
 
-  return (
+    return (
         <div className="flex flex-col justify-center items-center h-screen text-center">
             <div className="w-full max-w-xs m-auto">
                 <FractalFadeIn>
@@ -96,8 +97,8 @@ const Signup = (props: {
                                         value={props.email}
                                         state={
                                             checkEmail(props.email)
-                                              ? FractalInputState.SUCCESS
-                                              : FractalInputState.DEFAULT
+                                                ? FractalInputState.SUCCESS
+                                                : FractalInputState.DEFAULT
                                         }
                                         className="mt-1"
                                     />
@@ -105,7 +106,7 @@ const Signup = (props: {
                                 <FractalWarning
                                     type={FractalWarningType.SMALL}
                                     warning={checkPasswordVerbose(
-                                      props.password
+                                        props.password
                                     )}
                                     className="mt-3 float-right font-semibold"
                                 />
@@ -121,8 +122,8 @@ const Signup = (props: {
                                         value={props.password}
                                         state={
                                             checkPassword(props.password)
-                                              ? FractalInputState.SUCCESS
-                                              : FractalInputState.DEFAULT
+                                                ? FractalInputState.SUCCESS
+                                                : FractalInputState.DEFAULT
                                         }
                                         className="mt-1"
                                     />
@@ -130,8 +131,8 @@ const Signup = (props: {
                                 <FractalWarning
                                     type={FractalWarningType.SMALL}
                                     warning={checkConfirmPasswordVerbose(
-                                      props.password,
-                                      props.confirmPassword
+                                        props.password,
+                                        props.confirmPassword
                                     )}
                                     className="mt-3 float-right font-semibold"
                                 />
@@ -151,11 +152,11 @@ const Signup = (props: {
                                                 value={props.confirmPassword}
                                                 state={
                                                     checkConfirmPassword(
-                                                      props.password,
-                                                      props.confirmPassword
+                                                        props.password,
+                                                        props.confirmPassword
                                                     )
-                                                      ? FractalInputState.SUCCESS
-                                                      : FractalInputState.DEFAULT
+                                                        ? FractalInputState.SUCCESS
+                                                        : FractalInputState.DEFAULT
                                                 }
                                                 className="mt-1"
                                             />
@@ -181,7 +182,7 @@ const Signup = (props: {
                 </FractalFadeIn>
             </div>
         </div>
-  )
+    )
 }
 
 export default Signup
