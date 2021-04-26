@@ -61,7 +61,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             # Turnstyle is a utility that makes multiple runs of the same workflow file sequential. For instance,
             # if two PRs are merged into `dev` in rapid succession, fractal-build-and-deploy.yml will be triggered
@@ -258,7 +258,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -372,7 +372,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Current Git Hash as Environment Variable
               run: echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_ENV
@@ -484,7 +484,7 @@ jobs:
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -496,7 +496,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -536,7 +536,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Configure AWS CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -578,7 +578,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -606,12 +606,12 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -638,7 +638,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install Utility to Kill Lingering AWS Packer Builder Instances
               run: pip install aws-hashicorp-packer-reaper
@@ -659,7 +659,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -691,7 +691,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
@@ -720,7 +720,7 @@ jobs:
               if: always() && steps.start-maintenance-mode.outcome == 'success'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -734,7 +734,7 @@ jobs:
               if: always() && steps.start-maintenance-mode.outcome == 'failure'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -767,7 +767,7 @@ jobs:
               if: always() && steps.update-webserver-taskdefs.outcome == 'failure'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -818,7 +818,7 @@ jobs:
               if: always() && steps.update-webserver-amis.outcome == 'failure'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -852,7 +852,7 @@ jobs:
               if: always() && steps.end-maintenance-mode.outcome == 'success'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -865,7 +865,7 @@ jobs:
               if: always() && steps.end-maintenance-mode.outcome == 'failure'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -892,7 +892,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Authenticate Heroku
               run: |
@@ -941,7 +941,7 @@ jobs:
               shell: python3 {0}
               run: |
                   import os
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -954,7 +954,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -1236,13 +1236,13 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack on success
               shell: python3 {0}
               if: needs.client-applications-publish-build-s3.result == 'success'
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -1262,7 +1262,7 @@ jobs:
               if: needs.client-applications-publish-build-s3.result == 'failure'
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
@@ -1292,7 +1292,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Retrieve Today's Date
               run: echo "date=$(date)" >> $GITHUB_ENV
@@ -1309,11 +1309,11 @@ jobs:
             - name: Notify Slack
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-prod"
-                  BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` to Production Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "Deployment of Fractal Version `v${{ needs.client-applications-publish-build-s3.outputs.release_version }}` on Branch `${{ needs.fractal-publish-build-config.outputs.branch }}` Completed. See the generated GitHub Release here: https://github.com/fractal/fractal/releases/tag/${{ needs.client-applications-publish-build-s3.outputs.release_version }} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -1321,10 +1321,10 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-prod"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   BODY = "@channel GitHub Release Creation failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

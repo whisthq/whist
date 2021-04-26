@@ -1,117 +1,64 @@
 #!/usr/bin/env python
 import os
-from functools import wraps
+from functools import wraps, partial
+import sys
+
+# add the current directory to the path no matter where this is called from
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
+
 from github import Github
 
-
-def with_github(func):
-    """A decorator to pass a configured GitHub repository to functions
-
-    Passes a default GitHub repository to decorated functions as the
-    'repo=' kwarg.
-
-    Args:
-        func: A function that accepts a GitHub client as its first argument.
-    Returns:
-        The input function, partially applied with the GitHub client object.
-    """
-
-    @wraps(func)
-    def with_github_wrapper(*args, **kwargs):
-
-        # GITHUB_REPO to the "fractal/fractal" repository
-        # GITHUB_TOKEN must be set, or we'll get an auth error
-        github_repo = os.environ.get("GITHUB_REPO", "fractal/fractal")
-        github_token = os.environ.get("GITHUB_TOKEN")
-
-        if not github_token:
-            raise Exception("No GITHUB_TOKEN environment variable provided.")
-
-        client = Github(github_token)
-        repo = client.get_repo(github_repo)
-
-        kwargs["repo"] = kwargs.get("repo", repo)
-
-        return func(*args, **kwargs)
-
-    return with_github_wrapper
+import formatters as fmt
 
 
-@with_github
-def create_comment(issue_number, body, repo=None):
-    """Create a comment on a GitHub issue or pull request
+def github_comment_update(
+    github_token: str,
+    github_repo: str,
+    issue_number: int,
+    identifier: str,
+    body: str,
+    title=None,
+    code=None,
+    lang=None,
+    create=True,
+):
+    """Updates and creates previous comments on a GitHub issue or PR
+
+    A IDENTIFIER must be passed as the second argument, which will be hidden
+    in the markup of the comment to identify it to later runs of your script.
+
+    If this function finds one or more comments in the thread containing
+    IDENTIFIER, it will replace the contents of that comment with BODY.
 
     Args:
-        issue_number: a number representing the issue or PR
-        body: a string that becomes the entire content of the comment
-        repo: a PyGithub repository object
+        github_token: to authenticate with Github
+        github_repo: repo to comment on
+        issue: a number that represents the issue or pull request
+        identifier: a string that represents 'instances' of this comment
+        body: a string, the main content of the comment
+        create: True if you want to create a comment IF none exist currently
+        title: a optional string, formatted at the top of the comment
+        code: a optional string, placed in a block at the bottom of the comment
+        lang: a optional string, used to format the comment's code block
     Returns:
         None
     """
-    issue = repo.get_issue(int(issue_number))
-    issue.create_comment(body)
 
+    client = Github(github_token)
+    repo = client.get_repo(github_repo)
 
-@with_github
-def get_comments_by(issue_number, func, repo=None):
-    """Retrieve comments from an issue that pass a filter
+    content = fmt.default_message_github(body, title, code, lang)
+    body = fmt.concat_id(identifier, content)
 
-    FUNC will be passed the PyGithub IssueComment object, and should
-    return True or False to filter comments from the returned sequence.
-
-    IssueComment.body represents the text content of the issue, which is
-    a common attribute to filter with.
-
-    Args:
-        issue_number: a number representing the issue or PR
-        func: a function that receives a PyGithub object, return True or False
-        repo: a PyGithub repository object
-    Returns:
-        None
-    """
-    issue = repo.get_issue(int(issue_number))
+    issue = repo.get_issue(issue_number)
+    matching_comments = []
     for comment in issue.get_comments():
-        if func(comment):
-            yield comment
+        if fmt.startswith_id(identifier, comment.body):
+            matching_comments.append(comment)
 
-
-def delete_comments_by(issue_number, func):
-    """Delete comments from an issue that pass a filter
-
-    FUNC will be passed the PyGithub IssueComment object, and should
-    return True or False to filter comments from the collection to be deleted.
-
-    IssueComment.body represents the text content of the issue, which is
-    a common attribute to filter with.
-
-    Args:
-        issue_number: a number representing the issue or PR
-        func: a function that receives a PyGithub object, return True or False
-    Returns:
-        None
-    """
-    for comment in get_comments_by(issue_number, func):
-        comment.delete()
-
-
-def edit_comments_by(issue_number, func, body, create=False):
-    """Edits all comments in an issue that pass a filter
-
-    FUNC will be passed the PyGithub IssueComment object, and should
-    return True or False to filter comments from the collection to be deleted.
-
-    IssueComment.body represents the text content of the issue, which is
-    a common attribute to filter with.
-
-    Args:
-        issue_number: a number representing the issue or PR
-        func: a function that receives a PyGithub object, return True or False
-        body: a string that becomes the entire content of the comment
-    Returns:
-        None
-    """
-    comments = list(get_comments_by(issue_number, func))
-    for comment in comments:
-        comment.edit(body)
-    if create and not comments:
-        create_comment(issue_number, body)
+    if not matching_comments and create:
+        # create a comment if none exist
+        issue.create_comment(body)
+    else:
+        for comment in matching_comments:
+            comment.edit(body)
