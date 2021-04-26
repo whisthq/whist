@@ -1,5 +1,9 @@
-import { environment, FractalCIEnvironment, FractalNodeEnvironment } from '../../config/environment'
-import env from '@app/utils/env'
+import {
+  environment,
+  FractalCIEnvironment,
+  FractalNodeEnvironment,
+} from "../../config/environment"
+import env from "@app/utils/env"
 
 const getDevelopmentEnv = () => {
   switch (process.env.DEVELOPMENT_ENV) {
@@ -24,11 +28,14 @@ const getProductionEnv = () => {
 }
 
 export const config =
-    process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-      ? getDevelopmentEnv()
-      : getProductionEnv()
+  process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
+    ? getDevelopmentEnv()
+    : getProductionEnv()
 
 export default config
 
 // Re-exporting
-export { loggingBaseFilePath } from '../../config/environment'
+export {
+  loggingBaseFilePath,
+  FractalCIEnvironment,
+} from "../../config/environment"
