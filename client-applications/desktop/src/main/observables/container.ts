@@ -18,7 +18,6 @@ import {
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
-import { eventUpdateAvailable } from "@app/main/events/autoupdate"
 import { debugObservables, errorObservables } from "@app/utils/logging"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap } from "@app/utils/observables"
@@ -34,21 +33,18 @@ import {
   withLatestFrom,
   takeWhile,
 } from "rxjs/operators"
+import { formatContainer } from "@app/utils/formatters"
 
 export const containerCreateRequest = zip(
   userEmail,
   userAccessToken,
   userConfigToken
-).pipe(
-  takeUntil(eventUpdateAvailable),
-  map(([email, access, _]) => [email, access])
-)
+).pipe(map(([email, access, _]) => [email, access]))
 
 export const containerCreateProcess = containerCreateRequest.pipe(
   exhaustMap(([email, token]) => from(containerCreate(email, token))),
   share()
 )
-
 export const containerCreateSuccess = containerCreateProcess.pipe(
   filter((req) => (req?.json?.ID ?? "") !== "")
 )
@@ -76,9 +72,9 @@ export const containerAssignPolling = containerAssignRequest.pipe(
   share()
 )
 
-containerAssignPolling.subscribe((res) =>
-  console.log("container poll", res?.status, res?.json.state)
-)
+// containerAssignPolling.subscribe((res) =>
+//   console.log("container poll", res?.status, res?.json.state)
+// )
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
   takeLast(1),
@@ -105,11 +101,20 @@ export const containerAssignLoading = loadingFrom(
 
 debugObservables(
   [containerCreateRequest, "containerCreateRequest"],
-  [containerCreateSuccess, "containerCreateSuccess"],
+  [
+    containerCreateSuccess.pipe(map((res) => formatContainer(res))),
+    "containerCreateSuccess",
+  ],
   [containerCreateLoading, "containerCreateLoading"],
   [containerAssignRequest, "containerAssignRequest"],
-  [containerAssignPolling, "containerAssignPolling"],
-  [containerAssignSuccess, "containerAssignSuccess"],
+  [
+    containerAssignPolling.pipe(map((res) => formatContainer(res))),
+    "containerAssignPolling",
+  ],
+  [
+    containerAssignSuccess.pipe(map((res) => formatContainer(res))),
+    "containerAssignSuccess",
+  ],
   [containerAssignLoading, "containerAssignLoading"]
 )
 
