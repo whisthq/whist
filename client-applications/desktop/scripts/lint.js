@@ -11,13 +11,13 @@
  *
  */
 
-const { execute } = require("../node_modules/eslint/lib/cli")
+const { execute } = require('../node_modules/eslint/lib/cli')
 
 // The first two arguments here are simply placeholders, as ESLint CLI expects to be called in this way
 execute([
-  "yarn",
-  "eslint",
-  ...process.argv.slice(2),
-  "--max-warnings=0",
-  "./src/**/*.{js,jsx,ts,tsx}",
+    'yarn',
+    'eslint',
+    ...process.argv.slice(2),
+    '--max-warnings=0',
+    './src/**/*.{js,jsx,ts,tsx}',
 ]).then((ret) => process.exit(ret))

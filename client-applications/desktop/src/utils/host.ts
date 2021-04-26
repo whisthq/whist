@@ -1,6 +1,6 @@
-import { AsyncReturnType } from '@app/@types/state'
-import { get, apiPut } from '@app/utils/api'
-import { HostServicePort } from '@app/utils/constants'
+import { AsyncReturnType } from "@app/@types/state"
+import { get, apiPut } from "@app/utils/api"
+import { HostServicePort } from "@app/utils/constants"
 
 // This file directly interacts with data returned from the webserver, which
 // has keys labelled in Python's snake_case format. We want to be able to pass
@@ -13,7 +13,7 @@ import { HostServicePort } from '@app/utils/constants'
 export const hostServiceInfo = async (username: string, accessToken: string) =>
   get({
     endpoint: `/host_service?username=${encodeURIComponent(username)}`,
-    accessToken
+    accessToken,
   })
 
 export const hostServiceConfig = async (
@@ -24,13 +24,13 @@ export const hostServiceConfig = async (
   config_encryption_token: string
 ) => {
   return (await apiPut(
-    '/set_config_encryption_token',
+    "/set_config_encryption_token",
     `https://${ip}:${HostServicePort}`,
     {
       user_id,
       client_app_auth_secret,
       host_port,
-      config_encryption_token
+      config_encryption_token,
     },
     true
   )) as { status: number }
@@ -50,9 +50,9 @@ export const hostServiceInfoSecret = (res: hostServiceInfoResponse) =>
 
 export const hostServiceInfoValid = (res: hostServiceInfoResponse) =>
   res?.status === 200 &&
-  (hostServiceInfoIP(res) ?? '') !== '' &&
-  (hostServiceInfoPort(res) ?? '') !== '' &&
-  (hostServiceInfoSecret(res) ?? '') !== ''
+  (hostServiceInfoIP(res) ?? "") !== "" &&
+  (hostServiceInfoPort(res) ?? "") !== "" &&
+  (hostServiceInfoSecret(res) ?? "") !== ""
 
 export const hostServiceInfoPending = (res: hostServiceInfoResponse) =>
   res?.status === 200 && !hostServiceInfoValid(res)
