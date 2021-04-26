@@ -1118,37 +1118,6 @@ jobs:
                   # store new desktop app version as GitHub step output to substitute in GitHub release tag creation
                   echo "::set-output name=release_version::${NEW_VERSION}"
 
-            - name: Select AWS S3 Bucket to Publish to Based on GHA Machine OS and Git Branch
-              shell: bash -e {0}
-              run: |
-                  BRANCH_NAME="${{ needs.fractal-publish-build-config.outputs.branch }}"
-
-                  if [ "$RUNNER_OS" == "Linux" ]; then
-                    if [ "$BRANCH_NAME" == "prod" ]; then
-                        echo "s3_bucket=fractal-chromium-ubuntu-prod" >> $GITHUB_ENV
-                    elif [ "$BRANCH_NAME" == "staging" ]; then
-                        echo "s3_bucket=fractal-chromium-ubuntu-staging" >> $GITHUB_ENV
-                    else
-                        echo "s3_bucket=fractal-chromium-ubuntu-dev" >> $GITHUB_ENV
-                    fi
-                  elif [ "$RUNNER_OS" == "Windows" ]; then
-                    if [ "$BRANCH_NAME" == "prod" ]; then
-                        echo "s3_bucket=fractal-chromium-windows-prod" >> $GITHUB_ENV
-                    elif [ "$BRANCH_NAME" == "staging" ]; then
-                        echo "s3_bucket=fractal-chromium-windows-staging" >> $GITHUB_ENV
-                    else
-                        echo "s3_bucket=fractal-chromium-windows-dev" >> $GITHUB_ENV
-                    fi
-                  else
-                    if [ "$BRANCH_NAME" == "prod" ]; then
-                        echo "s3_bucket=fractal-chromium-macos-prod" >> $GITHUB_ENV
-                    elif [ "$BRANCH_NAME" == "staging" ]; then
-                        echo "s3_bucket=fractal-chromium-macos-staging" >> $GITHUB_ENV
-                    else
-                        echo "s3_bucket=fractal-chromium-macos-dev" >> $GITHUB_ENV
-                    fi
-                  fi
-
             # Bump the package version in package.json using jq
             - name: Update Package Version
               shell: bash
@@ -1160,12 +1129,16 @@ jobs:
                   rm packageOld.json
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
-            # publish.bat expects to be run from /desktop, for consistency with yarn commands and manual testing
-            # - name: Publish the Windows Electron Application
-            #   if: runner.os == 'Windows'
-            #   shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-            #   working-directory: client-applications\desktop
-            #   run: .\scripts\publish.bat -version=${{ env.desktop_app_new_version }} -bucket=${{ env.s3_bucket }} -env=${{ needs.fractal-publish-build-config.outputs.deploy_environment }} -publish=${{ needs.fractal-publish-build-config.outputs.publish }}
+            - name: Publish the Windows Electron Application
+              if: runner.os == 'Windows'
+              shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              working-directory: client-applications\desktop
+              run: |
+                  REM We need to increase the timeout to deal with GHA's weak VMs.
+                  yarn config set network-timeout 600000
+                  yarn cache clean
+                  yarn install
+                  yarn package:publish --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
 
             # (builds the branch that it is run on automatically, so prod if running on push to prod)
             - name: Publish the MacOS Electron Application
@@ -1185,8 +1158,11 @@ jobs:
                   mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 
                   # Build the Fractal protocol and package the Electron application
-                  # publish.sh expects to be run from /desktop, for consistency with yarn commands and manual testing
-                  ./scripts/publish.sh --version ${{ env.desktop_app_new_version }} --bucket ${{ env.s3_bucket }} --env ${{ needs.fractal-publish-build-config.outputs.deploy_environment }} --publish ${{ needs.fractal-publish-build-config.outputs.publish }}
+                  # We need to increase the timeout to deal with GHA's weak VMs.
+                  yarn config set network-timeout 600000
+                  yarn cache clean
+                  yarn install
+                  yarn package:publish --version=${{ env.desktop_app_new_version }} --environment=${{ needs.fractal-publish-build-config.outputs.deploy_environment }}
 
             # Update hasura version
             # Run only on Mac, to prevent updating the database multiple times
