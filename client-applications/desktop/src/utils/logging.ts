@@ -1,15 +1,15 @@
-import { app } from 'electron'
-import { tap } from 'rxjs/operators'
-import { identity, truncate } from 'lodash'
-import fs from 'fs'
-import path from 'path'
-import util from 'util'
-import AWS from 'aws-sdk'
-import logzio from 'logzio-nodejs'
-import { merge, Observable } from 'rxjs'
-import stringify from 'json-stringify-safe'
+import { app } from "electron"
+import { tap } from "rxjs/operators"
+import { identity, truncate } from "lodash"
+import fs from "fs"
+import path from "path"
+import util from "util"
+import AWS from "aws-sdk"
+import logzio from "logzio-nodejs"
+import { merge, Observable } from "rxjs"
+import stringify from "json-stringify-safe"
 
-import config, { loggingBaseFilePath } from '@app/config/environment'
+import config, { loggingBaseFilePath } from "@app/config/environment"
 
 // Logging base function
 export enum LogLevel {
