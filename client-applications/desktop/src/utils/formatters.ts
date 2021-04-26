@@ -1,6 +1,8 @@
 import { ChildProcess } from "child_process"
 import { omit, pick } from "lodash"
 
+const omitJson = ["status", "statusText", "response"]
+
 export const formatChildProcess = (process: ChildProcess) =>
   omit(process, [
     "stdin",
@@ -14,8 +16,10 @@ export const formatChildProcess = (process: ChildProcess) =>
     "_handle",
   ])
 
-export const formatContainer = (req: object) =>
-  omit(req, [
+export const formatLogin = (res: object) => omit(res, [...omitJson])
+
+export const formatContainer = (res: object) =>
+  omit(res, [
     "statusText",
     "response",
     "status",
@@ -32,8 +36,7 @@ export const formatContainer = (req: object) =>
     "json.output.last_pinged",
   ])
 
-export const formatHostConfig = (req: object) =>
-  pick(req, ["response._readableState"])
+export const formatHostConfig = (res: object) =>
+  pick(res, ["response._readableState"])
 
-export const formatHostInfo = (req: object) =>
-  omit(req, ["status", "statusText", "response"])
+export const formatHostInfo = (res: object) => omit(res, [...omitJson])
