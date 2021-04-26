@@ -1,6 +1,6 @@
-import ping from 'ping'
+import ping from "ping"
 
-import { AWSRegion } from '@app/@types/aws'
+import { AWSRegion } from "@app/@types/aws"
 
 const findLowest = (arr: number[]) => {
   let min = Number.MAX_SAFE_INTEGER
@@ -57,8 +57,8 @@ export const chooseRegion = async (regions: AWSRegion[]) => {
   for (let i = 0; i < regions.length; i += 1) {
     const region = regions[i]
     const averagePingTime = await fractalPingTime(
-            `dynamodb.${region}.amazonaws.com`,
-            3
+      `dynamodb.${region}.amazonaws.com`,
+      3
     )
 
     if (averagePingTime < lowestPingTime) {

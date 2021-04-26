@@ -4,45 +4,40 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from 'electron'
-import { autoUpdater } from 'electron-updater'
-import EventEmitter from 'events'
-import { fromEvent, merge, zip, combineLatest } from 'rxjs'
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+import EventEmitter from "events"
+import { fromEvent, merge, zip, combineLatest } from "rxjs"
 
 import {
   eventUpdateAvailable,
-  eventUpdateDownloaded
-} from '@app/main/events/autoupdate'
-import {
-  eventAppReady,
-  eventWindowCreated
-} from '@app/main/events/app'
+  eventUpdateDownloaded,
+} from "@app/main/events/autoupdate"
+import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 
-import { takeUntil, take, concatMap } from 'rxjs/operators'
+import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
   showAppDock,
-  hideAppDock
-} from '@app/utils/windows'
-import { loginSuccess } from '@app/main/observables/login'
-import { signupSuccess } from '@app/main/observables/signup'
+  hideAppDock,
+} from "@app/utils/windows"
+import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
 import {
   protocolLaunchProcess,
-  protocolCloseRequest
-} from '@app/main/observables/protocol'
-import { errorWindowRequest } from '@app/main/observables/error'
-import {
-  autoUpdateAvailable
-} from '@app/main/observables/autoupdate'
+  protocolCloseRequest,
+} from "@app/main/observables/protocol"
+import { errorWindowRequest } from "@app/main/observables/error"
+import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
   userAccessToken,
-  userConfigToken
-} from '@app/main/observables/user'
+  userConfigToken,
+} from "@app/main/observables/user"
 
-import { uploadToS3 } from '@app/utils/logging'
+import { uploadToS3 } from "@app/utils/logging"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -58,7 +53,7 @@ eventAppReady.pipe(take(1)).subscribe(() => {
   autoUpdater.autoDownload = false
   // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
   // and fires an update if the current version is less than the version in latest.yml
-  autoUpdater.checkForUpdatesAndNotify().catch(err => console.error(err))
+  autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
 })
 
 // By default, the window-all-closed Electron event will cause the application
@@ -72,9 +67,13 @@ merge(
   signupSuccess,
   errorWindowRequest,
   eventUpdateAvailable
-).pipe(
-  concatMap(() => fromEvent(app as EventEmitter, 'window-all-closed').pipe(take(1)))
-).subscribe((event) => event.preventDefault())
+)
+  .pipe(
+    concatMap(() =>
+      fromEvent(app as EventEmitter, "window-all-closed").pipe(take(1))
+    )
+  )
+  .subscribe((event) => event.preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {

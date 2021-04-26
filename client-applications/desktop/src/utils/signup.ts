@@ -1,5 +1,5 @@
-import { post } from '@app/utils/api'
-import { AsyncReturnType } from '@app/@types/state'
+import { post } from "@app/utils/api"
+import { AsyncReturnType } from "@app/@types/state"
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
@@ -9,20 +9,20 @@ export const emailSignup = async (
   encrypted_config_token: string
 ) =>
   post({
-    endpoint: '/account/register',
+    endpoint: "/account/register",
     body: {
       username,
       password,
       encrypted_config_token,
-      name: '',
-      feedback: ''
-    }
+      name: "",
+      feedback: "",
+    },
   })
 
 type ResponseAuth = AsyncReturnType<typeof emailSignup>
 
 export const emailSignupValid = (response: ResponseAuth) =>
-  (response?.json?.access_token ?? '') !== ''
+  (response?.json?.access_token ?? "") !== ""
 
 export const emailSignupError = (response: ResponseAuth) => {
   // A 400 bad response indicates that the user account exists,

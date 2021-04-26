@@ -1,5 +1,5 @@
-import { Observable, ObservableInput, merge, race, interval, from } from 'rxjs'
-import { mapTo, switchMap } from 'rxjs/operators'
+import { Observable, ObservableInput, merge, race, interval, from } from "rxjs"
+import { mapTo, switchMap } from "rxjs/operators"
 
 export const loadingFrom = (
   request: Observable<any>,

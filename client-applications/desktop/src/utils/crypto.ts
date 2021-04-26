@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from "crypto"
 
 export const generateHashedPassword = (password: string): string => {
   /*
@@ -8,12 +8,12 @@ export const generateHashedPassword = (password: string): string => {
     */
   const token = crypto.pbkdf2Sync(
     password,
-    process?.env?.REACT_APP_SHA_SECRET_KEY ?? '',
+    process?.env?.REACT_APP_SHA_SECRET_KEY ?? "",
     100000,
     16,
-    'sha256'
+    "sha256"
   )
-  return token.toString('hex')
+  return token.toString("hex")
 }
 
 export const generateRandomString = async (bytes: number) => {
@@ -30,10 +30,10 @@ export const generateRandomString = async (bytes: number) => {
       resolve(buf)
     })
   })
-  return randomString.toString('hex')
+  return randomString.toString("hex")
 }
 
-const algorithm = 'aes-256-gcm'
+const algorithm = "aes-256-gcm"
 
 export const encryptConfigToken = async (text: string, password: string) => {
   /*
@@ -49,10 +49,10 @@ export const encryptConfigToken = async (text: string, password: string) => {
 
   const cipher = crypto.createCipheriv(algorithm, hashedPassword, configIV)
 
-  let encrypted = cipher.update(text, 'utf8', 'hex')
+  let encrypted = cipher.update(text, "utf8", "hex")
 
-  encrypted += cipher.final('hex')
-  const tag = cipher.getAuthTag().toString('hex')
+  encrypted += cipher.final("hex")
+  const tag = cipher.getAuthTag().toString("hex")
 
   return encrypted.concat(configIV, tag)
 }
@@ -69,11 +69,11 @@ export const decryptConfigToken = (text: string, password: string): string => {
   const hashedPassword = generateHashedPassword(password)
   const encrypted = text.substring(0, 128)
   const configIV = text.substring(128, 224)
-  const tag = Buffer.from(text.substring(224), 'hex')
+  const tag = Buffer.from(text.substring(224), "hex")
   const decipher = crypto.createDecipheriv(algorithm, hashedPassword, configIV)
   decipher.setAuthTag(tag)
-  let dec = decipher.update(encrypted, 'hex', 'utf8')
-  dec += decipher.final('utf8')
+  let dec = decipher.update(encrypted, "hex", "utf8")
+  dec += decipher.final("utf8")
 
   return dec
 }

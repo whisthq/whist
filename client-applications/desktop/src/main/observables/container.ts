@@ -11,20 +11,18 @@ import {
   containerInfo,
   containerInfoError,
   containerInfoSuccess,
-  containerInfoPending
-} from '@app/utils/container'
+  containerInfoPending,
+} from "@app/utils/container"
 import {
   userEmail,
   userAccessToken,
-  userConfigToken
-} from '@app/main/observables/user'
-import {
-  eventUpdateAvailable
-} from '@app/main/events/autoupdate'
-import { debugObservables, errorObservables } from '@app/utils/logging'
-import { ContainerAssignTimeout } from '@app/utils/constants'
-import { loadingFrom, pollMap } from '@app/utils/observables'
-import { from, of, zip } from 'rxjs'
+  userConfigToken,
+} from "@app/main/observables/user"
+import { eventUpdateAvailable } from "@app/main/events/autoupdate"
+import { debugObservables, errorObservables } from "@app/utils/logging"
+import { ContainerAssignTimeout } from "@app/utils/constants"
+import { loadingFrom, pollMap } from "@app/utils/observables"
+import { from, of, zip } from "rxjs"
 import {
   map,
   share,
@@ -34,8 +32,8 @@ import {
   takeUntil,
   exhaustMap,
   withLatestFrom,
-  takeWhile
-} from 'rxjs/operators'
+  takeWhile,
+} from "rxjs/operators"
 
 export const containerCreateRequest = zip(
   userEmail,
@@ -52,11 +50,11 @@ export const containerCreateProcess = containerCreateRequest.pipe(
 )
 
 export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? '') !== '')
+  filter((req) => (req?.json?.ID ?? "") !== "")
 )
 
 export const containerCreateFailure = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? '') === '')
+  filter((req) => (req?.json?.ID ?? "") === "")
 )
 
 export const containerCreateLoading = loadingFrom(
@@ -79,7 +77,7 @@ export const containerAssignPolling = containerAssignRequest.pipe(
 )
 
 containerAssignPolling.subscribe((res) =>
-  console.log('container poll', res?.status, res?.json.state)
+  console.log("container poll", res?.status, res?.json.state)
 )
 
 export const containerAssignSuccess = containerAssignPolling.pipe(
@@ -106,16 +104,16 @@ export const containerAssignLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [containerCreateRequest, 'containerCreateRequest'],
-  [containerCreateSuccess, 'containerCreateSuccess'],
-  [containerCreateLoading, 'containerCreateLoading'],
-  [containerAssignRequest, 'containerAssignRequest'],
-  [containerAssignPolling, 'containerAssignPolling'],
-  [containerAssignSuccess, 'containerAssignSuccess'],
-  [containerAssignLoading, 'containerAssignLoading']
+  [containerCreateRequest, "containerCreateRequest"],
+  [containerCreateSuccess, "containerCreateSuccess"],
+  [containerCreateLoading, "containerCreateLoading"],
+  [containerAssignRequest, "containerAssignRequest"],
+  [containerAssignPolling, "containerAssignPolling"],
+  [containerAssignSuccess, "containerAssignSuccess"],
+  [containerAssignLoading, "containerAssignLoading"]
 )
 
 errorObservables(
-  [containerCreateFailure, 'containerCreateFailure'],
-  [containerAssignFailure, 'containerAssignFailure']
+  [containerCreateFailure, "containerCreateFailure"],
+  [containerAssignFailure, "containerAssignFailure"]
 )

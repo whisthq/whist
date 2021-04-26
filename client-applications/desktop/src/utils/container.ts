@@ -1,10 +1,10 @@
-import { screen } from 'electron'
-import { pick } from 'lodash'
+import { screen } from "electron"
+import { pick } from "lodash"
 
-import { get, post } from '@app/utils/api'
-import { defaultAllowedRegions, AWSRegion } from '@app/@types/aws'
-import { chooseRegion } from '@app/utils/region'
-import { AsyncReturnType } from '@app/@types/state'
+import { get, post } from "@app/utils/api"
+import { defaultAllowedRegions, AWSRegion } from "@app/@types/aws"
+import { chooseRegion } from "@app/utils/region"
+import { AsyncReturnType } from "@app/@types/state"
 
 // For the purposes of the low-level rendering which is performed by the
 // protocol, the default DPI is always 96; this is modified by a scale factor
@@ -41,26 +41,26 @@ export const containerCreateErrorInternal = (
   response: AsyncReturnType<typeof containerCreate>
 ) =>
   ![402, 422].includes(response.status as number) ||
-  (response?.json?.ID ?? '') === ''
+  (response?.json?.ID ?? "") === ""
 
 export const containerInfo = async (taskID: string, accessToken: string) =>
   await taskStatus(taskID, accessToken)
 
 export const containerInfoError = (
   response: AsyncReturnType<typeof containerInfo>
-) => (response?.json?.state ?? '') === ''
+) => (response?.json?.state ?? "") === ""
 
 export const containerInfoSuccess = (
   response: AsyncReturnType<typeof containerInfo>
-) => response?.json?.state === 'SUCCESS'
+) => response?.json?.state === "SUCCESS"
 
 export const containerInfoPending = (
   response: AsyncReturnType<typeof containerInfo>
-) => response?.json?.state !== 'SUCCESS' && response?.json.state !== 'FAILURE'
+) => response?.json?.state !== "SUCCESS" && response?.json.state !== "FAILURE"
 
 export const containerInfoPorts = (
   response: AsyncReturnType<typeof containerInfo>
-) => pick(response?.json?.output, ['port_32262', 'port_32263', 'port_32273'])
+) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
 
 export const containerInfoIP = (
   response: AsyncReturnType<typeof containerInfo>
@@ -73,7 +73,7 @@ export const containerInfoSecretKey = (
 // Helper functions
 
 const taskStatus = async (taskID: string, accessToken: string) =>
-  get({ endpoint: '/status/' + taskID, accessToken })
+  get({ endpoint: "/status/" + taskID, accessToken })
 
 const containerRequest = async (
   username: string,
@@ -82,18 +82,18 @@ const containerRequest = async (
   dpi: number
 ) =>
   post({
-    endpoint: '/container/assign',
+    endpoint: "/container/assign",
     accessToken,
     body: {
       username,
       region,
       dpi,
-      app: 'Google Chrome'
-    }
+      app: "Google Chrome",
+    },
   })
 
 const regionRequest = async (username: string, accessToken: string) =>
   get({
     endpoint: `/regions?username=${username}`,
-    accessToken
+    accessToken,
   })
