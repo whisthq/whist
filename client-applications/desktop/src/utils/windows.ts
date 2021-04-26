@@ -8,9 +8,9 @@ import {
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError
-} from '@app/utils/constants'
-import config, { FractalCIEnvironment } from '@app/config'
+  WindowHashAssignContainerError,
+} from "@app/utils/constants"
+import config, { FractalCIEnvironment } from "@app/config/environment"
 
 const { buildRoot } = config
 
