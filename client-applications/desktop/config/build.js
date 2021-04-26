@@ -1,18 +1,14 @@
 const env = require('../env.json') || {}
 
-const appDetails = {
-  appId: "com.fractalcomputers.fractal", // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
-  copyright: "Copyright © Fractal Computers, Inc.",
-  productName: "Fractal",
-}
-
 // Environment-specific configuration
-let iconName = "icon" // icon file name
+
 const { PACKAGED_ENV = "prod" } = env
-if (PACKAGED_ENV !== "prod") {
-  appDetails.appId += `-${PACKAGED_ENV}`
-  appDetails.productName += ` (${PACKAGED_ENV})`
-  iconName += `_${PACKAGED_ENV}`
+const iconName = PACKAGED_ENV === "prod" ? "icon" : `icon_${PACKAGED_ENV}`
+
+const appDetails = {
+  appId: "com.fractalcomputers.fractal" + (PACKAGED_ENV === "prod" ? '' : `-${PACKAGED_ENV}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
+  copyright: "Copyright © Fractal Computers, Inc.",
+  productName: "Fractal" + (PACKAGED_ENV === "prod" ? '' : ` (${PACKAGED_ENV})`),
 }
 
 // This configuration controls how the application is bundled,
