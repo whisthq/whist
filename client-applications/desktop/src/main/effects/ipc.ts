@@ -3,18 +3,18 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { eventIPC } from '@app/main/events/ipc'
-import { ipcBroadcast } from '@app/utils/ipc'
-import { StateIPC } from '@app/@types/state'
-import { Observable, merge } from 'rxjs'
-import { mapTo, withLatestFrom, map, startWith } from 'rxjs/operators'
-import { toPairs } from 'lodash'
+import { eventIPC } from "@app/main/events/ipc"
+import { ipcBroadcast } from "@app/utils/ipc"
+import { StateIPC } from "@app/@types/state"
+import { Observable, merge } from "rxjs"
+import { mapTo, withLatestFrom, map, startWith } from "rxjs/operators"
+import { toPairs } from "lodash"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from '@app/utils/constants'
-import { getWindows } from '@app/utils/windows'
-import { loginLoading, loginWarning } from '@app/main/observables/login'
-import { signupLoading, signupWarning } from '@app/main/observables/signup'
-import { autoUpdateDownloadProgress } from '@app/main/observables/autoupdate'
+import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
+import { getWindows } from "@app/utils/windows"
+import { loginLoading, loginWarning } from "@app/main/observables/login"
+import { signupLoading, signupWarning } from "@app/main/observables/signup"
+import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -32,27 +32,27 @@ import { autoUpdateDownloadProgress } from '@app/main/observables/autoupdate'
 // constrained to observables that emit serializable values.
 
 interface SubscriptionMap {
-    [key: string]: Observable<string | number | boolean | SubscriptionMap>
+  [key: string]: Observable<string | number | boolean | SubscriptionMap>
 }
 
 const emitJSON = (
-    observable: Observable<string | number | boolean | SubscriptionMap>,
-    str: string
+  observable: Observable<string | number | boolean | SubscriptionMap>,
+  str: string
 ) => observable.pipe(map((val) => ({ [str]: val })))
 
 const objectCombine = (obj: SubscriptionMap) =>
-    merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
+  merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
 
 const subscribed: SubscriptionMap = {
-    loginLoading: loginLoading,
-    loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-    updateInfo: autoUpdateDownloadProgress,
-    signupLoading: signupLoading,
-    signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+  loginLoading: loginLoading,
+  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
+  updateInfo: autoUpdateDownloadProgress,
+  signupLoading: signupLoading,
+  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
 
 objectCombine(subscribed)
-    .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
-    .subscribe(([subs, state]) => {
-        ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-    })
+  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+  .subscribe(([subs, state]) => {
+    ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
+  })

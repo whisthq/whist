@@ -1,37 +1,37 @@
-import { app } from 'electron'
-import { tap } from 'rxjs/operators'
-import { identity, truncate } from 'lodash'
-import fs from 'fs'
-import path from 'path'
-import util from 'util'
-import AWS from 'aws-sdk'
-import logzio from 'logzio-nodejs'
-import { merge, Observable } from 'rxjs'
-import stringify from 'json-stringify-safe'
+import { app } from "electron"
+import { tap } from "rxjs/operators"
+import { identity, truncate } from "lodash"
+import fs from "fs"
+import path from "path"
+import util from "util"
+import AWS from "aws-sdk"
+import logzio from "logzio-nodejs"
+import { merge, Observable } from "rxjs"
+import stringify from "json-stringify-safe"
 
-import config, { loggingBaseFilePath } from '@app/utils/config'
+import config, { loggingBaseFilePath } from "@app/utils/config"
 
 // Logging base function
 export enum LogLevel {
-    DEBUG = 'DEBUG',
-    WARNING = 'WARNING',
-    ERROR = 'ERROR',
+  DEBUG = "DEBUG",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
 }
 
 // Initialize logz.io SDK
 const logzLogger = logzio.createLogger({
-    token: config.keys.LOGZ_API_KEY,
-    bufferSize: 1,
-    addTimestampWithNanoSecs: true,
-    sendIntervalMs: 50,
+  token: config.keys.LOGZ_API_KEY,
+  bufferSize: 1,
+  addTimestampWithNanoSecs: true,
+  sendIntervalMs: 50,
 })
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
-    fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-    const logPath = path.join(loggingBaseFilePath, 'debug.log')
-    return fs.createWriteStream(logPath, { flags: 'a' })
+  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
+  const logPath = path.join(loggingBaseFilePath, "debug.log")
+  return fs.createWriteStream(logPath, { flags: "a" })
 }
 
 const logFile = openLogFile()
@@ -44,12 +44,12 @@ const logFile = openLogFile()
 // function strips these circular references from the object.
 
 const logBase = (
-    logFile: fs.WriteStream,
-    title: string,
-    data?: any,
-    level?: LogLevel
+  logFile: fs.WriteStream,
+  title: string,
+  data?: any,
+  level?: LogLevel
 ) => {
-    /*
+  /*
   Description:
       Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
   Arguments:
@@ -59,29 +59,29 @@ const logBase = (
       level (LogLevel): Log level, see enum LogLevel above
   */
 
-    const template = `DEBUG: ${title} -- \n ${
-        data !== undefined ? stringify(data, null, 2) : ''
-    }`
+  const template = `DEBUG: ${title} -- \n ${
+    data !== undefined ? stringify(data, null, 2) : ""
+  }`
 
-    const debugLog = truncate(template, {
-        length: 1000,
-        omission: '...**logBase only prints 1000 characters per log**',
+  const debugLog = truncate(template, {
+    length: 1000,
+    omission: "...**logBase only prints 1000 characters per log**",
+  })
+
+  if (app.isPackaged) {
+    logzLogger.log({
+      message: debugLog,
+      level: level,
     })
+  } else {
+    console.log(debugLog)
+  }
 
-    if (app.isPackaged) {
-        logzLogger.log({
-            message: debugLog,
-            level: level,
-        })
-    } else {
-        console.log(debugLog)
-    }
-
-    logFile.write(`${util.format(debugLog)} \n`)
+  logFile.write(`${util.format(debugLog)} \n`)
 }
 
 export const uploadToS3 = async (email: string) => {
-    /*
+  /*
   Description:
       Uploads a local file to S3
   Arguments:
@@ -89,67 +89,67 @@ export const uploadToS3 = async (email: string) => {
   Returns:
       response from the s3 upload
   */
-    const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
+  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-    logBase(
-        logFile,
-        'Logs upload to S3',
-        { s3FileName: s3FileName },
-        LogLevel.DEBUG
-    )
+  logBase(
+    logFile,
+    "Logs upload to S3",
+    { s3FileName: s3FileName },
+    LogLevel.DEBUG
+  )
 
-    const uploadHelper = async (localFilePath: string) => {
-        const accessKey = config.keys.AWS_ACCESS_KEY
-        const secretKey = config.keys.AWS_SECRET_KEY
-        const bucketName = 'fractal-protocol-logs'
+  const uploadHelper = async (localFilePath: string) => {
+    const accessKey = config.keys.AWS_ACCESS_KEY
+    const secretKey = config.keys.AWS_SECRET_KEY
+    const bucketName = "fractal-protocol-logs"
 
-        const s3 = new AWS.S3({
-            accessKeyId: accessKey,
-            secretAccessKey: secretKey,
-        })
-        // Read file into buffer
-        const fileContent = fs.readFileSync(localFilePath)
-        // Set up S3 upload parameters
-        const params = {
-            Bucket: bucketName,
-            Key: s3FileName,
-            Body: fileContent,
-        }
-        // Upload files to the bucket
-        return await new Promise((resolve, reject) => {
-            s3.upload(params, (err: Error, data: any) => {
-                if (err !== null) {
-                    reject(err)
-                } else {
-                    resolve(data)
-                }
-            })
-        })
-    }
-
-    const uploadPromises: Array<Promise<any>> = []
-
-    const logLocations = [
-        path.join(loggingBaseFilePath, 'log-dev.txt'),
-        path.join(loggingBaseFilePath, 'log-staging.txt'),
-        path.join(loggingBaseFilePath, 'log.txt'),
-    ]
-
-    logLocations.forEach((filePath: string) => {
-        if (fs.existsSync(filePath)) {
-            uploadPromises.push(uploadHelper(filePath))
-        }
+    const s3 = new AWS.S3({
+      accessKeyId: accessKey,
+      secretAccessKey: secretKey,
     })
+    // Read file into buffer
+    const fileContent = fs.readFileSync(localFilePath)
+    // Set up S3 upload parameters
+    const params = {
+      Bucket: bucketName,
+      Key: s3FileName,
+      Body: fileContent,
+    }
+    // Upload files to the bucket
+    return await new Promise((resolve, reject) => {
+      s3.upload(params, (err: Error, data: any) => {
+        if (err !== null) {
+          reject(err)
+        } else {
+          resolve(data)
+        }
+      })
+    })
+  }
 
-    await Promise.all(uploadPromises)
+  const uploadPromises: Array<Promise<any>> = []
+
+  const logLocations = [
+    path.join(loggingBaseFilePath, "log-dev.txt"),
+    path.join(loggingBaseFilePath, "log-staging.txt"),
+    path.join(loggingBaseFilePath, "log.txt"),
+  ]
+
+  logLocations.forEach((filePath: string) => {
+    if (fs.existsSync(filePath)) {
+      uploadPromises.push(uploadHelper(filePath))
+    }
+  })
+
+  await Promise.all(uploadPromises)
 }
 
 export const logObservable = (
-    logFile: fs.WriteStream,
-    level: LogLevel,
-    title: string
+  logFile: fs.WriteStream,
+  level: LogLevel,
+  title: string
 ) => {
-    /*
+  /*
     Description:
         Returns a custom operator that logs values emitted by an observable
 
@@ -164,12 +164,12 @@ export const logObservable = (
         MonoTypeOperatorFunction: logging operator
     */
 
-    return tap<any>({
-        next(value) {
-            const data = identity(value)
-            logBase(logFile, title, data, level)
-        },
-    })
+  return tap<any>({
+    next(value) {
+      const data = identity(value)
+      logBase(logFile, title, data, level)
+    },
+  })
 }
 
 // Log level wrapper functions
@@ -178,8 +178,8 @@ const warning = logObservable.bind(null, logFile, LogLevel.WARNING)
 const error = logObservable.bind(null, logFile, LogLevel.ERROR)
 
 const logObservables = (
-    func: typeof debug,
-    ...args: Array<[Observable<any>, string]>
+  func: typeof debug,
+  ...args: Array<[Observable<any>, string]>
 ) => merge(...args.map(([obs, title]) => obs.pipe(func(title)))).subscribe()
 
 export const debugObservables = logObservables.bind(null, debug)
