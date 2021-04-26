@@ -20,7 +20,7 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     // initialize the audio encoder
 
     AudioEncoder* encoder = (AudioEncoder*)safe_malloc(sizeof(AudioEncoder));
-    memset(encoder, 0, sizeof(AudioEncoder));
+    memset(encoder, 0, sizeof(*encoder));
 
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+

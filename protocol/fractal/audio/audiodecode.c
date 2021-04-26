@@ -22,7 +22,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     // initialize the audio decoder
 
     AudioDecoder *decoder = (AudioDecoder *)safe_malloc(sizeof(AudioDecoder));
-    memset(decoder, 0, sizeof(AudioDecoder));
+    memset(decoder, 0, sizeof(*decoder));
 
     // setup the AVCodec and AVFormatContext
     // avcodec_register_all is deprecated on FFmpeg 4+
@@ -117,7 +117,7 @@ void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
     LOG_INFO("swrcontext: %p || frame: %p || frame_data: %p",
             decoder->pSwrContext, decoder->pFrame,
             decoder->pFrame->extended_data);
-  */
+ */
 
     if (swr_convert(decoder->pSwrContext, data_out, len,
                     (const uint8_t **)decoder->pFrame->extended_data, len) < 0) {
