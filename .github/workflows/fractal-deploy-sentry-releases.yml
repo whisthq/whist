@@ -47,7 +47,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Set Git Repository URL to Enable sentry-cli Automatic Commit Tagging
               run: git remote set-url origin https://github.com/fractal/fractal
@@ -86,7 +86,7 @@ jobs:
               if: failure()
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
@@ -106,12 +106,12 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Notify Slack on success
               shell: python3 {0}
               run: |
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"

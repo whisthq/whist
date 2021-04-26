@@ -53,7 +53,7 @@ def collapsed(func):
 
 
 def surround_base(spacing, wrap_text, text):
-    return wrap_text + (" " * spacing) + text + (" " * spacing) + wrap_text
+    return wrap_text + " " * spacing + text + " " * spacing + wrap_text
 
 
 def surround_xs(wrap_text, text):
@@ -105,32 +105,8 @@ def sep():
     return "---"
 
 
-def x(text):
-    return surround_sm(":x:", text)
-
-
 def html_comment(text):
     return f"<!-- {text} -->"
-
-
-def thumbsup(text):
-    return surround_sm(":thumbsup:", text)
-
-
-def mag_right(text):
-    return surround_sm(":mag_right:", text)
-
-
-def construction(text):
-    return surround_sm(":construction:", text)
-
-
-def rotating_light(text):
-    return surround_sm(":rotating_light:", text)
-
-
-def exclamation(text):
-    return surround_sm(":exclamation:", text)
 
 
 def code_block(text, lang=""):
@@ -195,9 +171,7 @@ def default_message_github(body, title=None, code=None, lang=None):
     Returns:
         A string containing the parameters, formatted to post as a comment
     """
-    return join_newline(h2(title),
-                        body,
-                        code_overflow_collapsed(code, lang=lang))
+    return join_newline(h2(title), body, code_overflow_collapsed(code, lang=lang))
 
 
 def default_message_slack(body, title=None, code=None, lang=None):
@@ -218,6 +192,5 @@ def default_message_slack(body, title=None, code=None, lang=None):
         lines.append("*" + title + "*")
     lines.append(body)
     if code is not None:
-         lines.append(code_block(code))
-    return '\n'.join(lines)
-
+        lines.append(code_block(code))
+    return "\n".join(lines)

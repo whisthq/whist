@@ -46,7 +46,7 @@ jobs:
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/install.sh
+              run: ./notifications/setup_notifications.sh
 
             # A non-pull_request event does not have a github.base_ref set
             # We have to dig into the event object, which has a ref string
@@ -180,7 +180,7 @@ jobs:
                   import sys
                   import urllib.parse
                   sys.path.append(os.environ["PATH_HELPERS"])
-                  from notifications import slack_debug
+                  from notifications.slack_bot import slack_post
 
                   # No notifications if the migration diff
                   # is empty, so exit early
@@ -204,14 +204,14 @@ jobs:
                                      + f"here:\n{issue_url(github_sha)}")
 
 
-                  title = "Database migration performed"
+                  title = ":construction: Database migration performed :construction:"
                   body = (f"A PR was merged and triggered "
                           + "an automatic schema migration on branch: "
                           + f"`{github_branch}`.\n\n"
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
-                  slack_debug(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
 
             - name: Notify Slack on failure
               if: failure()
@@ -220,7 +220,7 @@ jobs:
                   import os
                   import sys
                   sys.path.append(os.environ["PATH_HELPERS"])
-                  from notifications import slack_post
+                  from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   GITHUB_BRANCH = os.environ["GITHUB_BRANCH"]
