@@ -95,10 +95,12 @@ volatile int running_ci = 0;
 char user_email[FRACTAL_ARGS_MAXLEN + 1];
 char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
-bool using_stun = true;  // deprecated. TODO deprecate STUN code and make deprecated feature commit
+bool using_stun = true;
 
-int udp_port = -1;  // given by server
-int tcp_port = -1;  // given by server
+// given by server protocol during port discovery. tells client the ports to use
+// for UDP and TCP communications.
+int udp_port = -1;
+int tcp_port = -1;
 int client_id = -1;
 int uid;
 
