@@ -12,10 +12,9 @@
     "homepage": "https://fractal.co",
     "scripts": {
         "start": "node ./scripts/start.js",
-        "package": "node ./scripts/package.js --never",
-        "package:publish": "node ./scripts/package.js --always",
-        "package:local": "./scripts/publish.sh",
-        "package:set-env": "node ./scripts/setPackageEnv.js",
+        "package:local": "node ./scripts/package-local.js",
+        "package:notarize": "node ./scripts/package-notarize.js",
+        "package:publish": "node ./scripts/package-publish.js",
         "postinstall": "node ./scripts/postinstall.js",
         "lint:check": "node ./scripts/lint",
         "lint:fix": "node ./scripts/lint --fix",
