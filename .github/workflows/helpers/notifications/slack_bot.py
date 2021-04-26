@@ -39,26 +39,9 @@ def slack_post(
         code: an optional string, placed in a block at the bottom of the comment
         lang: an optional string, used to format the comment's code block
     Returns
-        None"""
-    fmt_body = fmt.default_message_slack(body, title, code, lang)
-    _create_post(
-        slack_webhook=slack_webhook,
-        slack_username=slack_username,
-        channel=channel,
-        body=fmt_body,
-    )
-
-
-def _create_post(slack_webhook, slack_username, channel, body):
+        requests.Response object
     """
-    Args:
-        slack_webhook: a string, Slack webhook to send messages to
-        slack_username: a string, Name of account to post messages as
-        channel: a string, Slack channel to post to
-        body: a string, markdown Slack message to post
-    Returns
-        Errors out if got bad response from Slack.
-    """
+    body = fmt.default_message_slack(body, title, code, lang)
     data = {
         "channel": channel,
         "username": slack_username,
