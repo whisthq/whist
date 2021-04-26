@@ -24,13 +24,13 @@ const argv = yargs(process.argv.slice(2))
   .argv
 
 
-helpers.buildAndCopyProtocol()
-helpers.configureCodeSigning(true)
 helpers.reinitializeYarn()
+helpers.buildAndCopyProtocol()
+helpers.buildTailwind()
+
+helpers.configureCodeSigning(true)
 
 helpers.setPackageEnv(argv.environment)
-
-helpers.buildTailwind()
 
 helpers.snowpackBuild(argv.version)
 

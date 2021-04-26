@@ -19,14 +19,14 @@ const argv = yargs(process.argv.slice(2))
   .argv
 
 
-helpers.buildAndCopyProtocol()
-helpers.configureCodeSigning(true)
 helpers.reinitializeYarn()
+helpers.buildAndCopyProtocol()
+helpers.buildTailwind()
+
+helpers.configureCodeSigning(true)
 
 // For testing, we just hardcode the environment to dev
 helpers.setPackageEnv("dev")
-
-helpers.buildTailwind()
 
 helpers.snowpackBuild(argv.version)
 helpers.electronBuild()
