@@ -47,7 +47,7 @@ const getBucketName = () => {
       os_str = 'ubuntu'
       break;
   }
-  return 'fractal-chromium-' + os_str + '-' + argv.environment
+  return `fractal-chromium-${os_str}-${argv.environment}`
 }
 
 helpers.electronPublish(getBucketName())
