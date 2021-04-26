@@ -10,8 +10,9 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { fromEventIPC } from "@app/main/events/ipc"
+import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
 import { from } from "rxjs"
+
 import { loadingFrom } from "@app/utils/observables"
 import {
   debugObservables,
@@ -19,9 +20,10 @@ import {
   errorObservables,
 } from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
+import { fromAction, UserAction } from "@app/utils/actions"
 
-export const loginRequest = fromEventIPC("loginRequest").pipe(
+export const loginRequest = fromAction(UserAction.LOGIN).pipe(
+  tap(x => console.log(x)),
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
   map(({ email, password }) => [email, password]),
   share()

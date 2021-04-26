@@ -6,12 +6,11 @@
 import { eventIPC } from "@app/main/events/ipc"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { Observable, merge } from "rxjs"
-import { mapTo, withLatestFrom, map, startWith } from "rxjs/operators"
-import { toPairs } from "lodash"
+import { mapTo, withLatestFrom, startWith } from "rxjs/operators"
 
 import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
+import { SubscriptionMap, objectCombine } from "@app/utils/observables"
 import { loginLoading, loginWarning } from "@app/main/observables/login"
 import { signupLoading, signupWarning } from "@app/main/observables/signup"
 import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
@@ -31,17 +30,6 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
 
-interface SubscriptionMap {
-  [key: string]: Observable<string | number | boolean | SubscriptionMap>
-}
-
-const emitJSON = (
-  observable: Observable<string | number | boolean | SubscriptionMap>,
-  str: string
-) => observable.pipe(map((val) => ({ [str]: val })))
-
-const objectCombine = (obj: SubscriptionMap) =>
-  merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
 
 const subscribed: SubscriptionMap = {
   loginLoading: loginLoading,

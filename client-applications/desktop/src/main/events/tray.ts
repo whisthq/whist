@@ -6,11 +6,12 @@
 import { Subject } from 'rxjs'
 import { filter } from 'rxjs/operators'
 
-type TrayAction = 'signoutRequest' | 'quitRequest'
+import { UserAction } from '@app/utils/actions'
+
 export const eventTray = new Subject()
 export const eventTrayActions = {
   signout: () => eventTray.next('signoutRequest'),
   quit: () => eventTray.next('quitRequest')
 }
-export const fromEventTray = (action: TrayAction) =>
+export const fromEventTray = (action: UserAction) =>
   eventTray.pipe(filter((request) => request === action))

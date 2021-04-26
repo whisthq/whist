@@ -40,8 +40,7 @@ export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
   share()
 )
 
-export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
-  eventIPC.pipe(
+export const fromEventIPC = (...keys: Array<keyof StateIPC>) => eventIPC.pipe(
     map((obj) => get(obj as Partial<StateIPC>, keys)),
     share()
   )
