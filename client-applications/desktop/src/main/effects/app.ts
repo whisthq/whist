@@ -40,7 +40,6 @@ import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/utils/config"
 
-
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
@@ -53,10 +52,10 @@ eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false
-  // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the 
+  // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
   // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
   // we don't need to set it.
-  switch(env.PACKAGED_ENV) {
+  switch (env.PACKAGED_ENV) {
     case FractalCIEnvironment.STAGING:
       autoUpdater.channel = "staging-rc"
       break
