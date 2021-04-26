@@ -12,6 +12,8 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
 from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
+import stripe
+
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
@@ -79,23 +81,60 @@ def payment(action, **kwargs):
 # right now, not really so it's not implemented
 # there should be some scaffolding you can use in the client to make it happen
 
-## TODO not sure what this is used by exactly
-# @stripe_bp.route("/stripe/hooks", methods=["POST"])
-# def hooks(**kwargs):
-#     body = request.get_data()
 
-#     # Endpoint for stripe webhooks
-#     sigHeader = request.headers["Stripe-Signature"]
-#     endpointSecret = ENDPOINT_SECRET
-#     event = None
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
+@stripe_bp.route("/stripe/create-checkout-session", methods=["POST"])
+def create_checkout_session():
+    data = json.loads(request.data)
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            success_url="https://example.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url="https://example.com/canceled.html",
+            payment_method_types=["card"],
+            mode="subscription",
+            line_items=[
+                {
+                    "price": data["priceId"],
+                    "quantity": 1,
+                }
+            ],
+        )
+        return jsonify({"sessionId": checkout_session["id"]})
+    except Exception as e:
+        return jsonify({"error": {"message": str(e)}}), 400
 
-#     try:
-#         event = stripe.Webhook.construct_event(body, sigHeader, endpointSecret)
-#     except ValueError:
-#         # Invalid payload
-#         return jsonify({"status": "Invalid payload"}), NOT_ACCEPTABLE
-#     except stripe.error.SignatureVerificationError:
-#         # Invalid signature
-#         return jsonify({"status": "Invalid signature"}), FORBIDDEN
 
-#     return webhookHelper(event)
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
+@stripe_bp.route("/stripe/customer-portal", methods=["POST"])
+def customer_portal():
+    # This is the URL to which the customer will be redirected after they are
+    # done managing their billing with the portal.
+    return_url = "fractal.co"  # TODO: not sure what goes here
+
+    session = stripe.billing_portal.Session.create(
+        customer="{{CUSTOMER_ID}}", return_url=return_url
+    )
+    return jsonify({"url": session.url})
+
+
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
+@stripe_bp.route("/stripe/webhook", methods=["POST"])
+def webhook():
+    event = None
+    payload = request.data
+    try:
+        event = json.loads(payload)
+    except:
+        print("Webhook error while parsing basic request.")
+        return jsonify(success=False)
+
+    if event["type"] == "payment_intent.succeeded":
+        return {"message": event["id"]}
