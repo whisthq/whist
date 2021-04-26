@@ -175,6 +175,8 @@ int connect_to_server(bool using_stun) {
 
     // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
     // Windows Socket 65535 Socket options apply to all sockets.
+    // this is set to stop the kernel from buffering too much, thereby
+    // getting the data to us faster for lower latency
     int a = 65535;
     if (setsockopt(packet_send_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
                    sizeof(int)) == -1) {
