@@ -15,6 +15,7 @@ Includes
 ============================
 */
 
+#include <fractal/core/fractal.h>
 #include <SDL2/SDL.h>
 
 /*
