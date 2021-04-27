@@ -667,6 +667,17 @@ void* safe_malloc(size_t size);
  */
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
+typedef struct DynamicBuffer {
+    int size;
+    int capacity;
+    bool use_memory_regions;
+    char* buf;
+} DynamicBuffer;
+
+DynamicBuffer* init_dynamic_buffer(bool use_memory_regions);
+void resize_dynamic_buffer(DynamicBuffer* db, int new_size);
+void free_dynamic_buffer(DynamicBuffer* db);
+
 // Dummy typedef for block allocator since only pointers are used anyway
 // See fractal.c for the real BlockAllocator struct
 typedef char BlockAllocator;

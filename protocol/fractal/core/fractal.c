@@ -38,41 +38,61 @@ void print_system_info() {
     fractal_detach_thread(sysinfo_thread);
 }
 
-typedef struct DynamicBuffer {
-    int size;
-    int capacity;
-    char* buf;
-} DynamicBuffer;
-
-DynamicBuffer* init_dynamic_buffer() {
+DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
     DynamicBuffer* db = safe_malloc(sizeof(DynamicBuffer));
     db->size = 0;
-    db->capacity = 128;
-    db->buf = safe_malloc(db->capacity);
-    if (!db->buf) {
-        LOG_FATAL("Could not safe_malloc size %d!", db->capacity);
+    db->use_memory_regions = use_memory_regions;
+    if (db->use_memory_regions) {
+        // We have to allocate a page anyway,
+        // So we can start off the capacity large
+        db->capacity = 4096;
+        db->buf = allocate_region(db->capacity);
+    } else {
+        db->capacity = 128;
+        db->buf = safe_malloc(db->capacity);
     }
+    // No need to check db->buf because safe_malloc and allocate_region already do
     return db;
 }
 
 void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
-    if (new_size > db->capacity) {
-        int new_capacity = new_size * 2;
-        char* new_buffer = realloc(db->buf, new_capacity);
-        if (!new_buffer) {
-            LOG_FATAL("Could not realloc from %d to %d!", db->capacity, new_capacity);
-        } else {
-            db->capacity = new_capacity;
-            db->size = new_size;
-            db->buf = new_buffer;
-        }
-    } else {
-        db->size = new_size;
+    int new_capacity = db->capacity;
+    // If the capacity is too small, keep doubling it
+    while (new_size > new_capacity) {
+        new_capacity = db->capacity * 2;
     }
+    // If the capacity is too large, keep halving it
+    while (new_size < new_capacity / 4) {
+        new_capacity /= 2;
+    }
+
+    // If the desired capacity has changed, realloc
+    if (db->capacity != new_capacity) {
+        char* new_buffer;
+        if (db->use_memory_regions) {
+            new_buffer = realloc_region(db->buf, new_capacity);
+        } else {
+            new_buffer = realloc(db->buf, new_capacity);
+        }
+        // TODO: Use safe_realloc instead
+        if (!new_buffer) {
+            LOG_FATAL("Could not realloc dynamic buffer from %d to %d!", db->capacity,
+                      new_capacity);
+        }
+        // Update the capacity and buffer
+        db->capacity = new_capacity;
+        db->buf = new_buffer;
+    }
+    // Update the size of the dynamic buffer
+    db->size = new_size;
 }
 
 void free_dynamic_buffer(DynamicBuffer* db) {
-    free(db->buf);
+    if (db->use_memory_regions) {
+        deallocate_region(db->buf);
+    } else {
+        free(db->buf);
+    }
     free(db);
 }
 
@@ -165,7 +185,7 @@ int runcmd(const char* cmdline, char** response) {
         CHAR ch_buf[2048];
         BOOL b_success = FALSE;
 
-        DynamicBuffer* db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer(false);
         for (;;) {
             b_success = ReadFile(h_child_std_out_rd, ch_buf, sizeof(ch_buf), &dw_read, NULL);
             if (!b_success || dw_read == 0) break;
@@ -223,7 +243,7 @@ int runcmd(const char* cmdline, char** response) {
         /* Read pipe until end of file, or an error occurs. */
 
         int current_len = 0;
-        DynamicBuffer* db = init_dynamic_buffer();
+        DynamicBuffer* db = init_dynamic_buffer(false);
 
         while (true) {
             char c = (char)fgetc(p_pipe);
