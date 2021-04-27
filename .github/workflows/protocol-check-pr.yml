@@ -214,7 +214,7 @@ jobs:
             - name: Build Protocol Server in Docker Container
               if: runner.os == 'Linux'
               working-directory: protocol
-              run: ./build_protocol.sh release
+              run: ./build_protocol.sh Release
 
             # This ensures that all the build files from build_protocol.sh have actually been generated
             - name: Ensure that all protocol build files are present

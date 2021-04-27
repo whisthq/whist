@@ -14,7 +14,7 @@ mount=${1:-}
 if [[ "$mount" == "mount" ]]; then
     shift # If the first parameter was "mount", shift that parameter away
     # Now rebuild the docker protocol to ensure that it is fresh
-    ../protocol/build_protocol.sh
+    ../protocol/build_protocol.sh Debug
     # If no protocol exists, copy the current one, so that the base Dockerfile doesn't complain about it not existing
     # We intentionally don't update this, when mounting, so that the Docker image doesn't forcefully rebuild
     if [[ ! -d "base/build-temp/protocol" ]]; then
@@ -29,7 +29,7 @@ else
         echo "A protocol build exists, though it is not guaranteed to be up-to-date."
     else
         echo "Attempting to copy an existing protocol build failed with the above error. Building ourselves a fresh copy..."
-        ../protocol/build_protocol.sh
+        ../protocol/build_protocol.sh Release
         ./helper-scripts/copy_protocol_build.sh
     fi
 fi
