@@ -64,8 +64,8 @@ const bundleConfig = {
             },
             {
                 from: "env.json",
-                to: "Resources/"
-            }
+                to: "Resources/",
+            },
         ],
     },
 
@@ -91,6 +91,13 @@ const bundleConfig = {
     win: {
         icon: `build/${iconName}.ico`,
         target: ["nsis"],
+      extraFiles: [
+        {
+          from: "protocol-build/client/",
+          to: "protocol-build/client/",
+          filter: "**/*",
+        },
+      ],
     },
 
     linux: {
