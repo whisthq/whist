@@ -8,12 +8,45 @@ set -Eeuo pipefail
 
 # Begin wait loop to get TTY number and port mapping from Fractal ECS host service
 FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+USER_CONFIGS_DIR=/fractal/userConfigs
+APP_CONFIG_MAP_FILENAME=/usr/share/fractal/app-config-map.json
 
-# Wait for TTY and port mapping files to exist
+# Wait for TTY and port mapping files and user config to exist
 until [ -f $FRACTAL_MAPPINGS_DIR/.ready ]
 do
     sleep 0.1
 done
+
+# Symlink loaded user configs into the appropriate folders
+
+# While perhaps counterintuitive, "source" is the path in the userConfigs directory
+#   and "destination" is the original location of the config file/folder.
+#   This is because when creating symlinks, the userConfig path is the source
+#   and the original location is the destination
+# Iterate through the possible configuration locations and copy
+for row in $(cat $APP_CONFIG_MAP_FILENAME | jq -rc '.[]'); do
+    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
+    SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
+    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+
+    # If original config path does not exist, then continue
+    if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
+        continue
+    fi
+
+    # If the source path doesn't exist, then copy default configs to the synced app config folder
+    if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
+        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
+    fi
+
+    # Remove the original configs and symlink the new ones to the original locations
+    rm -rf $DEST_CONFIG_PATH
+    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
+    chown -R fractal $SOURCE_CONFIG_PATH
+done
+
+# Delete broken symlinks from config
+find $USER_CONFIGS_DIR -xtype l -delete
 
 # Register TTY once it was assigned via writing to a file by Fractal ECS host service
 ASSIGNED_TTY=$(cat $FRACTAL_MAPPINGS_DIR/tty)
