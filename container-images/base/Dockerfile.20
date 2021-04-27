@@ -617,6 +617,12 @@ RUN systemctl enable fractal-audio
 COPY scripts/run-fractal-server.sh /usr/share/fractal/run-fractal-server.sh
 RUN chmod +x /usr/share/fractal/run-fractal-server.sh
 
+COPY scripts/run-as-fractal-user.sh /usr/share/fractal/run-as-fractal-user.sh
+RUN chmod +x /usr/share/fractal/run-as-fractal-user.sh
+
+COPY scripts/run-fractal-application.sh /usr/bin/run-fractal-application.sh
+RUN chmod +x /usr/bin/run-fractal-application.sh
+
 VOLUME [ "/sys/fs/cgroup" ]
 
 # As opposed to graphical.target, which is the default
