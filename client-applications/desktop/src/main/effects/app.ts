@@ -4,35 +4,35 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from 'electron'
-import { autoUpdater } from 'electron-updater'
-import EventEmitter from 'events'
-import { fromEvent, merge, zip, combineLatest } from 'rxjs'
+import { app } from "electron"
+import { autoUpdater } from "electron-updater"
+import EventEmitter from "events"
+import { fromEvent, merge, zip, combineLatest } from "rxjs"
 
 import {
   eventUpdateAvailable,
-  eventUpdateDownloaded
-} from '@app/main/events/autoupdate'
-import { eventAppReady, eventWindowCreated } from '@app/main/events/app'
-import { eventTrayActions } from '@app/main/events/tray'
-import { takeUntil, take, concatMap } from 'rxjs/operators'
+  eventUpdateDownloaded,
+} from "@app/main/events/autoupdate"
+import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
+import { eventTrayActions } from "@app/main/events/tray"
+import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
   showAppDock,
-  hideAppDock
-} from '@app/utils/windows'
-import { createTray } from '@app/utils/tray'
-import { loginSuccess } from '@app/main/observables/login'
-import { signupSuccess } from '@app/main/observables/signup'
-import { quitRequest, signoutRequest } from '@app/main/observables/tray'
+  hideAppDock,
+} from "@app/utils/windows"
+import { createTray } from "@app/utils/tray"
+import { loginSuccess } from "@app/main/observables/login"
+import { signupSuccess } from "@app/main/observables/signup"
+import { quitRequest, signoutRequest } from "@app/main/observables/tray"
 import {
   protocolLaunchProcess,
-  protocolCloseRequest
-} from '@app/main/observables/protocol'
-import { errorWindowRequest } from '@app/main/observables/error'
-import { autoUpdateAvailable } from '@app/main/observables/autoupdate'
+  protocolCloseRequest,
+} from "@app/main/observables/protocol"
+import { errorWindowRequest } from "@app/main/observables/error"
+import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
   userAccessToken,
@@ -89,7 +89,7 @@ merge(
 )
   .pipe(
     concatMap(() =>
-      fromEvent(app as EventEmitter, 'window-all-closed').pipe(take(1))
+      fromEvent(app as EventEmitter, "window-all-closed").pipe(take(1))
     )
   )
   .subscribe((event) => event.preventDefault())
