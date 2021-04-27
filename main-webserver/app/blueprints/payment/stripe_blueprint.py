@@ -92,6 +92,15 @@ def payment(action, **kwargs):
 def create_checkout_session(**kwargs):
     """
     Retruns checkout session id from a given product and customer
+
+    Args:
+        customerId (str): the stripe id of the user
+        priceId (str): the price id of the product (subscription)
+        successUrl (str): url to redirect to upon completion success
+        cancelUrl (str): url to redirect to upon cancelation
+
+    Returns:
+        json, int: Json containing session id and status code
     """
     body = kwargs["body"]
     return checkout_helper(
@@ -105,8 +114,17 @@ def create_checkout_session(**kwargs):
 @jwt_required()
 @fractal_auth
 def customer_portal(**kwargs):
-    # This is the URL to which the customer will be redirected after they are
-    # done managing their billing with the portal.
+    """
+    Returns billing portal url.
+
+    Args:
+        customerId (str): the stripe id of the user
+        returnUrl (str): the url to redirect to upon leaving the billing portal
+
+    Returns:
+        json, int: Json containing billing url and status code
+    """
+
     body = kwargs["body"]
     return billing_portal_helper(body["customerId"], body["returnUrl"])
 
@@ -126,3 +144,5 @@ def webhook():
 
     if event["type"] == "payment_intent.succeeded":
         return {"message": event["id"]}
+    elif event["type"] == "invoice.payment_failed":
+        print("payment failed")

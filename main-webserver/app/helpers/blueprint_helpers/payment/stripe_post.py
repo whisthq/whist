@@ -27,6 +27,15 @@ def checkout_helper(
 ) -> Tuple[str, int]:
     """
     Returns checkout session id from Stripe client
+
+    Args:
+        customer_id (str): the stripe id of the user
+        price_id (str): the price id of the product (subscription)
+        success_url (str): url to redirect to upon completion success
+        cancel_url (str): url to redirect to upon cancelation
+
+    Returns:
+        json, int: Json containing session id and status code
     """
     client = StripeClient(current_app.config["STRIPE_SECRET"])
     try:
@@ -41,7 +50,14 @@ def checkout_helper(
 
 def billing_portal_helper(customer_id: str, return_url: str) -> Tuple[str, int]:
     """
-    Returns billing portal url from Stripe Client
+    Returns billing portal url.
+
+    Args:
+        customer_id (str): the stripe id of the user
+        return_url (str): the url to redirect to upon leaving the billing portal
+
+    Returns:
+        json, int: Json containing billing url and status code
     """
     client = StripeClient(current_app.config["STRIPE_SECRET"])
     try:
