@@ -6,7 +6,8 @@ Requires=fractal-entrypoint.service
 
 [Service]
 User=root
-Type=exec
+Type=notify
+NotifyAccess=all
 EnvironmentFile=/usr/share/fractal/fractal-display-config.env
 ExecStart=/usr/bin/xinit -- /usr/bin/Xorg :${display_num_nvidia} -noreset +extension GLX +extension RANDR +extension RENDER -logfile ${xorg_log_file_nvidia} -config ${xorg_config_file_nvidia} vt${tty_number}
 
