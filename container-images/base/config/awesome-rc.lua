@@ -397,7 +397,7 @@ end)
 client.connect_signal("unmanage", function (c)
     local numclients = compute_table_length(awful.screen.focused().all_clients)
     if numclients == 0 and c.class == "Google-chrome" then
-      awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
+      -- awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
 
       mouse.coords({ x = 100, y = 100})
       root.fake_input('button_press', 1)
