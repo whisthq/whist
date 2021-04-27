@@ -14,7 +14,7 @@ from app.helpers.blueprint_helpers.host_service.host_service_post import (
 
 def test_initial_auth_good():
     resp, resp_code = initial_instance_auth_helper("1.1.1.1", "test_instance_id", "us-east-1")
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert "AuthToken" in resp_dict.keys()
     assert resp_code == SUCCESS
     attempted_inst = InstanceInfo.query.filter_by(instance_id="test_instance_id").one_or_none()
@@ -24,7 +24,7 @@ def test_initial_auth_good():
 def test_initial_auth_exists(bulk_instance):
     bulk_instance(instance_name="test_instance_id")
     resp, resp_code = initial_instance_auth_helper("1.1.1.1", "test_instance_id", "us-east-1")
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": BAD_REQUEST}, BAD_REQUEST)
 
 
@@ -34,7 +34,7 @@ def test_heartbeat_no_update(bulk_instance):
     resp, resp_code = instance_heartbeat_helper(
         "test_auth", "test_instance_id", 1024000, "test", False
     )
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     inst = InstanceInfo.get("test_instance_id")
     assert time.time() - inst.last_pinged <= 2
@@ -46,7 +46,7 @@ def test_heartbeat_wrong_key(bulk_instance):
     resp, resp_code = instance_heartbeat_helper(
         "test_aut", "test_instance_id", 1024000, "test", False
     )
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.get("test_instance_id")
     assert time.time() - inst.last_pinged >= 3
@@ -58,7 +58,7 @@ def test_heartbeat_no_exist(bulk_instance):
     resp, resp_code = instance_heartbeat_helper(
         "test_auth", "test_instance_id2", 1024, "test", False
     )
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.get("test_instance_id")
     assert time.time() - inst.last_pinged >= 3
@@ -69,7 +69,7 @@ def test_heartbeat_dying(bulk_instance):
     resp, resp_code = instance_heartbeat_helper(
         "test_auth", "test_instance_id", 1024000, "test", True
     )
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     assert InstanceInfo.query.filter_by(instance_id="test_instance_id").one_or_none() is None
 
@@ -80,7 +80,7 @@ def test_heartbeat_updates(bulk_instance):
     resp, resp_code = instance_heartbeat_helper(
         "test_auth", "test_instance_id", 1025000, "test", False
     )
-    resp_dict = loads(resp)
+    resp_dict = loads(str(resp))
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     inst = InstanceInfo.get("test_instance_id")
     assert inst.memoryRemainingInInstance == 1025

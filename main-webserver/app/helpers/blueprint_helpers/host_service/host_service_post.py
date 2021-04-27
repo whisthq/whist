@@ -33,7 +33,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
     ami_id = RegionToAmi.query.get(location).ami_id
     new_instance = InstanceInfo(
-        instance_id=instance_id, ip=ip, auth_token=auth_token, ami_id=ami_id
+        instance_id=instance_id, ip=ip, auth_token=auth_token, ami_id=ami_id, location=location
     )
     instance_sql = fractal_sql_commit(db, lambda database, x: database.session.add(x), new_instance)
     if instance_sql:
