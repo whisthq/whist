@@ -33,7 +33,7 @@ const bundleConfig = {
     },
 
     // The files we must wrap into our packaged application.
-    files: ["build/**/*", "node_modules/", "package.json"],
+    files: ["build/**/*", "node_modules/", "package.json", "env.json"],
     // We cannot bundle the protocol binaries -- they must remain separate.
     // This registers the fractal:// URL protocol in the bundle installer.
     protocols: {
