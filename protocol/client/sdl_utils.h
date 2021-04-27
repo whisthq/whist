@@ -72,14 +72,18 @@ void destroy_sdl(SDL_Window* window);
  *
  * @param filename                 PNG image file path
  *
- * @returns                        the loaded surface on success, and NULL on failure
+ * @returns                        The loaded surface on success, and NULL on failure
  *
  * @note                           After a successful call to sdl_surface_from_png_file,
- *                                 remember to call `free(surface.pixels)` and
- *                                 `SDL_FreeSurface(surface)`
+ *                                 remember to call `free_sdl_surface`
  */
 SDL_Surface* sdl_surface_from_png_file(char* filename);
 
+/**
+ * @brief                          Free the SDL_Surface created by sdl_surface_from_png_file
+ *
+ * @param surface                  The SDL_Surface created by sdl_surface_from_png_file
+ */
 void free_sdl_surface(SDL_Surface* surface);
 
 /**
