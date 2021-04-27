@@ -31,6 +31,7 @@ Includes
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
+#include <signal.h>
 #include <unistd.h>
 #endif
 
@@ -139,19 +140,9 @@ Private Function Implementations
 ============================
 */
 
-#ifdef __linux__
-int xioerror_handler(Display* d) {
+void graceful_exit() {
     /*
-        When X display is destroyed, intercept XIOError in order to
-        quit clients and send container destruction signal. Clients
-        must be quit
-
-        For use as arg for XSetIOErrorHandler - this is fatal and thus
-        any program exit handling that would normally be expected to
-        be handled in another thread must be explicitly handled here.
-        Right now, we handle:
-            * SendContainerDestroyMessage
-            * quitClients
+        Quit clients gracefully and allow server to exit.
     */
 
     exiting = true;
@@ -180,8 +171,35 @@ int xioerror_handler(Display* d) {
     }
     fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
+}
+
+#ifdef __linux__
+int xioerror_handler(Display* d) {
+    /*
+        When X display is destroyed, intercept XIOError in order to
+        quit clients.
+
+        For use as arg for XSetIOErrorHandler - this is fatal and thus
+        any program exit handling that would normally be expected to
+        be handled in another thread must be explicitly handled here.
+        Right now, we handle:
+            * SendContainerDestroyMessage
+            * quitClients
+    */
+
+    graceful_exit();
 
     return 0;
+}
+
+void sig_handler(int sig_num) {
+    /*
+        When the server receives a SIGTERM, gracefully exit.
+    */
+
+    if (sig_num == SIGTERM) {
+        graceful_exit();
+    }
 }
 #endif
 
@@ -1112,6 +1130,7 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef __linux__
+    signal(SIGTERM, sig_handler);
     XSetIOErrorHandler(xioerror_handler);
 #endif
 
