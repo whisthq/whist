@@ -234,6 +234,7 @@ CREATE TABLE hardware.instance_info (
     "CPURemainingInInstance" bigint,
     "GPURemainingInInstance" bigint,
     "runningTasksCount" bigint,
+    last_pinged bigint,
     ip character varying NOT NULL,
     status character varying NOT NULL,
     ami_id character varying NOT NULL,
