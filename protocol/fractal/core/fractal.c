@@ -183,7 +183,8 @@ int runcmd(const char* cmdline, char** response) {
         resize_dynamic_buffer(db, db->size + 1);
         db->buf[db->size] = '\0';
         resize_dynamic_buffer(db, db->size - 1);
-        int size = db->size;
+        int size = (int)db->size;
+        // The caller will have to free this later
         *response = db->buf;
         free(db);
         return size;
@@ -356,6 +357,8 @@ char* fractal_git_revision() {
 
 #define MAX_FREES 1024
 
+// The internal block allocator struct,
+// which is what a BlockAllocator* actually points to
 typedef struct {
     size_t block_size;
 
@@ -367,6 +370,7 @@ typedef struct {
 } InternalBlockAllocator;
 
 BlockAllocator* create_block_allocator(size_t block_size) {
+    // Create a block allocator
     InternalBlockAllocator* blk_allocator = safe_malloc(sizeof(InternalBlockAllocator));
 
     // Set block allocator values
@@ -380,19 +384,16 @@ BlockAllocator* create_block_allocator(size_t block_size) {
 void* allocate_block(BlockAllocator* blk_allocator_in) {
     InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
-    LOG_INFO("!! MEMORY USAGE !!: %0.2f MB",
-             blk_allocator->num_allocated_blocks * blk_allocator->block_size / 1024.0 / 1024);
-
     // If a free block already exists, just use that one instead
     if (blk_allocator->num_free_blocks > 0) {
         char* block = blk_allocator->free_blocks[--blk_allocator->num_free_blocks];
-        mark_used_custom_block(block);
+        mark_used_region(block);
         return block;
     }
 
     // Otherwise, create a new block
     blk_allocator->num_allocated_blocks++;
-    char* block = allocate_custom_block(blk_allocator->block_size);
+    char* block = allocate_region(blk_allocator->block_size);
     // Return the newly allocated block
     return block;
 }
@@ -402,19 +403,18 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
 
     // If there's room in the free block list, just store the free block there instead
     if (blk_allocator->num_free_blocks < MAX_FREES) {
-        mark_unused_custom_block(block);
+        mark_unused_region(block);
         blk_allocator->free_blocks[blk_allocator->num_free_blocks++] = block;
-        return;
+    } else {
+        // Otherwise, actually free the block at an OS-level
+        deallocate_region(block);
+        blk_allocator->num_allocated_blocks--;
     }
-
-    // Otherwise, actually free the block at an OS-level
-    free_custom_block(block);
-    blk_allocator->num_allocated_blocks--;
 }
 
 // ------------------------------------
-// Implementation of a direct allocator
-// that allocates directly from mmap/MapViewOfFile
+// Implementation of an allocator that
+// allocates regions directly from mmap/MapViewOfFile
 // ------------------------------------
 
 #ifdef _WIN32
@@ -437,78 +437,94 @@ int get_page_size() {
 #endif
 }
 
-// Declare the BlockHeader struct
+// Declare the RegionHeader struct
 typedef struct {
     size_t size;
-} BlockHeader;
-// Macros to go between the data and the header of a block
-#define TO_BLOCK_HEADER(a) ((void*)(((char*)a) - sizeof(BlockHeader)))
-#define TO_BLOCK_DATA(a) ((void*)(((char*)a) + sizeof(BlockHeader)))
+} RegionHeader;
+// Macros to go between the data and the header of a region
+#define TO_REGION_HEADER(a) ((void*)(((char*)a) - sizeof(RegionHeader)))
+#define TO_REGION_DATA(a) ((void*)(((char*)a) + sizeof(RegionHeader)))
 
-void* allocate_custom_block(size_t block_size) {
+void* allocate_region(size_t region_size) {
     size_t page_size = get_page_size();
-    // Make space for the block header as well
-    block_size += sizeof(BlockHeader);
+    // Make space for the region header as well
+    region_size += sizeof(RegionHeader);
     // Round up to the nearest page size
-    block_size = block_size + (page_size - (block_size % page_size)) % page_size;
+    region_size = region_size + (page_size - (region_size % page_size)) % page_size;
 
 #ifdef _WIN32
-    void* p = VirtualAlloc(NULL, block_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    void* p = VirtualAlloc(NULL, region_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (p == NULL) {
         LOG_FATAL("Could not VirtualAlloc");
     }
-    ((BlockHeader*)p)->size = block_size;
+    ((RegionHeader*)p)->size = region_size;
 #else
-    void* p = mmap(0, block_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    void* p = mmap(0, region_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (p == NULL) {
         LOG_FATAL("mmap failed!");
     }
-    ((BlockHeader*)p)->size = block_size;
+    ((RegionHeader*)p)->size = region_size;
 #endif
-    return TO_BLOCK_DATA(p);
+    return TO_REGION_DATA(p);
 }
 
-void mark_unused_custom_block(void* block) {
-    BlockHeader* p = TO_BLOCK_HEADER(block);
+void mark_unused_region(void* region) {
+    RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
+    // Only mark the next page and beyond as freed,
+    // since we need to maintain the RegionHeader
     if (p->size > page_size) {
+        char* next_page = (char*)p + page_size;
+        size_t advise_size = p->size - page_size;
 #ifdef _WIN32
-        VirtualAlloc((char*)p + page_size, p->size - page_size, MEM_RESET, PAGE_READWRITE);
+        // Windows Task Manager will already be aware of correct memory usage
+        VirtualAlloc(next_page, advise_size, MEM_RESET, PAGE_READWRITE);
+#elif __APPLE__
+        // Lets you tell the Apple Task Manager to report correct memory usage
+        madvise(next_page, advise_size, MADV_FREE_REUSABLE);
 #else
-        // TODO: Implement on *nix
+        // Linux won't update `top`, but it will have the correct OOM semantics
+        madvise(next_page, advise_size, MADV_FREE);
 #endif
     }
 }
 
-void mark_used_custom_block(void* block) {
-    BlockHeader* p = TO_BLOCK_HEADER(block);
+void mark_used_region(void* region) {
+    RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     if (p->size > page_size) {
 #ifdef _WIN32
-        // Do Nothing
+        // Do Nothing, Windows will know when you touch the memory again
+#elif __APPLE__
+        char* next_page = (char*)p + page_size;
+        size_t advise_size = p->size - page_size;
+        // Tell the Apple Task Manager that we'll use this memory again
+        // Apparently we can lie to their Task Manager by not calling this
+        // Hm.
+        madvise(next_page, advise_size, MADV_FREE_REUSE);
 #else
-        // TODO: Implement on *nix
+        // Do Nothing, Linux will know when you touch the memory again
 #endif
     }
 }
 
-void* realloc_custom_block(void* block, size_t new_block_size) {
-    BlockHeader* p = TO_BLOCK_HEADER(block);
-    size_t block_size = p->size;
+void* realloc_region(void* region, size_t new_region_size) {
+    RegionHeader* p = TO_REGION_HEADER(region);
+    size_t region_size = p->size;
 
-    // Allocate new block
-    void* new_p = allocate_custom_block(new_block_size);
-    // Copy the actual data over, truncating to new_block_size if there's not enough space
-    memcpy(new_p, block, min(block_size - sizeof(BlockHeader), new_block_size));
-    // Allocate the old block
-    free_custom_block(block);
+    // Allocate new region
+    void* new_p = allocate_region(new_region_size);
+    // Copy the actual data over, truncating to new_region_size if there's not enough space
+    memcpy(new_p, region, min(region_size - sizeof(RegionHeader), new_region_size));
+    // Allocate the old region
+    deallocate_region(region);
 
-    // Return the new block
+    // Return the new region
     return new_p;
 }
 
-void free_custom_block(void* block) {
-    BlockHeader* p = TO_BLOCK_HEADER(block);
+void deallocate_region(void* region) {
+    RegionHeader* p = TO_REGION_HEADER(region);
 
 #ifdef _WIN32
     VirtualFree(p, 0, MEM_RELEASE);
