@@ -1,5 +1,6 @@
+# Activates PulseAudio with correct settings for Fractal, runs as root
 [Unit]
-Description=Activates PulseAudio with correct settings for Fractal, runs as root
+Description=Fractal Audio
 After=fractal-display.service network.target
 Requires=fractal-display.service
 
