@@ -20,10 +20,12 @@ run_as_fractal() {
 xmodmap /root/.Xmodmap
 
 # Start playerctl to respond to media keys
+echo "Starting \"playerctl daemon\" in the background..."
 run_as_fractal "playerctl daemon" &
 
 # Start the AwesomeWM window manager
 # Things running outside runuser are run as root
+echo "Starting awesomeWM..."
 run_as_fractal "awesome" &
 
 # Retrieve container parameters
