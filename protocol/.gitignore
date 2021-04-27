@@ -44,3 +44,7 @@ lib/64/**
 # Docs
 docs/html
 docs/latex
+
+# logs
+log*
+connection_id.txt
