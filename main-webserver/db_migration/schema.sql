@@ -236,7 +236,6 @@ CREATE TABLE hardware.instance_info (
     "runningTasksCount" bigint,
     last_pinged bigint,
     ip character varying NOT NULL,
-    status character varying NOT NULL,
     ami_id character varying NOT NULL,
     location character varying NOT NULL
 );

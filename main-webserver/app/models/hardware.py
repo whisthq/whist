@@ -152,7 +152,6 @@ class InstanceInfo(db.Model):
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
     location = db.Column(db.String(250))
     auth_token = db.Column(db.String(250), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
     CPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
     GPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
