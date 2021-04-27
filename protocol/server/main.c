@@ -186,6 +186,11 @@ int xioerror_handler(Display* d) {
 }
 #endif
 
+bool get_using_stun() {
+    // decide whether the server is using stun. TODO: pull this and arg parsing into its own file
+    return false;
+}
+
 int32_t multithreaded_encoder_factory(void* opaque) {
     UNUSED(opaque);
     encoder_factory_result = create_video_encoder(
@@ -855,7 +860,7 @@ int multithreaded_manage_clients(void* opaque) {
         }
 
         if (create_tcp_context(&discovery_context, NULL, PORT_DISCOVERY, 1, TCP_CONNECTION_WAIT,
-                               USING_STUN, binary_aes_private_key) < 0) {
+                               get_using_stun(), binary_aes_private_key) < 0) {
             continue;
         }
 
@@ -868,7 +873,7 @@ int multithreaded_manage_clients(void* opaque) {
 
         // Client is not in use so we don't need to worry about anyone else
         // touching it
-        if (connect_client(client_id, binary_aes_private_key) != 0) {
+        if (connect_client(client_id, get_using_stun(), binary_aes_private_key) != 0) {
             LOG_WARNING(
                 "Failed to establish connection with client. "
                 "(ID: %d)",
@@ -1169,7 +1174,7 @@ int main(int argc, char* argv[]) {
 
     while (!exiting) {
         if (get_timer(ack_timer) > 5) {
-            if (USING_STUN) {
+            if (get_using_stun()) {
                 // Broadcast ack
                 read_lock(&is_active_rwlock);
                 if (broadcast_ack() != 0) {

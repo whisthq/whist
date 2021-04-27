@@ -17,8 +17,6 @@ Public Functions
 ============================
 */
 
-#define USING_STUN 0
-
 /**
  * @brief                          Broadcasts acks to all active clients
  *
@@ -122,13 +120,14 @@ int try_get_next_message_udp(int client_id, FractalClientMessage *fcmsg, size_t 
  *                                 Failure here
  *
  * @param id                       Client ID of an active client
+ * @param using_stun               True if we are running a stun server
  * @param binary_aes_private_key          Key used to encrypt and decrypt communication
  *                                 with the client.
  *
  * @returns                        Returns -1 if either UDP or TCP connection
  *                                 fails or another error occurs, 0 on success.
  */
-int connect_client(int id, char *binary_aes_private_key);
+int connect_client(int id, bool using_stun, char *binary_aes_private_key);
 
 /**
  * @brief                          Closes client's UDP and TCP sockets.
