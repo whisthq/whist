@@ -115,13 +115,13 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
 // If the update is downloaded, quit the app and install the update
 
 eventUpdateDownloaded.subscribe(() => {
-  autoUpdater.quitAndInstall()
+  // autoUpdater.quitAndInstall()
 })
 
 autoUpdateAvailable.subscribe(() => {
-  closeWindows()
-  createUpdateWindow((win: any) => win.show())
-  autoUpdater.downloadUpdate().catch((err) => console.error(err))
+  // closeWindows()
+  // createUpdateWindow((win: any) => win.show())
+  // autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 
 eventWindowCreated.subscribe(() => showAppDock())
