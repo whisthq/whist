@@ -320,7 +320,6 @@ RUN apt-get install --no-install-recommends -y \
     dkms \
     awesome \
     awesome-extra \
-    playerctl \
     lxappearance \
     xinit \
     materia-gtk-theme \
@@ -507,6 +506,14 @@ RUN rm /etc/systemd/user/default.target.wants/pulseaudio.service
 RUN systemctl mask pulseaudio
 RUN chmod -x /usr/bin/start-pulseaudio-x11
 COPY config/pulse-client.conf /etc/pulse/client.conf
+
+# Install playerctl for media keys support. We install playerctl straight from
+# Github releases because as usual the Ubuntu package is horribly out of date
+# (and in particular don't support daemon mode).
+RUN wget -q https://github.com/altdesktop/playerctl/releases/download/v2.3.1/playerctl-2.3.1_amd64.deb \
+    && dpkg -i ./playerctl-2.3.1_amd64.deb \
+    && rm ./playerctl-2.3.1_amd64.deb
+
 
 # Create fractal Directory and Subdirectories in /usr/share
 RUN mkdir -p /usr/share/fractal/assets /usr/share/fractal/sync /usr/share/fractal/private
