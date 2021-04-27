@@ -1,4 +1,3 @@
-import { fromEventIPC } from "@app/main/events/ipc"
 import { fromEventPersist } from "@app/main/events/persist"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupRequest, signupSuccess } from "@app/main/observables/signup"
@@ -22,16 +21,18 @@ import {
   emailSignupAccessToken,
   emailSignupRefreshToken,
 } from "@app/utils/signup"
+import { fromAction } from "@app/utils/actions"
+import { RendererAction } from "@app/@types/actions"
 
 export const userEmail = merge(
   fromEventPersist("userEmail"),
-  fromEventIPC("loginRequest", "email").pipe(sample(loginSuccess)),
-  fromEventIPC("signupRequest", "email").pipe(sample(signupSuccess))
+  fromAction(RendererAction.LOGIN, "email").pipe(sample(loginSuccess)),
+  fromAction(RendererAction.SIGNUP, "email").pipe(sample(signupSuccess))
 ).pipe(filter(identity), share())
 
 export const userConfigToken = merge(
   fromEventPersist("userConfigToken"),
-  fromEventIPC("loginRequest", "password").pipe(
+  fromAction(RendererAction.LOGIN, "password").pipe(
     sample(loginSuccess),
     withLatestFrom(loginSuccess),
     switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))

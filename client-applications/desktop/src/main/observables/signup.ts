@@ -24,9 +24,10 @@ import {
 } from "@app/utils/logging"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
-import { fromAction, UserAction } from "@app/utils/actions"
+import { fromAction } from "@app/utils/actions"
+import { RendererAction } from "@app/@types/actions"
 
-export const signupRequest = fromAction(UserAction.SIGNUP).pipe(
+export const signupRequest = fromAction(RendererAction.SIGNUP).pipe(
   filter(
     (req) =>
       ((req?.email as string) ?? "") !== "" &&

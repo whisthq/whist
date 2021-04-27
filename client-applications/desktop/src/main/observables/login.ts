@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
+import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { from } from "rxjs"
 
 import { loadingFrom } from "@app/utils/observables"
@@ -20,10 +20,10 @@ import {
   errorObservables,
 } from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { fromAction, UserAction } from "@app/utils/actions"
+import { fromAction } from "@app/utils/actions"
+import { RendererAction } from "@app/@types/actions"
 
-export const loginRequest = fromAction(UserAction.LOGIN).pipe(
-  tap(x => console.log(x)),
+export const loginRequest = fromAction(RendererAction.LOGIN).pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
   map(({ email, password }) => [email, password]),
   share()

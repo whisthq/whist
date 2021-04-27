@@ -30,7 +30,6 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
 
-
 const subscribed: SubscriptionMap = {
   loginLoading: loginLoading,
   loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),

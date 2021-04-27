@@ -1,21 +1,25 @@
-import { filter } from "rxjs/operators"
+import { fromEventIPC } from "@app/main/events/ipc"
+import { eventTray } from "@app/main/events/tray"
+import { Observable } from "rxjs"
+import { filter, map } from "rxjs/operators"
+import { ActionType, RendererAction, Action } from "@app/@types/actions"
 
-import { fromEventIPC } from "@app/main/events/ipc";
-import { fromEventTray } from "@app/main/events/tray"
-import { SubscriptionMap } from "@app/utils/observables"
+export const fromAction = (
+  type: ActionType,
+  filterPayloadBy?: string
+): Observable<any> => {
+  const filterType = (observable: Observable<Action>) =>
+    observable.pipe(
+      filter((x) => x !== undefined && x.type === type),
+      map((x) => x.payload),
+      map((x) =>
+        filterPayloadBy !== undefined && x !== null ? x[filterPayloadBy] : x
+      )
+    )
 
-export enum UserAction {
-  LOGIN = "loginRequest",
-  SIGNUP = "signupRequest",
-  SIGNOUT = "signoutRequest",
-  QUIT = "quitRequest",
+  /* eslint-disable @typescript-eslint/strict-boolean-expressions */
+  if ((<any>Object).values(RendererAction).includes(type))
+    return filterType(fromEventIPC("action"))
+
+  return filterType(eventTray)
 }
-
-export const actionMap: SubscriptionMap = {
-    loginRequest: fromEventIPC(UserAction.LOGIN),
-    signupRequest: fromEventIPC(UserAction.SIGNUP),
-    signoutRequest: fromEventTray(UserAction.SIGNOUT),
-    quitRequest: fromEventTray(UserAction.QUIT)
-} 
-
-export const fromAction = (action: UserAction) => actionMap[action]

@@ -4,23 +4,23 @@
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
 
-import { mapValues } from 'lodash'
-import { persist, persistClear } from '@app/utils/persist'
-import { StateIPC } from '@app/@types/state'
-import { combineLatest, merge } from 'rxjs'
-import { startWith } from 'rxjs/operators'
+import { mapValues } from "lodash"
+import { persist, persistClear } from "@app/utils/persist"
+import { StateIPC } from "@app/@types/state"
+import { combineLatest, merge } from "rxjs"
+import { startWith } from "rxjs/operators"
 import {
   userEmail,
   userConfigToken,
   userAccessToken,
-  userRefreshToken
-} from '@app/main/observables/user'
+  userRefreshToken,
+} from "@app/main/observables/user"
 
-import { loginFailure } from '@app/main/observables/login'
-import { signupFailure } from '@app/main/observables/signup'
-import { containerCreateFailure } from '@app/main/observables/container'
-import { protocolLaunchFailure } from '@app/main/observables/protocol'
-import { signoutRequest } from '@app/main/observables/tray'
+import { loginFailure } from "@app/main/observables/login"
+import { signupFailure } from "@app/main/observables/signup"
+import { containerCreateFailure } from "@app/main/observables/container"
+import { protocolLaunchFailure } from "@app/main/observables/protocol"
+import { signoutRequest } from "@app/main/observables/tray"
 
 // We create observables for each piece of state we want to persist.
 // Each observable subscribes to the parts of the application that provide
@@ -30,7 +30,7 @@ const subscribed = {
   userEmail,
   userConfigToken,
   userAccessToken,
-  userRefreshToken
+  userRefreshToken,
 }
 
 // We combined the "subscribed" observables into a dictionary, using their names

@@ -3,15 +3,12 @@
  * @file app.ts
  * @brief This file contains all RXJS observables created from events caused by clicking on the tray.
  */
-import { Subject } from 'rxjs'
-import { filter } from 'rxjs/operators'
+import { Subject } from "rxjs"
 
-import { UserAction } from '@app/utils/actions'
+import { TrayAction, Action } from "@app/@types/actions"
 
-export const eventTray = new Subject()
+export const eventTray = new Subject<Action>()
 export const eventTrayActions = {
-  signout: () => eventTray.next('signoutRequest'),
-  quit: () => eventTray.next('quitRequest')
+  signout: () => eventTray.next({ type: TrayAction.SIGNOUT, payload: null }),
+  quit: () => eventTray.next({ type: TrayAction.QUIT, payload: null }),
 }
-export const fromEventTray = (action: UserAction) =>
-  eventTray.pipe(filter((request) => request === action))
