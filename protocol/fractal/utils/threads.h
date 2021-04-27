@@ -2,8 +2,10 @@
 #define FRACTAL_THREADS_H
 
 // So that SDL sees symbols such as memcpy
-#if defined(_WIN32)
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <string.h>
 #endif
 
 #define SDL_MAIN_HANDLED
