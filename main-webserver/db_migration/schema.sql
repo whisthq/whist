@@ -1,4 +1,4 @@
-  
+
 --
 -- PostgreSQL database dump
 --
@@ -236,7 +236,7 @@ CREATE TABLE hardware.instance_info (
     "runningTasksCount" bigint,
     ip character varying NOT NULL,
     status character varying NOT NULL,
-    is_draining boolean DEFAULT false NOT NULL,
+    ami_id character varying NOT NULL,
     location character varying NOT NULL
 );
 

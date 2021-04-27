@@ -51,7 +51,7 @@ def host_service_auth(**kwargs):
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    return initial_instance_auth_helper(address, instance_id)
+    return initial_instance_auth_helper(address, instance_id, "us-east-1")
 
 
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
