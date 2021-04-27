@@ -318,8 +318,8 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
     // Use 256kb static buffer for sending smaller TCP packets
     // But use our block allocator for sending large TCP packets
     // This function fragments the heap too much to use malloc here
-    char* packet_buffer = allocate_custom_block(sizeof(FractalPacket) + len + 64);
-    char* encrypted_packet_buffer = allocate_custom_block(sizeof(FractalPacket) + len + 128);
+    char* packet_buffer = allocate_region(sizeof(FractalPacket) + len + 64);
+    char* encrypted_packet_buffer = allocate_region(sizeof(FractalPacket) + len + 128);
 
     FractalPacket* packet = (FractalPacket*)packet_buffer;
 
@@ -351,8 +351,8 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
         failed = true;
     }
 
-    free_custom_block(packet_buffer);
-    free_custom_block(encrypted_packet_buffer);
+    deallocate_region(packet_buffer);
+    deallocate_region(encrypted_packet_buffer);
 
     // Return success code
     return failed ? -1 : 0;
@@ -729,7 +729,7 @@ static char* encrypted_packet_buffer = NULL;
 void clear_reading_tcp(SocketContext* context) {
     UNUSED(context);
     reading_packet_len = 0;
-    encrypted_packet_buffer = allocate_custom_block(packet_capacity);
+    encrypted_packet_buffer = allocate_region(packet_capacity);
 }
 
 FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
@@ -749,8 +749,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         // Make the tcp buffer larger if needed
         if (reading_packet_len + TCP_SEGMENT_SIZE >= packet_capacity) {
             packet_capacity *= 2;
-            encrypted_packet_buffer =
-                realloc_custom_block(encrypted_packet_buffer, packet_capacity);
+            encrypted_packet_buffer = realloc_region(encrypted_packet_buffer, packet_capacity);
         }
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
@@ -780,9 +779,9 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
 
         static char* decrypted_packet_buffer = NULL;
         if (decrypted_packet_buffer != NULL) {
-            free_custom_block(decrypted_packet_buffer);
+            deallocate_region(decrypted_packet_buffer);
         }
-        decrypted_packet_buffer = allocate_custom_block(target_len);
+        decrypted_packet_buffer = allocate_region(target_len);
 
         // If the target len is valid, and actual len > target len, then we're
         // good to go
@@ -804,8 +803,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             if (reading_packet_len < packet_capacity / 4 &&
                 packet_capacity > 2 * SMALLEST_TCP_BUFFER_SIZE) {
                 packet_capacity /= 2;
-                encrypted_packet_buffer =
-                    realloc_custom_block(encrypted_packet_buffer, packet_capacity);
+                encrypted_packet_buffer = realloc_region(encrypted_packet_buffer, packet_capacity);
             }
 
             if (decrypted_len < 0) {

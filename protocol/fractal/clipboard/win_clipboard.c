@@ -274,7 +274,7 @@ ClipboardData* unsafe_get_clipboard() {
                 // windows clipboard saves bitmap data without header -
                 //      add BMP header and then convert from bmp to png
                 //      before saving to clipboard data to be sent to peer
-                char* bmp_data = allocate_custom_block(bmp_size);
+                char* bmp_data = allocate_region(bmp_size);
                 if (!bmp_data) {
                     break;
                 }
@@ -292,7 +292,7 @@ ClipboardData* unsafe_get_clipboard() {
                     free(bmp_data);
                     break;
                 }
-                free_custom_block(bmp_data);
+                deallocate_region(bmp_data);
 
                 // Mark as CLIPBOARD IMAGE
                 cb->type = CLIPBOARD_IMAGE;
@@ -483,15 +483,15 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             if (cb->size > 0) {
                 // Store max size on bmp_size, png_to_bmp will read this
                 int bmp_size = sizeof(clipboard_buf) + 14;
-                char* bmp_buf = allocate_custom_block(bmp_size);
+                char* bmp_buf = allocate_region(bmp_size);
                 if (png_to_bmp(cb->data, cb->size, bmp_buf, &bmp_size) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
-                    free_custom_block(bmp_buf);
+                    deallocate_region(bmp_buf);
                     return;
                 }
                 if (bmp_size - 14 > (int)sizeof(clipboard_buf)) {
                     LOG_WARNING("Could not copy, clipboard too large! %d bytes", bmp_size - 14);
-                    free_custom_block(bmp_buf);
+                    deallocate_region(bmp_buf);
                     return;
                 }
                 cf_type = CF_DIB;
@@ -499,7 +499,7 @@ void unsafe_set_clipboard(ClipboardData* cb) {
                 h_mem = get_global_alloc(bmp_buf + 14, bmp_size - 14,
                                          false);  // no null char at end (false)
 
-                free_custom_block(bmp_buf);
+                deallocate_region(bmp_buf);
             }
             break;
         case CLIPBOARD_FILES:
