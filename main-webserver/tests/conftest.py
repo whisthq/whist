@@ -257,6 +257,7 @@ def bulk_instance():
             else f"instance-{os.urandom(16).hex()}",
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
+            ip='1.1.1.1',
             **kwargs,
         )
 
