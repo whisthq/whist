@@ -12,6 +12,7 @@ from app.helpers.utils.aws.base_ecs_client import ECSClient
 import pytest
 
 from flask_jwt_extended import create_access_token
+from flask_jwt_extended.default_callbacks import default_decode_key_callback
 
 from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
@@ -47,6 +48,9 @@ def app():
     # TODO: this entire function generally the same as entry_web.py. Can we combine?
     _app = create_app(testing=True)
     _app.test_client_class = FractalAPITestClient
+
+    # Reconfigure Flask-JWT-Extended so it can validate test JWTs
+    _app.extensions["flask-jwt-extended"].decode_key_loader(default_decode_key_callback)
 
     # enable web requests
     if not set_web_requests_status(True):
