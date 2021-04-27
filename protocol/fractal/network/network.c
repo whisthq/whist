@@ -729,6 +729,8 @@ void clear_reading_tcp(SocketContext* context) {
     reading_packet_len = 0;
     if (encrypted_tcp_packet_buffer == NULL) {
         encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
+    } else {
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
     }
 }
 
@@ -746,7 +748,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
 
     int len = TCP_SEGMENT_SIZE;
     while (should_recvp && len == TCP_SEGMENT_SIZE) {
-        // Make the tcp buffer larger if needed, by doubling it in size
+        // Make the tcp buffer larger if needed
         resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
@@ -798,7 +800,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             }
             reading_packet_len = actual_len - target_len;
 
-            // If the buffer is smaller than 1/4th the size, let's just realloc it smaller
+            // Realloc the buffer smaller if we have room to
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len);
 
             if (decrypted_len < 0) {

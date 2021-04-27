@@ -674,14 +674,14 @@ void* safe_realloc(void* buffer, size_t new_size);
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
 typedef struct DynamicBuffer {
-    int size;
-    int capacity;
+    size_t size;
+    size_t capacity;
     bool use_memory_regions;
     char* buf;
 } DynamicBuffer;
 
 DynamicBuffer* init_dynamic_buffer(bool use_memory_regions);
-void resize_dynamic_buffer(DynamicBuffer* db, int new_size);
+void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size);
 void free_dynamic_buffer(DynamicBuffer* db);
 
 // Dummy typedef for block allocator since only pointers are used anyway
