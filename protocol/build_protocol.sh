@@ -12,10 +12,10 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 # Set Cmake release flag
-if [[ ${1:-''} == release ]]; then
-    release_tag='-D CMAKE_BUILD_TYPE=Release'
+if [[ -n "${1:-''}" ]]; then
+    release_tag="-D CMAKE_BUILD_TYPE=$1"
 else
-    release_tag=''
+    release_tag=""
 fi
 
 # Build protocol
