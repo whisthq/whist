@@ -33,9 +33,6 @@ export const action = (type: ActionType): Observable<any> => {
     observable.pipe(
       filter((x) => x !== undefined && x.type === type),
       map((x) => x.payload)
-      //   map((x) =>
-      //     filterPayloadBy !== undefined && x !== null ? x[filterPayloadBy] : x
-      //   )
     )
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */
