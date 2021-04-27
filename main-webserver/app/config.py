@@ -181,11 +181,14 @@ class DeploymentConfig:
 
     database_url = property(getter("DATABASE_URL", fetch=False))
 
+    AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
     HOST_SERVICE_SECRET = property(getter("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET"))
+    JWT_DECODE_ALGORITHMS = ["RS256"]
+    JWT_DECODE_AUDIENCE = "https://api.fractal.co"
     JWT_QUERY_STRING_NAME = "access_token"
     JWT_TOKEN_LOCATION = ("headers", "query_string")
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
@@ -385,6 +388,9 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
 
         config_table = config_table_names.DEVELOPMENT
 
+        AUTH0_DOMAIN = None
+        JWT_DECODE_AUDIENCE = None
+        JWT_DECODE_ALGORITHMS = ["HS256"]
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         SENTRY_DSN = ""
 
