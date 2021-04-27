@@ -1,13 +1,16 @@
 import os
 
+from urllib.parse import urlunsplit
+
 import stripe
 
-from flask import Flask
+from flask import current_app, Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
+from jwt import PyJWKClient
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.config import CONFIG_MATRIX
@@ -19,6 +22,29 @@ from auth0 import ScopeError
 jwtManager = JWTManager()
 ma = Marshmallow()
 mail = SendGrid()
+
+
+@jwtManager.decode_key_loader
+def decode_key_callback(unverified_headers, _unverified_payload):
+    """Dynamically determine the key to use to validate each JWT.
+
+    The AUTH0_DOMAIN Flask configuration variable MUST be set.
+
+    Inspiration:
+        https://pyjwt.readthedocs.io/en/stable/usage.html#retrieve-rsa-signing-keys-from-a-jwks-endpoint
+
+    Specification:
+        https://flask-jwt-extended.readthedocs.io/en/stable/api/#flask_jwt_extended.JWTManager.decode_key_loader
+    """
+
+    parts = ("https", current_app.config["AUTH0_DOMAIN"], "/.well-known/jwks.json", None, None)
+    jwks_client = PyJWKClient(urlunsplit(parts))
+
+    # Extract the ID of the public verification key to download from the Auth0 tenant's
+    # /.well-known/jwks.json endpoint from the access token headers. Then we can tell our
+    # PyJWKClient instance to download the correct public key set for us and return its string
+    # representation.
+    return jwks_client.get_signing_key(unverified_headers["kid"]).key
 
 
 def create_app(testing=False):
