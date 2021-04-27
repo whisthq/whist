@@ -57,12 +57,12 @@ DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
 
 void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
     int new_capacity = db->capacity;
-    // If the capacity is too small, keep doubling it
-    while (new_size > new_capacity) {
-        new_capacity = db->capacity * 2;
+    // If the new capacity is too small, keep doubling it
+    while (new_capacity < new_size) {
+        new_capacity *= 2;
     }
     // If the capacity is too large, keep halving it
-    while (new_size < new_capacity / 4) {
+    while (new_capacity / 4 > new_size) {
         new_capacity /= 2;
     }
 
@@ -72,12 +72,7 @@ void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
         if (db->use_memory_regions) {
             new_buffer = realloc_region(db->buf, new_capacity);
         } else {
-            new_buffer = realloc(db->buf, new_capacity);
-        }
-        // TODO: Use safe_realloc instead
-        if (!new_buffer) {
-            LOG_FATAL("Could not realloc dynamic buffer from %d to %d!", db->capacity,
-                      new_capacity);
+            new_buffer = safe_realloc(db->buf, new_capacity);
         }
         // Update the capacity and buffer
         db->capacity = new_capacity;
@@ -326,6 +321,15 @@ void* safe_malloc(size_t size) {
     }
 }
 
+void* safe_realloc(void* buffer, size_t new_size) {
+    void* ret = realloc(buffer, new_size);
+    if (ret == NULL) {
+        LOG_FATAL("Realloc of size %d failed!", new_size);
+    } else {
+        return ret;
+    }
+}
+
 bool safe_strncpy(char* destination, const char* source, size_t num) {
     /*
      * Safely copy a string from source to destination.
@@ -475,7 +479,7 @@ void* allocate_region(size_t region_size) {
 #ifdef _WIN32
     void* p = VirtualAlloc(NULL, region_size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (p == NULL) {
-        LOG_FATAL("Could not VirtualAlloc");
+        LOG_FATAL("Could not VirtualAlloc. Error %x", GetLastError());
     }
     ((RegionHeader*)p)->size = region_size;
 #else
@@ -533,21 +537,23 @@ void* realloc_region(void* region, size_t new_region_size) {
     size_t region_size = p->size;
 
     // Allocate new region
-    void* new_p = allocate_region(new_region_size);
+    void* new_region = allocate_region(new_region_size);
     // Copy the actual data over, truncating to new_region_size if there's not enough space
-    memcpy(new_p, region, min(region_size - sizeof(RegionHeader), new_region_size));
+    memcpy(new_region, region, min(region_size - sizeof(RegionHeader), new_region_size));
     // Allocate the old region
     deallocate_region(region);
 
     // Return the new region
-    return new_p;
+    return new_region;
 }
 
 void deallocate_region(void* region) {
     RegionHeader* p = TO_REGION_HEADER(region);
 
 #ifdef _WIN32
-    VirtualFree(p, 0, MEM_RELEASE);
+    if (VirtualFree(p, 0, MEM_RELEASE) == 0) {
+        LOG_FATAL("VirtualFree failed! Error %x", GetLastError());
+    }
 #else
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
