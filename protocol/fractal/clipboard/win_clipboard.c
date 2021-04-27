@@ -286,7 +286,7 @@ ClipboardData* unsafe_get_clipboard() {
                 memcpy(bmp_data + 14, cb->data, cb->size);
 
                 // convert BMP to PNG, and save it into the Clipboard
-                cb->size = sizeof(clipboard_buf); // Tell bmp_to_png the max size of the buffer
+                cb->size = sizeof(clipboard_buf);  // Tell bmp_to_png the max size of the buffer
                 if (bmp_to_png(bmp_data, bmp_size, cb->data, &cb->size) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
                     free(bmp_data);
@@ -496,7 +496,8 @@ void unsafe_set_clipboard(ClipboardData* cb) {
                 }
                 cf_type = CF_DIB;
                 // Create a global allocation of the BMP
-                h_mem = get_global_alloc(bmp_buf + 14, bmp_size - 14, false);  // no null char at end (false)
+                h_mem = get_global_alloc(bmp_buf + 14, bmp_size - 14,
+                                         false);  // no null char at end (false)
 
                 free_custom_block(bmp_buf);
             }
