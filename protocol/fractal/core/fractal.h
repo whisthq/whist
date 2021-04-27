@@ -647,6 +647,12 @@ NORETURN void terminate_protocol();
 void* safe_malloc(size_t size);
 
 /**
+ * @brief                          Wrapper around realloc that will correctly exit the
+ *                                 protocol when realloc fails
+ */
+void* safe_realloc(void* buffer, size_t new_size);
+
+/**
  * @brief                          Safely copy a string from source to destination.
  *
  * @details                        Copies at most `num` bytes from `source` to `destination`. Bytes
@@ -715,6 +721,8 @@ void free_block(BlockAllocator* block_allocator, void* block);
 ==================
 Region Allocator
 ==================
+
+Note: All of these functions are safe, and will FATAL_ERROR on failure
 
 This is a thin wrapper around mmap/VirtualAlloc, and will give us fine-grained
 control over regions of memory and whether or not the OS will allocate actual pages of RAM for us.
