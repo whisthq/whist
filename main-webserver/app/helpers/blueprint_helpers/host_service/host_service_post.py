@@ -27,7 +27,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
 
     """
     auth_token = os.urandom(16).hex()
-    preexisting_instance = InstanceInfo.query.get(instance_id).one_or_none()
+    preexisting_instance = InstanceInfo.query.get(instance_id)
 
     if preexisting_instance is not None:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
@@ -58,7 +58,7 @@ def instance_heartbeat_helper(
     Returns: request status
 
     """
-    instance = InstanceInfo.query.get(instance_id).one_or_none()
+    instance = InstanceInfo.query.get(instance_id)
     enforce_auth = False
     if instance is None:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
