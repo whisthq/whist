@@ -4,7 +4,7 @@ import { Observable } from "rxjs"
 import { filter, map } from "rxjs/operators"
 import { ActionType, RendererAction, Action } from "@app/@types/actions"
 
-export const fromAction = (
+export const action = (
   type: ActionType,
   filterPayloadBy?: string
 ): Observable<any> => {

@@ -4,13 +4,11 @@
 import { debugObservables } from "@app/utils/logging"
 import { share } from "rxjs/operators"
 
-import { fromAction } from "@app/utils/actions"
+import { action } from "@app/main/events/actions"
 import { TrayAction } from "@app/@types/actions"
 
-const filterTray = (action: TrayAction) => fromAction(action).pipe(share())
-
-export const signoutRequest = filterTray(TrayAction.SIGNOUT)
-export const quitRequest = filterTray(TrayAction.QUIT)
+export const signoutRequest = action(TrayAction.SIGNOUT).pipe(share())
+export const quitRequest = action(TrayAction.QUIT).pipe(share())
 
 // Logging
 debugObservables(

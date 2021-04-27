@@ -21,18 +21,18 @@ import {
   emailSignupAccessToken,
   emailSignupRefreshToken,
 } from "@app/utils/signup"
-import { fromAction } from "@app/utils/actions"
+import { action } from "@app/main/events/actions"
 import { RendererAction } from "@app/@types/actions"
 
 export const userEmail = merge(
   fromEventPersist("userEmail"),
-  fromAction(RendererAction.LOGIN, "email").pipe(sample(loginSuccess)),
-  fromAction(RendererAction.SIGNUP, "email").pipe(sample(signupSuccess))
+  action(RendererAction.LOGIN, "email").pipe(sample(loginSuccess)),
+  action(RendererAction.SIGNUP, "email").pipe(sample(signupSuccess))
 ).pipe(filter(identity), share())
 
 export const userConfigToken = merge(
   fromEventPersist("userConfigToken"),
-  fromAction(RendererAction.LOGIN, "password").pipe(
+  action(RendererAction.LOGIN, "password").pipe(
     sample(loginSuccess),
     withLatestFrom(loginSuccess),
     switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))
