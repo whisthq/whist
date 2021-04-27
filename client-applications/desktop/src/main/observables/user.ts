@@ -11,6 +11,7 @@ import {
   withLatestFrom,
   share,
   filter,
+  pluck,
 } from "rxjs/operators"
 import {
   emailLoginConfigToken,
@@ -22,18 +23,17 @@ import {
   emailSignupRefreshToken,
 } from "@app/utils/signup"
 import { loginAction, signupAction } from "@app/main/events/actions"
-import { objectFilter } from "@app/utils/observables"
 
 export const userEmail = merge(
   fromEventPersist("userEmail"),
-  loginAction.pipe(objectFilter("email"), sample(loginSuccess)),
-  signupAction.pipe(objectFilter("email"), sample(signupSuccess))
+  loginAction.pipe(pluck("email"), sample(loginSuccess)),
+  signupAction.pipe(pluck("email"), sample(signupSuccess))
 ).pipe(filter(identity), share())
 
 export const userConfigToken = merge(
   fromEventPersist("userConfigToken"),
   loginAction.pipe(
-    objectFilter("password"),
+    pluck("password"),
     sample(loginSuccess),
     withLatestFrom(loginSuccess),
     switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))

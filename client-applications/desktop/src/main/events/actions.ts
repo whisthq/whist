@@ -2,12 +2,7 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { eventTray } from "@app/main/events/tray"
 import { Observable } from "rxjs"
 import { filter, map, share } from "rxjs/operators"
-import {
-  ActionType,
-  RendererAction,
-  TrayAction,
-  Action,
-} from "@app/@types/actions"
+import { ActionType, Action } from "@app/@types/actions"
 
 const action = (type: ActionType): Observable<any> => {
   /*
@@ -36,15 +31,15 @@ const action = (type: ActionType): Observable<any> => {
     )
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-  if ((<any>Object).values(RendererAction).includes(type))
+  if ((<any>Object).values(ActionType).includes(type))
     return filterType(fromEventIPC("action"))
 
   return filterType(eventTray)
 }
 
 // Should all actions be "hot"?
-export const loginAction = action(RendererAction.LOGIN)
-export const signupAction = action(RendererAction.SIGNUP)
+export const loginAction = action(ActionType.LOGIN)
+export const signupAction = action(ActionType.SIGNUP)
 
-export const signoutAction = action(TrayAction.SIGNOUT).pipe(share())
-export const quitAction = action(TrayAction.QUIT).pipe(share())
+export const signoutAction = action(ActionType.SIGNOUT).pipe(share())
+export const quitAction = action(ActionType.QUIT).pipe(share())

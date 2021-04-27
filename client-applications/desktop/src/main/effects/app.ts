@@ -14,7 +14,7 @@ import {
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
-import { eventTrayActions } from "@app/main/events/tray"
+import { eventActionTypes } from "@app/main/events/tray"
 import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
@@ -109,7 +109,7 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
   .subscribe(() => {
     closeWindows()
     hideAppDock()
-    createTray(eventTrayActions)
+    createTray(eventActionTypes)
   })
 
 // If the update is downloaded, quit the app and install the update

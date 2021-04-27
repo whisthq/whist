@@ -1,14 +1,9 @@
-export enum TrayAction {
+export enum ActionType {
+  LOGIN = "loginRequest",
+  SIGNUP = "signupRequest",
   SIGNOUT = "signoutRequest",
   QUIT = "quitRequest",
 }
-
-export enum RendererAction {
-  LOGIN = "loginRequest",
-  SIGNUP = "signupRequest",
-}
-
-export type ActionType = TrayAction | RendererAction
 
 export interface Action {
   type: ActionType
