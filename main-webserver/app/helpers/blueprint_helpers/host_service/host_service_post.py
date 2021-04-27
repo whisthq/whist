@@ -21,6 +21,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
     Args:
         ip: the IP address of the instance to be authed
         instance_id: the instance ID of the instance to be authenticated
+        location: which region the instance is in
 
     Returns:
 
