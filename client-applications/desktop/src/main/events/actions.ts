@@ -9,7 +9,7 @@ import {
   Action,
 } from "@app/@types/actions"
 
-export const action = (type: ActionType): Observable<any> => {
+const action = (type: ActionType): Observable<any> => {
   /*
         Description:
             An action is defined as any event that the user generates by interacting with the client
@@ -24,7 +24,7 @@ export const action = (type: ActionType): Observable<any> => {
             // Output: {email: test@test.com, password: Test123}
 
         Arguments:
-            children(JSX.Element | JSX.Element[]): Any children nested within this component
+            type (ActionType): The action type, see @types/actions for all available types
     */
 
   // Helper function which takes an Action-emitting observable and emits only Actions that match
