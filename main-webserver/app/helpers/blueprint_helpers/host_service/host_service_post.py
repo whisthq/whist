@@ -1,6 +1,7 @@
 import os
 from time import time
 from typing import Tuple
+from flask import Response
 from flask.json import jsonify
 
 from app.constants.http_codes import (
@@ -15,7 +16,7 @@ from app.helpers.utils.general.sql_commands import (
 from app.models import db, InstanceInfo, RegionToAmi
 
 
-def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tuple[str, int]:
+def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tuple[Response, int]:
     """
 
     Args:
@@ -45,7 +46,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
 
 def instance_heartbeat_helper(
     auth_token: str, instance_id: str, free_ram_kb: int, instance_type: str, is_dying: bool
-) -> Tuple[str, int]:
+) -> Tuple[Response, int]:
     """
 
     Args:
