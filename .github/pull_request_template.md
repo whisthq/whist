@@ -1,6 +1,6 @@
 | Ticket | Title             |
 | ------ | ----------------- |
-| #nb    | Insert Title Here |
+| Closes #nb    | Insert Title Here |
 
 ## Description
 
