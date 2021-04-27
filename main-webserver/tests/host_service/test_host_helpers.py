@@ -62,7 +62,7 @@ def test_heartbeat_no_exist(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert time.time() - inst.last_pinged >= 3
+    assert inst.last_pinged is None
 
 
 def test_heartbeat_dying(bulk_instance):
