@@ -20,10 +20,9 @@ import {
   errorObservables,
 } from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { action } from "@app/main/events/actions"
-import { RendererAction } from "@app/@types/actions"
+import { loginAction } from "@app/main/events/actions"
 
-export const loginRequest = action(RendererAction.LOGIN).pipe(
+export const loginRequest = loginAction.pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
   map(({ email, password }) => [email, password]),
   share()

@@ -11,7 +11,7 @@ import {
   protocolLaunchSuccess,
   protocolLaunchFailure,
 } from "@app/main/observables/protocol"
-import { quitRequest, signoutRequest } from "@app/main/observables/tray"
+import { quitAction, signoutAction } from "@app/main/events/actions"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a container is created and configured. To do this, we need it
@@ -28,5 +28,5 @@ zip(
 // this application will take care of showing an appropriate error message.
 zip(
   protocolLaunchProcess,
-  merge(signoutRequest, quitRequest, protocolLaunchFailure)
+  merge(signoutAction, quitAction, protocolLaunchFailure)
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))

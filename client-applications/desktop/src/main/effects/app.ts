@@ -26,7 +26,7 @@ import {
 import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
-import { quitRequest, signoutRequest } from "@app/main/observables/tray"
+import { quitAction, signoutAction } from "@app/main/events/actions"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -126,11 +126,11 @@ autoUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-quitRequest.subscribe(() => {
+quitAction.subscribe(() => {
   app.quit()
 })
 
-signoutRequest.subscribe(() => {
+signoutAction.subscribe(() => {
   app.relaunch()
   app.exit()
 })

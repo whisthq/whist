@@ -29,3 +29,8 @@ export const emitJSON = (observable: Observable<any>, str: string) =>
 
 export const objectCombine = (obj: SubscriptionMap) =>
   merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
+
+export const objectFilter = (filterKey: string | undefined) =>
+  map((obj: any) =>
+    filterKey !== undefined && obj !== null ? obj[filterKey] : obj
+  )
