@@ -165,7 +165,7 @@ SDL_mutex* render_mutex;
 // Hold information about frames as the packets come in
 #define RECV_FRAMES_BUFFER_SIZE 275
 FrameData receiving_frames[RECV_FRAMES_BUFFER_SIZE];
-BlockAllocator* frame_buf_allocator;
+BlockAllocator* frame_buffer_allocator;
 
 bool has_rendered_yet = false;
 
@@ -326,7 +326,8 @@ int render_video() {
 
         if (!video_decoder_decode(video_context.decoder, frame->compressed_frame, frame->size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
-            free_block(frame_buf_allocator, render_context.frame_buffer);
+            // Since we're done, we free the frame buffer
+            free_block(frame_buffer_allocator, render_context.frame_buffer);
             // rendering = false is set to false last,
             // since that can trigger the next frame render
             rendering = false;
@@ -506,14 +507,15 @@ int render_video() {
         }
 
         video_data.last_rendered_id = render_context.id;
-        free_block(frame_buf_allocator, render_context.frame_buffer);
+        // Since we're done, we free the frame buffer
+        free_block(frame_buffer_allocator, render_context.frame_buffer);
         has_rendered_yet = true;
         // rendering = false is set to false last,
         // since that can trigger the next frame render
         rendering = false;
     } else {
         // If rendering == false,
-        // Then we potentially render the loading screen
+        // Then we potentially render the loading screen as long as loading_index is valid
         if (video_data.loading_index >= 0) {
             const float loading_animation_fps = 20.0;
             if (get_timer(video_data.last_loading_frame_timer) > 1 / loading_animation_fps) {
@@ -760,7 +762,9 @@ int init_video_renderer() {
         LOG_ERROR("Failed to init peer cursors.");
     }
 
-    frame_buf_allocator = create_block_allocator(LARGEST_FRAME_SIZE);
+    // Here we create the frame buffer allocator,
+    // And make it allocate blocks of size LARGEST_FRAME_SIZE
+    frame_buffer_allocator = create_block_allocator(LARGEST_FRAME_SIZE);
 
     can_render = true;
 
@@ -1113,8 +1117,10 @@ int32_t receive_video(FractalPacket* packet) {
             return 0;
         }
         ctx->id = packet->id;
+        // If the frame buffer doesn't exist yet, we allocate one
+        // in order to hold the frame data
         if (ctx->frame_buffer == NULL) {
-            char* p = allocate_block(frame_buf_allocator);
+            char* p = allocate_block(frame_buffer_allocator);
             ctx->frame_buffer = p;
         }
         ctx->packets_received = 0;
