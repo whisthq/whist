@@ -158,6 +158,7 @@ class InstanceInfo(db.Model):
     GPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
     memoryRemainingInInstance = db.Column(db.Float, nullable=False, default=2000.0)
     runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    last_pinged = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
 
 
