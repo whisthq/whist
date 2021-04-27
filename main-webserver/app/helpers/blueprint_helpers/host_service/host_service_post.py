@@ -1,4 +1,5 @@
 import os
+from time import time
 from typing import Tuple
 from flask.json import jsonify
 
@@ -66,6 +67,7 @@ def instance_heartbeat_helper(
         db.session.delete(instance)
     else:
         instance.instance_type = instance_type
+        instance.last_pinged = int(time())
         instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
     db.session.commit()
     return jsonify({"status": SUCCESS}), SUCCESS
