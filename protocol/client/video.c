@@ -23,8 +23,8 @@ Includes
 
 #include <stdio.h>
 
-#include <fractal/cursor/peercursor.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "peercursor.h"
+#include "sdlscreeninfo.h"
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>
@@ -423,7 +423,7 @@ int render_video() {
                 SDL_FreeSurface(cursor_surface);
             } else {
                 // use cursor id to set cursor
-                cursor = SDL_CreateSystemCursor(frame->cursor.cursor_id);
+                cursor = SDL_CreateSystemCursor((SDL_SystemCursor)frame->cursor.cursor_id);
             }
             SDL_SetCursor((SDL_Cursor*)cursor);
 

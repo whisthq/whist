@@ -19,6 +19,7 @@ Includes
 
 #include "sdl_utils.h"
 #include <fractal/utils/png.h>
+#include <fractal/utils/lodepng.h>
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include <fractal/utils/color.h>
@@ -312,3 +313,85 @@ LRESULT CALLBACK low_level_keyboard_proc(INT n_code, WPARAM w_param, LPARAM l_pa
     return CallNextHookEx(mule, n_code, w_param, l_param);
 }
 #endif
+
+// masks for little-endian RGBA
+#define RGBA_MASK_A 0xff000000
+#define RGBA_MASK_B 0x00ff0000
+#define RGBA_MASK_G 0x0000ff00
+#define RGBA_MASK_R 0x000000ff
+
+SDL_Surface* sdl_surface_from_png_file(char* filename) {
+    /*
+        Load a PNG file to an SDL surface using lodepng.
+
+        Arguments:
+            filename (char*): PNG image file path
+
+        Returns:
+            surface (SDL_Surface*): the loaded surface on success, and NULL on failure
+
+        NOTE:
+            After a successful call to sdl_surface_from_png_file, remember to call
+            `SDL_FreeSurface(surface)` to free memory.
+    */
+
+    unsigned int w, h, error;
+    unsigned char* image;
+
+    // decode to 32-bit RGBA
+    // TODO: We need to free image after destroying the SDL_Surface!
+    // Perhaps we should simply return a PNG buffer and have the caller
+    // manage memory allocation.
+    error = lodepng_decode32_file(&image, &w, &h, filename);
+    if (error) {
+        LOG_ERROR("decoder error %u: %s\n", error, lodepng_error_text(error));
+        return NULL;
+    }
+
+    // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
+    SDL_Surface* surface =
+        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
+                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
+
+    if (surface == NULL) {
+        LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
+        return NULL;
+    }
+
+    return surface;
+}
+
+SDL_mutex* safe_SDL_CreateMutex() {  // NOLINT(readability-identifier-naming)
+    SDL_mutex* ret = SDL_CreateMutex();
+    if (ret == NULL) {
+        LOG_FATAL("Failed to safe_SDL_CreateMutex! %s", SDL_GetError());
+    }
+    return ret;
+}
+
+void safe_SDL_LockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_LockMutex(mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
+    }
+}
+
+int safe_SDL_TryLockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    int status = SDL_TryLockMutex(mutex);
+    if (status == 0 || status == SDL_MUTEX_TIMEDOUT) {
+        return status;
+    } else {
+        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
+    }
+}
+
+void safe_SDL_UnlockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_UnlockMutex(mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_UnlockMutex! %s", SDL_GetError());
+    }
+}
+
+void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
+    if (SDL_CondWait(cond, mutex) < 0) {
+        LOG_FATAL("Failed to safe_SDL_CondWait! %s", SDL_GetError());
+    }
+}

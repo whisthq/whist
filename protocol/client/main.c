@@ -29,12 +29,14 @@ Includes
 #include <string.h>
 #include <fcntl.h>
 
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
 #include <fractal/core/fractal.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"

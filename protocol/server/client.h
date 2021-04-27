@@ -58,7 +58,7 @@ typedef struct Client {
 
 } Client;
 
-extern SDL_mutex *state_lock;
+extern FractalMutex state_lock;
 extern RWLock is_active_rwlock;
 
 extern Client clients[MAX_NUM_CLIENTS];

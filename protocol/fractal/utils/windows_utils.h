@@ -52,7 +52,7 @@ Public Functions
  * @brief                          Attaches the current thread to the specified
  *                                 current input desktop
  *
- * @param currentInputDesktop      The Windows desktop that the current thread
+ * @param current_input_desktop    The Windows desktop that the current thread
  *                                 gets set to
  *
  * @returns                        Will return -2 on failure, will return 0 on

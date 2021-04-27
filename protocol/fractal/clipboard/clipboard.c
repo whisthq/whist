@@ -1,7 +1,7 @@
 #include "clipboard.h"
 #include <fractal/core/fractal.h>
 
-SDL_mutex* mutex;
+FractalMutex mutex;
 bool preserve_local_clipboard = false;
 
 void init_clipboard(bool is_client) {
@@ -19,7 +19,7 @@ void init_clipboard(bool is_client) {
     // If the caller is the client, then the clipboard state
     //     should be preserved for the shared clipboard state.
     preserve_local_clipboard = is_client;
-    mutex = safe_SDL_CreateMutex();
+    mutex = fractal_create_mutex();
     unsafe_init_clipboard();
 }
 
@@ -43,9 +43,9 @@ ClipboardData* get_clipboard() {
         return NULL;
     }
 
-    safe_SDL_LockMutex(mutex);
+    fractal_lock_mutex(mutex);
     ClipboardData* cb = unsafe_get_clipboard();
-    safe_SDL_UnlockMutex(mutex);
+    fractal_unlock_mutex(mutex);
     return cb;
 }
 
@@ -55,11 +55,11 @@ void set_clipboard(ClipboardData* cb) {
         return;
     }
 
-    safe_SDL_LockMutex(mutex);
+    fractal_lock_mutex(mutex);
     unsafe_set_clipboard(cb);
     // clear out update from filling clipboard
     unsafe_has_clipboard_updated();
-    safe_SDL_UnlockMutex(mutex);
+    fractal_unlock_mutex(mutex);
 }
 
 bool has_clipboard_updated() {
@@ -68,9 +68,9 @@ bool has_clipboard_updated() {
         return false;
     }
 
-    if (SDL_TryLockMutex(mutex) == 0) {
+    if (fractal_try_lock_mutex(mutex) == 0) {
         bool has_clipboard_updated = unsafe_has_clipboard_updated();
-        safe_SDL_UnlockMutex(mutex);
+        fractal_unlock_mutex(mutex);
         return has_clipboard_updated;
     } else {
         // LOG_WARNING("Could not check has_clipboard_updated, clipboard is busy!");
@@ -84,10 +84,10 @@ void destroy_clipboard() {
         return;
     }
 
-    safe_SDL_LockMutex(mutex);
+    fractal_lock_mutex(mutex);
     unsafe_destroy_clipboard();
-    safe_SDL_UnlockMutex(mutex);
+    fractal_unlock_mutex(mutex);
 
-    SDL_DestroyMutex(mutex);
+    fractal_destroy_mutex(mutex);
     mutex = NULL;
 }

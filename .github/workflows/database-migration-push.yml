@@ -24,7 +24,6 @@ jobs:
         runs-on: ubuntu-20.04
 
         env:
-            SLACK_URL: ${{ secrets.SLACK_HOOKS_ENDPOINT }}
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # needed for migra diff tool
             GITHUB_SHA: ${{ github.sha }}
             GITHUB_SHA_URL: "https://github.com/fractal/fractal/commit/"
@@ -44,6 +43,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Setup Python-based notifications
+              working-directory: .github/workflows/helpers
+              run: |
+                  pip install -r notifications/requirements.txt
+                  tmpfolder=`mktemp -d`
+                  mv notifications $tmpfolder # even if git repo changes, package is available
+                  echo "PYTHONPATH=$PYTHONPATH:$tmpfolder" >> $GITHUB_ENV # allows us to import from notifications
+
             # A non-pull_request event does not have a github.base_ref set
             # We have to dig into the event object, which has a ref string
             # such as "refs/heads/dev". We trim "refs/heads/" to get the
@@ -56,9 +63,6 @@ jobs:
                       ref="${{ github.event.ref }}"
                       echo "GITHUB_BRANCH=${ref:11}" >> $GITHUB_ENV
                   fi
-
-            - name: Set Slack channel based on branch
-              run: echo "SLACK_CHANNEL=alerts-${{ env.GITHUB_BRANCH }}" >> $GITHUB_ENV
 
             - name: Log GitHub context
               shell: python3 {0}
@@ -81,11 +85,6 @@ jobs:
                   print("GITHUB_BRANCH VARIABLE:")
                   print(os.environ.get("GITHUB_BRANCH"))
                   print(context.strip("\n"))
-
-            - name: Set up Python 3.8
-              uses: actions/setup-python@v2
-              with:
-                  python-version: 3.8
 
             - name: Upgrade pip
               working-directory: main-webserver
@@ -171,15 +170,13 @@ jobs:
             # Perform the database migration if this pull request is being
             # merged.
             - name: Perform database migration
-              if: success()
               run: |
                   echo "MIGRA RETURN CODE: ${{ steps.db-diff.outputs.code }}"
                   echo "MIGRA SQL DIFF: $(cat $PATH_DIFF)"
                   psql --single-transaction --file ${PATH_DIFF} \
                   ${{ steps.db-url.outputs.url }}
 
-            - name: Notify Slack
-              if: success()
+            - name: Notify Slack on success
               shell: python3 {0}
               run: |
                   import os
@@ -198,6 +195,8 @@ jobs:
                   github_sha = os.environ["GITHUB_SHA"]
                   github_branch = os.environ["GITHUB_BRANCH"]
 
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = f"#alerts-{github_branch}"
 
                   def issue_url(number):
                       return urllib.parse.urljoin(os.environ["GITHUB_SHA_URL"],
@@ -215,6 +214,20 @@ jobs:
                           + "Check the GitHub Actions logs for details. "
                           + slack_redirect)
 
-                  slack_debug(os.environ["SLACK_CHANNEL"],
-                              body,
-                              title=title)
+                  slack_debug(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
+
+            - name: Notify Slack on failure
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  sys.path.append(os.environ["PATH_HELPERS"])
+                  from notifications import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  GITHUB_BRANCH = os.environ["GITHUB_BRANCH"]
+                  SLACK_CHANNEL = f"#alerts-{GITHUB_BRANCH}"
+                  BODY = f"@channel Failed to perform database migration. Schemas are out-of-sync on branch `{GITHUB_BRANCH}`."
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

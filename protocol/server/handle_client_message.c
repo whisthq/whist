@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file client_message_handler.c
+ * @file handle_client_message.c
  * @brief This file contains all the code for server-side processing of messages
  *        received from a client
 ============================
@@ -179,11 +179,11 @@ static int handle_user_input_message(FractalClientMessage *fmsg, int client_id,
     }
 
     if (fmsg->type == MESSAGE_MOUSE_MOTION) {
-        safe_SDL_LockMutex(state_lock);
+        fractal_lock_mutex(state_lock);
         clients[client_id].mouse.is_active = true;
         clients[client_id].mouse.x = fmsg->mouseMotion.x_nonrel;
         clients[client_id].mouse.y = fmsg->mouseMotion.y_nonrel;
-        safe_SDL_UnlockMutex(state_lock);
+        fractal_unlock_mutex(state_lock);
     }
 
     return 0;
@@ -450,7 +450,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
     UNUSED(is_controlling);
 
     /*
-    if (safe_SDL_LockMutex(state_lock) != 0) {
+    if (fractal_lock_mutex(state_lock) != 0) {
         LOG_ERROR("Failed to lock client's mouse lock.");
         return -1;
     }
@@ -471,7 +471,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
         }
     } else {
         LOG_ERROR("Unrecognized interaction mode (Mode: %d)", (int)mode);
-        safe_SDL_UnlockMutex(state_lock);
+        fractal_unlock_mutex(state_lock);
         return -1;
     }
 
@@ -483,7 +483,7 @@ static int handle_interaction_mode_message(FractalClientMessage *fmsg, int clien
             }
         }
     }
-    safe_SDL_UnlockMutex(state_lock);
+    fractal_unlock_mutex(state_lock);
     */
     // Remove below if uncommenting
     UNUSED(fmsg);
@@ -510,12 +510,12 @@ static int handle_quit_message(FractalClientMessage *fmsg, int client_id, bool i
     int ret = 0;
     read_unlock(&is_active_rwlock);
     write_lock(&is_active_rwlock);
-    safe_SDL_LockMutex(state_lock);
+    fractal_lock_mutex(state_lock);
     if (quit_client(client_id) != 0) {
         LOG_ERROR("Failed to quit client. (ID: %d)", client_id);
         ret = -1;
     }
-    safe_SDL_UnlockMutex(state_lock);
+    fractal_unlock_mutex(state_lock);
     write_unlock(&is_active_rwlock);
     read_lock(&is_active_rwlock);
     if (ret == 0) {

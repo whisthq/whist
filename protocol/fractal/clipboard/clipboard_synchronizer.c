@@ -50,9 +50,9 @@ volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs 
 volatile bool updating_clipboard;  // acts as a mutex to prevent clipboard activity from overlapping
 volatile bool pending_update_clipboard;  // set to true when GetClipboard() has finished running
 clock last_clipboard_update;
-SDL_sem* clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
+FractalSemaphore clipboard_semaphore;  // used to signal clipboard_synchronizer_thread to continue
 ClipboardData* clipboard;
-SDL_Thread* clipboard_synchronizer_thread;
+FractalThread clipboard_synchronizer_thread;
 static bool connected = false;
 
 bool pending_clipboard_push;
@@ -88,9 +88,10 @@ void init_clipboard_synchronizer(bool is_client) {
     updating_clipboard = false;
     pending_update_clipboard = false;
     start_timer((clock*)&last_clipboard_update);
-    clipboard_semaphore = SDL_CreateSemaphore(0);
+    clipboard_semaphore = fractal_create_semaphore(0);
 
-    clipboard_synchronizer_thread = SDL_CreateThread(update_clipboard, "update_clipboard", NULL);
+    clipboard_synchronizer_thread =
+        fractal_create_thread(update_clipboard, "update_clipboard", NULL);
 
     pending_update_clipboard = true;
 }
@@ -115,7 +116,7 @@ void destroy_clipboard_synchronizer() {
 
     destroy_clipboard();
 
-    SDL_SemPost(clipboard_semaphore);
+    fractal_post_semaphore(clipboard_semaphore);
 }
 
 // NOTE that this function is in the hotpath.
@@ -147,7 +148,7 @@ bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
     updating_get_clipboard = false;
     clipboard = cb;
 
-    SDL_SemPost(clipboard_semaphore);
+    fractal_post_semaphore(clipboard_semaphore);
 
     return true;
 }
@@ -189,7 +190,7 @@ ClipboardData* clipboard_synchronizer_get_new_clipboard() {
             updating_clipboard = true;
             updating_set_clipboard = false;
             updating_get_clipboard = true;
-            SDL_SemPost(clipboard_semaphore);
+            fractal_post_semaphore(clipboard_semaphore);
         }
     }
 
@@ -204,7 +205,7 @@ int update_clipboard(void* opaque) {
     UNUSED(opaque);
 
     while (connected) {
-        SDL_SemWait(clipboard_semaphore);
+        fractal_wait_semaphore(clipboard_semaphore);
 
         if (!connected) {
             break;
@@ -229,7 +230,8 @@ int update_clipboard(void* opaque) {
             // spam
             const int spam_time_ms = 500;
             if (get_timer(clipboard_time) < spam_time_ms / (double)MS_IN_SECOND) {
-                SDL_Delay(max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
+                fractal_sleep(
+                    max((int)(spam_time_ms - MS_IN_SECOND * get_timer(clipboard_time)), 1));
             }
         }
 

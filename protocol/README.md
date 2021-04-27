@@ -64,6 +64,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   ├── network.c <- Functions to connect to server, and send_fmsg
 │   ├── sdl_event_handler.c <- Handle SDL Events
 │   ├── sdl_utils.c <- Set window icon, resize handler
+│   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
 │   └── video.c <- Handle and render video packets
 ├── fractal
 │   ├── audio
@@ -104,7 +105,6 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── mouse.c <- Mutliclient cursor colors
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's
 │   │   ├── rwlock.c <- Implementation of a lock with one writer and many readers
-│   │   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
 │   │   ├── sysinfo.c <- Print RAM/OS/Memory/HDD etc for logging purposes
 │   │   ├── window_name.c <- Linux Getter for the window name of the application
 │   │   └── windows_utils.c <- Log-in past windows start screen
@@ -173,7 +173,9 @@ Downloading precompiled binaries from S3 will require the AWS CLI to be installe
 
 #### Sentry
 
-To build you will need to install the sentry-native sdk. This can be done by running the python script get_latest_sentry.py in the root directory of this repo. The SDK is a CMake project which we load in our root CMakeLists.txt.
+The sentry-native SDK gets automatically built by our CMake build system.
+
+To start the protocol with a given sentry configuration, use the `-e` argument, for instance with `.\FractalClient.exe -e prod <IP>`. See the output of `FractalClient.exe --help` for more details.
 
 #### IDE
 

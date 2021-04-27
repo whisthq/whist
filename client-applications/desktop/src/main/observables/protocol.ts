@@ -21,6 +21,7 @@ import { hostConfigFailure } from '@app/main/observables/host'
 import { loadingFrom } from '@app/utils/observables'
 import { zip, of, fromEvent, merge } from 'rxjs'
 import { map, filter, share, mergeMap } from 'rxjs/operators'
+import { EventEmitter } from 'events'
 
 export const protocolLaunchProcess = containerAssignRequest.pipe(
   map(() => protocolLaunch()),
@@ -47,7 +48,7 @@ export const protocolLoading = loadingFrom(
 )
 
 export const protocolCloseRequest = protocolLaunchProcess.pipe(
-  mergeMap((protocol) => zip(of(protocol), fromEvent(protocol, 'close')))
+  mergeMap((protocol) => zip(of(protocol), fromEvent(protocol as EventEmitter, 'close')))
 )
 
 export const protocolCloseFailure = protocolCloseRequest.pipe(

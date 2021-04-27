@@ -20,7 +20,7 @@ Includes
 */
 
 #include <stdbool.h>
-#include <SDL2/SDL.h>
+#include <stdint.h>
 
 /*
 ============================
@@ -42,8 +42,23 @@ typedef enum FractalCursorState {
     CURSOR_STATE_VISIBLE = 1
 } FractalCursorState;
 
+typedef enum FractalCursorID {
+    FRACTAL_CURSOR_ARROW,
+    FRACTAL_CURSOR_IBEAM,
+    FRACTAL_CURSOR_WAIT,
+    FRACTAL_CURSOR_CROSSHAIR,
+    FRACTAL_CURSOR_WAITARROW,
+    FRACTAL_CURSOR_SIZENWSE,
+    FRACTAL_CURSOR_SIZENESW,
+    FRACTAL_CURSOR_SIZEWE,
+    FRACTAL_CURSOR_SIZENS,
+    FRACTAL_CURSOR_SIZEALL,
+    FRACTAL_CURSOR_NO,
+    FRACTAL_CURSOR_HAND
+} FractalCursorID;
+
 typedef struct FractalCursorImage {
-    SDL_SystemCursor cursor_id;
+    FractalCursorID cursor_id;
     FractalCursorState cursor_state;
     bool cursor_use_bmp;
     unsigned short cursor_bmp_width;
@@ -70,11 +85,5 @@ void init_cursors();
  * @returns                        Current FractalCursorImage
  */
 FractalCursorImage get_current_cursor();
-
-int init_peer_cursors(void);
-
-int destroy_peer_cursors(void);
-
-int draw_peer_cursor(SDL_Renderer *renderer, int x, int y, int r, int g, int b);
 
 #endif  // CURSOR_H

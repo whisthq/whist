@@ -2,7 +2,7 @@
 #define UINPUT_INPUT_DRIVER_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file uinput_input_driver_h.h
+ * @file uinput_input_driver.h
  * @brief This file defines the uinput input device type.
 ============================
 Usage
@@ -16,7 +16,6 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#include "../utils/sdlscreeninfo.h"
 
 /*
 ============================

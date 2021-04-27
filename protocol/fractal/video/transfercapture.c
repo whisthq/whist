@@ -1,4 +1,5 @@
 #include "transfercapture.h"
+#include "screencapture.h"
 #ifdef _WIN32
 #include "dxgicudatransfercapture.h"
 #endif

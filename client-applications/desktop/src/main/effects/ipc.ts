@@ -4,11 +4,12 @@
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
 import { eventIPC } from '@app/main/events/ipc'
-import { mapValues } from 'lodash'
 import { ipcBroadcast } from '@app/utils/ipc'
 import { StateIPC } from '@app/@types/state'
-import { combineLatest, Observable } from 'rxjs'
-import { startWith, mapTo, withLatestFrom } from 'rxjs/operators'
+import { Observable, merge } from 'rxjs'
+import { mapTo, withLatestFrom, map, startWith } from 'rxjs/operators'
+import { toPairs } from 'lodash'
+
 import { WarningLoginInvalid, WarningSignupInvalid } from '@app/utils/constants'
 import { getWindows } from '@app/utils/windows'
 import { loginLoading, loginWarning } from '@app/main/observables/login'
@@ -34,6 +35,18 @@ interface SubscriptionMap {
   [key: string]: Observable<string | number | boolean | SubscriptionMap>
 }
 
+const emitJSON = (observable: Observable<string | number | boolean | SubscriptionMap>, str: string) =>
+  observable.pipe(map(val => ({ [str]: val })))
+
+const objectCombine = (obj: SubscriptionMap) =>
+  merge(
+    ...toPairs(
+      obj
+    ).map(
+      ([name, obs]) => emitJSON(obs, name)
+    )
+  )
+
 const subscribed: SubscriptionMap = {
   loginLoading: loginLoading,
   loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
@@ -42,8 +55,8 @@ const subscribed: SubscriptionMap = {
   signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid))
 }
 
-combineLatest(mapValues(subscribed, (o) => o.pipe(startWith(undefined))))
-  .pipe(withLatestFrom(eventIPC))
-  .subscribe(([subs, state]) =>
+objectCombine(subscribed)
+  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+  .subscribe(([subs, state]) => {
     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-  )
+  })

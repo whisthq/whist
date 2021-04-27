@@ -11,7 +11,6 @@ import {
   protocolLaunchSuccess,
   protocolLaunchFailure
 } from '@app/main/observables/protocol'
-import { hideAppDock } from '@app/utils/windows'
 
 // The current implementation of the protocol process shows its own loading
 // screen while a container is created and configured. To do this, we need it
@@ -30,5 +29,3 @@ zip(
   protocolLaunchProcess,
   protocolLaunchFailure
 ).subscribe(([protocol, _error]) => protocolStreamKill(protocol))
-
-protocolLaunchProcess.subscribe(() => hideAppDock())

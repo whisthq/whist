@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lodepng.h"
 #include "logging.h"
 
 #ifdef _WIN32
@@ -409,126 +408,6 @@ end:
     return ret;
 }
 
-int load_png_file(uint8_t* data[4], int linesize[4], unsigned int* w, unsigned int* h,
-                  enum AVPixelFormat* pix_fmt, char* png_filename) {
-    /*
-        Loads PNG pixel data into `data[0]` given PNG filename in `png_filename`
-
-        Arguments:
-            data[4] (uint8_t*): image buffer
-            linesize[4] (int): image linesizes
-            w (int*): pointer with image width
-            h (int*): pointer with image height
-            pix_fmt (enum AVPixelFormat*): image pixel format
-            png_filename (char*): PNG image file path
-
-        Return:
-            ret (int): 0 on success, negative value on failure
-            => ARG data[0] is loaded with PNG pixel data
-    */
-
-    AVFormatContext* format_ctx = NULL;
-    AVCodec* codec = NULL;
-    AVCodecContext* codec_ctx = NULL;
-    AVFrame* frame = NULL;
-    int ret = 0;
-    AVPacket pkt;
-
-#if LIBAVCODEC_VERSION_MAJOR < 58
-    avcodec_register_all();
-    av_register_all();
-    avfilter_register_all();
-#endif
-
-    char err_buf[1000];
-
-    if ((ret = avformat_open_input(&format_ctx, png_filename, NULL, NULL)) < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("avformat_open_input failed: %s", err_buf);
-        return ret;
-    }
-
-    codec = avcodec_find_decoder(format_ctx->streams[0]->codecpar->codec_id);
-
-    if (!codec) {
-        LOG_ERROR("avcodec_find_decoder failed");
-        ret = AVERROR(EINVAL);
-        goto end;
-    }
-
-    codec_ctx = avcodec_alloc_context3(codec);
-
-    ret = avcodec_parameters_to_context(codec_ctx, format_ctx->streams[0]->codecpar);
-    if (ret < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("avcodec_parameters_to_context failed: %s", err_buf);
-        goto end;
-    }
-
-    if ((ret = avcodec_open2(codec_ctx, codec, NULL)) < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("avcodec_open2 failed: %s", err_buf);
-        goto end;
-    }
-
-    if (!(frame = av_frame_alloc())) {
-        LOG_ERROR("av_frame_alloc failed");
-        ret = AVERROR(ENOMEM);
-        goto end;
-    }
-
-    ret = av_read_frame(format_ctx, &pkt);
-    if (ret < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("av_read_frame failed: %s", err_buf);
-        goto end;
-    }
-
-    ret = avcodec_send_packet(codec_ctx, &pkt);
-
-    if (ret < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("avcodec_send_packet failed: %s", err_buf);
-        goto end;
-    }
-
-    // TODO: for now we correctly assume only one frame pops out per packet, but
-    // to be robust we could try to handle more as in videoencode.c
-    ret = avcodec_receive_frame(codec_ctx, frame);
-
-    if (ret < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("avcodec_receive_frame failed: %s", err_buf);
-        goto end;
-    }
-
-    ret = 0;
-
-    *w = frame->width;
-    *h = frame->height;
-    *pix_fmt = frame->format;
-
-    if ((ret = av_image_alloc(data, linesize, (int)*w, (int)*h, AV_PIX_FMT_RGB24, 32)) < 0) {
-        av_make_error_string(err_buf, sizeof(err_buf), ret);
-        LOG_ERROR("av_image_alloc failed: %s", err_buf);
-        goto end;
-    }
-    ret = 0;
-
-    struct SwsContext* sws_context =
-        sws_getContext(*w, *h, *pix_fmt, *w, *h, AV_PIX_FMT_RGB24, 0, NULL, NULL, NULL);
-
-    sws_scale(sws_context, (uint8_t const* const*)frame->data, frame->linesize, 0, *h, data,
-              linesize);
-
-end:
-    avcodec_close(codec_ctx);
-    avcodec_free_context(&codec_ctx);
-    avformat_close_input(&format_ctx);
-    av_freep(&frame);
-    return ret;
-}
-
 int png_data_to_bmp_data(uint8_t* png_buffer, AVPacket* pkt, int* width, int* height,
                          enum AVPixelFormat* png_format, enum AVPixelFormat* bmp_format) {
     /*
@@ -665,48 +544,4 @@ int png_char_to_bmp(char* png, int size, AVPacket* pkt) {
 
     av_freep(input);
     return 0;
-}
-
-// masks for little-endian RGBA
-#define RGBA_MASK_A 0xff000000
-#define RGBA_MASK_B 0x00ff0000
-#define RGBA_MASK_G 0x0000ff00
-#define RGBA_MASK_R 0x000000ff
-
-SDL_Surface* sdl_surface_from_png_file(char* filename) {
-    /*
-        Load a PNG file to an SDL surface using lodepng.
-
-        Arguments:
-            filename (char*): PNG image file path
-
-        Returns:
-            surface (SDL_Surface*): the loaded surface on success, and NULL on failure
-
-        NOTE:
-            After a successful call to sdl_surface_from_png_file, remember to call
-            `SDL_FreeSurface(surface)` to free memory.
-    */
-
-    unsigned int w, h, error;
-    unsigned char* image;
-
-    // decode to 32-bit RGBA
-    error = lodepng_decode32_file(&image, &w, &h, filename);
-    if (error) {
-        LOG_ERROR("decoder error %u: %s\n", error, lodepng_error_text(error));
-        return NULL;
-    }
-
-    // buffer pointer, width, height, bits per pixel, bytes per row, R/G/B/A masks
-    SDL_Surface* surface =
-        SDL_CreateRGBSurfaceFrom(image, w, h, sizeof(uint32_t) * 8, sizeof(uint32_t) * w,
-                                 RGBA_MASK_R, RGBA_MASK_G, RGBA_MASK_B, RGBA_MASK_A);
-
-    if (surface == NULL) {
-        LOG_ERROR("Failed to load SDL surface from file '%s': %s", filename, SDL_GetError());
-        return NULL;
-    }
-
-    return surface;
 }

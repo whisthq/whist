@@ -73,7 +73,7 @@ bool verify_hmac(void* signature, void* buf, int len, void* key);
  * @param plaintext_packet         Pointer to the plaintext packet to be
  *                                 encrypted
  * @param packet_len               Length of the packet to encrypt, in bytes
- * @param plaintext_packet         Pointer to receive the encrypted packet
+ * @param encrypted_packet         Pointer to receive the encrypted packet
  * @param private_key              AES private key used to encrypt and decrypt
  *                                 the packets
  *
@@ -106,7 +106,7 @@ int decrypt_packet(FractalPacket* encrypted_packet, int packet_len, FractalPacke
  *                                 decrypted
  * @param packet_len               Length of the packet to decrypt, in bytes
  * @param plaintext_packet         Pointer to receive the decrypted packet
- * @param plaintext_packet_len     Length of the decrypted packet, in bytes
+ * @param plaintext_len     Length of the decrypted packet, in bytes
  * @param private_key              AES private key used to encrypt and decrypt
  *                                 the packets
  *

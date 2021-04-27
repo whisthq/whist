@@ -20,7 +20,7 @@ Includes
 #include "sdl_event_handler.h"
 
 #include <fractal/utils/logging.h>
-#include <fractal/utils/sdlscreeninfo.h>
+#include "sdlscreeninfo.h"
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -330,7 +330,11 @@ int handle_mouse_wheel(SDL_Event *event) {
 int handle_multi_gesture(SDL_Event *event) {
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
-    fmsg.multigestureData = event->mgesture;
+    fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
+                                                     .d_dist = event->mgesture.dDist,
+                                                     .x = event->mgesture.x,
+                                                     .y = event->mgesture.y,
+                                                     .num_fingers = event->mgesture.numFingers};
     send_fmsg(&fmsg);
 
     return 0;

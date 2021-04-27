@@ -33,9 +33,9 @@ int multithreaded_print_system_info(void* opaque) {
 }
 
 void print_system_info() {
-    SDL_Thread* sysinfo_thread =
-        SDL_CreateThread(multithreaded_print_system_info, "print_system_info", NULL);
-    SDL_DetachThread(sysinfo_thread);
+    FractalThread sysinfo_thread =
+        fractal_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
+    fractal_detach_thread(sysinfo_thread);
 }
 
 typedef struct DynamicBuffer {
@@ -302,41 +302,6 @@ void* safe_malloc(size_t size) {
         LOG_FATAL("Malloc of size %d failed!", size);
     } else {
         return ret;
-    }
-}
-
-SDL_mutex* safe_SDL_CreateMutex() {  // NOLINT(readability-identifier-naming)
-    SDL_mutex* ret = SDL_CreateMutex();
-    if (ret == NULL) {
-        LOG_FATAL("Failed to safe_SDL_CreateMutex! %s", SDL_GetError());
-    }
-    return ret;
-}
-
-void safe_SDL_LockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
-    if (SDL_LockMutex(mutex) < 0) {
-        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
-    }
-}
-
-int safe_SDL_TryLockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
-    int status = SDL_TryLockMutex(mutex);
-    if (status == 0 && status == SDL_MUTEX_TIMEDOUT) {
-        return status;
-    } else {
-        LOG_FATAL("Failed to safe_SDL_LockMutex! %s", SDL_GetError());
-    }
-}
-
-void safe_SDL_UnlockMutex(SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
-    if (SDL_UnlockMutex(mutex) < 0) {
-        LOG_FATAL("Failed to safe_SDL_UnlockMutex! %s", SDL_GetError());
-    }
-}
-
-void safe_SDL_CondWait(SDL_cond* cond, SDL_mutex* mutex) {  // NOLINT(readability-identifier-naming)
-    if (SDL_CondWait(cond, mutex) < 0) {
-        LOG_FATAL("Failed to safe_SDL_CondWait! %s", SDL_GetError());
     }
 }
 
