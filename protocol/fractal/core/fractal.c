@@ -55,15 +55,21 @@ DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
     return db;
 }
 
-void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
-    int new_capacity = db->capacity;
+void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size) {
+    size_t new_capacity = db->capacity;
+    // If the capacity is too large, keep halving it
+    while (new_capacity / 4 > new_size) {
+        new_capacity /= 2;
+    }
     // If the new capacity is too small, keep doubling it
     while (new_capacity < new_size) {
         new_capacity *= 2;
     }
-    // If the capacity is too large, keep halving it
-    while (new_capacity / 4 > new_size) {
-        new_capacity /= 2;
+
+    if (db->use_memory_regions) {
+        new_capacity = max(new_capacity, 4096);
+    } else {
+        new_capacity = max(new_capacity, 128);
     }
 
     // If the desired capacity has changed, realloc
@@ -78,6 +84,7 @@ void resize_dynamic_buffer(DynamicBuffer* db, int new_size) {
         db->capacity = new_capacity;
         db->buf = new_buffer;
     }
+
     // Update the size of the dynamic buffer
     db->size = new_size;
 }
@@ -185,7 +192,7 @@ int runcmd(const char* cmdline, char** response) {
             b_success = ReadFile(h_child_std_out_rd, ch_buf, sizeof(ch_buf), &dw_read, NULL);
             if (!b_success || dw_read == 0) break;
 
-            int original_size = db->size;
+            size_t original_size = db->size;
             resize_dynamic_buffer(db, original_size + dw_read);
             memcpy(db->buf + original_size, ch_buf, dw_read);
             if (!b_success) break;
@@ -201,6 +208,7 @@ int runcmd(const char* cmdline, char** response) {
         int size = (int)db->size;
         // The caller will have to free this later
         *response = db->buf;
+        // Free the DynamicBuffer struct
         free(db);
         return size;
     } else {
@@ -254,7 +262,10 @@ int runcmd(const char* cmdline, char** response) {
             }
         }
 
+        // The caller will have to free this later
         *response = db->buf;
+
+        // Free the DynamicBuffer struct
         free(db);
 
         /* Close pipe and print return value of pPipe. */
