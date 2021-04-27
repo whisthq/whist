@@ -4,34 +4,27 @@ set -Eeu
 # This script starts the AwesomeWM window manager inside the container, retrieves
 # the container ID and DPI, and starts the container's application (i.e. Google Chrome)
 
-# Things running outside run_as_fractal are run as root.
-# Running with login means that we lose all environment variables, so we need to pass them in manually.
-run_as_fractal() {
-    runuser --login fractal -c \
-        'DISPLAY=:10 \
-        LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/usr/lib/i386-linux-gnu:/usr/local/nvidia/lib:/usr/local/nvidia/lib64 \
-        LOCAL=yes \
-        LC_ALL=C \
-        PATH=/usr/local/cuda-11.0/bin:/usr/local/nvidia/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
-        DEBIAN_FRONTEND=noninteractive '"$1"''
-}
+# Set resource paths
+FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
+DPI_FILENAME=$FRACTAL_MAPPINGS_DIR/DPI
 
 # Install keymappings
 xmodmap /root/.Xmodmap
 
+# Things running outside runuser are run as root
+
 # Start playerctl to respond to media keys
-echo "Starting \"playerctl daemon\" in the background..."
-run_as_fractal "playerctl daemon" &
+echo "Starting 'playerctl daemon' in the background..."
+/usr/share/fractal/run-as-fractal-user.sh "playerctl daemon" &
 
 # Start the AwesomeWM window manager
-# Things running outside runuser are run as root
-echo "Starting awesomeWM..."
-run_as_fractal "awesome" &
+echo "Starting AwesomeWM..."
+/usr/share/fractal/run-as-fractal-user.sh "awesome" &
 
-# Retrieve container parameters
-FRACTAL_MAPPINGS_DIR=/fractal/resourceMappings
-USER_CONFIGS_DIR=/fractal/userConfigs
-DPI_FILENAME=$FRACTAL_MAPPINGS_DIR/DPI
+# Gets the PID of the backgrounded AwesomeWM process
+awesome_pid=$!
+
+echo "AwesomeWM started as PID $awesome_pid..."
 
 # Send DPI to X Server, if DPI is set for the container
 if [ -f "$DPI_FILENAME" ]; then
@@ -39,14 +32,11 @@ if [ -f "$DPI_FILENAME" ]; then
     echo "Xft.dpi: $FRACTAL_DPI" | xrdb -merge
 fi
 
-# Wait for app configs to be ready
-# TODO: perhaps use inotifytools to block instead of poll
-# (https://github.com/fractal/fractal/issues/1132)
-until [ -f $USER_CONFIGS_DIR/.configready ]
-do
-    sleep 0.1
-done
-rm $USER_CONFIGS_DIR/.configready
+# Indicate that the display is ready and consider the service started
+systemd-notify --ready --status="X11 Display and AwesomeWM started"
 
-# Start the application that this container runs
-run_as_fractal fractal-application
+echo "Notified that fractal-display service is ready"
+
+# Wait for AwesomeWM process to finish
+# Note: this never finishes, but leaves the X server open
+wait $awesome_pid
