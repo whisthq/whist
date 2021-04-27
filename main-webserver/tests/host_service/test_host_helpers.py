@@ -30,10 +30,6 @@ def test_heartbeat_no_update(bulk_instance):
     pass
 
 
-def test_heartbeat_no_exist(bulk_instance):
-    pass
-
-
 def test_heartbeat_wrong_key(bulk_instance):
     pass
 
