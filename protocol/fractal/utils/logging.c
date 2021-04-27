@@ -731,7 +731,6 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
             fprintf(stderr, "Error: Unrecognized Exception\n");
             break;
     }
-    fflush(stderr);
     /* If this is a stack overflow then we can't walk the stack, so just show
       where the error happened */
     if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
@@ -739,6 +738,8 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
     } else {
     }
 
+    fflush(stdout);
+    fflush(stderr);
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
@@ -746,6 +747,8 @@ void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     print_stacktrace();
     fractal_sleep(100);
+    fflush(stdout);
+    fflush(stderr);
     exit(-1);
 }
 #endif
