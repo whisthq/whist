@@ -722,14 +722,14 @@ FractalPacket* read_udp_packet(SocketContext* context) {
 // NOTE: The following global variable code only works when reading from one TCP socket.
 // Will need to be adjusted if multiple TCP sockets are used
 static int reading_packet_len;
-#define SMALLEST_TCP_BUFFER_SIZE (64 * 1024)
-static int packet_capacity = SMALLEST_TCP_BUFFER_SIZE;
-static char* encrypted_packet_buffer = NULL;
+static DynamicBuffer* encrypted_tcp_packet_buffer = NULL;
 
 void clear_reading_tcp(SocketContext* context) {
     UNUSED(context);
     reading_packet_len = 0;
-    encrypted_packet_buffer = allocate_region(packet_capacity);
+    if (encrypted_tcp_packet_buffer == NULL) {
+        encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
+    }
 }
 
 FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
@@ -746,14 +746,11 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
 
     int len = TCP_SEGMENT_SIZE;
     while (should_recvp && len == TCP_SEGMENT_SIZE) {
-        // Make the tcp buffer larger if needed
-        if (reading_packet_len + TCP_SEGMENT_SIZE >= packet_capacity) {
-            packet_capacity *= 2;
-            encrypted_packet_buffer = realloc_region(encrypted_packet_buffer, packet_capacity);
-        }
+        // Make the tcp buffer larger if needed, by doubling it in size
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
-        len = recvp(context, encrypted_packet_buffer + reading_packet_len,
+        len = recvp(context, encrypted_tcp_packet_buffer + reading_packet_len,
                     min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
 
         if (len < 0) {
@@ -775,7 +772,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);
-        int target_len = *((int*)encrypted_packet_buffer);
+        int target_len = *((int*)encrypted_tcp_packet_buffer);
 
         static char* decrypted_packet_buffer = NULL;
         if (decrypted_packet_buffer != NULL) {
@@ -788,7 +785,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
             int decrypted_len =
-                decrypt_packet_n((FractalPacket*)(encrypted_packet_buffer + sizeof(int)),
+                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer + sizeof(int)),
                                  target_len, (FractalPacket*)decrypted_packet_buffer, target_len,
                                  (unsigned char*)context->binary_aes_private_key);
 
@@ -796,15 +793,12 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             // continue
             int start_next_bytes = sizeof(int) + target_len;
             for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
-                encrypted_packet_buffer[i - start_next_bytes] = encrypted_packet_buffer[i];
+                encrypted_tcp_packet_buffer[i - start_next_bytes] = encrypted_tcp_packet_buffer[i];
             }
             reading_packet_len = actual_len - target_len;
 
-            if (reading_packet_len < packet_capacity / 4 &&
-                packet_capacity > 2 * SMALLEST_TCP_BUFFER_SIZE) {
-                packet_capacity /= 2;
-                encrypted_packet_buffer = realloc_region(encrypted_packet_buffer, packet_capacity);
-            }
+            // If the buffer is smaller than 1/4th the size, let's just realloc it smaller
+            resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len);
 
             if (decrypted_len < 0) {
                 LOG_WARNING("Could not decrypt TCP message");
