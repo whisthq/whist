@@ -52,46 +52,19 @@ fi
 # Create a google_drive folder in the user's home
 ln -sf /fractal/cloudStorage/google_drive /home/fractal/
 
-# While perhaps counterintuitive, "source" is the path in the userConfigs directory
-#   and "destination" is the original location of the config file/folder.
-#   This is because when creating symlinks, the userConfig path is the source
-#   and the original location is the destination
-# Iterate through the possible configuration locations and copy
-for row in $(cat app-config-map.json | jq -rc '.[]'); do
-    SOURCE_CONFIG_SUBPATH=$(echo ${row} | jq -r '.source')
-    SOURCE_CONFIG_PATH=$USER_CONFIGS_DIR/$SOURCE_CONFIG_SUBPATH
-    DEST_CONFIG_PATH=$(echo ${row} | jq -r '.destination')
+# Start the application that this container runs
+/usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
+fractal_application_runuser_pid=$!
 
-    # If original config path does not exist, then continue
-    if [ ! -f "$DEST_CONFIG_PATH" ] && [ ! -d "$DEST_CONFIG_PATH" ]; then
-        continue
-    fi
-
-    # If the source path doesn't exist, then copy default configs to the synced app config folder
-    if [ ! -f "$SOURCE_CONFIG_PATH" ] && [ ! -d "$SOURCE_CONFIG_PATH" ]; then
-        cp -rT $DEST_CONFIG_PATH $SOURCE_CONFIG_PATH
-    fi
-
-    # Remove the original configs and symlink the new ones to the original locations
-    rm -rf $DEST_CONFIG_PATH
-    ln -sfnT $SOURCE_CONFIG_PATH $DEST_CONFIG_PATH
-    chown -R fractal $SOURCE_CONFIG_PATH
-done
-
-# Delete broken symlinks from config
-find $USER_CONFIGS_DIR -xtype l -delete
-
-echo "Sleeping until .configready is gone..."
-
-# Create a .configready file that forces the display to wait until configs are synced
-#     We are also forced to wait until the display has started
-touch $USER_CONFIGS_DIR/.configready
-until [ ! -f $USER_CONFIGS_DIR/.configready ]
+# Wait for run-fractal-application.sh to write PID to file
+FRACTAL_APPLICATION_PID_FILE="/home/fractal/fractal-application-pid"
+until [ -f "$FRACTAL_APPLICATION_PID_FILE" ]
 do
     sleep 0.1
 done
+fractal_application_pid=$(cat $FRACTAL_APPLICATION_PID_FILE)
+rm $FRACTAL_APPLICATION_PID_FILE
 
-echo "Done sleeping until .configready is gone..."
 echo "Now sleeping until there are X clients..."
 
 # Wait until the application has created its display before launching FractalServer.
@@ -107,11 +80,25 @@ echo "Done sleeping until there are X clients..."
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # Allow the command to fail without the script exiting, since we want to send logs/clean up the container.
-if ! /usr/share/fractal/FractalServer $OPTIONS ; then
-  echo "FractalServer exited with bad code $?"
-else
-  echo "FractalServer exited with good code 0"
-fi
+/usr/share/fractal/FractalServer $OPTIONS &
+fractal_server_pid=$!
+
+# Wait for either fractal-application or FractalServer to exit (both backgrounded processes)
+wait -n
+echo "Either FractalServer or fractal-application exited with code $?"
+echo "FractalServer PID: $fractal_server_pid"
+echo "runuser fractal-application PID: $fractal_application_runuser_pid"
+echo "fractal-application PID: $fractal_application_pid"
+echo "Remaining jobs: $(jobs -p)"
+
+# Kill whatever is still running of FractalServer and fractal-application, with SIGTERM.
+kill $fractal_application_pid ||:
+kill $fractal_server_pid ||:
+
+# Wait for fractal-application to finish terminating
+wait $fractal_application_runuser_pid
+
+echo "Both fractal-application and FractalServer have exited"
 
 # If $WEBSERVER_URL is unset, then do not attempt shutdown requests.
 if [[ ! ${WEBSERVER_URL+x} ]]; then
@@ -157,19 +144,15 @@ END
 )
 
 # After sending the logs request, but before we get deep into our polling loop,
-# we should safely shut down the running application by properly stopping our
-# X server. Note that systemd unit dependency relationships are such that
-# After and Requires dependencies only apply to startup, and not to shutdown;
-# hence, we can safely stop an ancestor service. This would not be the case
-# if we were to use the PartOf relationship.
+# we should safely shut down the running application.
 #
 # Also note that this will have to be reworked if the service that calls
 # this script starts doing so as a user instead of as root. The rework would
 # involve adding a root service whose only job is to listen for a signal
 # emitted here and to perform the same actions on receipt of the signal.
-systemctl stop fractal-display
+systemctl stop fractal-application
 
-echo "We just ran 'systemctl stop fractal-display'"
+echo "We just ran 'systemctl stop fractal-application'"
 
 get_task_state() {
     # GET $WEBSERVER_URL/status/$1
