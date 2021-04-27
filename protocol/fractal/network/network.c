@@ -750,7 +750,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
-        len = recvp(context, encrypted_tcp_packet_buffer + reading_packet_len,
+        len = recvp(context, encrypted_tcp_packet_buffer->buf + reading_packet_len,
                     min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
 
         if (len < 0) {
@@ -772,7 +772,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
         int actual_len = reading_packet_len - sizeof(int);
-        int target_len = *((int*)encrypted_tcp_packet_buffer);
+        int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
 
         static char* decrypted_packet_buffer = NULL;
         if (decrypted_packet_buffer != NULL) {
@@ -785,7 +785,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
             // Decrypt it
             int decrypted_len =
-                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer + sizeof(int)),
+                decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
                                  target_len, (FractalPacket*)decrypted_packet_buffer, target_len,
                                  (unsigned char*)context->binary_aes_private_key);
 
@@ -793,7 +793,8 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             // continue
             int start_next_bytes = sizeof(int) + target_len;
             for (unsigned long i = start_next_bytes; i < sizeof(int) + actual_len; i++) {
-                encrypted_tcp_packet_buffer[i - start_next_bytes] = encrypted_tcp_packet_buffer[i];
+                encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
+                    encrypted_tcp_packet_buffer->buf[i];
             }
             reading_packet_len = actual_len - target_len;
 
