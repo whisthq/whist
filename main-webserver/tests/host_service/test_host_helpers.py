@@ -1,5 +1,5 @@
+import pytest
 import time
-from json import loads
 
 
 from app.constants.http_codes import BAD_REQUEST, NOT_FOUND, SUCCESS
@@ -36,10 +36,11 @@ def test_heartbeat_no_update(bulk_instance):
     )
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
-    inst = InstanceInfo.get("test_instance_id")
+    inst = InstanceInfo.query.get("test_instance_id")
     assert time.time() - inst.last_pinged <= 2
 
 
+@pytest.mark.skip(reason='Enable when enforce_auth is set to true')
 def test_heartbeat_wrong_key(bulk_instance):
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
@@ -48,7 +49,7 @@ def test_heartbeat_wrong_key(bulk_instance):
     )
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
-    inst = InstanceInfo.get("test_instance_id")
+    inst = InstanceInfo.query.get("test_instance_id")
     assert time.time() - inst.last_pinged >= 3
 
 
@@ -60,7 +61,7 @@ def test_heartbeat_no_exist(bulk_instance):
     )
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
-    inst = InstanceInfo.get("test_instance_id")
+    inst = InstanceInfo.query.get("test_instance_id")
     assert time.time() - inst.last_pinged >= 3
 
 
@@ -82,6 +83,6 @@ def test_heartbeat_updates(bulk_instance):
     )
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
-    inst = InstanceInfo.get("test_instance_id")
+    inst = InstanceInfo.query.get("test_instance_id")
     assert inst.memoryRemainingInInstance == 1025
     assert time.time() - inst.last_pinged <= 2
