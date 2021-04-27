@@ -99,6 +99,8 @@ char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
 bool using_stun = true;
 
+// given by server protocol during port discovery. tells client the ports to use
+// for UDP and TCP communications.
 int udp_port = -1;
 int tcp_port = -1;
 int client_id = -1;
@@ -659,8 +661,11 @@ int32_t multithreaded_renderer(void* opaque) {
     return 0;
 }
 
-int main(int argc, char* argv[]) {
-    // If argc == 1 (no args passed), then check if client app path exists and try to launch.
+void handle_single_icon_launch_client_app(int argc, char* argv[]) {
+    // This function handles someone clicking the protocol icon as a means of starting Fractal by
+    // instead launching the client app
+    // If argc == 1 (no args passed), then check if client app path exists
+    // and try to launch.
     //     This should be done first because `execl` won't cleanup any allocated resources.
     // Mac apps also sometimes pass an argument like -psn_0_2126343 to the executable.
 #if defined(_WIN32) || defined(__APPLE__)
@@ -725,6 +730,10 @@ int main(int argc, char* argv[]) {
 #endif
 
     // END OF CHECKING IF IN PROD MODE AND TRYING TO LAUNCH CLIENT APP IF NO ARGS
+}
+
+int main(int argc, char* argv[]) {
+    handle_single_icon_launch_client_app(argc, argv);
 
     init_default_port_mappings();
 

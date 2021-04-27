@@ -84,7 +84,7 @@ int discover_ports(bool *using_stun) {
 
     if (send_tcp_packet(&context, PACKET_MESSAGE, (uint8_t *)&fcmsg, (int)sizeof(fcmsg)) < 0) {
         LOG_ERROR("Failed to send discovery request message.");
-        closesocket(context.s);
+        closesocket(context.socket);
         return -1;
     }
     LOG_INFO("Sent discovery packet");
@@ -97,7 +97,7 @@ int discover_ports(bool *using_stun) {
         packet = read_tcp_packet(&context, true);
         SDL_Delay(5);
     } while (packet == NULL && get_timer(timer) < 5.0);
-    closesocket(context.s);
+    closesocket(context.socket);
 
     if (packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
@@ -175,9 +175,11 @@ int connect_to_server(bool using_stun) {
 
     // socket options = TCP_NODELAY IPTOS_LOWDELAY SO_RCVBUF=65536
     // Windows Socket 65535 Socket options apply to all sockets.
+    // this is set to stop the kernel from buffering too much, thereby
+    // getting the data to us faster for lower latency
     int a = 65535;
-    if (setsockopt(packet_send_context.s, SOL_SOCKET, SO_RCVBUF, (const char *)&a, sizeof(int)) ==
-        -1) {
+    if (setsockopt(packet_send_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
+                   sizeof(int)) == -1) {
         LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
         return -1;
     }
@@ -185,7 +187,7 @@ int connect_to_server(bool using_stun) {
     if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
                            using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
-        closesocket(packet_send_context.s);
+        closesocket(packet_send_context.socket);
         return -1;
     }
 
@@ -202,9 +204,9 @@ int close_connections(void) {
             (int): 0 on success
     */
 
-    closesocket(packet_send_context.s);
-    closesocket(packet_receive_context.s);
-    closesocket(packet_tcp_context.s);
+    closesocket(packet_send_context.socket);
+    closesocket(packet_receive_context.socket);
+    closesocket(packet_tcp_context.socket);
     return 0;
 }
 

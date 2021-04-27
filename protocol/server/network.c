@@ -4,8 +4,8 @@
 
 #include <fractal/utils/aes.h>
 
+#include "network.h"
 #include "client.h"
-#include "webserver.h"
 
 #define UDP_CONNECTION_WAIT 1000
 #define TCP_CONNECTION_WAIT 1000
@@ -15,25 +15,25 @@ extern Client clients[MAX_NUM_CLIENTS];
 
 int last_input_id = -1;
 
-int connect_client(int id, char *binary_aes_private_key) {
+int connect_client(int id, bool using_stun, char *binary_aes_private_key) {
     if (create_udp_context(&(clients[id].UDP_context), NULL, clients[id].UDP_port, 1,
-                           UDP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
+                           UDP_CONNECTION_WAIT, using_stun, binary_aes_private_key) < 0) {
         LOG_ERROR("Failed UDP connection with client (ID: %d)", id);
         return -1;
     }
 
     if (create_tcp_context(&(clients[id].TCP_context), NULL, clients[id].TCP_port, 1,
-                           TCP_CONNECTION_WAIT, get_using_stun(), binary_aes_private_key) < 0) {
+                           TCP_CONNECTION_WAIT, using_stun, binary_aes_private_key) < 0) {
         LOG_WARNING("Failed TCP connection with client (ID: %d)", id);
-        closesocket(clients[id].UDP_context.s);
+        closesocket(clients[id].UDP_context.socket);
         return -1;
     }
     return 0;
 }
 
 int disconnect_client(int id) {
-    closesocket(clients[id].UDP_context.s);
-    closesocket(clients[id].TCP_context.s);
+    closesocket(clients[id].UDP_context.socket);
+    closesocket(clients[id].TCP_context.socket);
     return 0;
 }
 

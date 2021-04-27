@@ -140,7 +140,7 @@ typedef struct SocketContext {
     bool is_server;
     bool is_tcp;
     int timeout;
-    SOCKET s;
+    SOCKET socket;
     struct sockaddr_in addr;
     int ack;
     FractalMutex mutex;
