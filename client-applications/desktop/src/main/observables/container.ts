@@ -119,6 +119,12 @@ debugObservables(
 )
 
 errorObservables(
-  [containerCreateFailure, "containerCreateFailure"],
-  [containerAssignFailure, "containerAssignFailure"]
+  [
+    containerCreateFailure.pipe(map((res) => formatContainer(res))),
+    "containerCreateFailure",
+  ],
+  [
+    containerAssignFailure.pipe(map((res) => formatContainer(res))),
+    "containerAssignFailure",
+  ]
 )
