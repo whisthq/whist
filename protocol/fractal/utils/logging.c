@@ -756,6 +756,7 @@ void init_backtrace_handler() {
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
     signal(SIGSEGV, crash_handler);
+    signal(SIGABRT, crash_handler);
 #endif
 }
 
