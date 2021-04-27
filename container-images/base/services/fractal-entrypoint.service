@@ -1,5 +1,6 @@
+# Starts Fractal by starting Fractal systemd services, runs as root
 [Unit]
-Description=Starts Fractal by starting Fractal systemd services, runs as root
+Description=Fractal Entrypoint
 
 [Service]
 Type=oneshot
