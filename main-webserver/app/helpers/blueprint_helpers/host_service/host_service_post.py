@@ -11,10 +11,10 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
 )
-from app.models import db, InstanceInfo
+from app.models import db, InstanceInfo, RegionToAmi
 
 
-def initial_instance_auth_helper(ip: str, instance_id: str) -> Tuple[str, int]:
+def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tuple[str, int]:
     """
 
     Args:
@@ -29,7 +29,10 @@ def initial_instance_auth_helper(ip: str, instance_id: str) -> Tuple[str, int]:
 
     if preexisting_instance is not None:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-    new_instance = InstanceInfo(instance_id=instance_id, ip=ip, auth_token=auth_token)
+    ami_id = RegionToAmi.query.get(location).ami_id
+    new_instance = InstanceInfo(
+        instance_id=instance_id, ip=ip, auth_token=auth_token, ami_id=ami_id
+    )
     instance_sql = fractal_sql_commit(db, lambda database, x: database.session.add(x), new_instance)
     if instance_sql:
         return jsonify({"AuthToken": auth_token}), SUCCESS

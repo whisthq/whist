@@ -12,7 +12,6 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.models import (
     db,
     ClusterInfo,
-    InstanceInfo,
     RegionToAmi,
     UserContainer,
     SupportedAppImages,
@@ -112,7 +111,7 @@ def update_cluster(
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
 
     try:
-        _, _, instance_list = ecs_client.update_cluster_with_new_ami(cluster_name, ami)
+        ecs_client.update_cluster_with_new_ami(cluster_name, ami)
     except FractalECSClusterNotFoundException:
         # We should remove any entries in the DB referencing this cluster, as they are out of date
         # Cluster is a primary key, so `.first()` suffices
@@ -127,11 +126,6 @@ def update_cluster(
             },
         )
     else:
-        for instance_name in instance_list:
-            instance = InstanceInfo.query.get(instance_name)
-            if instance is not None:
-                instance.is_draining = True
-                db.session.commit()
         # The cluster did exist, and was updated successfully.
         self.update_state(
             state="SUCCESS",
