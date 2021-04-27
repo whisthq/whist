@@ -35,8 +35,10 @@ from app.helpers.utils.metrics.celery import register_metrics_monitor_in_worker
 # tasks that are due to be processed and the backend stores the results of processed tasks.
 CELERY_CONFIG = {
     "accept_content": ("pickle",),
-    # Whether or not the worker should retry a failed connection.
-    "broker_connection_retry": False,
+    # Whether or not the worker should retry a failed connection. Sometimes redis resets connections
+    # for a quick backend update, which we want to handle elegantly with a reconnect.
+    "broker_connection_retry": True,
+    "broker_connection_max_retries": 10,
     # See the Kombu source file containing the implementation of the Redis transport for a list of
     # valid transport options. These options configure the connection to the broker.
     # https://github.com/celery/kombu/blob/6cb9d6639e800012e733a0535db34653705290b9/kombu/transport/redis.py#L28
