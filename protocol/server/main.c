@@ -846,12 +846,6 @@ int multithreaded_manage_clients(void* opaque) {
                 exiting = true;
             }
         } else {
-            // client has connected to server for the first time
-            // update webserver parameters the first time a client connects
-            if (!first_client_connected) {
-                first_client_connected = true;
-            }
-
             // nongraceful client grace period has ended, but clients are
             //  connected still - we don't want server to exit yet
             if (client_exited_nongracefully &&
@@ -891,6 +885,11 @@ int multithreaded_manage_clients(void* opaque) {
             host_id = client_id;
         }
 
+        if (num_active_clients == 0) {
+            // we have went from 0 clients to 1 client, so we have got our first client
+            // this variable should never be set back to false after this
+            first_client_connected = true;
+        }
         num_active_clients++;
         client_joined_after_window_name_broadcast = true;
         /* Make everyone a controller */
