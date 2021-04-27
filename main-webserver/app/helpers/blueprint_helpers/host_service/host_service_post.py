@@ -63,7 +63,7 @@ def instance_heartbeat_helper(
     enforce_auth = False
     if instance is None:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
-    if instance.auth_token.lower() != auth_token.lower() or not enforce_auth:
+    if instance.auth_token.lower() != auth_token.lower() and enforce_auth:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
     if is_dying:
         db.session.delete(instance)
