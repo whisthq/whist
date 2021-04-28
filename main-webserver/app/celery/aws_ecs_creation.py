@@ -53,7 +53,7 @@ from app.exceptions import StartValueException
 
 
 MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
-MAX_POLL_ITERATIONS = 45
+MAX_POLL_ITERATIONS = 90
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
 
@@ -310,8 +310,8 @@ def find_available_container(
 def _poll(container_id: str) -> bool:
     """Poll the database until the web server receives its first ping from the new container.
 
-    Time out after MAX_POLL_ITERATIONS seconds. In the future, this may be an appropriate use
-    case for Hasura subscriptions.
+    Time out after MAX_POLL_ITERATIONS seconds.
+    This may be an appropriate use case for Hasura subscriptions.
 
     This function should patched to immediately return True in order to get CI to pass.
 
