@@ -818,7 +818,7 @@ def _assign_container(
     manual_scale_cluster.delay(cluster_name, region_name)
 
     # trigger celery task to see if task cleanup should be done
-    manual_cleanup_cluster(cluster_name, region_name)
+    manual_cleanup_cluster.delay(cluster_name, region_name)
 
     return user_container_schema.dump(base_container)
 
