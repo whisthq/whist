@@ -60,6 +60,7 @@ extern bool using_sentry;
 static volatile FractalSemaphore logger_semaphore;
 static volatile FractalMutex logger_mutex;
 static volatile FractalMutex log_file_mutex;
+static volatile FractalMutex logger_queue_mutex;
 
 // logger queue
 
@@ -148,6 +149,7 @@ void init_logger(char* log_dir) {
     logger_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
     log_file_mutex = fractal_create_mutex();
+    logger_queue_mutex = fractal_create_mutex();
     mprintf_thread = fractal_create_thread((FractalThreadFunction)multi_threaded_printf,
                                            "MultiThreadedPrintf", NULL);
     LOG_INFO("Writing logs to %s", log_file_name);
@@ -257,8 +259,8 @@ void start_connection_log() {
 }
 
 void destroy_logger() {
-    // Wait for any remaining printfs to execute
-    fractal_sleep(50);
+    // Flush out any remaining logs
+    flush_logs();
     if (using_sentry) {
         sentry_shutdown();
     }
@@ -327,128 +329,137 @@ int multi_threaded_printf(void* opaque) {
             break;
         }
 
-        int cache_size = 0;
+        flush_logs();
+    }
 
-        // Clear the queue into the cache,
-        // And then let go of the mutex so that printf can continue accumulating
-        fractal_lock_mutex((FractalMutex)logger_mutex);
-        cache_size = logger_queue_size;
-        for (int i = 0; i < logger_queue_size; i++) {
-            safe_strncpy((char*)logger_queue_cache[i].buf,
-                         (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
-            logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
-            logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
-            logger_queue[logger_queue_index].buf[0] = '\0';
-            logger_queue_index++;
-            logger_queue_index %= LOGGER_QUEUE_SIZE;
-            if (i != 0) {
-                fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
-            }
-        }
-        logger_queue_size = 0;
-        fractal_unlock_mutex((FractalMutex)logger_mutex);
-        fractal_lock_mutex((FractalMutex)log_file_mutex);
-        // Print all of the data into the cache
-        for (int i = 0; i < cache_size; i++) {
-            if (logger_queue_cache[i].log) {
-                if (mprintf_log_file) {
-                    fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
-                }
-                if (mprintf_log_connection_file &&
-                    logger_queue_cache[i].id >= log_connection_log_id) {
-                    fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
-                }
-            }
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
-            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
-            fprintf(stdout, "%s", logger_queue_cache[i].buf);
-            int chars_written =
-                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
-            logger_history_len += chars_written;
+    return 0;
+}
 
-            // Shift buffer over if too large;
-            if ((unsigned long)logger_history_len >
-                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
-                int new_len = sizeof(logger_history) / 3;
-                for (i = 0; i < new_len; i++) {
-                    logger_history[i] = logger_history[logger_history_len - new_len + i];
-                }
-                logger_history_len = new_len;
+void flush_logs() {
+    fractal_lock_mutex((FractalMutex)logger_queue_mutex);
+    // Clear the queue into the cache,
+    // And then let go of the mutex so that printf can continue accumulating
+    fractal_lock_mutex((FractalMutex)logger_mutex);
+    int cache_size = 0;
+    cache_size = logger_queue_size;
+    for (int i = 0; i < logger_queue_size; i++) {
+        safe_strncpy((char*)logger_queue_cache[i].buf,
+                     (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
+        logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
+        logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
+        logger_queue[logger_queue_index].buf[0] = '\0';
+        logger_queue_index++;
+        logger_queue_index %= LOGGER_QUEUE_SIZE;
+        if (i != 0) {
+            fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
+        }
+    }
+    logger_queue_size = 0;
+    fractal_unlock_mutex((FractalMutex)logger_mutex);
+
+    fractal_lock_mutex((FractalMutex)log_file_mutex);
+    // Print all of the data into the cache
+    for (int i = 0; i < cache_size; i++) {
+        if (logger_queue_cache[i].log) {
+            if (mprintf_log_file) {
+                fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
             }
-            //}
+            if (mprintf_log_connection_file && logger_queue_cache[i].id >= log_connection_log_id) {
+                fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
+            }
         }
-        if (mprintf_log_file) {
-            fflush(mprintf_log_file);
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+        fprintf(stdout, "%s", logger_queue_cache[i].buf);
+        int chars_written =
+            sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
+        logger_history_len += chars_written;
+
+        // Shift buffer over if too large;
+        if ((unsigned long)logger_history_len >
+            sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
+            int new_len = sizeof(logger_history) / 3;
+            for (i = 0; i < new_len; i++) {
+                logger_history[i] = logger_history[logger_history_len - new_len + i];
+            }
+            logger_history_len = new_len;
         }
-        if (mprintf_log_connection_file) {
-            fflush(mprintf_log_connection_file);
-        }
+        //}
+    }
+
+    // Flush the logs
+    fflush(stdout);
+    if (mprintf_log_file) {
+        fflush(mprintf_log_file);
+    }
+    if (mprintf_log_connection_file) {
+        fflush(mprintf_log_connection_file);
+    }
 
 #define MAX_LOG_FILE_SIZE (5 * BYTES_IN_KILOBYTE * BYTES_IN_KILOBYTE)
 
-        // If the log file is large enough, cache it
-        if (mprintf_log_file) {
-            fseek(mprintf_log_file, 0L, SEEK_END);
-            int sz = ftell(mprintf_log_file);
+    // If the log file is large enough, cache it
+    if (mprintf_log_file) {
+        fseek(mprintf_log_file, 0L, SEEK_END);
+        int sz = ftell(mprintf_log_file);
 
-            // If it's larger than 5MB, start a new file and store the old one
-            if (sz > MAX_LOG_FILE_SIZE) {
-                fclose(mprintf_log_file);
+        // If it's larger than 5MB, start a new file and store the old one
+        if (sz > MAX_LOG_FILE_SIZE) {
+            fclose(mprintf_log_file);
 
-                char f[1000] = "";
-                snprintf(f, sizeof(f), "%s%s%s%s", log_directory, "log", log_env, ".txt");
+            char f[1000] = "";
+            snprintf(f, sizeof(f), "%s%s%s%s", log_directory, "log", log_env, ".txt");
 
-                char fp[1000] = "";
-                snprintf(fp, sizeof(fp), "%s%s%s%s", log_directory, "log", log_env, "_prev.txt");
+            char fp[1000] = "";
+            snprintf(fp, sizeof(fp), "%s%s%s%s", log_directory, "log", log_env, "_prev.txt");
 
 #if defined(_WIN32)
-                WCHAR wf[1000];
-                WCHAR wfp[1000];
-                mbstowcs(wf, f, sizeof(wf));
-                mbstowcs(wfp, fp, sizeof(wfp));
-                DeleteFileW(wfp);
-                MoveFileW(wf, wfp);
-                DeleteFileW(wf);
+            WCHAR wf[1000];
+            WCHAR wfp[1000];
+            mbstowcs(wf, f, sizeof(wf));
+            mbstowcs(wfp, fp, sizeof(wfp));
+            DeleteFileW(wfp);
+            MoveFileW(wf, wfp);
+            DeleteFileW(wf);
 #endif
-                mprintf_log_file = fopen(f, "ab");
-            }
+            mprintf_log_file = fopen(f, "ab");
         }
-
-        // If the log file is large enough, cache it
-        if (mprintf_log_connection_file) {
-            fseek(mprintf_log_connection_file, 0L, SEEK_END);
-            long sz = ftell(mprintf_log_connection_file);
-
-            // If it's larger than 5MB, start a new file and store the old one
-            if (sz > MAX_LOG_FILE_SIZE) {
-                long buf_len = MAX_LOG_FILE_SIZE / 2;
-
-                char* original_buf = safe_malloc(buf_len);
-                char* buf = original_buf;
-                fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
-                fread(buf, buf_len, 1, mprintf_log_connection_file);
-
-                while (buf_len > 0 && buf[0] != '\n') {
-                    buf++;
-                    buf_len--;
-                }
-
-                char f[1000] = "";
-                strcat(f, log_directory);
-                strcat(f, "log_connection.txt");
-                mprintf_log_connection_file = freopen(f, "wb", mprintf_log_connection_file);
-                fwrite(buf, buf_len, 1, mprintf_log_connection_file);
-                fflush(mprintf_log_connection_file);
-
-                free(original_buf);
-            }
-        }
-        fractal_unlock_mutex((FractalMutex)log_file_mutex);
     }
-    return 0;
+
+    // If the log file is large enough, cache it
+    if (mprintf_log_connection_file) {
+        fseek(mprintf_log_connection_file, 0L, SEEK_END);
+        long sz = ftell(mprintf_log_connection_file);
+
+        // If it's larger than 5MB, start a new file and store the old one
+        if (sz > MAX_LOG_FILE_SIZE) {
+            long buf_len = MAX_LOG_FILE_SIZE / 2;
+
+            char* original_buf = safe_malloc(buf_len);
+            char* buf = original_buf;
+            fseek(mprintf_log_connection_file, -buf_len, SEEK_END);
+            fread(buf, buf_len, 1, mprintf_log_connection_file);
+
+            while (buf_len > 0 && buf[0] != '\n') {
+                buf++;
+                buf_len--;
+            }
+
+            char f[1000] = "";
+            strcat(f, log_directory);
+            strcat(f, "log_connection.txt");
+            mprintf_log_connection_file = freopen(f, "wb", mprintf_log_connection_file);
+            fwrite(buf, buf_len, 1, mprintf_log_connection_file);
+            fflush(mprintf_log_connection_file);
+
+            free(original_buf);
+        }
+    }
+    fractal_unlock_mutex((FractalMutex)log_file_mutex);
+    fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
 }
 
 /**
@@ -645,12 +656,19 @@ void print_stacktrace() {
     // get void*'s for all entries on the stack
     size = backtrace(array, HANDLER_ARRAY_SIZE);
 
-    // print out all the frames to stderr
+    // Flush out all of the logs that occured prior to the stacktrace
+    flush_logs();
+
+    // Print out all the backtrace frames to stderr
     backtrace_symbols_fd(array, size, STDERR_FILENO);
 
-    // and to the log
+    // and to the log file
+    fractal_lock_mutex((FractalMutex)log_file_mutex);
     int fd = fileno(mprintf_log_file);
     backtrace_symbols_fd(array, size, fd);
+
+    fflush(mprintf_log_file);
+    fractal_unlock_mutex((FractalMutex)log_file_mutex);
 
     fprintf(stderr, "addr2line -e build64/FractalServer");
     for (size_t i = 0; i < size; i++) {
@@ -659,12 +677,13 @@ void print_stacktrace() {
     fprintf(stderr, "\n\n");
 #endif
 
+    // Flush out what we've written to stderr
+    fflush(stderr);
     fractal_unlock_mutex(crash_handler_mutex);
 }
 
 #ifdef _WIN32
 LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
-    fractal_sleep(250);
     fprintf(stderr, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
         case EXCEPTION_ACCESS_VIOLATION:
@@ -738,17 +757,12 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
     } else {
     }
 
-    fflush(stdout);
-    fflush(stderr);
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
 void crash_handler(int sig) {
     fprintf(stderr, "\nError: signal %d:\n", sig);
     print_stacktrace();
-    fractal_sleep(100);
-    fflush(stdout);
-    fflush(stderr);
     exit(-1);
 }
 #endif
