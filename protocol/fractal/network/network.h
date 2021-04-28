@@ -126,7 +126,6 @@ Constants
 ============================
 */
 
-#define LARGEST_TCP_PACKET 10000000
 #define MAX_PAYLOAD_SIZE 1285
 
 /*
