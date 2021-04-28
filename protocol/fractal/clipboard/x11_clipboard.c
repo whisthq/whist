@@ -43,8 +43,6 @@ whatever files are in the SET_CLIPBOARD directory.
  done; "
  */
 
-#define MAX_CLIPBOARD_SIZE 9000000
-
 bool start_tracking_clipboard_updates();
 
 static Display* display = NULL;
@@ -410,10 +408,6 @@ DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size) {
             if (cb->size == 0) {
                 src_data += header_size;
                 src_size -= header_size;
-            }
-
-            if (cb->size + src_size > MAX_CLIPBOARD_SIZE) {
-                bad_clipboard = true;
             }
 
             if (!bad_clipboard) {
