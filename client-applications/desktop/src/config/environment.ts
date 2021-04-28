@@ -35,7 +35,5 @@ export const config =
 export default config
 
 // Re-exporting
-export {
-  loggingBaseFilePath,
-  FractalCIEnvironment,
-} from "../../config/environment"
+export { FractalCIEnvironment } from "../../config/environment"
+export { loggingBaseFilePath } from "../../config/paths"
