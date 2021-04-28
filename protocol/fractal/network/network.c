@@ -291,11 +291,6 @@ bool handshake_private_key(SocketContext* context) {
 }
 
 int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
-    // Verify packet size can fit
-    if (PACKET_HEADER_SIZE + (unsigned int)len > LARGEST_TCP_PACKET) {
-        LOG_WARNING("Packet too large!");
-        return -1;
-    }
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
         return -1;
@@ -724,8 +719,7 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         // Make the tcp buffer larger if needed
         resize_dynamic_buffer(encrypted_tcp_packet_buffer,
                               context->reading_packet_len + TCP_SEGMENT_SIZE);
-        // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
-        // overflow LARGEST_TCP_PACKET
+        // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE
         len = recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
                     TCP_SEGMENT_SIZE);
 
