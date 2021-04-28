@@ -774,6 +774,7 @@ void init_backtrace_handler() {
 #else
     signal(SIGSEGV, crash_handler);
     signal(SIGABRT, crash_handler);
+    signal(SIGPIPE, crash_handler);
 #endif
 }
 
