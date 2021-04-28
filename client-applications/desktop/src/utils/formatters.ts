@@ -1,7 +1,14 @@
 import { ChildProcess } from "child_process"
 import { omit, pick } from "lodash"
+import { merge, Observable } from "rxjs"
+import { map } from "rxjs/operators"
 
 const omitJson = ["status", "statusText", "response"]
+
+export const formatObservable = (
+  obs: Observable<any>,
+  formatter: (res: any) => void
+) => obs.pipe(map((res) => formatter(res)))
 
 export const formatChildProcess = (process: ChildProcess) =>
   omit(process, [
@@ -36,7 +43,6 @@ export const formatContainer = (res: object) =>
     "json.output.last_pinged",
   ])
 
-export const formatHostConfig = (res: object) =>
-  pick(res, ["response._readableState"])
+export const formatHostConfig = (res: object) => pick(res, ["json", "status"])
 
 export const formatHostInfo = (res: object) => omit(res, [...omitJson])

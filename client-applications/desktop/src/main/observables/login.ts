@@ -24,8 +24,12 @@ import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
 import { loginAction } from "@app/main/events/actions"
 =======
 import { filter, map, share, exhaustMap } from "rxjs/operators"
+<<<<<<< HEAD
 import { formatLogin } from "@app/utils/formatters"
 >>>>>>> added formatters for container and host
+=======
+import { formatLogin, formatObservable } from "@app/utils/formatters"
+>>>>>>> added a formattable observable to clean up all the piping
 
 export const loginRequest = loginAction.pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
@@ -63,7 +67,7 @@ export const loginLoading = loadingFrom(
 
 debugObservables(
   [loginRequest, "loginRequest"],
-  [loginSuccess.pipe(map((res) => formatLogin(res))), "loginSuccess"],
+  [formatObservable(loginSuccess, formatLogin), "loginSuccess"],
   [loginLoading, "loginLoading"]
 )
 
