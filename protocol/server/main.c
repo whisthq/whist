@@ -1278,15 +1278,22 @@ int main(int argc, char* argv[]) {
             if (!clients[id].is_active) continue;
 
             // Get packet!
-            FractalClientMessage* fmsg;
+            FractalPacket* tcp_packet = NULL;
+            FractalClientMessage* fmsg = NULL;
             FractalClientMessage local_fcmsg;
             size_t fcmsg_size;
-            if (try_get_next_message_tcp(id, &fmsg, &fcmsg_size) != 0 || fcmsg_size == 0) {
+            if (try_get_next_message_tcp(id, &tcp_packet) != 0 || tcp_packet == NULL) {
+                // On no TCP
                 if (try_get_next_message_udp(id, &local_fcmsg, &fcmsg_size) != 0 ||
                     fcmsg_size == 0) {
+                    // On no UDP
                     continue;
                 }
+                // On UDP
                 fmsg = &local_fcmsg;
+            } else {
+                // On TCP
+                fmsg = (FractalClientMessage*)tcp_packet->data;
             }
 
             // HANDLE FRACTAL CLIENT MESSAGE
@@ -1302,6 +1309,11 @@ int main(int argc, char* argv[]) {
                 // if (handleSpectatorMessage(fmsg, id) != 0) {
                 //     LOG_ERROR("Failed to handle message from spectator");
                 // }
+            }
+
+            // Free the tcp packet if we received one
+            if (tcp_packet) {
+                free_tcp_packet(tcp_packet);
             }
         }
         read_unlock(&is_active_rwlock);

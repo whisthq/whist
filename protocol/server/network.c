@@ -182,9 +182,8 @@ int broadcast_tcp_packet(FractalPacketType type, void *data, int len) {
 
 clock last_tcp_read;
 bool has_read = false;
-int try_get_next_message_tcp(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size) {
-    *fcmsg_size = 0;
-    *fcmsg = NULL;
+int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet) {
+    *p_tcp_packet = NULL;
 
     // Check if 20ms has passed since last TCP recvp, since each TCP recvp read takes 8ms
     bool should_recvp = false;
@@ -196,11 +195,8 @@ int try_get_next_message_tcp(int client_id, FractalClientMessage **fcmsg, size_t
 
     FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
     if (tcp_packet) {
-        *fcmsg = (FractalClientMessage *)tcp_packet->data;
-        *fcmsg_size = (size_t)tcp_packet->payload_size;
-
         LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
-        free_tcp_packet(tcp_packet);
+        *p_tcp_packet = tcp_packet;
     }
     return 0;
 }
