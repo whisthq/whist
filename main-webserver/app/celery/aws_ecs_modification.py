@@ -1,5 +1,5 @@
 import math
-
+import datetime
 from typing import Optional
 
 from celery import Task, shared_task
@@ -18,6 +18,7 @@ from app.models import (
 )
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.celery.aws_celery_exceptions import InvalidArguments, InvalidAppId, InvalidCluster
+from app.helpers.utils.general.time import date_to_unix, get_today
 
 
 @shared_task(bind=True)
@@ -314,3 +315,30 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     # we have enabled instance termination protection in our ASGs and Capacity Providers
     # so any instance with tasks will not be killed. This has been manually tested.
     ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
+
+
+@shared_task(bind=True)
+def check_and_cleanup_outdated_tasks(
+    self, cluster: str, region_name: str
+):  # pylint: disable=unused-argument
+    """
+    Cleanup tasks in a cluster that have not pinged for 90sec.
+
+    Args:
+        cluster: cluster to manually scale
+        region_name: region that cluster resides in
+    """
+    # this stops a circular import, because delete_container uses manual_scale_cluster which
+    # is in this file
+    from app.celery.aws_ecs_deletion import delete_container
+
+    cutoff_sec = 90
+    cutoff_time = date_to_unix(get_today() + datetime.timedelta(seconds=-cutoff_sec))
+    bad_containers = (
+        UserContainer.query.filter_by(cluster=cluster, location=region_name)
+        .filter(UserContainer.last_pinged < cutoff_time)
+        .all()
+    )
+    for container in bad_containers:
+        fractal_logger.info(f"triggering delete container for {container.container_id}")
+        delete_container.delay(container.container_id, container.secret_key)
