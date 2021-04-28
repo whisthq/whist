@@ -326,8 +326,8 @@ int send_clipboard_packets(void* opaque) {
         ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
         if (clipboard) {
             // Alloc an fmsg
-            FractalClientMessage* fmsg_clipboard =
-                allocate_region(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+            FractalClientMessage* fmsg_clipboard = allocate_region(
+                sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
             // Build the fmsg
             // Init metadata to 0 to prevent sending uninitialized packets over the network
             memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
