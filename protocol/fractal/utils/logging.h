@@ -171,6 +171,13 @@ void rename_log_file();
 void internal_logging_printf(const char* fmt_str, ...);
 
 /**
+ * @brief                          This function will immediately flush all of the logs,
+ *                                 rather than slowly pushing the logs through
+ *                                 from another thread
+ */
+void flush_logs();
+
+/**
  * @brief                          Destroy the logger object
  */
 void destroy_logger();
