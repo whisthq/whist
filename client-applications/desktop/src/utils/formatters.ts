@@ -1,5 +1,5 @@
 import { ChildProcess } from "child_process"
-import { omit, pick, truncate } from "lodash"
+import { omit, pick, truncate, fromPairs, toPairs, isFunction } from "lodash"
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 
@@ -23,7 +23,31 @@ export const formatChildProcess = (process: ChildProcess) =>
     "_handle",
   ])
 
-export const formatLogin = (res: any) => omit(res, [...omitJson])
+const pickMap = <
+  T extends Record<string, any>,
+  K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
+>(
+  obj: T,
+  fmap: K
+): T => ({
+  ...obj,
+  ...fromPairs(
+    toPairs(fmap).map(([key, value]) => [
+      key,
+      isFunction(value) ? value(obj[key]) : pickMap(obj[key], value),
+    ])
+  ),
+})
+
+export const formatLogin = (res: any) =>
+  pickMap(omit(res, [...omitJson]), {
+    json: {
+      access_token: (token: string) => truncate(token, { length: 15 }),
+      refresh_token: (token: string) => truncate(token, { length: 15 }),
+      encrypted_config_token: (token: string) =>
+        truncate(token, { length: 15 }),
+    },
+  })
 
 export const formatContainer = (res: any) => {
   if (res.state !== "POLLING") {
