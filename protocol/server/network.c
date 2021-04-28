@@ -194,13 +194,13 @@ int try_get_next_message_tcp(int client_id, FractalClientMessage **fcmsg, size_t
         has_read = true;
     }
 
-    FractalPacket *packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
-    if (packet) {
-        *fcmsg = (FractalClientMessage *)packet->data;
-        *fcmsg_size = (size_t)packet->payload_size;
+    FractalPacket *tcp_packet = read_tcp_packet(&(clients[client_id].TCP_context), should_recvp);
+    if (tcp_packet) {
+        *fcmsg = (FractalClientMessage *)tcp_packet->data;
+        *fcmsg_size = (size_t)tcp_packet->payload_size;
 
-        LOG_INFO("Received TCP BUF!!!! Size %d", packet->payload_size);
-        LOG_INFO("Received %d byte clipboard message from client.", packet->payload_size);
+        LOG_INFO("Received TCP Packet (Probably clipboard): Size %d", tcp_packet->payload_size);
+        free_tcp_packet(tcp_packet);
     }
     return 0;
 }
