@@ -180,7 +180,7 @@ type SetConfigEncryptionTokenRequest struct {
 	UserID                string             `json:"user_id"`                 // User to whom token belongs
 	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
 	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
-	resultChan            chan requestResult // Channel to pass the config encryption token setting setting result between goroutines
+	resultChan            chan requestResult // Channel to pass the config encryption token setting result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
