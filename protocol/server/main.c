@@ -1190,21 +1190,27 @@ int main(int argc, char* argv[]) {
 
         // If they clipboard as updated, we should send it over to the
         // client
-        ClipboardData* cb = clipboard_synchronizer_get_new_clipboard();
-        if (cb) {
+        ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
+        if (clipboard) {
             LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
+            // Alloc fmsg
             FractalServerMessage* fmsg_response =
-                safe_malloc(sizeof(FractalServerMessage) + cb->size);
+                allocate_region(sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size);
+            // Build fmsg
             memset(fmsg_response, 0, sizeof(*fmsg_response));
             fmsg_response->type = SMESSAGE_CLIPBOARD;
-            memcpy(&fmsg_response->clipboard, cb, sizeof(ClipboardData) + cb->size);
+            memcpy(&fmsg_response->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+            // Send fmsg
             read_lock(&is_active_rwlock);
             if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                     sizeof(FractalServerMessage) + cb->size) < 0) {
+                                     sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size) < 0) {
                 LOG_WARNING("Failed to broadcast clipboard message.");
             }
             read_unlock(&is_active_rwlock);
-            free(fmsg_response);
+            // Free fmsg
+            deallocate_region(fmsg_response);
+            // Free clipboard
+            free_clipboard(clipboard);
         }
 
         if (get_timer(window_name_timer) > 0.1) {  // poll window name every 100ms
