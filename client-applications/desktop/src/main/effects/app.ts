@@ -14,7 +14,7 @@ import {
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
-import { eventTrayActions } from "@app/main/events/tray"
+import { eventActionTypes } from "@app/main/events/tray"
 import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
@@ -26,7 +26,7 @@ import {
 import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
-import { quitRequest, signoutRequest } from "@app/main/observables/tray"
+import { quitAction, signoutAction } from "@app/main/events/actions"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -109,7 +109,7 @@ merge(protocolLaunchProcess, loginSuccess, signupSuccess)
   .subscribe(() => {
     closeWindows()
     hideAppDock()
-    createTray(eventTrayActions)
+    createTray(eventActionTypes)
   })
 
 // If the update is downloaded, quit the app and install the update
@@ -126,11 +126,11 @@ autoUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-quitRequest.subscribe(() => {
+quitAction.subscribe(() => {
   app.quit()
 })
 
-signoutRequest.subscribe(() => {
+signoutAction.subscribe(() => {
   app.relaunch()
   app.exit()
 })

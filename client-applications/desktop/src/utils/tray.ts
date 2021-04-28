@@ -2,7 +2,7 @@ import { app, Menu, Tray, nativeTheme, nativeImage } from "electron"
 import path from "path"
 let tray: Tray | null = null
 
-export const createTray = (eventTrayActions: {
+export const createTray = (eventActionTypes: {
   signout: () => any
   quit: () => any
 }) => {
@@ -16,13 +16,13 @@ export const createTray = (eventTrayActions: {
     {
       label: "Sign out",
       click: () => {
-        eventTrayActions.signout()
+        eventActionTypes.signout()
       },
     },
     {
       label: "Quit",
       click: () => {
-        eventTrayActions.quit()
+        eventActionTypes.quit()
       },
     },
   ])
@@ -30,7 +30,7 @@ export const createTray = (eventTrayActions: {
 }
 
 export const doesTrayExist = () => {
-  return tray != null ? !tray.isDestroyed() : false
+  return tray != null && !tray.isDestroyed()
 }
 
 const getIcon = () => {
