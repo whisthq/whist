@@ -289,7 +289,9 @@ ClipboardData* unsafe_get_clipboard() {
                 cb->size = sizeof(clipboard_buf);  // Tell bmp_to_png the max size of the buffer
                 if (bmp_to_png(bmp_data, bmp_size, cb->data, &cb->size) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
-                    free(bmp_data);
+                    deallocate_region(bmp_data);
+                    cb->type = CLIPBOARD_NONE;
+                    cb->size = 0;
                     break;
                 }
                 deallocate_region(bmp_data);
