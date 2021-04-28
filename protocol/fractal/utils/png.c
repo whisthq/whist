@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "lodepng.h"
+
 #include "logging.h"
 
 #ifdef _WIN32
@@ -37,61 +39,231 @@ int bmp_to_png(char* bmp, int bmp_size, char* png, int* png_size) {
     */
 
     // Read BMP file header contents
-    int w, h;
     if (bmp_size < 54) {
-        LOG_ERROR("BMP size is smaller than the than the smallest possible BMP header");
+        LOG_ERROR("BMP size is smaller than the than the smallest acceptable BMP header");
         return -1;
     }
+
+    // File signature
     if (bmp[0] != 'B' || bmp[1] != 'M') {
-        LOG_ERROR("BMP header BM failed");
+        LOG_ERROR("BMP magic number \"BM\" not found");
         return -1;
     }
-    int pixeloffset = *((int*)(&bmp[10]));
-    w = *((int*)(&bmp[18]));
-    h = *((int*)(&bmp[22]));
-    if (bmp[28] != 24 && bmp[28] != 32) {
-        LOG_ERROR("BMP is not 3 or 4 channel");
+    // File Size
+    uint32_t file_size = *((uint32_t*)(&bmp[2]));
+    // Unused, value doesn't matter
+    UNUSED(*((uint32_t*)(&bmp[6])));
+    // Pixel offset
+    uint32_t pixel_offset = *((uint32_t*)(&bmp[10]));
+    // Header size (from this point)
+    uint32_t header_size = *((uint32_t*)(&bmp[14]));
+    if (header_size != 40) {
+        LOG_ERROR("DIB header size must be 40");
         return -1;
     }
-    int num_channels = bmp[28] / 8;
+    // Width/height
+    uint32_t w = *((uint32_t*)(&bmp[18]));
+    uint32_t h = *((uint32_t*)(&bmp[22]));
+    // Number of planes (1)
+    if (*((uint16_t*)(&bmp[26])) != 1) {
+        LOG_ERROR("Number of BMP planes must be 1");
+        return -1;
+    }
+    // Bits per pixel
+    uint16_t bits_per_pixel = *((uint16_t*)(&bmp[28]));
+    if (bits_per_pixel != 24 && bits_per_pixel != 32) {
+        LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead", bits_per_pixel);
+        return -1;
+    }
+    // Compression (0 for none)
+    if (*((uint32_t*)(&bmp[30])) != 0) {
+        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead", *((uint32_t*)(&bmp[30])));
+        return -1;
+    }
+    // Size of the pixel data array
+    uint32_t data_size = *((uint32_t*)(&bmp[34]));
+    // horizontal DPI in pixels/meter, value doesn't matter
+    UNUSED(*((uint32_t*)(&bmp[38])));
+    // vertical DPI in pixels/meter, value doesn't matter
+    UNUSED(*((uint32_t*)(&bmp[42])));
+    // Must be 0, no palette
+    if (*((uint32_t*)(&bmp[46])) != 0 || *((uint32_t*)(&bmp[50])) != 0) {
+        LOG_ERROR("BMP color palettes are not supported");
+        return -1;
+    }
+
+    uint16_t num_channels = bmp[28] / 8;
 
     // BMP pixel arrays are always multiples of 4. Images with widths that are not multiples
-    //  of 4 are always padded at the end of each row. scanlineBytes is the padded width of each
-    //  BMP row in the original image.
-    int scanline_bytes = w * num_channels;
+    //  of 4 are always padded at the end of each row. scanline_bytes is the padded width of each
+    //  BMP row in the BMP image data.
+    uint32_t scanline_bytes = w * num_channels;
     if (scanline_bytes % 4 != 0) scanline_bytes = (scanline_bytes / 4) * 4 + 4;
 
-    int data_size = *((int*)(&bmp[34]));
+    // Data size can be 0, which means that it's scanline_bytes * h by default
     if (data_size == 0) {
         data_size = scanline_bytes * h;
     }
-
-    // memcpy will face UB problems below if the calculated size does not match the actual
-    // BMP byte array size
-    if ((unsigned)bmp_size < (unsigned)data_size + pixeloffset) {
-        LOG_WARNING("Actual size does not match given data_size and pixeloffset (%d < %d + %d)",
-                    bmp_size, data_size, pixeloffset);
-        return -1;
-    }
     // Require that data_size is uncompressed raw data
     if (scanline_bytes * h != data_size) {
-        LOG_WARNING("BMP size <> BMP header mismatch %d * %d != %d", scanline_bytes, h, data_size);
+        LOG_WARNING("BMP scanline * h <> BMP header data size mismatch %d * %d != %d", scanline_bytes, h, data_size);
         return -1;
     }
 
-    // Depending on numChannels, we could be dealing with BGR24 or BGRA32 in the BMP
-    // enum AVPixelFormat bmp_format = num_channels == 3 ? AV_PIX_FMT_BGR24 : AV_PIX_FMT_BGRA;
+    // Verify file_size against pixel_offset and data_size
+    if (file_size != pixel_offset + data_size) {
+        LOG_ERROR("BMP file_size is not expected PIXEL_OFFSET + DATA_SIZE, %d != %d + %d", file_size, pixel_offset, data_size);
+    }
 
-    // Just copy into the buffer without compression for now
-    memcpy(png, bmp, bmp_size);
-    *png_size = bmp_size;
+    // Check that the actual bmp buffer is the expected file size
+    if ((unsigned)bmp_size != file_size) {
+        LOG_WARNING("Actual size does not match header filesize (%d != %d)",
+                    bmp_size, file_size);
+        return -1;
+    }
+
+    // Create bmp buffer for lodepng
+    uint8_t* pixel_data_buffer = (uint8_t*)allocate_region(bmp_size);
+
+    for(uint32_t y = 0; y < h; y++) {
+        // BMP rows are stored bottom-to-top,
+        // this means we have to flip them by indexing by (h - y - 1)
+        // Note that scanline_bytes is often not num_channels*w, due to padding,
+        // But the target buffer will not be padded
+        uint8_t* source_pixel_ptr = (uint8_t*)bmp + pixel_offset + (h - y - 1) * scanline_bytes;
+        uint8_t* target_pixel_ptr = pixel_data_buffer + y * (num_channels*w);
+        for(uint32_t x = 0; x < w; x++) {
+            // BMPs are stored in BGR(A), and we need them in RGB(A)
+            if(num_channels == 3) {
+                *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //R
+                *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
+                *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //B
+            } else {
+                *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //R
+                *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
+                *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //B
+                *(target_pixel_ptr+3) = *(source_pixel_ptr+3); //A
+            }
+            // Source will be BGR or BGRA, depending on num_channels
+            source_pixel_ptr += num_channels;
+            // Target will be RGB or RGBA, depending on num_channels
+            target_pixel_ptr += num_channels;
+        }
+    }
+
+    // Convert to png
+    unsigned char* lodepng_data;
+    size_t lodepng_size;
+    int err;
+    if (num_channels == 3) {
+        err = lodepng_encode24(&lodepng_data, &lodepng_size, pixel_data_buffer, w, h);
+    } else {
+        err = lodepng_encode32(&lodepng_data, &lodepng_size, pixel_data_buffer, w, h);
+    }
+
+    deallocate_region(pixel_data_buffer);
+
+    if (err != 0) {
+        LOG_WARNING("Failed to encode BMP");
+        free(lodepng_data);
+        return -1;
+    }
+
+    if (lodepng_size > *png_size) {
+        LOG_WARNING("The decoded PNG is too large: %d overflows the max buffer of %d", lodepng_size, png_size);
+        free(lodepng_data);
+        return -1;
+    }
+
+    // Copy lodepng_data and size to the given parameters
+    memcpy(png, lodepng_data, lodepng_size);
+    *png_size = (int)lodepng_size;
 
     return 0;
 }
 
 int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size) {
-    // Just copy into the buffer without compression for now
-    memcpy(bmp, png, png_size);
-    *bmp_size = png_size;
+    unsigned char* lodepng_data;
+    unsigned int w, h;
+
+    int num_channels = 4;
+    if (lodepng_decode32(&lodepng_data, &w, &h, (unsigned char*)png, png_size) != 0) {
+        LOG_WARNING("Failed to decode PNG");
+        return -1;
+    }
+
+    // ====================
+    // Create Bitmap Header
+    // ====================
+
+    // Scanlines must round up to a multiple of 4
+    int scanline_bytes = w * num_channels;
+    if (scanline_bytes % 4 != 0) scanline_bytes = (scanline_bytes / 4) * 4 + 4;
+
+    if( 54 > *bmp_size ) {
+        LOG_WARNING("BMP too large to fit in BMP buffer");
+        free(lodepng_data);
+        return -1;
+    }
+
+    // File signature
+    bmp[0] = 'B';
+    bmp[1] = 'M';
+    // File Size
+    *((uint32_t*)(&bmp[2])) = 54 + h * scanline_bytes;
+    // Unused
+    *((uint32_t*)(&bmp[6])) = 0;
+    // Pixel offset
+    *((uint32_t*)(&bmp[10])) = 54;
+    // Header size (from this point)
+    *((uint32_t*)(&bmp[14])) = 40;
+    // Width/height
+    *((uint32_t*)(&bmp[18])) = w;
+    *((uint32_t*)(&bmp[22])) = h;
+    // Number of planes (1)
+    *((uint16_t*)(&bmp[26])) = 1;
+    // Bits per pixel
+    *((uint16_t*)(&bmp[28])) = 8 * num_channels;
+    // Compression (0 for none)
+    *((uint32_t*)(&bmp[30])) = 0;
+    // Size of the pixel data array
+    *((uint32_t*)(&bmp[34])) = h * scanline_bytes;
+    // horizontal DPI in pixels/meter
+    *((uint32_t*)(&bmp[38])) = 2835;
+    // vertical DPI in pixels/meter
+    *((uint32_t*)(&bmp[42])) = 2835;
+    // Must be 0, no palette
+    *((uint32_t*)(&bmp[46])) = 0;
+    // Must be 0, no palette
+    *((uint32_t*)(&bmp[50])) = 0;
+
+    if( *((uint32_t*)(&bmp[2])) > (size_t)*bmp_size ) {
+        LOG_WARNING("BMP too large to fit in BMP buffer");
+        free(lodepng_data);
+        return -1;
+    }
+
+    // ====================
+    // Copy Bitmap Data
+    // ====================
+
+    for(size_t y = 0; y < h; y++) {
+        // BMP rows are stored bottom-to-top,
+        // this means we have to flip them by indexing by (h - y - 1)
+        // Note that scanline_bytes is often not 4*w, due to padding,
+        // But the source buffer will not be padded
+        uint8_t* source_pixel_ptr = lodepng_data + y * (4*w);
+        uint8_t* target_pixel_ptr = (uint8_t*)bmp + 54 + (h - y - 1) * scanline_bytes;
+        for(size_t x = 0; x < w; x++) {
+            // lodepng gives us RGB(A), we need BGR(A)
+            *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //B
+            *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
+            *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //R
+            *(target_pixel_ptr+3) = *(source_pixel_ptr+3); //A
+            source_pixel_ptr += 4;
+            target_pixel_ptr += 4;
+        }
+    }
+
     return 0;
 }
