@@ -218,10 +218,9 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
 }
 
-// Handles the set config encryption token request from the client app by setting the
-// container's corresponding config encryption token in the map.
-// Takes the request to the `set_config_encryption_token` endpoint as an argument
-// and returns nil if no errors, and error object if error.
+// Handles the set config encryption token request from the client app. Takes
+// the request to the `set_config_encryption_token` endpoint as an argument and
+// returns nil if no errors, and error object if error.
 func handleSetConfigEncryptionTokenRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SetConfigEncryptionTokenRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
 		err := logger.MakeError("handleSetConfigEncryptionTokenRequest(): "+fmt, v...)
