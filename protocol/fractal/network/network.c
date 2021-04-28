@@ -183,15 +183,6 @@ int recvp(SocketContext* context, void* buf, int len);
 int sendp(SocketContext* context, void* buf, int len);
 
 /*
-@brief                          This will initialize and clear the TCP reader
-buffer. TCP data will have be read into this buffer, and will only return a
-packet when the entire packet is received
-
-@param context                  The socket context
-*/
-void clear_reading_tcp(SocketContext* context);
-
-/*
 @brief                          This will prepare the private key data
 
 @param priv_key_data            The private key data buffer
@@ -714,21 +705,6 @@ FractalPacket* read_udp_packet(SocketContext* context) {
     }
 }
 
-// NOTE: The following global variable code only works when reading from one TCP socket.
-// Will need to be adjusted if multiple TCP sockets are used
-static int reading_packet_len;
-static DynamicBuffer* encrypted_tcp_packet_buffer = NULL;
-
-void clear_reading_tcp(SocketContext* context) {
-    UNUSED(context);
-    reading_packet_len = 0;
-    if (encrypted_tcp_packet_buffer == NULL) {
-        encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
-    } else {
-        resize_dynamic_buffer(encrypted_tcp_packet_buffer, 0);
-    }
-}
-
 FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -738,17 +714,19 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         LOG_WARNING("TryReadingTCPPacket received a context that is NOT TCP!");
         return NULL;
     }
+    // The dynamically sized buffer to read into
+    DynamicBuffer* encrypted_tcp_packet_buffer = context->encrypted_tcp_packet_buffer;
 
 #define TCP_SEGMENT_SIZE 4096
 
     int len = TCP_SEGMENT_SIZE;
     while (should_recvp && len == TCP_SEGMENT_SIZE) {
         // Make the tcp buffer larger if needed
-        resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len + TCP_SEGMENT_SIZE);
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
         len =
-            recvp(context, encrypted_tcp_packet_buffer->buf + reading_packet_len, TCP_SEGMENT_SIZE);
+            recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len, TCP_SEGMENT_SIZE);
 
         if (len < 0) {
             int err = get_last_network_error();
@@ -758,17 +736,17 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             }
         } else if (len > 0) {
             // LOG_INFO( "READ LEN: %d", len );
-            reading_packet_len += len;
+            context->reading_packet_len += len;
         }
 
         // If the previous recvp was maxed out, ie == TCP_SEGMENT_SIZE,
         // then try pulling some more from recvp
     };
 
-    if ((unsigned long)reading_packet_len >= sizeof(int)) {
+    if ((unsigned long)context->reading_packet_len >= sizeof(int)) {
         // The amount of data bytes read (actual len), and the amount of bytes
         // we're looking for (target len), respectively
-        int actual_len = reading_packet_len - sizeof(int);
+        int actual_len = context->reading_packet_len - sizeof(int);
         int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
 
         // If the target len is valid, and actual len > target len, then we're
@@ -788,10 +766,10 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
                 encrypted_tcp_packet_buffer->buf[i - start_next_bytes] =
                     encrypted_tcp_packet_buffer->buf[i];
             }
-            reading_packet_len = actual_len - target_len;
+            context->reading_packet_len = actual_len - target_len;
 
             // Realloc the buffer smaller if we have room to
-            resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len);
+            resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len);
 
             if (decrypted_len < 0) {
                 // A warning not an error, since it doesn't simply we did something wrong
@@ -1258,6 +1236,9 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
     context->mutex = fractal_create_mutex();
     memcpy(context->binary_aes_private_key, binary_aes_private_key,
            sizeof(context->binary_aes_private_key));
+    context->reading_packet_len = 0;
+    context->encrypted_tcp_packet_buffer = init_dynamic_buffer(true);
+    resize_dynamic_buffer(context->encrypted_tcp_packet_buffer, 0);
 
     int ret;
 
@@ -1286,7 +1267,6 @@ int create_tcp_context(SocketContext* context, char* destination, int port, int 
         return -1;
     }
 
-    clear_reading_tcp(context);
     return ret;
 }
 
