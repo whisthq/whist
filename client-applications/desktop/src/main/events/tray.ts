@@ -6,11 +6,11 @@
 
 import { Subject } from "rxjs"
 
-import { ActionType, Action } from "@app/@types/actions"
+import { MainAction, Action } from "@app/@types/actions"
 
 export const eventTray = new Subject<Action>()
 
 export const eventActionTypes = {
-  signout: () => eventTray.next({ type: ActionType.SIGNOUT, payload: null }),
-  quit: () => eventTray.next({ type: ActionType.QUIT, payload: null }),
+  signout: () => eventTray.next({ type: MainAction.SIGNOUT, payload: null }),
+  quit: () => eventTray.next({ type: MainAction.QUIT, payload: null }),
 }
