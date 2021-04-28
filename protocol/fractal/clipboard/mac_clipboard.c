@@ -53,6 +53,10 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
+void unsafe_free_clipboard(ClipboardData* cb) {
+    // Do nothing
+}
+
 ClipboardData* unsafe_get_clipboard() {
     ClipboardData* cb = (ClipboardData*)clipboard_buf;
 

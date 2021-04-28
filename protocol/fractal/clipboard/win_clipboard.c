@@ -185,8 +185,6 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 
 static int last_clipboard_sequence_number = -1;
 
-static char clipboard_buf[9000000];
-
 bool unsafe_has_clipboard_updated() {
     bool has_updated = false;
 
@@ -200,11 +198,15 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
+void unsafe_free_clipboard(ClipboardData* cb) {
+    deallocate_region(cb);
+}
+
 ClipboardData* unsafe_get_clipboard() {
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
     fractal_sleep(15);
 
-    ClipboardData* cb = (ClipboardData*)clipboard_buf;
+    ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 
     cb->size = 0;
     cb->type = CLIPBOARD_NONE;
@@ -222,6 +224,7 @@ ClipboardData* unsafe_get_clipboard() {
 
     int cf_type = -1;
 
+    // Check for CF_TEXT/CF_FIB/CF_HDROP data, and if it exists, copy the data into cb
     for (int i = 0; i < (int)(sizeof(cf_types) / sizeof(cf_types[0])) && cf_type == -1; i++) {
         if (IsClipboardFormatAvailable(cf_types[i])) {
             HGLOBAL hglb = GetClipboardData(cf_types[i]);
@@ -229,13 +232,12 @@ ClipboardData* unsafe_get_clipboard() {
                 LPTSTR lptstr = GlobalLock(hglb);
                 if (lptstr != NULL) {
                     int data_size = (int)GlobalSize(hglb);
-                    if (data_size < (int)sizeof(clipboard_buf)) {
-                        cb->size = data_size;
-                        memcpy(cb->data, lptstr, data_size);
-                        cf_type = cf_types[i];
-                    } else {
-                        LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
-                    }
+
+                    // Copy from global memory to Clipboard buffer
+                    cb = realloc_region(cb, sizeof(ClipboardData) + data_size);
+                    cb->size = data_size;
+                    memcpy(cb->data, lptstr, data_size);
+                    cf_type = cf_types[i];
 
                     // Don't forget to release the lock after you are done.
                     GlobalUnlock(hglb);
@@ -262,22 +264,19 @@ ClipboardData* unsafe_get_clipboard() {
             case CF_TEXT:
                 // Read the contents of lptstr which just a pointer to the
                 // string.
-                cb->size = (int)strlen(cb->data);  // keep null character out
+                cb->size = (int)strlen(cb->data);  // Kick null character out of cb->data
                 LOG_INFO("CLIPBOARD STRING Received! Size: %d", cb->size);
                 cb->type = CLIPBOARD_TEXT;
                 break;
             case CF_DIB:
                 LOG_INFO("Clipboard bitmap received! Size: %d", cb->size);
 
+                // BMP will be 14 bytes larger than CF_DIB for the file header
                 int bmp_size = cb->size + 14;
 
-                // windows clipboard saves bitmap data without header -
-                //      add BMP header and then convert from bmp to png
-                //      before saving to clipboard data to be sent to peer
+                // Windows clipboard saves bitmap data without file header
+                // This will add file header and then convert from bmp to png
                 char* bmp_data = allocate_region(bmp_size);
-                if (!bmp_data) {
-                    break;
-                }
                 *((char*)(&bmp_data[0])) = 'B';
                 *((char*)(&bmp_data[1])) = 'M';
                 *((int*)(&bmp_data[2])) = bmp_size;
@@ -286,18 +285,29 @@ ClipboardData* unsafe_get_clipboard() {
                 memcpy(bmp_data + 14, cb->data, cb->size);
 
                 // convert BMP to PNG, and save it into the Clipboard
-                cb->size = sizeof(clipboard_buf);  // Tell bmp_to_png the max size of the buffer
-                if (bmp_to_png(bmp_data, bmp_size, cb->data, &cb->size) != 0) {
+                // cb->size will already contain the max size of cb->data
+                char* png;
+                int png_size;
+                if (bmp_to_png(bmp_data, bmp_size, &png, &png_size) != 0) {
                     LOG_ERROR("clipboard bmp to png conversion failed");
                     deallocate_region(bmp_data);
+                    cb = realloc_region(cb, sizeof(ClipboardData));
                     cb->type = CLIPBOARD_NONE;
                     cb->size = 0;
                     break;
                 }
                 deallocate_region(bmp_data);
 
-                // Mark as CLIPBOARD IMAGE
+                // Reallocate for new png size
+                deallocate_region(cb);
+                cb = allocate_region(sizeof(ClipboardData) + png_size);
+                // Copy png over
                 cb->type = CLIPBOARD_IMAGE;
+                cb->size = png_size;
+                memcpy(cb->data, png, png_size);
+
+                // Free png
+                free_png(png);
 
                 break;
             case CF_HDROP:
@@ -484,24 +494,18 @@ void unsafe_set_clipboard(ClipboardData* cb) {
             LOG_INFO("SetClipboard to Image with size %d", cb->size);
             if (cb->size > 0) {
                 // Store max size on bmp_size, png_to_bmp will read this
-                int bmp_size = sizeof(clipboard_buf) + 14;
-                char* bmp_buf = allocate_region(bmp_size);
-                if (png_to_bmp(cb->data, cb->size, bmp_buf, &bmp_size) != 0) {
+                int bmp_size;
+                char* bmp_data;
+                if (png_to_bmp(cb->data, cb->size, &bmp_data, &bmp_size) != 0) {
                     LOG_ERROR("Clipboard image png -> bmp conversion failed");
-                    deallocate_region(bmp_buf);
-                    return;
-                }
-                if (bmp_size - 14 > (int)sizeof(clipboard_buf)) {
-                    LOG_WARNING("Could not copy, clipboard too large! %d bytes", bmp_size - 14);
-                    deallocate_region(bmp_buf);
                     return;
                 }
                 cf_type = CF_DIB;
                 // Create a global allocation of the BMP
-                h_mem = get_global_alloc(bmp_buf + 14, bmp_size - 14,
+                h_mem = get_global_alloc(bmp_data + 14, bmp_size - 14,
                                          false);  // no null char at end (false)
-
-                deallocate_region(bmp_buf);
+                // Free the region that we received
+                free_bmp(bmp_data);
             }
             break;
         case CLIPBOARD_FILES:
