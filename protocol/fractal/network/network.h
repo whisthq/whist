@@ -144,6 +144,9 @@ typedef struct SocketContext {
     int ack;
     FractalMutex mutex;
     char binary_aes_private_key[16];
+    // Used for reading TCP packets
+    int reading_packet_len;
+    DynamicBuffer* encrypted_tcp_packet_buffer;
 } SocketContext;
 
 // TODO: Unique PRIVATE_KEY for every session, so that old packets can't be
