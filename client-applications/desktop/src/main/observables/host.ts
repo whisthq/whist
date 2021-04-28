@@ -33,7 +33,11 @@ import {
   exhaustMap,
   withLatestFrom,
 } from "rxjs/operators"
-import { formatHostConfig, formatHostInfo } from "@app/utils/formatters"
+import {
+  formatHostConfig,
+  formatHostInfo,
+  formatObservable,
+} from "@app/utils/formatters"
 
 export const hostInfoRequest = containerAssignPolling.pipe(
   skipWhile((res) => res?.json.state !== "PENDING"),
@@ -105,16 +109,10 @@ export const hostConfigLoading = loadingFrom(
 
 debugObservables(
   [hostInfoRequest, "hostInfoRequest"],
-  [hostInfoSuccess.pipe(map((res) => formatHostInfo(res))), "hostInfoSuccess"],
+  [formatObservable(hostInfoSuccess, formatHostInfo), "hostInfoSuccess"],
   [hostConfigRequest, "hostConfigRequest"],
-  [
-    hostConfigProcess.pipe(map((res) => formatHostConfig(res))),
-    "hostConfigProcess",
-  ],
-  [
-    hostConfigSuccess.pipe(map((res) => formatHostConfig(res))),
-    "hostConfigSuccess",
-  ]
+  [formatObservable(hostConfigProcess, formatHostConfig), "hostConfigProcess"],
+  [formatObservable(hostConfigSuccess, formatHostConfig), "hostConfigSuccess"]
 )
 
 errorObservables(
