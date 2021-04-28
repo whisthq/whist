@@ -43,12 +43,10 @@ whatever files are in the SET_CLIPBOARD directory.
  done; "
  */
 
-// TODO: standardize this across all clipboards
 #define MAX_CLIPBOARD_SIZE 9000000
 
 bool start_tracking_clipboard_updates();
 
-static char cb_buf[MAX_CLIPBOARD_SIZE];
 static Display* display = NULL;
 static Window window;
 
@@ -56,7 +54,7 @@ static Atom clipboard;
 static Atom incr_id;
 
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
-bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size);
+DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size);
 
 void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
 
@@ -66,56 +64,65 @@ void unsafe_destroy_clipboard() {
     }
 }
 
-bool get_clipboard_picture(ClipboardData* cb) {
+DynamicBuffer* get_clipboard_picture() {
     /*
     Assume that clipboard stores pictures in png format when getting
     */
     Atom target_atom = XInternAtom(display, "image/png", False),
          property_atom = XInternAtom(display, "XSEL_DATA", False);
 
+    // is PNG
     if (clipboard_has_target(property_atom, target_atom)) {
-        // is PNG
-        if (!get_clipboard_data(property_atom, cb, 0)) {
+        DynamicBuffer* db = NULL;
+        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
-            return false;
+            return NULL;
         }
-        cb->type = CLIPBOARD_IMAGE;
-        return true;
+        ((ClipboardData*)db->buf)->type = CLIPBOARD_IMAGE;
+        return db;
     }
 
     // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard image to target format");
-    return false;
+    return NULL;
 }
 
-bool get_clipboard_string(ClipboardData* cb) {
+DynamicBuffer* get_clipboard_string() {
     Atom target_atom = XInternAtom(display, "UTF8_STRING", False),
          property_atom = XInternAtom(display, "XSEL_DATA", False);
 
     if (clipboard_has_target(property_atom, target_atom)) {
-        if (!get_clipboard_data(property_atom, cb, 0)) {
+        DynamicBuffer* db = NULL;
+        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
-            return false;
+            return NULL;
         }
-
-        cb->type = CLIPBOARD_TEXT;
-        return true;
+        ((ClipboardData*)db->buf)->type = CLIPBOARD_TEXT;
+        return db;
     }
 
     // request failed, e.g. owner can't convert to the target format
     LOG_WARNING("Can't convert clipboard string to target format");
-    return false;
+    return NULL;
 }
 
-bool get_clipboard_files(ClipboardData* cb) {
+DynamicBuffer* get_clipboard_files() {
     Atom target_atom = XInternAtom(display, "x-special/gnome-copied-files", False);
     Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
     if (clipboard_has_target(property_atom, target_atom)) {
-        if (!get_clipboard_data(property_atom, cb, 0)) {
+        DynamicBuffer* db = NULL;
+        if ((db = get_clipboard_data(property_atom, 0)) == NULL) {
             LOG_WARNING("Failed to get clipboard data");
-            return false;
+            return NULL;
         }
+
+        ClipboardData* cb = (ClipboardData*)db->buf;
+
+        // Increase size by 1 for the null terminator
+        resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + 1);
+        cb = (ClipboardData*)db->buf;
+
         // Add null terminator
         cb->data[cb->size] = '\0';
         cb->size++;
@@ -147,26 +154,47 @@ bool get_clipboard_files(ClipboardData* cb) {
 
         cb->type = CLIPBOARD_FILES;
         cb->size = 0;
-        return true;
+        return db;
     } else {  // request failed, e.g. owner can't convert to the target format
         LOG_WARNING("Can't convert clipboard to target format");
-        return false;
+        return NULL;
     }
 }
 
 ClipboardData* unsafe_get_clipboard() {
-    ClipboardData* cb = (ClipboardData*)cb_buf;
-    cb->type = CLIPBOARD_NONE;
-    cb->size = 0;
+    static DynamicBuffer* db = NULL;
 
-    // NOT IMPLEMENTING CLIPBOARD FILES RIGHT NOW
-    // get_clipboard_files(cb) || get_clipboard_picture(cb) || get_clipboard_string(cb);
-    get_clipboard_picture(cb) || get_clipboard_string(cb);
+    // Free the previous dynamic buffer
+    if (db != NULL) {
+        free_dynamic_buffer(db);
+        db = NULL;
+    }
 
-    // Essentially just cb_buf, we expect that the user of GetClipboard
-    // will safe_malloc his own version if he wants to save multiple clipboards
-    // Otherwise, we just reuse the same memory buffer
-    return cb;
+    // Try to get a string/picture/files clipboard object (Stored in db's buf)
+    if (db == NULL) {
+        db = get_clipboard_string();
+    }
+    if (db == NULL) {
+        db = get_clipboard_picture();
+    }
+    if (db == NULL) {
+        // Not implementing clipboard files right now
+        // db = get_clipboard_files();
+    }
+
+    if (db == NULL) {
+        // If no db was found, just return a CLIPBOARD_NONE object
+        static ClipboardData cb_none;
+        cb_none.type = CLIPBOARD_NONE;
+        cb_none.size = 0;
+        return &cb_none;
+    } else {
+        // We expect that the user of GetClipboard
+        // will safe_malloc and memcpy his own version if he wants to
+        // save multiple clipboards
+        // Otherwise, we will free on the next call to get_clipboard
+        return (ClipboardData*)db->buf;
+    }
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
@@ -323,11 +351,16 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
     }
 }
 
-bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size) {
+DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size) {
     Atom new_atom;
     int resbits;
     long unsigned ressize, restail;
     char* result;
+
+    DynamicBuffer* db = init_dynamic_buffer(true);
+    resize_dynamic_buffer(db, sizeof(ClipboardData));
+
+    ClipboardData* cb = (ClipboardData*)db->buf;
 
     XGetWindowProperty(display, window, property_atom, 0, LONG_MAX / 4, True, AnyPropertyType,
                        &new_atom, &resbits, &ressize, &restail, (unsigned char**)&result);
@@ -365,6 +398,11 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size) 
             }
 
             if (!bad_clipboard) {
+                // Resize the dynamic buffer to that it can fit the new data
+                resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + src_size);
+                cb = (ClipboardData*)db->buf;
+
+                // Copy the data over and update the size
                 memcpy(cb->data + cb->size, src_data, src_size);
                 cb->size += src_size;
             }
@@ -379,6 +417,11 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size) 
             src_size -= header_size;
         }
 
+        // Resize the dynamic buffer to that it can fit the new data
+        resize_dynamic_buffer(db, sizeof(ClipboardData) + cb->size + src_size);
+        cb = (ClipboardData*)db->buf;
+
+        // Copy the data over and update the size
         memcpy(cb->data + cb->size, src_data, src_size);
         cb->size += src_size;
 
@@ -387,10 +430,9 @@ bool get_clipboard_data(Atom property_atom, ClipboardData* cb, int header_size) 
 
     if (bad_clipboard) {
         LOG_WARNING("Clipboard too large!");
-        cb->type = CLIPBOARD_NONE;
-        cb->size = 0;
-        return false;
+        free_dynamic_buffer(db);
+        return NULL;
     }
 
-    return true;
+    return db;
 }
