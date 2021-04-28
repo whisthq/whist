@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple
 import requests
 
 from celery import Task, shared_task
-from celery.exceptions import Ignore
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
@@ -637,10 +636,7 @@ def _assign_container(
                     "label": username,
                 },
             )
-            self.update_state(
-                state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"}
-            )
-            raise Ignore
+            raise Exception(f"Cluster {cluster_info.cluster} is {cluster_info.status}.")
 
         message = (
             f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
@@ -662,10 +658,7 @@ def _assign_container(
                 keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
             )
             fractal_logger.error("Error generating task with running IP", extra={"label": username})
-            self.update_state(
-                state="FAILURE", meta={"msg": "Error generating task with running IP"}
-            )
-            raise Ignore
+            raise Exception("Your app's network bindings were not created.")
 
         # TODO:  refactor this out into its own function
 
@@ -706,11 +699,7 @@ def _assign_container(
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
             )
-            self.update_state(
-                state="FAILURE",
-                meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
-            )
-            raise Ignore
+            raise Exception(f"We were unable to track container {task_id} in our database.")
 
         cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
         cluster_usage["cluster"] = cluster_name
@@ -727,11 +716,7 @@ def _assign_container(
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
             )
-            self.update_state(
-                state="FAILURE",
-                meta={"msg": "Error updating container {} in SQL.".format(task_id)},
-            )
-            raise Ignore
+            raise Exception(f"We were unable to assign container {task_id} to you in our database.")
 
     try:
         _mount_cloud_storage(user, base_container)
@@ -771,13 +756,9 @@ def _assign_container(
             "container {} failed to ping".format(str(base_container.container_id)),
             extra={"label": username},
         )
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Container {str(base_container.container_id)} failed to ping."},
-        )
         _clean_up_task(base_container)
 
-        raise Ignore
+        raise Exception(f"Container {base_container.container_id} failed to ping.")
 
         # pylint: disable=line-too-long
     fractal_logger.info(
@@ -875,8 +856,7 @@ def prewarm_new_container(
         fractal_logger.error(
             f"Cluster status is {cluster_info.status}", extra={"label": cluster_name}
         )
-        self.update_state(state="FAILURE", meta={"msg": f"Cluster status is {cluster_info.status}"})
-        raise Ignore
+        raise Exception(f"Cluster {cluster_info.cluster} is {cluster_info.status}.")
 
     message = f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
     self.update_state(
@@ -889,8 +869,7 @@ def prewarm_new_container(
     )
     if curr_ip == -1 or curr_network_binding == -1:
         fractal_logger.error("Error generating task with running IP", extra={"label": "prewarmed"})
-        self.update_state(state="FAILURE", meta={"msg": "Error generating task with running IP"})
-        raise Ignore
+        raise Exception("Your app's network bindings were not created.")
 
     # TODO:  refactor this out into its own function
 
@@ -927,11 +906,7 @@ def prewarm_new_container(
         )
     else:
         fractal_logger.info("SQL insertion unsuccessful", extra={"label": str(task_id)})
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": "Error inserting Container {} into SQL".format(task_id)},
-        )
-        raise Ignore
+        raise Exception(f"We were unable to track container {task_id} in our database.")
 
     cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
     cluster_usage["cluster"] = cluster_name
@@ -954,11 +929,7 @@ def prewarm_new_container(
         return user_container_schema.dump(container)
     else:
         fractal_logger.info("SQL insertion unsuccessful", extra={"label": str(task_id)})
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": "Error updating container {} in SQL.".format(task_id)},
-        )
-        raise Ignore
+        raise Exception(f"We were unable to assign container {task_id} to you in our database.")
 
 
 @shared_task(bind=True)
@@ -1039,52 +1010,32 @@ def _create_new_cluster(
     )
     time.sleep(10)
 
-    try:
-        cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster(
-            cluster_name=cluster_name,
-            instance_type=instance_type,
-            ami=ami,
-            min_size=min_size,
-            max_size=max_size,
-            availability_zones=availability_zones,
-        )
-        fractal_logger.info(f"Created cluster {cluster_name}")
+    cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster(
+        cluster_name=cluster_name,
+        instance_type=instance_type,
+        ami=ami,
+        min_size=min_size,
+        max_size=max_size,
+        availability_zones=availability_zones,
+    )
+    fractal_logger.info(f"Created cluster {cluster_name}")
 
-        cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+    cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
 
-        cluster_usage_info = ClusterInfo(
-            cluster=cluster_name, location=region_name, **cluster_usage
+    cluster_usage_info = ClusterInfo(cluster=cluster_name, location=region_name, **cluster_usage)
+    cluster_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), cluster_usage_info)
+    if cluster_sql:
+        cluster = ClusterInfo.query.get(cluster_name)
+        cluster = user_cluster_schema.dump(cluster)
+        fractal_logger.info(
+            f"Successfully created cluster {cluster_name}", extra={"label": cluster_name}
         )
-        cluster_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), cluster_usage_info)
-        if cluster_sql:
-            cluster = ClusterInfo.query.get(cluster_name)
-            cluster = user_cluster_schema.dump(cluster)
-            fractal_logger.info(
-                f"Successfully created cluster {cluster_name}", extra={"label": cluster_name}
-            )
 
-            if not current_app.testing:
-                task_time_taken = time.time() - task_start_time
-                logged_event_cluster_created(cluster_name, time_taken=task_time_taken)
+        if not current_app.testing:
+            task_time_taken = time.time() - task_start_time
+            logged_event_cluster_created(cluster_name, time_taken=task_time_taken)
 
-            return cluster
-        else:
-            fractal_logger.info("SQL insertion unsuccessful", extra={"label": cluster_name})
-            self.update_state(
-                state="FAILURE",
-                meta={
-                    "msg": "Error inserting cluster {cli} and disk into SQL".format(
-                        cli=cluster_name
-                    )
-                },
-            )
-            raise Ignore
-    except Exception as error:
-        fractal_logger.error(
-            f"Encountered error: {error}",
-        )
-        self.update_state(
-            state="FAILURE",
-            meta={"msg": f"Encountered error: {error}"},
-        )
-        raise Ignore from error
+        return cluster
+    else:
+        fractal_logger.info("SQL insertion unsuccessful", extra={"label": cluster_name})
+        raise Exception(f"We were unable to track {cluster_name} in our database.")

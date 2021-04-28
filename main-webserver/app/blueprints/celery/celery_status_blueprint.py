@@ -33,54 +33,45 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     except ValueError:
         abort(make_response({"error": "Invalid task ID"}, BAD_REQUEST))
 
-    try:
-        # methods like .status, .result of AsyncResult are actually properties that are fetched
-        # on each invocation. This led to a race where we mix returns from a non-SUCCESS state
-        # and a SUCCESS state. See https://github.com/fractal/fractal/pull/1725
-        result = current_app.AsyncResult(task_id)
-        result_data = result._get_task_meta()  # pylint: disable=protected-access
-        if result_data["status"] == "SUCCESS":
-            response = {"state": result_data["status"], "output": result_data["result"]}
-            return make_response(jsonify(response), SUCCESS)
-        elif result_data["status"] == "FAILURE":
-            if "MAINTENANCE ERROR" in result_data["result"]:
-                # this is a special case: the request was accepted but the celery task
-                # started after the webserver was put into maintenance mode. We return
-                # that webserver is in maintenance mode so client app knows what happened.
-                # TODO: can we catch this particular error more cleanly? A cursory search
-                # suggested no, see https://stackoverflow.com/questions/35114144/
-                # how-can-you-catch-a-custom-exception-from-celery-worker-or-stop-it-being-prefix
-                return (
-                    jsonify(
-                        {
-                            "error": "Webserver is in maintenance mode.",
-                        }
-                    ),
-                    WEBSERVER_MAINTENANCE,
-                )
-            # handle error normally
-            msg = None
-            if check_developer():
-                # give traceback to developers
-                msg = f"Experienced an error. Error trace: {result_data.get('traceback')}"
-            else:
-                # do not give details to non-developers
-                msg = "Experienced an error. Please try the request again."
-
-            response = {"state": result_data["status"], "output": msg}
-            return make_response(jsonify(response), SUCCESS)
+    # methods like .status, .result of AsyncResult are actually properties that are fetched
+    # on each invocation. This led to a race where we mix returns from a non-SUCCESS state
+    # and a SUCCESS state. See https://github.com/fractal/fractal/pull/1725
+    result = current_app.AsyncResult(task_id)
+    result_data = result._get_task_meta()  # pylint: disable=protected-access
+    if result_data["status"] == "SUCCESS":
+        response = {"state": result_data["status"], "output": result_data["result"]}
+        return make_response(jsonify(response), SUCCESS)
+    elif result_data["status"] == "FAILURE":
+        if "MAINTENANCE ERROR" in str(result_data["result"]):
+            # this is a special case: the request was accepted but the celery task
+            # started after the webserver was put into maintenance mode. We return
+            # that webserver is in maintenance mode so client app knows what happened.
+            # TODO: can we catch this particular error more cleanly? A cursory search
+            # suggested no, see https://stackoverflow.com/questions/35114144/
+            # how-can-you-catch-a-custom-exception-from-celery-worker-or-stop-it-being-prefix
+            return (
+                jsonify(
+                    {
+                        "error": "Webserver is in maintenance mode.",
+                    }
+                ),
+                WEBSERVER_MAINTENANCE,
+            )
+        # handle error normally
+        msg = None
+        if check_developer():
+            # give traceback to developers
+            msg = f"Experienced an error. Error trace: {result_data.get('traceback')}"
         else:
-            output = result_data["result"]
-            response = {"state": result_data["status"], "output": output}
-            return make_response(jsonify(response), SUCCESS)
-    except Exception as e:
-        response = {
-            "state": "FAILURE",
-            "output": "Received an Exception that could not be processed: {error}".format(
-                error=str(e)
-            ),
-        }
-        return make_response(jsonify(response), BAD_REQUEST)
+            # do not give details to non-developers
+            msg = "Experienced an error. Please try the request again."
+
+        response = {"state": result_data["status"], "output": msg}
+        return make_response(jsonify(response), SUCCESS)
+    else:
+        output = result_data["result"]
+        response = {"state": result_data["status"], "output": output}
+        return make_response(jsonify(response), SUCCESS)
 
 
 @celery_status_bp.route("/dummy", methods=["GET"])
