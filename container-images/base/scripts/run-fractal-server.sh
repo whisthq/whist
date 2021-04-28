@@ -143,17 +143,6 @@ LOGS_TASK_ID=$(curl \
 END
 )
 
-# After sending the logs request, but before we get deep into our polling loop,
-# we should safely shut down the running application.
-#
-# Also note that this will have to be reworked if the service that calls
-# this script starts doing so as a user instead of as root. The rework would
-# involve adding a root service whose only job is to listen for a signal
-# emitted here and to perform the same actions on receipt of the signal.
-systemctl stop fractal-application
-
-echo "We just ran 'systemctl stop fractal-application'"
-
 get_task_state() {
     # GET $WEBSERVER_URL/status/$1
     #   Get the status of the provided task.
