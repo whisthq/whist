@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Linter
 import { app } from "electron"
 import { tap } from "rxjs/operators"
 import { identity, truncate } from "lodash"
@@ -10,6 +13,7 @@ import logzio from "logzio-nodejs"
 import { merge, Observable } from "rxjs"
 import stringify from "json-stringify-safe"
 
+<<<<<<< HEAD
 import config, { loggingBaseFilePath } from "@app/config/environment"
 =======
 import { app } from 'electron'
@@ -25,12 +29,15 @@ import stringify from 'json-stringify-safe'
 
 import config, { loggingBaseFilePath } from '@app/utils/config'
 >>>>>>> linter
+=======
+import config, { loggingBaseFilePath } from "@app/utils/config"
+>>>>>>> Linter
 
 // Logging base function
 export enum LogLevel {
-  DEBUG = 'DEBUG',
-  WARNING = 'WARNING',
-  ERROR = 'ERROR',
+  DEBUG = "DEBUG",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
 }
 
 // Initialize logz.io SDK
@@ -38,15 +45,15 @@ const logzLogger = logzio.createLogger({
   token: config.keys.LOGZ_API_KEY,
   bufferSize: 1,
   addTimestampWithNanoSecs: true,
-  sendIntervalMs: 50
+  sendIntervalMs: 50,
 })
 
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
   fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-  const logPath = path.join(loggingBaseFilePath, 'debug.log')
-  return fs.createWriteStream(logPath, { flags: 'a' })
+  const logPath = path.join(loggingBaseFilePath, "debug.log")
+  return fs.createWriteStream(logPath, { flags: "a" })
 }
 
 const logFile = openLogFile()
@@ -75,18 +82,18 @@ const logBase = (
   */
 
   const template = `DEBUG: ${title} -- \n ${
-    data !== undefined ? stringify(data, null, 2) : ''
+    data !== undefined ? stringify(data, null, 2) : ""
   }`
 
   const debugLog = truncate(template, {
     length: 1000,
-    omission: '...**logBase only prints 1000 characters per log**'
+    omission: "...**logBase only prints 1000 characters per log**",
   })
 
   if (app.isPackaged) {
     logzLogger.log({
       message: debugLog,
-      level: level
+      level: level,
     })
   } else {
     console.log(debugLog)
@@ -108,7 +115,7 @@ export const uploadToS3 = async (email: string) => {
 
   logBase(
     logFile,
-    'Logs upload to S3',
+    "Logs upload to S3",
     { s3FileName: s3FileName },
     LogLevel.DEBUG
   )
@@ -116,11 +123,11 @@ export const uploadToS3 = async (email: string) => {
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
     const secretKey = config.keys.AWS_SECRET_KEY
-    const bucketName = 'fractal-protocol-logs'
+    const bucketName = "fractal-protocol-logs"
 
     const s3 = new AWS.S3({
       accessKeyId: accessKey,
-      secretAccessKey: secretKey
+      secretAccessKey: secretKey,
     })
     // Read file into buffer
     const fileContent = fs.readFileSync(localFilePath)
@@ -128,7 +135,7 @@ export const uploadToS3 = async (email: string) => {
     const params = {
       Bucket: bucketName,
       Key: s3FileName,
-      Body: fileContent
+      Body: fileContent,
     }
     // Upload files to the bucket
     return await new Promise((resolve, reject) => {
@@ -145,9 +152,9 @@ export const uploadToS3 = async (email: string) => {
   const uploadPromises: Array<Promise<any>> = []
 
   const logLocations = [
-    path.join(loggingBaseFilePath, 'log-dev.txt'),
-    path.join(loggingBaseFilePath, 'log-staging.txt'),
-    path.join(loggingBaseFilePath, 'log.txt')
+    path.join(loggingBaseFilePath, "log-dev.txt"),
+    path.join(loggingBaseFilePath, "log-staging.txt"),
+    path.join(loggingBaseFilePath, "log.txt"),
   ]
 
   logLocations.forEach((filePath: string) => {
@@ -180,10 +187,10 @@ export const logObservable = (
     */
 
   return tap<any>({
-    next (value) {
+    next(value) {
       const data = identity(value)
       logBase(logFile, title, data, level)
-    }
+    },
   })
 }
 
