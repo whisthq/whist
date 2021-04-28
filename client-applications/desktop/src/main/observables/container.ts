@@ -11,17 +11,17 @@ import {
   containerInfo,
   containerInfoError,
   containerInfoSuccess,
-  containerInfoPending,
-} from "@app/utils/container"
+  containerInfoPending
+} from '@app/utils/container'
 import {
   userEmail,
   userAccessToken,
-  userConfigToken,
-} from "@app/main/observables/user"
-import { debugObservables, errorObservables } from "@app/utils/logging"
-import { ContainerAssignTimeout } from "@app/utils/constants"
-import { loadingFrom, pollMap } from "@app/utils/observables"
-import { from, of, zip } from "rxjs"
+  userConfigToken
+} from '@app/main/observables/user'
+import { debugObservables, errorObservables } from '@app/utils/logging'
+import { ContainerAssignTimeout } from '@app/utils/constants'
+import { loadingFrom, pollMap } from '@app/utils/observables'
+import { from, of, zip } from 'rxjs'
 import {
   map,
   share,
@@ -31,13 +31,13 @@ import {
   takeUntil,
   exhaustMap,
   withLatestFrom,
-  takeWhile,
-} from "rxjs/operators"
+  takeWhile
+} from 'rxjs/operators'
 import {
   formatContainer,
   formatTokensArray,
-  formatObservable,
-} from "@app/utils/formatters"
+  formatObservable
+} from '@app/utils/formatters'
 
 export const containerCreateRequest = zip(
   userEmail,
@@ -50,11 +50,11 @@ export const containerCreateProcess = containerCreateRequest.pipe(
   share()
 )
 export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? "") !== "")
+  filter((req) => (req?.json?.ID ?? '') !== '')
 )
 
 export const containerCreateFailure = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? "") === "")
+  filter((req) => (req?.json?.ID ?? '') === '')
 )
 
 export const containerCreateLoading = loadingFrom(
@@ -106,35 +106,35 @@ export const containerAssignLoading = loadingFrom(
 debugObservables(
   [
     formatObservable(containerCreateRequest, formatTokensArray),
-    "containerCreateRequest",
+    'containerCreateRequest'
   ],
   [
     formatObservable(containerCreateSuccess, formatContainer),
-    "containerCreateSuccess",
+    'containerCreateSuccess'
   ],
-  [containerCreateLoading, "containerCreateLoading"],
+  [containerCreateLoading, 'containerCreateLoading'],
   [
     formatObservable(containerAssignRequest, formatTokensArray),
-    "containerAssignRequest",
+    'containerAssignRequest'
   ],
   [
     formatObservable(containerAssignPolling, formatContainer),
-    "containerAssignPolling",
+    'containerAssignPolling'
   ],
   [
     formatObservable(containerAssignSuccess, formatContainer),
-    "containerAssignSuccess",
+    'containerAssignSuccess'
   ],
-  [containerAssignLoading, "containerAssignLoading"]
+  [containerAssignLoading, 'containerAssignLoading']
 )
 
 errorObservables(
   [
     formatObservable(containerCreateFailure, formatContainer),
-    "containerCreateFailure",
+    'containerCreateFailure'
   ],
   [
     formatObservable(containerAssignFailure, formatContainer),
-    "containerAssignFailure",
+    'containerAssignFailure'
   ]
 )
