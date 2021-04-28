@@ -51,7 +51,8 @@ export const protocolLoading = loadingFrom(
 export const protocolCloseRequest = protocolLaunchProcess.pipe(
   mergeMap((protocol) =>
     zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
-  )
+  ),
+  map(([protocol, event]) => protocol)
 )
 
 export const protocolCloseFailure = protocolCloseRequest.pipe(
@@ -72,9 +73,7 @@ debugObservables(
   [protocolLaunchSuccess, "protocolLaunchSuccess"],
   [protocolLoading, "protocolLaunchLoading"],
   [
-    protocolCloseRequest.pipe(
-      map(([protocol, event]) => [formatChildProcess(protocol), event])
-    ),
+    formatObservable(protocolCloseRequest, formatChildProcess),
     "protocolCloseRequest",
   ]
 )
