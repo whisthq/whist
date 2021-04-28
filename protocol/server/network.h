@@ -66,24 +66,20 @@ int broadcast_tcp_packet(FractalPacketType type, void *data, int len);
  * @brief                          Tries to read in next available TCP message
  *                                 from a given, active client
  *
- * details                         If no TCP message is available, *fcmsg is
- *                                 set to NULL and *fcmsg_size is set to 0.
- *                                 Otherwise, *fcmsg is populated with a pointer
- *                                 to the next available TCP message and
- *                                 *fcmsg_size is set to the size of that
- *                                 message. The message need not be freed.
- *                                 Failure here
+ * details                         If no TCP message is available, *tcp_packet
+ *                                 is set to NULL.
+ *                                 Otherwise, *tcp_packet is populated with a
+ *                                 pointer to the next available TCP message.
+ *                                 Remember to free with free_tcp_packet
  *
  * @param client_id                Client ID of an active client
- * @param fcmsg                    Pointer to field which is to be populated
- *                                 with pointer to next available message
- * @param fcmsg_size               Pointer to field which is to be populated
- *                                 with size of the next available message.
+ *
+ * @param p_tcp_packet             Where to write the tcp_packet
  *
  * @returns                        Returns -1 on error, 0 otherwise. Not
  *                                 finding an available message is not an error.
  */
-int try_get_next_message_tcp(int client_id, FractalClientMessage **fcmsg, size_t *fcmsg_size);
+int try_get_next_message_tcp(int client_id, FractalPacket **p_tcp_packet);
 
 /**
  * @brief                          Tries to read in next available UDP message

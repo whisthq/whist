@@ -119,9 +119,6 @@ void destroy_clipboard_synchronizer() {
     fractal_post_semaphore(clipboard_semaphore);
 }
 
-// NOTE that this function is in the hotpath.
-// The hotpath *must* return in under ~10000 assembly instructions.
-// Please pass this comment into any non-trivial function that this function calls.
 bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
     /*
         When called, signal that the clipboard can be set to the given contents
@@ -146,7 +143,8 @@ bool clipboard_synchronizer_set_clipboard(ClipboardData* cb) {
     updating_clipboard = true;
     updating_set_clipboard = true;
     updating_get_clipboard = false;
-    clipboard = cb;
+    clipboard = allocate_region(sizeof(ClipboardData) + cb->size);
+    memcpy(clipboard, cb, sizeof(ClipboardData) + cb->size);
 
     fractal_post_semaphore(clipboard_semaphore);
 
@@ -216,6 +214,8 @@ int update_clipboard(void* opaque) {
 
             set_clipboard(clipboard);
             updating_set_clipboard = false;
+            deallocate_region(clipboard);
+            clipboard = NULL;
         } else if (updating_get_clipboard) {
             LOG_INFO("Trying to get clipboard!");
 
