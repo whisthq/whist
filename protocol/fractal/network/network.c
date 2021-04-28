@@ -722,11 +722,12 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
     int len = TCP_SEGMENT_SIZE;
     while (should_recvp && len == TCP_SEGMENT_SIZE) {
         // Make the tcp buffer larger if needed
-        resize_dynamic_buffer(encrypted_tcp_packet_buffer, context->reading_packet_len + TCP_SEGMENT_SIZE);
+        resize_dynamic_buffer(encrypted_tcp_packet_buffer,
+                              context->reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
-        len =
-            recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len, TCP_SEGMENT_SIZE);
+        len = recvp(context, encrypted_tcp_packet_buffer->buf + context->reading_packet_len,
+                    TCP_SEGMENT_SIZE);
 
         if (len < 0) {
             int err = get_last_network_error();

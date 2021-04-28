@@ -187,7 +187,8 @@ static int handle_clipboard_message(FractalServerMessage *fmsg, size_t fmsg_size
     if (fmsg_size != sizeof(FractalServerMessage) + fmsg->clipboard.size) {
         LOG_ERROR(
             "Incorrect message size for a server message"
-            " (type: clipboard message)!");
+            " (type: clipboard message)! Expected %d, but received %d",
+            sizeof(FractalServerMessage) + fmsg->clipboard.size, fmsg_size);
         return -1;
     }
     LOG_INFO("Received %d byte clipboard message from server!", fmsg_size);
