@@ -33,7 +33,11 @@ import {
   withLatestFrom,
   takeWhile,
 } from "rxjs/operators"
-import { formatContainer, formatObservable } from "@app/utils/formatters"
+import {
+  formatContainer,
+  formatTokensArray,
+  formatObservable,
+} from "@app/utils/formatters"
 
 export const containerCreateRequest = zip(
   userEmail,
@@ -100,13 +104,19 @@ export const containerAssignLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [containerCreateRequest, "containerCreateRequest"],
+  [
+    formatObservable(containerCreateRequest, formatTokensArray),
+    "containerCreateRequest",
+  ],
   [
     formatObservable(containerCreateSuccess, formatContainer),
     "containerCreateSuccess",
   ],
   [containerCreateLoading, "containerCreateLoading"],
-  [containerAssignRequest, "containerAssignRequest"],
+  [
+    formatObservable(containerAssignRequest, formatTokensArray),
+    "containerAssignRequest",
+  ],
   [
     formatObservable(containerAssignPolling, formatContainer),
     "containerAssignPolling",

@@ -22,8 +22,12 @@ import {
   emailSignupAccessToken,
   emailSignupRefreshToken,
 } from "@app/utils/signup"
+<<<<<<< HEAD
 import { loginAction, signupAction } from "@app/main/events/actions"
 
+=======
+import { formatObservable, formatTokens } from "@app/utils/formatters"
+>>>>>>> added formatters for user tokens
 export const userEmail = merge(
   fromEventPersist("userEmail"),
   loginAction.pipe(pluck("email"), sample(loginSuccess)),
@@ -57,7 +61,7 @@ export const userRefreshToken = merge(
 
 debugObservables(
   [userEmail, "userEmail"],
-  [userConfigToken, "userConfigToken"],
-  [userAccessToken, "userAccessToken"],
-  [userRefreshToken, "userRefreshToken"]
+  [formatObservable(userConfigToken, formatTokens), "userConfigToken"],
+  [formatObservable(userAccessToken, formatTokens), "userAccessToken"],
+  [formatObservable(userRefreshToken, formatTokens), "userRefreshToken"]
 )
