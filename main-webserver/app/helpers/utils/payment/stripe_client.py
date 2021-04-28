@@ -186,6 +186,54 @@ class StripeClient:
             return "0 days"
         return str(timedelta(seconds=time.mktime(trial_val) - time.time()))
 
+    def create_checkout_session(
+        self, success_url: str, cancel_url: str, customer_id: str, price_id: str
+    ) -> str:
+        """
+        Returns checkout session id from Stripe client
+
+        Args:
+            customer_id (str): the stripe id of the user
+            price_id (str): the price id of the product (subscription)
+            success_url (str): url to redirect to upon completion success
+            cancel_url (str): url to redirect to upon cancelation
+
+        Returns:
+            json, int: Json containing session id and status code
+    \    """
+        try:
+            checkout_session = stripe.checkout.Session.create(
+                success_url=success_url,
+                cancel_url=cancel_url,
+                customer=customer_id,
+                payment_method_types=["card"],
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+            )
+
+            return checkout_session["id"]
+        except Exception as e:
+            return str(e)
+
+    def create_billing_session(self, customer_id: str, return_url: str) -> str:
+        """
+        Returns billing portal url.
+
+        Args:
+            customer_id (str): the stripe id of the user
+            return_url (str): the url to redirect to upon leaving the billing portal
+
+        Returns:
+            json, int: Json containing billing url and status code
+        """
+        try:
+            billing_session = stripe.billing_portal.Session.create(
+                customer=customer_id, return_url=return_url
+            )
+            return billing_session.url
+        except Exception as e:
+            return str(e)
+
 
 if __name__ == "__main__":
     cli = StripeClient("sk_test_6ndCgv5edtzMuyqMoBbt1gXj00xy90yd4L")
