@@ -10,6 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
+<<<<<<< HEAD
 import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { from } from "rxjs"
 
@@ -33,6 +34,22 @@ import { formatLogin, formatObservable } from "@app/utils/formatters"
 
 export const loginRequest = loginAction.pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
+=======
+import { fromEventIPC } from '@app/main/events/ipc'
+import { from } from 'rxjs'
+import { loadingFrom } from '@app/utils/observables'
+import {
+  debugObservables,
+  warningObservables,
+  errorObservables
+} from '@app/utils/logging'
+import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/login'
+import { filter, map, share, exhaustMap } from 'rxjs/operators'
+import { formatLogin, formatObservable } from '@app/utils/formatters'
+
+export const loginRequest = fromEventIPC('loginRequest').pipe(
+  filter((req) => (req?.email ?? '') !== '' && (req?.password ?? '') !== ''),
+>>>>>>> linter
   map(({ email, password }) => [email, password]),
   share()
 )
@@ -66,11 +83,11 @@ export const loginLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [loginRequest, "loginRequest"],
-  [formatObservable(loginSuccess, formatLogin), "loginSuccess"],
-  [loginLoading, "loginLoading"]
+  [loginRequest, 'loginRequest'],
+  [formatObservable(loginSuccess, formatLogin), 'loginSuccess'],
+  [loginLoading, 'loginLoading']
 )
 
-warningObservables([loginWarning, "loginWarning"])
+warningObservables([loginWarning, 'loginWarning'])
 
-errorObservables([loginFailure, "loginFailure"])
+errorObservables([loginFailure, 'loginFailure'])
