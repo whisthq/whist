@@ -6,11 +6,11 @@ import { withContext } from '@app/shared/utils/context'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import Geometric from './geometric'
 import YoutubeLogo from '@app/assets/icons/youtubeLogo.svg'
-import InstagramLogo from '@app/assets/icons/instagramLogo.svg'
-import FacebookLogo from '@app/assets/icons/facebookLogo.svg'
-import RedditLogo from '@app/assets/icons/redditLogo.svg'
+import NotionLogo from '@app/assets/icons/notionLogo.svg'
+import ShopifyLogo from '@app/assets/icons/shopifyLogo.svg'
+import AirtableLogo from '@app/assets/icons/airtableLogo.svg'
 import FigmaLogo from '@app/assets/icons/figmaLogo.svg'
-import GmailLogo from '@app/assets/icons/gmailLogo.svg'
+import GoogleDriveLogo from '@app/assets/icons/googleDriveLogo.svg'
 
 import Typeform from '@app/pages/home/components/typeform'
 
@@ -115,7 +115,7 @@ export const Top = () => {
               alt="figma"
             />
             <img
-              src={InstagramLogo}
+              src={NotionLogo}
               style={{
                 position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 170 : 150,
@@ -128,7 +128,7 @@ export const Top = () => {
               alt="instagram"
             />
             <img
-              src={FacebookLogo}
+              src={ShopifyLogo}
               style={{
                 position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 370 : 220,
@@ -141,7 +141,7 @@ export const Top = () => {
               alt="facebook"
             />
             <img
-              src={GmailLogo}
+              src={GoogleDriveLogo}
               style={{
                 position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 450 : 30,
@@ -154,7 +154,7 @@ export const Top = () => {
               alt="gmail"
             />
             <img
-              src={RedditLogo}
+              src={AirtableLogo}
               style={{
                 position: 'absolute',
                 left: width > ScreenSize.MEDIUM ? 500 : 240,
