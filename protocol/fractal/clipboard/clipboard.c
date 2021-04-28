@@ -1,6 +1,17 @@
 #include "clipboard.h"
 #include <fractal/core/fractal.h>
 
+// These clipboard primitives are defined in {x11,win,mac}_clipboard.c
+// CMake will only link one of those C files, depending on the OS
+
+void unsafe_init_clipboard();
+ClipboardData* unsafe_get_clipboard();
+void unsafe_set_clipboard(ClipboardData* cb);
+void unsafe_free_clipboard(ClipboardData* cb);
+bool unsafe_has_clipboard_updated();
+void unsafe_destroy_clipboard();
+
+// A Mutex to ensure unsafe commands don't overlap
 FractalMutex mutex;
 bool preserve_local_clipboard = false;
 
@@ -60,6 +71,10 @@ void set_clipboard(ClipboardData* cb) {
     // clear out update from filling clipboard
     unsafe_has_clipboard_updated();
     fractal_unlock_mutex(mutex);
+}
+
+void free_clipboard(ClipboardData* cb) {
+    unsafe_free_clipboard(cb);
 }
 
 bool has_clipboard_updated() {

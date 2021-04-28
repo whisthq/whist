@@ -325,14 +325,20 @@ int send_clipboard_packets(void* opaque) {
         start_timer(&clipboard_time);
         ClipboardData* clipboard = clipboard_synchronizer_get_new_clipboard();
         if (clipboard) {
+            // Alloc an fmsg
             FractalClientMessage* fmsg_clipboard =
-                safe_malloc(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+                allocate_region(sizeof(FractalClientMessage) + sizeof(ClipboardData) + clipboard->size);
+            // Build the fmsg
             // Init metadata to 0 to prevent sending uninitialized packets over the network
             memset(fmsg_clipboard, 0, sizeof(*fmsg_clipboard));
             fmsg_clipboard->type = CMESSAGE_CLIPBOARD;
             memcpy(&fmsg_clipboard->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
+            // Send the fmsg
             send_fmsg(fmsg_clipboard);
-            free(fmsg_clipboard);
+            // Free the fmsg
+            deallocate_region(fmsg_clipboard);
+            // Free the clipboard
+            free_clipboard(clipboard);
         }
 
         // delay to avoid clipboard checking spam

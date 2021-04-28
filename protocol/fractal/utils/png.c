@@ -20,7 +20,7 @@
 #pragma warning(disable : 4244)
 #endif
 
-int bmp_to_png(char* bmp, int bmp_size, char* png, int* png_size) {
+int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     /*
         Converts a bmp array into a png image format, stored within pkt
 
@@ -111,8 +111,8 @@ int bmp_to_png(char* bmp, int bmp_size, char* png, int* png_size) {
     }
 
     // Verify file_size against pixel_offset and data_size
-    if (file_size != pixel_offset + data_size) {
-        LOG_ERROR("BMP file_size is not expected PIXEL_OFFSET + DATA_SIZE, %d != %d + %d", file_size, pixel_offset, data_size);
+    if (file_size < pixel_offset + data_size) {
+        LOG_ERROR("BMP file_size is too small to fit PIXEL_OFFSET + DATA_SIZE, %d < %d + %d", file_size, pixel_offset, data_size);
     }
 
     // Check that the actual bmp buffer is the expected file size
@@ -152,37 +152,24 @@ int bmp_to_png(char* bmp, int bmp_size, char* png, int* png_size) {
     }
 
     // Convert to png
-    unsigned char* lodepng_data;
-    size_t lodepng_size;
     int err;
     if (num_channels == 3) {
-        err = lodepng_encode24(&lodepng_data, &lodepng_size, pixel_data_buffer, w, h);
+        err = lodepng_encode24((unsigned char**)png, (size_t*)png_size, pixel_data_buffer, w, h);
     } else {
-        err = lodepng_encode32(&lodepng_data, &lodepng_size, pixel_data_buffer, w, h);
+        err = lodepng_encode32((unsigned char**)png, (size_t*)png_size, pixel_data_buffer, w, h);
     }
 
     deallocate_region(pixel_data_buffer);
 
     if (err != 0) {
         LOG_WARNING("Failed to encode BMP");
-        free(lodepng_data);
         return -1;
     }
-
-    if (lodepng_size > *png_size) {
-        LOG_WARNING("The decoded PNG is too large: %d overflows the max buffer of %d", lodepng_size, png_size);
-        free(lodepng_data);
-        return -1;
-    }
-
-    // Copy lodepng_data and size to the given parameters
-    memcpy(png, lodepng_data, lodepng_size);
-    *png_size = (int)lodepng_size;
 
     return 0;
 }
 
-int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size) {
+int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     unsigned char* lodepng_data;
     unsigned int w, h;
 
@@ -200,11 +187,10 @@ int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size) {
     int scanline_bytes = w * num_channels;
     if (scanline_bytes % 4 != 0) scanline_bytes = (scanline_bytes / 4) * 4 + 4;
 
-    if( 54 > *bmp_size ) {
-        LOG_WARNING("BMP too large to fit in BMP buffer");
-        free(lodepng_data);
-        return -1;
-    }
+    // Create return buffer
+    char* bmp = allocate_region(54 + (scanline_bytes*h));
+    *bmp_ptr = bmp;
+    *bmp_size = 54 + (scanline_bytes*h);
 
     // File signature
     bmp[0] = 'B';
@@ -237,12 +223,6 @@ int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size) {
     // Must be 0, no palette
     *((uint32_t*)(&bmp[50])) = 0;
 
-    if( *((uint32_t*)(&bmp[2])) > (size_t)*bmp_size ) {
-        LOG_WARNING("BMP too large to fit in BMP buffer");
-        free(lodepng_data);
-        return -1;
-    }
-
     // ====================
     // Copy Bitmap Data
     // ====================
@@ -266,4 +246,11 @@ int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size) {
     }
 
     return 0;
+}
+
+void free_png(char* png) {
+    free(png);
+}
+void free_bmp(char* bmp) {
+    deallocate_region(bmp);
 }
