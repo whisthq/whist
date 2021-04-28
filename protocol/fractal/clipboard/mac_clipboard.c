@@ -33,8 +33,6 @@ bool clipboard_has_string = false;
 bool clipboard_has_files = false;
 static int last_clipboard_sequence_number = -1;
 
-static char clipboard_buf[9000000];
-
 bool unsafe_has_clipboard_updated() {
     bool has_updated = false;
 
@@ -53,12 +51,10 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) {
-    // Do nothing
-}
+void unsafe_free_clipboard(ClipboardData* cb) { deallocate_region(cb); }
 
 ClipboardData* unsafe_get_clipboard() {
-    ClipboardData* cb = (ClipboardData*)clipboard_buf;
+    ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 
     cb->size = 0;
     cb->type = CLIPBOARD_NONE;
@@ -86,7 +82,7 @@ ClipboardData* unsafe_get_clipboard() {
         // populate filenames array with file URLs
         clipboard_get_files(filenames);
 
-        // set clipboard data attributes to be returned
+        // Set clipboard data attributes to be returned
         cb->type = CLIPBOARD_FILES;
         cb->size = 0;
 
@@ -118,41 +114,33 @@ ClipboardData* unsafe_get_clipboard() {
             free(filenames[i]->fullPath);
             free(filenames[i]);
         }
-
     } else if (clipboard_has_string) {
         // get the string
         const char* clipboard_string = clipboard_get_string();
         // int data_size = strlen(clipboard_string) + 1;  // for null terminator
         int data_size = strlen(clipboard_string);
-        // copy the data
-        if ((unsigned long)data_size < sizeof(clipboard_buf)) {
-            cb->size = data_size;
-            memcpy(cb->data, clipboard_string, data_size);
-            cb->type = CLIPBOARD_TEXT;
-        } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", data_size);
-        }
+        cb = realloc_region(cb, data_size);
+        // Copy the text data
+        cb->type = CLIPBOARD_TEXT;
+        memcpy(cb->data, clipboard_string, data_size);
     } else if (clipboard_has_image) {
-        // safe_malloc some space for the image
+        // safe_malloc some space for the image struct
         OSXImage* clipboard_image = (OSXImage*)safe_malloc(sizeof(OSXImage));
         memset(clipboard_image, 0, sizeof(OSXImage));
 
         // get the image
         clipboard_get_image(clipboard_image);
 
-        // copy the data
-        if ((unsigned long)clipboard_image->size < sizeof(clipboard_buf)) {
-            cb->size = clipboard_image->size;
-            memcpy(cb->data, clipboard_image->data, clipboard_image->size);
-            // dimensions for sanity check
-            // now that the image is in Clipboard struct, we can free this
-            // struct
-            free(clipboard_image);
-        } else {
-            LOG_WARNING("Could not copy, clipboard too large! %d bytes", clipboard_image->size);
-        }
-
+        // Allocate new cb struct
+        deallocate_region(cb);
+        cb = allocate_region(sizeof(ClipboardData) + clipboard_image->size);
+        // Copy cb over
         cb->type = CLIPBOARD_IMAGE;
+        cb->size = clipboard_image->size;
+        memcpy(cb->data, clipboard_image->data, clipboard_image->size);
+        // Now that the image is in Clipboard struct, we can free
+        // the OSXImage struct
+        free(clipboard_image);
     } else {
         LOG_INFO("Nothing in the clipboard!");
     }
