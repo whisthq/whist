@@ -2,7 +2,12 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { eventTray } from "@app/main/events/tray"
 import { Observable } from "rxjs"
 import { filter, map, share } from "rxjs/operators"
-import { ActionType, Action } from "@app/@types/actions"
+import {
+  ActionType,
+  MainAction,
+  RendererAction,
+  Action,
+} from "@app/@types/actions"
 
 const action = (type: ActionType): Observable<any> => {
   /*
@@ -12,7 +17,7 @@ const action = (type: ActionType): Observable<any> => {
             the desired action type (e.g. login request, signout request) is detected.
 
         Usage:
-            const loginAction = action(ActionType.LOGIN).pipe(
+            const loginAction = action(RendererAction.LOGIN).pipe(
                 tap(x => console.log("x"))
             )
 
@@ -31,15 +36,15 @@ const action = (type: ActionType): Observable<any> => {
     )
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-  if ((<any>Object).values(ActionType).includes(type))
+  if ((<any>Object).values(RendererAction).includes(type))
     return filterType(fromEventIPC("action"))
 
   return filterType(eventTray)
 }
 
 // Should all actions be "hot"?
-export const loginAction = action(ActionType.LOGIN)
-export const signupAction = action(ActionType.SIGNUP)
+export const loginAction = action(RendererAction.LOGIN)
+export const signupAction = action(RendererAction.SIGNUP)
 
-export const signoutAction = action(ActionType.SIGNOUT).pipe(share())
-export const quitAction = action(ActionType.QUIT).pipe(share())
+export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
+export const quitAction = action(MainAction.QUIT).pipe(share())
