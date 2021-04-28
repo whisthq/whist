@@ -318,7 +318,9 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
 
 @shared_task(bind=True)
-def check_and_cleanup_outdated_tasks(self, cluster: str, region_name: str):
+def check_and_cleanup_outdated_tasks(
+    self, cluster: str, region_name: str
+):  # pylint: disable=unused-argument
     """
     Cleanup tasks in a cluster that have not pinged for 90sec.
 
