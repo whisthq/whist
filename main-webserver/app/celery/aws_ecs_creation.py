@@ -310,7 +310,8 @@ def find_available_container(
 def _poll(container_id: str) -> bool:
     """Poll the database until the web server receives its first ping from the new container.
 
-    Time out after 20 seconds. This may be an appropriate use case for Hasura subscriptions.
+    Time out after MAX_POLL_ITERATIONS seconds. In the future, this may be an appropriate use
+    case for Hasura subscriptions.
 
     This function should patched to immediately return True in order to get CI to pass.
 
