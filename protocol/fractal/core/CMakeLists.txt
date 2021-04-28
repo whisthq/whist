@@ -10,6 +10,8 @@ add_custom_target(git_revision ALL
         )
 
 add_library(fractalCore STATIC
+        fractal_memory.h
+        fractal_memory.c
         fractal.h
         fractal.c
         fractalgetopt.h
