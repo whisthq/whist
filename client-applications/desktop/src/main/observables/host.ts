@@ -37,6 +37,7 @@ import {
   formatHostConfig,
   formatHostInfo,
   formatObservable,
+  formatTokensArray,
 } from "@app/utils/formatters"
 
 export const hostInfoRequest = containerAssignPolling.pipe(
@@ -108,7 +109,7 @@ export const hostConfigLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [hostInfoRequest, "hostInfoRequest"],
+  [formatObservable(hostInfoRequest, formatTokensArray), "hostInfoRequest"],
   [formatObservable(hostInfoSuccess, formatHostInfo), "hostInfoSuccess"],
   [hostConfigRequest, "hostConfigRequest"],
   [formatObservable(hostConfigProcess, formatHostConfig), "hostConfigProcess"],
