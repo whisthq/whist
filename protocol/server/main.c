@@ -1194,16 +1194,17 @@ int main(int argc, char* argv[]) {
         if (clipboard) {
             LOG_INFO("Received clipboard trigger. Broadcasting clipboard message.");
             // Alloc fmsg
-            FractalServerMessage* fmsg_response =
-                allocate_region(sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size);
+            FractalServerMessage* fmsg_response = allocate_region(
+                sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size);
             // Build fmsg
             memset(fmsg_response, 0, sizeof(*fmsg_response));
             fmsg_response->type = SMESSAGE_CLIPBOARD;
             memcpy(&fmsg_response->clipboard, clipboard, sizeof(ClipboardData) + clipboard->size);
             // Send fmsg
             read_lock(&is_active_rwlock);
-            if (broadcast_tcp_packet(PACKET_MESSAGE, (uint8_t*)fmsg_response,
-                                     sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size) < 0) {
+            if (broadcast_tcp_packet(
+                    PACKET_MESSAGE, (uint8_t*)fmsg_response,
+                    sizeof(FractalServerMessage) + sizeof(ClipboardData) + clipboard->size) < 0) {
                 LOG_WARNING("Failed to broadcast clipboard message.");
             }
             read_unlock(&is_active_rwlock);
