@@ -512,8 +512,8 @@ void mark_unused_region(void* region) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
 #ifdef _WIN32
-        // Windows Task Manager will already be aware of correct memory usage
-        VirtualAlloc(next_page, advise_size, MEM_RESET, PAGE_READWRITE);
+        // Offer the Virtual Memory up so that task manager knows we're not using those pages anymore
+        OfferVirtualMemory(next_page, advise_size, VmOfferPriorityNormal);
 #elif __APPLE__
         // Lets you tell the Apple Task Manager to report correct memory usage
         madvise(next_page, advise_size, MADV_FREE_REUSABLE);
@@ -528,17 +528,20 @@ void mark_used_region(void* region) {
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     if (p->size > page_size) {
-#ifdef _WIN32
-        // Do Nothing, Windows will know when you touch the memory again
-#elif __APPLE__
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
+#ifdef _WIN32
+        // Reclaim the virtual memory for usage again
+        ReclaimVirtualMemory(next_page, advise_size);
+#elif __APPLE__
         // Tell the Apple Task Manager that we'll use this memory again
         // Apparently we can lie to their Task Manager by not calling this
         // Hm.
         madvise(next_page, advise_size, MADV_FREE_REUSE);
 #else
         // Do Nothing, Linux will know when you touch the memory again
+        UNUSED(next_page);
+        UNUSED(advise_size);
 #endif
     }
 }
