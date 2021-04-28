@@ -91,11 +91,6 @@ printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
 #define BITS_IN_BYTE 8.0
 #define MS_IN_SECOND 1000
 
-#define LARGEST_TCP_PACKET 10000000
-#define PACKET_ENCRYPTION_PADDING \
-    16  // encryption can make packets a bit bigger, this pads to avoid overflow
-#define LARGEST_ENCRYPTED_TCP_PACKET (sizeof(int) + LARGEST_TCP_PACKET + PACKET_ENCRYPTION_PADDING)
-
 // Global data
 unsigned short port_mappings[USHRT_MAX + 1];
 
@@ -752,8 +747,8 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len + TCP_SEGMENT_SIZE);
         // Try to fill up the buffer, in chunks of TCP_SEGMENT_SIZE, but don't
         // overflow LARGEST_TCP_PACKET
-        len = recvp(context, encrypted_tcp_packet_buffer->buf + reading_packet_len,
-                    min(TCP_SEGMENT_SIZE, LARGEST_ENCRYPTED_TCP_PACKET - reading_packet_len));
+        len =
+            recvp(context, encrypted_tcp_packet_buffer->buf + reading_packet_len, TCP_SEGMENT_SIZE);
 
         if (len < 0) {
             int err = get_last_network_error();
@@ -776,19 +771,14 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
         int actual_len = reading_packet_len - sizeof(int);
         int target_len = *((int*)encrypted_tcp_packet_buffer->buf);
 
-        static char* decrypted_packet_buffer = NULL;
-        if (decrypted_packet_buffer != NULL) {
-            deallocate_region(decrypted_packet_buffer);
-        }
-        decrypted_packet_buffer = allocate_region(target_len);
-
         // If the target len is valid, and actual len > target len, then we're
         // good to go
-        if (target_len >= 0 && target_len <= LARGEST_TCP_PACKET && actual_len >= target_len) {
+        if (target_len >= 0 && actual_len >= target_len) {
+            FractalPacket* decrypted_packet_buffer = allocate_region(target_len);
             // Decrypt it
             int decrypted_len =
                 decrypt_packet_n((FractalPacket*)(encrypted_tcp_packet_buffer->buf + sizeof(int)),
-                                 target_len, (FractalPacket*)decrypted_packet_buffer, target_len,
+                                 target_len, decrypted_packet_buffer, target_len,
                                  (unsigned char*)context->binary_aes_private_key);
 
             // Move the rest of the read bytes to the beginning of the buffer to
@@ -804,17 +794,24 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp) {
             resize_dynamic_buffer(encrypted_tcp_packet_buffer, reading_packet_len);
 
             if (decrypted_len < 0) {
+                // A warning not an error, since it doesn't simply we did something wrong
+                // Someone else in the same coffeeshop as you could make you generate these
+                // by sending bad TCP packets. After this point though, the packet is authenticated,
+                // and problems with its data should be LOG_ERROR'ed
                 LOG_WARNING("Could not decrypt TCP message");
+                deallocate_region(decrypted_packet_buffer);
                 return NULL;
             } else {
                 // Return the decrypted packet
-                return (FractalPacket*)decrypted_packet_buffer;
+                return decrypted_packet_buffer;
             }
         }
     }
 
     return NULL;
 }
+
+void free_tcp_packet(FractalPacket* tcp_packet) { deallocate_region(tcp_packet); }
 
 int create_tcp_server_context(SocketContext* context, int port, int recvfrom_timeout_ms,
                               int stun_timeout_ms) {

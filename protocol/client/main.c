@@ -224,6 +224,7 @@ void update() {
         if (tcp_packet) {
             handle_server_message((FractalServerMessage*)tcp_packet->data,
                                   (size_t)tcp_packet->payload_size);
+            free_tcp_packet(tcp_packet);
         }
 
         // Update the last tcp check timer
