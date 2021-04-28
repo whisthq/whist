@@ -344,6 +344,13 @@ FractalPacket* read_tcp_packet(SocketContext* context, bool should_recvp);
 FractalPacket* read_udp_packet(SocketContext* context);
 
 /**
+ * @brief                          Frees a TCP packet created by read_tcp_packet
+ *
+ * @param tcp_packet               The TCP packet to free
+ */
+void free_tcp_packet(FractalPacket* tcp_packet);
+
+/**
  * @brief                          Sends a JSON POST request to some host and
  *                                 provides the response body
  *

@@ -717,20 +717,21 @@ int32_t send_audio(void* opaque) {
 #include <time.h>
 
 int do_discovery_handshake(SocketContext* context, int* client_id) {
-    FractalPacket* packet;
+    FractalPacket* tcp_packet;
     clock timer;
     start_timer(&timer);
     do {
-        packet = read_tcp_packet(context, true);
+        tcp_packet = read_tcp_packet(context, true);
         fractal_sleep(5);
-    } while (packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
-    if (packet == NULL) {
+    } while (tcp_packet == NULL && get_timer(timer) < CLIENT_PING_TIMEOUT_SEC);
+    // Exit on null tcp packet, otherwise analyze the resulting FractalClientMessage
+    if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive discovery request from client.");
         closesocket(context->socket);
         return -1;
     }
 
-    FractalClientMessage* fcmsg = (FractalClientMessage*)packet->data;
+    FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
     int user_id = fcmsg->discoveryRequest.user_id;
 
     read_lock(&is_active_rwlock);
@@ -757,14 +758,22 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
             closesocket(context->socket);
         }
         read_unlock(&is_active_rwlock);
-        if (ret != 0) return -1;
+        if (ret != 0) {
+            free_tcp_packet(tcp_packet);
+            return -1;
+        }
     }
 
     clients[*client_id].user_id = user_id;
     LOG_INFO("Found ID for client. (ID: %d)", *client_id);
 
-    // TODO: Should check for is_controlling, but happens after this function call
+    // TODO: Should check for is_controlling, but that happens after this function call
     handle_client_message(fcmsg, *client_id, true);
+    // fcmsg points into tcp_packet, but after this point, we don't use either,
+    // so here we free the tcp packet
+    free_tcp_packet(tcp_packet);
+    fcmsg = NULL;
+    tcp_packet = NULL;
 
     size_t fsmsg_size = sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage);
 

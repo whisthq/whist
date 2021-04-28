@@ -90,32 +90,36 @@ int discover_ports(bool *using_stun) {
     LOG_INFO("Sent discovery packet");
 
     // Receive discovery packets from server
-    FractalPacket *packet;
+    FractalPacket *tcp_packet = NULL;
     clock timer;
     start_timer(&timer);
     do {
-        packet = read_tcp_packet(&context, true);
+        tcp_packet = read_tcp_packet(&context, true);
         SDL_Delay(5);
-    } while (packet == NULL && get_timer(timer) < 5.0);
+    } while (tcp_packet == NULL && get_timer(timer) < 5.0);
     closesocket(context.socket);
 
-    if (packet == NULL) {
+    // If no tcp packet was found, just return -1
+    // Otherwise, parse the tcp packet's FractalDiscoveryReplyMessage
+    if (tcp_packet == NULL) {
         LOG_WARNING("Did not receive discovery packet from server.");
         return -1;
     }
 
-    FractalServerMessage *fsmsg = (FractalServerMessage *)packet->data;
-    if (packet->payload_size !=
+    FractalServerMessage *fsmsg = (FractalServerMessage *)tcp_packet->data;
+    if (tcp_packet->payload_size !=
         sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage)) {
         LOG_ERROR(
             "Incorrect discovery reply message size. Expected: %d, Received: "
             "%d",
             sizeof(FractalServerMessage) + sizeof(FractalDiscoveryReplyMessage),
-            packet->payload_size);
+            tcp_packet->payload_size);
+        free_tcp_packet(tcp_packet);
         return -1;
     }
     if (fsmsg->type != MESSAGE_DISCOVERY_REPLY) {
         LOG_ERROR("Message not of discovery reply type (Type: %d)", fsmsg->type);
+        free_tcp_packet(tcp_packet);
         return -1;
     }
 
@@ -126,6 +130,7 @@ int discover_ports(bool *using_stun) {
         (FractalDiscoveryReplyMessage *)fsmsg->discovery_reply;
     if (reply_msg->client_id == -1) {
         LOG_ERROR("Not awarded a client id from server.");
+        free_tcp_packet(tcp_packet);
         return -1;
     }
 
@@ -140,8 +145,13 @@ int discover_ports(bool *using_stun) {
 
     if (log_connection_id(reply_msg->connection_id) < 0) {
         LOG_ERROR("Failed to log connection ID.");
+        free_tcp_packet(tcp_packet);
         return -1;
     }
+
+    // fsmsg and reply_msg are pointers into tcp_packet,
+    // but at this point, we're done.
+    free_tcp_packet(tcp_packet);
 
     return 0;
 }
