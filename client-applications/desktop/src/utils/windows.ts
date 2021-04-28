@@ -89,8 +89,10 @@ export const createWindow = (
   } else {
     win
       .loadURL("http://localhost:8080" + params)
+      .then(() => {
+        win.webContents.openDevTools({ mode: "undocked" })
+      })
       .catch((err) => console.error(err))
-    win.webContents.openDevTools({ mode: "undocked" })
   }
 
   win.webContents.on("did-finish-load", () =>
