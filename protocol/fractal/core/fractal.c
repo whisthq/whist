@@ -512,7 +512,8 @@ void mark_unused_region(void* region) {
         char* next_page = (char*)p + page_size;
         size_t advise_size = p->size - page_size;
 #ifdef _WIN32
-        // Offer the Virtual Memory up so that task manager knows we're not using those pages anymore
+        // Offer the Virtual Memory up so that task manager knows we're not using those pages
+        // anymore
         OfferVirtualMemory(next_page, advise_size, VmOfferPriorityNormal);
 #elif __APPLE__
         // Lets you tell the Apple Task Manager to report correct memory usage

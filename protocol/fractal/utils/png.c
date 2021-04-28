@@ -72,12 +72,14 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     // Bits per pixel
     uint16_t bits_per_pixel = *((uint16_t*)(&bmp[28]));
     if (bits_per_pixel != 24 && bits_per_pixel != 32) {
-        LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead", bits_per_pixel);
+        LOG_ERROR("BMP pixel width must be 3 bytes or 4 bytes, got %d bits instead",
+                  bits_per_pixel);
         return -1;
     }
     // Compression (0 for none)
     if (*((uint32_t*)(&bmp[30])) != 0) {
-        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead", *((uint32_t*)(&bmp[30])));
+        LOG_ERROR("BMP must be uncompressed BI_RGB data: %d found instead",
+                  *((uint32_t*)(&bmp[30])));
         return -1;
     }
     // Size of the pixel data array
@@ -106,43 +108,44 @@ int bmp_to_png(char* bmp, int bmp_size, char** png, int* png_size) {
     }
     // Require that data_size is uncompressed raw data
     if (scanline_bytes * h != data_size) {
-        LOG_WARNING("BMP scanline * h <> BMP header data size mismatch %d * %d != %d", scanline_bytes, h, data_size);
+        LOG_WARNING("BMP scanline * h <> BMP header data size mismatch %d * %d != %d",
+                    scanline_bytes, h, data_size);
         return -1;
     }
 
     // Verify file_size against pixel_offset and data_size
     if (file_size < pixel_offset + data_size) {
-        LOG_ERROR("BMP file_size is too small to fit PIXEL_OFFSET + DATA_SIZE, %d < %d + %d", file_size, pixel_offset, data_size);
+        LOG_ERROR("BMP file_size is too small to fit PIXEL_OFFSET + DATA_SIZE, %d < %d + %d",
+                  file_size, pixel_offset, data_size);
     }
 
     // Check that the actual bmp buffer is the expected file size
     if ((unsigned)bmp_size != file_size) {
-        LOG_WARNING("Actual size does not match header filesize (%d != %d)",
-                    bmp_size, file_size);
+        LOG_WARNING("Actual size does not match header filesize (%d != %d)", bmp_size, file_size);
         return -1;
     }
 
     // Create bmp buffer for lodepng
     uint8_t* pixel_data_buffer = (uint8_t*)allocate_region(bmp_size);
 
-    for(uint32_t y = 0; y < h; y++) {
+    for (uint32_t y = 0; y < h; y++) {
         // BMP rows are stored bottom-to-top,
         // this means we have to flip them by indexing by (h - y - 1)
         // Note that scanline_bytes is often not num_channels*w, due to padding,
         // But the target buffer will not be padded
         uint8_t* source_pixel_ptr = (uint8_t*)bmp + pixel_offset + (h - y - 1) * scanline_bytes;
-        uint8_t* target_pixel_ptr = pixel_data_buffer + y * (num_channels*w);
-        for(uint32_t x = 0; x < w; x++) {
+        uint8_t* target_pixel_ptr = pixel_data_buffer + y * (num_channels * w);
+        for (uint32_t x = 0; x < w; x++) {
             // BMPs are stored in BGR(A), and we need them in RGB(A)
-            if(num_channels == 3) {
-                *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //R
-                *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
-                *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //B
+            if (num_channels == 3) {
+                *(target_pixel_ptr + 0) = *(source_pixel_ptr + 2);  // R
+                *(target_pixel_ptr + 1) = *(source_pixel_ptr + 1);  // G
+                *(target_pixel_ptr + 2) = *(source_pixel_ptr + 0);  // B
             } else {
-                *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //R
-                *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
-                *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //B
-                *(target_pixel_ptr+3) = *(source_pixel_ptr+3); //A
+                *(target_pixel_ptr + 0) = *(source_pixel_ptr + 2);  // R
+                *(target_pixel_ptr + 1) = *(source_pixel_ptr + 1);  // G
+                *(target_pixel_ptr + 2) = *(source_pixel_ptr + 0);  // B
+                *(target_pixel_ptr + 3) = *(source_pixel_ptr + 3);  // A
             }
             // Source will be BGR or BGRA, depending on num_channels
             source_pixel_ptr += num_channels;
@@ -188,9 +191,9 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     if (scanline_bytes % 4 != 0) scanline_bytes = (scanline_bytes / 4) * 4 + 4;
 
     // Create return buffer
-    char* bmp = allocate_region(54 + (scanline_bytes*h));
+    char* bmp = allocate_region(54 + (scanline_bytes * h));
     *bmp_ptr = bmp;
-    *bmp_size = 54 + (scanline_bytes*h);
+    *bmp_size = 54 + (scanline_bytes * h);
 
     // File signature
     bmp[0] = 'B';
@@ -227,19 +230,19 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     // Copy Bitmap Data
     // ====================
 
-    for(size_t y = 0; y < h; y++) {
+    for (size_t y = 0; y < h; y++) {
         // BMP rows are stored bottom-to-top,
         // this means we have to flip them by indexing by (h - y - 1)
         // Note that scanline_bytes is often not 4*w, due to padding,
         // But the source buffer will not be padded
-        uint8_t* source_pixel_ptr = lodepng_data + y * (4*w);
+        uint8_t* source_pixel_ptr = lodepng_data + y * (4 * w);
         uint8_t* target_pixel_ptr = (uint8_t*)bmp + 54 + (h - y - 1) * scanline_bytes;
-        for(size_t x = 0; x < w; x++) {
+        for (size_t x = 0; x < w; x++) {
             // lodepng gives us RGB(A), we need BGR(A)
-            *(target_pixel_ptr+0) = *(source_pixel_ptr+2); //B
-            *(target_pixel_ptr+1) = *(source_pixel_ptr+1); //G
-            *(target_pixel_ptr+2) = *(source_pixel_ptr+0); //R
-            *(target_pixel_ptr+3) = *(source_pixel_ptr+3); //A
+            *(target_pixel_ptr + 0) = *(source_pixel_ptr + 2);  // B
+            *(target_pixel_ptr + 1) = *(source_pixel_ptr + 1);  // G
+            *(target_pixel_ptr + 2) = *(source_pixel_ptr + 0);  // R
+            *(target_pixel_ptr + 3) = *(source_pixel_ptr + 3);  // A
             source_pixel_ptr += 4;
             target_pixel_ptr += 4;
         }
@@ -248,9 +251,5 @@ int png_to_bmp(char* png, int png_size, char** bmp_ptr, int* bmp_size) {
     return 0;
 }
 
-void free_png(char* png) {
-    free(png);
-}
-void free_bmp(char* bmp) {
-    deallocate_region(bmp);
-}
+void free_png(char* png) { free(png); }
+void free_bmp(char* bmp) { deallocate_region(bmp); }

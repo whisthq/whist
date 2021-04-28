@@ -198,9 +198,7 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) {
-    deallocate_region(cb);
-}
+void unsafe_free_clipboard(ClipboardData* cb) { deallocate_region(cb); }
 
 ClipboardData* unsafe_get_clipboard() {
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
