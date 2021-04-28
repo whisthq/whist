@@ -1,39 +1,14 @@
-const { app } = require('electron');
-const path = require('path');
+const { app } = require('electron')
+const {
+  baseFilePath,
+  protocolName,
+  protocolFolder,
+  loggingBaseFilePath,
+  userDataFolderNames,
+  buildRoot
+} = require('./paths')
+const path = require('path')
 
-const getBaseFilePath = () => {
-  if (process.platform === 'win32') {
-    return path.join(app.getPath('appData'), 'Fractal')
-  } else {
-    return path.join(app.getPath('home'), '.fractal')
-  }
-}
-const baseFilePath = getBaseFilePath()
-
-const getProtocolName = () => {
-  if (process.platform === 'win32') {
-    return 'Fractal.exe'
-  } else if (process.platform === 'darwin') {
-    return '_Fractal'
-  } else {
-    return 'Fractal'
-  }
-}
-
-const getProtocolFolder = () => {
-  if (app.isPackaged) {
-    if (process.platform === 'darwin') {
-      return path.join(app.getAppPath(), '../..', 'MacOS')
-    } else {
-      return path.join(app.getAppPath(), '../..', 'protocol-build/client')
-    }
-  } else {
-    return path.join(app.getAppPath(), '../../..', 'protocol-build/client')
-  }
-}
-
-const protocolName = getProtocolName()
-const protocolFolder = getProtocolFolder()
 
 const FractalNodeEnvironment = {
   DEVELOPMENT: 'development',
@@ -46,10 +21,6 @@ const FractalCIEnvironment = {
   STAGING: 'staging',
   PRODUCTION: 'prod'
 }
-
-const buildRoot = app.isPackaged
-  ? path.join(app.getAppPath(), 'build')
-  : path.resolve('public')
 
 /*
     Webserver URLs
@@ -65,16 +36,6 @@ const keys = {
   AWS_ACCESS_KEY: 'AKIA24A776SSHLVMSAVU', // only permissioned for S3 client-apps buckets
   AWS_SECRET_KEY: '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',
   LOGZ_API_KEY: 'IroqVsvNytmNricZSTLUSVtJbxNYBgxp'
-}
-
-const loggingBaseFilePath =
-  process.platform === 'win32'
-    ? path.join(app.getPath('appData'), 'Fractal')
-    : path.join(app.getPath('home'), '.fractal')
-
-const userDataFolderNames = {
-  development: 'Electron',
-  production: 'Fractal'
 }
 
 /*
