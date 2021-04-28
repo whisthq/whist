@@ -143,9 +143,9 @@ export const loggingBaseFilePath =
     : path.join(app.getPath('home'), '.fractal')
   
 export const auth0Config = {
-  "auth0Domain": "dev-bfl3r3vh.us.auth0.com",
-  "clientId": "3f8qBMQgHmnL58uUrGa9QC42i9tnrqYG",
-  "apiIdentifier": "<API_IDENTIFIER>"
+  auth0Domain: "mingy98.us.auth0.com",
+  clientId: "uzqjXsnbxl9IzLEzJinJrqvbeIO6moTS",
+  apiIdentifier: "<API_IDENTIFIER>" // TODO: API identifier
 }
 
 // default export until we have multiple exports

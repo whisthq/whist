@@ -11,7 +11,7 @@ import {
   WindowHashAssignContainerError
 } from '@app/utils/constants'
 import config, { FractalCIEnvironment } from '@app/utils/config'
-import { getAuthenticationURL } from '@app/utils/auth0'
+import { getAuthenticationURL, loadTokens } from '@app/utils/auth0'
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), "build")
@@ -103,6 +103,17 @@ export const createWindow = (
   )
   win.on("close", () => onClose?.(win))
 
+  return win
+}
+
+export const createAuthWindow: CreateWindowFunction = () => {
+
+  const win = createWindow(WindowHashAuth, {
+    ...base,
+    ...width.md,
+    ...height.lg
+  } as BrowserWindowConstructorOptions, getAuthenticationURL())
+
   // Authentication
   const {session: {webRequest}} = win.webContents;
 
@@ -112,15 +123,13 @@ export const createWindow = (
     ]
   };
 
+  webRequest.onBeforeRequest(filter, async ({url}) => {
+    const data = await loadTokens(url)
+    console.log(data)
+  });
+
   return win
 }
-
-export const createAuthWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuth, {
-    ...base,
-    ...width.md,
-    ...height.lg
-  } as BrowserWindowConstructorOptions, getAuthenticationURL())
 
 export const createAuthErrorWindow: CreateWindowFunction = () =>
   createWindow(WindowHashAuthError, {

@@ -2,6 +2,7 @@ import jwtDecode from "jwt-decode"
 import url from "url"
 import { auth0Config } from '@app/utils/config'
 import { store, persist } from '@app/utils/persist'
+import fetch from 'node-fetch'
 
 const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
@@ -80,7 +81,7 @@ export async function loadTokens(callbackURL: string) {
     headers: {
       "content-type": "application/json",
     },
-    data: JSON.stringify(exchangeOptions),
+    body: JSON.stringify(exchangeOptions),
   }
 
   try {
@@ -94,6 +95,8 @@ export async function loadTokens(callbackURL: string) {
     if (refreshToken) {
       await persist({refreshToken})
     }
+
+    return data
   } catch (error) {
     await logout()
 
