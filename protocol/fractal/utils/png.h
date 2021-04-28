@@ -15,23 +15,26 @@ Includes
 ============================
 */
 
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/time.h>
-#include <time.h>
-#endif
-
-#include <libavcodec/avcodec.h>
-
 /*
 ============================
 Public Functions
 ============================
 */
 
-int bmp_to_png(char* bmp, int bmp_size, char* png, int* png_size);
+int bmp_to_png(char* bmp_data, int bmp_size, char** png_data, int* png_size);
 
-int png_to_bmp(char* png, int png_size, char* bmp, int* bmp_size);
+/**
+ * @brief                          Converts a given png into a bmp
+ * 
+ * @param png_data                 The png data
+ * @param png_size                 The size of the png data
+ * @param bmp_data                 *bmp_data will be set to the bmp data
+ * @param bmp_size                 *bmp_size will be set to the bmp's size
+ * @returns 
+ */
+int png_to_bmp(char* png_data, int png_size, char** bmp_data, int* bmp_size);
+
+void free_png(char* png_data);
+void free_bmp(char* bmp_data);
 
 #endif

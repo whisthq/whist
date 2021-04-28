@@ -161,11 +161,22 @@ DynamicBuffer* get_clipboard_files() {
     }
 }
 
-ClipboardData* unsafe_get_clipboard() {
-    static DynamicBuffer* db = NULL;
+static DynamicBuffer* db = NULL;
 
-    // Free the previous dynamic buffer
+void unsafe_free_clipboard(ClipboardData* cb) {
+    if (db == NULL) {
+        LOG_ERROR("Called unsafe_free_clipboard, but there's nothing to free!");
+    } else {
+        free_dynamic_buffer(db);
+        db = NULL;
+    }
+}
+
+ClipboardData* unsafe_get_clipboard() {
+
+    // Free the previous dynamic buffer (shouldn't be necessary)
     if (db != NULL) {
+        LOG_ERROR("Called unsafe_get_clipboard, but the caller hasn't called unsafe_free_clipboard yet!");
         free_dynamic_buffer(db);
         db = NULL;
     }
