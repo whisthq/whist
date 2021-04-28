@@ -215,9 +215,9 @@ ClipboardData* unsafe_get_clipboard() {
     }
 
     int cf_types[] = {
-        CF_TEXT,
-        CF_DIB,
-        CF_HDROP,
+        CF_TEXT, CF_DIB,
+        // Not reading clipboard files right now
+        // CF_HDROP,
     };
 
     int cf_type = -1;
