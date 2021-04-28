@@ -73,9 +73,7 @@ void set_clipboard(ClipboardData* cb) {
     fractal_unlock_mutex(mutex);
 }
 
-void free_clipboard(ClipboardData* cb) {
-    unsafe_free_clipboard(cb);
-}
+void free_clipboard(ClipboardData* cb) { unsafe_free_clipboard(cb); }
 
 bool has_clipboard_updated() {
     if (!mutex) {
