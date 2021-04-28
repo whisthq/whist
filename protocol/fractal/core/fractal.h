@@ -680,8 +680,34 @@ typedef struct DynamicBuffer {
     char* buf;
 } DynamicBuffer;
 
+/**
+ * @brief                          Initializes a new dynamically sizing buffer.
+ *                                 Note that accessing a dynamic buffer's buf outside
+ *                                 of db->size is undefined behavior
+ *
+ * @param use_memory_regions       If true, will use OS-level memory regions [See allocate_region]
+ *                                 If false, will use malloc for db->buf
+ *                                 The DynamicBuffer struct itself will always use malloc
+ *
+ * @returns                        The dynamic buffer (With initial size 0)
+ */
 DynamicBuffer* init_dynamic_buffer(bool use_memory_regions);
+
+/**
+ * @brief                          This will resize the given DynamicBuffer to the given size.
+ *                                 This function may reallocate db->buf
+ *
+ * @param db                       The DynamicBuffer to resize
+ *
+ * @param new_size                 The new size to resize db to
+ */
 void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size);
+
+/**
+ * @brief                          This will free the DynamicBuffer and its contents
+ *
+ * @param db                       The DynamicBuffer to free
+ */
 void free_dynamic_buffer(DynamicBuffer* db);
 
 // Dummy typedef for block allocator since only pointers are used anyway
