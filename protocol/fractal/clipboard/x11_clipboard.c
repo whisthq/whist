@@ -164,11 +164,19 @@ DynamicBuffer* get_clipboard_files() {
 static DynamicBuffer* db = NULL;
 
 void unsafe_free_clipboard(ClipboardData* cb) {
-    if (db == NULL) {
-        LOG_ERROR("Called unsafe_free_clipboard, but there's nothing to free!");
+    if (cb->type != CLIPBOARD_NONE) {
+        if (db == NULL) {
+            LOG_ERROR("Called unsafe_free_clipboard, but there's nothing to free!");
+        } else {
+            free_dynamic_buffer(db);
+            db = NULL;
+        }
     } else {
-        free_dynamic_buffer(db);
-        db = NULL;
+        if (db != NULL) {
+            LOG_ERROR("cb->type is CLIPBOARD_NONE, but DynamicBuffer is still allocated?");
+            free_dynamic_buffer(db);
+            db = NULL;
+        }
     }
 }
 
