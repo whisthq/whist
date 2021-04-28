@@ -19,15 +19,16 @@ import {
 } from "@app/main/observables/container"
 import { hostConfigFailure } from "@app/main/observables/host"
 import { loadingFrom } from "@app/utils/observables"
-import { zip, of, fromEvent, merge } from "rxjs"
+import { zip, of, fromEvent, merge, Observable } from "rxjs"
 import { map, filter, share, mergeMap } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { formatObservable, formatChildProcess } from "@app/utils/formatters"
+import { ChildProcess } from "child_process"
 
 export const protocolLaunchProcess = containerAssignRequest.pipe(
   map(() => protocolLaunch()),
   share()
-)
+) as Observable<ChildProcess>
 
 export const protocolLaunchSuccess = containerAssignSuccess.pipe(
   map((res) => ({
@@ -52,15 +53,15 @@ export const protocolCloseRequest = protocolLaunchProcess.pipe(
   mergeMap((protocol) =>
     zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
   ),
-  map(([protocol, event]) => protocol)
+  map(([protocol]) => protocol)
 )
 
 export const protocolCloseFailure = protocolCloseRequest.pipe(
-  filter(([protocol]) => protocol.killed)
+  filter((protocol) => protocol.killed)
 )
 
 export const protocolCloseSuccess = protocolCloseRequest.pipe(
-  filter(([protocol]) => !protocol.killed)
+  filter((protocol) => !protocol.killed)
 )
 
 // Logging
