@@ -8,6 +8,8 @@ from app.constants.http_codes import FORBIDDEN  # , NOT_ACCEPTABLE
 
 from app.helpers.blueprint_helpers.payment.stripe_post import (
     retrieveHelper,
+    checkout_helper,
+    billing_portal_helper,
 )
 from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
@@ -82,45 +84,49 @@ def payment(action, **kwargs):
 # there should be some scaffolding you can use in the client to make it happen
 
 
-@limiter.limit(RATE_LIMIT_PER_MINUTE)
-@fractal_pre_process
-@jwt_required()
-@fractal_auth
 @stripe_bp.route("/stripe/create-checkout-session", methods=["POST"])
-def create_checkout_session():
-    data = json.loads(request.data)
-    try:
-        checkout_session = stripe.checkout.Session.create(
-            success_url="https://example.com/success.html?session_id={CHECKOUT_SESSION_ID}",
-            cancel_url="https://example.com/canceled.html",
-            payment_method_types=["card"],
-            mode="subscription",
-            line_items=[
-                {
-                    "price": data["priceId"],
-                    "quantity": 1,
-                }
-            ],
-        )
-        return jsonify({"sessionId": checkout_session["id"]})
-    except Exception as e:
-        return jsonify({"error": {"message": str(e)}}), 400
-
-
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
 @fractal_auth
-@stripe_bp.route("/stripe/customer-portal", methods=["POST"])
-def customer_portal():
-    # This is the URL to which the customer will be redirected after they are
-    # done managing their billing with the portal.
-    return_url = "fractal.co"  # TODO: not sure what goes here
+def create_checkout_session(**kwargs):
+    """
+    Retruns checkout session id from a given product and customer
 
-    session = stripe.billing_portal.Session.create(
-        customer="{{CUSTOMER_ID}}", return_url=return_url
+    Args:
+        customerId (str): the stripe id of the user
+        priceId (str): the price id of the product (subscription)
+        successUrl (str): url to redirect to upon completion success
+        cancelUrl (str): url to redirect to upon cancelation
+
+    Returns:
+        json, int: Json containing session id and status code
+    """
+    body = kwargs["body"]
+    return checkout_helper(
+        body["successUrl"], body["cancelUrl"], body["customerId"], body["priceId"]
     )
-    return jsonify({"url": session.url})
+
+
+@stripe_bp.route("/stripe/customer-portal", methods=["POST"])
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
+def customer_portal(**kwargs):
+    """
+    Returns billing portal url.
+
+    Args:
+        customerId (str): the stripe id of the user
+        returnUrl (str): the url to redirect to upon leaving the billing portal
+
+    Returns:
+        json, int: Json containing billing url and status code
+    """
+
+    body = kwargs["body"]
+    return billing_portal_helper(body["customerId"], body["returnUrl"])
 
 
 @fractal_pre_process
@@ -138,3 +144,5 @@ def webhook():
 
     if event["type"] == "payment_intent.succeeded":
         return {"message": event["id"]}
+    elif event["type"] == "invoice.payment_failed":
+        print("payment failed")

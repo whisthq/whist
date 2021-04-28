@@ -22,6 +22,51 @@ from app.helpers.utils.payment.stripe_client import (
 )
 
 
+def checkout_helper(
+    success_url: str, cancel_url: str, customer_id: str, price_id: str
+) -> Tuple[str, int]:
+    """
+    Returns checkout session id from Stripe client
+
+    Args:
+        customer_id (str): the stripe id of the user
+        price_id (str): the price id of the product (subscription)
+        success_url (str): url to redirect to upon completion success
+        cancel_url (str): url to redirect to upon cancelation
+
+    Returns:
+        json, int: Json containing session id and status code
+    """
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
+    try:
+        checkout_id = client.create_checkout_session(success_url, cancel_url, customer_id, price_id)
+        return (
+            jsonify({"sessionId": checkout_id}),
+            SUCCESS,
+        )
+    except Exception as e:
+        return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
+
+
+def billing_portal_helper(customer_id: str, return_url: str) -> Tuple[str, int]:
+    """
+    Returns billing portal url.
+
+    Args:
+        customer_id (str): the stripe id of the user
+        return_url (str): the url to redirect to upon leaving the billing portal
+
+    Returns:
+        json, int: Json containing billing url and status code
+    """
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
+    try:
+        url = client.create_billing_session(customer_id, return_url)
+        return jsonify({"url": url}), SUCCESS
+    except Exception as e:
+        return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
+
+
 def retrieveHelper(email: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
