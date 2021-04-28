@@ -9,7 +9,7 @@ import pytest
 
 from app.celery.aws_ecs_deletion import delete_container
 from app.helpers.utils.general.time import date_to_unix, get_today
-from app.celery.aws_ecs_modification import manual_cleanup_cluster
+from app.celery.aws_ecs_modification import check_and_cleanup_outdated_tasks
 from app.models import db
 
 from ..patches import function, Object
@@ -76,6 +76,6 @@ def test_autodelete_nonpinging_containers(cluster, bulk_container, monkeypatch):
     monkeypatch.setattr(delete_container, "delay", mocked_delete_container)
 
     # call cleanup routine
-    manual_cleanup_cluster(cluster=cluster.cluster, region_name=cluster.location)
+    check_and_cleanup_outdated_tasks(cluster=cluster.cluster, region_name=cluster.location)
 
     assert set(delete_list) == set(expected_delete_list)

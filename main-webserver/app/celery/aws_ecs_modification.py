@@ -1,10 +1,9 @@
 import math
-
+import datetime
 from typing import Optional
 
 from celery import Task, shared_task
 from flask import current_app
-import datetime
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
 from app.helpers.utils.aws.aws_resource_integrity import ensure_container_exists
@@ -319,7 +318,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
 
 @shared_task(bind=True)
-def manual_cleanup_cluster(self: Task, cluster: str, region_name: str):
+def check_and_cleanup_outdated_tasks(self, cluster: str, region_name: str):
     """
     Cleanup tasks in a cluster that have not pinged for 90sec.
 
