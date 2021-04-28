@@ -11,7 +11,7 @@ from requests import ConnectionError, Timeout, TooManyRedirects
 
 from app.maintenance.maintenance_manager import maintenance_track_task
 from app.celery.aws_ecs_deletion import delete_cluster
-from app.celery.aws_ecs_modification import manual_scale_cluster
+from app.celery.aws_ecs_modification import manual_scale_cluster, check_and_cleanup_outdated_tasks
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -797,6 +797,9 @@ def _assign_container(
 
     # trigger celery task to see if manual scaling should be done
     manual_scale_cluster.delay(cluster_name, region_name)
+
+    # trigger celery task to see if task cleanup should be done
+    check_and_cleanup_outdated_tasks.delay(cluster_name, region_name)
 
     return user_container_schema.dump(base_container)
 
