@@ -11,6 +11,7 @@
 // storage changes.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { from } from "rxjs"
 
@@ -38,18 +39,28 @@ export const loginRequest = loginAction.pipe(
 import { fromEventIPC } from '@app/main/events/ipc'
 import { from } from 'rxjs'
 import { loadingFrom } from '@app/utils/observables'
+=======
+import { fromEventIPC } from "@app/main/events/ipc"
+import { from } from "rxjs"
+import { loadingFrom } from "@app/utils/observables"
+>>>>>>> Linter
 import {
   debugObservables,
   warningObservables,
-  errorObservables
-} from '@app/utils/logging'
-import { emailLogin, emailLoginValid, emailLoginError } from '@app/utils/login'
-import { filter, map, share, exhaustMap } from 'rxjs/operators'
-import { formatLogin, formatObservable } from '@app/utils/formatters'
+  errorObservables,
+} from "@app/utils/logging"
+import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
+import { filter, map, share, exhaustMap } from "rxjs/operators"
+import { formatLogin, formatObservable } from "@app/utils/formatters"
 
+<<<<<<< HEAD
 export const loginRequest = fromEventIPC('loginRequest').pipe(
   filter((req) => (req?.email ?? '') !== '' && (req?.password ?? '') !== ''),
 >>>>>>> linter
+=======
+export const loginRequest = fromEventIPC("loginRequest").pipe(
+  filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
+>>>>>>> Linter
   map(({ email, password }) => [email, password]),
   share()
 )
@@ -83,11 +94,11 @@ export const loginLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [loginRequest, 'loginRequest'],
-  [formatObservable(loginSuccess, formatLogin), 'loginSuccess'],
-  [loginLoading, 'loginLoading']
+  [loginRequest, "loginRequest"],
+  [formatObservable(loginSuccess, formatLogin), "loginSuccess"],
+  [loginLoading, "loginLoading"]
 )
 
-warningObservables([loginWarning, 'loginWarning'])
+warningObservables([loginWarning, "loginWarning"])
 
-errorObservables([loginFailure, 'loginFailure'])
+errorObservables([loginFailure, "loginFailure"])
