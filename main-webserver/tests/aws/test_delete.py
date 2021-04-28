@@ -51,7 +51,7 @@ def test_unauthorized(container, monkeypatch):
 @pytest.mark.usefixtures("celery_worker")
 def test_autodelete_nonpinging_containers(cluster, bulk_container, monkeypatch):
     bad_ping_time = date_to_unix(get_today() + datetime.timedelta(seconds=-91))
-    good_ping_time = date_to_unix(get_today() + datetime.timedelta(seconds=-89))
+    good_ping_time = date_to_unix(get_today() + datetime.timedelta(seconds=-10))
 
     c_bad = bulk_container(cluster_name=cluster.cluster, location=cluster.location)
     c_bad.last_pinged = bad_ping_time
