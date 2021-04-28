@@ -17,7 +17,6 @@ import {
 } from "@app/main/observables/user"
 
 import { loginFailure } from "@app/main/observables/login"
-import { signupFailure } from "@app/main/observables/signup"
 import { containerCreateFailure } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
 
@@ -42,7 +41,6 @@ combineLatest(
 // to login again.
 merge(
   loginFailure,
-  signupFailure,
   containerCreateFailure,
   protocolLaunchFailure
 ).subscribe(() => persistClear())

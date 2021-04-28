@@ -10,10 +10,9 @@ import { Observable, merge } from "rxjs"
 import { mapTo, withLatestFrom, map, startWith } from "rxjs/operators"
 import { toPairs } from "lodash"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
+import { WarningLoginInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
 import { loginLoading, loginWarning } from "@app/main/observables/login"
-import { signupLoading, signupWarning } from "@app/main/observables/signup"
 import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
@@ -46,9 +45,7 @@ const objectCombine = (obj: SubscriptionMap) =>
 const subscribed: SubscriptionMap = {
   loginLoading: loginLoading,
   loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: autoUpdateDownloadProgress,
-  signupLoading: signupLoading,
-  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+  updateInfo: autoUpdateDownloadProgress
 }
 
 objectCombine(subscribed)

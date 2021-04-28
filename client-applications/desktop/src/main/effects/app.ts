@@ -24,7 +24,6 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -64,7 +63,6 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 merge(
   protocolLaunchProcess,
   loginSuccess,
-  signupSuccess,
   errorWindowRequest,
   eventUpdateAvailable
 )
@@ -90,7 +88,7 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, loginSuccess, signupSuccess)
+merge(protocolLaunchProcess, loginSuccess)
   .pipe(take(1))
   .subscribe(() => {
     closeWindows()

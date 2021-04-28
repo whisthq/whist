@@ -63,16 +63,6 @@ export const checkEmailVerbose = (email: string): string => {
   }
 }
 
-export const signupEnabled = (
-  email: string,
-  password: string,
-  confirmPassword: string
-): boolean => {
-  return (
-    checkEmail(email) && checkPassword(password) && password === confirmPassword
-  )
-}
-
 export const loginEnabled = (email: string, password: string): boolean =>
   checkEmail(email) && password.length >= MINIMUM_PASSWORD_LENGTH
 
