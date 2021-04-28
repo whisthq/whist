@@ -10,6 +10,7 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     retrieveHelper,
     checkout_helper,
     billing_portal_helper,
+    hasAccess,
 )
 from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
@@ -82,6 +83,17 @@ def payment(action, **kwargs):
 # basically, there are products which they can buy multiple units of
 # right now, not really so it's not implemented
 # there should be some scaffolding you can use in the client to make it happen
+
+
+@stripe_bp.route("/stripe/can_access_product", methods=["POST"])
+def can_access_product():
+    try:
+        stripe_id = json.loads(request.data)["stripe_id"]
+    except:
+        abort(400)
+    if hasAccess(stripe_id):
+        return jsonify(subscribed=True)
+    return jsonify(subscribed=False)
 
 
 @stripe_bp.route("/stripe/create-checkout-session", methods=["POST"])
