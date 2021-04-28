@@ -33,7 +33,7 @@ import {
   withLatestFrom,
   takeWhile,
 } from "rxjs/operators"
-import { formatContainer } from "@app/utils/formatters"
+import { formatContainer, formatObservable } from "@app/utils/formatters"
 
 export const containerCreateRequest = zip(
   userEmail,
@@ -102,17 +102,17 @@ export const containerAssignLoading = loadingFrom(
 debugObservables(
   [containerCreateRequest, "containerCreateRequest"],
   [
-    containerCreateSuccess.pipe(map((res) => formatContainer(res))),
+    formatObservable(containerCreateSuccess, formatContainer),
     "containerCreateSuccess",
   ],
   [containerCreateLoading, "containerCreateLoading"],
   [containerAssignRequest, "containerAssignRequest"],
   [
-    containerAssignPolling.pipe(map((res) => formatContainer(res))),
+    formatObservable(containerAssignPolling, formatContainer),
     "containerAssignPolling",
   ],
   [
-    containerAssignSuccess.pipe(map((res) => formatContainer(res))),
+    formatObservable(containerAssignSuccess, formatContainer),
     "containerAssignSuccess",
   ],
   [containerAssignLoading, "containerAssignLoading"]
@@ -120,11 +120,11 @@ debugObservables(
 
 errorObservables(
   [
-    containerCreateFailure.pipe(map((res) => formatContainer(res))),
+    formatObservable(containerCreateFailure, formatContainer),
     "containerCreateFailure",
   ],
   [
-    containerAssignFailure.pipe(map((res) => formatContainer(res))),
+    formatObservable(containerAssignFailure, formatContainer),
     "containerAssignFailure",
   ]
 )
