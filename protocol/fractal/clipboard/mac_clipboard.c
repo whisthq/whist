@@ -122,6 +122,7 @@ ClipboardData* unsafe_get_clipboard() {
         cb = realloc_region(cb, data_size);
         // Copy the text data
         cb->type = CLIPBOARD_TEXT;
+        cb->size = data_size;
         memcpy(cb->data, clipboard_string, data_size);
     } else if (clipboard_has_image) {
         // safe_malloc some space for the image struct
