@@ -1026,16 +1026,6 @@ CREATE TABLE public.invites (
 
 
 --
--- Name: tokens; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.tokens (
-    login_token character varying NOT NULL,
-    access_token character varying DEFAULT 'NULL'::character varying
-);
-
-
---
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1340,14 +1330,6 @@ ALTER TABLE ONLY public.users
 
 ALTER TABLE ONLY public.invites
     ADD CONSTRAINT invites_pkey PRIMARY KEY (user_id);
-
-
---
--- Name: tokens tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.tokens
-    ADD CONSTRAINT tokens_pkey PRIMARY KEY (login_token);
 
 
 --
