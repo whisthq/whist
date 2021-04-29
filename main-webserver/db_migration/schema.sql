@@ -1053,24 +1053,6 @@ CREATE TABLE public.users (
 
 
 --
--- Name: waitlist; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.waitlist (
-    user_id character varying NOT NULL,
-    name character varying NOT NULL,
-    points integer DEFAULT 0 NOT NULL,
-    referral_code character varying,
-    referrals integer DEFAULT 0,
-    real_user boolean,
-    auth_email character varying,
-    country character varying DEFAULT 'United States'::character varying,
-    on_waitlist boolean DEFAULT true,
-    waitlist_access_token character varying
-);
-
-
---
 -- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
 --
 
@@ -1374,14 +1356,6 @@ ALTER TABLE ONLY public.tokens
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT unique_user_id UNIQUE (user_id);
-
-
---
--- Name: waitlist waitlist_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.waitlist
-    ADD CONSTRAINT waitlist_pkey PRIMARY KEY (user_id);
 
 
 --
