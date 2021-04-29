@@ -30,8 +30,6 @@ format strings.
 #define _CRT_SECURE_NO_WARNINGS
 #endif
 
-#include <stdio.h>
-
 #ifdef _WIN32
 #define _NO_CVCONST_H
 #include <Windows.h>
@@ -39,9 +37,16 @@ format strings.
 #include <process.h>
 #define strtok_r strtok_s
 #else
+// Backtrace handling
+#define _GNU_SOURCE
+#include <dlfcn.h>
 #include <execinfo.h>
+#include <link.h>
+// Signal handling
 #include <signal.h>
 #endif
+
+#include <stdio.h>
 
 #include <fractal/core/fractal.h>
 #include "../network/network.h"
@@ -625,6 +630,9 @@ FractalMutex crash_handler_mutex;
 void print_stacktrace() {
     fractal_lock_mutex(crash_handler_mutex);
 
+    // Flush out all of the logs that occured prior to the stacktrace
+    flush_logs();
+
 #ifdef _WIN32
     unsigned int i;
     void* stack[100];
@@ -642,43 +650,60 @@ void print_stacktrace() {
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 
+    fractal_lock_mutex((FractalMutex)log_file_mutex);
     for (i = 0; i < frames; i++) {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
 
         fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
+        fprintf(mprintf_log_file, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
+                symbol->Address);
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
 
-    void* array[HANDLER_ARRAY_SIZE];
-    size_t size;
+    void* trace[HANDLER_ARRAY_SIZE];
+    size_t trace_size;
 
     // get void*'s for all entries on the stack
-    size = backtrace(array, HANDLER_ARRAY_SIZE);
+    trace_size = backtrace(trace, HANDLER_ARRAY_SIZE);
 
-    // Flush out all of the logs that occured prior to the stacktrace
-    flush_logs();
+    // Get the backtrace symbols
+    char** messages;
+    messages = backtrace_symbols(trace, trace_size);
 
-    // Print out all the backtrace frames to stderr
-    backtrace_symbols_fd(array, size, STDERR_FILENO);
-
-    // and to the log file
+    // Print stacktrace to stderr and logfile
     fractal_lock_mutex((FractalMutex)log_file_mutex);
-    int fd = fileno(mprintf_log_file);
-    backtrace_symbols_fd(array, size, fd);
-
+    // Print backtrace messages
+    for (int i = 1; i < (int)trace_size; i++) {
+        fprintf(stderr, "[backtrace #%02d] %s\n", i, messages[i]);
+        fprintf(mprintf_log_file, "[backtrace #%02d] %s\n", i, messages[i]);
+    }
+    // Print addr2line commands
+    for (int i = 1; i < (int)trace_size; i++) {
+        void* ptr = trace[i];
+        Dl_info info;
+        struct link_map* l_map = NULL;
+        dladdr1(ptr, &info, (void**)&l_map, RTLD_DL_LINKMAP);
+        char cmd[2048];
+        if (l_map) {
+            ptr = ptr - l_map->l_addr;
+            snprintf(cmd, sizeof(cmd), "addr2line -fp -e %s -i %p", info.dli_fname, ptr);
+            // Can only run on systems with addr2line
+            // runcmd(cmd, NULL);
+        } else {
+            snprintf(cmd, sizeof(cmd), "echo ??");
+        }
+        fprintf(stderr, "%s\n", cmd);
+        fprintf(mprintf_log_file, "%s\n", cmd);
+    }
+#endif
+    // Print out the final newlines, flush, then unlock the log file
+    fprintf(stderr, "\n\n");
+    fprintf(mprintf_log_file, "\n\n");
+    fflush(stderr);
     fflush(mprintf_log_file);
     fractal_unlock_mutex((FractalMutex)log_file_mutex);
 
-    fprintf(stderr, "addr2line -e build64/FractalServer");
-    for (size_t i = 0; i < size; i++) {
-        fprintf(stderr, " %p", array[i]);
-    }
-    fprintf(stderr, "\n\n");
-#endif
-
-    // Flush out what we've written to stderr
-    fflush(stderr);
     fractal_unlock_mutex(crash_handler_mutex);
 }
 
@@ -755,15 +780,16 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
     if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
         print_stacktrace();
     } else {
+        fprintf(stderr, "Can't show stacktrace when the stack has overflowed!\n");
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
-void crash_handler(int sig) {
-    fprintf(stderr, "\nError: signal %d:\n", sig);
+void unix_crash_handler(int sig) {
+    fprintf(stderr, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
-    exit(-1);
+    _exit(-1);
 }
 #endif
 
@@ -772,9 +798,24 @@ void init_backtrace_handler() {
 #ifdef _WIN32
     SetUnhandledExceptionFilter(windows_exception_handler);
 #else
-    signal(SIGSEGV, crash_handler);
-    signal(SIGABRT, crash_handler);
-    signal(SIGPIPE, crash_handler);
+    // Try to catch all the signals
+    struct sigaction sa = {0};
+    sa.sa_handler = &unix_crash_handler;
+    sa.sa_flags = SA_SIGINFO;
+    for (int i = 1; i < NSIG; i++) {
+        // TODO: We should gracefully exit on SIGTERM
+        // We do nothing on SIGCHLD
+        // We ignore SIGPIPE
+        // We crash on anything else
+        if (i != SIGTERM && i != SIGCHLD && i != SIGPIPE) {
+            sigaction(i, &sa, NULL);
+        }
+    }
+    // Ignore SIGPIPE, just let the syscall return EPIPE
+    sa.sa_handler = SIG_IGN;
+    // Without restarting the syscall, it'll forcefully return EINTR
+    sa.sa_flags = SA_RESTART;
+    sigaction(SIGPIPE, &sa, NULL);
 #endif
 }
 
