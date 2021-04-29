@@ -430,8 +430,10 @@ int32_t send_video(void* opaque) {
             if (accumulated_frames > 1) {
                 LOG_INFO("Accumulated Frames: %d", accumulated_frames);
             }
+            // If 1/MIN_FPS has passed, but no accumulated_frames have happened,
+            // Then we just resend the current frame
             if (accumulated_frames == 0) {
-                LOG_INFO("Sending current frame!");
+                // LOG_INFO("Resending current frame!");
             }
 
             // transfer the capture from the device to the encoder
