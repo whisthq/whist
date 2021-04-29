@@ -18,7 +18,7 @@ import {
   errorObservables,
 } from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
+import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { formatLogin, formatObservable } from "@app/utils/formatters"
 import { loginAction } from "@app/main/events/actions"
 
