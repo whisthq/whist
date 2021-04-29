@@ -104,8 +104,6 @@ def register_blueprints(app):
 
     from .blueprints.host_service.host_service_blueprint import host_service_bp
 
-    from .blueprints.oauth import oauth_bp
-
     app.register_blueprint(account_bp)
     app.register_blueprint(token_bp)
     app.register_blueprint(celery_status_bp)
@@ -117,4 +115,3 @@ def register_blueprints(app):
     app.register_blueprint(admin_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(host_service_bp)
-    app.register_blueprint(oauth_bp)

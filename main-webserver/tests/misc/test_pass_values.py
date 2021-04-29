@@ -7,7 +7,6 @@ from app.exceptions import StartValueException
 from app.celery.aws_ecs_creation import (
     _pass_start_values_to_instance,
     _clean_tasks_and_create_new_container,
-    _mount_cloud_storage,
     _assign_container,
 )
 from tests.patches import function, Object

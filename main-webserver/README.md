@@ -59,17 +59,7 @@ Whether you're running tests or the `docker-compose` stack locally, the web serv
 >
 > -O
 
-**3. Configure OAuth client (optional)**
-
-Before you can create new containers with cloud storage folders mounted to them from an instance of the web server running locally, you must download the [Google client secret file](https://s3.console.aws.amazon.com/s3/object/fractal-dev-secrets?region=us-east-1&prefix=client_secret.json) from S3. Save it to `main-webserver/client_secret.json`. An easy way to do this is to run:
-
-    aws s3 cp --only-show-errors s3://fractal-dev-secrets/client_secret.json client_secret.json
-
-from within the `main-webserver` directory.
-
-This step is optional. If you choose not to complete this step, you will still be able to launch containers, but those containers will not have cloud storage access, even for accounts to which a cloud storage provider is connected.
-
-**4. Spin Up Local Servers**
+**3. Spin Up Local Servers**
 
 Run the following to do a local deployment. If you are on Windows, you should run this from a command prompt in Administrator mode. This will create dummy SSL certificates (to get as close to the Redis+TLS setup we have in production) and start the app at `run.py`.
 
@@ -277,7 +267,6 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── mail
 │   │   │   ├── mail_blueprint.py --> endpoints for generating and sending emails
 │   │   │   └── newsletter_blueprint.py --> endpoints for sending out emails to a mailing list
-│   │   ├── oauth.py --> endpoints for OAuth/ storage connection
 │   │   └── payment
 │   │       └── stripe_blueprint.py --> endpoints for handling stripe transactions/subscriptions
 │   ├── celery
@@ -354,20 +343,14 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
 │   │   ├── logs.py -->  tables in our logs schema
-│   │   ├── oauth.py -->  tables in our oauth schema
 │   │   ├── public.py -->  tables in our public schema
 │   │   └── sales.py -->  tables in our sales schema
 │   └── serializers --> object-to-json conversion for our ORM.  Structure mirrors models
 │       ├── hardware.py
 │       ├── logs.py
-│       ├── oauth.py
 │       ├── public.py
 │       └── sales.py
 ├── app.json -->  structure of our app/heroku config
-├── bin -->  scripts needed for heroku app deployment
-│   ├── compile
-│   ├── detect
-│   └── util.sh
 ├── db_migration --> code that governs DB migration
 │   ├── config.py  --> config values for the migration
 │   ├── errors.py --> exception handling for the migration
@@ -425,10 +408,6 @@ Note that all conftest files contain test fixtures for their respective director
     │   └── test_webserver_maintenance.py --> integration tests for webserver maintenance mode
     ├── misc
     │   └── test_rate_limiter.py
-    ├── oauth
-    │   ├── test_cloud_storage.py
-    │   ├── test_credential.py
-    │   └── test_oauth.py
     ├── patches.py --> useful monkeypatches for all our tests
     ├── payment
     │   └── test_stripe_client.py
