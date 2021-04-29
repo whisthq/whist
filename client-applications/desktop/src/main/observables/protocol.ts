@@ -20,11 +20,12 @@ import {
 import { hostConfigFailure } from "@app/main/observables/host"
 import { loadingFrom } from "@app/utils/observables"
 import { zip, of, fromEvent, merge } from "rxjs"
-import { map, filter, share, mergeMap, take } from "rxjs/operators"
+import { map, filter, share, mergeMap, take, tap } from "rxjs/operators"
 import { EventEmitter } from "events"
 
 export const protocolLaunchProcess = containerCreateRequest.pipe(
   take(1),
+  tap(_ => console.log("PROTOCOL LAUNCH")),
   map(() => protocolLaunch()),
   share()
 )

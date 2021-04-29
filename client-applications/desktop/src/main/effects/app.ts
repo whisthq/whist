@@ -15,7 +15,7 @@ import {
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 
-import { takeUntil, take, concatMap } from "rxjs/operators"
+import { takeUntil, take, concatMap, tap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
@@ -24,6 +24,7 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { loginSuccess } from "@app/main/observables/login"
+import { accessToken } from "@app/main/observables/login_new"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -43,7 +44,7 @@ import { uploadToS3 } from "@app/utils/logging"
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
 eventAppReady
-  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
+  .pipe(takeUntil(zip(userEmail, accessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
 
 eventAppReady.pipe(take(1)).subscribe(() => {
@@ -88,7 +89,7 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, loginSuccess)
+merge(protocolLaunchProcess, accessToken)
   .pipe(take(1))
   .subscribe(() => {
     closeWindows()

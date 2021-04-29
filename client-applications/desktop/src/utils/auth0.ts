@@ -8,7 +8,7 @@ const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
 const redirectUri = "http://localhost/callback"
 
-let accessToken: string | null = null
+let accessToken: any  = null
 let profile: any = null
 let refreshToken = null
 
@@ -25,7 +25,8 @@ export function getAuthenticationURL() {
     "https://" +
     auth0Domain +
     "/authorize?" +
-    "scope=openid profile offline_access&" +
+    "audience=https://api.fractal.co/&" + 
+    "scope=openid profile offline_access email&" +
     "response_type=code&" +
     "client_id=" +
     clientId +
@@ -38,30 +39,29 @@ export function getAuthenticationURL() {
 export async function refreshTokens() {
   const refreshToken = store.get("refreshToken")
 
-  if (refreshToken) {
-    const refreshOptions = {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      data: {
-        grant_type: "refresh_token",
-        client_id: clientId,
-        refresh_token: refreshToken,
-      },
+  const refreshOptions = {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    data: {
+      grant_type: "refresh_token",
+      client_id: clientId,
+      refresh_token: refreshToken,
     }
+  }
 
-    try {
-      const response = await fetch(`https://${auth0Domain}/oauth/token`, refreshOptions)
-      const data = await response.json()
+  const response = await fetch(`https://${auth0Domain}/oauth/token`, refreshOptions)
+  const data = await response.json()
 
-      accessToken = data.access_token
-      profile = jwtDecode(data.id_token)
-    } catch (error) {
-      await logout()
+  accessToken = data.access_token
+  if (accessToken) {
+    await persist({accessToken})
+  }
 
-      throw error
-    }
-  } else {
-    throw new Error("No available refresh token.")
+  profile = jwtDecode(data.id_token)
+  if (profile) {
+    await persist({
+      email: profile.email
+    })
   }
 }
 
@@ -83,8 +83,6 @@ export async function loadTokens(callbackURL: string) {
     },
     body: JSON.stringify(exchangeOptions),
   }
-
-  try {
     const response = await fetch(`https://${auth0Domain}/oauth/token`, options)
     const data = await response.json();
 
@@ -95,13 +93,14 @@ export async function loadTokens(callbackURL: string) {
     if (refreshToken) {
       await persist({refreshToken})
     }
-
-    return data
-  } catch (error) {
-    await logout()
-
-    throw error
-  }
+    if (accessToken) {
+      await persist({accessToken})
+    }
+    if (profile) {
+      await persist({
+        email: profile.email
+      })
+    }
 }
 
 export async function logout() {
@@ -113,4 +112,10 @@ export async function logout() {
 
 export function getLogOutUrl() {
   return `https://${auth0Domain}/v2/logout`
+}
+
+// Returns true if JWT is expired, false otherwise
+export function checkJWTExpired(token: string) {
+  const jwt: any = jwtDecode(token)
+  return jwt.exp < (Date.now() / 1000)
 }

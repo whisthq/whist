@@ -124,8 +124,7 @@ export const createAuthWindow: CreateWindowFunction = () => {
   };
 
   webRequest.onBeforeRequest(filter, async ({url}) => {
-    const data = await loadTokens(url)
-    console.log(data)
+    await loadTokens(url)
   });
 
   return win

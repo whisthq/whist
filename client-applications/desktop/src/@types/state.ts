@@ -11,4 +11,5 @@ export interface StateIPC {
   errorRelaunchRequest: number
   updateInfo: string
   refreshToken: string
+  accessToken: string
 }
