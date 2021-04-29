@@ -36,7 +36,6 @@ from app.helpers.utils.event_logging.events import (
 )
 
 from app.serializers.hardware import UserContainerSchema, ClusterInfoSchema
-from app.serializers.oauth import CredentialSchema
 
 from app.constants.container_state_values import (
     FAILURE,
@@ -51,7 +50,7 @@ from app.celery.aws_celery_exceptions import ContainerNotAvailableError
 from app.exceptions import StartValueException
 
 
-MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES = 3
+MAX_PASS_START_VALUES_RETRIES = 3
 MAX_POLL_ITERATIONS = 90
 user_container_schema = UserContainerSchema()
 user_cluster_schema = ClusterInfoSchema()
@@ -86,14 +85,14 @@ def _clean_tasks_and_create_new_container(
     num_tries: int,
 ) -> Dict[str, Any]:
     """
-    This function is called by _assign_container() upon failure of _pass_start_values()
-    or _mount_cloud_storage(). It cleans resources associated with the container
-    that failed (stops and delete tasks), then retries _assign_container().
+    This function is called by _assign_container() upon failure of _pass_start_values(). It cleans
+    up resources associated with the container that failed (stops and delete tasks), then retries
+    _assign_container().
 
     Arguments:
         container: An instance of the UserContainer model.
         webserver_url: the webserver originating the initial assign_container request
-        num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
+        num_tries: the current number of attempts to call _pass_start_values.
 
     Returns:
         After cleaning resources, returns the result of recursive call to assign_container,
@@ -117,82 +116,6 @@ def _clean_tasks_and_create_new_container(
         webserver_url,
         num_tries,
     )
-
-
-def _mount_cloud_storage(user: User, container: UserContainer) -> None:
-    """Send a request to the ECS host service to mount a cloud storage folder to the container.
-
-    Arguments:
-        user: An instance of the User model representing the user who owns the container.
-        container: An instance of the UserContainer model.
-
-    Returns:
-        None
-
-    Raises:
-        StartValueException: When fails to connect to ECS host service
-            or cloud storage folder fails to mount
-    """
-
-    schema = CredentialSchema()
-    oauth_client_credentials = {
-        "dropbox": (
-            current_app.config["DROPBOX_APP_KEY"],
-            current_app.config["DROPBOX_APP_SECRET"],
-        ),
-        "google": (
-            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).get("client_id"),
-            current_app.config["GOOGLE_CLIENT_SECRET_OBJECT"].get("web", {}).get("client_secret"),
-        ),
-    }
-
-    for credential in user.credentials:
-        assert credential.provider_id in oauth_client_credentials
-
-        oauth_client_id, oauth_client_secret = oauth_client_credentials[credential.provider_id]
-
-        if oauth_client_id and oauth_client_secret:
-            try:
-                response = requests.post(
-                    (
-                        f"https://{container.ip}:{current_app.config['HOST_SERVICE_PORT']}"
-                        "/mount_cloud_storage"
-                    ),
-                    json=dict(
-                        auth_secret=current_app.config["HOST_SERVICE_SECRET"],
-                        host_port=container.port_32262,
-                        client_id=oauth_client_id,
-                        client_secret=oauth_client_secret,
-                        **schema.dump(credential),
-                    ),
-                    verify=False,
-                )
-            except (ConnectionError, Timeout, TooManyRedirects) as error:
-                # Don't just explode if there's a problem connecting to the ECS host service.
-                fractal_logger.error(
-                    (
-                        "Encountered an error while attempting to connect to the ECS host service "
-                        f"on {container.ip}: {error}"
-                    )
-                )
-                raise StartValueException from error
-            else:
-                if response.ok:
-                    fractal_logger.info(
-                        f"{credential.provider_id} cloud storage folder mounted successfully."
-                    )
-
-                else:
-                    fractal_logger.error(
-                        (
-                            f"{credential.provider_id} cloud storage folder failed to mount: "
-                            f"{response.text}"
-                        )
-                    )
-                    raise StartValueException
-
-        else:
-            fractal_logger.warning(f"{credential.provider_id} OAuth client not configured.")
 
 
 def _pass_start_values_to_instance(
@@ -505,7 +428,7 @@ def assign_container(
     :param cluster_name: which cluster the user needs a container for, only used in test
     :param dpi: the user's DPI
     :param webserver_url: the webserver originating the request
-    :param num_tries: the current number of attempts to pass_start_values and mount_cloud_storage
+    :param num_tries: the current number of attempts to call _pass_start_values
     :return: the generated container, in json form
 
     We directly call _assign_container because it can easily be mocked. The __code__ attribute
@@ -719,11 +642,10 @@ def _assign_container(
             raise Exception(f"We were unable to assign container {task_id} to you in our database.")
 
     try:
-        _mount_cloud_storage(user, base_container)
         _pass_start_values_to_instance(base_container, client_app_auth_secret)
     except StartValueException:
         num_tries += 1
-        if num_tries <= MAX_MOUNT_CLOUD_STORAGE_AND_PASS_START_VALUES_RETRIES:
+        if num_tries <= MAX_PASS_START_VALUES_RETRIES:
             return _clean_tasks_and_create_new_container(
                 base_container,
                 task_version,
