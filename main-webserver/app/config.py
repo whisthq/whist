@@ -10,7 +10,6 @@ on Heroku, the DeploymentConfig class will be selected. The configuration object
 instantiated and the Flask application is configured by flask.Config.from_object().
 """
 
-import json
 import os
 
 from collections import namedtuple
@@ -186,9 +185,6 @@ class DeploymentConfig:
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
     DATADOG_APP_KEY = property(getter("DATADOG_APP_KEY"))
-    DROPBOX_APP_KEY = property(getter("DROPBOX_APP_KEY", fetch=False, raising=False))
-    DROPBOX_APP_SECRET = property(getter("DROPBOX_APP_SECRET", fetch=False, raising=False))
-    DROPBOX_CSRF_TOKEN_SESSION_KEY = "dropbox-auth-csrf-token"
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
@@ -334,17 +330,6 @@ class DeploymentConfig:
         return "heroku-" + os.environ["HEROKU_DYNO_ID"]
 
     @property
-    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-        """Load the client secret configuration object from client_secret.json
-
-        Returns:
-            A Google client secret-formatted dictionary.
-        """
-
-        with open("client_secret.json") as secret_file:
-            return json.loads(secret_file.read())
-
-    @property
     def REDIS_URL(self):  # pylint: disable=invalid-name
         """Select the most secure Redis connection URI from the program's environment.
 
@@ -397,23 +382,6 @@ class LocalConfig(DeploymentConfig):
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     SENTRY_DSN = ""  # type: ignore
 
-    @property
-    def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-        """Load the client secret configuration from client_secret.json if the file exists.
-
-        If client_secret.json does not exist, return an empty dictionary.
-
-        Returns:
-            A dictionary.
-        """
-
-        try:
-            secret = super().GOOGLE_CLIENT_SECRET_OBJECT
-        except FileNotFoundError:
-            secret = {}
-
-        return secret
-
 
 def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
     """Generate a test configuration class that is a subclass of a base configuration class.
@@ -430,22 +398,10 @@ def _TestConfig(BaseConfig):  # pylint: disable=invalid-name
 
         config_table = config_table_names.DEVELOPMENT
 
-        DROPBOX_APP_KEY = "dropbox-client-id"
-        DROPBOX_APP_SECRET = "dropbox-client-secret"
         STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
         SENTRY_DSN = ""
 
         TESTING = True
-
-        @property
-        def GOOGLE_CLIENT_SECRET_OBJECT(self):  # pylint: disable=invalid-name
-            # Test deployments should not be able to act as OAuth clients.
-            return {
-                "web": {
-                    "client_id": "google-client-id",
-                    "client_secret": "google-client-secret",
-                }
-            }
 
     return TestConfig
 

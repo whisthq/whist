@@ -46,13 +46,6 @@ CREATE SCHEMA hdb_views;
 
 
 --
--- Name: oauth; Type: SCHEMA; Schema: -; Owner: -
---
-
-CREATE SCHEMA oauth;
-
-
---
 -- Name: sales; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -1001,41 +994,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- Name: credentials; Type: TABLE; Schema: oauth; Owner: -
---
-
-CREATE TABLE oauth.credentials (
-    user_id character varying(256) NOT NULL,
-    access_token character varying NOT NULL,
-    expiry timestamp with time zone NOT NULL,
-    token_type character varying(256) NOT NULL,
-    refresh_token character varying,
-    id integer NOT NULL,
-    provider_id character varying DEFAULT 'google'::character varying NOT NULL
-);
-
-
---
--- Name: credentials_id_seq; Type: SEQUENCE; Schema: oauth; Owner: -
---
-
-CREATE SEQUENCE oauth.credentials_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: credentials_id_seq; Type: SEQUENCE OWNED BY; Schema: oauth; Owner: -
---
-
-ALTER SEQUENCE oauth.credentials_id_seq OWNED BY oauth.credentials.id;
-
-
---
 -- Name: invites; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1108,13 +1066,6 @@ CREATE TABLE sales.email_templates (
 --
 
 ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval('hdb_catalog.remote_schemas_id_seq'::regclass);
-
-
---
--- Name: credentials id; Type: DEFAULT; Schema: oauth; Owner: -
---
-
-ALTER TABLE ONLY oauth.credentials ALTER COLUMN id SET DEFAULT nextval('oauth.credentials_id_seq'::regclass);
 
 
 --
@@ -1371,14 +1322,6 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_config
 
 ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
     ADD CONSTRAINT hdb_pro_state_pkey PRIMARY KEY (id);
-
-
---
--- Name: credentials credentials_pkey; Type: CONSTRAINT; Schema: oauth; Owner: -
---
-
-ALTER TABLE ONLY oauth.credentials
-    ADD CONSTRAINT credentials_pkey PRIMARY KEY (id);
 
 
 --
