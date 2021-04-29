@@ -41,7 +41,6 @@ format strings.
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <execinfo.h>
-#include <link.h>
 // Signal handling
 #include <signal.h>
 #endif
@@ -680,19 +679,23 @@ void print_stacktrace() {
     }
     // Print addr2line commands
     for (int i = 1; i < (int)trace_size; i++) {
+        // Storage for addr2line command
+        char cmd[2048];
+
+        // Generate addr2line command
         void* ptr = trace[i];
         Dl_info info;
-        struct link_map* l_map = NULL;
-        dladdr1(ptr, &info, (void**)&l_map, RTLD_DL_LINKMAP);
-        char cmd[2048];
-        if (l_map) {
-            ptr = ptr - l_map->l_addr;
+        if (dladdr(ptr, &info)) {
+            // Update ptr to be an offset from the dl's base
+            ptr = (void*)((char*)ptr - (char*)info.dli_fbase);
             snprintf(cmd, sizeof(cmd), "addr2line -fp -e %s -i %p", info.dli_fname, ptr);
             // Can only run on systems with addr2line
             // runcmd(cmd, NULL);
         } else {
             snprintf(cmd, sizeof(cmd), "echo ??");
         }
+
+        // Write addr2line command to logs
         fprintf(stderr, "%s\n", cmd);
         fprintf(mprintf_log_file, "%s\n", cmd);
     }
