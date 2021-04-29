@@ -10,11 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { from } from "rxjs"
-
 import { loadingFrom } from "@app/utils/observables"
 import {
   debugObservables,
@@ -22,45 +18,12 @@ import {
   errorObservables,
 } from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-<<<<<<< HEAD
-import { loginAction } from "@app/main/events/actions"
-=======
-import { filter, map, share, exhaustMap } from "rxjs/operators"
-<<<<<<< HEAD
-import { formatLogin } from "@app/utils/formatters"
->>>>>>> added formatters for container and host
-=======
+import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
 import { formatLogin, formatObservable } from "@app/utils/formatters"
->>>>>>> added a formattable observable to clean up all the piping
+import { loginAction } from "@app/main/events/actions"
 
 export const loginRequest = loginAction.pipe(
   filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
-=======
-import { fromEventIPC } from '@app/main/events/ipc'
-import { from } from 'rxjs'
-import { loadingFrom } from '@app/utils/observables'
-=======
-import { fromEventIPC } from "@app/main/events/ipc"
-import { from } from "rxjs"
-import { loadingFrom } from "@app/utils/observables"
->>>>>>> Linter
-import {
-  debugObservables,
-  warningObservables,
-  errorObservables,
-} from "@app/utils/logging"
-import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
-import { formatLogin, formatObservable } from "@app/utils/formatters"
-
-<<<<<<< HEAD
-export const loginRequest = fromEventIPC('loginRequest').pipe(
-  filter((req) => (req?.email ?? '') !== '' && (req?.password ?? '') !== ''),
->>>>>>> linter
-=======
-export const loginRequest = fromEventIPC("loginRequest").pipe(
-  filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
->>>>>>> Linter
   map(({ email, password }) => [email, password]),
   share()
 )
@@ -92,7 +55,6 @@ export const loginLoading = loadingFrom(
 )
 
 // Logging
-
 debugObservables(
   [loginRequest, "loginRequest"],
   [formatObservable(loginSuccess, formatLogin), "loginSuccess"],
