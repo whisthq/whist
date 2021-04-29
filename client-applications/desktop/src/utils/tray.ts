@@ -1,5 +1,5 @@
-import { app, Menu, Tray, nativeImage } from "electron"
-import path from "path"
+import { Menu, Tray, nativeImage } from "electron"
+import { trayIconPath } from "@app/config/files"
 let tray: Tray | null = null
 
 export const createTray = (eventActionTypes: {
@@ -32,24 +32,8 @@ export const doesTrayExist = () => {
   return tray != null && !tray.isDestroyed()
 }
 
-const getIcon = () => {
-  let iconPath = ""
-  if (app.isPackaged) {
-    iconPath = path.join(app.getAppPath(), "../..")
-  } else {
-    iconPath = path.join(app.getAppPath(), "../../..")
-  }
-
-  if (process.platform === "win32") {
-    return path.join(iconPath, "public/assets/images/trayIconPurple.ico")
-  } else {
-    return path.join(iconPath, "public/assets/images/trayIconBlackTemplate.png")
-  }
-}
-
 const createNativeImage = () => {
-  const path = getIcon()
-  let image = nativeImage.createFromPath(path)
+  let image = nativeImage.createFromPath(trayIconPath)
   image = image.resize({ width: 16 })
   image.setTemplateImage(true)
   return image
