@@ -183,8 +183,6 @@ class DeploymentConfig:
 
     DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
     DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
-    DATADOG_API_KEY = property(getter("DATADOG_API_KEY"))
-    DATADOG_APP_KEY = property(getter("DATADOG_APP_KEY"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
