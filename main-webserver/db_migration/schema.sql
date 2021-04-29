@@ -1014,18 +1014,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- Name: invites; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.invites (
-    user_id character varying NOT NULL,
-    access_granted boolean DEFAULT false NOT NULL,
-    invites_remaining integer DEFAULT 2 NOT NULL,
-    typeform_submitted boolean DEFAULT false NOT NULL
-);
-
-
---
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -1322,14 +1310,6 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
 
 ALTER TABLE ONLY public.users
     ADD CONSTRAINT "PK_users" PRIMARY KEY (user_id);
-
-
---
--- Name: invites invites_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.invites
-    ADD CONSTRAINT invites_pkey PRIMARY KEY (user_id);
 
 
 --
