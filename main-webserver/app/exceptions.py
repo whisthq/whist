@@ -107,8 +107,4 @@ class SentryInitializationError(Exception):
 
 
 class StartValueException(Exception):
-    """
-    Raised when a container fails to send start values (DPI, etc.)
-    or mount cloud storage.
-    Args: None
-    """
+    """Raised when a container fails to send start values (DPI, etc.)"""

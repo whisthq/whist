@@ -9,6 +9,5 @@ from .hardware import (
     SupportedAppImages,
     UserContainerState,
 )
-from .oauth import Credential
 from .public import User
 from .sales import EmailTemplates
