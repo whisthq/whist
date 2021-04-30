@@ -15,7 +15,7 @@ import {
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 import { eventActionTypes } from "@app/main/events/tray"
-import { takeUntil, take, concatMap } from "rxjs/operators"
+import { takeUntil, take, concatMap, tap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
@@ -24,9 +24,9 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
 import { quitAction, signoutAction } from "@app/main/events/actions"
+import { refreshTokens } from "@app/utils/auth"
+
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -35,8 +35,9 @@ import { errorWindowRequest } from "@app/main/observables/error"
 import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
-  userAccessToken,
   userConfigToken,
+  userAccessToken,
+  userRefreshToken
 } from "@app/main/observables/user"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
@@ -82,8 +83,6 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 
 merge(
   protocolLaunchProcess,
-  loginSuccess,
-  signupSuccess,
   errorWindowRequest,
   eventUpdateAvailable
 )
@@ -104,7 +103,7 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, loginSuccess, signupSuccess)
+merge(protocolLaunchProcess, userAccessToken)
   .pipe(take(1))
   .subscribe(() => {
     closeWindows()
@@ -134,3 +133,8 @@ signoutAction.subscribe(() => {
   app.relaunch()
   app.exit()
 })
+
+// If no valid access token exists, we regenerate one
+userRefreshToken.pipe(
+  takeUntil(userAccessToken)
+).subscribe(async (refreshToken: string) => await refreshTokens(refreshToken))

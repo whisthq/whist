@@ -1,98 +1,123 @@
-const MINIMUM_EMAIL_LENGTH = 5
-const MINIMUM_PASSWORD_LENGTH = 8
-const PASSWORD_REQUIRE_LOWERCASE = true
-const PASSWORD_REQUIRE_UPPERCASE = true
-const PASSWORD_REQUIRE_NUMBER = true
+import jwtDecode from "jwt-decode"
+import url from "url"
+import { auth0Config } from '@app/config/environment'
+import { store, persist } from '@app/utils/persist'
+import fetch from 'node-fetch'
 
-const passwordLowercase = /^(?=.*[a-z])/
-const passwordUppercase = /^(?=.*[A-Z])/
-const passwordNumber = /^(?=.*[0-9])/
+const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
-// http://emailregex.com/
-// the hex is for tabs and spaces of different types I think
-// eslint-disable-next-line no-control-regex
-const email99Percent = /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/
+const redirectUri = "http://localhost/callback"
 
-export const checkEmail = (email: string): boolean => {
-  return email99Percent.test(email)
+let accessToken: any  = null
+let profile: any = null
+let refreshToken = null
+
+export function getAccessToken() {
+  return accessToken
 }
 
-export const checkPassword = (password: string): boolean => {
-  if (password.length < MINIMUM_PASSWORD_LENGTH) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_LOWERCASE && !passwordLowercase.test(password)) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_UPPERCASE && !passwordUppercase.test(password)) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_NUMBER && !passwordNumber.test(password)) {
-    return false
-  }
-  return true
+export function getProfile() {
+  return profile
 }
 
-export const checkPasswordVerbose = (password: string): string => {
-  if (password.length === 0) {
-    return ""
-  }
-  if (password.length < MINIMUM_PASSWORD_LENGTH && password.length > 0) {
-    return "Too short"
-  } else if (!passwordLowercase.test(password) && PASSWORD_REQUIRE_LOWERCASE) {
-    return "Needs lowercase letter"
-  } else if (!passwordUppercase.test(password) && PASSWORD_REQUIRE_UPPERCASE) {
-    return "Needs uppercase letter"
-  } else if (!passwordNumber.test(password) && PASSWORD_REQUIRE_NUMBER) {
-    return "Needs number"
-  } else {
-    return ""
-  }
-}
-
-export const checkEmailVerbose = (email: string): string => {
-  if (
-    email.length === 0 ||
-    (email.length >= MINIMUM_EMAIL_LENGTH &&
-      email.includes("@") &&
-      email.includes("."))
-  ) {
-    return ""
-  } else {
-    return "Invalid email"
-  }
-}
-
-export const signupEnabled = (
-  email: string,
-  password: string,
-  confirmPassword: string
-): boolean => {
+export function getAuthenticationURL() {
   return (
-    checkEmail(email) && checkPassword(password) && password === confirmPassword
+    "https://" +
+    auth0Domain +
+    "/authorize?" +
+    "audience=" +
+    apiIdentifier +
+    "scope=openid profile offline_access email&" +
+    "response_type=code&" +
+    "client_id=" +
+    clientId +
+    "&" +
+    "redirect_uri=" +
+    redirectUri
   )
 }
 
-export const loginEnabled = (email: string, password: string): boolean =>
-  checkEmail(email) && password.length >= MINIMUM_PASSWORD_LENGTH
+export async function refreshTokens(refreshToken: string) {
 
-export const checkConfirmPassword = (
-  password: string,
-  confirmPassword: string
-) => {
-  const valid =
-    confirmPassword === password &&
-    password.length > 0 &&
-    confirmPassword.length > 0
-  return valid
+  console.log("Refreshing with token:", refreshToken)
+
+  const refreshOptions = {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      grant_type: "refresh_token",
+      client_id: clientId,
+      refresh_token: refreshToken,
+    })
+  }
+
+  const response = await fetch(`https://${auth0Domain}/oauth/token`, refreshOptions)
+  const data = await response.json()
+
+  accessToken = data.access_token
+  if (accessToken) {
+    await persist({accessToken})
+  }
+
+  profile = jwtDecode(data.id_token)
+  if (profile) {
+    await persist({
+      email: profile.email
+    })
+  }
 }
 
-export const checkConfirmPasswordVerbose = (
-  password: string,
-  confirmPassword: string
-) => {
-  if (confirmPassword.length === 0) {
-    return ""
+export async function loadTokens(callbackURL: string) {
+  const urlParts = url.parse(callbackURL, true)
+  const query = urlParts.query
+
+  const exchangeOptions = {
+    grant_type: "authorization_code",
+    client_id: clientId,
+    code: query.code,
+    redirect_uri: redirectUri,
   }
-  return checkConfirmPassword(password, confirmPassword) ? "" : "Doesn't match"
+
+  const options = {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(exchangeOptions),
+  }
+    const response = await fetch(`https://${auth0Domain}/oauth/token`, options)
+    const data = await response.json();
+
+    accessToken = data.access_token
+    profile = jwtDecode(data.id_token)
+    refreshToken = data.refresh_token
+
+    if (refreshToken) {
+      await persist({refreshToken})
+    }
+    if (accessToken) {
+      await persist({accessToken})
+    }
+    if (profile) {
+      await persist({
+        email: profile.email
+      })
+    }
+}
+
+export async function logout() {
+  store.delete('refreshToken')
+  accessToken = null
+  profile = null
+  refreshToken = null
+}
+
+export function getLogOutUrl() {
+  return `https://${auth0Domain}/v2/logout`
+}
+
+// Returns true if JWT is expired, false otherwise
+export function checkJWTExpired(token: string) {
+  const jwt: any = jwtDecode(token)
+  return jwt.exp < (Date.now() / 1000)
 }

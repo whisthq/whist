@@ -1,57 +1,30 @@
 import { fromEventPersist } from "@app/main/events/persist"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupRequest, signupSuccess } from "@app/main/observables/signup"
 import { debugObservables } from "@app/utils/logging"
-import { merge, from } from "rxjs"
+import { merge } from "rxjs"
 import { identity } from "lodash"
 import {
-  map,
-  sample,
-  switchMap,
-  withLatestFrom,
   share,
-  filter,
-  pluck,
+  filter
 } from "rxjs/operators"
-import {
-  emailLoginConfigToken,
-  emailLoginAccessToken,
-  emailLoginRefreshToken,
-} from "@app/utils/login"
-import {
-  emailSignupAccessToken,
-  emailSignupRefreshToken,
-} from "@app/utils/signup"
-import { loginAction, signupAction } from "@app/main/events/actions"
+import { checkJWTExpired } from "@app/utils/auth"
 import { formatObservable, formatTokens } from "@app/utils/formatters"
 
 export const userEmail = merge(
-  fromEventPersist("userEmail"),
-  loginAction.pipe(pluck("email"), sample(loginSuccess)),
-  signupAction.pipe(pluck("email"), sample(signupSuccess))
+  fromEventPersist("email"),
 ).pipe(filter(identity), share())
+
+export const userAccessToken = fromEventPersist("accessToken").pipe(
+  filter((token: string) => !!token),
+  filter((token: string) => !checkJWTExpired(token))
+)
+
+export const userRefreshToken = fromEventPersist("refreshToken").pipe(
+  filter((token: string) => !!token)
+)
 
 export const userConfigToken = merge(
   fromEventPersist("userConfigToken"),
-  loginAction.pipe(
-    pluck("password"),
-    sample(loginSuccess),
-    withLatestFrom(loginSuccess),
-    switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))
-  ),
-  signupRequest.pipe(map(([_email, _password, token]) => token))
-).pipe(filter(identity), share())
-
-export const userAccessToken = merge(
-  fromEventPersist("userAccessToken"),
-  loginSuccess.pipe(map(emailLoginAccessToken)),
-  signupSuccess.pipe(map(emailSignupAccessToken))
-).pipe(filter(identity), share())
-
-export const userRefreshToken = merge(
-  fromEventPersist("userRefeshToken"),
-  loginSuccess.pipe(map(emailLoginRefreshToken)),
-  signupSuccess.pipe(map(emailSignupRefreshToken))
+  userRefreshToken // TODO: change this, currently just using refresh token as userConfigToken to test boot
 ).pipe(filter(identity), share())
 
 // Logging

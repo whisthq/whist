@@ -6,13 +6,10 @@
 import { eventIPC } from "@app/main/events/ipc"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { mapTo, withLatestFrom, startWith } from "rxjs/operators"
+import { withLatestFrom, startWith } from "rxjs/operators"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
-import { getWindows } from "@app/utils/windows"
 import { SubscriptionMap, objectCombine } from "@app/utils/observables"
-import { loginLoading, loginWarning } from "@app/main/observables/login"
-import { signupLoading, signupWarning } from "@app/main/observables/signup"
+import { getWindows } from "@app/utils/windows"
 import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
@@ -31,11 +28,7 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 // constrained to observables that emit serializable values.
 
 const subscribed: SubscriptionMap = {
-  loginLoading: loginLoading,
-  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: autoUpdateDownloadProgress,
-  signupLoading: signupLoading,
-  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+  updateInfo: autoUpdateDownloadProgress
 }
 
 objectCombine(subscribed)

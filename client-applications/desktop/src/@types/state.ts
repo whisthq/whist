@@ -7,11 +7,9 @@ export type AsyncReturnType<
 export interface StateIPC {
   email: string
   password: string
-  loginWarning: string
-  loginLoading: boolean
-  signupWarning: string
-  signupLoading: boolean
   errorRelaunchRequest: number
   updateInfo: string
+  refreshToken: string
+  accessToken: string
   action: Action
 }

@@ -8,9 +8,10 @@ import {
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError,
-} from "@app/utils/constants"
-import config, { FractalCIEnvironment } from "@app/config/environment"
+  WindowHashAssignContainerError
+} from '@app/utils/constants'
+import config, { FractalCIEnvironment } from '@app/config/environment'
+import { getAuthenticationURL, loadTokens } from '@app/utils/auth'
 
 const { buildRoot } = config
 
@@ -74,8 +75,9 @@ export const getWindowTitle = () => {
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,
+  customUrl?: string,
   onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any
+  onClose?: (win: BrowserWindow) => any,
 ) => {
   const { title } = config
   const win = new BrowserWindow({ ...options, show: false, title })
@@ -83,12 +85,13 @@ export const createWindow = (
   const params = "?show=" + show
 
   if (app.isPackaged) {
+    // TODO: make this work with auth0
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
-      .loadURL("http://localhost:8080" + params)
+      .loadURL(customUrl ? customUrl : 'http://localhost:8080' + params)
       .then(() => {
         win.webContents.openDevTools({ mode: "undocked" })
       })
@@ -103,12 +106,29 @@ export const createWindow = (
   return win
 }
 
-export const createAuthWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuth, {
+export const createAuthWindow: CreateWindowFunction = () => {
+
+  const win = createWindow(WindowHashAuth, {
     ...base,
-    ...width.sm,
-    ...height.md,
-  } as BrowserWindowConstructorOptions)
+    ...width.md,
+    ...height.lg
+  } as BrowserWindowConstructorOptions, getAuthenticationURL())
+
+  // Authentication
+  const {session: {webRequest}} = win.webContents;
+
+  const filter = {
+    urls: [
+      'http://localhost/callback*'
+    ]
+  };
+
+  webRequest.onBeforeRequest(filter, async ({url}) => {
+    await loadTokens(url)
+  });
+
+  return win
+}
 
 export const createAuthErrorWindow: CreateWindowFunction = () =>
   createWindow(WindowHashAuthError, {

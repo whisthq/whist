@@ -1,9 +1,7 @@
 import "@app/main/observables/container"
 import "@app/main/observables/error"
 import "@app/main/observables/host"
-import "@app/main/observables/login"
 import "@app/main/observables/protocol"
-import "@app/main/observables/signup"
 import "@app/main/observables/user"
 
 // As with other 'index.ts' files in the main process, we only intialize the

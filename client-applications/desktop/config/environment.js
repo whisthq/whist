@@ -22,6 +22,12 @@ const FractalCIEnvironment = {
   PRODUCTION: 'prod'
 }
 
+const auth0Config = {
+  auth0Domain: "mingy98.us.auth0.com",
+  clientId: "uzqjXsnbxl9IzLEzJinJrqvbeIO6moTS",
+  apiIdentifier: "https://api.fractal.co/&"
+}
+
 /*
     Webserver URLs
 */
@@ -130,5 +136,6 @@ module.exports = {
   webservers,
   environment,
   loggingBaseFilePath,
-  userDataFolderNames
+  userDataFolderNames,
+  auth0Config
 }
