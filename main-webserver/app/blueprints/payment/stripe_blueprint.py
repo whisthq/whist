@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify  # , request
+from flask import Blueprint, jsonify, request, abort
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
@@ -10,11 +10,13 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     retrieveHelper,
     checkout_helper,
     billing_portal_helper,
+    hasAccess
 )
 from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 import stripe
+import json
 
 
 stripe_bp = Blueprint("stripe_bp", __name__)
@@ -89,6 +91,7 @@ def payment(action, **kwargs):
 @fractal_pre_process
 @jwt_required()
 @fractal_auth
+<<<<<<< HEAD
 def create_checkout_session(**kwargs):
     """
     Retruns checkout session id from a given product and customer
@@ -106,6 +109,42 @@ def create_checkout_session(**kwargs):
     return checkout_helper(
         body["successUrl"], body["cancelUrl"], body["customerId"], body["priceId"]
     )
+=======
+@stripe_bp.route("/stripe/can_access_product", methods=["POST"])
+def can_access_product():
+    try:
+        stripe_id = json.loads(request.data)["stripe_id"]
+    except:
+        abort(400)
+    if hasAccess(stripe_id):
+        return jsonify(subscribed=True)
+    return jsonify(subscribed=False)
+
+
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
+@stripe_bp.route("/stripe/create-checkout-session", methods=["POST"])
+def create_checkout_session():
+    data = json.loads(request.data)
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            success_url="https://example.com/success.html?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url="https://example.com/canceled.html",
+            payment_method_types=["card"],
+            mode="subscription",
+            line_items=[
+                {
+                    "price": data["priceId"],
+                    "quantity": 1,
+                }
+            ],
+        )
+        return jsonify({"sessionId": checkout_session["id"]})
+    except Exception as e:
+        return jsonify({"error": {"message": str(e)}}), 400
+>>>>>>> 90ec67292... moved into helpers
 
 
 @stripe_bp.route("/stripe/customer-portal", methods=["POST"])
@@ -129,6 +168,7 @@ def customer_portal(**kwargs):
     return billing_portal_helper(body["customerId"], body["returnUrl"])
 
 
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
 @fractal_auth
