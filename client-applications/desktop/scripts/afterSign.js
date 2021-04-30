@@ -16,6 +16,8 @@ exports.default = async function afterSign(context) {
     const appleId = process.env.FRACTAL_NOTARIZE_APPLE_ID ?? ""
     const applePassword = process.env.FRACTAL_NOTARIZE_APPLE_PASSWORD ?? ""
 
+    const appName = context.packager.appInfo.productFilename
+
     if (appleId && applePassword) {
       return await notarize({
         appBundleId: "com.fractalcomputers.fractal",
