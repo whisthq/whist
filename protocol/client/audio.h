@@ -26,6 +26,24 @@ Includes
 
 /*
 ============================
+Public Variables
+============================
+*/
+
+/**
+ * @brief                          Inform audio that an audio refresh event happened.
+ *                                 This is either adding a new audio device or removing
+ *                                 an old one.
+ */
+extern bool audio_refresh;
+
+/**
+ * @brief                          Sample rate of audio signal.
+ */
+extern volatile int audio_frequency;
+
+/*
+============================
 Public Functions
 ============================
 */
@@ -36,6 +54,17 @@ Public Functions
  *                                 for receiving from the server
  */
 void init_audio();
+
+/**
+ * @brief                          This will indicate to the audio file that an audio
+ *                                 refresh event happened.
+ */
+void set_audio_refresh();
+
+/**
+ * @brief                          This will change the audio sample rate.
+ */
+void set_audio_frequency(int new_audio_frequency);
 
 /**
  * @brief                          Receives a FractalPacket into an audio
@@ -68,23 +97,5 @@ void render_audio();
  *                                 decoder
  */
 void destroy_audio();
-
-/*
-============================
-Public Variables
-============================
-*/
-
-/**
- * @brief                          Inform audio that an audio refresh event happened.
- *                                 This is either adding a new audio device or removing
- *                                 an old one.
- */
-extern bool audio_refresh;
-
-/**
- * @brief                          Sample rate of audio signal.
- */
-extern volatile int audio_frequency;
 
 #endif  // CLIENT_AUDIO_H

@@ -21,9 +21,6 @@ Includes
 #include "audio.h"
 #include "network.h"
 
-volatile int audio_frequency;
-bool audio_refresh = false;
-
 extern bool has_video_rendered_yet;
 
 // Hold information about audio data as the packets come in
@@ -50,6 +47,8 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
+#define MAX_FREQ 128000
+
 /*
 ============================
 Custom Types
@@ -70,18 +69,24 @@ typedef struct RenderContext {
     AudioPacket audio_packets[MAX_NUM_AUDIO_INDICES];
 } RenderContext;
 
-AudioContext volatile audio_context;
+// holds information related to decoding and rendering audio
+static AudioContext volatile audio_context;
+// holds the current audio frame to play
+static RenderContext volatile audio_render_context;
+// true iff the audio packet in audio_render_context should be played
+static bool volatile rendering_audio = false;
 
+// sample rate of audio signal
+static volatile int audio_frequency = -1;
+// true iff we should connect to a new audio device when playing audio
+static volatile bool audio_refresh = false;
+
+// when the last nack was sent
 static clock nack_timer;
 
 static int last_nacked_id = -1;
 static int most_recent_audio_id = -1;
 static int last_played_id = -1;
-
-#define MAX_FREQ 128000
-
-static RenderContext volatile audio_render_context;
-static bool volatile rendering_audio = false;
 
 /*
 ============================
@@ -170,6 +175,10 @@ void destroy_audio() {
     destroy_audio_device();
 }
 
+void set_audio_refresh() { audio_refresh = true; }
+
+void set_audio_frequency(int new_audio_frequency) { audio_frequency = new_audio_frequency; }
+
 void render_audio() {
     /*
         Actually renders audio frames. Called in multithreaded_renderer. update_audio should
@@ -234,10 +243,6 @@ void render_audio() {
 
                 if (res < 0) {
                     LOG_ERROR("Could not play audio!");
-                } else {
-                    // Update last played id to be the last audio packet played
-                    last_played_id =
-                        audio_render_context.audio_packets[MAX_NUM_AUDIO_INDICES - 1].id;
                 }
             }
         } else {
@@ -251,9 +256,6 @@ void render_audio() {
 #endif
                     if (SDL_QueueAudio(audio_context.dev, packet->data, packet->size) < 0) {
                         LOG_ERROR("Could not play audio!\n");
-                    } else {
-                        // Update last played id to be the last audio packet played
-                        last_played_id = packet->id;
                     }
                 }
             }
@@ -266,7 +268,8 @@ void render_audio() {
 void update_audio() {
     /*
         This function will create or reinit the audio device if needed,
-        and it will play any queued audio packets.
+        and it will configure the @global audio_render_context to play
+        an audio packet. render_audio will actually play this packet.
     */
 
     // If we're currently rendering an audio packet, don't update audio
@@ -381,7 +384,8 @@ void update_audio() {
                 packet->nacked_amount = 0;
             }
 
-            // Render audio on audio thread
+            // Update last_played_id and tell renderer thread to render the audio
+            last_played_id += MAX_NUM_AUDIO_INDICES;
             rendering_audio = true;
         }
     }

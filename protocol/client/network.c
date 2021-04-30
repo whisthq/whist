@@ -21,6 +21,7 @@ Includes
 #include <fractal/core/fractal.h>
 #include "network.h"
 #include "client_utils.h"
+#include "audio.h"
 
 // Init information
 extern volatile int audio_frequency;
@@ -135,7 +136,7 @@ int discover_ports(bool *using_stun) {
     }
 
     client_id = reply_msg->client_id;
-    audio_frequency = reply_msg->audio_sample_rate;
+    set_audio_frequency(reply_msg->audio_sample_rate);
     udp_port = reply_msg->UDP_port;
     tcp_port = reply_msg->TCP_port;
     LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, udp_port, tcp_port);
