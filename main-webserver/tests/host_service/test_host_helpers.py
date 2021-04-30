@@ -13,6 +13,9 @@ from app.helpers.blueprint_helpers.host_service.host_service_post import (
 
 
 def test_initial_auth_good():
+    """
+    Tests whether auth works on an empty db
+    """
     resp, resp_code = initial_instance_auth_helper("1.1.1.1", "test_instance_id", "us-east-1")
     resp_dict = resp.get_json()
     assert "AuthToken" in resp_dict.keys()
@@ -22,6 +25,9 @@ def test_initial_auth_good():
 
 
 def test_initial_auth_exists(bulk_instance):
+    """
+    Tests whether auth fails if the instance already exists
+    """
     bulk_instance(instance_name="test_instance_id")
     resp, resp_code = initial_instance_auth_helper("1.1.1.1", "test_instance_id", "us-east-1")
     resp_dict = resp.get_json()
@@ -29,6 +35,9 @@ def test_initial_auth_exists(bulk_instance):
 
 
 def test_heartbeat_no_update(bulk_instance):
+    """
+    Tests that a heartbeat with no state changes works
+    """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper(
@@ -40,8 +49,12 @@ def test_heartbeat_no_update(bulk_instance):
     assert time.time() - inst.last_pinged <= 2
 
 
-@pytest.mark.skip(reason='Enable when enforce_auth is set to true')
+@pytest.mark.skip(reason="Enable when enforce_auth is set to true")
 def test_heartbeat_wrong_key(bulk_instance):
+    """
+    Tests that a heartbeat with the wrong auth token fails
+    and that it fails with NOT_FOUND
+    """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper(
@@ -54,6 +67,10 @@ def test_heartbeat_wrong_key(bulk_instance):
 
 
 def test_heartbeat_no_exist(bulk_instance):
+    """
+    Tests that a heartbeat for a nonexistent instance fails
+    and that it fails with NOT_FOUND
+    """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper(
@@ -66,6 +83,9 @@ def test_heartbeat_no_exist(bulk_instance):
 
 
 def test_heartbeat_dying(bulk_instance):
+    """
+    Tests that a dying heartbeat actually deletes the instance
+    """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     resp, resp_code = instance_heartbeat_helper(
         "test_auth", "test_instance_id", 1024000, "test", True
@@ -76,6 +96,9 @@ def test_heartbeat_dying(bulk_instance):
 
 
 def test_heartbeat_updates(bulk_instance):
+    """
+    Tests that heartbeats actually update state
+    """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
     resp, resp_code = instance_heartbeat_helper(
