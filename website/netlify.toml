@@ -1,6 +1,11 @@
 [build]
   ignore = "git diff --quiet HEAD^ HEAD ."
 
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
 [[headers]]
   # Define which paths this specific [[headers]] block will cover.
   for = "/*"
