@@ -6,19 +6,11 @@ import { debugObservables } from "@app/utils/logging"
 import { merge, from } from "rxjs"
 import { identity } from "lodash"
 import {
-  map,
-  sample,
-  switchMap,
-  withLatestFrom,
   share,
   filter,
   tap
 } from "rxjs/operators"
-import {
-  emailLoginConfigToken,
-  emailLoginAccessToken,
-  emailLoginRefreshToken,
-} from "@app/utils/login"
+import { checkJWTExpired } from "@app/utils/auth0"
 
 export const userEmail = merge(
   fromEventPersist("email"),
@@ -26,22 +18,17 @@ export const userEmail = merge(
 
 export const userConfigToken = merge(
   fromEventPersist("userConfigToken"),
-  fromEventIPC("loginRequest", "password").pipe( // TODO: remove
-    sample(loginSuccess),
-    withLatestFrom(loginSuccess),
-    switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))
-  ),
   refreshToken // TODO: change this, currently just using refresh token as userConfigToken
 ).pipe(filter(identity), share())
 
-export const userAccessToken = merge(
-  accessToken
-).pipe(filter(identity), share())
+export const userAccessToken = fromEventPersist("accessToken").pipe(
+  filter((token: string) => !!token),
+  filter((token: string) => !checkJWTExpired(token))
+)
 
-export const userRefreshToken = merge(
-  fromEventPersist("userRefeshToken"),
-  loginSuccess.pipe(map(emailLoginRefreshToken))
-).pipe(filter(identity), share())
+export const userRefreshToken = fromEventPersist("refreshToken").pipe(
+  filter((token: string) => !!token)
+)
 
 // Logging
 
