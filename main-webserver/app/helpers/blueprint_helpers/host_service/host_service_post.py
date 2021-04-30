@@ -20,7 +20,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
     """
 
     Args:
-        ip: the IP address of the instance to be authed
+        ip: the IP address of the instance to be authenticated
         instance_id: the instance ID of the instance to be authenticated
         location: which region the instance is in
 
@@ -30,8 +30,12 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
     auth_token = os.urandom(16).hex()
     preexisting_instance = InstanceInfo.query.get(instance_id)
 
+    # Make sure there's no instance with this ID already
+
     if preexisting_instance is not None:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
+
+    # Then create the instance
     ami_id = RegionToAmi.query.get(location).ami_id
     new_instance = InstanceInfo(
         instance_id=instance_id, ip=ip, auth_token=auth_token, ami_id=ami_id, location=location
@@ -60,11 +64,14 @@ def instance_heartbeat_helper(
 
     """
     instance = InstanceInfo.query.get(instance_id)
+    # Right now a bunch of instances have already started up without
+    # saved authentication tokens -- this is the fix for that backcompat
     enforce_auth = False
     if instance is None:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
     if instance.auth_token.lower() != auth_token.lower() and enforce_auth:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
+    # If the instance says it's dying, get rid of it
     if is_dying:
         db.session.delete(instance)
     else:
