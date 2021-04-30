@@ -181,7 +181,6 @@ class DeploymentConfig:
 
     database_url = property(getter("DATABASE_URL", fetch=False))
 
-    AUTH0_DOMAIN = property(getter("AUTH0_DOMAIN"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
