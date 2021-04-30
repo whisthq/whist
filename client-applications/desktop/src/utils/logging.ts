@@ -26,6 +26,9 @@ const logzLogger = logzio.createLogger({
   sendIntervalMs: 50,
 })
 
+// Disable until we configure new logz.io endpoint
+logzLogger.close()
+
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
@@ -69,10 +72,12 @@ const logBase = (
   })
 
   if (app.isPackaged) {
+    /* stop sending to logz until we configure new logz endpoint
     logzLogger.log({
       message: debugLog,
       level: level,
     })
+    */
   } else {
     console.log(debugLog)
   }
