@@ -1,21 +1,23 @@
 require("dotenv").config()
 const { notarize } = require("electron-notarize")
+const path = require("path")
 
 exports.default = async function afterSign(context) {
-    const { electronPlatformName, appOutDir } = context
-    if (
-        electronPlatformName !== "darwin" ||
-        process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false"
-    ) {
-        return
-    }
+  const { electronPlatformName, appOutDir } = context
 
-    const appName = context.packager.appInfo.productFilename
+  if (process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") return
 
-    return await notarize({
+  if (electronPlatformName === "darwin") {
+    const appleId = process.env.FRACTAL_NOTARIZE_APPLE_ID ?? ""
+    const applePassword = process.env.FRACTAL_NOTARIZE_APPLE_PASSWORD ?? ""
+
+    if (appleId && applePassword) {
+      return await notarize({
         appBundleId: "com.fractalcomputers.fractal",
-        appPath: `${appOutDir}/${appName}.app`,
-        appleId: `phil@fractal.co`,
-        appleIdPassword: `seoy-fnou-zjro-xicr`,
-    })
+        appPath: path.join(appOutDir, `${appName}.app`),
+        appleId: appleId,
+        appleIdPassword: applePassword,
+      })
+    }
+  }
 }
