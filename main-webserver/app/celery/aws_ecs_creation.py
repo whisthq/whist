@@ -704,6 +704,8 @@ def _assign_container(
     )
 
     if not current_app.testing:
+        # we figure out how empty our buffer is now
+        # and then refill it
         num_extra = _get_num_extra(task_definition_arn, region_name)
         for _ in range(num_extra):
             prewarm_new_container.delay(
