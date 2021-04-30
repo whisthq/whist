@@ -252,12 +252,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── __init__.py --> initialization code/global preprocessors for the app
 │   ├── blueprints -->  our API endpoints are described here
 │   │   ├── admin --> API endpoints relating to manipulating user and logs info
-│   │   │   ├── admin_blueprint.py --> endpoint for logging in as admin
 │   │   │   ├── hasura_blueprint.py --> endpoint we use to authenticate GQL queries
 │   │   │   └── logs_blueprint.py --> endpoint we use to upload logs
-│   │   ├── auth
-│   │   │   ├── account_blueprint.py --> endpoints we use to log into accounts/verify accounts
-│   │   │   └── token_blueprint.py --> endpoints we use to generate JWT tokens
 │   │   ├── aws
 │   │   │   └── aws_container_blueprint.py --> endpoints we use to create, delete, and manipulate AWS resources
 │   │   ├── celery
@@ -294,12 +290,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   ├── helpers --> helper utils we use throughout the codebase
 │   │   ├── blueprint_helpers --> any complex synchronous computation that's part of our endpoints
 │   │   │   ├── admin
-│   │   │   │   ├── admin_post.py --> helpers for admin login
 │   │   │   │   └── hasura_get.py --> helpers for GQL token get requests
-│   │   │   ├── auth
-│   │   │   │   ├── account_get.py --> helpers related to account get requests (e.g. user info retrieval)
-│   │   │   │   ├── account_post.py --> helpers related to account post reqs (e.g. login)
-│   │   │   │   └── token_post.py --> helpers related to JWT token generation/update
 │   │   │   ├── aws
 │   │   │   │   ├── aws_container_post.py --> helpers for AWS post reqs that _don't_ require celery tasks -- e.g protocol info
 │   │   │   │   └── container_state.py --> helpers that retrieve the current state of user containers (for client-app)
@@ -343,12 +334,10 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── _meta.py -->  the scripts initializing SQLAlchemy
 │   │   ├── hardware.py -->  tables in our hardware schema
 │   │   ├── logs.py -->  tables in our logs schema
-│   │   ├── public.py -->  tables in our public schema
 │   │   └── sales.py -->  tables in our sales schema
 │   └── serializers --> object-to-json conversion for our ORM.  Structure mirrors models
 │       ├── hardware.py
 │       ├── logs.py
-│       ├── public.py
 │       └── sales.py
 ├── app.json -->  structure of our app/heroku config
 ├── db_migration --> code that governs DB migration
