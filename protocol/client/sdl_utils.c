@@ -361,6 +361,7 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
 }
 
 void free_sdl_surface(SDL_Surface* surface) {
+    // Specified to call `SDL_FreeSurface` on the surface, and `free` on the pixels array
     char* pixels = surface->pixels;
     SDL_FreeSurface(surface);
     free(pixels);
