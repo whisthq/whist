@@ -75,14 +75,17 @@ void destroy_sdl(SDL_Window* window);
  * @returns                        The loaded surface on success, and NULL on failure
  *
  * @note                           After a successful call to sdl_surface_from_png_file,
- *                                 remember to call `free_sdl_surface`
+ *                                 remember to call `free_sdl_surface` when you're done using it!
  */
 SDL_Surface* sdl_surface_from_png_file(char* filename);
 
 /**
- * @brief                          Free the SDL_Surface created by sdl_surface_from_png_file
+ * @brief                          Free the SDL_Surface and its pixels array.
+ *                                 Will call `free` on the pixels array,
+ *                                 and `SDL_FreeSurface` on the surface itself.
+ *                                 Only call this if the pixels array has been malloc'ed.
  *
- * @param surface                  The SDL_Surface created by sdl_surface_from_png_file
+ * @param surface                  The SDL_Surface to be freed
  */
 void free_sdl_surface(SDL_Surface* surface);
 
