@@ -16,8 +16,7 @@ from app.constants.regions import USRegion
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.time import date_to_unix, get_today
 
-from app.models import db, User
-from app.serializers.public import UserSchema
+from app.models import db
 
 """ Welcome to the stripe client. The stripe client is a one stop shop for all things stripe, similarly
 to how the ECSClient covers much of our ECS core functionality, allowing us to use its various abstractions

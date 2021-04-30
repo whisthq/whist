@@ -1305,22 +1305,6 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
 
 
 --
--- Name: users PK_users; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT "PK_users" PRIMARY KEY (user_id);
-
-
---
--- Name: users unique_user_id; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT unique_user_id UNIQUE (user_id);
-
-
---
 -- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
 --
 
@@ -1447,14 +1431,6 @@ ALTER TABLE ONLY hardware.user_containers
 
 ALTER TABLE ONLY hardware.user_containers
     ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: user_containers user_id_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
