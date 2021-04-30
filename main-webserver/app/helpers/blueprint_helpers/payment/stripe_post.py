@@ -92,11 +92,3 @@ def retrieveHelper(email: str) -> Tuple[str, int]:
     except Exception as e:
         fractal_logger.error("", exc_info=True)
         return jsonify({"status": INTERNAL_SERVER_ERROR}), INTERNAL_SERVER_ERROR
-
-
-def hasAccess(stripe_id: str) -> bool:
-    client = StripeClient(current_app.config["STRIPE_SECRET"])
-
-    if client.is_paying or client.is_trialed:
-        return True
-    return False
