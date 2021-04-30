@@ -516,7 +516,6 @@ def _assign_container(
             # Simply set the output appropriately.
             pass
 
-        num_extra = _get_num_extra(task_definition_arn, region_name)
     else:
         num_extra = 0
         base_container = None
@@ -705,6 +704,7 @@ def _assign_container(
     )
 
     if not current_app.testing:
+        num_extra = _get_num_extra(task_definition_arn, region_name)
         for _ in range(num_extra):
             prewarm_new_container.delay(
                 task_definition_arn,
