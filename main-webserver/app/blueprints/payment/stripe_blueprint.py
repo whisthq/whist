@@ -86,6 +86,10 @@ def payment(action, **kwargs):
 
 
 @stripe_bp.route("/stripe/can_access_product", methods=["POST"])
+@limiter.limit(RATE_LIMIT_PER_MINUTE)
+@fractal_pre_process
+@jwt_required()
+@fractal_auth
 def can_access_product():
     try:
         stripe_id = json.loads(request.data)["stripe_id"]

@@ -67,6 +67,23 @@ def billing_portal_helper(customer_id: str, return_url: str) -> Tuple[str, int]:
         return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
 
 
+def hasAccess(customer_id: str) -> bool:
+    """
+    Returns whether customer is subscribed or trialed
+
+    Args:
+        customer_id (str): the stripe id of the user
+
+    Returns:
+        bool: true or false if either subscribed or trialed
+    """
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
+
+    if client.is_paying(customer_id) or client.is_trialed(customer_id):
+        return True
+    return False
+
+
 def retrieveHelper(email: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
