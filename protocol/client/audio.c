@@ -77,9 +77,9 @@ static RenderContext volatile audio_render_context;
 static bool volatile rendering_audio = false;
 
 // sample rate of audio signal
-static volatile int audio_frequency = -1;
+static int volatile audio_frequency = -1;
 // true iff we should connect to a new audio device when playing audio
-static volatile bool audio_refresh = false;
+static bool volatile audio_refresh = false;
 
 // when the last nack was sent
 static clock nack_timer;
