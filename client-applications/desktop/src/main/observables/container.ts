@@ -18,11 +18,11 @@ import {
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
-import { eventUpdateAvailable } from "@app/main/events/autoupdate"
+import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 import { debugObservables, errorObservables } from "@app/utils/logging"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap } from "@app/utils/observables"
-import { from, of, zip } from "rxjs"
+import { from, of, zip, combineLatest } from "rxjs"
 import {
   map,
   share,
@@ -40,12 +40,11 @@ import {
   formatObservable,
 } from "@app/utils/formatters"
 
-export const containerCreateRequest = zip(
-  userEmail,
-  userAccessToken,
-  userConfigToken
-).pipe(
-  takeUntil(eventUpdateAvailable),
+export const containerCreateRequest = combineLatest([
+  zip(userEmail, userAccessToken, userConfigToken),
+  eventUpdateNotAvailable,
+]).pipe(
+  map(([auth]) => auth),
   map(([email, access, _]) => [email, access])
 )
 
