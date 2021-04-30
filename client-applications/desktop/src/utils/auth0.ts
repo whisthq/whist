@@ -36,17 +36,18 @@ export function getAuthenticationURL() {
   )
 }
 
-export async function refreshTokens() {
-  const refreshToken = store.get("refreshToken")
+export async function refreshTokens(refreshToken: string) {
+
+  console.log("Refreshing with token:", refreshToken)
 
   const refreshOptions = {
     method: "POST",
     headers: { "content-type": "application/json" },
-    data: {
+    body: JSON.stringify({
       grant_type: "refresh_token",
       client_id: clientId,
       refresh_token: refreshToken,
-    }
+    })
   }
 
   const response = await fetch(`https://${auth0Domain}/oauth/token`, refreshOptions)

@@ -8,6 +8,7 @@ import { fromEventIPC } from "@app/main/events/ipc"
 import { fromEventPersist } from "@app/main/events/persist"
 import { from } from "rxjs"
 import { loadingFrom } from "@app/utils/observables"
+import { checkJWTExpired } from "@app/utils/auth0"
 import {
   debugObservables,
   warningObservables,
@@ -16,8 +17,10 @@ import {
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
 import { filter, tap, map, share, exhaustMap } from "rxjs/operators"
 
+// Valid access token exists
 export const accessToken = fromEventPersist("accessToken").pipe(
   filter((token: string) => !!token),
+  filter((token: string) => !checkJWTExpired(token)), // TODO: check if not expired
   tap(val => console.log(`ACCESS TOKEN OBSERVABLE ${val}`))
 )
 

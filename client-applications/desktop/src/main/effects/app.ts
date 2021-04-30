@@ -23,8 +23,9 @@ import {
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
+import { refreshTokens } from "@app/utils/auth0"
 import { loginSuccess } from "@app/main/observables/login"
-import { accessToken } from "@app/main/observables/login_new"
+import { accessToken, refreshToken } from "@app/main/observables/login_new"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -33,7 +34,6 @@ import { errorWindowRequest } from "@app/main/observables/error"
 import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
-  userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
 
@@ -109,3 +109,8 @@ autoUpdateAvailable.subscribe(() => {
 })
 
 eventWindowCreated.subscribe(() => showAppDock())
+
+// If no valid access token exists, we regenerate one
+refreshToken.pipe(
+  takeUntil(accessToken)
+).subscribe(async (refreshToken: string) => await refreshTokens(refreshToken))
