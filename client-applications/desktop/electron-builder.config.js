@@ -42,8 +42,9 @@ const bundleConfig = {
   mac: {
     category: "public.app-category.productivity",
     darkModeSupport: true,
-    entitlements: "scripts/entitlements.mac.plist",
-    entitlementsInherit: "scripts/entitlements.mac.plist",
+    // This is recommended to be in build/. I have placed it in public/, from where it will be moved to build/.
+    entitlements: "build/entitlements.mac.plist",
+    entitlementsInherit: "build/entitlements.mac.plist",
     extendInfo: {
       NSHighResolutionCapable: true,
     },
