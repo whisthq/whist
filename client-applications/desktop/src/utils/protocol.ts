@@ -48,8 +48,11 @@ export const protocolLaunch = () => {
       process.platform === "darwin" && {
         cwd: path.join(protocolFolder, ".."),
       }),
+    ...(app.isPackaged &&
+      process.platform !== "darwin" && {
+        cwd: path.join(protocolFolder, "../.."),
+      }),
   })
-
   return protocol
 }
 
