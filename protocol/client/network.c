@@ -24,7 +24,6 @@ Includes
 #include "audio.h"
 
 // Init information
-extern volatile int audio_frequency;
 extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 
 // Data
