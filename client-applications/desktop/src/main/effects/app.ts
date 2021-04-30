@@ -126,7 +126,7 @@ autoUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-quitAction.subscribe(() => {
+merge(protocolCloseRequest, quitAction).subscribe(() => {
   app.quit()
 })
 
