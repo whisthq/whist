@@ -1,5 +1,6 @@
 import React from 'react'
 import { Row, Col, Carousel } from 'react-bootstrap'
+import classNames from 'classnames'
 
 import InvestorBox from './components/investorBox'
 import EmployeeBox from './components/employeeBox'
@@ -40,15 +41,21 @@ export const About = (props: { useWidth?: boolean }) => {
       </Carousel.Item>
     )
   }
+
+  const { dark } = withContext()
+
   return (
-    <div>
+    <div className={classNames(
+      'overflow-x-hidden',
+      dark ? 'dark bg-blue-darkest' : 'bg-white'
+    )}>
       <div
         style={{ paddingBottom: 150 }}
         id="top"
         className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
       >
         <div>
-          <Header dark={false} />
+          <Header dark={dark} />
         </div>
         <Row>
           <Col
@@ -58,9 +65,9 @@ export const About = (props: { useWidth?: boolean }) => {
               marginTop: screenWidth > ScreenSize.XLARGE ? 100 : 50
             }}
           >
-            <h2>Our Stories</h2>
+            <h2 className="dark:text-gray-300">Our Stories</h2>
             <p
-              className="font-body .heading"
+              className="font-body dark:text-gray-400"
               style={{
                 marginTop: 25
               }}
@@ -78,9 +85,9 @@ export const About = (props: { useWidth?: boolean }) => {
         <div>
           <Row style={{ marginTop: 100 }}>
             <Col md={5}>
-              <h2>Our Investors</h2>
+              <h2 className="dark:text-gray-300">Our Investors</h2>
               <p
-                className="font-body"
+                className="font-body dark:text-gray-400"
                 style={{
                   marginTop: 30,
                   marginBottom: 20
