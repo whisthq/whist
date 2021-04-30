@@ -1132,9 +1132,6 @@ jobs:
             - name: Publish the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
-              env:
-                  FRACTAL_NOTARIZE_APPLE_ID: ${{ secrets.FRACTAL_NOTARIZE_APPLE_ID }}
-                  FRACTAL_NOTARIZE_APPLE_PASSWORD: ${{ secrets.FRACTAL_NOTARIZE_APPLE_PASSWORD }}
               working-directory: client-applications\desktop
               run: |
                   REM We need to increase the timeout to deal with GHA's weak VMs.
