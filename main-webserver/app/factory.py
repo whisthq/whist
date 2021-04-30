@@ -93,12 +93,8 @@ def register_blueprints(app):
         - app: Flask object
     """
 
-    from .blueprints.admin.admin_blueprint import admin_bp
     from .blueprints.admin.logs_blueprint import logs_bp
     from .blueprints.admin.hasura_blueprint import hasura_bp
-
-    from .blueprints.auth.account_blueprint import account_bp
-    from .blueprints.auth.token_blueprint import token_bp
 
     from .blueprints.celery.celery_status_blueprint import celery_status_bp
 
@@ -109,13 +105,10 @@ def register_blueprints(app):
 
     from .blueprints.host_service.host_service_blueprint import host_service_bp
 
-    app.register_blueprint(account_bp)
-    app.register_blueprint(token_bp)
     app.register_blueprint(celery_status_bp)
     app.register_blueprint(aws_container_bp)
     app.register_blueprint(hasura_bp)
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
-    app.register_blueprint(admin_bp)
     app.register_blueprint(logs_bp)
     app.register_blueprint(host_service_bp)
