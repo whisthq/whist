@@ -7,7 +7,7 @@ import {
   filter,
   tap
 } from "rxjs/operators"
-import { checkJWTExpired } from "@app/utils/auth0"
+import { checkJWTExpired } from "@app/utils/auth"
 
 export const userEmail = merge(
   fromEventPersist("email"),

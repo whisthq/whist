@@ -23,7 +23,7 @@ import {
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
-import { refreshTokens } from "@app/utils/auth0"
+import { refreshTokens } from "@app/utils/auth"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,

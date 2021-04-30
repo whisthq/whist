@@ -11,7 +11,7 @@ import {
   WindowHashAssignContainerError
 } from '@app/utils/constants'
 import config, { FractalCIEnvironment } from '@app/utils/config'
-import { getAuthenticationURL, loadTokens } from '@app/utils/auth0'
+import { getAuthenticationURL, loadTokens } from '@app/utils/auth'
 
 const buildRoot = app.isPackaged
   ? path.join(app.getAppPath(), "build")
