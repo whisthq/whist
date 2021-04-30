@@ -381,11 +381,10 @@ void update_audio() {
                 packet->id = -1;
                 packet->nacked_amount = 0;
             }
-
-            // Update last_played_id and tell renderer thread to render the audio
-            last_played_id += MAX_NUM_AUDIO_INDICES;
             rendering_audio = true;
         }
+        // Update last_played_id and tell renderer thread to render the audio
+        last_played_id += MAX_NUM_AUDIO_INDICES;
     }
 
     // Find pending audio packets and NACK them
