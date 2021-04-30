@@ -8,6 +8,11 @@ exports.default = async function afterSign(context) {
   if (process.env.CSC_IDENTITY_AUTO_DISCOVERY === "false") return
 
   if (electronPlatformName === "darwin") {
+    // These environment variables our set in our CI using GitHub Secrets.
+    // Notarizing will automatically be tested in the client apps CI; you
+    // should not need to notarize locally.
+    // If you believe you do need to notarize locally, please check Notion
+    // or ask for our Apple credentials.
     const appleId = process.env.FRACTAL_NOTARIZE_APPLE_ID ?? ""
     const applePassword = process.env.FRACTAL_NOTARIZE_APPLE_PASSWORD ?? ""
 
