@@ -1,11 +1,11 @@
 import os
+import platform
+import signal
+import subprocess
 import uuid
 
 from contextlib import contextmanager
 from random import getrandbits as randbits
-import platform
-import subprocess
-import signal
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient
 
@@ -16,14 +16,13 @@ from flask_jwt_extended import create_access_token
 from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
-from app.models import ClusterInfo, db, InstanceInfo, User, UserContainer
+from app.models import ClusterInfo, db, InstanceInfo, UserContainer
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.limiter import limiter
 from app.celery_utils import make_celery
-
 from tests.client import FractalAPITestClient
 
 
@@ -76,10 +75,10 @@ def authorized(client, user, monkeypatch):
     sent along with every request made by the Flask test client.
 
     Returns:
-        An instance of the User model representing the authorized user.
+        A string representing the authorized user's identity.
     """
 
-    access_token = create_access_token(identity=user.user_id, additional_claims={"scope": "admin"})
+    access_token = create_access_token(identity=user, additional_claims={"scope": "admin"})
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
@@ -166,7 +165,7 @@ def container(cluster, user, task_def_env):
             task_definition=f"fractal-{task_def_env}-browsers-chrome",
             task_version=None,
             state=initial_state,
-            user_id=user.user_id,
+            user_id=user,
             port_32262=randbits(16),
             port_32263=randbits(16),
             port_32273=randbits(16),
@@ -362,95 +361,29 @@ def task_def_env(app):
 
 
 @pytest.fixture
-def user():
-    """Create a test user.
-
-    Returns:
-        An instance of the User model.
-    """
-
-    u = User(
-        user_id=f"test-user+{uuid.uuid4()}@fractal.co",
-        password="",
-        encrypted_config_token="",
-    )
-
-    db.session.add(u)
-    db.session.commit()
-
-    yield u
-
-    db.session.delete(u)
-    db.session.commit()
-
-
-@pytest.fixture
 def make_user():
     """Create a new user for testing purposes.
 
-    Args:
-        stripe_customer_id: Optional. The test user's Stripe customer ID.
-        domain (Optional[str]): Which domain the user email address should be in.
-        kwargs: Optional. Additional keyword arguments that will be forwarded directly to the User
-            constructor. If provided, the user_id, password, and encrypted_config_token keyword
-            arguments will be ignored.
-
-    Returns:
-        An instance of the User model.
+    See tests.conftest.user.
     """
 
-    # Maintain a list of all of the users that have been created with this factory fixture so they
-    # can be deleted during this fixture's teardown phase.
-    users = []
-
-    def _user(stripe_customer_id=None, domain="fractal.co", **kwargs):
-        if "user_id" not in kwargs:
-            kwargs["user_id"] = f"test-user-{uuid.uuid4()}@{domain}"
-        if "password" not in kwargs:
-            kwargs["password"] = ""
-        if "encrypted_config_token" not in kwargs:
-            kwargs["encrypted_config_token"] = ""
-        user = User(stripe_customer_id=stripe_customer_id, **kwargs)
-
-        db.session.add(user)
-        db.session.commit()
-        users.append(user)
-
-        return user
-
-    yield _user
-
-    # Clean up all of the test users that were created.
-    for user in users:
-        db.session.delete(user)
-
-    db.session.commit()
+    return user
 
 
 @pytest.fixture
 def make_authorized_user(client, make_user, monkeypatch):
     """Create a new user for testing purposes and authorize all future test requests as that user.
 
-    Args:
-        stripe_customer_id: Optional. The test user's Stripe customer ID.
-        domain (Optional[str]): Which domain the user email address should be in.
-        kwargs: Optional. Additional keyword arguments that will be forwarded directly to the User
-            constructor. The user_id and password keyword arguments will be ignored if they are
-            provided.
-
-    Returns:
-        An instance of the User model representing the authorized user.
+    See tests.conftest.user.
     """
 
-    def _authorized_user(stripe_customer_id=None, domain="fractal.co", **kwargs):
-        user = make_user(stripe_customer_id=stripe_customer_id, domain=domain, **kwargs)
-        access_token = create_access_token(
-            identity=user.user_id, additional_claims={"scope": "admin"}
-        )
+    def _authorized_user(**kwargs):
+        username = make_user(**kwargs)
+        access_token = create_access_token(identity=username, additional_claims={"scope": "admin"})
 
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
-        return user
+        return username
 
     return _authorized_user
 
@@ -509,3 +442,20 @@ def reset_limiter():
     Reset the rate limiter after every test.
     """
     limiter.reset()
+
+
+def user(*, domain="fractal.co", user_id=None):
+    """Generate a fake email address for a test user.
+
+    Args:
+        domain: Optional. A string representing a domain name. It will be the domain with which the
+            user's email address is associated.
+
+    Returns:
+        A string representing the user's identity.
+    """
+
+    return user_id if user_id is not None else f"test-user+{uuid.uuid4()}@fractal.co"
+
+
+user_fixture = pytest.fixture(name="user")(user)

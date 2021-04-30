@@ -14,10 +14,6 @@ from app.helpers.utils.event_logging.event_tags import (
     CLUSTER_DELETION,
     CLUSTER_LIFECYCLE,
     CLUSTER_NAME as CLUSTER_NAME_F,  # cluster_name=
-    LOGON,
-    LOGOFF,
-    USER_LIFECYCLE,
-    USER_NAME as USER_NAME_F,
     SUCCESS,
     valid_tags,
 )
@@ -47,21 +43,6 @@ def basic_logging_event(title, tags, text=""):
 
 
 # below are some commonly used events
-
-
-def logged_event_for_logon(user_name):
-    """Logs whether a user logged on.
-
-    Args:
-        user_name (str): Name of the user who just logged on.
-    """
-    basic_logging_event(
-        title="User Logged On",
-        text=to_text(username=user_name),
-        tags=[LOGON, SUCCESS, USER_NAME_F.format(user_name=user_name)],
-    )
-
-
 def logged_event_container_prewarmed(
     container_name, cluster_name, username="unknown", time_taken="unknown"
 ):
@@ -144,25 +125,6 @@ def logged_event_cluster_created(cluster_name, time_taken="unknown"):
         text=to_text(cluster_name=cluster_name, spinup_time=time_taken),
         tags=[CLUSTER_CREATION, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
     )
-
-
-def logged_event_user_logoff(user_name, lifecycle=False):
-    """Logs whether a user logged off. Same as logon basically.
-
-    Args:
-        user_name (str): Name of the user who just logged off.
-        lifecycle (bool, optional): Whether to do the lifecycle calculation, which involves us
-            calculating how long the user was logged on, or to naively just say "logged off" with
-            a timestamp.
-    """
-    if lifecycle:
-        logged_event_user_lifecycle(user_name)
-    else:
-        basic_logging_event(
-            title="User Logged Off",
-            text=to_text(username=user_name),
-            tags=[LOGOFF, SUCCESS, USER_NAME_F.format(user_name=user_name)],
-        )
 
 
 def logged_event_container_deleted(
@@ -275,26 +237,6 @@ def logged_event_cluster_lifecycle(cluster_name, time_taken="unknown"):
             shutdown_time=time_taken,
         ),
         tags=[CLUSTER_LIFECYCLE, SUCCESS, CLUSTER_NAME_F.format(cluster_name=cluster_name)],
-    )
-
-
-def logged_event_user_lifecycle(user_name):
-    """Same as above but for log in/log off.
-
-    Args:
-        user_name (str): Name of the user who logged off and we'd like to find their previous log in
-            or whatever.
-    """
-    end_date = time()
-    end_date = str(end_date)
-
-    basic_logging_event(
-        title="User Lifecycle ended.",
-        text=to_text(
-            username=user_name,
-            end_date=end_date,
-        ),
-        tags=[USER_LIFECYCLE, SUCCESS, USER_NAME_F.format(user_name=user_name)],
     )
 
 

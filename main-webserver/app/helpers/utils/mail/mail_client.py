@@ -27,7 +27,7 @@ from sendgrid.helpers.mail import Mail
 
 from app.helpers.utils.general.logs import fractal_logger
 from app.exceptions import SendGridException, TemplateNotFound
-from app.models import User, EmailTemplates
+from app.models import EmailTemplates
 from app.helpers.utils.general.tokens import get_access_tokens
 
 
@@ -150,13 +150,10 @@ class MailUtils:
             jinja_keys = jinja_args.keys()
             if "link" in jinja_keys:
                 if "reset?" in jinja_args["link"]:
-                    user = User.query.get(to_email)
-                    access_token, _ = get_access_tokens(user.user_id)
-
-                    if user:
-                        jinja_args["link"] = "{base_url}{email_verification_token}".format(
-                            base_url=jinja_args["link"].split("reset?")[0] + "reset?",
-                            email_verification_token=access_token,
-                        )
+                    access_token, _ = get_access_tokens(to_email)
+                    jinja_args["link"] = "{base_url}{email_verification_token}".format(
+                        base_url=jinja_args["link"].split("reset?")[0] + "reset?",
+                        email_verification_token=access_token,
+                    )
 
         return jinja_args
