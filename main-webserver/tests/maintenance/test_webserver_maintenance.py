@@ -102,7 +102,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
             region_name=region_name,
             max_size=1,
             min_size=0,
-            username=authorized.user_id,
+            username=authorized,
         )
         resp = client.post("/aws_container/create_cluster", json=create_cluster_body)
 
@@ -111,7 +111,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
 
         # test_endpoint assign_container
         assign_container_body = dict(
-            username=authorized.user_id,
+            username=authorized,
             cluster_name="maintenance-test",
             region_name=region_name,
             region=region_name,
@@ -122,7 +122,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
     elif endpoint_type == "a_c":
         # aws_container_assign endpoint used by client app
         assign_container_body = dict(
-            username=authorized.user_id,
+            username=authorized,
             app="Blender",
             region=region_name,
         )

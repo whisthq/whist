@@ -1014,23 +1014,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- Name: users; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.users (
-    user_id character varying(250) NOT NULL,
-    encrypted_config_token character varying(256) NOT NULL DEFAULT ''::character varying,
-    token character varying(250),
-    name character varying(250),
-    password character varying(250) NOT NULL,
-    stripe_customer_id character varying(250),
-    reason_for_signup text,
-    verified boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
-
-
---
 -- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
 --
 
@@ -1305,22 +1288,6 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
 
 
 --
--- Name: users PK_users; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT "PK_users" PRIMARY KEY (user_id);
-
-
---
--- Name: users unique_user_id; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.users
-    ADD CONSTRAINT unique_user_id UNIQUE (user_id);
-
-
---
 -- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
 --
 
@@ -1447,14 +1414,6 @@ ALTER TABLE ONLY hardware.user_containers
 
 ALTER TABLE ONLY hardware.user_containers
     ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- Name: user_containers user_id_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES public.users(user_id) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --

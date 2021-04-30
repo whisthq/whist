@@ -17,16 +17,17 @@ from app.models import (
     UserContainer,
     RegionToAmi,
     SupportedAppImages,
-    User,
 )
 from app.constants.http_codes import (
     SUCCESS,
     BAD_REQUEST,
 )
+from tests.conftest import user
 from tests.helpers.general.progress import queryStatus
 from tests.patches import function
 
 GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
+module_user = pytest.fixture(scope="module")(user)
 
 
 @pytest.fixture(scope="module")
@@ -37,52 +38,13 @@ def ecs_data(app):
         pytest.container_name = None
 
 
-@pytest.fixture(scope="module")
-def module_user(app):
-    """Create a test user.
-
-    This fixture is similar to the user fixture, but it has module scope. This means that if two
-    tests functions defined in the same module use this fixture, its value will remain the same. In
-    other words, for each module M that includes a test function that uses this fixture, this
-    fixture's setup code will run once when it is called by the first function in M that uses this
-    fixture and its teardown code will run once it is called by the last function in M that uses
-    it.
-
-    The purpose of this fixture is to share a single user instance across many tests.
-
-    Returns:
-        An instance of the User model.
-    """
-
-    user = User(
-        user_id=f"test-user+{uuid.uuid4()}@fractal.co",
-        password="",
-        encrypted_config_token="",
-        verified=True,
-    )
-
-    # It seems that since this fixture has module scope, it doesn't run with application context.
-    # Therefore, we have to manually acquire application context before creating and destroying the
-    # test user.
-    with app.app_context():
-        db.session.add(user)
-        db.session.commit()
-
-    yield user
-
-    with app.app_context():
-        db.session.delete(user)
-        db.session.commit()
-
-
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_worker")
 @pytest.mark.usefixtures("ecs_data")
 def test_create_cluster(client, module_user):
     cluster_name = pytest.cluster_name
 
-    db.session.add(module_user)
-    client.login(module_user.user_id)
+    client.login(module_user)
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
     resp = client.post(
@@ -93,7 +55,7 @@ def test_create_cluster(client, module_user):
             region_name="us-east-1",
             max_size=1,
             min_size=0,
-            username=module_user.user_id,
+            username=module_user,
         ),
     )
 
@@ -111,14 +73,14 @@ def test_create_cluster(client, module_user):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_worker")
 def test_assign_container(client, module_user, monkeypatch, task_def_env):
-    client.login(module_user.user_id)
+    client.login(module_user)
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
     fractal_logger.info("Starting to assign container in cluster {}".format(pytest.cluster_name))
 
     resp = client.post(
         "/aws_container/assign_container",
         json=dict(
-            username=module_user.user_id,
+            username=module_user,
             cluster_name=pytest.cluster_name,
             region_name="us-east-1",
             task_definition_arn="fractal-{}-browsers-chrome".format(task_def_env),

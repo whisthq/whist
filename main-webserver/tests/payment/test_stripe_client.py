@@ -35,7 +35,7 @@ from app.helpers.utils.payment.stripe_client import (
     RegionNotSupported,
 )
 
-from app.models import db, User
+from app.models import db
 
 # the two test cards stripe gives us
 stripe_no_auth_card = "4242424242424242"

@@ -2,12 +2,10 @@ import json
 
 from functools import wraps
 
-from flask import abort, current_app, jsonify, request
+from flask import jsonify, request
 from flask_jwt_extended import get_jwt_identity
 
-from app.models import User
-
-from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
+from app.constants.http_codes import UNAUTHORIZED
 from app.helpers.utils.general.logs import fractal_logger
 
 
@@ -52,10 +50,7 @@ def fractal_auth(func):
 
         current_user = get_jwt_identity()
 
-        if (
-            current_user != username
-            and current_app.config["DASHBOARD_USERNAME"] not in current_user
-        ):
+        if current_user != username:
             fractal_logger.info(
                 f"Authorization failed. Provided username {username} does not match username "
                 f"associated with provided Bearer token {current_user}."
@@ -91,30 +86,8 @@ def check_developer() -> bool:
     """
 
     current_user = get_jwt_identity()
-    if current_user is None:
-        return False
-    elif current_app.config["DASHBOARD_USERNAME"] in current_user:
-        return True
-    elif current_user.endswith("@fractal.co"):
-        # first just check if the user is in the db and verified
-        user = User.query.get(current_user)
-        if user is not None and user.verified is True:
-            return True
-        # otherwise, allow a verified developer with the name real_developer to pass
-        # real_developer+anything@fractal.co. This lets devs create new accounts that don't have
-        # real emails associated with them. According to
-        # https://gmail.googleblog.com/2008/03/2-hidden-ways-to-get-more-from-your.html
-        # these emails still map to real_developer@fractal.co
-        groups = current_user.split("+")
-        if len(groups) >= 2:
-            # if a + was found in the username, we extract everything before the + and use that
-            # as the current user
-            real_developer = groups[0]
-            current_user = f"{real_developer}@fractal.co"
-            user = User.query.get(current_user)
-            # make sure the real_developer is actually verified
-            return user is not None and user.verified is True
-    return False
+
+    return bool(current_user and current_user.endswith("@fractal.co"))
 
 
 def developer_required(func):
@@ -169,24 +142,7 @@ def payment_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # admin/developer override
-        if not check_developer():
-            user = User.query.get(get_jwt_identity())
-
-            if user is None:
-                abort(UNAUTHORIZED)
-
-            if not user.subscribed:
-                fractal_logger.warning(f"{user.user_id} must pay to access {request.path}.")
-
-                return (
-                    jsonify(
-                        {
-                            "error": ("User is not a valid paying user."),
-                        }
-                    ),
-                    PAYMENT_REQUIRED,
-                )
+        # TODO: Ensure that the authenticated user is a paying user.
         return func(*args, **kwargs)
 
     return wrapper
