@@ -18,7 +18,6 @@ import {
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
-import { accessToken } from "@app/main/observables/login_new"
 import { eventUpdateAvailable } from "@app/main/events/autoupdate"
 import { debugObservables, errorObservables } from "@app/utils/logging"
 import { ContainerAssignTimeout } from "@app/utils/constants"
@@ -38,7 +37,7 @@ import {
 
 export const containerCreateRequest = zip(
   userEmail,
-  accessToken,
+  userAccessToken,
   userConfigToken
 ).pipe(
   takeUntil(eventUpdateAvailable),

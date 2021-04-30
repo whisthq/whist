@@ -16,7 +16,6 @@ import {
   userRefreshToken,
 } from "@app/main/observables/user"
 
-import { loginFailure } from "@app/main/observables/login"
 import { containerCreateFailure } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
 
@@ -40,7 +39,6 @@ combineLatest(
 // On certain kinds of failures, we clear persistence to force the user
 // to login again.
 merge(
-  loginFailure,
   containerCreateFailure,
   protocolLaunchFailure
 ).subscribe(() => persistClear())

@@ -24,8 +24,6 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { refreshTokens } from "@app/utils/auth0"
-import { loginSuccess } from "@app/main/observables/login"
-import { accessToken, refreshToken } from "@app/main/observables/login_new"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -35,6 +33,8 @@ import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
   userConfigToken,
+  userAccessToken,
+  userRefreshToken
 } from "@app/main/observables/user"
 
 import { uploadToS3 } from "@app/utils/logging"
@@ -44,7 +44,7 @@ import { uploadToS3 } from "@app/utils/logging"
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
 eventAppReady
-  .pipe(takeUntil(zip(userEmail, accessToken, userConfigToken)))
+  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => createAuthWindow((win: any) => win.show()))
 
 eventAppReady.pipe(take(1)).subscribe(() => {
@@ -63,7 +63,6 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 
 merge(
   protocolLaunchProcess,
-  loginSuccess,
   errorWindowRequest,
   eventUpdateAvailable
 )
@@ -89,7 +88,7 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, accessToken)
+merge(protocolLaunchProcess, userAccessToken)
   .pipe(take(1))
   .subscribe(() => {
     closeWindows()
@@ -111,6 +110,6 @@ autoUpdateAvailable.subscribe(() => {
 eventWindowCreated.subscribe(() => showAppDock())
 
 // If no valid access token exists, we regenerate one
-refreshToken.pipe(
-  takeUntil(accessToken)
+userRefreshToken.pipe(
+  takeUntil(userAccessToken)
 ).subscribe(async (refreshToken: string) => await refreshTokens(refreshToken))

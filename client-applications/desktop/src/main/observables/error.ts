@@ -7,7 +7,6 @@ import { eventIPC } from "@app/main/events/ipc"
 import { eventAppReady } from "@app/main/events/app"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
-import { loginFailure } from "@app/main/observables/login"
 import {
   createAuthErrorWindow,
   createContainerErrorWindowNoAccess,
@@ -33,7 +32,6 @@ export const errorRelaunchRequest = eventIPC.pipe(
 )
 
 export const errorWindowRequest = merge(
-  loginFailure.pipe(mapTo(createAuthErrorWindow)),
   containerCreateFailure.pipe(
     map((response) => {
       if (containerCreateErrorNoAccess(response)) {

@@ -12,7 +12,6 @@ import { toPairs } from "lodash"
 
 import { WarningLoginInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
-import { loginLoading, loginWarning } from "@app/main/observables/login"
 import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
@@ -43,8 +42,6 @@ const objectCombine = (obj: SubscriptionMap) =>
   merge(...toPairs(obj).map(([name, obs]) => emitJSON(obs, name)))
 
 const subscribed: SubscriptionMap = {
-  loginLoading: loginLoading,
-  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
   updateInfo: autoUpdateDownloadProgress
 }
 
