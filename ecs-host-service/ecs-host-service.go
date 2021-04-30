@@ -117,7 +117,8 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpContainer(): successfully initialized TTY.")
 
-	// Get AppName, appImage, and mountCommand from environment variables (set by run_container_image.sh)
+	// Get AppName, appImage, and mountCommand from the request sent by
+	// run_container_image.sh
 	appName := fractalcontainer.AppName(req.AppName)
 
 	logger.Infof(`SpinUpContainer(): app name: "%s"`, req.AppName)
