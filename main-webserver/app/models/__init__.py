@@ -10,5 +10,4 @@ from .hardware import (
     SupportedAppImages,
     UserContainerState,
 )
-from .public import User
 from .sales import EmailTemplates
