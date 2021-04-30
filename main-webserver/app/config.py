@@ -181,20 +181,16 @@ class DeploymentConfig:
 
     database_url = property(getter("DATABASE_URL", fetch=False))
 
-    DASHBOARD_PASSWORD = property(getter("DASHBOARD_PASSWORD"))
-    DASHBOARD_USERNAME = property(getter("DASHBOARD_USERNAME"))
     ENDPOINT_SECRET = property(getter("ENDPOINT_SECRET"))
     FRONTEND_URL = property(getter("FRONTEND_URL"))
     HIREFIRE_TOKEN = property(getter("HIREFIRE_TOKEN"))
     HOST_SERVICE_PORT = property(getter("HOST_SERVICE_PORT", default="4678"))
     HOST_SERVICE_SECRET = property(getter("HOST_SERVICE_AND_WEBSERVER_AUTH_SECRET"))
     JWT_QUERY_STRING_NAME = "access_token"
-    JWT_SECRET_KEY = property(getter("JWT_SECRET_KEY"))
     JWT_TOKEN_LOCATION = ("headers", "query_string")
     SECRET_KEY = property(getter("SECRET_KEY", fetch=False))
     SENDGRID_API_KEY = property(getter("SENDGRID_API_KEY"))
     SENDGRID_DEFAULT_FROM = "noreply@fractal.co"
-    SHA_SECRET_KEY = property(getter("SHA_SECRET_KEY"))
     SILENCED_ENDPOINTS = ("/status", "/ping")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))

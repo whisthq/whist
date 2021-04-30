@@ -25,7 +25,6 @@ class UserContainer(db.Model):
             RUNNING_UNAVAILABLE: The protocol server is running and a client is connected.
 
         user_id (string): User ID, typically email
-        user (User): reference to user in public.users with id user_id
         task_definition (string): foreign key to supported_app_images of streamed application
         app (SupportedAppImage): reference to hardware.supported_app_image obj of
             streamed application
@@ -51,8 +50,7 @@ class UserContainer(db.Model):
     ip = db.Column(db.String(250), nullable=False)
     location = db.Column(db.String(250), nullable=False)
     state = db.Column(db.String(250), nullable=False)
-    user_id = db.Column(db.ForeignKey("users.user_id"), nullable=True)
-    user = relationship("User", back_populates="containers")
+    user_id = db.Column(db.String(), nullable=True)
     task_definition = db.Column(db.ForeignKey("hardware.supported_app_images.task_definition"))
     task_version = db.Column(db.Integer, nullable=True)
     app = relationship("SupportedAppImages", back_populates="containers")
@@ -234,7 +232,7 @@ class UserContainerState(db.Model):
     __tablename__ = "user_app_state"  # may want to change going forward
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
 
-    user_id = db.Column(db.ForeignKey("users.user_id"), primary_key=True, nullable=False)
+    user_id = db.Column(db.String(), primary_key=True)
     state = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250))
     client_app_auth_secret = db.Column(db.String(250))

@@ -25,7 +25,6 @@ from app.models import (
     ClusterInfo,
     SortedClusters,
     SupportedAppImages,
-    User,
     RegionToAmi,
 )
 from app.helpers.blueprint_helpers.aws.container_state import set_container_state
@@ -471,9 +470,6 @@ def _assign_container(
     client_app_auth_secret = os.urandom(16).hex()
     enable_reconnect = False
     task_start_time = time.time()
-    user = User.query.get(username)
-
-    assert user, f"user {user} does not exist in the Users table"
 
     existing_container: Optional[UserContainer] = None
 

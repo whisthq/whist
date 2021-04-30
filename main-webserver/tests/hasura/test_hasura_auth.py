@@ -26,7 +26,7 @@ def test_login_header(client):
 
 def test_auth_header(client, make_authorized_user):
     authorized = make_authorized_user()
-    access_token = create_access_token(authorized.user_id)
+    access_token = create_access_token(authorized)
 
     response = client.get(
         "/hasura/auth", headers={"Authorization": "Bearer {}".format(access_token)}
@@ -34,6 +34,6 @@ def test_auth_header(client, make_authorized_user):
     assert response.status_code == HTTPStatus.OK
     assert response.json == {
         "X-Hasura-Role": "user",
-        "X-Hasura-User-Id": authorized.user_id,
+        "X-Hasura-User-Id": authorized,
         "X-Hasura-Login-Token": "",
     }
