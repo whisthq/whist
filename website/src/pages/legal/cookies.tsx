@@ -2,16 +2,22 @@
 
 import React from 'react'
 import { HashLink } from 'react-router-hash-link'
+import classNames from 'classnames'
 
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import { withContext } from '@app/shared/utils/context'
 
 const Cookies = () => {
   const { width } = withContext()
-
+  const { dark } = withContext()
   return (
-        <div style={{ overflowX: 'hidden' }} id="top">
+        <div className={classNames(
+          'overflow-x-hidden',
+          dark ? 'dark bg-blue-darkest' : 'bg-white'
+        )}
+          style={{ overflowX: 'hidden' }} id="top">
             <div
+                className= "dark:text-gray-300"
                 style={{
                   padding:
                         width > ScreenSize.MEDIUM ? '75px 150px' : '50px 40px',
