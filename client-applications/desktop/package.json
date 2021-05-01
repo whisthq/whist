@@ -70,7 +70,7 @@
         "electron": "^12.0.2",
         "electron-builder": "^22.10.5",
         "electron-notarize": "github:mingy98/electron-notarize#master",
-        "esbuild": "^0.11.16",
+        "esbuild": "^0.11.17",
         "eslint": "^7.24.0",
         "eslint-config-prettier": "^8.2.0",
         "eslint-config-standard": "^16.0.2",
@@ -86,7 +86,7 @@
         "prettier": "^2.2.1",
         "rimraf": "^3.0.2",
         "snowpack": "^3.3.7",
-        "tailwindcss": "^2.1.1",
+        "tailwindcss": "^2.1.2",
         "typescript": "^4.2.4"
     },
     "engines": {
