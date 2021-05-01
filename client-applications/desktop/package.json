@@ -47,7 +47,7 @@
         "react-icons": "^4.2.0",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
-        "react-spring": "^9.1.0",
+        "react-spring": "^9.1.2",
         "rxjs": "^7.0.0"
     },
     "devDependencies": {
