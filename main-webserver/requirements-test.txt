@@ -5,7 +5,7 @@ flake8==3.9.1
 mailslurp-client==11.8.12
 moto==2.0.1
 progressbar==2.5
-pylint==2.8.2
+pylint==2.7.4
 pytest==6.2.2
 pytest-celery==0.0.0.a1
 pytest-dotenv==0.5.2
