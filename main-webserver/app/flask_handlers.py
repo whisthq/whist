@@ -31,18 +31,17 @@ def set_web_requests_status(enabled: bool) -> bool:
         True iff _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
     """
     global _WEB_REQUESTS_ENABLED  # pylint: disable=global-statement
-    with _WEB_REQUESTS_LOCK:
-        has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
-    if not has_lock:
-        # this should not happen and means our lock contention is bad
-        fractal_logger.error(
-            f"Could not acquire web requests lock. Could not set _WEB_REQUESTS_ENABLED={enabled}."
-        )
-        return False
-    _WEB_REQUESTS_ENABLED = enabled
-    _WEB_REQUESTS_LOCK.release()
-    fractal_logger.info(f"_WEB_REQUESTS_ENABLED set to {enabled}")
-    return True
+    with has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1):
+        if not has_lock:
+            # this should not happen and means our lock contention is bad
+            fractal_logger.error(
+                f"Could not acquire web requests lock. Could not set _WEB_REQUESTS_ENABLED={enabled}."
+            )
+            return False
+        _WEB_REQUESTS_ENABLED = enabled
+        _WEB_REQUESTS_LOCK.release()
+        fractal_logger.info(f"_WEB_REQUESTS_ENABLED set to {enabled}")
+        return True
 
 
 def can_process_requests() -> bool:
@@ -53,18 +52,17 @@ def can_process_requests() -> bool:
         True iff _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
         or acquiring lock failed.
     """
-    with _WEB_REQUESTS_LOCK:
-        has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1)
-    if not has_lock:
-        # this should not happen and means our lock contention is bad
-        fractal_logger.error(
-            "Could not acquire web requests lock. Assuming requests cannot be handled."
-        )
-        return False
-    # copy value into web_requests_status
-    web_requests_status = _WEB_REQUESTS_ENABLED
-    _WEB_REQUESTS_LOCK.release()
-    return web_requests_status
+    with has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1):
+        if not has_lock:
+            # this should not happen and means our lock contention is bad
+            fractal_logger.error(
+                "Could not acquire web requests lock. Assuming requests cannot be handled."
+            )
+            return False
+        # copy value into web_requests_status
+        web_requests_status = _WEB_REQUESTS_ENABLED
+        _WEB_REQUESTS_LOCK.release()
+        return web_requests_status
 
 
 def can_process_requests_handler(app: Flask):
