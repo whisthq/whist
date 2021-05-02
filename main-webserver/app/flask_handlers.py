@@ -52,7 +52,6 @@ def can_process_requests() -> bool:
         True iff _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
         or acquiring lock failed.
     """
-    with has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1):
     has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1) # pylint: disable=consider-using-with
     if not has_lock:
         # this should not happen and means our lock contention is bad
