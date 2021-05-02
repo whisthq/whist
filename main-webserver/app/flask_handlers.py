@@ -31,7 +31,9 @@ def set_web_requests_status(enabled: bool) -> bool:
         True iff _WEB_REQUESTS_ENABLED was properly set to the given parameter `enabled`.
     """
     global _WEB_REQUESTS_ENABLED  # pylint: disable=global-statement
-    has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1) # pylint: disable=consider-using-with
+    has_lock = _WEB_REQUESTS_LOCK.acquire(
+        blocking=True, timeout=1
+    )  # pylint: disable=consider-using-with
     if not has_lock:
         # this should not happen and means our lock contention is bad
         fractal_logger.error(
@@ -52,7 +54,9 @@ def can_process_requests() -> bool:
         True iff _WEB_REQUESTS_ENABLED is True. False if _WEB_REQUESTS_ENABLED is False
         or acquiring lock failed.
     """
-    has_lock = _WEB_REQUESTS_LOCK.acquire(blocking=True, timeout=1) # pylint: disable=consider-using-with
+    has_lock = _WEB_REQUESTS_LOCK.acquire(
+        blocking=True, timeout=1
+    )  # pylint: disable=consider-using-with
     if not has_lock:
         # this should not happen and means our lock contention is bad
         fractal_logger.error(
