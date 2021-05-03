@@ -725,9 +725,7 @@ class ECSClient:
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):
             raise Exception("availability_zones should be a list of strs")
-        auto_scaling_group_name = auto_scaling_group_name or self.generate_name(
-            "auto_scaling_group"
-        )
+        auto_scaling_group_name = auto_scaling_group_name or self.generate_name("asg")
         _ = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
             LaunchConfigurationName=launch_config_name,
