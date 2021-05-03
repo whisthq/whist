@@ -24,7 +24,11 @@ import {
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
 import { quitAction, signoutAction } from "@app/main/events/actions"
-import { refreshTokens } from "@app/utils/auth"
+import {
+  refreshTokens,
+  generateRandomConfigToken,
+  storeConfigToken,
+} from "@app/utils/auth"
 
 import {
   protocolLaunchProcess,
@@ -134,5 +138,14 @@ userRefreshToken.pipe(takeUntil(userAccessToken)).subscribe(
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   async (refreshToken: string): Promise<void> => {
     await refreshTokens(refreshToken)
+  }
+)
+
+// If no config token, randomly generate one and store it
+userRefreshToken.pipe(takeUntil(userConfigToken)).subscribe(
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  async () => {
+    const configToken = generateRandomConfigToken()
+    await storeConfigToken(configToken)
   }
 )

@@ -21,8 +21,7 @@ export const userRefreshToken = fromEventPersist("refreshToken").pipe(
 )
 
 export const userConfigToken = merge(
-  fromEventPersist("userConfigToken"),
-  userRefreshToken // TODO: change this, currently just using refresh token as userConfigToken to test boot
+  fromEventPersist("userConfigToken")
 ).pipe(filter(identity), share())
 
 // Logging

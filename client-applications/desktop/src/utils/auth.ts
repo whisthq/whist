@@ -3,6 +3,7 @@ import { URL } from "url"
 import { auth0Config } from "@app/config/environment"
 import { store, persist } from "@app/utils/persist"
 import fetch from "node-fetch"
+import { randomBytes } from "crypto"
 
 const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
@@ -56,7 +57,6 @@ export async function refreshTokens(refreshToken: string) {
 }
 
 export async function loadTokens(callbackURL: string) {
-  // eslint-disable-next-line node/no-deprecated-api
   const url = new URL(callbackURL)
   const code = url.searchParams.get("code")
 
@@ -106,4 +106,13 @@ export function getLogOutUrl() {
 export function checkJWTExpired(token: string) {
   const jwt: any = jwtDecode(token)
   return jwt.exp < Date.now() / 1000
+}
+
+export function generateRandomConfigToken() {
+  const buffer = randomBytes(48)
+  return buffer.toString("base64")
+}
+
+export async function storeConfigToken(configToken: string) {
+  await persist({ userConfigToken: configToken })
 }

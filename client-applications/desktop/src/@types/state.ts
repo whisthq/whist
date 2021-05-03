@@ -11,5 +11,6 @@ export interface StateIPC {
   updateInfo: string
   refreshToken: string
   accessToken: string
+  userConfigToken: string
   action: Action
 }
