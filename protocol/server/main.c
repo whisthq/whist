@@ -57,6 +57,9 @@ Includes
 #include <fractal/utils/windows_utils.h>
 #endif
 
+// For setting connection_id
+#include <sentry.h>
+
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
 #endif

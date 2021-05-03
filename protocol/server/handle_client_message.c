@@ -30,6 +30,8 @@ Includes
 #include <fractal/utils/windows_utils.h>
 #endif
 
+#include <sentry.h>
+
 extern Client clients[MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
@@ -552,7 +554,13 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
             sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
             sentry_set_user(user);
         } else {
-            sentry_send_bread_crumb("info", "non host email: %s", fmsg.user_email);
+            char breadcrumb_msg_buf[512];
+            if (strlen(fmsg.user_email) < sizeof(breadcrumb_msg_buf) / 2) {
+                LOG_ERROR("Fmsg user_email is too long! Size of %d", strlen(fmsg.user_email));
+            }
+            snprintf(breadcrumb_msg_buf, sizeof(breadcrumb_msg_buf), "Non host email: %s",
+                     fmsg.user_email);
+            sentry_send_bread_crumb(INFO_TAG, breadcrumb_msg_buf);
         }
     }
 
