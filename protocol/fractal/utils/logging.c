@@ -50,7 +50,10 @@ format strings.
 #include <fractal/core/fractal.h>
 #include "../network/network.h"
 #include "logging.h"
+
+// Include Sentry
 #include <sentry.h>
+#define SENTRY_DSN "https://8e1447e8ea2f4ac6ac64e0150fa3e5d0@o400459.ingest.sentry.io/5373388"
 
 char* get_logger_history();
 int get_logger_history_len();
@@ -71,6 +74,7 @@ static volatile FractalMutex logger_queue_mutex;
 typedef struct LoggerQueueItem {
     int id;
     bool log;
+    const char* tag;
     char buf[LOGGER_BUF_SIZE];
 } LoggerQueueItem;
 static volatile LoggerQueueItem logger_queue[LOGGER_QUEUE_SIZE];
@@ -83,7 +87,7 @@ static volatile int logger_global_id = 0;
 FractalThread mprintf_thread = NULL;
 static volatile bool run_multithreaded_printf;
 int multi_threaded_printf(void* opaque);
-void mprintf(bool log, const char* fmt_str, va_list args);
+void mprintf(bool log, const char* tag, const char* fmt_str, va_list args);
 clock mprintf_timer;
 FILE* mprintf_log_file = NULL;
 FILE* mprintf_log_connection_file = NULL;
@@ -289,32 +293,22 @@ void destroy_logger() {
     }
 }
 
-void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...) {
+void sentry_send_bread_crumb(const char* tag, const char* sentry_str) {
     if (!using_sentry) return;
         // in the current sentry-native beta version, breadcrumbs prevent sentry
         //  from sending Windows events to the dashboard, so we only log
         //  breadcrumbs for OSX and Linux
 #ifndef _WIN32
-    va_list args;
-    va_start(args, fmt_str);
-    char sentry_str[LOGGER_BUF_SIZE];
-    vsnprintf(sentry_str, sizeof(sentry_str), fmt_str, args);
     sentry_value_t crumb = sentry_value_new_breadcrumb("default", sentry_str);
     sentry_value_set_by_key(crumb, "category", sentry_value_new_string("protocol-logs"));
     sentry_value_set_by_key(crumb, "level", sentry_value_new_string(tag));
     sentry_add_breadcrumb(crumb);
-    va_end(args);
 #endif
 }
 
-void sentry_send_event(const char* fmt_str, ...) {
+void sentry_send_event(const char* sentry_str) {
     if (!using_sentry) return;
 
-    va_list args;
-    va_start(args, fmt_str);
-    char sentry_str[LOGGER_BUF_SIZE];
-    vsnprintf(sentry_str, sizeof(sentry_str), fmt_str, args);
-    va_end(args);
     sentry_value_t event = sentry_value_new_message_event(
         /*   level */ SENTRY_LEVEL_ERROR,
         /*  logger */ "client-logs",
@@ -350,6 +344,7 @@ void flush_logs() {
         safe_strncpy((char*)logger_queue_cache[i].buf,
                      (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
         logger_queue_cache[i].log = logger_queue[logger_queue_index].log;
+        logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
         logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
         logger_queue[logger_queue_index].buf[0] = '\0';
         logger_queue_index++;
@@ -364,6 +359,12 @@ void flush_logs() {
     fractal_lock_mutex((FractalMutex)log_file_mutex);
     // Print all of the data into the cache
     for (int i = 0; i < cache_size; i++) {
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
+        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+        // Log to the log files
         if (logger_queue_cache[i].log) {
             if (mprintf_log_file) {
                 fprintf(mprintf_log_file, "%s", logger_queue_cache[i].buf);
@@ -372,12 +373,16 @@ void flush_logs() {
                 fprintf(mprintf_log_connection_file, "%s", logger_queue_cache[i].buf);
             }
         }
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+        // Log to stdout
         fprintf(stdout, "%s", logger_queue_cache[i].buf);
+        // Log to sentry
+        const char* tag = logger_queue_cache[i].tag;
+        if (tag == WARNING_TAG) {
+            sentry_send_bread_crumb(tag, (const char*)logger_queue[i].buf);
+        } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
+            sentry_send_event((const char*)logger_queue[i].buf);
+        }
+        // Log to the logger history buffer
         int chars_written =
             sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
         logger_history_len += chars_written;
@@ -532,17 +537,17 @@ char* escape_string(char* old_string, bool escape_all) {
 }
 
 // Our vararg function that gets called from LOG_INFO, LOG_WARNING, etc macros
-void internal_logging_printf(const char* fmt_str, ...) {
+void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
     // Map to mprintf
-    mprintf(WRITE_MPRINTF_TO_LOG, fmt_str, args);
+    mprintf(WRITE_MPRINTF_TO_LOG, tag, fmt_str, args);
     va_end(args);
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
-void mprintf(bool log, const char* fmt_str, va_list args) {
+void mprintf(bool log, const char* tag, const char* fmt_str, va_list args) {
     if (mprintf_thread == NULL) {
         printf("initLogger has not been called! Printing below...\n");
         vprintf(fmt_str, args);
@@ -555,6 +560,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
     char* buf = NULL;
     if (logger_queue_size < LOGGER_QUEUE_SIZE - 2) {
         logger_queue[index].log = log;
+        logger_queue[index].tag = tag;
         logger_queue[index].id = logger_global_id++;
         buf = (char*)logger_queue[index].buf;
 
@@ -601,6 +607,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
                 snprintf(buf, LOGGER_BUF_SIZE, "|    %s \n", san_line);
                 free(san_line);
                 logger_queue[index].log = log;
+                logger_queue[index].tag = tag;
                 logger_queue[index].id = logger_global_id++;
                 logger_queue_size++;
                 fractal_post_semaphore((FractalSemaphore)logger_semaphore);
@@ -616,6 +623,7 @@ void mprintf(bool log, const char* fmt_str, va_list args) {
         buf = (char*)logger_queue[index].buf;
         safe_strncpy(buf, "Buffer maxed out!!!\n", LOGGER_BUF_SIZE);
         logger_queue[index].log = log;
+        logger_queue[index].tag = tag;
         logger_queue[index].id = logger_global_id++;
         logger_queue_size++;
         fractal_post_semaphore((FractalSemaphore)logger_semaphore);
