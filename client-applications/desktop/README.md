@@ -136,9 +136,9 @@ A handy file during development is `main/debug.ts`. When the environment variabl
 
 ### MacOS Notarizing
 
-Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully.
+Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully. 
 
-You can download the certificate from AWS S3. You'll want to log into the web interface and manually download `fractal-apple-codesigning-certificate.p12` from the `fractal-dev-secrets` bucket. Once downloaded, double-click the `.p12` file, and enter the password `Fractalcomputers!` when prompted.
+We have notarization set up as part of our CI pipeline (both for testing and publishing) in GitHub Actions, so you should not need to perform notarization locally, even for tsting. If you do, you can download the certificate from AWS S3. You'll want to log into the web interface and manually download `fractal-apple-codesigning-certificate.p12` from the `fractal-dev-secrets` bucket. Once downloaded, double-click the `.p12` file, and enter the password `Fractalcomputers!` when prompted.
 
 In order for notarizing to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it _at least_ once following installation, which will prompt you to install additional components. If your macOS version is too old to install Xcode directly from the macOS App Store, you can manually download the macOS SDK (which you'd normally obtain through Xcode) for your macOS version and place it in the right subfolder. Here's an example for macOS 10.14:
 
