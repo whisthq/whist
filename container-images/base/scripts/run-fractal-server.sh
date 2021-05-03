@@ -16,7 +16,6 @@ WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
-AWESOME_WM_PID_FILE=/usr/share/fractal/private/awesome_wm_pid
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -91,14 +90,6 @@ echo "FractalServer PID: $fractal_server_pid"
 echo "runuser fractal-application PID: $fractal_application_runuser_pid"
 echo "fractal-application PID: $fractal_application_pid"
 echo "Remaining jobs: $(jobs -p)"
-
-# Kill Awesome WM before killing the fractal-application, with SIGTERM. Make sure the window
-#    manager has stopped before continuing.
-kill $(cat $AWESOME_WM_PID_FILE) ||:
-while [ -f $AWESOME_WM_PID_FILE ]
-do
-    sleep 0.1
-done
 
 # Kill whatever is still running of FractalServer and fractal-application, with SIGTERM.
 kill $fractal_application_pid ||:

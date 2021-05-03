@@ -396,12 +396,11 @@ end)
 
 client.connect_signal("unmanage", function (c)
     local numclients = compute_table_length(awful.screen.focused().all_clients)
+    -- If last closed client was Chrome, open a new tab to its window.
+    --     By sending the new tab command to the window, we prevent a new
+    --     instance of Chrome opening if the user has hit the tab "x".
     if numclients == 0 and c.class == "Google-chrome" then
-      awful.spawn("google-chrome", {focus = true, skip_taskbar = true, titlebars_enabled = false, below = true})
-
-      mouse.coords({ x = 100, y = 100})
-      root.fake_input('button_press', 1)
-      root.fake_input('button_release', 1)
+      os.execute("xdotool key --window " .. c.window .. " ctrl+t")
     end
     manage_taskbar_visibility()
     ensure_client_is_not_offscreen(awful.client.getmaster())
