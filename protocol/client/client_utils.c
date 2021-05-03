@@ -31,6 +31,9 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/core/fractalgetopt.h>
 
+// For setting connection_id
+#include <sentry.h>
+
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
 extern volatile char *server_ip;

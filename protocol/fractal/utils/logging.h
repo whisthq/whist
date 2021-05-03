@@ -38,7 +38,6 @@ Includes
 */
 
 #include <string.h>
-#include "sentry.h"
 #include <fractal/core/fractal.h>
 #include "clock.h"
 
@@ -47,8 +46,6 @@ Includes
 Defines
 ============================
 */
-
-#define SENTRY_DSN "https://8e1447e8ea2f4ac6ac64e0150fa3e5d0@o400459.ingest.sentry.io/5373388"
 
 #define LOGGER_QUEUE_SIZE 1000
 #define LOGGER_BUF_SIZE 1000
@@ -64,13 +61,11 @@ Defines
 #define LOG_LEVEL DEBUG_LEVEL
 #endif
 
-#define PRINTFUNCTION(format, ...) internal_logging_printf(format, ##__VA_ARGS__)
-#define SENTRYBREADCRUMB(tag, format, ...) sentry_send_bread_crumb(tag, format, ##__VA_ARGS__)
-#define SENTRYEVENT(format, ...) sentry_send_event(format, ##__VA_ARGS__)
 #define LOG_FMT "%s | %-7s | %-35s | %-30s:%-5d | "
 #define LOG_ARGS(LOG_TAG) current_time_str(), LOG_TAG, _FILE, __FUNCTION__, __LINE__
 
 #define NEWLINE "\n"
+// Cast to const chars so that comparison against XYZ_TAG is defined
 #define FATAL_ERROR_TAG "FATAL_ERROR"
 #define ERROR_TAG "ERROR"
 #define WARNING_TAG "WARNING"
@@ -79,7 +74,7 @@ Defines
 
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
+    internal_logging_printf(DEBUG_TAG, LOG_FMT message NEWLINE, LOG_ARGS(DEBUG_TAG), ##__VA_ARGS__)
 #else
 #define LOG_DEBUG(message, ...)
 #endif
@@ -87,7 +82,7 @@ Defines
 // LOG_INFO refers to something that can happen, and does not imply that anything went wrong
 #if LOG_LEVEL >= INFO_LEVEL
 #define LOG_INFO(message, ...) \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
+    internal_logging_printf(INFO_TAG, LOG_FMT message NEWLINE, LOG_ARGS(INFO_TAG), ##__VA_ARGS__)
 #else
 #define LOG_INFO(message, ...)
 #endif
@@ -95,9 +90,9 @@ Defines
 // LOG_WARNING refers to something going wrong, but it's unknown whether or not it's the code or the
 // host's configuration (i.e. no audio device etc)
 #if LOG_LEVEL >= WARNING_LEVEL
-#define LOG_WARNING(message, ...)                                                 \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__); \
-    SENTRYBREADCRUMB(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), ##__VA_ARGS__)
+#define LOG_WARNING(message, ...)                                                        \
+    internal_logging_printf(WARNING_TAG, LOG_FMT message NEWLINE, LOG_ARGS(WARNING_TAG), \
+                            ##__VA_ARGS__);
 #else
 #define LOG_WARNING(message, ...)
 #endif
@@ -105,18 +100,17 @@ Defines
 // LOG_ERROR must imply that something is fundamentally wrong with our code, but it is a recoverable
 // error
 #if LOG_LEVEL >= ERROR_LEVEL
-#define LOG_ERROR(message, ...)                                                 \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__); \
-    SENTRYEVENT(LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__);
+#define LOG_ERROR(message, ...) \
+    internal_logging_printf(ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(ERROR_TAG), ##__VA_ARGS__);
 #else
 #define LOG_ERROR(message, ...)
 #endif
 
 // LOG_FATAL implies that the protocol cannot recover from this error, something might be
 // wrong with our code (Or e.g. the host is out of RAM etc)
-#define LOG_FATAL(message, ...)                                                       \
-    PRINTFUNCTION(LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__); \
-    SENTRYEVENT(LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), ##__VA_ARGS__);   \
+#define LOG_FATAL(message, ...)                                                                  \
+    internal_logging_printf(FATAL_ERROR_TAG, LOG_FMT message NEWLINE, LOG_ARGS(FATAL_ERROR_TAG), \
+                            ##__VA_ARGS__);                                                      \
     terminate_protocol()
 
 /*
@@ -125,9 +119,7 @@ Public Functions
 ============================
 */
 
-void sentry_send_bread_crumb(char* tag, const char* fmt_str, ...);
-
-void sentry_send_event(const char* fmt_str, ...);
+void sentry_send_bread_crumb(const char* tag, const char* sentry_str);
 
 /**
  * @brief                          Print the stacktrace of the calling function to stdout
@@ -164,11 +156,13 @@ void rename_log_file();
 /**
  * @brief                          Log the given format string
  *                                 This is an internal function that shouldn't be used,
- *                                 please use LOG_INFO, LOG_WARNING, etc
+ *                                 please use the macros LOG_INFO, LOG_WARNING, etc
  *
- * @param fmt_str                  The directory to store the log files in
+ * @param tag                      The tag-level to log with
+ *
+ * @param fmt_str                  The format string to printf with
  */
-void internal_logging_printf(const char* fmt_str, ...);
+void internal_logging_printf(const char* tag, const char* fmt_str, ...);
 
 /**
  * @brief                          This function will immediately flush all of the logs,
