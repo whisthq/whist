@@ -1,24 +1,12 @@
 import jwtDecode from "jwt-decode"
-import url from "url"
-import { auth0Config } from '@app/config/environment'
-import { store, persist } from '@app/utils/persist'
-import fetch from 'node-fetch'
+import { URL } from "url"
+import { auth0Config } from "@app/config/environment"
+import { store, persist } from "@app/utils/persist"
+import fetch from "node-fetch"
 
 const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
 const redirectUri = "http://localhost/callback"
-
-let accessToken: any  = null
-let profile: any = null
-let refreshToken = null
-
-export function getAccessToken() {
-  return accessToken
-}
-
-export function getProfile() {
-  return profile
-}
 
 export function getAuthenticationURL() {
   return (
@@ -45,33 +33,37 @@ export async function refreshTokens(refreshToken: string) {
       grant_type: "refresh_token",
       client_id: clientId,
       refresh_token: refreshToken,
-    })
+    }),
   }
 
-  const response = await fetch(`https://${auth0Domain}/oauth/token`, refreshOptions)
+  const response = await fetch(
+    `https://${auth0Domain}/oauth/token`,
+    refreshOptions
+  )
   const data = await response.json()
 
-  accessToken = data.access_token
-  if (accessToken) {
-    await persist({accessToken})
+  const accessToken: string = data.access_token
+  if (accessToken !== "") {
+    await persist({ accessToken })
   }
 
-  profile = jwtDecode(data.id_token)
-  if (profile) {
+  const profile: Record<string, string> | undefined = jwtDecode(data.id_token)
+  if (profile != null) {
     await persist({
-      email: profile.email
+      email: profile.email,
     })
   }
 }
 
 export async function loadTokens(callbackURL: string) {
-  const urlParts = url.parse(callbackURL, true)
-  const query = urlParts.query
+  // eslint-disable-next-line node/no-deprecated-api
+  const url = new URL(callbackURL)
+  const code = url.searchParams.get("code")
 
   const exchangeOptions = {
     grant_type: "authorization_code",
     client_id: clientId,
-    code: query.code,
+    code,
     redirect_uri: redirectUri,
   }
 
@@ -82,31 +74,28 @@ export async function loadTokens(callbackURL: string) {
     },
     body: JSON.stringify(exchangeOptions),
   }
-    const response = await fetch(`https://${auth0Domain}/oauth/token`, options)
-    const data = await response.json();
+  const response = await fetch(`https://${auth0Domain}/oauth/token`, options)
+  const data = await response.json()
 
-    accessToken = data.access_token
-    profile = jwtDecode(data.id_token)
-    refreshToken = data.refresh_token
+  const accessToken: string = data.access_token
+  const refreshToken: string = data.refresh_token
 
-    if (refreshToken) {
-      await persist({refreshToken})
-    }
-    if (accessToken) {
-      await persist({accessToken})
-    }
-    if (profile) {
-      await persist({
-        email: profile.email
-      })
-    }
+  if (refreshToken !== "") {
+    await persist({ refreshToken })
+  }
+  if (accessToken !== "") {
+    await persist({ accessToken })
+  }
+  if (data.id_token !== "") {
+    const profile: Record<string, string> = jwtDecode(data.id_token)
+    await persist({
+      email: profile.email,
+    })
+  }
 }
 
 export async function logout() {
-  store.delete('refreshToken')
-  accessToken = null
-  profile = null
-  refreshToken = null
+  store.delete("refreshToken")
 }
 
 export function getLogOutUrl() {
@@ -116,5 +105,5 @@ export function getLogOutUrl() {
 // Returns true if JWT is expired, false otherwise
 export function checkJWTExpired(token: string) {
   const jwt: any = jwtDecode(token)
-  return jwt.exp < (Date.now() / 1000)
+  return jwt.exp < Date.now() / 1000
 }

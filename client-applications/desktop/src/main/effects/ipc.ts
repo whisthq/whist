@@ -28,7 +28,7 @@ import { autoUpdateDownloadProgress } from "@app/main/observables/autoupdate"
 // constrained to observables that emit serializable values.
 
 const subscribed: SubscriptionMap = {
-  updateInfo: autoUpdateDownloadProgress
+  updateInfo: autoUpdateDownloadProgress,
 }
 
 objectCombine(subscribed)

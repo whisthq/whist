@@ -1,6 +1,4 @@
 import React from "react"
-import { Switch, Route } from "react-router-dom"
-import { Router } from "react-router"
 import { chain } from "lodash"
 import ReactDOM from "react-dom"
 
@@ -19,7 +17,6 @@ import {
   ContainerAssignErrorText,
   ProtocolErrorTitle,
   ProtocolErrorText,
-  WindowHashAuth,
   WindowHashUpdate,
   WindowHashAuthError,
   WindowHashCreateContainerErrorNoAccess,
@@ -31,7 +28,6 @@ import {
   NavigationErrorText,
 } from "@app/utils/constants"
 
-import { browserHistory } from "@app/utils/history"
 import { useMainState } from "@app/utils/ipc"
 
 // Electron has no way to pass data to a newly launched browser
@@ -53,7 +49,7 @@ const RootComponent = () => {
   const [, setMainState] = useMainState()
 
   const errorContinue = () => setMainState({ errorRelaunchRequest: Date.now() })
-  
+
   if (show === WindowHashUpdate) return <Update />
   if (show === WindowHashAuthError) {
     return (

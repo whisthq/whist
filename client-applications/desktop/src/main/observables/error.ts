@@ -8,7 +8,6 @@ import { eventAppReady } from "@app/main/events/app"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
 import {
-  createAuthErrorWindow,
   createContainerErrorWindowNoAccess,
   createContainerErrorWindowUnauthorized,
   createContainerErrorWindowInternal,

@@ -8,14 +8,13 @@ import { app } from "electron"
 import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
-
 import {
   eventUpdateAvailable,
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 import { eventActionTypes } from "@app/main/events/tray"
-import { takeUntil, take, concatMap, tap } from "rxjs/operators"
+import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
   createAuthWindow,
@@ -37,7 +36,7 @@ import {
   userEmail,
   userConfigToken,
   userAccessToken,
-  userRefreshToken
+  userRefreshToken,
 } from "@app/main/observables/user"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
@@ -81,11 +80,7 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
 
-merge(
-  protocolLaunchProcess,
-  errorWindowRequest,
-  eventUpdateAvailable
-)
+merge(protocolLaunchProcess, errorWindowRequest, eventUpdateAvailable)
   .pipe(
     concatMap(() =>
       fromEvent(app as EventEmitter, "window-all-closed").pipe(take(1))
@@ -135,6 +130,9 @@ signoutAction.subscribe(() => {
 })
 
 // If no valid access token exists, we regenerate one
-userRefreshToken.pipe(
-  takeUntil(userAccessToken)
-).subscribe(async (refreshToken: string) => await refreshTokens(refreshToken))
+userRefreshToken.pipe(takeUntil(userAccessToken)).subscribe(
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  async (refreshToken: string): Promise<void> => {
+    await refreshTokens(refreshToken)
+  }
+)

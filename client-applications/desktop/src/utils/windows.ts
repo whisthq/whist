@@ -3,15 +3,14 @@ import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import {
   WindowHashAuth,
   WindowHashUpdate,
-  WindowHashAuthError,
   WindowHashProtocolError,
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError
-} from '@app/utils/constants'
-import config, { FractalCIEnvironment } from '@app/config/environment'
-import { getAuthenticationURL, loadTokens } from '@app/utils/auth'
+  WindowHashAssignContainerError,
+} from "@app/utils/constants"
+import config, { FractalCIEnvironment } from "@app/config/environment"
+import { getAuthenticationURL, loadTokens } from "@app/utils/auth"
 
 const { buildRoot } = config
 
@@ -77,20 +76,22 @@ export const createWindow = (
   options: Partial<BrowserWindowConstructorOptions>,
   customUrl?: string,
   onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any,
+  onClose?: (win: BrowserWindow) => any
 ) => {
   const { title } = config
   const win = new BrowserWindow({ ...options, show: false, title })
 
   const params = "?show=" + show
 
-  if (app.isPackaged && !customUrl) {
+  if (app.isPackaged && customUrl === undefined) {
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
-      .loadURL(customUrl ? customUrl : 'http://localhost:8080' + params)
+      .loadURL(
+        customUrl !== undefined ? customUrl : "http://localhost:8080" + params
+      )
       .then(() => {
         win.webContents.openDevTools({ mode: "undocked" })
       })
@@ -106,35 +107,32 @@ export const createWindow = (
 }
 
 export const createAuthWindow: CreateWindowFunction = () => {
-
-  const win = createWindow(WindowHashAuth, {
-    ...base,
-    ...width.md,
-    ...height.lg
-  } as BrowserWindowConstructorOptions, getAuthenticationURL())
+  const win = createWindow(
+    WindowHashAuth,
+    {
+      ...base,
+      ...width.md,
+      ...height.lg,
+    } as BrowserWindowConstructorOptions,
+    getAuthenticationURL()
+  )
 
   // Authentication
-  const {session: {webRequest}} = win.webContents;
+  const {
+    session: { webRequest },
+  } = win.webContents
 
   const filter = {
-    urls: [
-      'http://localhost/callback*'
-    ]
-  };
+    urls: ["http://localhost/callback*"],
+  }
 
-  webRequest.onBeforeRequest(filter, async ({url}) => {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  webRequest.onBeforeRequest(filter, async ({ url }) => {
     await loadTokens(url)
-  });
+  })
 
   return win
 }
-
-export const createAuthErrorWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuthError, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
   createWindow(WindowHashCreateContainerErrorNoAccess, {
