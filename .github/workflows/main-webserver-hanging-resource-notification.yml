@@ -63,7 +63,9 @@ jobs:
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
                                           '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
-                  echo "hanging_resource=$hanging_resource" >> $GITHUB_ENV
+                  echo 'hanging_resource<<EOF' >> $GITHUB_ENV
+                  echo "$hanging_resource" >> $GITHUB_ENV
+                  echo "EOF" >> $GITHUB_ENV
 
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
