@@ -8,4 +8,4 @@ printf "COMMIT_REF %s | CACHED_COMMIT_REF %s | PWD %s\n" \
 printf "URL %s | BRANCH %s | HEAD %s | PULL_REQUEST %s\n" \
         $URL     $BRANCH     $HEAD     $PULL_REQUEST
 
-npm run build && rm -rf /opt/build/cache
+yarn build && rm -rf /opt/build/cache
