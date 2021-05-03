@@ -322,6 +322,7 @@ RUN apt-get install --no-install-recommends -y \
     awesome-extra \
     lxappearance \
     xinit \
+    xdotool \
     materia-gtk-theme \
     yaru-theme-gtk \
     gtk2-engines-murrine \
