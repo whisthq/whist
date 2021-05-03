@@ -84,8 +84,7 @@ export const createWindow = (
 
   const params = "?show=" + show
 
-  if (app.isPackaged) {
-    // TODO: make this work with auth0
+  if (app.isPackaged && !customUrl) {
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))

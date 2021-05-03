@@ -38,9 +38,6 @@ export function getAuthenticationURL() {
 }
 
 export async function refreshTokens(refreshToken: string) {
-
-  console.log("Refreshing with token:", refreshToken)
-
   const refreshOptions = {
     method: "POST",
     headers: { "content-type": "application/json" },
