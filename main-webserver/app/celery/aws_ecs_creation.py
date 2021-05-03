@@ -668,6 +668,36 @@ def _assign_container(
         force=True,  # necessary since check will fail otherwise
     )
 
+    # Prewarm containers as/if necessary. We do this before polling below since
+    # that might take a while, and for prewarming to be effective it can't wait
+    # that long. We also do this before polling so that we prewarm even if
+    # polling fails. This has the advantage of improving our prewarming story
+    # in case a container fails to ping due to a container-specific reason
+    # (i.e. not the entire host is unhealthy) and doesn't make anything worse
+    # under our existing setup because we always clean up after non-pinging
+    # containers.
+    if not current_app.testing:
+        # we figure out how empty our buffer is now
+        # and then refill it
+        num_extra = _get_num_extra(task_definition_arn, region_name)
+        for _ in range(num_extra):
+            prewarm_new_container.delay(
+                task_definition_arn,
+                task_version,
+                region_name=region_name,
+                webserver_url=webserver_url,
+            )
+        task_time_taken = time.time() - task_start_time
+        logged_event_container_assigned(
+            base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
+        )
+
+    # trigger celery task to see if manual scaling should be done
+    manual_scale_cluster.delay(cluster_name, region_name)
+
+    # trigger celery task to see if task cleanup should be done
+    check_and_cleanup_outdated_tasks.delay(cluster_name, region_name)
+
     if not _poll(base_container.container_id):
         set_container_state(
             keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
@@ -702,28 +732,6 @@ def _assign_container(
         f"""Success, task ID is {self.request.id} and container is ready.""",
         extra={"label": username},
     )
-
-    if not current_app.testing:
-        # we figure out how empty our buffer is now
-        # and then refill it
-        num_extra = _get_num_extra(task_definition_arn, region_name)
-        for _ in range(num_extra):
-            prewarm_new_container.delay(
-                task_definition_arn,
-                task_version,
-                region_name=region_name,
-                webserver_url=webserver_url,
-            )
-        task_time_taken = time.time() - task_start_time
-        logged_event_container_assigned(
-            base_container.container_id, cluster_name, username=username, time_taken=task_time_taken
-        )
-
-    # trigger celery task to see if manual scaling should be done
-    manual_scale_cluster.delay(cluster_name, region_name)
-
-    # trigger celery task to see if task cleanup should be done
-    check_and_cleanup_outdated_tasks.delay(cluster_name, region_name)
 
     return user_container_schema.dump(base_container)
 
