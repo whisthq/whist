@@ -13,7 +13,6 @@ const environment: FractalEnvironment = {
     keys: {
       GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
     },
-    sentry_env: "development",
     client_download_urls: {
       macOS: "https://fractal-chromium-macos-dev.s3.amazonaws.com/Fractal.dmg",
       Windows:
@@ -27,7 +26,6 @@ const environment: FractalEnvironment = {
     keys: {
       GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
     },
-    sentry_env: "staging",
     client_download_urls: {
       macOS:
         "https://fractal-chromium-macos-staging.s3.amazonaws.com/Fractal.dmg",
@@ -42,7 +40,6 @@ const environment: FractalEnvironment = {
     keys: {
       GOOGLE_ANALYTICS_TRACKING_CODES: ["UA-180615646-1"],
     },
-    sentry_env: "production",
     client_download_urls: {
       macOS: "https://fractal-chromium-macos-prod.s3.amazonaws.com/Fractal.dmg",
       Windows:
