@@ -175,15 +175,21 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        # branch, commit = self._get_git_info()
         branch, commit = self._get_git_info()
         branch = branch.replace("/", "-")
-        name = f"{starter_name}-<{branch}>-<{commit}>-uuid-{uuid.uuid4()}"
+        # Generate our own UID instead of using UUIDs since they make the
+        # resource names too long (and therefore tests fail). We would need
+        # log_36(16^32) = approx 25 digits of lowercase alphanumerics to get
+        # the same entropy as 32 hexadecimal digits (i.e. the output of
+        # uuid.uuid4()) but 10 digits gives us more than enough entropy while
+        # saving us a lot of characters.
+        uid = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10))
+        name = f"{starter_name}-<{branch}>-<{commit}>-uid-{uid}"
 
         # need a special case for capacity_provider and cluster
         # as they don't like special characters
-        if starter_name in ["capacity_provider", "cluster"]:
-            name = f"{starter_name}-{branch}-{commit}-uuid-{uuid.uuid4()}"
+        if starter_name in ["capprov", "cluster"]:
+            name = f"{starter_name}-{branch}-{commit}-uid-{uid}"
 
         if current_app.testing:
             name = f"test-{name}"
@@ -682,7 +688,7 @@ class ECSClient:
         # Initial data/scripts to be run on all container instances
         userdata = userdata_template.format(cluster_name)
 
-        launch_config_name = launch_config_name or self.generate_name("launch_configuration")
+        launch_config_name = launch_config_name or self.generate_name("lc")
         _ = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
@@ -780,7 +786,7 @@ class ECSClient:
         auto_scaling_group_arn = auto_scaling_group_info["AutoScalingGroups"][0][
             "AutoScalingGroupARN"
         ]
-        capacity_provider_name = capacity_provider_name or self.generate_name("capacity_provider")
+        capacity_provider_name = capacity_provider_name or self.generate_name("capprov")
         _ = self.ecs_client.create_capacity_provider(
             name=capacity_provider_name,
             autoScalingGroupProvider={
