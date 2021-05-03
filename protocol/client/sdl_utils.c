@@ -105,7 +105,7 @@ void set_window_icon_from_png(SDL_Window* sdl_window, char* filename) {
 
     SDL_Surface* icon_surface = sdl_surface_from_png_file(filename);
     SDL_SetWindowIcon(sdl_window, icon_surface);
-    free_sdl_surface(icon_surface);
+    free_sdl_rgb_surface(icon_surface);
 }
 
 SDL_Window* init_sdl(int target_output_width, int target_output_height, char* name,
@@ -360,7 +360,7 @@ SDL_Surface* sdl_surface_from_png_file(char* filename) {
     return surface;
 }
 
-void free_sdl_surface(SDL_Surface* surface) {
+void free_sdl_rgb_surface(SDL_Surface* surface) {
     // Specified to call `SDL_FreeSurface` on the surface, and `free` on the pixels array
     char* pixels = surface->pixels;
     SDL_FreeSurface(surface);
