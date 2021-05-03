@@ -4,9 +4,8 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app } from "electron"
+import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
-import EventEmitter from "events"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
 
 import {
@@ -87,12 +86,8 @@ merge(
   errorWindowRequest,
   eventUpdateAvailable
 )
-  .pipe(
-    concatMap(() =>
-      fromEvent(app as EventEmitter, "window-all-closed").pipe(take(1))
-    )
-  )
-  .subscribe((event) => event.preventDefault())
+  .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
+  .subscribe((event) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
 combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
