@@ -35,7 +35,10 @@ import { StateIPC } from "@app/@types/state"
 // observables can initialize.
 
 export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
-  map(([_event, state]) => state as Partial<StateIPC>),
+  map((args) => {
+    if (!Array.isArray(args)) return {} as Partial<StateIPC>
+    return args[1] as Partial<StateIPC>
+  }),
   startWith({}),
   share()
 )
