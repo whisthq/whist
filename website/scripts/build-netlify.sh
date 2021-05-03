@@ -2,8 +2,10 @@
 
 set -Eeuo pipefail
 
-echo $CACHED_COMMIT_REF $COMMIT_REF $PWD
-git diff $CACHED_COMMIT_REF $COMMIT_REF ||:
-echo $URL $BRANCH $HEAD $PULL_REQUEST
+echo "Logging Netlify Build Environment (to debug netlify.toml)"
+printf "COMMIT_REF %s | CACHED_COMMIT_REF %s | PWD %s\n" \
+        $COMMIT_REF     $CACHED_COMMIT_REF     $PWD
+printf "URL %s | BRANCH %s | HEAD %s | PULL_REQUEST %s\n" \
+        $URL     $BRANCH     $HEAD     $PULL_REQUEST
 
-export REACT_APP_VERSION=$COMMIT_REF && npm run build && rm -rf /opt/build/cache
+npm run build && rm -rf /opt/build/cache
