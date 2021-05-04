@@ -55,6 +55,13 @@ The Fractal monorepository contains 8 Fractal subrepositories:
 
 For more in-depth explanations of each subrepository, see that subrepository's README.
 
+Note that there is also additional documentation for some subrepos (and other Fractal repos) at [docs.fractal.co](https://docs.fractal.co):
+
+- [docs.fractal.co/protocol](https://docs.fractal.co/protocol)
+- [docs.fractal.co/webserver](https://docs.fractal.co/webserver)
+- [docs.fractal.co/SDL](https://docs.fractal.co/SDL)
+- [docs.fractal.co/FFmpeg](https://docs.fractal.co/FFmpeg)
+
 ## Development
 
 To get started with development, clone this repository and navigate to a specific subrepository. While it is likely that you will work on a feature that touches multiple subrepositories, each subrepository has its own development and styling standards which you should follow, in addition to the usual [Fractal Engineering Guidelines](https://www.notion.so/tryfractal/Engineering-Guidelines-d8a1d5ff06074ddeb8e5510b4412033b).
