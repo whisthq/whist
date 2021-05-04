@@ -58,10 +58,6 @@ A tree structure is provided below:
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
 │   └── run_container_image.sh <- Helper script to run a build container image
-├── productivity
-│   └── slack
-│       ├── Dockerfile.20 <- Container image for Slack
-│       └── run-slack.sh <- Helper script to start Slack with the right parameters
 ├── push_container_image.sh <- Helper script to push a built container image to GHCR
 ├── run_local_container_image.sh <- Helper script to run a locally-built container image
 ├── run_remote_container_image.sh <- Helper script to fetch and run a container image stored on GHCR
