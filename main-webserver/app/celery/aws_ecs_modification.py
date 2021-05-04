@@ -274,37 +274,36 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         cluster: cluster to manually scale
         region_name: region that cluster resides in
     """
-    # self.update_state(
-    #     state="STARTED",
-    #     meta={
-    #         "msg": f"Checking if cluster {cluster} should be scaled.",
-    #     },
-    # )
+    self.update_state(
+        state="STARTED",
+        meta={
+            "msg": f"Checking if cluster {cluster} should be scaled.",
+        },
+    )
 
-    # factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
+    factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
 
-    # cluster_data = ClusterInfo.query.get(cluster)
-    # if cluster_data is None:
-    #     raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
+    cluster_data = ClusterInfo.query.get(cluster)
+    if cluster_data is None:
+        raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
 
-    # num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
-    # num_instances = cluster_data.registeredContainerInstancesCount
-    # expected_num_instances = math.ceil(num_tasks / factor)
+    num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
+    num_instances = cluster_data.registeredContainerInstancesCount
+    expected_num_instances = math.ceil(num_tasks / factor)
 
-    # # expected_num_instances must be >= cluster_data.minContainers
-    # expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
-    # # expected_num_instances must be <= cluster_data.maxContainers
-    # expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
+    # expected_num_instances must be >= cluster_data.minContainers
+    expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
+    # expected_num_instances must be <= cluster_data.maxContainers
+    expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
 
-    # if expected_num_instances == num_instances:
-    #     fractal_logger.info(f"Cluster {cluster} did not need any scaling.")
-    #     return
+    if expected_num_instances == num_instances:
+        fractal_logger.info(f"Cluster {cluster} did not need any scaling.")
+        return
 
-    # fractal_logger.info(
-    #     f"Changing ASG desired capacity in {cluster} from {num_instances} "
-    #     f"to {expected_num_instances}."
-    # )
-    expected_num_instances = 1
+    fractal_logger.info(
+        f"Changing ASG desired capacity in {cluster} from {num_instances} "
+        f"to {expected_num_instances}."
+    )
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
     if len(asg_list) != 1:
@@ -320,6 +319,13 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
 
 
 def kill_draining_instances_with_no_tasks(cluster: str, region_name: str):
+    """
+    Kill any instances that are draining and have no tasks.
+
+    Args:
+        cluster: cluster to manually scale
+        region_name: region that cluster resides in
+    """
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     draining_instances_data = ecs_client.ecs_client.list_container_instances(
         filter="runningTasksCount==0", cluster=cluster, status="DRAINING"
