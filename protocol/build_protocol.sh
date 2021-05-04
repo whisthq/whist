@@ -11,11 +11,11 @@ set -Eeuo pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
-# Set Cmake release flag
-if [[ -n "${1:-''}" ]]; then
+# Set Cmake release flag, if provided. Build in debug mode by default.
+if [[ -n "${1:-}" ]]; then
     release_tag="-D CMAKE_BUILD_TYPE=$1"
 else
-    release_tag=""
+    release_tag="-D CMAKE_BUILD_TYPE=Debug"
 fi
 
 # Build protocol
