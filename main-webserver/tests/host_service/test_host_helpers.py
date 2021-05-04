@@ -1,4 +1,3 @@
-import pytest
 import time
 
 
@@ -49,7 +48,6 @@ def test_heartbeat_no_update(bulk_instance):
     assert time.time() - inst.last_pinged <= 2
 
 
-@pytest.mark.skip(reason="Enable when enforce_auth is set to true")
 def test_heartbeat_wrong_key(bulk_instance):
     """
     Tests that a heartbeat with the wrong auth token fails
