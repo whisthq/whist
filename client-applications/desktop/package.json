@@ -48,7 +48,8 @@
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
         "react-spring": "^9.1.2",
-        "rxjs": "^7.0.0"
+        "rxjs": "^7.0.0",
+        "ts-toolbelt": "^9.6.0"
     },
     "devDependencies": {
         "@snowpack/plugin-build-script": "^2.1.0",
@@ -87,7 +88,7 @@
         "rimraf": "^3.0.2",
         "snowpack": "^3.3.7",
         "tailwindcss": "^2.1.2",
-        "typescript": "^4.2.4"
+        "typescript": "^4.3.0-dev.20210504"
     },
     "engines": {
         "node": ">=14.x",
