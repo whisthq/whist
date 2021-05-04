@@ -300,28 +300,24 @@ def main():
         aws_clusters, db_clusters = get_hanging_clusters(urls, secrets, region)
         for cluster in aws_clusters:
             output.append((str(cluster), get_num_instances(cluster, region)))
+        stout = ""
         if len(aws_clusters) > 0:
-            print(
-                "\\n- "
-                + "\\n- ".join(
-                    [
-                        "`"
-                        + c
-                        + "`"
-                        + " in AWS but not in any DB ("
-                        + str(n)
-                        + " instances)"
-                        for c, n in output
-                    ]
-                )
+            stout += "\\n- " + "\\n- ".join(
+                [
+                    "`"
+                    + c
+                    + "`"
+                    + " in AWS but not in any DB ("
+                    + str(n)
+                    + " instances)"
+                    for c, n in output
+                ]
             )
         if len(db_clusters) > 0:
-            print(
-                "\\n- "
-                + "\\n- ".join(
-                    ["`" + c + "`" + " in a DB but not AWS" for c in db_clusters]
-                )
+            stout += "\\n- " + "\\n- ".join(
+                ["`" + c + "`" + " in a DB but not AWS" for c in db_clusters]
             )
+        print(stout)
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
