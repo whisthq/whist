@@ -189,7 +189,8 @@ def test_delete_bad_cluster():
     """
 
     # This cluster doesn't actually exist on our AWS account.
-    cluster = ClusterInfo(cluster="test-cluster-{uuid.uuid4()}", location="us-east-1")
+    cluster_name = ECSClient.generate_name("cluster", test_prefix=True)
+    cluster = ClusterInfo(cluster=cluster_name, location="us-east-1")
 
     db.session.add(cluster)  # Change the cluster object's state to pending.
     db.session.flush()  # Change the cluster object's state to persistent.

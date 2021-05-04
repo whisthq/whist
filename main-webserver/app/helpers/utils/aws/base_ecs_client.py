@@ -3,7 +3,6 @@ import random
 import re
 import string
 import time
-import uuid
 from collections import defaultdict
 from datetime import date
 from pprint import saferepr
@@ -172,7 +171,7 @@ class ECSClient:
     @staticmethod
     def generate_name(starter_name="", test_prefix=False):
         """
-        Helper function for generating a name with a random UUID
+        Helper function for generating a name with a random UID
         Args:
             starter_name (Optional[str]): starter string for the name
             test_prefix (Optional[bool]): whether the resource should have a "test-" prefix attached
