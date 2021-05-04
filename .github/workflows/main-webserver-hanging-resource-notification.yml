@@ -75,8 +75,6 @@ jobs:
                   import os
                   from notifications.slack_bot import slack_post
 
-                  print("${{ env.hanging_resource }}")
-
                   if os.environ.get("hanging_resource") not in (None, ""):
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                     SLACK_CHANNEL = "#alerts-dev"
