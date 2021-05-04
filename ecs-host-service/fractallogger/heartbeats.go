@@ -24,7 +24,10 @@ const fractalWebserverHeartbeatEndpoint = "/host_service/heartbeat"
 
 // We send the webserver the webserver the host instance ID when handshaking.
 type handshakeRequest struct {
-	InstanceID string
+	InstanceID   string
+	InstanceType string // EC2 instance type
+	Region       string // AWS region
+	AWSAmiID     string // AWS AMI ID
 }
 
 // We receive an auth token from the webserver if handshaking succeeded, which
@@ -39,9 +42,6 @@ type heartbeatRequest struct {
 	Timestamp        string // Current timestamp
 	HeartbeatNumber  uint64 // Index of heartbeat since host service started
 	InstanceID       string // EC2 instance ID
-	InstanceType     string // EC2 instance type
-	Region           string // AWS region
-	AWSAmiID         string // AWS AMI ID
 	TotalRAMinKB     string // Total amount of RAM on the host, in kilobytes
 	FreeRAMinKB      string // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
 	AvailRAMinKB     string // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
@@ -155,8 +155,28 @@ func handshake() (handshakeResponse, error) {
 		return resp, MakeError("handshake(): Couldn't get AWS instanceID. Error: %v", err)
 	}
 
+	instanceType, err := GetAwsInstanceType()
+	if err != nil {
+		return resp, MakeError("handshake(): Couldn't get AWS instanceType. Error: %v", err)
+	}
+
+	region, err := GetAwsPlacementRegion()
+	if err != nil {
+		return resp, MakeError("handshake(): Couldn't get AWS placementRegion. Error: %v", err)
+	}
+
+	amiID, err := GetAwsAmiID()
+	if err != nil {
+		return resp, MakeError("handshake(): Couldn't get AWS amiID. Error: %v", err)
+	}
+
 	requestURL := getFractalWebserver() + fractalWebserverAuthEndpoint
-	requestBody, err := json.Marshal(handshakeRequest{instanceID})
+	requestBody, err := json.Marshal(handshakeRequest{
+		InstanceID:   instanceID,
+		InstanceType: instanceType,
+		Region:       region,
+		AWSAmiID:     amiID,
+	})
 	if err != nil {
 		return resp, MakeError("handshake(): Could not marshal the handshakeRequest object. Error: %v", err)
 	}
@@ -204,9 +224,6 @@ func sendHeartbeat(isDying bool) {
 	// instance over a malformed heartbeat --- we can let the webserver decide if
 	// we want to mark the instance as draining.
 	instanceID, _ := GetAwsInstanceID()
-	instanceType, _ := GetAwsInstanceType()
-	region, _ := GetAwsPlacementRegion()
-	amiID, _ := GetAwsAmiID()
 	totalRAM, _ := GetTotalMemoryInKB()
 	freeRAM, _ := GetFreeMemoryInKB()
 	availRAM, _ := GetAvailableMemoryInKB()
@@ -217,9 +234,6 @@ func sendHeartbeat(isDying bool) {
 		Timestamp:        Sprintf("%s", time.Now()),
 		HeartbeatNumber:  numBeats,
 		InstanceID:       instanceID,
-		InstanceType:     instanceType,
-		Region:           region,
-		AWSAmiID:         amiID,
 		TotalRAMinKB:     totalRAM,
 		FreeRAMinKB:      freeRAM,
 		AvailRAMinKB:     availRAM,
