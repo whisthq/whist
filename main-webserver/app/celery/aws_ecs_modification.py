@@ -274,36 +274,37 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         cluster: cluster to manually scale
         region_name: region that cluster resides in
     """
-    self.update_state(
-        state="STARTED",
-        meta={
-            "msg": f"Checking if cluster {cluster} should be scaled.",
-        },
-    )
+    # self.update_state(
+    #     state="STARTED",
+    #     meta={
+    #         "msg": f"Checking if cluster {cluster} should be scaled.",
+    #     },
+    # )
 
-    factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
+    # factor = int(current_app.config["AWS_TASKS_PER_INSTANCE"])
 
-    cluster_data = ClusterInfo.query.get(cluster)
-    if cluster_data is None:
-        raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
+    # cluster_data = ClusterInfo.query.get(cluster)
+    # if cluster_data is None:
+    #     raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
 
-    num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
-    num_instances = cluster_data.registeredContainerInstancesCount
-    expected_num_instances = math.ceil(num_tasks / factor)
+    # num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
+    # num_instances = cluster_data.registeredContainerInstancesCount
+    # expected_num_instances = math.ceil(num_tasks / factor)
 
-    # expected_num_instances must be >= cluster_data.minContainers
-    expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
-    # expected_num_instances must be <= cluster_data.maxContainers
-    expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
+    # # expected_num_instances must be >= cluster_data.minContainers
+    # expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
+    # # expected_num_instances must be <= cluster_data.maxContainers
+    # expected_num_instances = min(expected_num_instances, cluster_data.maxContainers)
 
-    if expected_num_instances == num_instances:
-        fractal_logger.info(f"Cluster {cluster} did not need any scaling.")
-        return
+    # if expected_num_instances == num_instances:
+    #     fractal_logger.info(f"Cluster {cluster} did not need any scaling.")
+    #     return
 
-    fractal_logger.info(
-        f"Changing ASG desired capacity in {cluster} from {num_instances} "
-        f"to {expected_num_instances}."
-    )
+    # fractal_logger.info(
+    #     f"Changing ASG desired capacity in {cluster} from {num_instances} "
+    #     f"to {expected_num_instances}."
+    # )
+    expected_num_instances = 1
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     asg_list = ecs_client.get_auto_scaling_groups_in_cluster(cluster)
     if len(asg_list) != 1:
@@ -315,6 +316,29 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     # we have enabled instance termination protection in our ASGs and Capacity Providers
     # so any instance with tasks will not be killed. This has been manually tested.
     ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
+    kill_draining_instances_with_no_tasks(cluster, region_name)
+
+
+def kill_draining_instances_with_no_tasks(cluster: str, region_name: str):
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+    draining_instances_data = ecs_client.ecs_client.list_container_instances(
+        filter="runningTasksCount==0", cluster=cluster, status="DRAINING"
+    )
+    killable_instance_arns = draining_instances_data["containerInstanceArns"]
+    if killable_instance_arns is None:
+        return
+    # see https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_container_instances
+    # we need to parse out the ec2 instance id
+    resp = ecs_client.ecs_client.describe_container_instances(
+        cluster=cluster, containerInstances=killable_instance_arns
+    )
+    killable_ec2_instance_arns = [data["ec2InstanceId"] for data in resp["containerInstances"]]
+    for instance_arn in killable_ec2_instance_arns:
+        instance_arn = instance_arn.split("/")[-1]
+        fractal_logger.info(f"killing {instance_arn} because it is draining and has no tasks")
+        ecs_client.auto_scaling_client.terminate_instance_in_auto_scaling_group(
+            InstanceId=instance_arn, ShouldDecrementDesiredCapacity=False
+        )
 
 
 @shared_task(bind=True)

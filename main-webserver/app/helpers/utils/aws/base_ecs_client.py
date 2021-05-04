@@ -790,10 +790,7 @@ class ECSClient:
             autoScalingGroupProvider={
                 "autoScalingGroupArn": auto_scaling_group_arn,
                 "managedScaling": {
-                    "maximumScalingStepSize": 1000,
-                    "minimumScalingStepSize": 1,
-                    "status": "ENABLED",
-                    "targetCapacity": 100,
+                    "status": "DISABLED",
                 },
                 "managedTerminationProtection": "ENABLED",
             },
