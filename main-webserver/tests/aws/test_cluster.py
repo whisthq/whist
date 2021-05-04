@@ -1,7 +1,5 @@
 """Unit and integration tests for code that we use to manipulate ECS clusters."""
 
-import uuid
-
 from collections import namedtuple
 
 import boto3
@@ -103,8 +101,7 @@ class Stack(_Stack):
 def test_lifecycle(region):
     """Test creation and deletion of an ECS cluster through Fractal's web API."""
 
-    cluster_name = f"test-cluster-{uuid.uuid4()}"
-    ecs_client = boto3.client("ecs", region_name=region)
+    cluster_name = ECSClient.generate_name("cluster", test_prefix=True)
     exception = None
 
     create_new_cluster.delay(

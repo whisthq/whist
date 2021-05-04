@@ -7,6 +7,8 @@ import platform
 import subprocess
 import signal
 
+from app.helpers.utils.aws.base_ecs_client import ECSClient
+
 import pytest
 
 from flask_jwt_extended import create_access_token
@@ -112,7 +114,6 @@ def celery_parameters(app):
         A dictionary whose keys are keyword arguments that will be passed to the Celery
         constructor.
     """
-
     return celery_params(app)
 
 
@@ -128,8 +129,8 @@ def cluster():
     Returns:
         An instance of the ClusterInfo model.
     """
-
-    c = ClusterInfo(cluster=f"test-cluster-{uuid.uuid4()}", location="us-east-1")
+    cluster_name = ECSClient.generate_name(starter_name="cluster", test_prefix=True)
+    c = ClusterInfo(cluster=cluster_name, location="us-east-1")
 
     db.session.add(c)
     db.session.commit()
