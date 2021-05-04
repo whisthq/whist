@@ -30,6 +30,7 @@ import {
   takeUntil,
   exhaustMap,
   withLatestFrom,
+  tap
 } from "rxjs/operators"
 import {
   formatHostConfig,
@@ -39,7 +40,6 @@ import {
 } from "@app/utils/formatters"
 
 export const hostInfoRequest = containerAssignLoading.pipe(
-  filter((loading) => !loading),
   withLatestFrom(userEmail, userAccessToken),
   map(([_, email, token]) => [email, token] as [string, string]),
   share()
