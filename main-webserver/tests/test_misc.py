@@ -235,7 +235,7 @@ def test_check_before_verify():
     with pytest.raises(
         RuntimeError,
         match=re.escape(
-            "You must call `@jwt_required()` or `verify_jwt_in_request` before using this method"
+            "You must call `@jwt_required()` or `verify_jwt_in_request()` before using this method"
         ),
     ):
         check_developer()
