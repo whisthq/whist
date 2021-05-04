@@ -150,7 +150,7 @@ class InstanceInfo(db.Model):
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
-    location = db.Column(db.String(250), nullable = False)
+    location = db.Column(db.String(250), nullable=False)
     instance_type = db.Column(db.String(250))
     auth_token = db.Column(db.String(250), nullable=False)
     ip = db.Column(db.String(250), nullable=False)
