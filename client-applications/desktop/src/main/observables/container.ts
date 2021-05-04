@@ -48,11 +48,11 @@ export const containerCreateProcess = containerCreateRequest.pipe(
 )
 
 export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? "") !== "")
+  filter((req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "")
 )
 
 export const containerCreateFailure = containerCreateProcess.pipe(
-  filter((req) => (req?.json?.ID ?? "") === "")
+  filter((req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "")
 )
 
 export const containerCreateLoading = loadingFrom(
