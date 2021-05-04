@@ -1,6 +1,15 @@
-import { Observable, ObservableInput, merge, race, interval, from } from "rxjs"
-import { map, mapTo, switchMap } from "rxjs/operators"
-import { toPairs } from "lodash"
+import {
+  Observable,
+  ObservableInput,
+  merge,
+  race,
+  interval,
+  from,
+  EMPTY,
+} from "rxjs"
+import { map, mapTo, switchMap, filter, takeLast } from "rxjs/operators"
+import { toPairs, compact, identity } from "lodash"
+import { debugObservables } from "@app/utils/logging"
 
 export const loadingFrom = (
   request: Observable<any>,
@@ -51,3 +60,63 @@ export const objectCombine = (obj: SubscriptionMap) =>
       obs.pipe(map((val) => ({ [name]: val })))
     )
   )
+
+export const factory = <T, A>(
+  name: string,
+  fx: {
+    request: Observable<T>
+    process: (ax: T) => Observable<A>
+    success?: (dx: A) => boolean
+    failure?: (dx: A) => boolean
+    warning?: (dx: A) => boolean
+    logging?: {
+      request?: [string, (_: T) => any]
+      process?: [string, (_: A) => any]
+      success?: [string, (_: A) => any]
+      failure?: [string, (_: A) => any]
+      warning?: [string, (_: A) => any]
+      loading?: [string, (_: boolean) => any]
+    }
+  }
+) => {
+  const request = fx.request
+  const processOuter = request.pipe(map(fx.process))
+  const process = processOuter.pipe(switchMap((processOuter) => processOuter))
+  const results = processOuter.pipe(
+    switchMap((processOuter) => processOuter.pipe(takeLast(1)))
+  )
+
+  const success = fx.success && results.pipe(filter(fx.success))
+  const failure = fx.failure && results.pipe(filter(fx.failure))
+  const warning = fx.warning && results.pipe(filter(fx.warning))
+
+  const loading = loadingFrom(request, ...compact([success, failure, warning]))
+
+  const logging = [
+    ["Request", request, ...(fx?.logging?.request || [])],
+    ["Process", process, ...(fx?.logging?.process || [])],
+    ["Success", success, ...(fx?.logging?.success || [])],
+    ["Failure", failure, ...(fx?.logging?.failure || [])],
+    ["Warning", warning, ...(fx?.logging?.warning || [])],
+    ["Loading", loading, ...(fx?.logging?.loading || [])],
+  ] as [string, Observable<any>?, string?, ((...args: any[]) => any)?][]
+
+  debugObservables(
+    ...logging.map(
+      ([stage, obs, message, transform]) =>
+        [
+          obs?.pipe?.(map(transform || identity)) || EMPTY,
+          `${name}${stage}${message ? " -- " : ""}${message ?? ""}`,
+        ] as [Observable<any>, string]
+    )
+  )
+
+  return {
+    request,
+    process,
+    success: success ?? EMPTY,
+    failure: failure ?? EMPTY,
+    warning: warning ?? EMPTY,
+    loading: loading ?? EMPTY,
+  }
+}
