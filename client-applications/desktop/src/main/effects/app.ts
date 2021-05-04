@@ -41,8 +41,7 @@ import {
   userConfigToken,
 } from "@app/main/observables/user"
 import { uploadToS3 } from "@app/utils/logging"
-import env from "@app/utils/env"
-import { FractalCIEnvironment } from "@app/config/environment"
+import { config, FractalEnvironments } from "@app/config/environment"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -61,11 +60,11 @@ eventAppReady.pipe(take(1)).subscribe(() => {
   // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
   // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
   // we don't need to set it.
-  switch (env.PACKAGED_ENV) {
-    case FractalCIEnvironment.STAGING:
+  switch (config.appEnvironment) {
+    case FractalEnvironments.STAGING:
       autoUpdater.channel = "staging-rc"
       break
-    case FractalCIEnvironment.DEVELOPMENT:
+    case FractalEnvironments.DEVELOPMENT:
       autoUpdater.channel = "dev-rc"
       break
     default:

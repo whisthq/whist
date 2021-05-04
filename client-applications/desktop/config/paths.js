@@ -1,7 +1,7 @@
 /*
   Paths config
   This file exports the relevant paths for the protocol, app userdata, etc.
-  These paths are dependent on operating system
+  These paths are dependent on operating system.
 */
 
 const { app } = require("electron")
