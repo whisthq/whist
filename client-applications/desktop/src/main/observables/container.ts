@@ -20,7 +20,7 @@ import {
 } from "@app/main/observables/user"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 import { ContainerAssignTimeout } from "@app/utils/constants"
-import { loadingFrom, pollMap } from "@app/utils/observables"
+import { loadingFrom, pollMap, factory } from "@app/utils/observables"
 import { from, of, zip, combineLatest } from "rxjs"
 import {
   map,
@@ -33,7 +33,6 @@ import {
   takeWhile,
 } from "rxjs/operators"
 import { formatContainer, formatTokensArray } from "@app/utils/formatters"
-import { factory } from "@app/utils/observables"
 
 export const containerCreateRequest = combineLatest([
   zip(userEmail, userAccessToken, userConfigToken),
