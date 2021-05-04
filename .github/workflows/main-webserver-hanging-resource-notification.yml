@@ -66,6 +66,7 @@ jobs:
                   echo 'hanging_resource<<EOF' >> $GITHUB_ENV
                   echo "$hanging_resource" >> $GITHUB_ENV
                   echo "EOF" >> $GITHUB_ENV
+                  echo "$hanging_resource"
 
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Notify in Slack if Hanging Resources Exist
