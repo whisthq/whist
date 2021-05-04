@@ -13,16 +13,20 @@ from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
     fractal_sql_commit,
 )
-from app.models import db, InstanceInfo, RegionToAmi
+from app.models import db, InstanceInfo
 
 
-def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tuple[Response, int]:
+def initial_instance_auth_helper(
+    ip: str, instance_id: str, instance_type: str, location: str, ami_id: str
+) -> Tuple[Response, int]:
     """
 
     Args:
         ip: the IP address of the instance to be authenticated
         instance_id: the instance ID of the instance to be authenticated
+        instance_type: what type of hardware the instance is on
         location: which region the instance is in
+        ami_id: what AMI the instance is running
 
     Returns:
 
@@ -36,9 +40,13 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
     # Then create the instance
-    ami_id = RegionToAmi.query.get(location).ami_id
     new_instance = InstanceInfo(
-        instance_id=instance_id, ip=ip, auth_token=auth_token, ami_id=ami_id, location=location
+        instance_id=instance_id,
+        ip=ip,
+        auth_token=auth_token,
+        instance_type=instance_type,
+        ami_id=ami_id,
+        location=location,
     )
     instance_sql = fractal_sql_commit(db, lambda database, x: database.session.add(x), new_instance)
     if instance_sql:
@@ -49,7 +57,7 @@ def initial_instance_auth_helper(ip: str, instance_id: str, location: str) -> Tu
 
 
 def instance_heartbeat_helper(
-    auth_token: str, instance_id: str, free_ram_kb: int, instance_type: str, is_dying: bool
+    auth_token: str, instance_id: str, free_ram_kb: int, is_dying: bool
 ) -> Tuple[Response, int]:
     """
 
@@ -57,7 +65,6 @@ def instance_heartbeat_helper(
         auth_token (str): the auth token of the instance
         instance_id (str): the AWS instance ID
         free_ram_kb (int): how many KB of ram are available
-        instance_type (str): what type of instance (e.g. g4.xlarge) it is
         is_dying (bool): if the instance is being shut down
 
     Returns: request status
@@ -72,7 +79,6 @@ def instance_heartbeat_helper(
     if is_dying:
         db.session.delete(instance)
     else:
-        instance.instance_type = instance_type
         instance.last_pinged = int(time())
         instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
     db.session.commit()
