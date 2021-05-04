@@ -1,5 +1,6 @@
 import os
 import random
+import re
 import string
 import time
 import uuid
@@ -176,7 +177,10 @@ class ECSClient:
             str: the generated name
         """
         branch, commit = self._get_git_info()
-        branch = branch.replace("/", "-")
+        # Sanitize branch name to prevent complaints from boto. Note from the
+        # python3 docs that if the hyphen is at the beginning or end of the
+        # contents of `[]` then it should not be escaped.
+        branch = re.sub("[^0-9a-zA-Z-]+", "-", branch, count=0, flags=re.ASCII)
         # Generate our own UID instead of using UUIDs since they make the
         # resource names too long (and therefore tests fail). We would need
         # log_36(16^32) = approx 25 digits of lowercase alphanumerics to get
