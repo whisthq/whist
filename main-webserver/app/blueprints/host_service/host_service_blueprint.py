@@ -47,6 +47,12 @@ def host_service_auth(**kwargs):
     Authenticates a host instance with the webserver
     and saves its info in the DB.
 
+    Args:
+        instance_id (str): the cloud ID of the instance
+        instance_type (str): what type of hardware is the instance on?
+        region (str): where is the instance?
+        ami (str): what image is the instance running?
+
     Returns: a response indicating if the auth/db init succeeded
 
     """
@@ -70,6 +76,13 @@ def host_service_heartbeat(**kwargs):
     """
     Updates the host service's info in the DB
     based on the incoming heartbeat.
+
+    Args:
+        auth_token (str): the instance's authentication token with the webserver
+        instance_id (str): the instance's cloud ID
+        free_ram_kb (int): how much ram does the instance had available?
+        dying_heartbeat (bool): is the instance about to die?
+
 
     Returns:
         a response indicating if the heartbeat was processed
