@@ -64,12 +64,9 @@ def instance_heartbeat_helper(
 
     """
     instance = InstanceInfo.query.get(instance_id)
-    # Right now a bunch of instances have already started up without
-    # saved authentication tokens -- this is the fix for that backcompat
-    enforce_auth = False
     if instance is None:
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
-    if instance.auth_token.lower() != auth_token.lower() and enforce_auth:
+    if instance.auth_token.lower() != auth_token.lower():
         return jsonify({"status": NOT_FOUND}), NOT_FOUND
     # If the instance says it's dying, get rid of it
     if is_dying:
