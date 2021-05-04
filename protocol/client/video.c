@@ -759,7 +759,7 @@ int init_video_renderer() {
     */
 
     if (init_peer_cursors() != 0) {
-        LOG_ERROR("Failed to init peer cursors.");
+        LOG_WARNING("Failed to init peer cursors.");
     }
 
     // Here we create the frame buffer allocator,
