@@ -19,7 +19,6 @@ import {
   userConfigToken,
 } from "@app/main/observables/user"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
-import { debugObservables, errorObservables } from "@app/utils/logging"
 import { ContainerAssignTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap } from "@app/utils/observables"
 import { from, of, zip, combineLatest } from "rxjs"
@@ -28,17 +27,13 @@ import {
   share,
   delay,
   filter,
-  takeLast,
   takeUntil,
   exhaustMap,
   withLatestFrom,
   takeWhile,
 } from "rxjs/operators"
-import {
-  formatContainer,
-  formatTokensArray,
-  formatObservable,
-} from "@app/utils/formatters"
+import { formatContainer, formatTokensArray } from "@app/utils/formatters"
+import { factory } from "@app/utils/observables"
 
 export const containerCreateRequest = combineLatest([
   zip(userEmail, userAccessToken, userConfigToken),
@@ -67,78 +62,34 @@ export const containerCreateLoading = loadingFrom(
   containerCreateFailure
 )
 
-export const containerAssignRequest = containerCreateSuccess.pipe(
-  withLatestFrom(userAccessToken),
-  map(([response, token]) => [response.json.ID, token])
-)
-
-export const containerAssignPolling = containerAssignRequest.pipe(
-  pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
-  takeWhile((res) => containerInfoPending(res), true),
-  takeWhile((res) => !containerInfoError(res), true),
-  takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
-  share()
-)
-
-containerAssignPolling.subscribe((res) =>
-  console.log("container poll", res?.status, res?.json.state)
-)
-
-export const containerAssignSuccess = containerAssignPolling.pipe(
-  takeLast(1),
-  filter((res) => containerInfoSuccess(res))
-)
-
-export const containerAssignFailure = containerAssignPolling.pipe(
-  takeLast(1),
-  filter(
-    (res) =>
-      containerInfoError(res) ||
-      containerInfoPending(res) ||
-      !containerInfoSuccess(res)
-  )
-)
-
-export const containerAssignLoading = loadingFrom(
-  containerAssignRequest,
-  containerAssignSuccess,
-  containerAssignFailure
-)
-
-// Logging
-
-debugObservables(
-  [
-    formatObservable(containerCreateRequest, formatTokensArray),
-    "containerCreateRequest",
-  ],
-  [
-    formatObservable(containerCreateSuccess, formatContainer),
-    "containerCreateSuccess",
-  ],
-  [containerCreateLoading, "containerCreateLoading"],
-  [
-    formatObservable(containerAssignRequest, formatTokensArray),
-    "containerAssignRequest",
-  ],
-  [
-    formatObservable(containerAssignPolling, formatContainer),
-    "containerAssignPolling",
-  ],
-  [
-    formatObservable(containerAssignSuccess, formatContainer),
-    "containerAssignSuccess",
-  ],
-  [containerAssignLoading, "containerAssignLoading"]
-)
-
-errorObservables(
-  [
-    formatObservable(containerCreateFailure, formatContainer),
-    "containerCreateFailure",
-  ],
-  [
-    formatObservable(containerAssignFailure, formatContainer),
-    "containerAssignFailure",
-  ]
-)
+export const {
+  request: containerAssignRequest,
+  process: containerAssignProcess,
+  success: containerAssignSuccess,
+  failure: containerAssignFailure,
+  loading: containerAssignLoading,
+} = factory("containerAssign", {
+  request: containerCreateSuccess.pipe(
+    withLatestFrom(userAccessToken),
+    map(([response, token]) => [response.json.ID, token] as [string, string])
+  ),
+  process: (args) =>
+    of(args).pipe(
+      pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
+      takeWhile((res) => containerInfoPending(res), true),
+      takeWhile((res) => !containerInfoError(res), true),
+      takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
+      share()
+    ),
+  success: (res) => containerInfoSuccess(res),
+  failure: (res) =>
+    containerInfoError(res) ||
+    containerInfoPending(res) ||
+    !containerInfoSuccess(res),
+  logging: {
+    request: ["only tokens", formatTokensArray],
+    process: ["omitting verbose response", formatContainer],
+    success: ["omitting verbose response", formatContainer],
+    failure: ["omitting verbose response", formatContainer],
+  },
+})
