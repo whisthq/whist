@@ -56,7 +56,7 @@ export const containerInfoSuccess = (
 
 export const containerInfoPending = (
   response: AsyncReturnType<typeof containerInfo>
-) => response?.json?.state !== "SUCCESS" && response?.json.state !== "FAILURE"
+) => response?.json?.state !== "SUCCESS" && response?.json?.state !== "FAILURE"
 
 export const containerInfoPorts = (
   response: AsyncReturnType<typeof containerInfo>
