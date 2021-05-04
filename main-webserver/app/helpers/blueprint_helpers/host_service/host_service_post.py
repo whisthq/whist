@@ -28,7 +28,7 @@ def initial_instance_auth_helper(
         location: which region the instance is in
         ami_id: what AMI the instance is running
 
-    Returns:
+    Returns: whether the request succeeded or failed, plus the response code
 
     """
     auth_token = os.urandom(16).hex()
@@ -39,7 +39,7 @@ def initial_instance_auth_helper(
     if preexisting_instance is not None:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    # Then create the instance
+    # Then create a row for the instance in the DB
     new_instance = InstanceInfo(
         instance_id=instance_id,
         ip=ip,
@@ -67,7 +67,7 @@ def instance_heartbeat_helper(
         free_ram_kb (int): how many KB of ram are available
         is_dying (bool): if the instance is being shut down
 
-    Returns: request status
+    Returns: whether the request succeeded or failed, plus the response code
 
     """
     instance = InstanceInfo.query.get(instance_id)

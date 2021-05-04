@@ -43,6 +43,13 @@ def host_service(**kwargs):
 @host_service_bp.route("/host_service/auth", methods=("POST",))
 @fractal_pre_process
 def host_service_auth(**kwargs):
+    """
+    Authenticates a host instance with the webserver
+    and saves its info in the DB.
+
+    Returns: a response indicating if the auth/db init succeeded
+
+    """
     body = kwargs.pop("body")
     address: str = kwargs.pop("received_from")
 
@@ -60,6 +67,14 @@ def host_service_auth(**kwargs):
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
 @fractal_pre_process
 def host_service_heartbeat(**kwargs):
+    """
+    Updates the host service's info in the DB
+    based on the incoming heartbeat.
+
+    Returns:
+        a response indicating if the heartbeat was processed
+
+    """
     # pylint: disable=unused-variable
     body = kwargs.pop("body")
     address = kwargs.pop("received_from")

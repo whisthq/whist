@@ -147,6 +147,23 @@ class SortedClusters(db.Model):
 
 
 class InstanceInfo(db.Model):
+    """
+    compute instance information
+
+    Attributes:
+        instance_id (string): instance id from AWS console
+        location (string): AWS region (i.e. us-east-1)
+        instance_type (string): what hardware is the instance running on?
+        auth_token (string): what token does this instance use to auth with the webserver?
+        ip (string): the instance's public IP
+        CPURemainingPerInstance (float): CPU that isn't in use
+        GPURemainingPerInstance (float): GPU that isn't in use
+        memoryRemainingPerInstance (float): RAM not in use
+        runningTasksCount (int): how many containers are running?
+        last_pinged (int): when did this instance last tell us it existed?
+        ami_id (str): what image is this machine based on?
+    """
+
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
