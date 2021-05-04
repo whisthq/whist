@@ -137,17 +137,12 @@ def test_region():
 
 def test_prod_name():
     current_app.testing = False
-
-    client = ECSClient()
-
-    assert not client.generate_name().startswith("test-")
+    assert not ECSClient.generate_name().startswith("test-")
 
 
 def test_test_name():
     assert current_app.testing
-
-    client = ECSClient()
-    name = client.generate_name()
+    name = ECSClient.generate_name()
 
     assert name.startswith("test-")
     assert "_" not in name

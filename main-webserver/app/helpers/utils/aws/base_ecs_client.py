@@ -162,13 +162,15 @@ class ECSClient:
         )
         return clients
 
-    def _get_git_info(self):
+    @staticmethod
+    def _get_git_info():
         branch = current_app.config["APP_GIT_BRANCH"]
         commit = current_app.config["APP_GIT_COMMIT"]
 
         return branch, commit[0:7]
 
-    def generate_name(self, starter_name="", test_prefix=False):
+    @staticmethod
+    def generate_name(starter_name="", test_prefix=False):
         """
         Helper function for generating a name with a random UUID
         Args:
@@ -177,7 +179,7 @@ class ECSClient:
         Returns:
             str: the generated name
         """
-        branch, commit = self._get_git_info()
+        branch, commit = ECSClient._get_git_info()
         # Sanitize branch name to prevent complaints from boto. Note from the
         # python3 docs that if the hyphen is at the beginning or end of the
         # contents of `[]` then it should not be escaped.
@@ -211,13 +213,13 @@ class ECSClient:
             cluster_name (Optional[str]): name of cluster, will be automatically generated if not
                 provided
         """
-        branch, commit = self._get_git_info()
+        branch, commit = ECSClient._get_git_info()
 
         if isinstance(capacity_providers, str):
             capacity_providers = [capacity_providers]
         if not isinstance(capacity_providers, list):
             raise Exception("capacity_providers must be a list of strs")
-        cluster_name = cluster_name or self.generate_name("cluster")
+        cluster_name = cluster_name or ECSClient.generate_name("cluster")
 
         self.ecs_client.create_cluster(
             clusterName=cluster_name,
@@ -690,12 +692,12 @@ class ECSClient:
                 created
         """
 
-        cluster_name = cluster_name or self.generate_name("cluster")
+        cluster_name = cluster_name or ECSClient.generate_name("cluster")
 
         # Initial data/scripts to be run on all container instances
         userdata = userdata_template.format(cluster_name)
 
-        launch_config_name = launch_config_name or self.generate_name("lc")
+        launch_config_name = launch_config_name or ECSClient.generate_name("lc")
         _ = self.auto_scaling_client.create_launch_configuration(
             LaunchConfigurationName=launch_config_name,
             ImageId=ami,
@@ -724,7 +726,7 @@ class ECSClient:
         Returns:
              str: name of auto scaling group created
         """
-        branch, commit = self._get_git_info()
+        branch, commit = ECSClient._get_git_info()
         availability_zones = availability_zones or [
             self.region_name + "a" if self.region_name != "us-east-1" else "us-east-1b"
         ]
@@ -732,7 +734,7 @@ class ECSClient:
             availability_zones = [availability_zones]
         if not isinstance(availability_zones, list):
             raise Exception("availability_zones should be a list of strs")
-        auto_scaling_group_name = auto_scaling_group_name or self.generate_name("asg")
+        auto_scaling_group_name = auto_scaling_group_name or ECSClient.generate_name("asg")
         _ = self.auto_scaling_client.create_auto_scaling_group(
             AutoScalingGroupName=auto_scaling_group_name,
             LaunchConfigurationName=launch_config_name,
@@ -757,7 +759,7 @@ class ECSClient:
                     "Value": "True" if current_app.testing else "False",
                     "PropagateAtLaunch": True,
                 },
-                {"Key": "Name", "Value": self.generate_name("ec2"), "PropagateAtLaunch": True},
+                {"Key": "Name", "Value": ECSClient.generate_name("ec2"), "PropagateAtLaunch": True},
             ],
         )
 
@@ -791,7 +793,7 @@ class ECSClient:
         auto_scaling_group_arn = auto_scaling_group_info["AutoScalingGroups"][0][
             "AutoScalingGroupARN"
         ]
-        capacity_provider_name = capacity_provider_name or self.generate_name("capprov")
+        capacity_provider_name = capacity_provider_name or ECSClient.generate_name("capprov")
         _ = self.ecs_client.create_capacity_provider(
             name=capacity_provider_name,
             autoScalingGroupProvider={
