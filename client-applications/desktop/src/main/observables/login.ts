@@ -23,7 +23,17 @@ export const {
   failure: loginFailure,
   warning: loginWarning,
   loading: loginLoading,
-} = factory("login", {
+} = factory<
+  { email: string; password: string },
+  {
+    status: number
+    json: {
+      access_token: string
+      refresh_token: string
+      encrypted_config_token: string
+    }
+  }
+>("login", {
   request: loginAction,
   process: ({ email, password }) => from(emailLogin(email, password)),
   success: (result) => emailLoginValid(result),

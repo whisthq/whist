@@ -81,14 +81,16 @@ export const factory = <T, A>(
 ) => {
   const request = fx.request
   const processOuter = request.pipe(map(fx.process))
-  const process = processOuter.pipe(switchMap((processOuter) => processOuter))
+  const process = processOuter.pipe(
+    switchMap((obs: Observable<any>) => obs)
+  )
   const results = processOuter.pipe(
-    switchMap((processOuter) => processOuter.pipe(takeLast(1)))
+    switchMap((obs: Observable<any>) => obs.pipe(takeLast(1)))
   )
 
-  const success = fx.success != null && results.pipe(filter(fx.success))
-  const failure = fx.failure != null && results.pipe(filter(fx.failure))
-  const warning = fx.warning != null && results.pipe(filter(fx.warning))
+  const success = (fx.success != null) ? results.pipe(filter(fx.success)) : EMPTY
+  const failure = (fx.failure != null) ? results.pipe(filter(fx.failure)) : EMPTY
+  const warning = (fx.warning != null) ? results.pipe(filter(fx.warning)) : EMPTY
 
   const loading = loadingFrom(request, ...compact([success, failure, warning]))
 
