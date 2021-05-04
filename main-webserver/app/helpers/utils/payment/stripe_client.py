@@ -4,7 +4,6 @@ from datetime import datetime, timedelta
 
 from functools import reduce
 
-import uuid
 import stripe
 
 from flask import current_app
