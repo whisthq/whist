@@ -40,6 +40,8 @@ type heartbeatRequest struct {
 	HeartbeatNumber  uint64 // Index of heartbeat since host service started
 	InstanceID       string // EC2 instance ID
 	InstanceType     string // EC2 instance type
+	Region           string // AWS region
+	AWSAmiID         string // AWS AMI ID
 	TotalRAMinKB     string // Total amount of RAM on the host, in kilobytes
 	FreeRAMinKB      string // Lower bound on RAM available on the host (not consumed by running containers), in kilobytes
 	AvailRAMinKB     string // Upper bound on RAM available on the host (not consumed by running containers), in kilobytes
@@ -203,6 +205,8 @@ func sendHeartbeat(isDying bool) {
 	// we want to mark the instance as draining.
 	instanceID, _ := GetAwsInstanceID()
 	instanceType, _ := GetAwsInstanceType()
+	region, _ := GetAwsPlacementRegion()
+	amiID, _ := GetAwsAmiID()
 	totalRAM, _ := GetTotalMemoryInKB()
 	freeRAM, _ := GetFreeMemoryInKB()
 	availRAM, _ := GetAvailableMemoryInKB()
@@ -214,6 +218,8 @@ func sendHeartbeat(isDying bool) {
 		HeartbeatNumber:  numBeats,
 		InstanceID:       instanceID,
 		InstanceType:     instanceType,
+		Region:           region,
+		AWSAmiID:         amiID,
 		TotalRAMinKB:     totalRAM,
 		FreeRAMinKB:      freeRAM,
 		AvailRAMinKB:     availRAM,
