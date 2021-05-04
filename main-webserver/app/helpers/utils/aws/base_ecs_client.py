@@ -182,6 +182,7 @@ class ECSClient:
         # python3 docs that if the hyphen is at the beginning or end of the
         # contents of `[]` then it should not be escaped.
         branch = re.sub("[^0-9a-zA-Z-]+", "-", branch, count=0, flags=re.ASCII)
+
         # Generate our own UID instead of using UUIDs since they make the
         # resource names too long (and therefore tests fail). We would need
         # log_36(16^32) = approx 25 digits of lowercase alphanumerics to get
@@ -189,12 +190,12 @@ class ECSClient:
         # uuid.uuid4()) but 10 digits gives us more than enough entropy while
         # saving us a lot of characters.
         uid = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(10))
-        name = f"{starter_name}-<{branch}>-<{commit}>-uid-{uid}"
 
-        # need a special case for capacity_provider and cluster
-        # as they don't like special characters
-        if starter_name in ["capprov", "cluster"]:
-            name = f"{starter_name}-{branch}-{commit}-uid-{uid}"
+        # Note that capacity providers and clusters do not allow special
+        # characters like angle brackets, which we were using before to
+        # separate the branch name and commit hash. To be safe, we don't use
+        # those characters in any of our resource names.
+        name = f"{starter_name}-{branch}-{commit}-uid-{uid}"
 
         test_prefix = test_prefix or current_app.testing
         if test_prefix:
