@@ -66,11 +66,12 @@ Defines
 
 #define NEWLINE "\n"
 // Cast to const chars so that comparison against XYZ_TAG is defined
-#define FATAL_ERROR_TAG "FATAL_ERROR"
-#define ERROR_TAG "ERROR"
-#define WARNING_TAG "WARNING"
-#define INFO_TAG "INFO"
-#define DEBUG_TAG "DEBUG"
+extern const char *debug_tag, *info_tag, *warning_tag, *error_tag, *fatal_error_tag;
+#define DEBUG_TAG debug_tag
+#define INFO_TAG info_tag
+#define WARNING_TAG warning_tag
+#define ERROR_TAG error_tag
+#define FATAL_ERROR_TAG fatal_error_tag
 
 #if LOG_LEVEL >= DEBUG_LEVEL
 #define LOG_DEBUG(message, ...) \

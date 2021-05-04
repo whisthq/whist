@@ -59,6 +59,13 @@ char* get_logger_history();
 int get_logger_history_len();
 void init_backtrace_handler();
 
+// TAG Strings
+const char* debug_tag = "DEBUG";
+const char* info_tag = "INFO";
+const char* warning_tag = "WARNING";
+const char* error_tag = "FATAL_ERROR";
+const char* fatal_error_tag = "FATAL_ERROR";
+
 extern int connection_id;
 extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
