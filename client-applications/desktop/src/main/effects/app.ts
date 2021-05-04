@@ -128,7 +128,7 @@ eventWindowCreated.subscribe(() => showAppDock())
 zip(
   protocolCloseRequest,
   merge(protocolLaunchSuccess.pipe(mapTo(true)), protocolLaunchFailure.pipe(mapTo(false)))
-).subscribe(([, success]: [any, boolean]) => {
+).subscribe(([, success]: [ChildProcess, boolean]) => {
   if (success) app.quit()
 })
 
