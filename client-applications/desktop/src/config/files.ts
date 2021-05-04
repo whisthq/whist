@@ -1,5 +1,4 @@
 import path from "path"
-import { app } from "electron"
 import config from "@app/config/environment"
 const { buildRoot } = config
 
