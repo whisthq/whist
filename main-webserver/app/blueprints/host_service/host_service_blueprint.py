@@ -48,10 +48,13 @@ def host_service_auth(**kwargs):
 
     try:
         instance_id: str = body.pop("InstanceID")
+        instance_type: str = body.pop("InstanceType")
+        region: str = body.pop("Region")
+        ami: str = body.pop("AWSAmiId")
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    return initial_instance_auth_helper(address, instance_id, "us-east-1")
+    return initial_instance_auth_helper(address, instance_id, instance_type, region, ami)
 
 
 @host_service_bp.route("/host_service/heartbeat", methods=("POST",))
@@ -70,7 +73,6 @@ def host_service_heartbeat(**kwargs):
     try:
         timestamp: str = body.pop("Timestamp")
         heartbeat_number: int = body.pop("HeartbeatNumber")
-        instance_type: str = body.pop("InstanceType")
         total_ram_kb: int = body.pop("TotalRAMinKB")
         free_ram_kb: int = body.pop("FreeRAMinKB")
         available_ram_kb: int = body.pop("AvailRAMinKB")
@@ -78,6 +80,4 @@ def host_service_heartbeat(**kwargs):
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
-    return instance_heartbeat_helper(
-        auth_token, instance_id, free_ram_kb, instance_type, dying_heartbeat
-    )
+    return instance_heartbeat_helper(auth_token, instance_id, free_ram_kb, dying_heartbeat)
