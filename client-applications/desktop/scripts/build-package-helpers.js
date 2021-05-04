@@ -69,7 +69,7 @@ module.exports = {
 
   // Get the current client-app version
   getCurrentClientAppVersion: () => {
-    version = execCommand("git describe --abbrev=0", ".", {}, "pipe")
+    version = execCommand("git describe --tags --abbrev=0", ".", {}, "pipe")
     console.log(`Getting current client-app version: ${version}`)
     return version
   },
