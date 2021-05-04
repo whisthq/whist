@@ -45,7 +45,7 @@ static SDL_Surface *duplicate_surface(SDL_Surface *surface) {
 int init_peer_cursors(void) {
     base_cursor_surface = SDL_LoadBMP("../../../fractal/cursor/cursor.bmp");
     if (base_cursor_surface == NULL) {
-        LOG_ERROR("Failed to load cursor bmp. (Error: %s)", SDL_GetError());
+        LOG_WARNING("Failed to load cursor bmp. (Error: %s)", SDL_GetError());
         return -1;
     }
     if (SDL_LockSurface(base_cursor_surface) != 0) {
