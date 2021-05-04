@@ -168,11 +168,12 @@ class ECSClient:
 
         return branch, commit[0:7]
 
-    def generate_name(self, starter_name=""):
+    def generate_name(self, starter_name="", test_prefix=False):
         """
         Helper function for generating a name with a random UUID
         Args:
             starter_name (Optional[str]): starter string for the name
+            test_prefix (Optional[bool]): whether the resource should have a "test-" prefix attached
         Returns:
             str: the generated name
         """
@@ -195,7 +196,8 @@ class ECSClient:
         if starter_name in ["capprov", "cluster"]:
             name = f"{starter_name}-{branch}-{commit}-uid-{uid}"
 
-        if current_app.testing:
+        test_prefix = test_prefix or current_app.testing
+        if test_prefix:
             name = f"test-{name}"
 
         return name
