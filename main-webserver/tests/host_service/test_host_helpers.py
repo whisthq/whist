@@ -57,7 +57,7 @@ def test_heartbeat_wrong_key(bulk_instance):
     """
     bulk_instance(instance_name="test_instance_id", auth_token="test_auth")
     time.sleep(3)
-    resp, resp_code = instance_heartbeat_helper("test_aut", "test_instance_id", 1024000, False)
+    resp, resp_code = instance_heartbeat_helper("bad_token", "test_instance_id", 1024000, False)
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": NOT_FOUND}, NOT_FOUND)
     inst = InstanceInfo.query.get("test_instance_id")
