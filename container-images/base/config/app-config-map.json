@@ -28,10 +28,5 @@
         "source": "sidekick",
         "destination": "/home/fractal/.config/sidekick",
         "type": "folder"
-    },
-    {
-        "source": "Slack",
-        "destination": "/home/fractal/.config/Slack",
-        "type": "folder"
     }
 ]
