@@ -7,6 +7,8 @@
 import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { mapTo } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 
 import {
   eventUpdateAvailable,
@@ -29,6 +31,8 @@ import { quitAction, signoutAction } from "@app/main/events/actions"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
+  protocolLaunchSuccess,
+  protocolLaunchFailure,
 } from "@app/main/observables/protocol"
 import { errorWindowRequest } from "@app/main/observables/error"
 import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
@@ -87,10 +91,10 @@ merge(
   eventUpdateAvailable
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
-  .subscribe((event) => (event as IpcMainEvent).preventDefault())
+  .subscribe((event: IpcMainEvent) => event.preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
-combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
+combineLatest([userEmail, protocolCloseRequest]).subscribe(([email,]: [string, ChildProcess]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
 
@@ -121,8 +125,11 @@ autoUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-merge(protocolCloseRequest, quitAction).subscribe(() => {
-  app.quit()
+zip(
+  protocolCloseRequest,
+  merge(protocolLaunchSuccess.pipe(mapTo(true)), protocolLaunchFailure.pipe(mapTo(false)))
+).subscribe(([, success]: [any, boolean]) => {
+  if (success) app.quit()
 })
 
 signoutAction.subscribe(() => {
