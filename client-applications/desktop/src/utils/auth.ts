@@ -2,46 +2,34 @@ import jwtDecode from "jwt-decode"
 import { URL } from "url"
 import { auth0Config } from "@app/config/environment"
 import { store, persist } from "@app/utils/persist"
-import fetch from "node-fetch"
 import { randomBytes } from "crypto"
+import { configPost } from "@fractal/core-ts"
 
 const { apiIdentifier, auth0Domain, clientId } = auth0Config
 
 const redirectUri = "http://localhost/callback"
 
-export function getAuthenticationURL() {
-  return (
-    "https://" +
-    auth0Domain +
-    "/authorize?" +
-    "audience=" +
-    apiIdentifier +
-    "scope=openid profile offline_access email&" +
-    "response_type=code&" +
-    "client_id=" +
-    clientId +
-    "&" +
-    "redirect_uri=" +
-    redirectUri
-  )
+const auth0HttpConfig = {
+  server: `https://${auth0Domain}`,
 }
 
-export async function refreshTokens(refreshToken: string) {
-  const refreshOptions = {
-    method: "POST",
+const post = configPost(auth0HttpConfig)
+
+export const getAuthenticationURL = () => {
+  return `https://${auth0Domain}/authorize?audience=${apiIdentifier}&scope=openid profile offline_access email&response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`
+}
+
+export const refreshTokens = async (refreshToken: string) => {
+  const response = await post({
+    endpoint: "/oauth/token",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({
+    body: {
       grant_type: "refresh_token",
       client_id: clientId,
       refresh_token: refreshToken,
-    }),
-  }
-
-  const response = await fetch(
-    `https://${auth0Domain}/oauth/token`,
-    refreshOptions
-  )
-  const data = await response.json()
+    },
+  })
+  const data = response.json
 
   const accessToken: string = data.access_token
   if (accessToken !== "") {
@@ -56,26 +44,23 @@ export async function refreshTokens(refreshToken: string) {
   }
 }
 
-export async function loadTokens(callbackURL: string) {
+export const loadTokens = async (callbackURL: string) => {
   const url = new URL(callbackURL)
   const code = url.searchParams.get("code")
 
-  const exchangeOptions = {
+  const body = {
     grant_type: "authorization_code",
     client_id: clientId,
     code,
     redirect_uri: redirectUri,
   }
 
-  const options = {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(exchangeOptions),
-  }
-  const response = await fetch(`https://${auth0Domain}/oauth/token`, options)
-  const data = await response.json()
+  const response = await post({
+    endpoint: "/oauth/token",
+    headers: { "content-type": "application/json" },
+    body,
+  })
+  const data = response.json
 
   const accessToken: string = data.access_token
   const refreshToken: string = data.refresh_token
@@ -94,25 +79,25 @@ export async function loadTokens(callbackURL: string) {
   }
 }
 
-export async function logout() {
+export const logout = () => {
   store.delete("refreshToken")
 }
 
-export function getLogOutUrl() {
+export const getLogOutUrl = () => {
   return `https://${auth0Domain}/v2/logout`
 }
 
 // Returns true if JWT is expired, false otherwise
-export function checkJWTExpired(token: string) {
+export const checkJWTExpired = (token: string) => {
   const jwt: any = jwtDecode(token)
   return jwt.exp < Date.now() / 1000
 }
 
-export function generateRandomConfigToken() {
+export const generateRandomConfigToken = () => {
   const buffer = randomBytes(48)
   return buffer.toString("base64")
 }
 
-export async function storeConfigToken(configToken: string) {
+export const storeConfigToken = async (configToken: string) => {
   await persist({ userConfigToken: configToken })
 }

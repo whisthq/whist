@@ -20,9 +20,10 @@ export const userRefreshToken = fromEventPersist("refreshToken").pipe(
   filter((token: string) => Boolean(token))
 )
 
-export const userConfigToken = merge(
-  fromEventPersist("userConfigToken")
-).pipe(filter(identity), share())
+export const userConfigToken = fromEventPersist("userConfigToken").pipe(
+  filter(identity),
+  share()
+)
 
 // Logging
 debugObservables(

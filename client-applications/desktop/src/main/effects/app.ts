@@ -134,18 +134,16 @@ signoutAction.subscribe(() => {
 })
 
 // If no valid access token exists, we regenerate one
-userRefreshToken.pipe(takeUntil(userAccessToken)).subscribe(
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  async (refreshToken: string): Promise<void> => {
-    await refreshTokens(refreshToken)
-  }
-)
+userRefreshToken
+  .pipe(takeUntil(userAccessToken))
+  .subscribe((refreshToken: string) => {
+    // eslint-disable-next-line no-void
+    void refreshTokens(refreshToken)
+  })
 
 // If no config token, randomly generate one and store it
-userRefreshToken.pipe(takeUntil(userConfigToken)).subscribe(
-  // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  async () => {
-    const configToken = generateRandomConfigToken()
-    await storeConfigToken(configToken)
-  }
-)
+userRefreshToken.pipe(takeUntil(userConfigToken)).subscribe(() => {
+  const configToken = generateRandomConfigToken()
+  // eslint-disable-next-line no-void
+  void storeConfigToken(configToken)
+})
