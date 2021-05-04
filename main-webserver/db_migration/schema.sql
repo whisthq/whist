@@ -237,7 +237,8 @@ CREATE TABLE hardware.instance_info (
     last_pinged bigint,
     ip character varying NOT NULL,
     ami_id character varying NOT NULL,
-    location character varying NOT NULL
+    location character varying NOT NULL,
+    instance_type character varying NOT NULL,
 );
 
 
