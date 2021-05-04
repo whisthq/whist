@@ -11,56 +11,26 @@
 // storage changes.
 
 import { from } from "rxjs"
-import { loadingFrom } from "@app/utils/observables"
-import {
-  debugObservables,
-  warningObservables,
-  errorObservables,
-} from "@app/utils/logging"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
-import { formatLogin, formatObservable } from "@app/utils/formatters"
+import { formatLogin } from "@app/utils/formatters"
 import { loginAction } from "@app/main/events/actions"
+import { factory } from "@app/utils/observables"
 
-export const loginRequest = loginAction.pipe(
-  filter((req) => (req?.email ?? "") !== "" && (req?.password ?? "") !== ""),
-  map(({ email, password }) => [email, password]),
-  share()
-)
-
-export const loginProcess = loginRequest.pipe(
-  map(async ([email, password]) => await emailLogin(email, password)),
-  exhaustMap((req) => from(req)),
-  share()
-)
-
-export const loginWarning = loginProcess.pipe(
-  filter((res) => !emailLoginError(res)),
-  filter((res) => !emailLoginValid(res))
-)
-
-export const loginSuccess = loginProcess.pipe(
-  filter((res) => emailLoginValid(res))
-)
-
-export const loginFailure = loginProcess.pipe(
-  filter((res) => emailLoginError(res))
-)
-
-export const loginLoading = loadingFrom(
-  loginRequest,
-  loginSuccess,
-  loginFailure,
-  loginWarning
-)
-
-// Logging
-debugObservables(
-  [loginRequest, "loginRequest"],
-  [formatObservable(loginSuccess, formatLogin), "loginSuccess"],
-  [loginLoading, "loginLoading"]
-)
-
-warningObservables([loginWarning, "loginWarning"])
-
-errorObservables([loginFailure, "loginFailure"])
+export const {
+  request: loginRequest,
+  process: loginProcess,
+  success: loginSuccess,
+  failure: loginFailure,
+  warning: loginWarning,
+  loading: loginLoading,
+} = factory("login", {
+  request: loginAction,
+  process: ({ email, password }) => from(emailLogin(email, password)),
+  success: (result) => emailLoginValid(result),
+  failure: (result) => emailLoginError(result),
+  warning: (result) => !emailLoginError(result) && !emailLoginValid(result),
+  logging: {
+    request: ["hiding password", ({ email }) => [email, "********"]],
+    success: ["only { json } tokens", formatLogin],
+  },
+})
