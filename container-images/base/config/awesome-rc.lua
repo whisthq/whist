@@ -400,7 +400,7 @@ client.connect_signal("unmanage", function (c)
     --     By sending the new tab command to the window, we prevent a new
     --     instance of Chrome opening if the user has hit the tab "x".
     if numclients == 0 and (c.class == "Google-chrome" or c.class == "Brave-browser" or c.class == "Sidekick-browser") then
-      os.execute("xdotool key --window " .. c.window .. " ctrl+t")
+      os.execute("xdotool key --window " .. c.window .. " alt+1")
     end
     manage_taskbar_visibility()
     ensure_client_is_not_offscreen(awful.client.getmaster())
