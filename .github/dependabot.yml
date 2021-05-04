@@ -80,6 +80,14 @@ updates:
   #####################################################
   ################## ECS-Host-Service #################
 
+  # Dependabot is currently disabled for the host service because the host
+  # service itself has only standard library dependencies. The other
+  # dependencies are pulled in by the ecs-agent, which we are deprecating as
+  # soon as possible, and unfortunately updating those dependencies causes the
+  # host service not to compile anymore, and fixing the issues would take too
+  # much energy to be worth it for now. Once the webserver refactor is done, we
+  # can revisit this.
+
   #  - package-ecosystem: "gomod"
   #    directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
   #    schedule:
