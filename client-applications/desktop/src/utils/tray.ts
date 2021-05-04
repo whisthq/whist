@@ -1,5 +1,6 @@
 import { Menu, Tray, nativeImage } from "electron"
 import { trayIconPath } from "@app/config/files"
+
 let tray: Tray | null = null
 
 export const createTray = (eventActionTypes: {
