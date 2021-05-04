@@ -31,9 +31,8 @@ GENERIC_UBUNTU_SERVER_2004_LTS_AMI = "ami-0885b1f6bd170450c"
 
 @pytest.fixture(scope="module")
 def ecs_data(app):
-    branch = app.config["APP_GIT_BRANCH"].replace("/", "-")
-    commit = app.config["APP_GIT_COMMIT"][:7]
-    pytest.cluster_name = f"test-cluster-{branch}-{commit}-{uuid.uuid4()}"
+    branch, commit = ECSClient._get_git_info()
+    pytest.cluster_name = ECSClient.generate_name(starter_name="cluster", test_prefix=True)
     pytest.container_name = None
 
 
