@@ -4,8 +4,8 @@ import {
   userConfigToken,
 } from "@app/main/observables/user"
 import {
-  containerAssignPolling,
   containerAssignFailure,
+  containerAssignLoading,
 } from "@app/main/observables/container"
 import { loadingFrom, pollMap } from "@app/utils/observables"
 import {
@@ -23,10 +23,8 @@ import { debugObservables, errorObservables } from "@app/utils/logging"
 import { from } from "rxjs"
 import {
   map,
-  take,
   share,
   filter,
-  skipWhile,
   takeLast,
   takeWhile,
   takeUntil,
@@ -40,11 +38,10 @@ import {
   formatTokensArray,
 } from "@app/utils/formatters"
 
-export const hostInfoRequest = containerAssignPolling.pipe(
-  skipWhile((res) => res?.json.state !== "PENDING"),
-  take(1),
+export const hostInfoRequest = containerAssignLoading.pipe(
+  filter((loading) => !loading),
   withLatestFrom(userEmail, userAccessToken),
-  map(([_, email, token]) => [email, token]),
+  map(([_, email, token]) => [email, token] as [string, string]),
   share()
 )
 
@@ -55,7 +52,7 @@ export const hostInfoPolling = hostInfoRequest.pipe(
   share()
 )
 
-hostInfoPolling.subscribe((res) =>
+hostInfoPolling.subscribe((res: any) =>
   console.log("host poll", res?.status, res?.json)
 )
 
