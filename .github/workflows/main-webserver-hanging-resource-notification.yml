@@ -55,7 +55,6 @@ jobs:
                   aws-region: us-east-1
 
             - name: Check for Hanging Resources and Notify in Slack if They Exist
-              working-directory: .github/workflows/helpers/aws
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
@@ -74,6 +73,7 @@ jobs:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                     SLACK_CHANNEL = "#alerts-dev"
                     BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: %s" % resources
+                    
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-packer-instance-notification:
