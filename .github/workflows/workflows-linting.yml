@@ -57,7 +57,7 @@ jobs:
 
             - name: Install requirements
               working-directory: .github/workflows/helpers
-              run: pip install -r notifications/requirements.txt
+              run: pip install -r requirements.txt
 
             - name: Check if Code is Linted with Python Black
               working-directory: .github/workflows/helpers
