@@ -434,5 +434,7 @@ def hanging_resource(component, region, urls, secrets):
     elif component == "Instances":
         message = "\n"
         instances = flag_instances(region)
-        message += instances if len(instances) > 0 else "     - No hanging instances\n"
-        return message
+        if len(instances) > 0:
+            message += instances
+            return message
+        return ""
