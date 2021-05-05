@@ -39,10 +39,12 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Setup Python-based notifications
+            - name: Setup Python-based notification and resource modules
               working-directory: .github/workflows/helpers
               shell: bash
-              run: ./notifications/setup_notifications.sh
+              run: |
+                  ./notifications/setup_notifications.sh
+                  ./aws/setup_aws.sh
 
             - name: Install boto3
               run: pip install boto3
