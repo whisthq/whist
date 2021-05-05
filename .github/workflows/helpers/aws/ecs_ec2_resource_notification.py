@@ -1,12 +1,9 @@
-import boto3
-import os
-import uuid
-import sys
-
 from datetime import datetime
 from datetime import date
 from datetime import timezone
 from datetime import timedelta
+
+import boto3
 
 regions = [
     "us-east-1",
