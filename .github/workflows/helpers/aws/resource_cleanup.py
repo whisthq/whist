@@ -54,7 +54,8 @@ def get_num_instances(cluster, region):
     return instance_count
 
 
-# Takes a Cluster ARN and maps it to its Auto Scaling Group(s) via its associated Capacity Provider(s)
+# Takes a Cluster ARN and maps it to its Auto Scaling Group(s) via its
+# associated Capacity Provider(s)
 def cluster_to_asgs(cluster_arn, region):
     capacity_providers, _ = subprocess.Popen(
         [
@@ -110,7 +111,10 @@ def get_db_clusters(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_clusters($_eq: String = \\"%s\\") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            (
+                '{"query":"query get_clusters($_eq: String = \\"%s\\")'
+                ' { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            )
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -133,7 +137,10 @@ def get_db_tasks(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_tasks($_eq: String = \\"%s\\") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            (
+                '{"query":"query get_tasks($_eq: String = \\"%s\\")'
+                ' { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            )
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -152,16 +159,16 @@ def get_hanging_asgs(region):
     ]
     all_asgs = get_all_aws_asgs(region)
 
-    # return names (not ARNs) of ASGs not assocated a cluster (could be more than one ASG per cluster)
+    # return names (not ARNs) of ASGs not assocated a cluster (could be more
+    # than one ASG per cluster)
     return [asg.split("/")[-1] for asg in list(set(all_asgs) - set(cluster_asgs))]
 
 
 # Compares list of clusters in AWS to list of clusters in all DBs
 def get_hanging_clusters(urls, secrets, region):
     # parses names of clusters from ARNs since only the names are stored in the DB
-    aws_clusters = set(
-        [cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)]
-    )
+    aws_clusters = {cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)}
+
     if "default" in aws_clusters:
         aws_clusters.remove("default")
 
@@ -170,7 +177,8 @@ def get_hanging_clusters(urls, secrets, region):
     for url, secret in zip(urls, secrets):
         db_clusters |= set(get_db_clusters(url, secret, region))
 
-    # return list of cluster names in aws but not in db (and vice versa), ignoring the 'default' cluster
+    # return list of cluster names in aws but not in db (and vice versa),
+    # ignoring the 'default' cluster
     return [list(aws_clusters - db_clusters), list(db_clusters - aws_clusters)]
 
 
@@ -179,7 +187,7 @@ def delete_if_older_than_one_day(task, cluster, time):
     now = datetime.now(timezone.utc)
     then = dateutil.parser.parse(time)
     if now - then > timedelta(days=1):
-        clusters, _ = subprocess.Popen(
+        _, _ = subprocess.Popen(
             [
                 "aws",
                 "ecs",
