@@ -6,16 +6,18 @@ import classNames from 'classnames'
 
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import { withContext } from '@app/shared/utils/context'
+import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 
 const Cookies = () => {
   const { width } = withContext()
-  const { dark } = withContext()
+  const { dark, setDark } = withContext()
   return (
         <div className={classNames(
           'overflow-x-hidden',
           dark ? 'dark bg-blue-darkest' : 'bg-white'
         )}
           style={{ overflowX: 'hidden' }} id="top">
+            <DarkModeIcon/>
             <div
                 className= "dark:text-gray-300"
                 style={{

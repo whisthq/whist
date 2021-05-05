@@ -7,7 +7,6 @@ import { withContext } from '@app/shared/utils/context'
 
 import Header from '@app/shared/components/header'
 import Footer from '@app/shared/components/footer'
-import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 import Top from './top'
 import Middle from './middle'
 import Features from './features'
@@ -19,7 +18,7 @@ export const Chrome = () => {
 
         Arguments: none
     */
-  const { dark, setDark } = withContext()
+  const { dark } = withContext()
 
   return (
     <div
@@ -29,7 +28,6 @@ export const Chrome = () => {
       )}
     >
       <div className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden">
-        <DarkModeIcon dark={dark} onClick={() => setDark(!dark)} />
         <Header dark={dark} />
         <Top />
         <Middle />
