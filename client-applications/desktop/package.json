@@ -48,7 +48,8 @@
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
         "react-spring": "^9.1.2",
-        "rxjs": "^7.0.0"
+        "rxjs": "^7.0.0",
+        "universal-analytics": "^0.4.23"
     },
     "devDependencies": {
         "@snowpack/plugin-build-script": "^2.1.0",
