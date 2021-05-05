@@ -57,7 +57,6 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
             - name: Check for Hanging Resources and Notify in Slack if They Exist
               shell: python3 {0}
               run: |
