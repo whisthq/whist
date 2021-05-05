@@ -167,9 +167,8 @@ def get_hanging_asgs(region):
 # Compares list of clusters in AWS to list of clusters in all DBs
 def get_hanging_clusters(urls, secrets, region):
     # parses names of clusters from ARNs since only the names are stored in the DB
-    aws_clusters = set(
-        [cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)]
-    )
+    aws_clusters = {cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)}
+
     if "default" in aws_clusters:
         aws_clusters.remove("default")
 
