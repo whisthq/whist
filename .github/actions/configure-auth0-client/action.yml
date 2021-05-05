@@ -1,0 +1,64 @@
+# actions/configure-auth0-client/action.yml
+#
+# Configure GHA as an Auth0 Client
+# Given a git ref as input, return all information necessary to configure GHA
+# to communicate with the Auth0 tenant.
+
+name: Configure GHA as an Auth0 Client
+description: |
+    Configure GHA to communicate with the deployment-stage-appropriate tenant
+    as the GHA client registered to that tenant.
+inputs:
+    ref:
+        description: |
+            A git ref that is used to determine the Auth0 tenant with which GHA
+            should communicate
+        required: false
+        default: ${{ github.ref }}
+outputs:
+    domain:
+        description: The Auth0 tenant's domain
+        value: ${{ steps.configure-client.outputs.domain }}
+    client-id:
+        description: The client ID of the GHA client registered to the tenant
+        value: ${{ steps.configure-client.outputs.client-id }}
+    client-secret-key:
+        description: |
+            The name of the GitHub secret that contains the client secret of
+            the GHA client registered to the Auth0 tenant
+        value: ${{ steps.configure-client.outputs.client-secret-key }}
+    refresh-token-key:
+        description: |
+            The name of the GitHub secret that contains the refresh token
+            belonging to a Fractal administrator and issued to the GHA client
+            registered to the Auth0 tenant
+        value: ${{ steps.configure-client.outputs.refresh-token-key }}
+runs:
+    using: composite
+    steps:
+        - name: Look up configuration by git ref
+          id: configure-client
+          shell: bash
+          run: |
+              # Remove the refs/heads/ or refs/tags/ prefix from the git ref name
+              sname="${${{ inputs.ref }}##*/}"
+
+              case "$sname" in
+                  prod)
+                      domain="fractal-prod.us.auth0.com"
+                      client_id="dnhVmqdHkF1O6aWwakv7jDVMd5Ii6VfX"
+                      suffix="PROD" ;;
+                  staging)
+                      domain="fractal-staging.us.auth0.com"
+                      client_id="2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5"
+                      suffix="STAGING" ;;
+                  *)
+                      domain="fractal-dev.us.auth0.com"
+                      client_id="6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1"
+                      suffix="DEV" ;;
+              esac
+
+              echo "::set-output name=domain::$domain"
+              echo "::set-output name=client-id::$client_id"
+              echo "::set-output name=client-secret-key::AUTH0_GHA_CLIENT_SECRET_$suffix"
+              echo "::set-output name=refresh-token-key::AUTH0_REFRESH_TOKEN_$suffix"
