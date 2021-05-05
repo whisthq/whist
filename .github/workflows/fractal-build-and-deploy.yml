@@ -690,6 +690,19 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
+            - name: Configure GHA to communicate with Auth0
+              id: configure-client
+              uses: ./.github/actions/configure-auth0-client
+
+            - name: Obtain a Fractal access token
+              id: get-token
+              uses: ./.github/actions/refresh-auth0-token
+              with:
+                  domain: ${{ steps.configure-client.outputs.domain }}
+                  client-id: ${{ steps.configure-client.outputs.client-id }}
+                  client-secret: ${{ secrets[steps.configure-client.outputs.client-secret-key] }}
+                  refresh-token: ${{ secrets[steps.configure-client.outputs.refresh-token-key] }}
+
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
               shell: bash
@@ -705,15 +718,10 @@ jobs:
               shell: python3 {0}
               run: |
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import start_maintenance
 
+                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
                   start_maintenance(WEBSERVER_URL, TOKEN)
@@ -754,15 +762,10 @@ jobs:
               shell: python3 {0}
               run: |
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import update_taskdefs
 
+                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # Try to update taskdefs. Errors if request/celery task fails.
                   update_taskdefs(WEBSERVER_URL, TOKEN)
@@ -790,7 +793,6 @@ jobs:
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
                   import json
 
-                  from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import update_region
 
                   # get region_names and amis as python vars
@@ -806,12 +808,8 @@ jobs:
                   print(f"AMIs: {amis_str}")
                   AMIS = json.loads(amis_str)
 
+                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
                   WEBSERVER_URL="${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # call update region
                   for region_name, ami in zip(REGION_NAMES, AMIS):
@@ -839,15 +837,10 @@ jobs:
               shell: python3 {0}
               run: |
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
-                  from scripts.misc_scripts import login
                   from scripts.maintenance_scripts import end_maintenance
 
+                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
                   WEBSERVER_URL = "${{ needs.fractal-publish-build-config.outputs.webserver_url }}"
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   # Try to end maintenance. Fails if could not succeed after a predefined number of attempts.
                   end_maintenance(WEBSERVER_URL, TOKEN)
