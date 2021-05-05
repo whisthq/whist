@@ -38,7 +38,7 @@ jobs:
               working-directory: .github/workflows
               run: prettier --check '*.yml'
 
-    workflow-helpers-linting:
+    workflows-helpers-linting:
         name: Lint Github Actions Helpers
         runs-on: ubuntu-20.04
 
