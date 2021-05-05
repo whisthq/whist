@@ -99,5 +99,5 @@ def test_heartbeat_updates(bulk_instance):
     resp_dict = resp.get_json()
     assert (resp_dict, resp_code) == ({"status": SUCCESS}, SUCCESS)
     inst = InstanceInfo.query.get("test_instance_id")
-    assert inst.memoryRemainingInInstance == 1025
+    assert inst.memoryRemainingInInstanceInMb == 1025
     assert time.time() - inst.last_pinged <= 2
