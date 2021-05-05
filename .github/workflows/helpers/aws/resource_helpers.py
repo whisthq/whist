@@ -60,7 +60,7 @@ def read_tags(tags, resource):
     return name, test == "True"
 
 
-def delete_if_older_than_one_day(task, cluster, region, time):  # TODO: TEST ME
+def delete_if_older_than_one_day(task, cluster, region, time):
     """
     Determines if provided task is older than one day and stops it using the AWS CLI
 
