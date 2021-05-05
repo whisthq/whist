@@ -172,7 +172,7 @@ def cluster_to_asgs(cluster_arn, region):
     capacity_providers = response["clusters"][0]["capacityProviders"]
     if len(capacity_providers) > 0:
         response = client.describe_capacity_providers(
-            capacity_providers=capacity_providers
+            capacityProviders=capacity_providers
         )
         asgs = [
             asg["autoScalingGroupProvider"]["autoScalingGroupArn"]
@@ -402,7 +402,8 @@ def hanging_resource(component, region, urls, secrets):
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
-            print("\\n- `" + "`\\n- `".join([str(x) for x in asgs]) + "`")
+            return "\\n     - `" + "`\\n     - `".join([str(x) for x in asgs]) + "`"
+        return ""
     elif component == "Clusters":
         output = []
         aws_clusters, db_clusters = get_hanging_clusters(urls, secrets, region)
@@ -410,7 +411,7 @@ def hanging_resource(component, region, urls, secrets):
             output.append((str(cluster), get_num_instances(cluster, region)))
         stout = ""
         if len(aws_clusters) > 0:
-            stout += "\\n- " + "\\n- ".join(
+            stout += "\\n     - " + "\\n     - ".join(
                 [
                     "`"
                     + c
@@ -422,20 +423,19 @@ def hanging_resource(component, region, urls, secrets):
                 ]
             )
         if len(db_clusters) > 0:
-            stout += "\\n- " + "\\n- ".join(
+            stout += "\\n     - " + "\\n     - ".join(
                 ["`" + c + "`" + " in a DB but not AWS" for c in db_clusters]
             )
-        print(stout)
+        return stout
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
-            print("\\n- " + "\\n- ".join(["`" + str(t) + "`" + d for t, d in tasks]))
+            return "\\n     - " + "\\n     - ".join(
+                ["`" + str(t) + "`" + d for t, d in tasks]
+            )
+        return ""
     elif component == "Instances":
         instances = flag_instances(region)
-        message = (
-            flag_instances(region)
-            if len(instances) > 0
-            else "     - No hanging instances\\n"
-        )
+        message = instances if len(instances) > 0 else "     - No hanging instances\\n"
         message += "\\n"
-        print(message) if len(message) > 0 else print("No hanging instances!")
+        return message

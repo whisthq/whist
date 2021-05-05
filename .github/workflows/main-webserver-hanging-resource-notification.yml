@@ -75,7 +75,7 @@ jobs:
                                                  "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}",
                                                  "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" ])
 
-                  if resources is not "":
+                  if resources:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                     SLACK_CHANNEL = "#alerts-dev"
                     BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: %s." % resources
