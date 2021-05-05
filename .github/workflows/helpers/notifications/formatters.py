@@ -76,27 +76,27 @@ def surround_xl(wrap_text, text):
     return surround_base(5, wrap_text, text)
 
 
-def h1(text=None):
+def heading1(text=None):
     if text:
         return f"# {text}"
 
 
-def h2(text=None):
+def heading2(text=None):
     if text:
         return f"## {text}"
 
 
-def h3(text=None):
+def heading3(text=None):
     if text:
         return f"### {text}"
 
 
-def h4(text=None):
+def heading4(text=None):
     if text:
         return f"#### {text}"
 
 
-def h5(text=None):
+def heading5(text=None):
     if text:
         return f"##### {text}"
 
@@ -171,7 +171,7 @@ def default_message_github(body, title=None, code=None, lang=None):
     Returns:
         A string containing the parameters, formatted to post as a comment
     """
-    return join_newline(h2(title), body, code_overflow_collapsed(code, lang=lang))
+    return join_newline(heading2(title), body, code_overflow_collapsed(code, lang=lang))
 
 
 def default_message_slack(body, title=None, code=None, lang=None):
