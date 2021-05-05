@@ -32,6 +32,7 @@ fi
 # The point is to ensure that this package can be imported even if our git repo changes.
 tmpfolder=`mktemp -d`
 cp -r notifications $tmpfolder
+cp -r aws $tmpfolder
 
 # Add the temp folder to our python path, so we can import from notifications.
 # The fancy syntax means "$PYTHONPATH:" if it's defined, else ""
