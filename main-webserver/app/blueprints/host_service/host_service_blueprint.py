@@ -63,7 +63,7 @@ def host_service_auth(**kwargs):
         instance_id: str = body.pop("InstanceID")
         instance_type: str = body.pop("InstanceType")
         region: str = body.pop("Region")
-        ami: str = body.pop("AWSAmiId")
+        ami: str = body.pop("AWSAmiID")
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
