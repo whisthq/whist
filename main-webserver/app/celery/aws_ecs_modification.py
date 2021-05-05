@@ -341,6 +341,7 @@ def kill_draining_instances_with_no_tasks(cluster_data: ClusterInfo) -> int:
         The number of draining instances with no tasks that could not be killed because
         of the minContainers constraint.
     """
+    fractal_logger.info("HERE!!")
     ecs_client = ECSClient(launch_type="EC2", region_name=cluster_data.location)
     draining_instances_data = ecs_client.ecs_client.list_container_instances(
         filter="runningTasksCount==0", cluster=cluster_data.cluster, status="DRAINING"

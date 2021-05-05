@@ -273,8 +273,6 @@ def test_delete_container(client, monkeypatch):
     def mock_set_capacity(self, asg_name: str, desired_capacity: int):
         setattr(mock_set_capacity, "test_passed", desired_capacity == 0)
 
-    # mock kill_draining_instances_with_no_tasks
-    monkeypatch.setattr(kill_draining_instances_with_no_tasks, function(returns=0))
     monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
 
     resp = client.post(
@@ -575,14 +573,21 @@ def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
         maxContainers=10,
     )
 
+    def mock_kill_instance(*args):  # pylint:disable=unused-argument
+        return 0
+
     def mock_set_asg_capacity(
         self, asg_name: str, desired_capacity: int
     ):  # pylint: disable=unused-argument
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 2)
 
-    # mock kill_draining_instances_with_no_tasks
-    monkeypatch.setattr(kill_draining_instances_with_no_tasks, function(returns=0))
+    # mock kill_draining_instances_with_no_tasks because no real cluster/instances were made
+    monkeypatch.setattr(
+        kill_draining_instances_with_no_tasks,
+        "__code__",
+        mock_kill_instance.__code__,
+    )
     monkeypatch.setattr(
         ECSClient, "get_auto_scaling_groups_in_cluster", function(returns=["fake-asg"])
     )
@@ -611,14 +616,21 @@ def test_manual_scale_cluster_down(bulk_cluster, monkeypatch):
         maxContainers=10,
     )
 
+    def mock_kill_instance(*args):  # pylint:disable=unused-argument
+        return 0
+
     def mock_set_asg_capacity(
         self, asg_name: str, desired_capacity: int
     ):  # pylint: disable=unused-argument
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 1)
 
-    # mock kill_draining_instances_with_no_tasks
-    monkeypatch.setattr(kill_draining_instances_with_no_tasks, function(returns=0))
+    # mock kill_draining_instances_with_no_tasks because no real cluster/instances were made
+    monkeypatch.setattr(
+        kill_draining_instances_with_no_tasks,
+        "__code__",
+        mock_kill_instance.__code__,
+    )
     monkeypatch.setattr(
         ECSClient, "get_auto_scaling_groups_in_cluster", function(returns=["fake-asg1"])
     )

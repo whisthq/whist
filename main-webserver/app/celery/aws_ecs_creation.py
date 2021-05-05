@@ -905,7 +905,7 @@ def _create_new_cluster(
     instance_type: Optional[str] = "g3.4xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
     region_name: Optional[str] = "us-east-1",
-    min_size: Optional[int] = 0,
+    min_size: Optional[int] = 1,
     max_size: Optional[int] = 10,
     availability_zones: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
@@ -913,6 +913,11 @@ def _create_new_cluster(
     See create_new_cluster. This is helpful to mock.
     """
     task_start_time = time.time()
+    if min_size < 1:
+        fractal_logger.warning(
+            f"Creating a cluster with min_size {min_size}. Clusters should have a min_size >= 1."
+        )
+
     all_regions = RegionToAmi.query.all()
 
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
