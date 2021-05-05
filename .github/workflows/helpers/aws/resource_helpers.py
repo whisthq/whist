@@ -112,10 +112,7 @@ def get_all_aws_asgs(region):
     """
     client = boto3.client("autoscaling", region_name=region)
     response = client.describe_auto_scaling_groups()
-
-    all_asgs = [
-        response["AutoScalingGroupARN"] for asg in response["AutoScalingGroups"]
-    ]
+    all_asgs = [asg["AutoScalingGroupARN"] for asg in response["AutoScalingGroups"]]
     return all_asgs
 
 
@@ -208,7 +205,7 @@ def get_db_clusters(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_clusters($_eq: String = \\"%s\\") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            '{"query":"query get_clusters($_eq: String = "%s") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -241,7 +238,7 @@ def get_db_tasks(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_tasks($_eq: String = \\"%s\\") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            '{"query":"query get_tasks($_eq: String = "%s") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -383,16 +380,16 @@ def flag_instances(region):
             overdue, days = compare_days(launch_time)
             if overdue and state not in shutting_down_states:
                 message += (
-                    f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days \\n"
+                    f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days \n"
                 )
             elif test:
                 if (
                     has_elapsed_hours(launch_time, 1)
                     and state not in shutting_down_states
                 ):
-                    message += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE* \\n"
+                    message += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE* \n"
             elif len(name) == 0 and state not in shutting_down_states:
-                message += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED* \\n"
+                message += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED* \n"
 
     return message
 
@@ -402,7 +399,7 @@ def hanging_resource(component, region, urls, secrets):
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
-            return "\\n     - `" + "`\\n     - `".join([str(x) for x in asgs]) + "`"
+            return "\n     - `" + "`\n     - `".join([str(x) for x in asgs]) + "`"
         return ""
     elif component == "Clusters":
         output = []
@@ -411,7 +408,7 @@ def hanging_resource(component, region, urls, secrets):
             output.append((str(cluster), get_num_instances(cluster, region)))
         stout = ""
         if len(aws_clusters) > 0:
-            stout += "\\n     - " + "\\n     - ".join(
+            stout += "\n     - " + "\n     - ".join(
                 [
                     "`"
                     + c
@@ -423,19 +420,19 @@ def hanging_resource(component, region, urls, secrets):
                 ]
             )
         if len(db_clusters) > 0:
-            stout += "\\n     - " + "\\n     - ".join(
+            stout += "\n     - " + "\n     - ".join(
                 ["`" + c + "`" + " in a DB but not AWS" for c in db_clusters]
             )
         return stout
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
-            return "\\n     - " + "\\n     - ".join(
+            return "\n     - " + "\n     - ".join(
                 ["`" + str(t) + "`" + d for t, d in tasks]
             )
         return ""
     elif component == "Instances":
         instances = flag_instances(region)
-        message = instances if len(instances) > 0 else "     - No hanging instances\\n"
-        message += "\\n"
+        message = instances if len(instances) > 0 else "     - No hanging instances\n"
+        message += "\n"
         return message
