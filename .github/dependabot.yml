@@ -143,3 +143,24 @@ updates:
     open-pull-requests-limit: 10
 
   #####################################################
+  ############## GitHub Workflow Helpers ##############
+
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers/notifications" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "pip"
+    directory: "/.github/workflows/helpers/aws" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  #####################################################
