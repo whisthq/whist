@@ -132,4 +132,7 @@ if __name__ == "__main__":
         )
         result += "\\n"
 
-    print(result) if len(result) > 0 else print("No hanging instances!")
+    if len(result) > 0:
+        print(result)
+    else:
+        print("No hanging instances!")
