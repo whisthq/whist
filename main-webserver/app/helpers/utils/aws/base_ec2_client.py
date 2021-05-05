@@ -90,6 +90,8 @@ class EC2Client:
         Returns: the IDs of the started instances
 
         """
+        # rather than having some complex launch config, just make the kwargs
+        # at call time
         kwargs = {
             "ImageId": ami_id,
             "InstanceType": instance_type,
@@ -109,9 +111,8 @@ class EC2Client:
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
         if poll_til_up:
-            time.sleep(
-                5
-            )  # AWS takes a bit of time to recognize that these resources actually exist
+            time.sleep(5)
+            # AWS takes a bit of time to recognize that these resources actually exist
             self.spin_til_instances_up(instance_ids)
 
         return instance_ids
@@ -148,10 +149,10 @@ class EC2Client:
     def check_if_instances_down(self, instance_ids: List[str]) -> bool:
         """
         Checks whether a given set of instances are stopped
-            Args:
-                    instance_ids: the instances to check
+        Args:
+                instance_ids: the instances to check
 
-            Returns: a boolean corresponding to whether every instance is dead`
+        Returns: a boolean corresponding to whether every instance is dead`
 
         """
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
