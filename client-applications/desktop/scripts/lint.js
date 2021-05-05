@@ -20,4 +20,6 @@ execute([
     ...process.argv.slice(2),
     '--max-warnings=0',
     './src/**/*.{js,jsx,ts,tsx}',
+    './scripts/**/*.js',
+    './*.js',
 ]).then((ret) => process.exit(ret))
