@@ -205,13 +205,14 @@ def get_db_clusters(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_clusters($_eq: String = "%s") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            '{"query":"query get_clusters($_eq: String = \\"%s\\") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
             % (region),
         ],
         stdout=subprocess.PIPE,
     ).communicate()
-    clusters = json.loads(clusters)["data"]["hardware_cluster_info"]
-    return [list(cluster.values())[0] for cluster in clusters]
+    print(clusters)
+    # clusters = json.loads(clusters)["data"]["hardware_cluster_info"]
+    # return [list(cluster.values())[0] for cluster in clusters]
 
 
 def get_db_tasks(url, secret, region):
@@ -238,7 +239,7 @@ def get_db_tasks(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_tasks($_eq: String = "%s") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            '{"query":"query get_tasks($_eq: String = \\"%s\\") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -434,6 +435,15 @@ def hanging_resource(component, region, urls, secrets):
             )
         return ""
     elif component == "Instances":
+        message = "\n"
         instances = flag_instances(region)
-        message = instances if len(instances) > 0 else "     - No hanging instances\n"
+        message += instances if len(instances) > 0 else "     - No hanging instances\n"
         return message
+
+
+hanging_resource(
+    "Clusters",
+    "us-east-1",
+    ["https://dev-database.fractal.co/v1/graphql"],
+    ["WhFpeUYnKxGsa8L"],
+)
