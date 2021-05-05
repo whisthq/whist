@@ -19,7 +19,7 @@ on:
 
 jobs:
     workflows-linting-main:
-        name: Lint Github Actions Workflows
+        name: Lint GitHub Actions Workflows
         runs-on: ubuntu-20.04
 
         steps:
@@ -37,3 +37,44 @@ jobs:
             - name: Check if Code is Formatted
               working-directory: .github/workflows
               run: prettier --check '*.yml'
+
+    workflow-helpers-linting:
+        name: Lint Github Actions Helpers
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Set up Python 3.8
+              uses: actions/setup-python@v2
+              with:
+                  python-version: 3.8
+
+            - name: Upgrade pip
+              working-directory: main-webserver
+              run: pip install --upgrade pip
+
+            - name: Install requirements
+              working-directory: .github/workflows/helpers
+              run: pip install -r notifications/requirements.txt
+
+            - name: Check if Code is Linted with Python Black
+              working-directory: .github/workflows/helpers
+              run: |
+                  result=$(black . --check) # Returns 0 if the code is already linted
+                  if [ "$result" -ne "0" ]; then
+                    (echo "To pass this check please lint the code with Python Black" && false)
+                  else
+                    (echo "Code is linted with Python Black" && true)
+                  fi
+
+            - name: Check if Code Matches Pylint Standards
+              working-directory: .github/workflows/helpers
+              run: |
+                  # For consistency, just use the same pylintrc for all of our
+                  # python code. This is obviously a hack, and not something we
+                  # want to do in this way in the long term.
+                  # TODO here: https://github.com/fractal/fractal/issues/2111
+                  ln -sf ../../../main-webserver/pylintrc ./pylintrc
+                  pylint . # Returns 0 iff code is linted
