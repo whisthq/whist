@@ -136,11 +136,13 @@ A handy file during development is `main/debug.ts`. When the environment variabl
 
 ### MacOS Notarizing
 
-Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. This is all automated as part of Electron, although you need to have the Fractal Apple Developer Certificate in your MacOS Keychain for this work successfully.
+Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. 
 
-We have notarization set up as part of our CI pipeline (both for testing and publishing) in GitHub Actions, so you should not need to perform notarization locally, even for testing. If you do, you can download the certificate from AWS S3. You'll want to log into the web interface and manually download `fractal-apple-codesigning-certificate.p12` from the `fractal-dev-secrets` bucket. Once downloaded, double-click the `.p12` file, and enter the password `Fractalcomputers!` when prompted.
+Notarizing is done in Github CI. In the event you want to notarize locally:
 
-In order for notarizing to work, you need to have installed the latest version of Xcode (which you can install from the macOS App Store), and have opened it _at least_ once following installation, which will prompt you to install additional components. If your macOS version is too old to install Xcode directly from the macOS App Store, you can manually download the macOS SDK (which you'd normally obtain through Xcode) for your macOS version and place it in the right subfolder. Here's an example for macOS 10.14:
+1. Download the Fractal Apple Developer Certificate, which is `fractal-apple-codesigning-certificate.p12` in the `fractal-dev-secrets` bucket. The password is `Fractalcomputers!`.
+
+2. Make sure you have the latest version of Xcode and have opened it at least once. We recommend downloading Xcode from the App Store. If your Mac doesn't have the App Store, you can run these commands (replace `10.14` with your Mac's version):
 
 ```
 # Explicitly retrieve macOS 10.14 SDK
@@ -154,9 +156,9 @@ tar -xf MacOSX10.14.sdk.tar
 mv MacOSX10.14.sdk /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs
 ```
 
-Once those components are installed, you need to open up a terminal and run `xcode-select --install` to install the Xcode CLI, which is necessary for the notarizing to work. Once all of these are done, you should have no problem with the notarization process as part of the packaging of the application.
+3. Run `xcode-select --install`.
 
-If you run into `xcrun: error: unable to find utility "altool", not a developer tool or in PATH`, first try to run `xcode-select --reset` in your Terminal. This will reset `xcode-select` to use the default CLI tools path. If this doesn't work, uninstall Xcode altogether, and install the FULL version from the Mac App Store.
+4. Run `yarn package:notarize`.
 
 ### Publishing New Versions
 
@@ -164,9 +166,16 @@ Fractal runs two update channels, `production` and `testing`. The `dev` branch s
 
 Any CI generated builds are also stored in GitHub Releases which can be manually downloaded and used.
 
-#### Update Channels
+### Common Auto-Update Errors
 
-There is a channel for `testing` and `production` on each platform. These channels are backed by AWS S3 buckets ([here](https://s3.console.aws.amazon.com/s3/home?region=us-east-1#)) that follow a file structure and metadata schema specified by [electron-builder's publish system](https://www.electron.build/configuration/publish) (it's basically the executable installer + a well-known YAML file with metadata like file hash, file name, and release date which is used for knowing when an update is available).
+#### Unable to find `altool`
+First try to run `xcode-select --reset` in your Terminal. This will reset `xcode-select` to use the default CLI tools path. If this doesn't work, uninstall Xcode altogether, and install the FULL version from the Mac App Store.
+
+#### 403 error access denied
+This is probably not an S3 bucket policy issue; rather, you're probably trying to read a resource that doesn't exist. Right click the packaged app and select `Show Package Contents`. Then open `Contents` > `Resources` > `app-update.yml`. Ensure that the bucket and channel are correct. The dev channel is `dev-rc`, staging is `staging-rc`, prod is `latest`.
+
+#### Zip file not found
+When you packaged the app, or when the app currently in S3 was published, the ZIP file was likely not included. Check `electron-builder.config.js` to see if "zip" is one of the targets.
 
 ## Continous Integration
 
