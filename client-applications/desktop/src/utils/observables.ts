@@ -8,7 +8,7 @@ import {
   EMPTY,
 } from "rxjs"
 import { map, mapTo, switchMap, filter, takeLast } from "rxjs/operators"
-import { toPairs, compact, identity, isEmpty } from "lodash"
+import { toPairs, identity, isEmpty } from "lodash"
 import { debugObservables } from "@app/utils/logging"
 
 export const loadingFrom = (
@@ -182,7 +182,7 @@ export const factory = <T, A>(
 
   // We can infer the loading state from the emissions of request + the
   // "completion" states (success, failure, warning).
-  const loading = loadingFrom(request, ...compact([success, failure, warning]))
+  const loading = loadingFrom(request, success, failure, warning)
 
   const logging = [
     ["Request", request, ...(fx?.logging?.request ?? [])],
