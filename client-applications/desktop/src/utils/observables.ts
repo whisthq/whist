@@ -7,7 +7,7 @@ import {
   from,
   EMPTY,
 } from "rxjs"
-import { map, mapTo, switchMap, filter, takeLast } from "rxjs/operators"
+import { map, mapTo, switchMap, filter, takeLast, share } from "rxjs/operators"
 import { toPairs, identity, isEmpty } from "lodash"
 import { debugObservables } from "@app/utils/logging"
 
@@ -168,10 +168,12 @@ export const factory = <T, A>(
   // keep it in a higher-order observable ("processOuter") so we can reference
   // it more than once.
 
-  const request = fx.request
-  const processOuter = request.pipe(map(fx.process))
-  const process = processOuter.pipe(switchMap(identity))
-  const results = processOuter.pipe(switchMap((obs) => obs.pipe(takeLast(1))))
+  const request = fx.request.pipe(share())
+  const processOuter = request.pipe(map(fx.process), share())
+  const process = processOuter.pipe(switchMap(identity), share())
+  const results = processOuter.pipe(
+    switchMap((o) => o.pipe(takeLast(1), share()))
+  )
 
   // The caller doesn't need to pass completion states they don't care about,
   // so if not passed then we just assign an empty observable (which completes
