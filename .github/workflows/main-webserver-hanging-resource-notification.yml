@@ -5,8 +5,11 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    schedule:
-        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    # schedule:
+    #     - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
+    push:
+        branches:
+            - mia/resource-notif-fix
 
 jobs:
     main-webserver-hanging-resource-notification:
@@ -26,6 +29,7 @@ jobs:
                     - ASGs
                     - Clusters
                     - Tasks
+                    - Instances
         env:
             db_url_dev: "https://dev-database.fractal.co/v1/graphql"
             db_url_staging: "https://staging-database.fractal.co/v1/graphql"
@@ -40,6 +44,9 @@ jobs:
               shell: bash
               run: ./notifications/setup_notifications.sh
 
+            - name: Install boto3
+              run: pip install boto3
+
             - name: Install Utility to Get Date and Time
               run: pip install python-dateutil
 
@@ -50,89 +57,27 @@ jobs:
                   aws-secret-access-key: ${{ secrets.AWS_ECS_SECRET_ACCESS_KEY }}
                   aws-region: us-east-1
 
-            - name: Check for Hanging Resources
-              working-directory: .github/workflows/helpers/aws
-              run: |
-                  hanging_resource=$(python resource_cleanup.py ${{ matrix.resource }} ${{ matrix.aws-region }} \
-                                          ${{ env.db_url_dev}} \
-                                          ${{ env.db_url_staging}} \
-                                          ${{ env.db_url_prod}} \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}' \
-                                          '${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}')
-                  echo 'hanging_resource<<EOF' >> $GITHUB_ENV
-                  echo "$hanging_resource" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
-                  echo "$hanging_resource"
-
             # If we don't define hanging_resource as a GITHUB_ENV and separate in 2 steps, there's a payload error
-            - name: Notify in Slack if Hanging Resources Exist
+            - name: Check for Hanging Resources and Notify in Slack if They Exist
               shell: python3 {0}
               run: |
-                  import os
                   from notifications.slack_bot import slack_post
+                  from aws.resource_helpers import hanging_resource
 
-                  if os.environ.get("hanging_resource") not in (None, ""):
+                  resources = hanging_resource("${{ matrix.resource }}",
+                                               "${{ matrix.aws-region }}",
+                                               [ "${{ env.db_url_dev}}", 
+                                                 "${{ env.db_url_staging}}", 
+                                                 "${{ env.db_url_prod}}"],
+                                               [ "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_DEV }}",
+                                                 "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_STAGING }}",
+                                                 "${{ secrets.HASURA_GRAPHQL_ACCESS_KEY_PROD }}" ])
+
+                  if resources is not "":
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                     SLACK_CHANNEL = "#alerts-dev"
-                    BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: ${{ env.hanging_resource }}."
+                    BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: %s." % resources
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-    main-webserver-hanging-ec2-notification:
-        name: Main Webserver EC2 Resource Notification
-        runs-on: ubuntu-20.04
-        steps:
-            - name: Checkout Git Repository
-              uses: actions/checkout@v2
-
-            - name: Configure AWS Credentials
-              uses: aws-actions/configure-aws-credentials@v1
-              with:
-                  aws-access-key-id: ${{ secrets.AWS_EC2_ACCESS_KEY_ID }}
-                  aws-secret-access-key: ${{ secrets.AWS_EC2_SECRET_ACCESS_KEY }}
-                  aws-region: us-east-1
-
-            - name: Setup Python-based notifications
-              working-directory: .github/workflows/helpers
-              shell: bash
-              run: ./notifications/setup_notifications.sh
-
-            - name: Install boto3
-              run: pip install boto3
-
-            - name: Scan ec2 instances
-              working-directory: .github/workflows/helpers/aws
-              run: |
-                  ec2_instances=$(python ecs_ec2_resource_notification.py)
-                  echo 'ec2_instances<<EOF' >> $GITHUB_ENV
-                  echo "$ec2_instances" >> $GITHUB_ENV
-                  echo "EOF" >> $GITHUB_ENV
-                  echo "$ec2_instances"
-
-            - name: Notify Slack all instances
-              shell: python3 {0}
-              run: |
-                  import os
-                  from notifications.slack_bot import slack_post
-
-                  if os.environ.get("ec2_instances") not in (None, ""):
-                    SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#alerts-dev"
-                    BODY = "${{ env.ec2_instances }}"
-
-                    slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-
-            - name: Notify Slack if error
-              if: failure()
-              shell: python3 {0}
-              run: |
-                  from notifications.slack_bot import slack_post
-
-                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-dev"
-                  BODY = "@channel :rotating_light: Scanning EC2 Instance failure"
-
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     main-webserver-hanging-packer-instance-notification:
         name: Main Webserver AWS Packer Instance Notification
