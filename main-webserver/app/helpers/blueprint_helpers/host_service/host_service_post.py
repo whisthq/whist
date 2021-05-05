@@ -34,8 +34,7 @@ def initial_instance_auth_helper(
     auth_token = os.urandom(16).hex()
     preexisting_instance = InstanceInfo.query.get(instance_id)
 
-    # Make sure there's no instance with this ID already
-
+    # Make sure there's no instance with this ID in the DB already
     if preexisting_instance is not None:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
@@ -80,6 +79,6 @@ def instance_heartbeat_helper(
         db.session.delete(instance)
     else:
         instance.last_pinged = int(time())
-        instance.memoryRemainingInInstance = int(free_ram_kb / 1000)
+        instance.memoryRemainingInInstanceInMb = int(free_ram_kb / 1000)
     db.session.commit()
     return jsonify({"status": SUCCESS}), SUCCESS
