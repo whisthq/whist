@@ -136,7 +136,7 @@ A handy file during development is `main/debug.ts`. When the environment variabl
 
 ### MacOS Notarizing
 
-Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware. 
+Before you can package the MacOS application it needs to be notarized. The application will get notarized as part of the regular build script. This means that it needs to be uploaded to Apple's servers and scanned for viruses and malware.
 
 Notarizing is done in Github CI. In the event you want to notarize locally:
 
@@ -169,12 +169,15 @@ Any CI generated builds are also stored in GitHub Releases which can be manually
 ### Common Auto-Update Errors
 
 #### Unable to find `altool`
+
 First try to run `xcode-select --reset` in your Terminal. This will reset `xcode-select` to use the default CLI tools path. If this doesn't work, uninstall Xcode altogether, and install the FULL version from the Mac App Store.
 
 #### 403 error access denied
+
 This is probably not an S3 bucket policy issue; rather, you're probably trying to read a resource that doesn't exist. Right click the packaged app and select `Show Package Contents`. Then open `Contents` > `Resources` > `app-update.yml`. Ensure that the bucket and channel are correct. The dev channel is `dev-rc`, staging is `staging-rc`, prod is `latest`.
 
 #### Zip file not found
+
 When you packaged the app, or when the app currently in S3 was published, the ZIP file was likely not included. Check `electron-builder.config.js` to see if "zip" is one of the targets.
 
 ## Continous Integration
