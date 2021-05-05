@@ -120,18 +120,18 @@ def flag_instances(region):
 
 
 if __name__ == "__main__":
-    msg = ""
+    MSG = ""
     for reg in regions:
-        msg += "Instances from *{}*\\n".format(reg)
+        MSG += "Instances from *{}*\\n".format(reg)
         reg_instances = flag_instances(reg)
-        msg += (
+        MSG += (
             flag_instances(reg)
             if len(reg_instances) > 0
             else "     - No hanging instances\\n"
         )
-        msg += "\\n"
+        MSG += "\\n"
 
-    if len(msg) > 0:
-        print(msg)
+    if len(MSG) > 0:
+        print(MSG)
     else:
         print("No hanging instances!")
