@@ -6,6 +6,7 @@
 
 import { app } from "electron"
 import { closeWindows } from "@app/utils/windows"
+import { clearKeys } from "@app/utils/persist"
 
 import {
   errorRelaunchRequest,
@@ -17,6 +18,7 @@ import {
 // of the Effects module of the application.
 
 errorRelaunchRequest.subscribe(() => {
+  clearKeys('refreshToken', 'accessToken') // force user to re-login
   app.relaunch()
   app.exit()
 })

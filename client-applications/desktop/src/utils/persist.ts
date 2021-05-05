@@ -24,3 +24,7 @@ export const persistKeys = (obj: Partial<StateIPC>, ...keys: string[]) => {
 export const persistClear = () => {
   store.clear()
 }
+
+export const clearKeys = (...keys: string[]) => {
+  store.reset(...keys)
+}
