@@ -230,15 +230,15 @@ CREATE TABLE hardware.instance_info (
     instance_id character varying NOT NULL,
     auth_token character varying NOT NULL,
     "lastHeartbeated" double precision,
-    "memoryRemainingInInstance" bigint,
+    "memoryRemainingInInstanceInMb" bigint,
     "CPURemainingInInstance" bigint,
     "GPURemainingInInstance" bigint,
     "runningTasksCount" bigint,
     last_pinged bigint,
     ip character varying NOT NULL,
-    ami_id character varying,
-    location character varying,
-    instance_type character varying
+    ami_id character varying NOT NULL,
+    location character varying NOT NULL,
+    instance_type character varying NOT NULL
 );
 
 

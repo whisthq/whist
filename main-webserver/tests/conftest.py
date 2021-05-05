@@ -259,7 +259,8 @@ def bulk_instance():
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
             ip="1.1.1.1",
-            ami_id="test",
+            ami_id=kwargs.get("ami_id", "test"),
+            instance_type=kwargs.get("instance_type", "test_type"),
             **kwargs,
         )
 
