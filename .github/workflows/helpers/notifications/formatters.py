@@ -34,8 +34,8 @@ def newline(func):
 
 
 def join_newline(*args):
-    identity = lambda: ""
-    newlined = newline(identity)
+    empty = lambda: ""
+    newlined = newline(empty)
     return newlined().join(i for i in args if i)
 
 
