@@ -75,6 +75,21 @@ jobs:
               with:
                   python-version: 3.8
 
+            - name: Configure GHA to communicate with Auth0
+              id: configure-client
+              uses: ./.github/actions/configure-auth0-client
+              with:
+                  ref: ${{ github.base_ref }} # The git ref of the target branch
+
+            - name: Obtain a Fractal access token
+              id: get-token
+              uses: ./.github/actions/refresh-auth0-token
+              with:
+                  domain: ${{ steps.configure-client.outputs.domain }}
+                  client-id: ${{ steps.configure-client.outputs.client-id }}
+                  client-secret: ${{ secrets[steps.configure-client.outputs.client-secret-key] }}
+                  refresh-token: ${{ secrets[steps.configure-client.outputs.refresh-token-key] }}
+
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
@@ -88,25 +103,20 @@ jobs:
                   bash docker/retrieve_config.sh
                   bash docker/local_deploy.sh
 
+                  # Wait for the web server to finish deploying
+                  sleep 5
+
             - name: Ensure Containers Launch and Exit Properly
               id: ensure-containers-work
               working-directory: main-webserver
               shell: python3 {0}
               run: |
-                  import time
                   import sys; sys.path.append(".")
-                  from scripts.misc_scripts import login
                   from scripts.utils import make_get_request
                   from scripts.celery_scripts import poll_celery_task
 
-                  time.sleep(5) # give containers 5 seconds to prepare
-
+                  TOKEN = "${{ steps.get-token.outputs.access-token }}"
                   WEBSERVER_URL = "http://localhost:7730" # local webserver available here
-                  USERNAME = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_USERNAME }}"
-                  PASSWORD = "${{ secrets.HEROKU_ALL_WEBSERVERS_ADMIN_PASSWORD }}"
-
-                  # Log in as Admin to get Bearer Token
-                  TOKEN = login(WEBSERVER_URL, USERNAME, PASSWORD)["access_token"]
 
                   resp = make_get_request(WEBSERVER_URL, "/dummy", admin_token=TOKEN)
                   assert resp.status_code == 202, f"Expected 202, got code {resp.status_code} with content {resp.content}"
