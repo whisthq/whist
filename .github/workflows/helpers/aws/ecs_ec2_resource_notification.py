@@ -108,13 +108,13 @@ def flag_instances(region):
             overdue, days = compare_days(launch_time)
             if overdue and state not in shutting_down_states:
                 message += (
-                    f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days \\n"
+                    f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days\\n"
                 )
             elif test:
                 if compare_hours(launch_time) and state not in shutting_down_states:
-                    message += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE* \\n"
+                    message += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE*\\n"
             elif len(name) == 0 and state not in shutting_down_states:
-                message += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED* \\n"
+                message += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\\n"
 
     return message
 
@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     result = ""
     for r in regions:
-        result += "Instances from *{}* \\n".format(r)
+        result += "Instances from *{}*\\n".format(r)
         instances = flag_instances(r)
         result += (
             flag_instances(r)
