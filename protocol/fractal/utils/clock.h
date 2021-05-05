@@ -72,8 +72,8 @@ Public Functions
 void start_timer(clock* timer);
 
 /**
- * @brief                          Get the amount of elapsed time since the last
- *                                 start_timer
+ * @brief                          Get the amount of elapsed time in seconds since
+ *                                 the last start_timer
  *
  * @param timer		               The timer in question
  */
