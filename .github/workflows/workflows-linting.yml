@@ -77,4 +77,6 @@ jobs:
                   # want to do in this way in the long term.
                   # TODO here: https://github.com/fractal/fractal/issues/2111
                   ln -sf ../../../main-webserver/pylintrc ./pylintrc
-                  pylint . # Returns 0 iff code is linted
+                  pylint aws # Returns -1 iff code is linted
+                  pylint notifications
+                  pylint resources
