@@ -60,6 +60,7 @@ jobs:
                   aws-region: us-east-1
 
             - name: Check for Hanging Resources and Notify in Slack if They Exist
+              working-directory: .github/workflows/helpers/aws
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
