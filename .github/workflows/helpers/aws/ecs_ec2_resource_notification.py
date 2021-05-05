@@ -122,11 +122,11 @@ def flag_instances(region):
 if __name__ == "__main__":
 
     result = ""
-    for r in regions:
-        result += "Instances from *{}*\\n".format(r)
-        instances = flag_instances(r)
+    for region in regions:
+        result += "Instances from *{}*\\n".format(region)
+        instances = flag_instances(region)
         result += (
-            flag_instances(r)
+            flag_instances(region)
             if len(instances) > 0
             else "     - No hanging instances\\n"
         )
