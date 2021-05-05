@@ -1,4 +1,4 @@
-const env = require('../env.json') || {}
+const env = require("../env.json") || {}
 
 // Environment-specific configuration
 
@@ -7,5 +7,5 @@ const iconName = PACKAGED_ENV === "prod" ? "icon" : `icon_${PACKAGED_ENV}`
 
 module.exports = {
   iconName,
-  PACKAGED_ENV
+  PACKAGED_ENV,
 }

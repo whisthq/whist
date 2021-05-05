@@ -21,5 +21,6 @@ execute([
   "--max-warnings=0",
   "./src/**/*.{js,jsx,ts,tsx}",
   "./scripts/**/*.js",
+  "./config/**/*.{js,ts}",
   "./*.js",
 ]).then((ret) => process.exit(ret))
