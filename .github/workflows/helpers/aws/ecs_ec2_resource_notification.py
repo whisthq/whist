@@ -120,7 +120,6 @@ def flag_instances(region):
 
 
 if __name__ == "__main__":
-
     result = ""
     for region in regions:
         result += "Instances from *{}*\\n".format(region)
