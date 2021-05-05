@@ -96,7 +96,7 @@ def test_create_cluster(client, module_user):
             instance_type="g3s.xlarge",
             region_name="us-east-1",
             max_size=1,
-            min_size=0,
+            min_size=1,
             username=module_user.user_id,
         ),
     )

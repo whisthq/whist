@@ -108,7 +108,7 @@ def test_lifecycle(region):
     exception = None
 
     create_new_cluster.delay(
-        cluster_name=cluster_name, region_name=region, max_size=1, min_size=1, ami=None
+        cluster_name=cluster_name, region_name=region, max_size=0, ami=None
     ).get()
 
     # Make sure the cluster actually got created.
