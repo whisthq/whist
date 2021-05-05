@@ -8,15 +8,13 @@ of things going wrong.
 
 import os
 import json
-from functools import wraps
 import sys
+
+import requests
+from . import formatters as fmt
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-import requests
-
-import formatters as fmt
 
 
 def slack_post(
@@ -50,10 +48,10 @@ def slack_post(
         "type": "mrkdwn",
         "text": body,
     }
-    r = requests.post(
+    resp = requests.post(
         slack_webhook,
         data=json.dumps(data),
         headers={"Content-Type": "application/json"},
     )
-    r.raise_for_status()
-    return r
+    resp.raise_for_status()
+    return resp

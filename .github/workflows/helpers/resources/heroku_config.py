@@ -22,7 +22,7 @@ def heroku_config(app_name):
     """
     url = f"{HEROKU_BASE_URL}/apps/{app_name}/config-vars"
 
-    r = requests.get(
+    resp = requests.get(
         url,
         headers={
             "Accept": "application/vnd.heroku+json; version=3",
@@ -30,8 +30,8 @@ def heroku_config(app_name):
         },
     )
 
-    r.raise_for_status()
-    return r.json()
+    resp.raise_for_status()
+    return resp.json()
 
 
 if __name__ == "__main__":
