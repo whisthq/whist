@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import boto3
 import os
 import uuid
@@ -7,6 +8,9 @@ import json
 
 from datetime import date, datetime, timedelta, timezone
 import dateutil.parser
+
+# add the current directory to the path no matter where this is called from
+sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def compare_days(timestamp):
