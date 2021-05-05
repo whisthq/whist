@@ -5,11 +5,8 @@
 
 name: "Main Webserver: Hanging Resource Notification"
 on:
-    # schedule:
-    #     - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
-    push:
-        branches:
-            - mia/resource-notif-fix
+    schedule:
+        - cron: "12 16 * * *" # runs at 11:12am (EST/UTC+5) each day
 
 jobs:
     main-webserver-hanging-resource-notification:
@@ -42,9 +39,7 @@ jobs:
             - name: Setup Python-based notification and resource modules
               working-directory: .github/workflows/helpers
               shell: bash
-              run: |
-                  ./notifications/setup_notifications.sh
-                  # bash aws/setup_aws.sh
+              run: ./notifications/setup_notifications.sh
 
             - name: Install boto3
               run: pip install boto3

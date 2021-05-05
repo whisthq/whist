@@ -13,6 +13,10 @@ import dateutil.parser
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
+def has_elapsed_hours(timestamp, hours):
+    return abs(datetime.now(timezone.utc) - timestamp) > timedelta(hours=hours)
+
+
 def compare_days(timestamp):
     """
     Compares a given timestamp with the current date and returns whether
@@ -30,10 +34,6 @@ def compare_days(timestamp):
     different = today - launch_time
 
     return (True, different.days) if different.days >= 14 else (False, different.days)
-
-
-def has_elapsed_hours(timestamp, hours):
-    return abs(datetime.now(timezone.utc) - timestamp) > timedelta(hours=hours)
 
 
 def read_tags(tags, resource):
@@ -395,7 +395,18 @@ def flag_instances(region):
 
 
 def hanging_resource(component, region, urls, secrets):
-    # format as bulleted list for Slack notification
+    """
+    Reports any hanging resources of the specified component in a given region
+
+    Args:
+        component (str): one of [ASGs, Clusters, Tasks, Instances]
+        region (str): current region
+        urls (list[str]): database urls to query
+        secrets (list[str]): x-hasura-admin-secrets
+
+    Returns:
+        string: formatted bulleted list for Slack notification
+    """
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
