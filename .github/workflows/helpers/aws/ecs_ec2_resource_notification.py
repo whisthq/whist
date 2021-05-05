@@ -92,8 +92,8 @@ def flag_instances(region):
 
     shutting_down_states = ["shutting-down", "terminated", "stopping", "stopped"]
 
-    for r in reservations:
-        instances = r["Instances"]
+    for res in reservations:
+        instances = res["Instances"]
         for instance in instances:
             launch_time = instance["LaunchTime"]
 
@@ -120,18 +120,18 @@ def flag_instances(region):
 
 
 if __name__ == "__main__":
-    result = ""
+    msg = ""
     for region in regions:
-        result += "Instances from *{}*\\n".format(region)
+        msg += "Instances from *{}*\\n".format(region)
         instances = flag_instances(region)
-        result += (
+        msg += (
             flag_instances(region)
             if len(instances) > 0
             else "     - No hanging instances\\n"
         )
-        result += "\\n"
+        msg += "\\n"
 
-    if len(result) > 0:
-        print(result)
+    if len(msg) > 0:
+        print(msg)
     else:
         print("No hanging instances!")
