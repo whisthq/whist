@@ -45,7 +45,7 @@ from app.constants.container_state_values import (
     WAITING_FOR_CLIENT_APP,
 )
 
-from app.celery.aws_celery_exceptions import ContainerNotAvailableError
+from app.celery.aws_celery_exceptions import ContainerNotAvailableError, ClusterDidNotStart
 
 from app.exceptions import StartValueException
 
@@ -390,7 +390,7 @@ def _get_num_extra(taskdef: str, location: str) -> int:
                 UserContainer.query.filter(
                     UserContainer.task_definition == taskdef,
                     UserContainer.location == location,
-                    UserContainer.user_id is not None,
+                    UserContainer.user_id != None,
                 )
             )
         )
@@ -930,9 +930,9 @@ def _create_new_cluster(
             f"region {region_name}"
         ),
     )
-    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
+
     self.update_state(
-        state="PENDING",
+        state="STARTED",
         meta={
             "msg": (
                 f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in "
@@ -940,8 +940,7 @@ def _create_new_cluster(
             ),
         },
     )
-    time.sleep(10)
-
+    ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
     cluster_name, _, _, _ = ecs_client.create_auto_scaling_cluster(
         cluster_name=cluster_name,
         instance_type=instance_type,
@@ -950,9 +949,28 @@ def _create_new_cluster(
         max_size=max_size,
         availability_zones=availability_zones,
     )
-    fractal_logger.info(f"Created cluster {cluster_name}")
+    fractal_logger.info(f"Created cluster {cluster_name}. Waiting for ")
 
     cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+    if min_size >= 1 and cluster_usage["registeredContainerInstancesCount"] == 0:
+        # wait for at least one instance to come online
+        max_tries = 60
+        success = False
+        for _ in range(max_tries):
+            # fetch the latest information
+            cluster_usage = ecs_client.get_clusters_usage(clusters=[cluster_name])[cluster_name]
+            if cluster_usage["registeredContainerInstancesCount"] != 0:
+                # an instance is registered
+                success = True
+                break
+            time.sleep(5)
+        # this is a really bad error, as it means our instances are not coming online
+        if not success:
+            fractal_logger.error(
+                f"an instance did not register for cluster {cluster_name}. Deleting the cluster."
+            )
+            delete_cluster.delay(cluster_name, force=False)
+            raise ClusterDidNotStart("No instance was registered.")
 
     cluster_usage_info = ClusterInfo(cluster=cluster_name, location=region_name, **cluster_usage)
     cluster_sql = fractal_sql_commit(db, lambda db, x: db.session.add(x), cluster_usage_info)
