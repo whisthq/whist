@@ -21,7 +21,7 @@ const cmdMainWatch = [
   "--watch ./src/main",
   "--watch ./src/utils",
   "--ext js,jsx,ts,tsx,svg",
-  `--exec \"${cmdElectron}\"`,
+  `--exec "${cmdElectron}"`,
 ].join(" ")
 
 console.log(cmdMainWatch)

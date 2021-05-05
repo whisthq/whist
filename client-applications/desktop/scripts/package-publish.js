@@ -2,27 +2,26 @@
 // supported platforms).
 
 const helpers = require("./build-package-helpers")
-const yargs = require('yargs')
+const yargs = require("yargs")
 
 // Get required args
 const argv = yargs(process.argv.slice(2))
   .version(false) // necessary to prevent mis-parsing of the `--version` arg we pass in
-  .option('version', {
-    description: "Set the version number of the client app to be published. Must be greater than the current version in the S3 bucket for autoupdate to work.",
-    type: 'string',
+  .option("version", {
+    description:
+      "Set the version number of the client app to be published. Must be greater than the current version in the S3 bucket for autoupdate to work.",
+    type: "string",
     requiresArg: true,
     demandOption: true,
   })
-  .option('environment', {
+  .option("environment", {
     description: "Set the client-app environment (dev, staging, or prod).",
-    type: 'string',
+    type: "string",
     requiresArg: true,
-    choices: ['dev', 'staging', 'prod'],
+    choices: ["dev", "staging", "prod"],
     demandOption: true,
   })
-  .help()
-  .argv
-
+  .help().argv
 
 helpers.reinitializeYarn()
 helpers.buildAndCopyProtocol()
@@ -35,19 +34,19 @@ helpers.setPackageEnv(argv.environment)
 helpers.snowpackBuild(argv.version)
 
 const getBucketName = () => {
-  var os_str
-  switch(process.platform) {
-    case 'darwin':
-      os_str = 'macos'
-      break;
-    case 'win32':
-      os_str = 'windows'
-      break;
-    case 'linux': 
-      os_str = 'ubuntu'
-      break;
+  let osStr
+  switch (process.platform) {
+    case "darwin":
+      osStr = "macos"
+      break
+    case "win32":
+      osStr = "windows"
+      break
+    case "linux":
+      osStr = "ubuntu"
+      break
   }
-  return `fractal-chromium-${os_str}-${argv.environment}`
+  return `fractal-chromium-${osStr}-${argv.environment}`
 }
 
 helpers.electronPublish(getBucketName())
