@@ -1006,7 +1006,7 @@ jobs:
               if: runner.os == 'Windows'
               uses: crazy-max/ghaction-chocolatey@v1
               with:
-                  args: install cmake --installargs 'ADD_CMAKE_TO_PATH=System'
+                  args: install cmake --no-progress --installargs 'ADD_CMAKE_TO_PATH=System'
 
             - name: Set up Visual Studio Developer Command Prompt (for nmake)
               if: runner.os == 'Windows'
@@ -1150,7 +1150,7 @@ jobs:
               working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
-                  wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
+                  wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
 
                   # Untar it
                   xz -d MacOSX10.14.sdk.tar.xz
