@@ -1,5 +1,5 @@
 {
-    "include": ["src", "scripts", ".", ".eslintrc.js"],
+    "include": ["src", "scripts", ".", ".eslintrc.js", "config"],
     "compilerOptions": {
         "allowJs": true,
         "module": "esnext",
