@@ -126,17 +126,17 @@ def code_overflow_collapsed(text, *args, **kwargs):
     return code_block(text, *args, **kwargs)
 
 
-def identity(x):
+def identity(i):
     """The identity function
 
     Somehow, Python doesn't have this built in.
 
     Args:
-       x: anything
+       i: anything
     Returns
-       x, completely unchanged
+       i, completely unchanged
     """
-    return x
+    return i
 
 
 def concat_id(identifier, text):

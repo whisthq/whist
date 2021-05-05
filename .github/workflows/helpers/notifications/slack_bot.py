@@ -48,10 +48,10 @@ def slack_post(
         "type": "mrkdwn",
         "text": body,
     }
-    r = requests.post(
+    resp = requests.post(
         slack_webhook,
         data=json.dumps(data),
         headers={"Content-Type": "application/json"},
     )
-    r.raise_for_status()
-    return r
+    resp.raise_for_status()
+    return resp
