@@ -44,7 +44,7 @@ jobs:
               shell: bash
               run: |
                   ./notifications/setup_notifications.sh
-                  bash /aws/setup_aws.sh
+                  bash ./aws/setup_aws.sh
 
             - name: Install boto3
               run: pip install boto3
