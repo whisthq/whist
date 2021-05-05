@@ -69,7 +69,12 @@ module.exports = {
 
   // Get the current client-app version
   getCurrentClientAppVersion: () => {
-    version = execCommand("git describe --tags --abbrev=0", ".", {}, "pipe")
+    const version = execCommand(
+      "git describe --tags --abbrev=0",
+      ".",
+      {},
+      "pipe"
+    )
     console.log(`Getting current client-app version: ${version}`)
     return version
   },
@@ -89,13 +94,22 @@ module.exports = {
   // Build via electron-build
   electronBuild: () => {
     console.log("Running 'electron-builder build'...")
-    execCommand(`electron-builder build --config electron-builder.config.js --publish never`, ".")
+    execCommand(
+      `electron-builder build --config electron-builder.config.js --publish never`,
+      "."
+    )
   },
 
-  // Publish via electron-build 
+  // Publish via electron-build
   electronPublish: (bucket) => {
-    console.log(`Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`)
-    execCommand(`electron-builder build --config electron-builder.config.js --publish always`, ".", {S3_BUCKET: bucket})
+    console.log(
+      `Running 'electron-builder publish' and uploading to S3 bucket ${bucket}...`
+    )
+    execCommand(
+      `electron-builder build --config electron-builder.config.js --publish always`,
+      ".",
+      { S3_BUCKET: bucket }
+    )
   },
 
   // This function takes in a boolean for whether to codesign the client-app.
@@ -103,20 +117,27 @@ module.exports = {
   // codesigns the existing files.
   configureCodeSigning: (enableCodeSigning) => {
     if (!(enableCodeSigning === true || enableCodeSigning === false)) {
-      console.error(`configureCodeSigning passed a non-boolean value: ${enableCodeSigning}`)
+      console.error(
+        `configureCodeSigning passed a non-boolean value: ${enableCodeSigning}`
+      )
       process.exit(-1)
     }
 
-    if(enableCodeSigning) {
-      if (process.platform === 'darwin') {
-        console.log("Codesigning everything in protocol-build/client");
-        execCommand("find protocol-build/client -type f -exec codesign -f -v -s \"Fractal Computers, Inc.\" \{\} \\;", ".")
+    if (enableCodeSigning) {
+      if (process.platform === "darwin") {
+        console.log("Codesigning everything in protocol-build/client")
+        execCommand(
+          'find protocol-build/client -type f -exec codesign -f -v -s "Fractal Computers, Inc." {} \\;',
+          "."
+        )
       } else {
-        console.log("We do not currently do any codesigning on non-MacOS platforms.");
+        console.log(
+          "We do not currently do any codesigning on non-MacOS platforms."
+        )
       }
     } else {
-      console.log("Disabling codesigning...");
-      process.env['CSC_IDENTITY_AUTO_DISCOVERY'] = 'false';
+      console.log("Disabling codesigning...")
+      process.env.CSC_IDENTITY_AUTO_DISCOVERY = "false"
     }
   },
 
@@ -141,5 +162,5 @@ module.exports = {
     execCommand("yarn config set network-timeout 600000", ".")
     execCommand("yarn cache clean", ".")
     execCommand("yarn install", ".")
-  }
+  },
 }
