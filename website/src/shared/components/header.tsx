@@ -1,5 +1,6 @@
 import React, { useState, ReactNode } from 'react'
 import { withClass } from '@app/shared/utils/withClass'
+import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 import history from '@app/shared/utils/history'
 import classNames from 'classnames'
 import {
@@ -66,10 +67,10 @@ const Header = (props: {
   dark: boolean
 }) => {
   const [expanded, setExpanded] = useState(false)
-
   history.listen(() => setExpanded(false))
 
   return (
+      <div>
         <div className="relative w-full">
             <div className="flex w-full mt-4 md:h-12 items-center">
                 <JustifyStartEndRow
@@ -124,6 +125,8 @@ const Header = (props: {
                     />
                 </div>
             </ScreenFull>
+        </div>
+        <DarkModeIcon/>
         </div>
   )
 }
