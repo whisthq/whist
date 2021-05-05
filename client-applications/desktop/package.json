@@ -29,6 +29,7 @@
         "@types/ping": "^0.2.0",
         "@types/react-router": "^5.1.13",
         "@types/react-router-dom": "^5.1.7",
+        "@types/universal-analytics": "^0.4.4",
         "aws-sdk": "^2.900.0",
         "classnames": "^2.3.1",
         "electron-store": "^8.0.0",
