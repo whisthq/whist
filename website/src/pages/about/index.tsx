@@ -7,6 +7,7 @@ import EmployeeBox from './components/employeeBox'
 
 import Footer from '@app/shared/components/footer'
 import Header from '@app/shared/components/header'
+import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 import { ScreenSize } from '@app/shared/constants/screenSizes'
 import { withContext } from '@app/shared/utils/context'
 
@@ -42,7 +43,7 @@ export const About = (props: { useWidth?: boolean }) => {
     )
   }
 
-  const { dark } = withContext()
+  const { dark, setDark } = withContext()
 
   return (
     <div className={classNames(
@@ -55,6 +56,8 @@ export const About = (props: { useWidth?: boolean }) => {
         className="pb-20 px-12 max-w-screen-2xl m-auto overflow-x-hidden"
       >
         <div>
+          <DarkModeIcon dark={dark} onClick={() => setDark(!dark)} />
+
           <Header dark={dark} />
         </div>
         <Row>
