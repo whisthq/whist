@@ -17,7 +17,9 @@ const appDetails = {
 const bundleConfig = {
   afterSign: "scripts/afterSign.js",
 
-  artifactName: "Fractal.${ext}",
+  // We need to disable an eslint error here because this is electron-builder-specific syntax
+  // (https://www.electron.build/configuration/configuration#artifact-file-name-template)
+  artifactName: "Fractal.${ext}", // eslint-disable-line no-template-curly-in-string
 
   asar: true,
 
