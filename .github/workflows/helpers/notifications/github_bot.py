@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 import os
-from functools import wraps, partial
 import sys
+
+from github import Github
+from . import formatters as fmt
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
-
-from github import Github
-
-import formatters as fmt
 
 
 def github_comment_update(

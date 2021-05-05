@@ -34,8 +34,8 @@ def newline(func):
 
 
 def join_newline(*args):
-    identity = lambda: ""
-    newlined = newline(identity)
+    empty = lambda: ""
+    newlined = newline(empty)
     return newlined().join(i for i in args if i)
 
 
@@ -76,27 +76,27 @@ def surround_xl(wrap_text, text):
     return surround_base(5, wrap_text, text)
 
 
-def h1(text=None):
+def heading1(text=None):
     if text:
         return f"# {text}"
 
 
-def h2(text=None):
+def heading2(text=None):
     if text:
         return f"## {text}"
 
 
-def h3(text=None):
+def heading3(text=None):
     if text:
         return f"### {text}"
 
 
-def h4(text=None):
+def heading4(text=None):
     if text:
         return f"#### {text}"
 
 
-def h5(text=None):
+def heading5(text=None):
     if text:
         return f"##### {text}"
 
@@ -126,17 +126,17 @@ def code_overflow_collapsed(text, *args, **kwargs):
     return code_block(text, *args, **kwargs)
 
 
-def identity(x):
+def identity(i):
     """The identity function
 
     Somehow, Python doesn't have this built in.
 
     Args:
-       x: anything
+       i: anything
     Returns
-       x, completely unchanged
+       i, completely unchanged
     """
-    return x
+    return i
 
 
 def concat_id(identifier, text):
@@ -171,7 +171,7 @@ def default_message_github(body, title=None, code=None, lang=None):
     Returns:
         A string containing the parameters, formatted to post as a comment
     """
-    return join_newline(h2(title), body, code_overflow_collapsed(code, lang=lang))
+    return join_newline(heading2(title), body, code_overflow_collapsed(code, lang=lang))
 
 
 def default_message_slack(body, title=None, code=None, lang=None):
@@ -187,6 +187,7 @@ def default_message_slack(body, title=None, code=None, lang=None):
     # Slack doesn't support most markdown formatting, so we need to keep the
     # message very simple.
     # It also doesn't support the language argument, so we'll just omit it.
+    _ = lang
     lines = []
     if title is not None:
         lines.append("*" + title + "*")
