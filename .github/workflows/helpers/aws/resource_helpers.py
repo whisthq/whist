@@ -396,6 +396,8 @@ def flag_instances(region):
 
 def hanging_resource(component, region, urls, secrets):
     # format as bulleted list for Slack notification
+    print(urls)
+    print(secrets)
     if component == "ASGs":
         asgs = get_hanging_asgs(region)
         if len(asgs) > 0:
@@ -434,5 +436,4 @@ def hanging_resource(component, region, urls, secrets):
     elif component == "Instances":
         instances = flag_instances(region)
         message = instances if len(instances) > 0 else "     - No hanging instances\n"
-        message += "\n"
         return message
