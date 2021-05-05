@@ -57,11 +57,11 @@ export const protocolCloseRequest = protocolLaunchProcess.pipe(
 )
 
 export const protocolCloseFailure = protocolCloseRequest.pipe(
-  filter((protocol) => protocol.killed)
+  filter((protocol: ChildProcess) => protocol.killed)
 )
 
 export const protocolCloseSuccess = protocolCloseRequest.pipe(
-  filter((protocol) => !protocol.killed)
+  filter((protocol: ChildProcess) => !protocol.killed)
 )
 
 // Logging

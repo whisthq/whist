@@ -89,11 +89,11 @@ export const hostConfigProcess = hostConfigRequest.pipe(
 )
 
 export const hostConfigSuccess = hostConfigProcess.pipe(
-  filter((res) => hostServiceConfigValid(res))
+  filter((res: {status: number}) => hostServiceConfigValid(res))
 )
 
 export const hostConfigFailure = hostConfigProcess.pipe(
-  filter((res) => hostServiceConfigError(res))
+  filter((res: {status: number}) => hostServiceConfigError(res))
 )
 
 export const hostConfigLoading = loadingFrom(

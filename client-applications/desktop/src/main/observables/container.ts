@@ -33,6 +33,7 @@ import {
   takeWhile,
 } from "rxjs/operators"
 import { formatContainer, formatTokensArray } from "@app/utils/formatters"
+import { AsyncReturnType } from "@app/@types/state"
 
 export const containerCreateRequest = combineLatest([
   zip(userEmail, userAccessToken, userConfigToken),
@@ -67,28 +68,31 @@ export const {
   success: containerAssignSuccess,
   failure: containerAssignFailure,
   loading: containerAssignLoading,
-} = factory("containerAssign", {
-  request: containerCreateSuccess.pipe(
-    withLatestFrom(userAccessToken),
-    map(([response, token]) => [response.json.ID, token] as [string, string])
-  ),
-  process: (args) =>
-    of(args).pipe(
-      pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
-      takeWhile((res) => containerInfoPending(res), true),
-      takeWhile((res) => !containerInfoError(res), true),
-      takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
-      share()
+} = factory<[string, string], AsyncReturnType<typeof containerInfo>>(
+  "containerAssign",
+  {
+    request: containerCreateSuccess.pipe(
+      withLatestFrom(userAccessToken),
+      map(([response, token]) => [response.json.ID, token] as [string, string])
     ),
-  success: (res) => containerInfoSuccess(res),
-  failure: (res) =>
-    containerInfoError(res) ||
-    containerInfoPending(res) ||
-    !containerInfoSuccess(res),
-  logging: {
-    request: ["only tokens", formatTokensArray],
-    process: ["omitting verbose response", formatContainer],
-    success: ["omitting verbose response", formatContainer],
-    failure: ["omitting verbose response", formatContainer],
-  },
-})
+    process: (args) =>
+      of(args).pipe(
+        pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
+        takeWhile((res) => containerInfoPending(res), true),
+        takeWhile((res) => !containerInfoError(res), true),
+        takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
+        share()
+      ),
+    success: (res) => containerInfoSuccess(res),
+    failure: (res) =>
+      containerInfoError(res) ||
+      containerInfoPending(res) ||
+      !containerInfoSuccess(res),
+    logging: {
+      request: ["only tokens", formatTokensArray],
+      process: ["omitting verbose response", formatContainer],
+      success: ["omitting verbose response", formatContainer],
+      failure: ["omitting verbose response", formatContainer],
+    },
+  }
+)
