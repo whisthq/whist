@@ -10,7 +10,7 @@ import { DarkModeIcon } from '@app/shared/components/darkModeIcon'
 
 const Cookies = () => {
   const { width } = withContext()
-  const { dark, setDark } = withContext()
+  const { dark } = withContext()
   return (
         <div className={classNames(
           'overflow-x-hidden',
