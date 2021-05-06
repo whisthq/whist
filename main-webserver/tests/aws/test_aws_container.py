@@ -5,6 +5,7 @@ import pytest
 from flask_jwt_extended import create_access_token
 
 from app.celery import aws_ecs_creation
+from app.celery import aws_ecs_modification
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import manual_scale_cluster, update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
@@ -576,6 +577,10 @@ def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 2)
 
+    # mock kill_draining as the cluster does not actually exist
+    monkeypatch.setattr(
+        aws_ecs_modification, "kill_draining_instances_with_no_tasks", function(returns=0)
+    )
     monkeypatch.setattr(
         ECSClient, "get_auto_scaling_groups_in_cluster", function(returns=["fake-asg"])
     )
@@ -610,6 +615,10 @@ def test_manual_scale_cluster_down(bulk_cluster, monkeypatch):
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 1)
 
+    # mock kill_draining as the cluster does not actually exist
+    monkeypatch.setattr(
+        aws_ecs_modification, "kill_draining_instances_with_no_tasks", function(returns=0)
+    )
     monkeypatch.setattr(
         ECSClient, "get_auto_scaling_groups_in_cluster", function(returns=["fake-asg1"])
     )
