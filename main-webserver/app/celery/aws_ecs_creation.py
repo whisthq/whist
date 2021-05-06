@@ -752,7 +752,6 @@ def _assign_container(
 
 
 @shared_task
-@maintenance_track_task
 def prewarm_new_container(
     task_definition_arn: str,
     task_version: int,
@@ -775,6 +774,22 @@ def prewarm_new_container(
         dpi: what DPI to use on the server -- just to load into a db column
             as a placeholder since the column is nonnullable
         webserver_url: The URL of the web server to ping and with which to authenticate.
+    """
+    return _prewarm_new_container(
+        self, task_definition_arn, task_version, cluster_name, region_name, webserver_url
+    )
+
+
+def _prewarm_new_container(
+    self: Task,
+    task_definition_arn: str,
+    task_version: int,
+    cluster_name: str,
+    region_name: str,
+    webserver_url: str,
+):
+    """
+    Actual implementation of prewarm_new_container. Useful for mocking the celery task.
     """
     task_start_time = time.time()
 

@@ -26,6 +26,7 @@ def update_cluster(
     region_name: Optional[str] = "us-east-1",
     cluster_name: Optional[str] = None,
     ami: Optional[str] = None,
+    webserver_url: Optional[str] = None,
 ) -> None:
     """
     Updates a specific cluster to use a new AMI
@@ -38,6 +39,9 @@ def update_cluster(
     Returns:
         None, though cluster update info stored in state
     """
+    # import this here to stop a circular import
+    from app.celery.aws_ecs_creation import prewarm_new_container
+
     all_regions = RegionToAmi.query.all()
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
@@ -121,7 +125,18 @@ def update_cluster(
             "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
         }
     else:
-        # The cluster did exist, and was updated successfully.
+        # The cluster did exist, and was updated successfully. Now we prewarm a task to stop the new
+        # instance from getting scaled in
+        default_app = "Google Chrome"
+        app_data = SupportedAppImages.query.get(default_app)
+        prewarm_new_container(
+            task_definition_arn=app_data.task_definition,
+            task_version=app_data.task_version,
+            cluster_name=cluster_name,
+            region_name=region_name,
+            webserver_url=webserver_url,
+        )  # pylint:disable=no-value-for-parameter
+
         return {
             "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
         }
@@ -136,6 +151,7 @@ def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] =
     Args:
         region_name (Optional[str]): which region the cluster is in
         ami (Optional[str]): which AMI to use
+        webserver_url: which webserver URL the prewarmed container in update_cluster should talk to
 
     Returns:
          None, though which cluster was updated is in celery state
@@ -176,7 +192,7 @@ def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] =
     fractal_logger.info(f"Updating clusters: {all_clusters}")
     tasks = []
     for cluster in all_clusters:
-        task = update_cluster.delay(region_name, cluster.cluster, ami)
+        task = update_cluster.delay(region_name, cluster.cluster, ami, webserver_url)
         tasks.append(task.id)
 
     fractal_logger.info(

@@ -748,6 +748,7 @@ jobs:
               if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
               working-directory: main-webserver
               shell: python3 {0}
+              # this must be run before ami update, because that prewarms a container running the new task version
               run: |
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
                   from scripts.misc_scripts import login
