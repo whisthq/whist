@@ -1,4 +1,3 @@
-import { filter, map, share, exhaustMap } from "rxjs/operators"
 import { loginProcess } from "@app/main/observables/login"
 
 // example test using observable, doesn't do anything right now
