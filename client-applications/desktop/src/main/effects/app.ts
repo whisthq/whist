@@ -35,7 +35,6 @@ import {
   protocolLaunchFailure,
 } from "@app/main/observables/protocol"
 import { errorWindowRequest } from "@app/main/observables/error"
-import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
   userEmail,
   userAccessToken,
@@ -119,7 +118,7 @@ eventUpdateDownloaded.subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-autoUpdateAvailable.subscribe(() => {
+eventUpdateAvailable.subscribe(() => {
   closeWindows()
   createUpdateWindow((win: any) => win.show())
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
