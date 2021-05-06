@@ -321,7 +321,9 @@ def test_delete_container(client, monkeypatch):
 def test_update_region(client, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
-    def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
+    def mock_update_cluster(
+        region_name="us-east-1", cluster_name=None, ami=None, webserver_url=None
+    ):
         success = True
         # check that the arguments are as expected
         if cluster_name != pytest.cluster_name:
