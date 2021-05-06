@@ -95,7 +95,7 @@ const char *clipboard_get_string() {
             return [text UTF8String];
         }
     } else {
-        printf("Can't get Mac Clipboard String data.\n");
+        LOG_ERROR("Can't get Mac Clipboard String data.");
         return "";  // empty string since there is no clipboard test data
     }
 }
@@ -207,7 +207,7 @@ void clipboard_get_files(OSXFilenames *filenames[]) {
                          PATH_MAX);
         }
     } else {
-        printf("Can't get Mac Clipboard Files data.\n");
+        LOG_ERROR("Can't get Mac Clipboard Files data.");
     }
 }
 
@@ -233,7 +233,7 @@ void clipboard_set_files(char *filepaths[]) {
             NSString *url_string = [NSString stringWithUTF8String:filepaths[i]];
             NSURL *url = [[NSURL fileURLWithPath:url_string] absoluteURL];
             if (url == nil) {
-                printf("Error in converting C string relative path to NSURL.\n");
+                LOG_ERROR("Error in converting C string relative path to NSURL.");
             }
             [mutable_arr_urls addObject:url];
         } else {

@@ -105,7 +105,7 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         if (optopt == (int)'-') return (-1);
         if (!*place) ++optind;
         if (opterr && *ostr != ':')
-            (void)fprintf(stderr, "%s: illegal option -- %c\n", progname(nargv[0]), optopt);
+            (void)LOG_PRINTF("%s: illegal option -- %c\n", progname(nargv[0]), optopt);
         return (BADCH);
     }
     if (*++oli != ':') { /* don't need argument */
@@ -124,8 +124,8 @@ int getopt_internal(int nargc, char *const *nargv, const char *ostr) {
         else if (nargc <= ++optind) { /* no arg */
             place = EMSG;
             if ((opterr) && (*ostr != ':'))
-                (void)fprintf(stderr, "%s: option requires an argument -- %c\n", progname(nargv[0]),
-                              optopt);
+                (void)LOG_PRINTF("%s: option requires an argument -- %c\n", progname(nargv[0]),
+                                 optopt);
             return (BADARG);
         } else /* white space */
             optarg = nargv[optind];
@@ -205,14 +205,13 @@ int getopt_long(int nargc, char *const *nargv, const char *options,
                  * indicates no error should be generated
                  */
                 if ((opterr) && (*options != ':'))
-                    (void)fprintf(stderr, "%s: option requires an argument -- %s\n",
-                                  progname(nargv[0]), current_argv);
+                    (void)LOG_PRINTF("%s: option requires an argument -- %s\n", progname(nargv[0]),
+                                     current_argv);
                 return (BADARG);
             }
         } else { /* No matching argument */
             if ((opterr) && (*options != ':'))
-                (void)fprintf(stderr, "%s: illegal option -- %s\n", progname(nargv[0]),
-                              current_argv);
+                (void)LOG_PRINTF("%s: illegal option -- %s\n", progname(nargv[0]), current_argv);
             return (BADCH);
         }
         if (long_options[match].flag) {
