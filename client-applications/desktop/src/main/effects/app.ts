@@ -104,13 +104,11 @@ combineLatest([userEmail, protocolCloseRequest]).subscribe(
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, loginSuccess, signupSuccess)
-  .pipe(take(1))
-  .subscribe(() => {
-    closeWindows()
-    hideAppDock()
-    createTray(eventActionTypes)
-  })
+merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
+  closeWindows()
+  hideAppDock()
+  createTray(eventActionTypes)
+})
 
 // If the update is downloaded, quit the app and install the update
 

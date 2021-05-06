@@ -23,7 +23,7 @@ import {
 } from "@app/utils/container"
 import { warningObservables } from "@app/utils/logging"
 import {
-  containerAssignFailure,
+  containerPollingFailure,
   containerCreateFailure,
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
@@ -47,7 +47,7 @@ export const errorWindowRequest = merge(
       return createContainerErrorWindowInternal
     })
   ),
-  containerAssignFailure.pipe(mapTo(assignContainerErrorWindow)),
+  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow)),
   protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
 ).pipe(
   withLatestFrom(eventAppReady),

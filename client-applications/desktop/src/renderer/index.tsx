@@ -16,8 +16,8 @@ import {
   ContainerCreateErrorTextNoAccess,
   ContainerCreateErrorTitleUnauthorized,
   ContainerCreateErrorTextUnauthorized,
-  ContainerAssignErrorTitle,
-  ContainerAssignErrorText,
+  containerPollingErrorTitle,
+  containerPollingErrorText,
   ProtocolErrorTitle,
   ProtocolErrorText,
   WindowHashAuth,
@@ -104,8 +104,8 @@ const RootComponent = () => {
   if (show === WindowHashAssignContainerError) {
     return (
       <Error
-        title={ContainerAssignErrorTitle}
-        text={ContainerAssignErrorText}
+        title={containerPollingErrorTitle}
+        text={containerPollingErrorText}
         onClick={errorContinue}
       />
     )

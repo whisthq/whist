@@ -19,7 +19,7 @@ import {
   userConfigToken,
 } from "@app/main/observables/user"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
-import { ContainerAssignTimeout } from "@app/utils/constants"
+import { containerPollingTimeout } from "@app/utils/constants"
 import { loadingFrom, pollMap, factory } from "@app/utils/observables"
 import { from, of, zip, combineLatest } from "rxjs"
 import {
@@ -63,13 +63,13 @@ export const containerCreateLoading = loadingFrom(
 )
 
 export const {
-  request: containerAssignRequest,
-  process: containerAssignProcess,
-  success: containerAssignSuccess,
-  failure: containerAssignFailure,
-  loading: containerAssignLoading,
+  request: containerPollingRequest,
+  process: containerPollingProcess,
+  success: containerPollingSuccess,
+  failure: containerPollingFailure,
+  loading: containerPollingLoading,
 } = factory<[string, string], AsyncReturnType<typeof containerInfo>>(
-  "containerAssign",
+  "containerPolling",
   {
     request: containerCreateSuccess.pipe(
       withLatestFrom(userAccessToken),
@@ -80,7 +80,7 @@ export const {
         pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
         takeWhile((res) => containerInfoPending(res), true),
         takeWhile((res) => !containerInfoError(res), true),
-        takeUntil(of(true).pipe(delay(ContainerAssignTimeout))),
+        takeUntil(of(true).pipe(delay(containerPollingTimeout))),
         share()
       ),
     success: (res) => containerInfoSuccess(res),
