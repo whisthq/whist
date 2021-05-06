@@ -60,6 +60,7 @@ int get_logger_history_len();
 void init_backtrace_handler();
 
 // TAG Strings
+const char* printf_tag = "PRINTF";
 const char* debug_tag = "DEBUG";
 const char* info_tag = "INFO";
 const char* warning_tag = "WARNING";
@@ -548,19 +549,29 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
-    // Map to mprintf
-    mprintf(WRITE_MPRINTF_TO_LOG, tag, fmt_str, args);
+    if (tag == PRINTF_TAG) {
+        if (mprintf_thread != NULL) {
+            LOG_ERROR(
+                "Error! initLogger has already been called, but LOG_PRINTF was still used anyway! "
+                "Printing message below...");
+        }
+        vprintf(fmt_str, args);
+    } else {
+        if (mprintf_thread == NULL) {
+            printf("initLogger has not been called! Printing message below...\n");
+            vprintf(fmt_str, args);
+            return;
+        } else {
+            // Map LOG_XYZ to mprintf
+            mprintf(WRITE_MPRINTF_TO_LOG, tag, fmt_str, args);
+        }
+    }
+
     va_end(args);
 }
 
 // Core multithreaded printf function, that accepts va_list and log boolean
 void mprintf(bool log, const char* tag, const char* fmt_str, va_list args) {
-    if (mprintf_thread == NULL) {
-        printf("initLogger has not been called! Printing below...\n");
-        vprintf(fmt_str, args);
-        return;
-    }
-
     fractal_lock_mutex((FractalMutex)logger_mutex);
 
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
@@ -668,7 +679,7 @@ void print_stacktrace() {
     for (i = 0; i < frames; i++) {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
 
-        fprintf(stderr, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
+        fprintf(stdout, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
         fprintf(mprintf_log_file, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
                 symbol->Address);
     }
@@ -685,11 +696,11 @@ void print_stacktrace() {
     char** messages;
     messages = backtrace_symbols(trace, trace_size);
 
-    // Print stacktrace to stderr and logfile
+    // Print stacktrace to stdout and logfile
     fractal_lock_mutex((FractalMutex)log_file_mutex);
     // Print backtrace messages
     for (int i = 1; i < (int)trace_size; i++) {
-        fprintf(stderr, "[backtrace #%02d] %s\n", i, messages[i]);
+        fprintf(stdout, "[backtrace #%02d] %s\n", i, messages[i]);
         fprintf(mprintf_log_file, "[backtrace #%02d] %s\n", i, messages[i]);
     }
     // Print addr2line commands
@@ -711,14 +722,14 @@ void print_stacktrace() {
         }
 
         // Write addr2line command to logs
-        fprintf(stderr, "%s\n", cmd);
+        fprintf(stdout, "%s\n", cmd);
         fprintf(mprintf_log_file, "%s\n", cmd);
     }
 #endif
     // Print out the final newlines, flush, then unlock the log file
-    fprintf(stderr, "\n\n");
+    fprintf(stdout, "\n\n");
     fprintf(mprintf_log_file, "\n\n");
-    fflush(stderr);
+    fflush(stdout);
     fflush(mprintf_log_file);
     fractal_unlock_mutex((FractalMutex)log_file_mutex);
 
@@ -727,70 +738,70 @@ void print_stacktrace() {
 
 #ifdef _WIN32
 LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // NOLINT
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode) {
         case EXCEPTION_ACCESS_VIOLATION:
-            fprintf(stderr, "Error: EXCEPTION_ACCESS_VIOLATION\n");
+            fprintf(stdout, "Error: EXCEPTION_ACCESS_VIOLATION\n");
             break;
         case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-            fprintf(stderr, "Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n");
+            fprintf(stdout, "Error: EXCEPTION_ARRAY_BOUNDS_EXCEEDED\n");
             break;
         case EXCEPTION_BREAKPOINT:
-            fprintf(stderr, "Error: EXCEPTION_BREAKPOINT\n");
+            fprintf(stdout, "Error: EXCEPTION_BREAKPOINT\n");
             break;
         case EXCEPTION_DATATYPE_MISALIGNMENT:
-            fprintf(stderr, "Error: EXCEPTION_DATATYPE_MISALIGNMENT\n");
+            fprintf(stdout, "Error: EXCEPTION_DATATYPE_MISALIGNMENT\n");
             break;
         case EXCEPTION_FLT_DENORMAL_OPERAND:
-            fprintf(stderr, "Error: EXCEPTION_FLT_DENORMAL_OPERAND\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_DENORMAL_OPERAND\n");
             break;
         case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-            fprintf(stderr, "Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_DIVIDE_BY_ZERO\n");
             break;
         case EXCEPTION_FLT_INEXACT_RESULT:
-            fprintf(stderr, "Error: EXCEPTION_FLT_INEXACT_RESULT\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_INEXACT_RESULT\n");
             break;
         case EXCEPTION_FLT_INVALID_OPERATION:
-            fprintf(stderr, "Error: EXCEPTION_FLT_INVALID_OPERATION\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_INVALID_OPERATION\n");
             break;
         case EXCEPTION_FLT_OVERFLOW:
-            fprintf(stderr, "Error: EXCEPTION_FLT_OVERFLOW\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_OVERFLOW\n");
             break;
         case EXCEPTION_FLT_STACK_CHECK:
-            fprintf(stderr, "Error: EXCEPTION_FLT_STACK_CHECK\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_STACK_CHECK\n");
             break;
         case EXCEPTION_FLT_UNDERFLOW:
-            fprintf(stderr, "Error: EXCEPTION_FLT_UNDERFLOW\n");
+            fprintf(stdout, "Error: EXCEPTION_FLT_UNDERFLOW\n");
             break;
         case EXCEPTION_ILLEGAL_INSTRUCTION:
-            fprintf(stderr, "Error: EXCEPTION_ILLEGAL_INSTRUCTION\n");
+            fprintf(stdout, "Error: EXCEPTION_ILLEGAL_INSTRUCTION\n");
             break;
         case EXCEPTION_IN_PAGE_ERROR:
-            fprintf(stderr, "Error: EXCEPTION_IN_PAGE_ERROR\n");
+            fprintf(stdout, "Error: EXCEPTION_IN_PAGE_ERROR\n");
             break;
         case EXCEPTION_INT_DIVIDE_BY_ZERO:
-            fprintf(stderr, "Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n");
+            fprintf(stdout, "Error: EXCEPTION_INT_DIVIDE_BY_ZERO\n");
             break;
         case EXCEPTION_INT_OVERFLOW:
-            fprintf(stderr, "Error: EXCEPTION_INT_OVERFLOW\n");
+            fprintf(stdout, "Error: EXCEPTION_INT_OVERFLOW\n");
             break;
         case EXCEPTION_INVALID_DISPOSITION:
-            fprintf(stderr, "Error: EXCEPTION_INVALID_DISPOSITION\n");
+            fprintf(stdout, "Error: EXCEPTION_INVALID_DISPOSITION\n");
             break;
         case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-            fprintf(stderr, "Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n");
+            fprintf(stdout, "Error: EXCEPTION_NONCONTINUABLE_EXCEPTION\n");
             break;
         case EXCEPTION_PRIV_INSTRUCTION:
-            fprintf(stderr, "Error: EXCEPTION_PRIV_INSTRUCTION\n");
+            fprintf(stdout, "Error: EXCEPTION_PRIV_INSTRUCTION\n");
             break;
         case EXCEPTION_SINGLE_STEP:
-            fprintf(stderr, "Error: EXCEPTION_SINGLE_STEP\n");
+            fprintf(stdout, "Error: EXCEPTION_SINGLE_STEP\n");
             break;
         case EXCEPTION_STACK_OVERFLOW:
-            fprintf(stderr, "Error: EXCEPTION_STACK_OVERFLOW\n");
+            fprintf(stdout, "Error: EXCEPTION_STACK_OVERFLOW\n");
             break;
         default:
-            fprintf(stderr, "Error: Unrecognized Exception\n");
+            fprintf(stdout, "Error: Unrecognized Exception\n");
             break;
     }
     /* If this is a stack overflow then we can't walk the stack, so just show
@@ -798,14 +809,14 @@ LONG WINAPI windows_exception_handler(EXCEPTION_POINTERS* ExceptionInfo) {  // N
     if (EXCEPTION_STACK_OVERFLOW != ExceptionInfo->ExceptionRecord->ExceptionCode) {
         print_stacktrace();
     } else {
-        fprintf(stderr, "Can't show stacktrace when the stack has overflowed!\n");
+        fprintf(stdout, "Can't show stacktrace when the stack has overflowed!\n");
     }
 
     return EXCEPTION_EXECUTE_HANDLER;
 }
 #else
 void unix_crash_handler(int sig) {
-    fprintf(stderr, "\nError: signal %d:%s\n", sig, strsignal(sig));
+    fprintf(stdout, "\nError: signal %d:%s\n", sig, strsignal(sig));
     print_stacktrace();
     _exit(-1);
 }
