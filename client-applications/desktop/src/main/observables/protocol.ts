@@ -11,10 +11,9 @@ import {
   fromEvent,
   merge,
   combineLatest,
-  interval,
   Observable,
 } from "rxjs"
-import { map, filter, share, mergeMap, throttle } from "rxjs/operators"
+import { map, filter, share, mergeMap, take } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 import { EventEmitter } from "events"
 
@@ -43,7 +42,7 @@ export const protocolLaunchProcess = combineLatest([
   zip(userEmail, userAccessToken, userConfigToken),
   eventUpdateNotAvailable,
 ]).pipe(
-  throttle(() => interval(10000)),
+  take(1),
   map(() => protocolLaunch()),
   share()
 ) as Observable<ChildProcess>
