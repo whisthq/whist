@@ -4,4 +4,4 @@ const helpers = require("./build-package-helpers")
 
 helpers.buildAndCopyProtocol()
 helpers.buildTailwind()
-helpers.snowpackDev(helpers.getCurrentClientAppVersion())
+helpers.snowpackDev({ VERSION: helpers.getCurrentClientAppVersion() })

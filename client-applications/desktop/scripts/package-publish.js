@@ -31,7 +31,7 @@ helpers.configureCodeSigning(true)
 
 helpers.setPackageEnv(argv.environment)
 
-helpers.snowpackBuild(argv.version)
+helpers.snowpackBuild({ VERSION: argv.version })
 
 const getBucketName = () => {
   let osStr

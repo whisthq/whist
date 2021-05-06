@@ -27,5 +27,5 @@ helpers.configureCodeSigning(true)
 // For testing, we just hardcode the environment to dev
 helpers.setPackageEnv("dev")
 
-helpers.snowpackBuild(argv.version)
+helpers.snowpackBuild({ VERSION: argv.version })
 helpers.electronBuild()
