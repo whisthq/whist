@@ -131,7 +131,7 @@ zip(
     protocolLaunchFailure.pipe(mapTo(false))
   )
 ).subscribe(([, success]: [ChildProcess, boolean]) => {
-  if (success) app.quit()
+  if (success) app.exit()
 })
 
 signoutAction.subscribe(() => {
