@@ -754,7 +754,7 @@ int main(int argc, char* argv[]) {
 
     // cache should be the first thing!
     if (configure_cache() != 0) {
-        printf("Failed to configure cache.");
+        LOG_PRINTF("Failed to configure cache.");
         return -1;
     }
 

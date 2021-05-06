@@ -62,7 +62,7 @@ while(!packet) {
   packet = ReadTCPPacket(context);
 }
 
-printf("MESSAGE: %s\n", packet->data); // Will print "Hello this is a message!"
+LOG_INFO("MESSAGE: %s", packet->data); // Will print "Hello this is a message!"
 */
 
 /*
