@@ -295,13 +295,11 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
     num_instances = cluster_data.registeredContainerInstancesCount
     expected_num_instances = math.ceil(num_tasks / factor)
-    # it is possible for some of the draining instances cannot be killed because of the
-    # minContainers constraint. however, we ignore these in our expected_num_instances
-    # calculations because these instances can never be assigned to. This logic increments
-    # expected_num_instances but obeys the maxContainers constraint.
-    # future invocations of this function can remove the remaining draining instances
-    # because the current invocation spun up new valid instances
-    expected_num_instances += num_unkilled_draining_instances_with_no_tasks
+    # it is possible that some of the draining instances cannot be killed because of the
+    # minContainers constraint. We ignore these in our expected_num_instances
+    # calculation because these instances can never be assigned to.
+    # future invocations of this function can kill the remaining draining instances
+    expected_num_instances += num_remaining_draining_instances_with_no_tasks
 
     # expected_num_instances must be >= cluster_data.minContainers
     expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
