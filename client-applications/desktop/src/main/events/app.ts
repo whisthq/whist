@@ -21,14 +21,6 @@ export const eventWindowCreated = fromEvent(
   "browser-window-created"
 )
 
-// By default, the window-all-closed Electron event will cause the application
-// to close. We don't want this behavior, we want to control for ourselves
-// when the application closes with observables and Effects.
-// We subscribe to window-all-closed here and call preventDefault().
-// The event will still emit, but the app won't quit automatically.
-
-app.on("window-all-closed", (event: any) => event.preventDefault())
-
 // Set custom app data folder based on environment
 const { deployEnv } = config
 const appPath = app.getPath("userData")
