@@ -1,10 +1,10 @@
-from typing import Dict, Union, Optional, Tuple
+from typing import Dict, Union, Optional
 
 import stripe
 
-from flask import current_app, jsonify
+from flask import current_app
 
-from app.constants.http_codes import BAD_REQUEST, NOT_ACCEPTABLE, SUCCESS, UNAUTHORIZED, NOT_FOUND
+from app.constants.http_codes import BAD_REQUEST, SUCCESS, UNAUTHORIZED
 from app.helpers.utils.general.crypto import check_value, hash_value
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.general.sql_commands import (
@@ -19,7 +19,6 @@ from app.models import db, User
 from app.helpers.utils.event_logging.events import (
     logged_event_for_logon,
 )
-from app.helpers.utils.mail.mail_client import MailClient
 
 
 def login_helper(email: str, password: str) -> Dict[str, Union[bool, Optional[str], Optional[int]]]:
@@ -234,35 +233,6 @@ def lookup_helper(username: str) -> Dict[str, Union[bool, int]]:
         return {"exists": True, "status": SUCCESS}
     else:
         return {"exists": False, "status": SUCCESS}
-
-
-def update_user_helper(body: Dict[str, str]) -> Tuple[str, int]:
-    user = User.query.get(body["username"])
-    if user:
-        if "name" in body:
-            user.name = body["name"]
-            db.session.commit()
-
-            return jsonify({"msg": "Name updated successfully"}), SUCCESS
-        if "email" in body:
-            user.user_id = body["email"]
-            db.session.commit()
-
-            token = user.token
-            url = current_app.config["FRONTEND_URL"] + "/verify?" + token
-            mail_client = MailClient(current_app.config["SENDGRID_API_KEY"])
-            mail_client.send_email("EMAIL_VERIFICATION", user.user_id, jinja_args={"url": url})
-        if "password" in body:
-            result_dict = reset_password_helper(
-                body["username"], body["password"], body["encrypted_config_token"]
-            )
-            if result_dict["status"] == SUCCESS:
-                result_dict["msg"] = "Password updated successfully"
-            else:
-                result_dict["msg"] = "We had an error updating your password"
-            return jsonify(result_dict), SUCCESS
-        return jsonify({"msg": "Field not accepted"}), NOT_ACCEPTABLE
-    return jsonify({"msg": "User not found"}), NOT_FOUND
 
 
 def auto_login_helper(email: str) -> Dict[str, Union[Optional[int], Optional[str]]]:

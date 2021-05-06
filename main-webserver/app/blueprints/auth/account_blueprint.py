@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import SUCCESS
@@ -8,12 +8,10 @@ from app.helpers.blueprint_helpers.auth.account_post import (
     login_helper,
     lookup_helper,
     register_helper,
-    update_user_helper,
     verify_helper,
     auto_login_helper,
     verify_password_helper,
 )
-from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 account_bp = Blueprint("account_bp", __name__)
@@ -21,26 +19,12 @@ account_bp = Blueprint("account_bp", __name__)
 
 @account_bp.route("/account/delete", methods=["POST"])
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
-@fractal_pre_process
 @jwt_required()
-@fractal_auth
-def account_post_delete(**kwargs):
+def account_post_delete():
     # Account deletion endpoint
-    username = kwargs["body"]["username"]
-
-    output = delete_helper(username)
+    output = delete_helper(get_jwt_identity())
 
     return jsonify(output), output["status"]
-
-
-@account_bp.route("/account/update", methods=["POST"])
-@limiter.limit(RATE_LIMIT_PER_MINUTE)
-@fractal_pre_process
-@jwt_required()
-@fractal_auth
-def account_post_update(**kwargs):
-    # Change the user's name, email, or password
-    return update_user_helper(kwargs["body"])
 
 
 @account_bp.route("/account/<action>", methods=["POST"])

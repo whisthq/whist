@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify  # , request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app import fractal_pre_process
 
@@ -13,7 +13,6 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
     deleteCardHelper,
     retrieveHelper,
 )
-from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 
@@ -24,7 +23,6 @@ stripe_bp = Blueprint("stripe_bp", __name__)
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
-@fractal_auth
 def payment(action, **kwargs):
     """Covers payment endpoints for stripe. Right now has seven endpoints:
 
@@ -71,6 +69,7 @@ def payment(action, **kwargs):
     make stripe actions even if they are a full user).
     """
     body = kwargs["body"]
+    email = get_jwt_identity()
 
     # these add a subscription or remove (or modify)
     if action == "addSubscription" or action == "modifySubscription":
