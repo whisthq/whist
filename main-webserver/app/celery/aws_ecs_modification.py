@@ -287,9 +287,21 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     if cluster_data is None:
         raise InvalidCluster(f"Cluster {cluster} is not in ClusterInfo")
 
+    # first kill all draining instances with no tasks
+    num_remaining_draining_instances_with_no_tasks = kill_draining_instances_with_no_tasks(
+        cluster_data
+    )
+
     num_tasks = cluster_data.pendingTasksCount + cluster_data.runningTasksCount
     num_instances = cluster_data.registeredContainerInstancesCount
     expected_num_instances = math.ceil(num_tasks / factor)
+    # it is possible for some of the draining instances cannot be killed because of the
+    # minContainers constraint. however, we ignore these in our expected_num_instances
+    # calculations because these instances can never be assigned to. This logic increments
+    # expected_num_instances but obeys the maxContainers constraint.
+    # future invocations of this function can remove the remaining draining instances
+    # because the current invocation spun up new valid instances
+    expected_num_instances += num_unkilled_draining_instances_with_no_tasks
 
     # expected_num_instances must be >= cluster_data.minContainers
     expected_num_instances = max(expected_num_instances, cluster_data.minContainers)
@@ -342,3 +354,40 @@ def check_and_cleanup_outdated_tasks(
     for container in bad_containers:
         fractal_logger.info(f"triggering delete container for {container.container_id}")
         delete_container.delay(container.container_id, container.secret_key)
+
+
+def kill_draining_instances_with_no_tasks(cluster_data: ClusterInfo) -> int:
+    """
+    Kill any instances that are draining and have no tasks.
+    Args:
+        cluster_data: SQLAlchemy object containing information on the cluster
+    Returns:
+        The number of draining instances with no tasks that could not be killed because
+        of the minContainers constraint.
+    """
+    fractal_logger.info("HERE!!")
+    ecs_client = ECSClient(launch_type="EC2", region_name=cluster_data.location)
+    draining_instances_data = ecs_client.ecs_client.list_container_instances(
+        filter="runningTasksCount==0", cluster=cluster_data.cluster, status="DRAINING"
+    )
+    killable_instance_arns = draining_instances_data["containerInstanceArns"]
+    # we can only kill this many instances without going under minContainers
+    max_killable = cluster_data.registeredContainerInstancesCount - cluster_data.minContainers
+    num_unkilled_draining_instances_with_no_tasks = len(killable_instance_arns) - max_killable
+    killable_instance_arns = killable_instance_arns[:max_killable]
+    if killable_instance_arns is None:  # an empty list can be checked this way
+        return
+    # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_container_instances
+    resp = ecs_client.ecs_client.describe_container_instances(
+        cluster=cluster_data.cluster, containerInstances=killable_instance_arns
+    )
+    killable_ec2_instance_arns = [data["ec2InstanceId"] for data in resp["containerInstances"]]
+    for instance_arn in killable_ec2_instance_arns:
+        instance_arn = instance_arn.split("/")[-1]  #  we need to parse out the ec2 instance id
+        fractal_logger.info(f"killing {instance_arn} because it is draining and has no tasks")
+        # see https://github.com/fractal/fractal/pull/2066/files#r625630975 for why
+        # we set ShouldDecrementDesiredCapacity=False
+        ecs_client.auto_scaling_client.terminate_instance_in_auto_scaling_group(
+            InstanceId=instance_arn, ShouldDecrementDesiredCapacity=False
+        )
+    return num_unkilled_draining_instances_with_no_tasks
