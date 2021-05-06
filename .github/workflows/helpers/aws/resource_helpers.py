@@ -12,6 +12,16 @@ sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
 
 
 def has_elapsed_hours(timestamp, hours):
+    """
+    Determines if the time elapsed since timestamp exceeds a given number of hours
+
+    Args:
+        timestamp (datetime): datetime object representing the time a resource was created
+        hours (int): number of hours to check if elapsed
+
+    Returns:
+        bool: a boolean representing whether provided num of hours have elapsed since timestamp
+    """
     return abs(datetime.now(timezone.utc) - timestamp) > timedelta(hours=hours)
 
 
@@ -60,7 +70,7 @@ def read_tags(tags, resource):
 
 def delete_if_older_than_one_day(region, task, cluster, time):
     """
-    Determines if provided task is older than one day and stops it using the AWS CLI
+    Determines if provided task is older than one day and stops it
 
     Args:
         region (str): region of where task/cluster is running
