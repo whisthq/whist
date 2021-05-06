@@ -5,14 +5,7 @@
 // Many of these observables emit the protocol ChildProcess object, which
 // carries important data about the state of the protocol process.
 
-import {
-  zip,
-  of,
-  fromEvent,
-  merge,
-  combineLatest,
-  Observable,
-} from "rxjs"
+import { zip, of, fromEvent, merge, combineLatest, Observable } from "rxjs"
 import { map, filter, share, mergeMap, take } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 import { EventEmitter } from "events"
