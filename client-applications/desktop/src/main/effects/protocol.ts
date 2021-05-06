@@ -12,6 +12,7 @@ import {
 } from "@app/main/observables/protocol"
 import { errorWindowRequest } from "@app/main/observables/error"
 import { quitAction, signoutAction } from "@app/main/events/actions"
+import { errorWindowRequest } from "@app/main/observables/error"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a container is created and configured. To do this, we need it
