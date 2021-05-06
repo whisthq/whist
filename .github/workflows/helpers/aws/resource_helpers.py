@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from datetime import date, datetime, timedelta, timezone
-import boto3
 import os
 import sys
 import subprocess
 import json
+import boto3
 
 # add the current directory to the path no matter where this is called from
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "."))
@@ -58,14 +58,14 @@ def read_tags(tags, resource):
     return name, test == "True"
 
 
-def delete_if_older_than_one_day(task, cluster, region, time):
+def delete_if_older_than_one_day(region, task, cluster, time):
     """
     Determines if provided task is older than one day and stops it using the AWS CLI
 
     Args:
+        region (str): region of where task/cluster is running
         task (str): task ARN of task to check
         cluster (str): cluster that the specified task is associated with
-        region (str): region of where task/cluster is running
         time (datetime): datetime object representing the timestamp an task was started
 
     Returns:
@@ -347,7 +347,7 @@ def get_hanging_tasks(urls, secrets, region):
         (
             task,
             delete_if_older_than_one_day(
-                task, aws_tasks_and_times[task][0], aws_tasks_and_times[task][1]
+                region, task, aws_tasks_and_times[task][0], aws_tasks_and_times[task][1]
             ),
         )
         for task in hanging_tasks
@@ -365,7 +365,7 @@ def flag_instances(region):
         map: map of all branches with associated instances
     """
     reservations = get_all_aws_instances(region)
-    MSG = ""
+    msg = ""
 
     shutting_down_states = ["shutting-down", "terminated", "stopping", "stopped"]
 
@@ -384,7 +384,7 @@ def flag_instances(region):
 
             overdue, days = compare_days(launch_time)
             if overdue and state not in shutting_down_states:
-                MSG += (
+                msg += (
                     f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days\n"
                 )
             elif test:
@@ -392,11 +392,11 @@ def flag_instances(region):
                     has_elapsed_hours(launch_time, 1)
                     and state not in shutting_down_states
                 ):
-                    MSG += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE*\n"
+                    msg += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE*\n"
             elif len(name) == 0 and state not in shutting_down_states:
-                MSG += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\n"
+                msg += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\n"
 
-    return MSG
+    return msg
 
 
 def hanging_resource(component, region, urls, secrets):
@@ -422,9 +422,9 @@ def hanging_resource(component, region, urls, secrets):
         aws_clusters, db_clusters = get_hanging_clusters(urls, secrets, region)
         for cluster in aws_clusters:
             output.append((str(cluster), get_num_instances(cluster, region)))
-        MSG = ""
+        msg = ""
         if len(aws_clusters) > 0:
-            MSG += "\n     - " + "\n     - ".join(
+            msg += "\n     - " + "\n     - ".join(
                 [
                     "`"
                     + c
@@ -436,10 +436,10 @@ def hanging_resource(component, region, urls, secrets):
                 ]
             )
         if len(db_clusters) > 0:
-            MSG += "\n     - " + "\n     - ".join(
+            msg += "\n     - " + "\n     - ".join(
                 ["`" + c + "`" + " in a DB but not AWS" for c in db_clusters]
             )
-        return MSG
+        return msg
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
@@ -448,9 +448,9 @@ def hanging_resource(component, region, urls, secrets):
             )
         return ""
     elif component == "Instances":
-        MSG = "\n"
+        msg = "\n"
         instances = flag_instances(region)
         if len(instances) > 0:
-            MSG += instances
-            return MSG
+            msg += instances
+            return msg
         return ""
