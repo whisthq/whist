@@ -196,9 +196,6 @@ func handshake() (handshakeResponse, error) {
 	if err != nil {
 		return resp, MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
-	// Overwrite body because handshake is not implemented properly yet
-	// TODO: actually implement the handshake (https://github.com/fractal/fractal/issues/510)
-	body, _ = json.Marshal(handshakeResponse{"testauthtoken"})
 
 	Infof("handshake(): got response code: %v", httpResp.StatusCode)
 	Infof("handshake(): got response: %s", body)
