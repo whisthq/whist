@@ -26,6 +26,7 @@ Includes
 #include <fractal/utils/logging.h>
 #include <fractal/utils/window_name.h>
 #include "client_utils.h"
+#include "audio.h"
 
 #include <stddef.h>
 
@@ -168,7 +169,7 @@ static int handle_audio_frequency_message(FractalServerMessage *fmsg, size_t fms
         return -1;
     }
     LOG_INFO("Changing audio frequency to %d", fmsg->frequency);
-    audio_frequency = fmsg->frequency;
+    set_audio_frequency(fmsg->frequency);
     return 0;
 }
 

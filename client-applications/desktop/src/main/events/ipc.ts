@@ -6,10 +6,11 @@
 
 import { ipcMain } from "electron"
 import { fromEvent } from "rxjs"
-import { get } from "lodash"
-import { map, share, startWith } from "rxjs/operators"
+import { get, identity } from "lodash"
+import { map, share, startWith, filter } from "rxjs/operators"
 import { StateChannel } from "@app/utils/constants"
 import { StateIPC } from "@app/@types/state"
+import { Object } from "ts-toolbelt"
 
 // This file listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -43,8 +44,10 @@ export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
   share()
 )
 
-export const fromEventIPC = (...keys: Array<keyof StateIPC>) =>
+export const fromEventIPC = <T extends Object.Paths<StateIPC>>(...keys: T) =>
   eventIPC.pipe(
     map((obj) => get(obj as Partial<StateIPC>, keys)),
+    filter(identity),
+    map((obj) => obj as NonNullable<Object.Path<StateIPC, T>>),
     share()
   )

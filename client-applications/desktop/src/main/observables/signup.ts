@@ -36,7 +36,7 @@ export const signupRequest = signupAction.pipe(
     from(
       createConfigToken()
         .then(async (token) => await encryptConfigToken(token, req.password))
-        .then((token) => [req, token])
+        .then((token) => [req, token] as const)
     )
   ),
   map(([req, token]) => [req?.email, req?.password, token]),

@@ -146,6 +146,39 @@ class SortedClusters(db.Model):
     status = db.Column(db.String(250), nullable=False)
 
 
+class InstanceInfo(db.Model):
+    """
+    compute instance information
+
+    Attributes:
+        instance_id (string): instance id from AWS console
+        location (string): AWS region (i.e. us-east-1)
+        instance_type (string): what hardware is the instance running on?
+        auth_token (string): what token does this instance use to auth with the webserver?
+        ip (string): the instance's public IP
+        CPURemainingPerInstance (float): CPU that isn't in use
+        GPURemainingPerInstance (float): GPU that isn't in use
+        memoryRemainingPerInstance (float): RAM not in use
+        runningTasksCount (int): how many containers are running?
+        last_pinged (int): when did this instance last tell us it existed?
+        ami_id (str): what image is this machine based on?
+    """
+
+    __tablename__ = "instance_info"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    location = db.Column(db.String(250), nullable=False)
+    instance_type = db.Column(db.String(250), nullable=False)
+    auth_token = db.Column(db.String(250), nullable=False)
+    ip = db.Column(db.String(250), nullable=False)
+    CPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    GPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
+    memoryRemainingInInstanceInMb = db.Column(db.Float, nullable=False, default=2000.0)
+    runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    last_pinged = db.Column(db.Integer)
+    ami_id = db.Column(db.String(250), nullable=False)
+
+
 class RegionToAmi(db.Model):
     """
     This class represents the region_to_ami table in hardware

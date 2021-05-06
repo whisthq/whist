@@ -38,6 +38,17 @@ Public Functions
 void init_audio();
 
 /**
+ * @brief                          This will indicate to the audio file that an audio
+ *                                 refresh event happened.
+ */
+void set_audio_refresh();
+
+/**
+ * @brief                          This will change the audio sample rate.
+ */
+void set_audio_frequency(int new_audio_frequency);
+
+/**
  * @brief                          Receives a FractalPacket into an audio
  *                                 packet, and check if NACKing is necessary
  *

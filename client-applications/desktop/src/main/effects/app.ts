@@ -7,6 +7,8 @@
 import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { mapTo, takeUntil, take, concatMap } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 
 import {
   eventUpdateAvailable,
@@ -14,7 +16,7 @@ import {
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 import { eventActionTypes } from "@app/main/events/tray"
-import { takeUntil, take, concatMap } from "rxjs/operators"
+
 import {
   closeWindows,
   createAuthWindow,
@@ -25,10 +27,12 @@ import {
 import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
-import { quitAction, signoutAction } from "@app/main/events/actions"
+import { signoutAction } from "@app/main/events/actions"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
+  protocolLaunchSuccess,
+  protocolLaunchFailure,
 } from "@app/main/observables/protocol"
 import { errorWindowRequest } from "@app/main/observables/error"
 import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
@@ -87,12 +91,14 @@ merge(
   eventUpdateAvailable
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
-  .subscribe((event) => (event as IpcMainEvent).preventDefault())
+  .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
-combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
-  uploadToS3(email).catch((err) => console.error(err))
-})
+combineLatest([userEmail, protocolCloseRequest]).subscribe(
+  ([email]: [string, ChildProcess]) => {
+    uploadToS3(email).catch((err) => console.error(err))
+  }
+)
 
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
@@ -121,8 +127,14 @@ autoUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-merge(protocolCloseRequest, quitAction).subscribe(() => {
-  app.quit()
+zip(
+  protocolCloseRequest,
+  merge(
+    protocolLaunchSuccess.pipe(mapTo(true)),
+    protocolLaunchFailure.pipe(mapTo(false))
+  )
+).subscribe(([, success]: [ChildProcess, boolean]) => {
+  if (success) app.quit()
 })
 
 signoutAction.subscribe(() => {
