@@ -192,7 +192,7 @@ func handshake() (handshakeResponse, error) {
 	// linter warning for an "ineffectual assingment to body", so we declare it
 	// and only set it later.
 	var body []byte
-	_, err = ioutil.ReadAll(httpResp.Body)
+	body, err = ioutil.ReadAll(httpResp.Body)
 	if err != nil {
 		return resp, MakeError("handshake():: Unable to read body of response from webserver. Error: %v", err)
 	}
