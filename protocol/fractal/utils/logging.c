@@ -554,12 +554,15 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
             LOG_ERROR(
                 "Error! initLogger has already been called, but LOG_PRINTF was still used anyway! "
                 "Printing message below...");
+            LOG_INFO(fmt_str, args);
+        } else {
+            vprintf(fmt_str, args);
         }
-        vprintf(fmt_str, args);
     } else {
         if (mprintf_thread == NULL) {
             printf("initLogger has not been called! Printing message below...\n");
             vprintf(fmt_str, args);
+            fflush(stdout);
             return;
         } else {
             // Map LOG_XYZ to mprintf
