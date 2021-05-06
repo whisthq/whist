@@ -1,6 +1,6 @@
 from flask import abort, Blueprint
 from flask.json import jsonify
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.orm.exc import NoResultFound
 
 from app import fractal_pre_process, log_request
@@ -33,7 +33,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     preprocess_task_info,
     protocol_info,
 )
-from app.helpers.utils.general.auth import fractal_auth, developer_required, payment_required
+from app.helpers.utils.general.auth import developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.models import ClusterInfo, RegionToAmi
@@ -59,7 +59,6 @@ def regions():
 @aws_container_bp.route("/container_state/<action>", methods=["POST"])
 @fractal_pre_process
 @jwt_required()
-@fractal_auth
 def container_state(action, **kwargs):
     """This is an endpoint which accesses our container_state_values table.
     This table hides much of the inner workings of container spinup from users
@@ -75,10 +74,11 @@ def container_state(action, **kwargs):
     Returns:
         json, int: A json HTTP response and status code.
     """
+    user = get_jwt_identity()
+
     if action == "cancel":
         body = kwargs.pop("body")
         try:
-            user = body.pop("username")
             task = body.pop("task")
             set_container_state(keyuser=user, keytask=task, state=CANCELLED)
         except:
@@ -356,7 +356,6 @@ def aws_container_ping(**kwargs):
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
-@fractal_auth
 @payment_required
 def aws_container_assign(**kwargs):
     """
@@ -371,8 +370,9 @@ def aws_container_assign(**kwargs):
     """
     body = kwargs.pop("body")
     response = jsonify({"status": NOT_FOUND}), NOT_FOUND
+    user = get_jwt_identity()
+
     try:
-        user = body.pop("username")
         app = body.pop("app")
         region = body.pop("region")
         dpi = body.get("dpi", 96)

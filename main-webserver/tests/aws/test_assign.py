@@ -18,31 +18,23 @@ from app.models import SupportedAppImages, User
 from tests.patches import function
 
 
-def test_bad_app(client, authorized):
-    response = client.post(
-        "/container/assign", json=dict(username=authorized.user_id, app="Bad App")
-    )
+@pytest.mark.usefixtures("authorized")
+def test_bad_app(client):
+    response = client.post("/container/assign", json=dict(app="Bad App"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
-def test_no_username(client):
-    response = client.post("/container/assign", json=dict(app="VSCode"))
-
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-
-def test_no_app(client, authorized):
-    response = client.post("/container/assign", json=dict(username=authorized.user_id))
+def test_no_app(client):
+    response = client.post("/container/assign")
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
-def test_no_region(client, authorized):
-    response = client.post(
-        "/container/assign", json=dict(username=authorized.user_id, app="VSCode")
-    )
+@pytest.mark.usefixtures("authorized")
+def test_no_region(client):
+    response = client.post("/container/assign", json=dict(app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 

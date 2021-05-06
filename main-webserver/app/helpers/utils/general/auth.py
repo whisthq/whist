@@ -1,5 +1,3 @@
-import json
-
 from functools import wraps
 
 from flask import abort, current_app, jsonify, request
@@ -9,72 +7,6 @@ from app.models import User
 
 from app.constants.http_codes import UNAUTHORIZED, PAYMENT_REQUIRED
 from app.helpers.utils.general.logs import fractal_logger
-
-
-def fractal_auth(func):
-    """Authenticates users for requests (a decorator). It checks that the
-    provided username is matching the jwt provided (which this server gave to that
-    user on login with a secret key). It also authenticates the admin user.
-
-    Args:
-        func (function): A function that we are wrapping with this decorator.
-        Read the python docs on decorators for more context (effectivelly, this injects
-        code to run before the function and may return early if the user is not authenticated,
-        for example).
-
-    Returns:
-        function: The wrapped function (i.e. a function that does the
-        provided func if the username was authenticated and otherwise returns an
-        unauthorized error).
-    """
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        username = None
-
-        try:
-            if request.method == "POST":
-                body = json.loads(request.data)
-                if "username" in body.keys():
-                    username = body["username"]
-                elif "email" in body.keys():
-                    username = body["email"]
-            elif request.method == "GET":
-                username = request.args.get("username")
-        except Exception as e:
-            fractal_logger.error(
-                "Bearer error: {error}".format(error=str(e)),
-            )
-            return (
-                jsonify({"error": "No username provided, cannot authorize Bearer token."}),
-                UNAUTHORIZED,
-            )
-
-        current_user = get_jwt_identity()
-
-        if (
-            current_user != username
-            and current_app.config["DASHBOARD_USERNAME"] not in current_user
-        ):
-            fractal_logger.info(
-                f"Authorization failed. Provided username {username} does not match username "
-                f"associated with provided Bearer token {current_user}."
-            )
-            return (
-                jsonify(
-                    {
-                        "error": (
-                            f"Authorization failed. Provided username {username} does not match "
-                            f"the username associated with provided Bearer token {current_user}."
-                        )
-                    }
-                ),
-                UNAUTHORIZED,
-            )
-
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def check_developer() -> bool:
