@@ -5,6 +5,11 @@
 // Many of these observables emit the protocol ChildProcess object, which
 // carries important data about the state of the protocol process.
 
+import { zip, of, fromEvent, merge, combineLatest, Observable } from "rxjs"
+import { map, filter, share, mergeMap, take } from "rxjs/operators"
+import { ChildProcess } from "child_process"
+import { EventEmitter } from "events"
+
 import { protocolLaunch } from "@app/utils/protocol"
 import {
   containerInfoIP,
@@ -13,24 +18,29 @@ import {
 } from "@app/utils/container"
 import { debugObservables, errorObservables } from "@app/utils/logging"
 import {
-  containerAssignRequest,
-  containerAssignSuccess,
-  containerAssignFailure,
+  containerPollingSuccess,
+  containerPollingFailure,
 } from "@app/main/observables/container"
+import {
+  userEmail,
+  userAccessToken,
+  userConfigToken,
+} from "@app/main/observables/user"
 import { hostConfigFailure } from "@app/main/observables/host"
 import { loadingFrom } from "@app/utils/observables"
-import { zip, of, fromEvent, merge, Observable } from "rxjs"
-import { map, filter, share, mergeMap } from "rxjs/operators"
-import { EventEmitter } from "events"
 import { formatObservable, formatChildProcess } from "@app/utils/formatters"
-import { ChildProcess } from "child_process"
+import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 
-export const protocolLaunchProcess = containerAssignRequest.pipe(
+export const protocolLaunchProcess = combineLatest([
+  zip(userEmail, userAccessToken, userConfigToken),
+  eventUpdateNotAvailable,
+]).pipe(
+  take(1),
   map(() => protocolLaunch()),
   share()
 ) as Observable<ChildProcess>
 
-export const protocolLaunchSuccess = containerAssignSuccess.pipe(
+export const protocolLaunchSuccess = containerPollingSuccess.pipe(
   map((res) => ({
     ip: containerInfoIP(res),
     secret_key: containerInfoSecretKey(res),
@@ -40,7 +50,7 @@ export const protocolLaunchSuccess = containerAssignSuccess.pipe(
 
 export const protocolLaunchFailure = merge(
   hostConfigFailure,
-  containerAssignFailure
+  containerPollingFailure
 )
 
 export const protocolLoading = loadingFrom(

@@ -4,8 +4,8 @@ import {
   userConfigToken,
 } from "@app/main/observables/user"
 import {
-  containerAssignFailure,
-  containerAssignLoading,
+  containerPollingFailure,
+  containerPollingLoading,
 } from "@app/main/observables/container"
 import { loadingFrom, pollMap } from "@app/utils/observables"
 import {
@@ -38,7 +38,7 @@ import {
   formatTokensArray,
 } from "@app/utils/formatters"
 
-export const hostInfoRequest = containerAssignLoading.pipe(
+export const hostInfoRequest = containerPollingLoading.pipe(
   withLatestFrom(userEmail, userAccessToken),
   map(([_, email, token]) => [email, token] as [string, string]),
   share()
@@ -47,7 +47,7 @@ export const hostInfoRequest = containerAssignLoading.pipe(
 export const hostInfoPolling = hostInfoRequest.pipe(
   pollMap(1000, async ([email, token]) => await hostServiceInfo(email, token)),
   takeWhile((res) => hostServiceInfoPending(res), true),
-  takeUntil(containerAssignFailure),
+  takeUntil(containerPollingFailure),
   share()
 )
 

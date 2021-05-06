@@ -172,7 +172,7 @@ export const factory = <T, A>(
   const processOuter = request.pipe(map(fx.process), share())
   const process = processOuter.pipe(switchMap(identity), share())
   const results = processOuter.pipe(
-    switchMap((o) => o.pipe(takeLast(1), share()))
+    switchMap((o: Observable<A>) => o.pipe(takeLast(1), share()))
   )
 
   // The caller doesn't need to pass completion states they don't care about,
