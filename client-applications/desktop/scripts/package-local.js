@@ -10,5 +10,5 @@ helpers.configureCodeSigning(false)
 helpers.setPackageEnv("dev")
 
 // For package-local, we don't want to increment the version so we use existing version
-helpers.snowpackBuild(helpers.getCurrentClientAppVersion())
+helpers.snowpackBuild({ VERSION: helpers.getCurrentClientAppVersion() })
 helpers.electronBuild()

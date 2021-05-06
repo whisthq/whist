@@ -80,15 +80,15 @@ module.exports = {
   },
 
   // Run snowpack in development mode
-  snowpackDev: (version) => {
-    console.log(`Running 'snowpack dev' with version ${version} ...`)
-    execCommand("snowpack dev", ".", { VERSION: version })
+  snowpackDev: (env) => {
+    console.log(`Running 'snowpack dev' with version ${env.VERSION} ...`)
+    execCommand("snowpack dev", ".", env)
   },
 
   // Run snowpack in build mode
-  snowpackBuild: (version) => {
-    console.log(`Running 'snowpack build' with version ${version} ...`)
-    execCommand("snowpack build", ".", { VERSION: version })
+  snowpackBuild: (env) => {
+    console.log(`Running 'snowpack build' with version ${env.VERSION} ...`)
+    execCommand("snowpack build", ".", env)
   },
 
   // Build via electron-build
