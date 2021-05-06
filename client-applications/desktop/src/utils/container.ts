@@ -29,6 +29,10 @@ export const containerCreate = async (email: string, accessToken: string) => {
   return response
 }
 
+export const containerCreateSuccess = (
+  response: AsyncReturnType<typeof containerCreate>
+) => [200, 202].includes(response.status as number)
+
 export const containerCreateErrorNoAccess = (
   response: AsyncReturnType<typeof containerCreate>
 ) => response.status === 402
@@ -40,8 +44,9 @@ export const containerCreateErrorUnauthorized = (
 export const containerCreateErrorInternal = (
   response: AsyncReturnType<typeof containerCreate>
 ) =>
-  ![402, 422].includes(response.status as number) ||
-  (response?.json?.ID ?? "") === ""
+  (response?.json?.ID ?? "") === "" &&
+  !containerCreateErrorNoAccess(response) &&
+  !containerCreateErrorUnauthorized(response)
 
 export const containerInfo = async (taskID: string, accessToken: string) =>
   await taskStatus(taskID, accessToken)
