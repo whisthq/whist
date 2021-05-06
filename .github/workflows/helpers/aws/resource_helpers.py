@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from datetime import date, datetime, timedelta, timezone
-import dateutil.parser
 import boto3
 import os
 import sys
@@ -205,7 +204,10 @@ def get_db_clusters(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_clusters($_eq: String = \\"%s\\") { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            (
+                '{"query":"query get_clusters($_eq: String = \\"%s\\")'
+                ' { hardware_cluster_info(where: {location: {_eq: $_eq}}) { cluster }}"}'
+            )
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -238,7 +240,10 @@ def get_db_tasks(url, secret, region):
             "-H",
             "x-hasura-admin-secret: %s" % (secret),
             "--data-raw",
-            '{"query":"query get_tasks($_eq: String = \\"%s\\") { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            (
+                '{"query":"query get_tasks($_eq: String = \\"%s\\")'
+                ' { hardware_user_containers(where: {location: {_eq: $_eq}}) { container_id }}"}'
+            )
             % (region),
         ],
         stdout=subprocess.PIPE,
@@ -283,9 +288,7 @@ def get_hanging_clusters(urls, secrets, region):
         list: list of cluster names
     """
     # parses names of clusters from ARNs since only the names are stored in the DB
-    aws_clusters = set(
-        [cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)]
-    )
+    aws_clusters = {cluster.split("/")[-1] for cluster in get_all_aws_clusters(region)}
     if "default" in aws_clusters:
         aws_clusters.remove("default")
 
