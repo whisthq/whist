@@ -6,8 +6,22 @@
 // These observables are subscribed by protocol launching observables, which
 // react to success container creation emissions from here.
 
+import { from, of, zip, combineLatest } from "rxjs"
+import {
+  map,
+  share,
+  delay,
+  takeUntil,
+  withLatestFrom,
+  takeWhile,
+} from "rxjs/operators"
+
 import {
   containerCreate,
+  containerCreateSuccess as createSuccess,
+  containerCreateErrorNoAccess,
+  containerCreateErrorUnauthorized,
+  containerCreateErrorInternal,
   containerInfo,
   containerInfoError,
   containerInfoSuccess,
@@ -20,46 +34,34 @@ import {
 } from "@app/main/observables/user"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 import { containerPollingTimeout } from "@app/utils/constants"
-import { loadingFrom, pollMap, factory } from "@app/utils/observables"
-import { from, of, zip, combineLatest } from "rxjs"
-import {
-  map,
-  share,
-  delay,
-  filter,
-  takeUntil,
-  exhaustMap,
-  withLatestFrom,
-  takeWhile,
-} from "rxjs/operators"
+import { pollMap, factory } from "@app/utils/observables"
+
 import { formatContainer, formatTokensArray } from "@app/utils/formatters"
 import { AsyncReturnType } from "@app/@types/state"
 
-export const containerCreateRequest = combineLatest([
-  zip(userEmail, userAccessToken, userConfigToken),
-  eventUpdateNotAvailable,
-]).pipe(
-  map(([auth]) => auth),
-  map(([email, access, _]) => [email, access])
-)
-
-export const containerCreateProcess = containerCreateRequest.pipe(
-  exhaustMap(([email, token]) => from(containerCreate(email, token))),
-  share()
-)
-
-export const containerCreateSuccess = containerCreateProcess.pipe(
-  filter((req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "")
-)
-
-export const containerCreateFailure = containerCreateProcess.pipe(
-  filter((req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "")
-)
-
-export const containerCreateLoading = loadingFrom(
-  containerCreateRequest,
-  containerCreateSuccess,
-  containerCreateFailure
+export const {
+  request: containerCreateRequest,
+  process: containerCreateProcess,
+  success: containerCreateSuccess,
+  failure: containerCreateFailure,
+  loading: containerCreateLoading,
+} = factory<[string, string], AsyncReturnType<typeof containerCreate>>(
+  "containerCreate",
+  {
+    request: combineLatest([
+      zip(userEmail, userAccessToken, userConfigToken),
+      eventUpdateNotAvailable,
+    ]).pipe(
+      map(([auth]) => auth),
+      map(([email, access, _]) => [email, access])
+    ),
+    process: ([email, token]) => from(containerCreate(email, token)),
+    success: (res) => createSuccess(res),
+    failure: (res) =>
+      containerCreateErrorInternal(res) ||
+      containerCreateErrorNoAccess(res) ||
+      containerCreateErrorUnauthorized(res),
+  }
 )
 
 export const {
