@@ -71,7 +71,7 @@ jobs:
 
                   if resources:
                     SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                    SLACK_CHANNEL = "#test"
+                    SLACK_CHANNEL = "#alerts-dev"
                     BODY = "Hanging *${{ matrix.resource }}* in _${{ matrix.aws-region }}_: %s" % resources
                     
                     slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -105,7 +105,7 @@ jobs:
                   import subprocess
                   from notifications.slack_bot import slack_post
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#test"
+                  SLACK_CHANNEL = "#alerts-dev"
 
                   ret = subprocess.run("aws-hashicorp-packer-reaper list", capture_output=True, shell=True)
                   assert ret.returncode == 0, f"AWS Hashicorp Packer Reaper failed. Stdout: {ret.stdout}, Stderr: {ret.stderr}"
@@ -141,7 +141,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#test"
+                  SLACK_CHANNEL = "#alerts-dev"
                   BODY = "@channel :rotating_light: Hanging Resource Notification Failed"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
