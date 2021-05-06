@@ -39,7 +39,7 @@ def update_cluster(
     Returns:
         None, though cluster update info stored in state
     """
-    # import this here to stop a circular import
+    # import this here to get around a circular import
     from app.celery.aws_ecs_creation import prewarm_new_container
 
     all_regions = RegionToAmi.query.all()
@@ -135,7 +135,7 @@ def update_cluster(
             cluster_name=cluster_name,
             region_name=region_name,
             webserver_url=webserver_url,
-        )  # pylint:disable=no-value-for-parameter
+        )
 
         return {
             "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",

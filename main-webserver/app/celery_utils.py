@@ -91,8 +91,6 @@ def celery_params(flask_app):
         """
 
         def __call__(self, *args, **kwargs):
-            # provide the flask context to celery tasks. This lets them access the db and
-            # access request information (such as the webserver's hostname)
             with flask_app.app_context():
                 return self.run(*args, **kwargs)
 

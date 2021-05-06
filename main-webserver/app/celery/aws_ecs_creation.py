@@ -789,7 +789,8 @@ def _prewarm_new_container(
     webserver_url: str,
 ):
     """
-    Actual implementation of prewarm_new_container. Useful for mocking the celery task.
+    This contains the actual implementation of prewarm_new_container. The separation is useful
+    for mocking the prewarm celery task, as testers can just mock this function.
     """
     task_start_time = time.time()
 
