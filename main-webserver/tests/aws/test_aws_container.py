@@ -577,7 +577,7 @@ def test_manual_scale_cluster_up(bulk_cluster, monkeypatch):
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 2)
 
-    # mock kill_draining as the cluster does not actually exist
+    # mock kill_draining because the cluster does not actually exist in ECS
     monkeypatch.setattr(
         aws_ecs_modification, "kill_draining_instances_with_no_tasks", function(returns=0)
     )
@@ -615,7 +615,7 @@ def test_manual_scale_cluster_down(bulk_cluster, monkeypatch):
         # manual_scale_cluster should try to increase capacity to 2
         setattr(mock_set_asg_capacity, "test_passed", desired_capacity == 1)
 
-    # mock kill_draining as the cluster does not actually exist
+    # mock kill_draining because the cluster does not actually exist in ECS
     monkeypatch.setattr(
         aws_ecs_modification, "kill_draining_instances_with_no_tasks", function(returns=0)
     )
