@@ -943,7 +943,7 @@ jobs:
 
                   # This should be set by main-webserver/atomic_deployment.sh
                   if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
-                    return
+                    sys.exit(0)
 
                   GITHUB_SHA = "${{ github.sha }}"
                   GITHUB_SHA_URL = "https://github.com/fractal/fractal/commit/"
