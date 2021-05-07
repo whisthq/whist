@@ -152,7 +152,7 @@ def test_update_cluster(monkeypatch, task_def_env):
     success = False
 
     def mock_prewarm(
-        self, task_definition_arn, task_version, cluster_name, region_name, webserver_url
+        task_definition_arn, task_version, cluster_name, region_name, webserver_url
     ):  # pylint:disable=unused-argument
         # ensure:
         # - task def is chrome for the correct task environment

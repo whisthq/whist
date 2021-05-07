@@ -125,7 +125,7 @@ def update_cluster(
             "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
         }
     else:
-        # The cluster did exist, and was updated successfully. Now we prewarm a task to stop the new
+        # The cluster did exist, and was updated successfully. Now we prewarm a task to stop this
         # instance from getting scaled in
         default_app = "Google Chrome"
         app_data = SupportedAppImages.query.get(default_app)
