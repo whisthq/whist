@@ -931,7 +931,7 @@ jobs:
             - name: Deploy the webserver atomically
               shell: bash -e {0}
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              run: main-webserver/atomic_deployment.sh
+              run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
