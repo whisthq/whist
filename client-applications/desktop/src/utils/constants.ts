@@ -39,7 +39,6 @@ export const AuthErrorText =
   "Try again in a few minutes, or contact support@fractal.co for help."
 
 // Various container create error messages
-
 export const ContainerCreateErrorTitleInternal =
   "There was an error connecting to the Fractal servers."
 

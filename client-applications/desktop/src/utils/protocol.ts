@@ -1,3 +1,7 @@
+/*
+    This file contains all the code used to interact with the protocol through the client-app. Everything -- launching, passing args, and closing args -- should be done here.
+ */
+
 import { app } from "electron"
 import path from "path"
 import { spawn, ChildProcess } from "child_process"
