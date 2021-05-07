@@ -28,8 +28,7 @@ splitsh-lite --prefix main-webserver --target refs/heads/workflows-private/main-
 git checkout workflows-private/main-webserver
 # we are now in the main-webserver folder as a standalone git repo
 
-# tmpfolder=$(mktemp -d)
-tmpfolder=/var/folders/0x/q00z8t8s3xqb369kpg540bjc0000gn/T/tmp.3zuQmBPt
+tmpfolder=$(mktemp -d)
 echo "Created a temporary folder to store schema information at $tmpfolder"
 
 CURRENT_DB_SCHEMA_PATH="$tmpfolder/current_live_schema.sql"
