@@ -36,7 +36,7 @@ export const useMainState = ():
     const listener = (_: IpcRendererEvent, state: StateIPC) => setState(state)
     ipc.on(StateChannel, listener)
 
-    // useEffect allows you to return a functino that will be called to perform
+    // useEffect allows you to return a function that will be called to perform
     // "cleanup". In our case, we'll use it to remove our event listener.
     return () => {
       ipc.removeListener?.(StateChannel, listener)
