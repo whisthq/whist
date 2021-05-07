@@ -372,7 +372,7 @@ def kill_draining_instances_with_no_tasks(cluster_data: ClusterInfo) -> int:
     max_killable = cluster_data.registeredContainerInstancesCount - cluster_data.minContainers
     num_unkilled_draining_instances_with_no_tasks = len(killable_instance_arns) - max_killable
     killable_instance_arns = killable_instance_arns[:max_killable]
-    if killable_instance_arns is None:  # an empty list can be checked this way
+    if len(killable_instance_arns) == 0:
         return
     # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/ecs.html#ECS.Client.describe_container_instances
     resp = ecs_client.ecs_client.describe_container_instances(
