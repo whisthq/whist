@@ -1,16 +1,32 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file fractal_memory.h
+ * @brief This file contains custom memory handling for Fractal.
+*/
 
 /**
  * @brief                          Wrapper around malloc that will correctly exit the
  *                                 protocol when malloc fails
+ *
+ * @returns                        Allocated memory space
  */
 void* safe_malloc(size_t size);
 
 /**
  * @brief                          Wrapper around realloc that will correctly exit the
  *                                 protocol when realloc fails
+ *
+ * @param buffer                   Buffer to be reallocated
+ * @param new_size                 New size of the reallocated buffer
+ *
+ * @returns                        Reallocated memory space
  */
 void* safe_realloc(void* buffer, size_t new_size);
 
+/**
+ * @brief   Dynamic buffer.
+ * @details Memory buffer used to store any allocated data.
+ */
 typedef struct {
     size_t size;
     size_t capacity;

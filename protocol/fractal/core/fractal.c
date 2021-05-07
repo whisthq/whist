@@ -4,6 +4,12 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 
+/*
+============================
+Includes
+============================
+*/
+
 #include "fractal.h"  // header file for this protocol, includes winsock
 #include "../utils/logging.h"
 
@@ -15,9 +21,17 @@
 char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 bool using_sentry = false;
 
-// Print Memory Info
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 int multithreaded_print_system_info(void* opaque) {
+    /*
+        Thread function to print system info to log
+    */
+
     UNUSED(opaque);
 
     LOG_INFO("Hardware information:");
@@ -32,13 +46,34 @@ int multithreaded_print_system_info(void* opaque) {
     return 0;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 void print_system_info() {
+    /*
+        Print the system info of the computer
+    */
+
     FractalThread sysinfo_thread =
         fractal_create_thread(multithreaded_print_system_info, "print_system_info", NULL);
     fractal_detach_thread(sysinfo_thread);
 }
 
 int runcmd(const char* cmdline, char** response) {
+    /*
+        Run a system command via command prompt or terminal
+
+        Arguments:
+            cmdline (const char*): String of the system command to run
+            repsonse (char**): Terminal output from the cmdline
+
+        Returns:
+            (int): 0 or value of pipe if success, else -1
+    */
+
 #ifdef _WIN32
     HANDLE h_child_std_in_rd = NULL;
     HANDLE h_child_std_in_wr = NULL;
@@ -222,6 +257,20 @@ int runcmd(const char* cmdline, char** response) {
 
 bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
                                   char* hex_private_key) {
+    /*
+        Reads a 16-byte hexidecimal string and copies it into private_key
+
+        Arguments:
+            hex_string (char*): The hexidecimal string to copy
+            binary_private_key (char*): The 16-byte buffer to copy the bytes into
+            hex_private_key (char*): The 33-byte buffer to fill with a hex string
+                representation of the private key.
+
+        Returns:
+            (bool): true if hex_string was a 16-byte hexadecimal
+                value, otherwise false
+    */
+
     // It looks wasteful to convert from string to binary and back, but we need
     // to validate the hex string anyways, and it's easier to see exactly the
     // format in which we're storing it (big-endian).
@@ -246,6 +295,16 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
 }
 
 int get_fmsg_size(FractalClientMessage* fmsg) {
+    /*
+        Calculate the size of a FractalClientMessage struct
+
+        Arguments:
+            fmsg (FractalClientMessage*): The Fractal Client Message to find the size
+
+        Returns:
+            (int): The size of the Fractal Client Message struct
+    */
+
     if (fmsg->type == MESSAGE_KEYBOARD_STATE || fmsg->type == MESSAGE_DISCOVERY_REQUEST) {
         return sizeof(*fmsg);
     } else if (fmsg->type == CMESSAGE_CLIPBOARD) {
@@ -257,6 +316,10 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
 }
 
 void terminate_protocol() {
+    /*
+        Terminates the protocol
+    */
+
     LOG_INFO("Terminating Protocol");
     destroy_logger();
     print_stacktrace();
@@ -265,21 +328,22 @@ void terminate_protocol() {
 
 bool safe_strncpy(char* destination, const char* source, size_t num) {
     /*
-     * Safely copy a string from source to destination.
-     *
-     * Copies at most `num` bytes * after the first null character of `source` are not copied.
-     * If no null character is encountered within the first `num` bytes
-     * of `source`, `destination[num - 1]` will be manually set to zero,
-     * so `destination` is guaranteed to be null terminated, unless
-     * `num` is zero, in which case the `destination` is left unchanged.
-     *
-     * Arguments:
-     *     destination: Address to copy to. Should have at least `num` bytes available.
-     *     source: Address to copy from.
-     *     num: Number of bytes to copy.
-     *
-     * Return:
-     *     True if all bytes of source were copied (i.e. strlen(source) <= num - 1)
+        Safely copy a string from source to destination.
+
+        Copies at most `num` bytes * after the first null character of `source` are not copied.
+        If no null character is encountered within the first `num` bytes
+        of `source`, `destination[num - 1]` will be manually set to zero,
+        so `destination` is guaranteed to be null terminated, unless
+        `num` is zero, in which case the `destination` is left unchanged.
+
+        Arguments:
+            destination: Address to copy to. Should have at least `num` bytes available.
+            source: Address to copy from.
+            num: Number of bytes to copy.
+
+        Return:
+            (bool): true if all bytes of source were copied (i.e. strlen(source) <= num - 1),
+                else false
      */
     if (num > 0) {
         size_t i;
@@ -297,8 +361,14 @@ bool safe_strncpy(char* destination, const char* source, size_t num) {
 // Defines to stringize a macro
 #define xstr(s) str(s)
 #define str(s) #s
-// Return git revision as string, or "none" if no git revision found
 char* fractal_git_revision() {
+    /*
+        Returns git revision if found
+
+        Returns:
+            (char*): git revision as string, or "none" if no git revision found
+    */
+
 #ifdef FRACTAL_GIT_REVISION
     return xstr(FRACTAL_GIT_REVISION);
 #else
