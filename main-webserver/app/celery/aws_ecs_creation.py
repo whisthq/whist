@@ -390,7 +390,8 @@ def _get_num_extra(taskdef: str, location: str) -> int:
                 UserContainer.query.filter(
                     UserContainer.task_definition == taskdef,
                     UserContainer.location == location,
-                    UserContainer.user_id != None,
+                    # SQLAlchemy does not correctly use the "is not None" semantic
+                    UserContainer.user_id != None,  # pylint: disable=singleton-comparison
                 )
             )
         )
