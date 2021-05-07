@@ -404,6 +404,7 @@ def _get_num_extra(taskdef: str, location: str) -> int:
     return 0
 
 
+@shared_task
 @maintenance_track_task
 def assign_container(
     username: str,
