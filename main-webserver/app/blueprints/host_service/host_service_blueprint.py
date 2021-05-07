@@ -102,9 +102,9 @@ def host_service_heartbeat(**kwargs):
         timestamp: str = body.pop("Timestamp")
         heartbeat_number: int = body.pop("HeartbeatNumber")
         total_ram_kb: int = body.pop("TotalRAMinKB")
-        free_ram_kb: int = body.pop("FreeRAMinKB")
+        free_ram_kb: int = int(body.pop("FreeRAMinKB"))
         available_ram_kb: int = body.pop("AvailRAMinKB")
-        dying_heartbeat: bool = body.pop("IsDyingHeartbeat")
+        dying_heartbeat: bool = bool(body.pop("IsDyingHeartbeat"))
     except KeyError:
         return jsonify({"status": BAD_REQUEST}), BAD_REQUEST
 
