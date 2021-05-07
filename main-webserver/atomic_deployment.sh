@@ -17,7 +17,7 @@ cd "$DIR/.."
 HEROKU_APP_NAME=${1}
 
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
-DB_URL=$(heroku config:get DATABASE_URL --app $HEROKU_APP_NAME)
+DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 
 # Install db migration dependencies. If this fails, the entire deploy will fail.
 echo "Installing db migration dependencies..."
@@ -37,7 +37,7 @@ NEW_DB_SCHEMA_PATH="db_migration/schema.sql"
 OUT_DIFF="$tmpfolder/diff.sql"
 
 echo "Getting the current schema..."
-pg_dump --no-owner --no-privileges --schema-only $DB_URL >> $CURRENT_DB_SCHEMA_PATH
+pg_dump --no-owner --no-privileges --schema-only "${DB_URL}" >> $CURRENT_DB_SCHEMA_PATH
 
 echo "Calling schema diff script..."
 set +e # allow any exit-code; we will semantically parse this
@@ -52,8 +52,8 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
 
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
-    heroku ps:scale web=0 --app $HEROKU_APP_NAME
-    heroku ps:scale celery=0 --app $HEROKU_APP_NAME
+    heroku ps:scale web=0 --app ${HEROKU_APP_NAME}
+    heroku ps:scale celery=0 --app ${HEROKU_APP_NAME}
 
     # apply diff safely, knowing nothing is happening on webserver
     psql --single-transaction --file $OUT_DIFF $DB_URL
