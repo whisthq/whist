@@ -6,6 +6,7 @@ from flask_jwt_extended import create_access_token
 
 from app.celery import aws_ecs_creation
 from app.celery import aws_ecs_modification
+from app.celery.aws_ecs_creation import prewarm_new_container
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import manual_scale_cluster, update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
@@ -148,20 +149,22 @@ def test_assign_container(client, module_user, monkeypatch, task_def_env):
 
 @pytest.mark.usefixtures("celery_worker")
 def test_update_cluster(monkeypatch, task_def_env):
+    success = False
+
     def mock_prewarm(
         self, task_definition_arn, task_version, cluster_name, region_name, webserver_url
     ):  # pylint:disable=unused-argument
         # ensure:
         # - task def is chrome for the correct task environment
         # - cluster is correct
+        nonlocal success
         success = (task_definition_arn == f"fractal-{task_def_env}-browsers-chrome") and (
             cluster_name == pytest.cluster_name
         )
-        setattr(mock_prewarm, "success", success)
 
     # mock calling prewarm new container because we are upgrading the AMI to something that will
     # not support prewarming a container
-    monkeypatch.setattr(aws_ecs_creation, "_prewarm_new_container", mock_prewarm)
+    monkeypatch.setattr(prewarm_new_container, "run", mock_prewarm)
 
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
@@ -175,8 +178,7 @@ def test_update_cluster(monkeypatch, task_def_env):
     res.get(timeout=30)
 
     # make sure mock prewarm was called and succeeded
-    assert hasattr(mock_prewarm, "success")
-    assert getattr(mock_prewarm, "success")
+    assert success is True
     # make sure task succeeded
     assert res.successful()
     assert res.state == "SUCCESS"
