@@ -732,6 +732,7 @@ def _assign_container(
     return user_container_schema.dump(base_container)
 
 
+@shared_task
 @maintenance_track_task
 def prewarm_new_container(
     task_definition_arn: str,

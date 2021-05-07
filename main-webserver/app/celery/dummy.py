@@ -5,6 +5,7 @@ from celery import shared_task, current_task
 from app.helpers.utils.general.logs import fractal_logger
 
 
+@shared_task
 def dummy_task(self):
     """
     A dummy task deployed with our webserver. Useful for scripted testing and manually making
