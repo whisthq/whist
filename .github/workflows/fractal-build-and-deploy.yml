@@ -945,7 +945,7 @@ jobs:
                   if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
                     return
 
-                  GITHUB_SHA = ${{ github.sha }}
+                  GITHUB_SHA = "${{ github.sha }}"
                   GITHUB_SHA_URL = "https://github.com/fractal/fractal/commit/"
                   ISSUE_URL = urllib.parse.urljoin(GITHUB_SHA_URL, GITHUB_SHA)
 
