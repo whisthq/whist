@@ -12,6 +12,21 @@ import { toPairs, identity, isEmpty } from "lodash"
 import { debugObservables } from "@app/utils/logging"
 
 export const loadingFrom = (
+  /*
+        Description:
+            A helper that automates the creation of a "loading" observable.
+
+        Arguments:
+            request: A observable whose emissions represent the "start" of a
+                     loading process.
+            ...ends: A list of observables whose emissions represent the "end"
+                     of a loading process.
+        Returns:
+            A observable that emits "true" when "request" emits, and "false"
+            as soon as any of the "...ends" observables emit. Only one "end"
+            observable should emit at a time, any subsequent "end" emissions
+            will be ignored until "request" emits again.
+    */
   request: Observable<any>,
   ...ends: Array<Observable<any>>
 ) =>
@@ -21,6 +36,20 @@ export const loadingFrom = (
   )
 
 export const pollMap = <T>(
+  /*
+        Description:
+            An adorable little helper to perform a function on a time interval.
+
+        Arguments:
+            step: A number of milliseconds to wait between each function call.
+            func: A function that returns a value, a Promise, or an
+                  observable.
+        Returns:
+            An observable that emits the result of func at every time step. The
+            observable will emit infinitely, it's up to the caller to
+            unsubscribe from it. The returned observable will wait for the first
+            time step before emitting its first value.
+    */
   step: number,
   func: (...args: any[]) => ObservableInput<T>
 ) => {
