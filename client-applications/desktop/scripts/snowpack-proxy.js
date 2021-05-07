@@ -1,3 +1,9 @@
+// This is a custom plugin that we've written to deal with a annoying quirk
+// of Electron/Snowpack integration. Snowpack, which expects to be deployed
+// on a server, exports files with file path imports relative to "public".
+// Electron expects file path imports relative to the project root.
+// This script keeps them both happy. It should be called from the "plugins"
+// section of snowpack.config.js.
 const path = require("path")
 const { promisify } = require("util")
 const fs = require("fs")
