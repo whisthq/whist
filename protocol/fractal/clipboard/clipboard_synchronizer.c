@@ -34,14 +34,24 @@ if (client_clipboard) {
 destroyClipboardSynchronizer();
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <stdio.h>
 
 #include <fractal/core/fractal.h>
 #include "clipboard.h"
 
-#define MS_IN_SECOND 1000
+/*
+============================
+Defines
+============================
+*/
 
-int update_clipboard(void* opaque);
+#define MS_IN_SECOND 1000
 
 extern char filename[300];
 extern char username[50];
@@ -57,7 +67,30 @@ static bool connected = false;
 
 bool pending_clipboard_push;
 
+/*
+============================
+Private Functions
+============================
+*/
+
+int update_clipboard(void* opaque);
+
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 bool is_clipboard_synchronizing() {
+    /*
+        Check if the clipboard is in the midst of being updated
+
+        Returns:
+            (bool): True if the clipboard is currently busy being updated.
+                This will be true for a some period of time after
+                updateSetClipboard.
+    */
+
     if (!connected) {
         LOG_ERROR("Tried to is_clipboard_synchronizing, but the clipboard is not initialized");
         return true;
@@ -98,7 +131,7 @@ void init_clipboard_synchronizer(bool is_client) {
 
 void destroy_clipboard_synchronizer() {
     /*
-        Destroy the clipboard synchronizer
+        Clean up and destroy the clipboard synchronizer
     */
 
     LOG_INFO("Destroying clipboard");

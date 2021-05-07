@@ -81,7 +81,7 @@ typedef struct ClipboardData {
 } ClipboardData;
 
 /**
- * @brief                          Data packet description
+ * @brief                          Clipboard file data packet description
  */
 typedef struct ClipboardFiles {
     int size;
@@ -136,9 +136,9 @@ void set_clipboard(ClipboardData* cb);
 void free_clipboard(ClipboardData* clipboard);
 
 /**
- * @brief                          Get the current clipboard
+ * @brief                          Check whether the clipboard has new data
  *
- * @returns                        Pointer to the current clipboard data
+ * @returns                        True if new clipboard data, false if else
  */
 bool has_clipboard_updated();
 
