@@ -6,6 +6,7 @@ import config from "@app/config/environment"
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments
+// We send the environment so that the protocol can init sentry if necessary
 const protocolParameters = {
   environment: config.sentryEnv,
 }
@@ -34,6 +35,7 @@ export const endStream = (process: ChildProcess, message: string) => {
   process.stdin?.end(message)
 }
 
+// Spawn the child process with the initial arguments passed in
 export const protocolLaunch = () => {
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
 
@@ -56,6 +58,7 @@ export const protocolLaunch = () => {
   return protocol
 }
 
+// Stream the rest of the info that the protocol needs
 export const protocolStreamInfo = (
   protocol: ChildProcess,
   info: {
