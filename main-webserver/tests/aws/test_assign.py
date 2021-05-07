@@ -71,8 +71,8 @@ def test_get_num_extra_fractional(bulk_container, make_user, task_def_env):
         .first()
         .preboot_number
     )
-    assert (
-        _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == int(15.0 * preboot_num)
+    assert _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1") == int(
+        15.0 * preboot_num
     )
 
 
@@ -92,6 +92,7 @@ def test_get_num_extra_subtracts(bulk_container, make_user, task_def_env):
         .preboot_number
     )
     from app.helpers.utils.general.logs import fractal_logger
+
     fractal_logger.info(f"preboot {task_def_env}: {preboot_num}")
     assert (
         _get_num_extra(f"fractal-{task_def_env}-browsers-chrome", "us-east-1")
