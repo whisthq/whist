@@ -37,11 +37,19 @@ Custom Types
 ============================
 */
 
+/**
+ * @brief   Cursor state.
+ * @details State of the cursor on the rendered screen.
+ */
 typedef enum FractalCursorState {
     CURSOR_STATE_HIDDEN = 0,
     CURSOR_STATE_VISIBLE = 1
 } FractalCursorState;
 
+/**
+ * @brief   Cursor ID.
+ * @details The type of the cursor showing up on the screen.
+ */
 typedef enum FractalCursorID {
     FRACTAL_CURSOR_ARROW,
     FRACTAL_CURSOR_IBEAM,
@@ -57,6 +65,10 @@ typedef enum FractalCursorID {
     FRACTAL_CURSOR_HAND
 } FractalCursorID;
 
+/**
+ * @brief   Cursor image.
+ * @details The image used for the rendered cursor.
+ */
 typedef struct FractalCursorImage {
     FractalCursorID cursor_id;
     FractalCursorState cursor_state;

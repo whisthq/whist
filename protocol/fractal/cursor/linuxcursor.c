@@ -11,6 +11,12 @@ GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
 arrow, etc.).
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
 #include "../utils/logging.h"
@@ -21,9 +27,28 @@ static Display* disp;
 
 static uint32_t last_cursor[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
 
-void init_cursors() { disp = XOpenDisplay(NULL); }
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void init_cursors() {
+    /*
+        Initialize all cursors by creating the display
+    */
+
+    disp = XOpenDisplay(NULL);
+}
 
 FractalCursorImage get_current_cursor() {
+    /*
+        Returns the current cursor image
+
+        Returns:
+            (FractalCursorImage): Current FractalCursorImage
+    */
+
     FractalCursorImage image = {0};
     image.cursor_id = FRACTAL_CURSOR_ARROW;
     image.cursor_state = CURSOR_STATE_VISIBLE;

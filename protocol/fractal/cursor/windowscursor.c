@@ -11,9 +11,21 @@ GetCurrentCursor to retrieve what the cursor shold be on the OS (drag-window,
 arrow, etc.).
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <windows.h>
 
 #include "cursor.h"
+
+/*
+============================
+Custom Types
+============================
+*/
 
 typedef struct FractalCursorTypes {
     HCURSOR CursorAppStarting;
@@ -37,13 +49,27 @@ typedef struct FractalCursorTypes {
 struct FractalCursorTypes l_types = {0};
 struct FractalCursorTypes* types = &l_types;
 
+/*
+============================
+Private Functions
+============================
+*/
+
 FractalCursorImage get_cursor_image(PCURSORINFO pci);
 
 void load_cursors();
 
-void init_cursors() { load_cursors(); }
+/*
+============================
+Private Function Implementations
+============================
+*/
 
 void load_cursors() {
+    /*
+        Load each cursor by type
+    */
+
     types->CursorAppStarting = LoadCursor(NULL, IDC_APPSTARTING);
     types->CursorArrow = LoadCursor(NULL, IDC_ARROW);
     types->CursorCross = LoadCursor(NULL, IDC_CROSS);
@@ -63,6 +89,17 @@ void load_cursors() {
 }
 
 FractalCursorImage get_cursor_image(PCURSORINFO pci) {
+    /*
+        Get the corresponding cursor image for by cursor type
+
+        Arguments:
+            pci (PCURSORINFO): Windows cursor info
+
+        Returns:
+            (FractalCursorImage): the corresponding FractalCursorImage
+                for the `pci` cursor type
+    */
+
     HCURSOR cursor = pci->hCursor;
     FractalCursorImage image = {0};
 
@@ -95,7 +132,28 @@ FractalCursorImage get_cursor_image(PCURSORINFO pci) {
     return image;
 }
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
+void init_cursors() {
+    /*
+        Initialize all cursors by loading cursors
+    */
+
+    load_cursors();
+}
+
 FractalCursorImage get_current_cursor() {
+    /*
+        Returns the current cursor image
+
+        Returns:
+            (FractalCursorImage): Current FractalCursorImage
+    */
+
     CURSORINFO pci;
     pci.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&pci);
