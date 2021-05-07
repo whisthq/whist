@@ -19,7 +19,20 @@ device via DestroyAudioDevice.
 
 #include "wasapicapture.h"
 
+/*
+============================
+Public Functions
+============================
+*/
+
 AudioDevice *create_audio_device() {
+    /*
+        Create an audio device to capture audio on Windows
+
+        Returns:
+            (AudioDevice*): The initialized audio device struct
+    */
+
     AudioDevice *audio_device = safe_malloc(sizeof(AudioDevice));
     memset(audio_device, 0, sizeof(AudioDevice));
 
@@ -100,6 +113,14 @@ AudioDevice *create_audio_device() {
 }
 
 void start_audio_device(AudioDevice *audio_device) {
+    /*
+        Set the audio device to start capturing audio
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that gets
+                started to capture audio
+    */
+
     audio_device->hWakeUp = CreateWaitableTimer(NULL, FALSE, NULL);
 
     LARGE_INTEGER li_first_fire;
@@ -118,6 +139,13 @@ void start_audio_device(AudioDevice *audio_device) {
 }
 
 void destroy_audio_device(AudioDevice *audio_device) {
+    /*
+        Stop, release, and destroy the audio device sutrct and free its memory
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that gets destroyed
+    */
+
     audio_device->pAudioClient->lpVtbl->Stop(audio_device->pAudioClient);
     audio_device->pAudioCaptureClient->lpVtbl->Release(audio_device->pAudioCaptureClient);
     CoTaskMemFree(audio_device->pwfx);
@@ -129,15 +157,43 @@ void destroy_audio_device(AudioDevice *audio_device) {
 }
 
 void get_next_packet(AudioDevice *audio_device) {
+    /*
+        Request the next packet of audio data from the captured audio stream
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that captures the audio
+                stream
+    */
+
     audio_device->hNextPacketResult = audio_device->pAudioCaptureClient->lpVtbl->GetNextPacketSize(
         audio_device->pAudioCaptureClient, &audio_device->nNextPacketSize);
 }
 
 bool packet_available(AudioDevice *audio_device) {
+    /*
+        Check if the next packet of audio data is available from the captured audio stream
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that captures the audio
+                stream
+
+        Returns:
+            (bool): true if the next packet of audio data is available, else false
+    */
+
     return SUCCEEDED(audio_device->hNextPacketResult) && audio_device->nNextPacketSize > 0;
 }
 
 void get_buffer(AudioDevice *audio_device) {
+    /*
+        Get the buffer holding the next packet of audio data from the audio stream.
+        Read audio frames into audio device buffer.
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that captures the audio
+                stream
+    */
+
     audio_device->pAudioCaptureClient->lpVtbl->GetBuffer(
         audio_device->pAudioCaptureClient, &audio_device->buffer, &audio_device->frames_available,
         &audio_device->dwFlags, NULL, NULL);
@@ -149,6 +205,16 @@ void release_buffer(AudioDevice *audio_device) {
                                                              audio_device->frames_available);
 }
 
-void wait_timer(AudioDevice *audio_device) { WaitForSingleObject(audio_device->hWakeUp, INFINITE); }
+void wait_timer(AudioDevice *audio_device) {
+    /*
+        Wait for next packet
+
+        Arguments:
+            audio_device (AudioDevice*): The audio device that captures the audio
+                stream
+    */
+
+    WaitForSingleObject(audio_device->hWakeUp, INFINITE);
+}
 
 #endif  // _WIN32

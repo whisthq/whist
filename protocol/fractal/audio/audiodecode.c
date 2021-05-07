@@ -18,9 +18,25 @@ audio_decoder_packet_readout.
 
 #include "audiodecode.h"
 
-AudioDecoder *create_audio_decoder(int sample_rate) {
-    // initialize the audio decoder
+/*
+============================
+Public Functions
+============================
+*/
 
+AudioDecoder *create_audio_decoder(int sample_rate) {
+    /*
+        Initialize a FFmpeg AAC audio decoder for a specific sample rate
+
+        Arguments:
+            sample_rate (int): The sample rate, in Hertz, of the audio to
+                decode
+
+        Returns:
+            (AudioDecoder*): The initialized FFmpeg AAC audio decoder
+    */
+
+    // initialize the audio decoder
     AudioDecoder *decoder = (AudioDecoder *)safe_malloc(sizeof(AudioDecoder));
     memset(decoder, 0, sizeof(*decoder));
 
@@ -85,14 +101,22 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
 }
 
 int init_av_frame(AudioDecoder *decoder) {
-    // setup the AVFrame fields
+    /*
+        Initialize an AVFrame to receive a decoded audio frame
 
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder to associate the AVFrame with
+
+        Returns:
+            (int): 0 if success, else -1
+    */
+
+    // setup the AVFrame fields
     decoder->pFrame->nb_samples = MAX_AUDIO_FRAME_SIZE;
     decoder->pFrame->format = decoder->pCodecCtx->sample_fmt;
     decoder->pFrame->channel_layout = decoder->pCodecCtx->channel_layout;
 
     // initialize the AVFrame buffer
-
     if (av_frame_get_buffer(decoder->pFrame, 0)) {
         LOG_WARNING("Could not initialize AVFrame buffer.");
         return -1;
@@ -102,50 +126,60 @@ int init_av_frame(AudioDecoder *decoder) {
 }
 
 void audio_decoder_packet_readout(AudioDecoder *decoder, uint8_t *data) {
+    /*
+        Read a decoded audio packet from the decoder into a data buffer
+
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder that decoded the audio packet
+            data (uint8_t*): Data buffer to receive the decoded audio data
+    */
+
     if (!decoder) return;
     // convert samples from the AVFrame and return
 
     // initialize
-    // LOG_INFO("reading out packet");
-
     uint8_t **data_out = &data;
     int len = decoder->pFrame->nb_samples;
-    // LOG_INFO("DECODED FRAME LEN: %d", len);
+
     // convert
-
-    /*
-    LOG_INFO("swrcontext: %p || frame: %p || frame_data: %p",
-            decoder->pSwrContext, decoder->pFrame,
-            decoder->pFrame->extended_data);
- */
-
     if (swr_convert(decoder->pSwrContext, data_out, len,
                     (const uint8_t **)decoder->pFrame->extended_data, len) < 0) {
         LOG_WARNING("Could not convert samples to output format.");
     }
-    // LOG_INFO("finished reading out packet");
 }
 
 int audio_decoder_get_frame_data_size(AudioDecoder *decoder) {
+    /*
+        Retrieve the size of an audio frame
+
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder associated with the audio frame
+
+        Returns:
+            (int): The size of the audio frame, in bytes
+    */
+
     return av_get_bytes_per_sample(decoder->pCodecCtx->sample_fmt) * decoder->pFrame->nb_samples *
            av_get_channel_layout_nb_channels(decoder->pFrame->channel_layout);
 }
 
 int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet) {
+    /*
+        Decode an AAC encoded audio packet
+
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder used to decode the AAC packet
+            encoded_packet (AVPacket*): The AAC encoded audio packet to decode
+
+        Returns:
+            (int): 0 if success, else -1
+    */
+
     if (!decoder) {
         return -1;
     }
-    // decode a single packet of encoded data
-    // LOG_INFO("decoding packet!");
-    // initialize output frame
-
-    // if (init_av_frame(decoder)) {
-    //     LOG_WARNING("Could not initialize output AVFrame for decoding.\n");
-    //     return -1;
-    // }
 
     // send packet for decoding
-
     int res = avcodec_send_packet(decoder->pCodecCtx, encoded_packet);
     if (res < 0) {
         LOG_WARNING("Could not send AVPacket for decoding: error '%s'.", av_err2str(res));
@@ -153,7 +187,6 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
     }
 
     // get decoded frame
-
     res = avcodec_receive_frame(decoder->pCodecCtx, decoder->pFrame);
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         // decoder needs more data or there's nothing left
@@ -164,14 +197,18 @@ int audio_decoder_decode_packet(AudioDecoder *decoder, AVPacket *encoded_packet)
         LOG_ERROR("Could not decode frame: error '%s'.", av_err2str(res));
         return -1;
     } else {
-        // printf("Succeeded to decode frame of size:%5d\n",
-        // decoder->pFrame->nb_samples);
-        // LOG_INFO("finished decoding packet!");
         return 0;
     }
 }
 
 void destroy_audio_decoder(AudioDecoder *decoder) {
+    /*
+        Destroy a FFmpeg AAC audio decoder, and free its memory
+
+        Arguments:
+            decoder (AudioDecoder*): The audio decoder to destroy
+    */
+
     if (decoder == NULL) {
         LOG_WARNING("Cannot destroy null audio decoder.");
         return;

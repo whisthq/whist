@@ -96,6 +96,7 @@ int audio_decoder_get_frame_data_size(AudioDecoder* decoder);
  *
  * @param decoder                  The audio decoder that decoded the audio
  *                                 packet
+ *
  * @param data                     Data buffer to receive the decoded audio data
  */
 void audio_decoder_packet_readout(AudioDecoder* decoder, uint8_t* data);
@@ -105,6 +106,7 @@ void audio_decoder_packet_readout(AudioDecoder* decoder, uint8_t* data);
  *
  * @param decoder                  The audio decoder used to decode the AAC
  *                                 packet
+ *
  * @param encoded_packet           The AAC encoded audio packet to decode
  *
  * @returns                        0 if success, else -1
