@@ -10,10 +10,6 @@
  * @file fractal.h
  * @brief This file contains the core of Fractal custom structs and definitions
  *        used throughout.
-
-============================
-Usage
-============================
 */
 
 /*
@@ -184,8 +180,16 @@ Custom Types
 ============================
 */
 
+/**
+ * @brief   Encode type.
+ * @details Type of encoding used for video encoding.
+ */
 typedef enum EncodeType { SOFTWARE_ENCODE = 0, NVENC_ENCODE = 1, QSV_ENCODE = 2 } EncodeType;
 
+/**
+ * @brief   Codec types.
+ * @details The codec type being used for video encoding.
+ */
 typedef enum CodecType {
     CODEC_TYPE_UNKNOWN = 0,
     CODEC_TYPE_H264 = 264,
@@ -193,6 +197,25 @@ typedef enum CodecType {
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
 
+/**
+ * @brief   Frame struct.
+ * @details Video frame to be rendered.
+ */
+typedef struct Frame {
+    FractalCursorImage cursor;
+    int width;
+    int height;
+    CodecType codec_type;
+    int size;
+    bool is_iframe;
+    int num_peer_update_msgs;
+    unsigned char compressed_frame[];
+} Frame;
+
+/**
+ * @brief   Keycodes.
+ * @details Different accepted keycodes from client input.
+ */
 typedef enum FractalKeycode {
     FK_A = 4,              ///< 4
     FK_B = 5,              ///< 5
@@ -317,9 +340,11 @@ typedef enum FractalKeycode {
     FK_MEDIASELECT = 263,  ///< 263
 } FractalKeycode;
 
-/// @brief Modifier keys applied to keyboard input.
-/// @details Codes for when keyboard input is modified. These values may be
-/// bitwise OR'd together.
+/**
+ * @brief   Modifier keys applied to keyboard input.
+ * @details Codes for when keyboard input is modified. These values may be
+ *          bitwise OR'd together.
+ */
 typedef enum FractalKeymod {
     MOD_NONE = 0x0000,    ///< No modifier key active.
     MOD_LSHIFT = 0x0001,  ///< `LEFT SHIFT` is currently active.
@@ -332,8 +357,10 @@ typedef enum FractalKeymod {
     MOD_CAPS = 0x2000,    ///< `CAPSLOCK` is currently active.
 } FractalKeymod;
 
-/// @brief Mouse button.
-/// @details Codes for encoding mouse actions.
+/**
+ * @brief   Mouse button.
+ * @details Codes for encoding mouse actions.
+ */
 typedef enum FractalMouseButton {
     MOUSE_L = 1,       ///< Left mouse button.
     MOUSE_MIDDLE = 2,  ///< Middle mouse button.
@@ -343,8 +370,10 @@ typedef enum FractalMouseButton {
     MOUSE_MAKE_32 = 0x7FFFFFFF,
 } FractalMouseButton;
 
-/// @brief Cursor properties.
-/// @details Track important information on cursor.
+/**
+ * @brief   Cursor properties.
+ * @details Track important information on cursor.
+ */
 typedef struct FractalCursor {
     uint32_t size;       ///< Size in bytes of the cursor image buffer.
     uint32_t positionX;  ///< When leaving relative mode, the horizontal position
@@ -369,8 +398,10 @@ typedef struct FractalCursor {
     uint8_t __pad[1];
 } FractalCursor;
 
-/// @brief Keyboard message.
-/// @details Messages related to keyboard usage.
+/**
+ * @brief   Keyboard message.
+ * @details Messages related to keyboard usage.
+ */
 typedef struct FractalKeyboardMessage {
     FractalKeycode code;  ///< Keyboard input.
     FractalKeymod mod;    ///< Stateful modifier keys applied to keyboard input.
@@ -378,16 +409,20 @@ typedef struct FractalKeyboardMessage {
     uint8_t __pad[3];
 } FractalKeyboardMessage;
 
-/// @brief Mouse button message.
-/// @details Message from mouse button.
+/**
+ * @brief   Mouse button message.
+ * @details Message from mouse button.
+ */
 typedef struct FractalMouseButtonMessage {
     FractalMouseButton button;  ///< Mouse button.
     bool pressed;               ///< `true` if clicked, `false` if released.
     uint8_t __pad[3];
 } FractalMouseButtonMessage;
 
-/// @brief Mouse wheel message.
-/// @details Message from mouse wheel.
+/**
+ * @brief   Mouse wheel message.
+ * @details Message from mouse wheel.
+ */
 typedef struct FractalMouseWheelMessage {
     int32_t x;        ///< Horizontal delta of mouse wheel rotation. Negative values
                       ///< scroll left. Only used for Windows server.
@@ -397,15 +432,17 @@ typedef struct FractalMouseWheelMessage {
     float precise_y;  ///< Vertical floating delta of mouse wheel/trackpad scrolling.
 } FractalMouseWheelMessage;
 
-/// @brief Mouse motion message.
-/// @details Member of FractalMessage. Mouse motion can be sent in either
-/// relative or absolute mode via the `relative` member. Absolute mode treats
-/// the `x` and `y` values as the exact destination for where the cursor will
-/// appear. These values are sent from the client in device screen coordinates
-/// and are translated in accordance with the values set via
-/// FractalClientSetDimensions. Relative mode `x` and `y` values are not
-/// affected by FractalClientSetDimensions and move the cursor with a signed
-/// delta value from its previous location.
+/**
+ * @brief   Mouse motion message.
+ * @details Member of FractalMessage. Mouse motion can be sent in either
+ *          relative or absolute mode via the `relative` member. Absolute mode treats
+ *          the `x` and `y` values as the exact destination for where the cursor will
+ *          appear. These values are sent from the client in device screen coordinates
+ *          and are translated in accordance with the values set via
+ *          FractalClientSetDimensions. Relative mode `x` and `y` values are not
+ *          affected by FractalClientSetDimensions and move the cursor with a signed
+ *          delta value from its previous location.
+ */
 typedef struct FractalMouseMotionMessage {
     int32_t x;      ///< The absolute horizontal screen coordinate of the cursor  if
                     ///< `relative` is `false`, or the delta (can be negative) if
@@ -420,12 +457,10 @@ typedef struct FractalMouseMotionMessage {
     uint8_t __pad[3];
 } FractalMouseMotionMessage;
 
-typedef struct FractalDiscoveryRequestMessage {
-    int user_id;
-    FractalTimeData time_data;
-    char user_email[FRACTAL_ARGS_MAXLEN + 1];
-} FractalDiscoveryRequestMessage;
-
+/**
+ * @brief   Multigesture message.
+ * @details Message from multigesture event on touchpad.
+ */
 typedef struct FractalMultigestureMessage {
     float d_theta;         ///< The amount the fingers rotated.
     float d_dist;          ///< The amount the fingers pinched.
@@ -434,8 +469,35 @@ typedef struct FractalMultigestureMessage {
     uint16_t num_fingers;  ///< Number of fingers used in the gesture.
 } FractalMultigestureMessage;
 
-typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
+/**
+ * @brief   Discovery request message.
+ * @details Discover packet to be sent from client to server.
+ */
+typedef struct FractalDiscoveryRequestMessage {
+    int user_id;
+    FractalTimeData time_data;
+    char user_email[FRACTAL_ARGS_MAXLEN + 1];
+} FractalDiscoveryRequestMessage;
 
+/**
+ * @brief   Discovery reply message.
+ * @details Message sent by server in response to a FractalDiscoveryRequestMessage.
+ */
+typedef struct FractalDiscoveryReplyMessage {
+    int client_id;
+    int UDP_port;
+    int TCP_port;
+    int connection_id;
+    int audio_sample_rate;
+    char filename[300];
+    char username[50];
+} FractalDiscoveryReplyMessage;
+
+/**
+ * @brief   Client message type.
+ * @details Each message will have a specified type to indicate what information
+ *          the packet is carrying between client and server.
+ */
 typedef enum FractalClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message
     MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
@@ -465,6 +527,10 @@ typedef enum FractalClientMessageType {
     CMESSAGE_QUIT = 999,
 } FractalClientMessageType;
 
+/**
+ * @brief   Client message.
+ * @details Message from a Fractal client to a Fractal server.
+ */
 typedef struct FractalClientMessage {
     FractalClientMessageType type;  ///< Input message type.
     unsigned int id;
@@ -517,6 +583,10 @@ typedef struct FractalClientMessage {
     ClipboardData clipboard;
 } FractalClientMessage;
 
+/**
+ * @brief   Server message type.
+ * @details Type of message being sent from a Fractal server to a Fractal client.
+ */
 typedef enum FractalServerMessageType {
     SMESSAGE_NONE = 0,  ///< No Message
     MESSAGE_PONG = 1,
@@ -527,24 +597,10 @@ typedef enum FractalServerMessageType {
     SMESSAGE_QUIT = 100,
 } FractalServerMessageType;
 
-typedef struct FractalDiscoveryReplyMessage {
-    int client_id;
-    int UDP_port;
-    int TCP_port;
-    int connection_id;
-    int audio_sample_rate;
-    char filename[300];
-    char username[50];
-} FractalDiscoveryReplyMessage;
-
-typedef struct PeerUpdateMessage {
-    int peer_id;
-    int x;
-    int y;
-    bool is_controlling;
-    FractalRGBColor color;
-} PeerUpdateMessage;
-
+/**
+ * @brief   Server message.
+ * @details Message from a Fractal server to a Fractal client.
+ */
 typedef struct FractalServerMessage {
     FractalServerMessageType type;  ///< Input message type.
     union {
@@ -559,21 +615,31 @@ typedef struct FractalServerMessage {
     };
 } FractalServerMessage;
 
+/**
+ * @brief   Interaction mode.
+ * @details How a specified client will interact with the streaming session.
+ */
+typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
+
+/**
+ * @brief   Peer update message.
+ * @details Message sent when a client peer has updated.
+ */
+typedef struct PeerUpdateMessage {
+    int peer_id;
+    int x;
+    int y;
+    bool is_controlling;   // whether this is the controlling client
+    FractalRGBColor color; // client cursor color
+} PeerUpdateMessage;
+
+/* @brief   Packet destination. (unused)
+ * @details Host and port of a message destination.
+ */
 typedef struct FractalDestination {
     int host;
     int port;
 } FractalDestination;
-
-typedef struct Frame {
-    FractalCursorImage cursor;
-    int width;
-    int height;
-    CodecType codec_type;
-    int size;
-    bool is_iframe;
-    int num_peer_update_msgs;
-    unsigned char compressed_frame[];
-} Frame;
 
 /*
 ============================
@@ -613,7 +679,7 @@ char* get_ip();
 
 /**
  * @brief                          Reads a 16-byte hexidecimal string and copies
- * it into private_key
+ *                                 it into private_key
  *
  * @param hex_string               The hexidecimal string to copy
  * @param binary_private_key       The 16-byte buffer to copy the bytes into
@@ -621,7 +687,7 @@ char* get_ip();
  *                                 representation of the private key.
  *
  * @returns                        True if hex_string was a 16-byte hexadecimal
- * value, otherwise false
+ *                                 value, otherwise false
  */
 bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
                                   char* hex_private_key);
