@@ -2,7 +2,7 @@ import time
 
 from typing import Union
 
-from celery import Task, shared_task, current_task
+from celery import shared_task, current_task
 from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster

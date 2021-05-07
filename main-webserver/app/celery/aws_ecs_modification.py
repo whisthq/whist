@@ -2,7 +2,7 @@ import math
 import datetime
 from typing import Optional
 
-from celery import Task, shared_task, current_task
+from celery import shared_task, current_task
 from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
-from celery import Task, shared_task, current_task
+from celery import shared_task, current_task
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
@@ -433,7 +433,6 @@ def assign_container(
     does not exist for functions with celery decorators like this one.
     """
     return _assign_container(
-        self,
         username,
         task_definition_arn,
         task_version,
@@ -462,8 +461,8 @@ def _assign_container(
 
     set_container_state(
         keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
         state=PENDING,
         force=True,  # necessary since check will fail otherwise
     )
@@ -527,8 +526,8 @@ def _assign_container(
     else:
         set_container_state(
             keyuser=username,
-            keytask=self.request.id,
-            task_id=self.request.id,
+            keytask=current_task.request.id,
+            task_id=current_task.request.id,
             state=SPINNING_UP_NEW,
             force=True,  # necessary since check will fail otherwise
         )
@@ -547,7 +546,10 @@ def _assign_container(
 
         if cluster_info.status == "DEPROVISIONING":
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.error(
                 f"Cluster status is {cluster_info.status}",
@@ -574,7 +576,10 @@ def _assign_container(
         )
         if curr_ip == -1 or curr_network_binding == -1:
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=scurrent_taskelf.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.error("Error generating task with running IP", extra={"label": username})
             raise Exception("Your app's network bindings were not created.")
@@ -613,7 +618,10 @@ def _assign_container(
         else:
 
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
@@ -630,7 +638,10 @@ def _assign_container(
             base_container = container
         else:
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
@@ -656,8 +667,8 @@ def _assign_container(
     # and for the container to ping the webserver
     set_container_state(
         keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
         state=WAITING_FOR_CLIENT_APP,
         ip=base_container.ip,
         client_app_auth_secret=client_app_auth_secret,
@@ -697,7 +708,10 @@ def _assign_container(
 
     if not _poll(base_container.container_id):
         set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+            keyuser=username,
+            keytask=current_task.request.id,
+            task_id=current_task.request.id,
+            state=FAILURE,
         )
 
         fractal_logger.info(
@@ -722,11 +736,14 @@ def _assign_container(
     )
 
     set_container_state(
-        keyuser=username, keytask=self.request.id, task_id=self.request.id, state=READY
+        keyuser=username,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
+        state=READY,
     )
 
     fractal_logger.info(
-        f"""Success, task ID is {self.request.id} and container is ready.""",
+        f"""Success, task ID is {current_task.request.id} and container is ready.""",
         extra={"label": username},
     )
 
