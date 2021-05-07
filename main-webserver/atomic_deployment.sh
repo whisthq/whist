@@ -57,21 +57,25 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # apply diff safely, knowing nothing is happening on webserver
     psql --single-transaction --file $OUT_DIFF $DB_URL
 
+    echo "Redeploying webserver..."
+    # this should redeploy the webserver with code that corresponds to the new schema
+    git push -f heroku-fractal-server workflows-private/main-webserver:master
+    
+    # bring webserver back online
     heroku ps:scale web=1 --app $HEROKU_APP_NAME
     heroku ps:scale celery=1 --app $HEROKU_APP_NAME
+
 elif [ $DIFF_EXIT_CODE == "0" ]; then
     echo "No diff. Continuing redeploy."
+
+    echo "Redeploying webserver..."
+    # this should redeploy the webserver with code that corresponds to the new schema
+    git push -f heroku-fractal-server workflows-private/main-webserver:master
+    
 else
     echo "Diff script exited poorly. We are not redeploying the webserver because"
     echo "the ORM might be inconsistent with the live webserver db. This is an"
     echo "extremely serious error and should be investigated immediately."
     exit 1
 fi
-
-echo "Redeploying webserver..."
-
-ls
-
-# this should redeploy the webserver with code that corresponds to the new schema
-# git push -f heroku-fractal-server workflows-private/main-webserver:master
 
