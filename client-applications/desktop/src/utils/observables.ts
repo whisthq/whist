@@ -17,12 +17,12 @@ export const loadingFrom = (
             A helper that automates the creation of a "loading" observable.
 
         Arguments:
-            request: A observable whose emissions represent the "start" of a
+            request: An observable whose emissions represent the "start" of a
                      loading process.
             ...ends: A list of observables whose emissions represent the "end"
                      of a loading process.
         Returns:
-            A observable that emits "true" when "request" emits, and "false"
+            An observable that emits "true" when "request" emits, and "false"
             as soon as any of the "...ends" observables emit. Only one "end"
             observable should emit at a time, any subsequent "end" emissions
             will be ignored until "request" emits again.
