@@ -21,6 +21,7 @@ from app.celery.aws_celery_exceptions import InvalidArguments, InvalidAppId, Inv
 from app.helpers.utils.general.time import date_to_unix, get_today
 
 
+@shared_task
 def update_cluster(
     region_name: Optional[str] = "us-east-1",
     cluster_name: Optional[str] = None,
@@ -126,6 +127,7 @@ def update_cluster(
         }
 
 
+@shared_task
 def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
     """
     Updates all clusters in a region to use a new AMI
@@ -243,6 +245,7 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
     )
 
 
+@shared_task
 def manual_scale_cluster(cluster: str, region_name: str):
     """
     Check scaling a cluster based on simple rules:
@@ -297,6 +300,7 @@ def manual_scale_cluster(cluster: str, region_name: str):
     ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
 
 
+@shared_task
 def check_and_cleanup_outdated_tasks(
     cluster: str, region_name: str
 ):  # pylint: disable=unused-argument

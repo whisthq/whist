@@ -22,6 +22,7 @@ from app.helpers.utils.general.sql_commands import (
 from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
 
+@shared_task
 def delete_container(container_name: str, aes_key: str) -> None:
     """Delete a container.
 

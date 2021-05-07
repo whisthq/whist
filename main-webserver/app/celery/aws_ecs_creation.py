@@ -860,6 +860,7 @@ def prewarm_new_container(
         raise Exception(f"We were unable to assign container {task_id} to you in our database.")
 
 
+@shared_task
 @maintenance_track_task
 def create_new_cluster(
     cluster_name: Optional[str] = None,
