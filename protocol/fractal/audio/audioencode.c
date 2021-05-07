@@ -18,7 +18,7 @@ audio_encoder_fifo_intake. You can then encode via audio_encoder_encode.
 
 /*
 ============================
-Public Functions
+Public Function Implementations
 ============================
 */
 

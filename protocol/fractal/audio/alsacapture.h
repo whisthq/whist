@@ -35,6 +35,9 @@ Custom Types
 ============================
 */
 
+/**
+ * @brief                          Audio capture device features
+ */
 typedef struct AudioDevice {
     snd_pcm_t* handle;
     snd_pcm_uframes_t num_frames;

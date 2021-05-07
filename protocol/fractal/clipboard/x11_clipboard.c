@@ -15,6 +15,12 @@ clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/Xfixes.h>
@@ -43,20 +49,41 @@ whatever files are in the SET_CLIPBOARD directory.
  done; "
  */
 
-bool start_tracking_clipboard_updates();
-
 static Display* display = NULL;
 static Window window;
 
 static Atom clipboard;
 static Atom incr_id;
 
+/*
+============================
+Private Functions
+============================
+*/
+
+bool start_tracking_clipboard_updates();
 bool clipboard_has_target(Atom property_atom, Atom target_atom);
 DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size);
 
-void unsafe_init_clipboard() { start_tracking_clipboard_updates(); }
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+void unsafe_init_clipboard() {
+    /*
+        Initialize the clipboard by starting tracking clipboard updates
+    */
+
+    start_tracking_clipboard_updates();
+}
 
 void unsafe_destroy_clipboard() {
+    /*
+        Destroy clipboard by closing associated X display
+    */
+
     if (display) {
         XCloseDisplay(display);
     }
@@ -64,8 +91,13 @@ void unsafe_destroy_clipboard() {
 
 DynamicBuffer* get_clipboard_picture() {
     /*
-    Assume that clipboard stores pictures in png format when getting
+        Get an image from the Linux OS clipboard
+        NOTE: Assume that clipboard stores pictures in png format when getting
+
+        Returns:
+            (DynamicBuffer*): clipboard data buffer into which image is loaded
     */
+
     Atom target_atom = XInternAtom(display, "image/png", False),
          property_atom = XInternAtom(display, "XSEL_DATA", False);
 
@@ -86,6 +118,13 @@ DynamicBuffer* get_clipboard_picture() {
 }
 
 DynamicBuffer* get_clipboard_string() {
+    /*
+        Get a string from the Linux OS clipboard
+
+        Returns:
+            (DynamicBuffer*): clipboard data buffer into which string is loaded
+    */
+
     Atom target_atom = XInternAtom(display, "UTF8_STRING", False),
          property_atom = XInternAtom(display, "XSEL_DATA", False);
 
@@ -105,6 +144,13 @@ DynamicBuffer* get_clipboard_string() {
 }
 
 DynamicBuffer* get_clipboard_files() {
+    /*
+        Get files from the Linux OS clipboard
+
+        Returns:
+            (DynamicBuffer*): clipboard data buffer into which files are loaded
+    */
+
     Atom target_atom = XInternAtom(display, "x-special/gnome-copied-files", False);
     Atom property_atom = XInternAtom(display, "XSEL_DATA", False);
 
@@ -162,6 +208,13 @@ DynamicBuffer* get_clipboard_files() {
 static DynamicBuffer* db = NULL;
 
 void unsafe_free_clipboard(ClipboardData* cb) {
+    /*
+        Free clipboard buffer memory
+
+        Arguments:
+            cb (ClipboardData*): clipboard data to be freed
+    */
+
     if (cb->type != CLIPBOARD_NONE) {
         if (db == NULL) {
             LOG_ERROR("Called unsafe_free_clipboard, but there's nothing to free!");
@@ -179,6 +232,14 @@ void unsafe_free_clipboard(ClipboardData* cb) {
 }
 
 ClipboardData* unsafe_get_clipboard() {
+    /*
+        Get and return the current contents of the Linux clipboard
+
+        Returns:
+            (ClipboardData*): the clipboard data that has been read
+                from the Linux OS clipboard
+    */
+
     // Free the previous dynamic buffer (shouldn't be necessary)
     if (db != NULL) {
         LOG_ERROR(
@@ -215,6 +276,14 @@ ClipboardData* unsafe_get_clipboard() {
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
+    /*
+        Set the Linux OS clipboard to contain the data from `cb`
+
+        Arguments:
+            cb (ClipboardData*): the clipboard data to load into
+                the Linux OS clipboard
+    */
+
     static FILE* inp = NULL;
 
     //
@@ -301,6 +370,13 @@ void unsafe_set_clipboard(ClipboardData* cb) {
 }
 
 bool start_tracking_clipboard_updates() {
+    /*
+        Open X display and begin tracking clipboard updates
+
+        Returns:
+            (bool): true on success, false on failure
+    */
+
     // To be called at the beginning of clipboard usage
     display = XOpenDisplay(NULL);
     if (!display) {
@@ -316,11 +392,13 @@ bool start_tracking_clipboard_updates() {
 }
 
 bool unsafe_has_clipboard_updated() {
-    //
-    // If the clipboard has updated since this function was last called,
-    // or since StartTrackingClipboardUpdates was last called,
-    // then we return "true". Otherwise, return "false".
-    //
+    /*
+        Whether the clipboard has updated since this function was last called
+        or since start_tracking_clipboard_updates was last called.
+
+        Returns:
+            (bool): true if clipboard has updated, else false
+    */
 
     if (!display) {
         return false;
@@ -352,6 +430,21 @@ bool unsafe_has_clipboard_updated() {
 }
 
 bool clipboard_has_target(Atom property_atom, Atom target_atom) {
+    /*
+        Check whether `property_atom` contains content of type `target_atom`.
+        Typically, `property_atom` will be "XSEL_DATA" because this refers
+        to the clipboard selection data. An example of `target_atom` is
+        "image/png" for images.
+
+        Arguments:
+            property_atom (Atom): the property name being checked for
+            target_atom (Atom): the source in which object of type `property_atom`
+                is being searched for
+
+        Returns:
+            (bool): true if `target_atom` contains `property_atom`, else false
+    */
+
     XEvent event;
 
     XSelectInput(display, window, PropertyChangeMask);
@@ -369,6 +462,17 @@ bool clipboard_has_target(Atom property_atom, Atom target_atom) {
 }
 
 DynamicBuffer* get_clipboard_data(Atom property_atom, int header_size) {
+    /*
+        Get the data from the clipboard, as type `property_atom`
+
+        Arguments:
+            property_atom (Atom): type of data to be retrieved from OS clipboard
+            header_size (int): how many bytes of header to skip over in the OS clipboard
+
+        Returns:
+            (DynamicBuffer*): the clipboard data buffer loaded with the OS clipboard data
+    */
+
     Atom new_atom;
     int resbits;
     long unsigned ressize, restail;

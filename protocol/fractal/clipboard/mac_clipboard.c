@@ -15,12 +15,14 @@ clipboard with a CLIPBOARD_FILES type, then the clipboard will be set to
 whatever files are in the SET_CLIPBOARD directory.
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #include <fractal/core/fractal.h>
 #include "clipboard.h"
-
-void unsafe_init_clipboard(){};
-
-void unsafe_destroy_clipboard(){};
 
 #include <sys/syslimits.h>
 #include <unistd.h>
@@ -33,7 +35,25 @@ bool clipboard_has_string = false;
 bool clipboard_has_files = false;
 static int last_clipboard_sequence_number = -1;
 
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+void unsafe_init_clipboard(){};
+
+void unsafe_destroy_clipboard(){};
+
 bool unsafe_has_clipboard_updated() {
+    /*
+        Check if the Mac clipboard has updated
+
+        Returns:
+            (bool): true if the clipboard has updated since the last
+                call to this function, else false
+    */
+
     bool has_updated = false;
 
     int new_clipboard_sequence_number = get_clipboard_changecount();
@@ -51,9 +71,26 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) { deallocate_region(cb); }
+void unsafe_free_clipboard(ClipboardData* cb) {
+    /*
+        Free the clipboard memory
+
+        Arguments:
+            cb (ClipboardData*): the clipboard to be freed
+    */
+
+    deallocate_region(cb);
+}
 
 ClipboardData* unsafe_get_clipboard() {
+    /*
+        Get and return the current contents of the Mac clipboard
+
+        Returns:
+            (ClipboardData*): the clipboard data that has been read
+                from the Mac OS clipboard
+    */
+
     ClipboardData* cb = allocate_region(sizeof(ClipboardData));
 
     cb->size = 0;
@@ -150,6 +187,14 @@ ClipboardData* unsafe_get_clipboard() {
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
+    /*
+        Set the Mac OS clipboard to contain the data from `cb`
+
+        Arguments:
+            cb (ClipboardData*): the clipboard data to load into
+                the Mac OS clipboard
+    */
+
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }

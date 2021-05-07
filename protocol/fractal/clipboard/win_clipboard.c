@@ -18,29 +18,17 @@ LGET_CLIPBOARD and LSET_CLIPBOARD are the wide-character versions of these
 strings, for use on windows OS's
 */
 
+/*
+============================
+Includes
+============================
+*/
+
 #ifdef _WIN32
 
 #include <fractal/core/fractal.h>
 #include "../utils/png.h"
 #include "clipboard.h"
-
-char* get_clipboard_directory() {
-    static char buf[MAX_PATH];
-    wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
-    return buf;
-}
-char* set_clipboard_directory() {
-    static char buf[MAX_PATH];
-    wcstombs(buf, lset_clipboard_directory(), sizeof(buf));
-    return buf;
-}
-
-void unsafe_init_clipboard() {
-    get_clipboard_directory();
-    set_clipboard_directory();
-}
-
-void unsafe_destroy_clipboard() {}
 
 #include "shlwapi.h"
 #pragma comment(lib, "Shlwapi.lib")
@@ -48,7 +36,57 @@ void unsafe_destroy_clipboard() {}
 #include "Shellapi.h"
 #include "shlobj_core.h"
 
+/*
+============================
+Private Function Implementations
+============================
+*/
+
+char* get_clipboard_directory() {
+    /*
+        Get the directory of the get clipboard cache
+
+        Returns:
+            (char*): the get clipboard directory string
+    */
+
+    static char buf[MAX_PATH];
+    wcstombs(buf, lget_clipboard_directory(), sizeof(buf));
+    return buf;
+}
+char* set_clipboard_directory() {
+    /*
+        Get the directory of the set clipboard cache
+
+        Returns:
+            (char*): the set clipboard directory string
+    */
+
+    static char buf[MAX_PATH];
+    wcstombs(buf, lset_clipboard_directory(), sizeof(buf));
+    return buf;
+}
+
+void unsafe_init_clipboard() {
+    /*
+        Initialize the clipboard by getting both the
+        get clipboard and set clipboard caches
+    */
+
+    get_clipboard_directory();
+    set_clipboard_directory();
+}
+
+void unsafe_destroy_clipboard() {}
+
 WCHAR* lclipboard_directory() {
+    /*
+        Get the parent directory of the clipboard caches
+
+        Returns:
+            (WCHAR*): parent directory of the clipboard caches
+    */
+
     static WCHAR* directory = NULL;
     if (directory == NULL) {
         static WCHAR sz_path[MAX_PATH];
@@ -75,6 +113,13 @@ WCHAR* lclipboard_directory() {
 }
 
 WCHAR* lget_clipboard_directory() {
+    /*
+        Get the get clipboard cache directory
+
+        Returns:
+            (WCHAR*): the get clipboard cache directory
+    */
+
     static WCHAR path[MAX_PATH];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
@@ -89,6 +134,13 @@ WCHAR* lget_clipboard_directory() {
 }
 
 WCHAR* lset_clipboard_directory() {
+    /*
+        Get the set clipboard cache directory
+
+        Returns:
+            (WCHAR*): the set clipboard cache directory
+    */
+
     static WCHAR path[MAX_PATH];
     WCHAR* cb_dir = lclipboard_directory();
     wcscpy(path, cb_dir);
@@ -105,6 +157,9 @@ WCHAR* lset_clipboard_directory() {
 
 #define REPARSE_MOUNTPOINT_HEADER_SIZE 8
 
+/**
+ * @brief                          Struct for reparsing file mount point
+ */
 typedef struct {
     DWORD ReparseTag;
     DWORD ReparseDataLength;
@@ -117,9 +172,18 @@ typedef struct {
 
 #include <winioctl.h>
 
-bool create_junction(WCHAR* sz_junction, WCHAR* sz_path);
-
 bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
+    /*
+        From filename `sz_junction`, create full path under `sz_path`
+
+        Arguments:
+            sz_junction (WCHAR*): filename of file to be created
+            sz_path (WCHAR*): directory under which new file should be created
+
+        Returns:
+            (bool): true on success, false on failure
+    */
+
     BYTE buf[sizeof(ReparseMountpointDataBuffer) + MAX_PATH * sizeof(WCHAR)];
     ReparseMountpointDataBuffer* reparse_buffer = (ReparseMountpointDataBuffer*)buf;
     WCHAR sz_target[MAX_PATH] = L"\\??\\";
@@ -186,6 +250,14 @@ bool create_junction(WCHAR* sz_junction, WCHAR* sz_path) {
 static int last_clipboard_sequence_number = -1;
 
 bool unsafe_has_clipboard_updated() {
+    /*
+        Whether the Windows OS clipboard has updated
+
+        Returns:
+            (bool): true if clipboard has updated since last time this function
+                was called, else false
+    */
+
     bool has_updated = false;
 
     int new_clipboard_sequence_number = GetClipboardSequenceNumber();
@@ -198,9 +270,25 @@ bool unsafe_has_clipboard_updated() {
     return has_updated;
 }
 
-void unsafe_free_clipboard(ClipboardData* cb) { deallocate_region(cb); }
+void unsafe_free_clipboard(ClipboardData* cb) {
+    /*
+        Free the clipboard memory
+
+        Arguments:
+            cb (ClipboardData*): the clipboard to be freed
+    */
+    deallocate_region(cb);
+}
 
 ClipboardData* unsafe_get_clipboard() {
+    /*
+        Get and return the current contents of the Windows clipboard
+
+        Returns:
+            (ClipboardData*): the clipboard data that has been read
+                from the Windows OS clipboard
+    */
+
     // We have to wait a bit after hasClipboardUpdated, before the clipboard actually updates
     fractal_sleep(15);
 
@@ -473,6 +561,14 @@ HGLOBAL get_global_alloc(void* buf, int len, bool null_char) {
 }
 
 void unsafe_set_clipboard(ClipboardData* cb) {
+    /*
+        Set the Mac OS clipboard to contain the data from `cb`
+
+        Arguments:
+            cb (ClipboardData*): the clipboard data to load into
+                the Mac OS clipboard
+    */
+
     if (cb->type == CLIPBOARD_NONE) {
         return;
     }
