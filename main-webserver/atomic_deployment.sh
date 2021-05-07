@@ -1,7 +1,12 @@
 #!/bin/bash
 
 # Atomically apply database migrations to the current webserver
-# this 
+# This is specifically written to run in the main-webserver deployment workflow context.
+# It needs the following to be setup:
+# .github/workflows/helpers/notifications is installed in the PYTHONPATH
+# splitsh-lite (https://github.com/splitsh/lite)
+# Heroku CLI
+
 # Arguments
 # ${1}: HEROKU_APP_NAME: name of webserver Heroku app. Ex: fractal-dev-server.
 
@@ -36,11 +41,11 @@ NEW_DB_SCHEMA_PATH="db_migration/schema.sql"
 OUT_DIFF="$tmpfolder/diff.sql"
 
 echo "Getting the current schema..."
-pg_dump --no-owner --no-privileges --schema-only "${DB_URL}" >> $CURRENT_DB_SCHEMA_PATH
+pg_dump --no-owner --no-privileges --schema-only "${DB_URL}" >> "$CURRENT_DB_SCHEMA_PATH"
 
 echo "Calling schema diff script..."
 set +e # allow any exit-code; we will semantically parse this
-python db_migration/schema_diff.py ${CURRENT_DB_SCHEMA_PATH} ${NEW_DB_SCHEMA_PATH} ${OUT_DIFF}
+python db_migration/schema_diff.py "${CURRENT_DB_SCHEMA_PATH}" "${NEW_DB_SCHEMA_PATH}" "${OUT_DIFF}"
 DIFF_EXIT_CODE=$?
 set -e # undo allowing any exit-code
 
@@ -49,21 +54,26 @@ echo "Schema diff exit code: $DIFF_EXIT_CODE"
 if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # a diff exists, now apply it atomically by first pausing the webserver
 
+    echo "Migra SQL diff:"
+    cat "${PATH_DIFF}"
+
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
-    heroku ps:scale web=0 --app ${HEROKU_APP_NAME}
-    heroku ps:scale celery=0 --app ${HEROKU_APP_NAME}
+    heroku ps:scale web=0 --app "${HEROKU_APP_NAME}"
+    heroku ps:scale celery=0 --app "${HEROKU_APP_NAME}"
 
     # apply diff safely, knowing nothing is happening on webserver
-    psql --single-transaction --file $OUT_DIFF $DB_URL
+    psql --single-transaction --file "${OUT_DIFF}" "${DB_URL}"
+
+    
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
     git push -f heroku-fractal-server workflows-private/main-webserver:master
     
     # bring webserver back online
-    heroku ps:scale web=1 --app $HEROKU_APP_NAME
-    heroku ps:scale celery=1 --app $HEROKU_APP_NAME
+    heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
+    heroku ps:scale celery=1 --app "${HEROKU_APP_NAME}"
 
 elif [ $DIFF_EXIT_CODE == "0" ]; then
     echo "No diff. Continuing redeploy."

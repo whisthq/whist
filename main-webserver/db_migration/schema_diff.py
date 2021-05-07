@@ -108,7 +108,6 @@ def schema_diff(path_current, path_merging):
 
 if __name__ == "__main__":
     _, PATH_CURRENT, PATH_MERGING, OUTPATH = sys.argv
-    print(PATH_CURRENT, PATH_MERGING, OUTPATH)
 
     return_code, output = schema_diff(PATH_CURRENT, PATH_MERGING)
 
