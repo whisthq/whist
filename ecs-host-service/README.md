@@ -40,10 +40,6 @@ For more details, see the comments and deferred cleanup function at the beginnin
 
 We use `goimports` and `golint` for Golang linting and coding standards. These are automatically installed when running `make format` or `make lint`.
 
-If you decide to manually install `goimports` and `golint` by copying the installation commands from the Makefile, make sure not to run the `go get` commands inside any of the ecs-host-service directories, since that will pollute our `go.mod` and `go.sum` files. Instead, switch to your home directory (for instance).
-
-If `goimports` and `golint` are installed, you can manually format and lint your code with `goimports [path-to-file-to-lint.go]` and `golint [path-to-file-to-format.go]`, respectively.
-
 The easiest way to check that your code is ready for review (i.e. is linted, vetted, and formatted) is just to run `make check`. This is what we use to check the code in CI as well.
 
 ## Publishing
