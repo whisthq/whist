@@ -16,17 +16,43 @@ retrieve from the clipboard, or put some specific data in the clipboard, via the
 respective "ClipboardGet___" or "ClipboardSet___".
 */
 
-#include "clipboard_osx.h"
+/*
+============================
+Includes
+============================
+*/
 
+#include "clipboard_osx.h"
 #include <AppKit/AppKit.h>
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 int get_clipboard_changecount() {
+    /*
+        Check if the clipboard has updated since last time we checked it
+
+        Returns:
+            (int): The integer count of clipboard updates (e.g. 233, and after an
+                update, 234)
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSInteger change_count = [pasteboard changeCount];
     return (int)change_count;
 }
 
 bool check_clipboard_has_string() {
+    /*
+        Check if the clipboard has a string stored
+
+        Returns:
+            (bool): true if it contains a string, else false
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -34,6 +60,13 @@ bool check_clipboard_has_string() {
 }
 
 bool check_clipboard_has_image() {
+    /*
+        Check if the clipboard has an image stored
+
+        Returns:
+            (bool): true if it contains a string, else false
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSImage class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -41,6 +74,13 @@ bool check_clipboard_has_image() {
 }
 
 const char *clipboard_get_string() {
+    /*
+        Get a string from the clipboard
+
+        Returns:
+            (const char*): The string retrieved from the clipboard
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSString class]];
     NSDictionary *options = [NSDictionary dictionary];
@@ -61,6 +101,13 @@ const char *clipboard_get_string() {
 }
 
 void clipboard_set_string(const char *str) {
+    /*
+        Set the clipboard to a specific string
+
+        Arguments:
+            str (const char*): The string to set the clipboard to
+    */
+
     // clear clipboard and then set string data
     [[NSPasteboard generalPasteboard] clearContents];
     [[NSPasteboard generalPasteboard] setString:[NSString stringWithUTF8String:str]
@@ -69,6 +116,14 @@ void clipboard_set_string(const char *str) {
 }
 
 void clipboard_get_image(OSXImage *clipboard_image) {
+    /*
+        Get an image from the clipboard
+
+        Arguments:
+            clipboard_image (OSXImage*): The image struct that the image gets
+                retrieved into
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSBitmapImageRep *rep =
         (NSBitmapImageRep *)[NSBitmapImageRep imageRepWithPasteboard:pasteboard];
@@ -88,6 +143,14 @@ void clipboard_get_image(OSXImage *clipboard_image) {
 }
 
 void clipboard_set_image(char *img, int len) {
+    /*
+        Set the clipboard to a specific image
+
+        Arguments:
+            img (char*): The data of the image to set the clipboard to
+            len (int): The length of the image data buffer
+    */
+
     NSData *image_data = [[[NSData alloc] initWithBytes:img length:len] autorelease];
     NSBitmapImageRep *image_rep = [[[NSBitmapImageRep alloc] initWithData:image_data] autorelease];
     NSImage *image = [[[NSImage alloc] initWithSize:[image_rep size]] autorelease];
@@ -101,6 +164,13 @@ void clipboard_set_image(char *img, int len) {
 }
 
 bool check_clipboard_has_files() {
+    /*
+        Check if the clipboard has files stored
+
+        Returns:
+            (bool): true if it contains files, else false
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
     NSDictionary *options =
@@ -110,6 +180,14 @@ bool check_clipboard_has_files() {
 }
 
 void clipboard_get_files(OSXFilenames *filenames[]) {
+    /*
+        Get one or many files from the clipboard
+
+        Arguments:
+            filenames (OSXFilenames*[]): List of the filenames retrieved from the
+                clipboard
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
     NSArray *class_array = [NSArray arrayWithObject:[NSURL class]];
 
@@ -134,6 +212,13 @@ void clipboard_get_files(OSXFilenames *filenames[]) {
 }
 
 void clipboard_set_files(char *filepaths[]) {
+    /*
+        Set the clipboard to one or many files
+
+        Arguments:
+            filepaths (char*[]): List of file paths to set the clipboard to
+    */
+
     NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
 
     // clear pasteboard

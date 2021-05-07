@@ -47,6 +47,9 @@ DEFINE_GUID(IID_IAudioCaptureClient, 0xc8adbd64, 0xe71e, 0x48a0, 0xa4, 0xde, 0x1
             0xd3, 0x17);
 #endif
 
+/**
+ * @brief                          Audio capture device features
+ */
 typedef struct AudioDevice {
     IMMDevice* device;
     IMMDeviceEnumerator* pMMDeviceEnumerator;

@@ -20,7 +20,7 @@ audio_decoder_packet_readout.
 
 /*
 ============================
-Public Functions
+Public Function Implementations
 ============================
 */
 

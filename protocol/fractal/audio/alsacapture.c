@@ -19,7 +19,7 @@ device via DestroyAudioDevice.
 
 /*
 ============================
-Public Functions
+Public Function Implementations
 ============================
 */
 

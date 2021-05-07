@@ -60,20 +60,19 @@ Public Functions
  * @brief                          Check if the clipboard has updated since last
  *                                 time we checked it
  *
- * @returns                        The integer count of clipboard updates (e.g.
- *                                 233, and after an update, 234)
+ * @returns                        The integer count of clipboard updates
  */
 int get_clipboard_changecount();
 
 /**
- * @brief                          Check if the clipboard has a string stored in
+ * @brief                          Check if the clipboard has a string stored
  *
  * @returns                        True if it contains a string, else False
  */
 bool check_clipboard_has_string();
 
 /**
- * @brief                          Check if the clipboard has an image stored in
+ * @brief                          Check if the clipboard has an image stored
  *
  *
  * @returns                        True if it contains an image, else False
@@ -81,7 +80,7 @@ bool check_clipboard_has_string();
 bool check_clipboard_has_image();
 
 /**
- * @brief                          Check if the clipboard has files stored in it
+ * @brief                          Check if the clipboard has files stored
  *
  * @returns                        True if it contains files, else False
  */
@@ -113,6 +112,7 @@ void clipboard_get_image(OSXImage* clipboard_image);
  * @brief                          Set the clipboard to a specific image
  *
  * @param img                      The data of the image to set the clipboard to
+ *
  * @param len                      The length of the image data buffer
  */
 void clipboard_set_image(char* img, int len);
