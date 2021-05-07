@@ -77,25 +77,6 @@ int broadcast_udp_packet(FractalPacketType type, void *data, int len, int id, in
 
     double max_bytes_per_second = burst_bitrate / BITS_IN_BYTE;
 
-    /*
-    if (type == PACKET_AUDIO) {
-        static int ddata = 0;
-        static clock last_timer;
-        if( ddata == 0 )
-        {
-            start_timer( &last_timer );
-        }
-        ddata += len;
-        get_timer( last_timer );
-        if( get_timer( last_timer ) > 5.0 )
-        {
-            LOG_INFO( "AUDIO BANDWIDTH: %f kbps", 8 * ddata / get_timer(
-    last_timer ) / 1024 ); ddata = 0;
-        }
-        // LOG_INFO("Video ID %d (Packets: %d)", id, num_indices);
-    }
-    */
-
     clock packet_timer;
     start_timer(&packet_timer);
 
