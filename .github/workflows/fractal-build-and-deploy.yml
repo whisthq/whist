@@ -916,6 +916,7 @@ jobs:
                   else
                       echo 'Error: Invalid branch' && false
                   fi
+                  HEROKU_APP_NAME=fractal-serv-jmather625-2pps2r
                   echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
                   heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
@@ -927,14 +928,10 @@ jobs:
                   wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
                   | sudo tar -zxp --directory /usr/local/bin/
 
-            - name: Split off and checkout main-webserver subtree
-              run: |
-                  splitsh-lite --prefix main-webserver --target refs/heads/workflows-private/main-webserver
-                  git checkout workflows-private/main-webserver
-
-            - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
+            - name: Deploy the webserver atomically
+              shell: bash -e {0}
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              run: git push -f heroku-fractal-server workflows-private/main-webserver:master
+              run: main-webserver/atomic_deployment.sh
 
             - name: Notify Slack
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
