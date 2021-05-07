@@ -1,7 +1,39 @@
+/**
+ * Copyright Fractal Computers, Inc. 2020
+ * @file fractal_memory.c
+ * @brief This file contains custom memory handling for Fractal.
+
+============================
+Usage
+============================
+clipboard = allocate_region(sizeof(ClipboardData) + cb->size);
+memcpy(clipboard, cb, sizeof(ClipboardData) + cb->size);
+deallocate_region(clipboard);
+*/
+
+/*
+============================
+Includes
+============================
+*/
 
 #include <fractal/core/fractal.h>
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 void* safe_malloc(size_t size) {
+    /*
+        Wrapper around malloc that will correctly exit the
+        protocol when malloc fails
+
+        Return:
+            (void*): `malloc` allocated memory space
+    */
+
     void* ret = malloc(size);
     if (ret == NULL) {
         LOG_FATAL("Malloc of size %d failed!", size);
@@ -11,6 +43,18 @@ void* safe_malloc(size_t size) {
 }
 
 void* safe_realloc(void* buffer, size_t new_size) {
+    /*
+        Wrapper around realloc that will correctly exit the
+        protocol when realloc fails
+
+        Arguments:
+            buffer (void*): Buffer to be reallocated
+            new_size (size_t): New size of the reallocated buffer
+
+        Return:
+            (void*): `realloc` allocated memory space
+    */
+
     void* ret = realloc(buffer, new_size);
     if (ret == NULL) {
         LOG_FATAL("Realloc of size %d failed!", new_size);
@@ -22,7 +66,27 @@ void* safe_realloc(void* buffer, size_t new_size) {
 // Implementation of a dynamically sized buffer
 // ------------------------------------
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
+    /*
+        Initializes a new dynamically sizing buffer.
+        Note that accessing a dynamic buffer's buf outside
+        of db->size is undefined behavior
+
+        Arguments:
+            use_memory_regions (bool): If true, will use OS-level memory regions [See allocate_region]
+                If false, will use malloc for db->buf
+                NOTE: The DynamicBuffer struct itself will always use malloc
+
+        Returns:
+            (DynamicBuffer*): The dynamic buffer (With initial size 0)
+    */
+
     DynamicBuffer* db = safe_malloc(sizeof(DynamicBuffer));
     db->size = 0;
     db->use_memory_regions = use_memory_regions;
@@ -40,6 +104,15 @@ DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
 }
 
 void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size) {
+    /*
+        This will resize the given DynamicBuffer to the given size. This function may
+        reallocate db->buf
+
+        Arguments:
+            db (DynamicBuffer*): The DynamicBuffer to resize
+            new_size (size_t): The new size to resize `db` to
+    */
+
     size_t new_capacity = db->capacity;
     // If the capacity is too large, keep halving it
     while (new_capacity / 4 > new_size) {
@@ -74,6 +147,13 @@ void resize_dynamic_buffer(DynamicBuffer* db, size_t new_size) {
 }
 
 void free_dynamic_buffer(DynamicBuffer* db) {
+    /*
+        This will free the DynamicBuffer and its contents
+
+        Arguments:
+            db (DynamicBuffer*): The DynamicBuffer to free
+    */
+
     if (db->use_memory_regions) {
         deallocate_region(db->buf);
     } else {
@@ -102,7 +182,25 @@ typedef struct {
     char* free_blocks[MAX_FREES];
 } InternalBlockAllocator;
 
+/*
+============================
+Public Function Implementations
+============================
+*/
+
 BlockAllocator* create_block_allocator(size_t block_size) {
+    /*
+        Creates a block allocator that will create and free blocks of the
+        given block_size. The block allocator will _not_ interfere with
+        the malloc heap.
+
+        Arguments:
+            block_size (size_t): The size of blocks that this block allocator will allocate/free
+
+        Returns:
+            (BlockAllocator*): The created block allocator
+    */
+
     // Create a block allocator
     InternalBlockAllocator* blk_allocator = safe_malloc(sizeof(InternalBlockAllocator));
 
@@ -115,6 +213,16 @@ BlockAllocator* create_block_allocator(size_t block_size) {
 }
 
 void* allocate_block(BlockAllocator* blk_allocator_in) {
+    /*
+        Allocates a block using the given block allocator
+
+        Arguments:
+            blk_allocator_in (BlockAllocator*): The block allocator to use for allocating the block
+
+        Returns:
+            (void*): The new block
+    */
+
     InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     // If a free block already exists, just use that one instead
@@ -132,6 +240,14 @@ void* allocate_block(BlockAllocator* blk_allocator_in) {
 }
 
 void free_block(BlockAllocator* blk_allocator_in, void* block) {
+    /*
+        Frees a block allocated by allocate_block
+
+        Arguments:
+            blk_allocator_in (BlockAllocator*): The block allocator that the block was allocated from
+            block (void*): The block to free
+    */
+
     InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
 
     // If there's room in the free block list, just store the free block there instead
@@ -150,6 +266,12 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
 // allocates regions directly from mmap/MapViewOfFile
 // ------------------------------------
 
+/*
+============================
+Includes
+============================
+*/
+
 #ifdef _WIN32
 #include <memoryapi.h>
 #else
@@ -157,8 +279,35 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
 #include <sys/mman.h>
 #endif
 
+/*
+============================
+Custom Types
+============================
+*/
+
+// Declare the RegionHeader struct
+typedef struct {
+    size_t size;
+} RegionHeader;
+// Macros to go between the data and the header of a region
+#define TO_REGION_HEADER(a) ((void*)(((char*)a) - sizeof(RegionHeader)))
+#define TO_REGION_DATA(a) ((void*)(((char*)a) + sizeof(RegionHeader)))
+
+/*
+============================
+Private Function Implementations
+============================
+*/
+
 // Get the page size
 int get_page_size() {
+    /*
+        Get the system page size
+
+        Returns:
+            (int): system page size
+    */
+
 #ifdef _WIN32
     SYSTEM_INFO sys_info;
 
@@ -170,15 +319,26 @@ int get_page_size() {
 #endif
 }
 
-// Declare the RegionHeader struct
-typedef struct {
-    size_t size;
-} RegionHeader;
-// Macros to go between the data and the header of a region
-#define TO_REGION_HEADER(a) ((void*)(((char*)a) - sizeof(RegionHeader)))
-#define TO_REGION_DATA(a) ((void*)(((char*)a) + sizeof(RegionHeader)))
+/*
+============================
+Public Function Implementations
+============================
+*/
 
 void* allocate_region(size_t region_size) {
+    /*
+        Allocates a region of memory, of the requested size.
+        This region will be allocated independently of
+        the malloc heap or any block allocator.
+        Will be zero-initialized.
+
+        Arguments:
+            region_size (size_t): The size of the region to create
+
+        Returns:
+            (void*): The new region of memory
+    */
+
     size_t page_size = get_page_size();
     // Make space for the region header as well
     region_size += sizeof(RegionHeader);
@@ -202,6 +362,15 @@ void* allocate_region(size_t region_size) {
 }
 
 void mark_unused_region(void* region) {
+    /*
+        Marks the region as unused (for now). This will let other processes
+        use it if they desire. This will decrease the reported memory usage,
+        by the size of the region that was used
+
+        Arguments:
+            region (void*): The region to mark as unused
+    */
+
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     // Only mark the next page and beyond as freed,
@@ -224,6 +393,14 @@ void mark_unused_region(void* region) {
 }
 
 void mark_used_region(void* region) {
+    /*
+        Marks the region as used again. This will grab new memory regions from the OS,
+        only give other processes have taken the memory while it was unused.
+
+        Arguments:
+            region (void*): The region to mark as used now
+    */
+
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t page_size = get_page_size();
     if (p->size > page_size) {
@@ -246,6 +423,19 @@ void mark_used_region(void* region) {
 }
 
 void* realloc_region(void* region, size_t new_region_size) {
+    /*
+        Resize the memory region. This will try to simply grow the region,
+        but if it can't, it will allocate a new region and copy everything over.
+
+        Arguments:
+            region (void*): The region to resize
+            new_region_size (size_t): The new size of the region
+
+        Returns:
+            (void*): The new pointer to the region (Will be
+                different from the given region, if an allocation + copy was necessary)
+    */
+
     RegionHeader* p = TO_REGION_HEADER(region);
     size_t region_size = p->size;
 
@@ -261,6 +451,13 @@ void* realloc_region(void* region, size_t new_region_size) {
 }
 
 void deallocate_region(void* region) {
+    /*
+        Give the region back to the OS
+
+        Arguments:
+            region (void*): The region to deallocate
+    */
+
     RegionHeader* p = TO_REGION_HEADER(region);
 
 #ifdef _WIN32
