@@ -399,6 +399,12 @@ typedef struct FractalCursor {
 } FractalCursor;
 
 /**
+ * @brief   Interaction mode.
+ * @details How a specified client will interact with the streaming session.
+ */
+typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
+
+/**
  * @brief   Keyboard message.
  * @details Messages related to keyboard usage.
  */
@@ -614,12 +620,6 @@ typedef struct FractalServerMessage {
         char init_msg[0];
     };
 } FractalServerMessage;
-
-/**
- * @brief   Interaction mode.
- * @details How a specified client will interact with the streaming session.
- */
-typedef enum InteractionMode { CONTROL = 1, SPECTATE = 2, EXCLUSIVE_CONTROL = 3 } InteractionMode;
 
 /**
  * @brief   Peer update message.
