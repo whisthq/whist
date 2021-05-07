@@ -64,8 +64,8 @@ Public Functions
  *                                 for receiving from the server
  *
  * @param bit_rate                 The amount of bits/seconds that the audio
- *                                 will be encoded to (higher means higher
- *                                 quality encoding, and more bandwidth usage)
+ *                                 will be encoded to
+ *
  * @param sample_rate              The sample rate, in Hertz, of the audio to
  *                                 encode
  *
