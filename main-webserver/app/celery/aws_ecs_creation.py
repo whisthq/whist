@@ -390,7 +390,7 @@ def _get_num_extra(taskdef: str, location: str) -> int:
                 UserContainer.query.filter(
                     UserContainer.task_definition == taskdef,
                     UserContainer.location == location,
-                    UserContainer.user_id is not None,
+                    UserContainer.user_id != None,
                 )
             )
         )
