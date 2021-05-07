@@ -21,6 +21,9 @@ cd "$DIR/.."
 
 HEROKU_APP_NAME=${1}
 
+# if true, a future step will send a slack notification 
+echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
+
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
 DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
 
@@ -65,22 +68,22 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # apply diff safely, knowing nothing is happening on webserver
     psql --single-transaction --file "${OUT_DIFF}" "${DB_URL}"
 
-    
-
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
-    git push -f heroku-fractal-server workflows-private/main-webserver:master
+    # git push -f heroku-fractal-server workflows-private/main-webserver:master
     
     # bring webserver back online
     heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
     heroku ps:scale celery=1 --app "${HEROKU_APP_NAME}"
+
+    echo "DB_MIGRATION_PERFORMED=true" >> "${GITHUB_ENV}"
 
 elif [ $DIFF_EXIT_CODE == "0" ]; then
     echo "No diff. Continuing redeploy."
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
-    git push -f heroku-fractal-server workflows-private/main-webserver:master
+    # git push -f heroku-fractal-server workflows-private/main-webserver:master
     
 else
     echo "Diff script exited poorly. We are not redeploying the webserver because"
