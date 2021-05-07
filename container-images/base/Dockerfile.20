@@ -213,6 +213,10 @@ RUN mkdir /dist /ignore && \
                        --no-install-libglvnd \
                        --skip-depmod
 
+# Copy configuration files needed for Vulkan to work
+RUN mkdir /dist/etc && \
+    cp -r /etc/{vulkan,nvidia,OpenCL} /dist/etc
+
 ################ STAGE 4: fractal-base ################
 # - Copy and install libinput from libinput-build
 # - Copy and install xf86-input-libinput from
