@@ -2,7 +2,7 @@ import math
 import datetime
 from typing import Optional
 
-from celery import Task, shared_task
+from celery import Task, shared_task, current_task
 from flask import current_app
 
 from app.helpers.utils.aws.base_ecs_client import ECSClient, FractalECSClusterNotFoundException
@@ -21,9 +21,7 @@ from app.celery.aws_celery_exceptions import InvalidArguments, InvalidAppId, Inv
 from app.helpers.utils.general.time import date_to_unix, get_today
 
 
-@shared_task(bind=True)
 def update_cluster(
-    self: Task,
     region_name: Optional[str] = "us-east-1",
     cluster_name: Optional[str] = None,
     ami: Optional[str] = None,
@@ -32,7 +30,6 @@ def update_cluster(
     Updates a specific cluster to use a new AMI
 
     Args:
-        self (CeleryInstance): the celery instance running the task
         region_name (Optional[str]): which region the cluster is in
         cluster_name (Optional[str]): which cluster to update
         ami (Optional[str]): which AMI to use
@@ -45,7 +42,7 @@ def update_cluster(
     if ami is None:
         ami = region_to_ami[region_name]
 
-    self.update_state(
+    current_task.update_state(
         state="PENDING",
         meta={
             "msg": (f"updating cluster {cluster_name} on ECS to ami {ami} in region {region_name}"),
@@ -93,8 +90,8 @@ def update_cluster(
         # Actually stop the task if it's not done.
         if not ecs_client.check_if_done(offset=0):
             ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
-            self.update_state(
-                state="PENDING",
+            current_task.update_state(
+                state="STARTED",
                 meta={
                     "msg": "Container {container_name} begun stoppage".format(
                         container_name=container_name,
@@ -119,30 +116,22 @@ def update_cluster(
         fractal_sql_commit(db, lambda db, x: db.session.delete(x), bad_entry)
 
         # Task was executed successfully; we have recorded the fact that this cluster did not exist.
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
-            },
-        )
+        return {
+            "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
+        }
     else:
         # The cluster did exist, and was updated successfully.
-        self.update_state(
-            state="SUCCESS",
-            meta={
-                "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
-            },
-        )
+        return {
+            "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
+        }
 
 
-@shared_task(bind=True)
-def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
+def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
     """
     Updates all clusters in a region to use a new AMI
     calls update_cluster under the hood
 
     Args:
-        self (CeleryInstance): the celery instance running the task
         region_name (Optional[str]): which region the cluster is in
         ami (Optional[str]): which AMI to use
 
@@ -166,8 +155,8 @@ def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Opt
             f"updated AMI in {region_name} to {ami}",
         )
 
-    self.update_state(
-        state="PENDING",
+    current_task.update_state(
+        state="STARTED",
         meta={
             "msg": (f"updating to ami {ami} in region {region_name}"),
         },
@@ -180,11 +169,7 @@ def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Opt
         fractal_logger.warning(
             f"No clusters found in region {region_name}",
         )
-        self.update_state(
-            state="SUCCESS",
-            meta={"msg": f"No clusters in region {region_name}", "tasks": ""},
-        )
-        return
+        return {"msg": f"No clusters in region {region_name}", "tasks": ""}
 
     fractal_logger.info(f"Updating clusters: {all_clusters}")
     tasks = []
@@ -200,11 +185,7 @@ def update_region(self: Task, region_name: Optional[str] = "us-east-1", ami: Opt
     # format tasks as space separated strings (used by AMI creation workflow to poll for success)
     delim = " "
     formatted_tasks = delim.join(tasks)
-
-    self.update_state(
-        state="SUCCESS",
-        meta={"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks},
-    )
+    return {"msg": f"updated to ami {ami} in region {region_name}", "tasks": formatted_tasks}
 
 
 @shared_task
@@ -262,8 +243,7 @@ def update_task_definitions(app_id: str = None, task_version: int = None):
     )
 
 
-@shared_task(bind=True)
-def manual_scale_cluster(self, cluster: str, region_name: str):
+def manual_scale_cluster(cluster: str, region_name: str):
     """
     Check scaling a cluster based on simple rules:
     1. expected_num_instances = ceil( (active_tasks + pending_tasks) / AWS_TASKS_PER_INSTANCE )
@@ -274,7 +254,7 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
         cluster: cluster to manually scale
         region_name: region that cluster resides in
     """
-    self.update_state(
+    current_task.update_state(
         state="STARTED",
         meta={
             "msg": f"Checking if cluster {cluster} should be scaled.",
@@ -317,9 +297,8 @@ def manual_scale_cluster(self, cluster: str, region_name: str):
     ecs_client.set_auto_scaling_group_capacity(asg, expected_num_instances)
 
 
-@shared_task(bind=True)
 def check_and_cleanup_outdated_tasks(
-    self, cluster: str, region_name: str
+    cluster: str, region_name: str
 ):  # pylint: disable=unused-argument
     """
     Cleanup tasks in a cluster that have not pinged for 90sec.
