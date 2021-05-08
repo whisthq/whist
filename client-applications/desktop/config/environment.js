@@ -1,3 +1,8 @@
+/*
+  Environment config
+  This file exports environment-specific variables used at runtime
+*/
+
 const {
   baseFilePath,
   protocolName,
