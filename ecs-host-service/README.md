@@ -51,3 +51,41 @@ The easiest way to check that your code is ready for review (i.e. is linted, vet
 The Fractal host service gets built into our AMIs during deployment.
 
 For testing, you can also use the `upload` target in the makefile, which builds a host service and pushes it to the `fractal-ecs-host-service` s3 bucket with value equal to the branch name that `make upload` was run from.
+
+## Tree of host service files
+
+```tree
+.
+├── ecsagent
+│   ├── agent <- package containing our modified ecsagent code. For the fractal-specific changelog, see the README in this directory.
+│   ├── ecsagent.go <- Our wrapper for the ecsagent code
+│   └── seelog_bridge.go <- A wrapper for the ecsagent logging to integrate with our own
+├── ecs-host-service.go <- The main file, contains the main logic and the most comments to explain the design decisions of the host service
+├── fractalcontainer <- package for the abstraction of a container managed by Fractal
+│   ├── cloudstorage <- package for cloud storage-specific functionality
+│   │   ├── provider.go <- file that defines possible cloud storage providers
+│   │   └── rclone.go <- file that implements all the actual interfacing with rclone
+│   ├── cloud_storage.go <- fractalcontainer wrapper of the cloudstorage package
+│   ├── fractal_container.go <- the main file in the fractalcontainer package, defines the types and implements the simple functions associated with Fractal-managed containers
+│   ├── portbindings <- package for the abstraction of port bindings between the container and the host
+│   │   ├── port_bindings.go <- provides helper functions for port bindings
+│   │   └── transport_protocol.go <- provides the abstraction of a transport_protocol (used by the ecsagent as well)
+│   ├── tracker.go <- keeps a list of all Fractal-managed containers at any given point
+│   ├── ttys <- package to abstract away TTYs
+│   │   └── ttys.go <- implementation of the ttys package
+│   ├── uinputdevices <- package to abstract away uinput devices
+│   │   ├── uinput <- package that provides actual uinput functionality that is consumed by the uinputdevices package. This package used to be a separate codebase, but got rolled into this one. See the README in this directory for more details.
+│   │   └── uinput_devices.go <- Our wrapper for the uinput package, and implementation of the uinputdevices package
+│   ├── user_configs.go <- Provides functions that manage user configs, including fetching, uploading, and encrypting
+│   └── write_data_for_protocol.go <- Provides functions that communicate with the container itself by writing data (e.g. providing TTY mappings, etc.)
+├── fractallogger <- Logging package
+│   ├── constants.go <- Provides some constants that need to be available in every package, could eventually be rolled into its own package but it's only two lines long at the time of writing this.
+│   ├── fractallogger.go <- Main logging file
+│   ├── heartbeats.go <- Implementation of heartbeats to the webserver
+│   ├── logzio_specifics.go <- Integration with logzio
+│   ├── metadata.go <- Implementation of computing information about the host, like AWS-specific metadata or memory usage
+│   └── sentry-specifics.go <- Integration with Sentry
+├── httpserver <- Package that exposes HTTPS endpoints of the host service
+│   └── server.go <- Infrastructure around those endpoints
+├── Makefile
+```
