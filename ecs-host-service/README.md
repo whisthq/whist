@@ -36,6 +36,8 @@ We never use `os.exit()` or any of the `log.fatal()` variants, or even plain `pa
 
 For more details, see the comments and deferred cleanup function at the beginning of `main()`.
 
+For a list of changes made to the ECS agent codebase, see [the README in `ecsagent/agent`](./ecsagent/agent/README.md).
+
 ## Styling
 
 We use `goimports` and `golint` for Golang linting and coding standards. These are automatically installed when running `make format` or `make lint`.
