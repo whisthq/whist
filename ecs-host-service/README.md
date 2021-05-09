@@ -36,6 +36,8 @@ We never use `os.exit()` or any of the `log.fatal()` variants, or even plain `pa
 
 For more details, see the comments and deferred cleanup function at the beginning of `main()`.
 
+We use [contexts](https://golang.org/pkg/context/) from the Go standard library extensively to scope requests and set timeouts. [Brushing up on contexts](https://blog.golang.org/context) might prove useful.
+
 For a list of changes made to the ECS agent codebase, see [the README in `ecsagent/agent`](./ecsagent/agent/README.md).
 
 ## Styling
