@@ -26,6 +26,7 @@ echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
 
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
 DB_URL=$(heroku config:get DATABASE_URL --app "${HEROKU_APP_NAME}")
+echo "APP: $HEROKU_APP_NAME, DB URL: $DB_URL"
 
 # Install db migration dependencies. If this fails, the entire deploy will fail.
 echo "Installing db migration dependencies..."
