@@ -916,8 +916,8 @@ jobs:
                   else
                       echo 'Error: Invalid branch' && false
                   fi
-                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
                   HEROKU_APP_NAME="fractal-serv-jmather625-2pps2r"
+                  echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
                   heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
               env:
