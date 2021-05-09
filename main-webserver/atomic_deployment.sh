@@ -58,7 +58,7 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
     # a diff exists, now apply it atomically by first pausing the webserver
 
     echo "Migra SQL diff:"
-    cat "${PATH_DIFF}"
+    cat "${OUT_DIFF}"
 
     # stop webserver. TODO: parse how many dynos exist currently and
     # restore that many as opposed to just restoring to 1 dyno
