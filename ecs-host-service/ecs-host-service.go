@@ -436,11 +436,14 @@ func main() {
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
 	// WaitGroup for all goroutines to tell us when they've stopped (if the
-	// context gets cancelled). Finally, we defer a function which
-	// cancels the global context if necessary, logs any panic we might be
-	// recovering from, and cleans up after the entire host service. After
-	// the permissions check, the creation of this context and WaitGroup, and the
-	// following defer must be the first statements in main().
+	// context gets cancelled). Finally, we defer a function which cancels the
+	// global context if necessary, logs any panic we might be recovering from,
+	// and cleans up after the entire host service (although some aspects of
+	// cleanup may not seem necessary on a production instance, they are
+	// immensely helpful to prevent the host service from clogging up the local
+	// filesystem during development). After the permissions check, the creation
+	// of this context and WaitGroup, and the following defer must be the first
+	// statements in main().
 	globalCtx, globalCancel := context.WithCancel(context.Background())
 	goroutineTracker := sync.WaitGroup{}
 	defer func() {
