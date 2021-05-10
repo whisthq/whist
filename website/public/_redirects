@@ -1,3 +1,0 @@
-# We need to let the React app handle all routing login.
-# Without this, directly navigating to fractal.co/about fails.
-/* /index.html 200
