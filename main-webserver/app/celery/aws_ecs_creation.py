@@ -577,7 +577,7 @@ def _assign_container(
         if curr_ip == -1 or curr_network_binding == -1:
             set_container_state(
                 keyuser=username,
-                keytask=scurrent_taskelf.request.id,
+                keytask=current_task.request.id,
                 task_id=current_task.request.id,
                 state=FAILURE,
             )
@@ -913,7 +913,7 @@ def create_new_cluster(
         user_cluster_schema: information on cluster created
     """
     return _create_new_cluster(
-        self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
+        cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
     )
 
 
