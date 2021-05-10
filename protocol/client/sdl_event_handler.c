@@ -336,6 +336,18 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers};
     send_fmsg(&fmsg);
+    // LOG_INFO("multigesture detected!! d_theta: %d d_dist: %d, x: %d, y: %d, num_fingers: %d",
+        // event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
+
+    // if (fabs(event->mgesture.dTheta) > 3.14 / 180.0 ) {
+    //     LOG_INFO("ROTATE");
+    // } else if (fabs(event->mgesture.dDist) > 0.002 ) {
+    //     if (event->mgesture.dDist > 0) {
+    //         LOG_INFO("PINCH OPEN");
+    //     } else {
+    //         LOG_INFO("PINCH CLOSE");
+    //     }
+    // }
 
     return 0;
 }
@@ -370,6 +382,9 @@ int handle_sdl_event(SDL_Event *event) {
         Return:
             (int): 0 on success, -1 on failure
     */
+
+    LOG_INFO("sdl event->type: 0x%x; mgesture: 0x%x; motion: %d; tfinger: %d",
+        event->type, event->mgesture.type, event->motion.which, event->tfinger.type);
 
     switch (event->type) {
         case SDL_WINDOWEVENT:
