@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import Modal from 'react-modal'
 import { FaTimes } from 'react-icons/fa'
-import TypeformComponent from 'react-typeform-embed'
+import * as typeformEmbed from '@typeform/embed'
+import '@typeform/embed/build/css/widget.css'
 import classNames from 'classnames'
 
 import 'reactjs-popup/dist/index.css'
@@ -23,6 +24,17 @@ const Typeform = (props: {
 
   const { show, onClose, onSubmit } = props
 
+  const typeformContainer = useCallback((node) => {
+    if (node !== undefined) {
+      typeformEmbed.createWidget(config.url.TYPEFORM_FORM_ID, {
+        container: node,
+        onSubmit: onSubmit
+      })
+    }
+  }, [])
+
+  Modal.setAppElement('#root')
+
   return (
         <div className="text-center">
             <Modal
@@ -37,11 +49,14 @@ const Typeform = (props: {
                 }}
             >
                 <div>
-                    <TypeformComponent.ReactTypeformEmbed
-                        url={config.url.TYPEFORM_URL}
-                        popup={false}
-                        onSubmit={onSubmit}
-                    />
+                    <div ref={typeformContainer} style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      overflow: 'hidden'
+                    }}/>
                     <div
                         className="absolute right-4 top-2 w-8 h-8 z-50 cursor-pointer"
                         onClick={onClose}
