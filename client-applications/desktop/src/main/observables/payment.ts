@@ -88,7 +88,10 @@ export const stripePortalFailure = stripePortalProcess.pipe(
 // thread to parse the returned object accordingly.
 export const stripeAction = merge(
   stripeCheckoutSuccess.pipe(
-    map((req) => ({ action: "CHECKOUT", stripeCheckoutId: req.json.sessionId }))
+    map((req) => ({
+      action: "CHECKOUT",
+      stripeCheckoutId: req.json.session_id,
+    }))
   ),
   stripePortalSuccess.pipe(
     map((req) => ({ action: "PORTAL", stripePortalUrl: req.json.url }))
