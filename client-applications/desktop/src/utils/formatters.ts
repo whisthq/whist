@@ -9,7 +9,8 @@ import { omit, pick, truncate, fromPairs, toPairs, isFunction } from "lodash"
 import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 
-/* Contains general fields of a typical JSON response that are usually
+/* 
+   Contains general fields of a typical JSON response that are usually
    unecessary, such as 'status' and 'response'
 */
 
