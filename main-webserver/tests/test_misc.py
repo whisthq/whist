@@ -6,6 +6,7 @@ import concurrent.futures
 import platform
 import os
 import signal
+import uuid
 
 import pytest
 from sqlalchemy.exc import OperationalError
@@ -19,7 +20,7 @@ from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.models import RegionToAmi
+from app.models import ClusterInfo, db, RegionToAmi, SortedClusters
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 from app.celery.dummy import dummy_task
 
@@ -365,3 +366,21 @@ def test_host_service(client):
     expected_keys = ["ip", "port", "client_app_auth_secret"]
 
     assert all(item in expected_keys for item in response.json)
+
+
+def test_sorted_clusters(request):
+    """Ensure that SortedClusters instances have a containers attribute."""
+
+    cluster = ClusterInfo(cluster=str(uuid.uuid4()), location="us-east-1", maxContainers=1)
+
+    def finalizer():
+        db.session.delete(cluster)
+        db.session.commit()
+
+    request.addfinalizer(finalizer)
+    db.session.add(cluster)
+    db.session.commit()
+
+    cluster_view = SortedClusters.query.filter_by(cluster=cluster.cluster).one()
+
+    assert cluster_view.containers.count() == 0

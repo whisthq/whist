@@ -113,23 +113,12 @@ class ClusterInfo(db.Model):
 
 
 class SortedClusters(db.Model):
-    """Sorted list of cluster data, sorted by registeredCotnainerInstancesCount
+    """Represents the cluster_sorted view, which contains data from cluster_info.
+
+    The rows in cluster_sorted are sorted by cluster_info.registeredContainerInstancesCount.
 
     Attributes:
-        cluster (string): cluster id from AWS console
-        location (string): AWS region (i.e. us-east-1)
-        maxCPURemainingPerInstance (float): maximum available CPU that has not
-            been allocated to tasks
-        maxMemoryRemainingPerInstance (float): maximum avilable RAM that has not
-            been allocated to tasks
-        pendingTaskscount (int): number of tasks in the cluster that are in the PENDING state
-        runningTasksCount (int): number of tasks in the cluster that are in the RUNNING state
-        registeredContainerInstancesCount (int): The number of container instances registered
-            into the cluster. This includes container instances in both ACTIVE and DRAINING status.
-        minContainers (int): The minimum size of the Auto Scaling group.
-        maxContainers (int): The maximum size of the Auto Scaling Group
-        status: (string): Status of the cluster, either [ACTIVE, PROVISIONING,
-            DEPROVISINING, FAILED, INACTIVE]
+        See app.models.hardware.ClusterInfo.
     """
 
     __tablename__ = "cluster_sorted"
@@ -144,6 +133,12 @@ class SortedClusters(db.Model):
     minContainers = db.Column(db.Integer, nullable=False, default=0)
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     status = db.Column(db.String(250), nullable=False)
+    containers = relationship(
+        "UserContainer",
+        lazy="dynamic",
+        passive_deletes=True,
+        primaryjoin="foreign(UserContainer.cluster) == SortedClusters.cluster",
+    )
 
 
 class InstanceInfo(db.Model):
