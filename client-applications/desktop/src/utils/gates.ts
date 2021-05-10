@@ -18,7 +18,7 @@ const logFormat = (...args: any[]) => {
 
   let output = truncate(stringify(value, null, 2), {
     length: 1000,
-    omission: "...**logBase only prints 1000 characters per log**",
+    omission: "...**only printing 1000 characters per log**",
   })
   return `${title}${message}${output}`
 }
