@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useMainState } from "@app/utils/ipc"
 import { useStripe } from "@stripe/react-stripe-js"
+import { RendererAction } from "@app/@types/actions"
 
 interface StripeContextInterface {
   action: string
@@ -23,7 +24,9 @@ const StripeContext = React.createContext<StripeContextInterface>({
   getPortalSession: () => {},
 })
 
-export const StripeProvider = ({ children }: any) => {
+export const StripeProvider = (props: {
+  children: JSX.Element | JSX.Element[]
+}) => {
   /**
    *  Stripe Provider for client app payment flow, responsible for
    *  redirecting the user to the customer checkout portal and the customer portal, where
@@ -46,32 +49,46 @@ export const StripeProvider = ({ children }: any) => {
   const [stripePortalUrl, setStripePortalUrl] = useState("")
   const stripe = useStripe()
 
-  const getCheckoutSession = async (
+  // The two arguments priceId and customerId are required parameters;
+  // the url's are technically optional.
+  const getCheckoutSession = (
     priceId: string,
     customerId: string,
     successUrl: string,
     cancelUrl: string
   ) => {
     setMainState({
-      stripeCheckoutRequest: { priceId, customerId, successUrl, cancelUrl },
+      action: {
+        type: RendererAction.CHECKOUT,
+        payload: {
+          priceId,
+          customerId,
+          successUrl,
+          cancelUrl,
+        },
+      },
       stripeAction: {},
     })
   }
 
-  const getPortalSession = async (customerId: string, returnUrl: string) => {
+  const getPortalSession = (customerId: string, returnUrl: string) => {
     setMainState({
-      stripePortalRequest: { customerId, returnUrl },
+      action: {
+        type: RendererAction.PORTAL,
+        payload: {
+          customerId,
+          returnUrl,
+        },
+      },
       stripeAction: {},
     })
   }
 
   useEffect(() => {
-    if (mainState.stripeAction && mainState.stripeAction.action != null) {
-      setAction(mainState.stripeAction.action)
-      mainState.stripeAction.action === "CHECKOUT"
-        ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
-        : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
-    }
+    setAction(mainState.stripeAction.action ?? "")
+    mainState.stripeAction.action === "CHECKOUT"
+      ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
+      : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
   }, [mainState])
 
   useEffect(() => {
@@ -83,9 +100,7 @@ export const StripeProvider = ({ children }: any) => {
       }
     }
     if (action === "CHECKOUT") {
-      redirect()
-        .then((res) => console.log(res))
-        .catch((err) => console.log(err))
+      redirect().catch((err) => console.log(err))
     } else if (action === "PORTAL") {
       window.location.href = stripePortalUrl
     }
@@ -101,7 +116,7 @@ export const StripeProvider = ({ children }: any) => {
         getPortalSession,
       }}
     >
-      {children}
+      {props.children}
     </StripeContext.Provider>
   )
 }
