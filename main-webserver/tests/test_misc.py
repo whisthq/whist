@@ -19,9 +19,7 @@ from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
-from app.models import db, RegionToAmi
-from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
-from app.constants.http_codes import SUCCESS, ACCEPTED, WEBSERVER_MAINTENANCE
+from app.models import RegionToAmi
 from app.constants.http_codes import SUCCESS, WEBSERVER_MAINTENANCE
 from app.celery.dummy import dummy_task
 
@@ -214,15 +212,15 @@ def test_check_admin(app):
     with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
         verify_jwt_in_request()
 
-        assert check_developer() == True
+        assert check_developer() is True
 
 
-def test_check_authorization_optional(app):
+def test_check_authorization_optional():
     """Make sure check_developer() returns False within an unauthorized request's context."""
 
     verify_jwt_in_request(optional=True)
 
-    assert check_developer() == False
+    assert check_developer() is False
 
 
 def test_check_before_verify():
@@ -300,7 +298,7 @@ def test_rate_limiter(client):
     Test the rate limiter decorator. The first 10 requests should succeed,
     but the 11th should error out with 429.
     """
-    for i in range(10):
+    for _ in range(10):
         resp = client.post("/newsletter/post")
         assert resp.status_code == 200
         g._rate_limiting_complete = False
