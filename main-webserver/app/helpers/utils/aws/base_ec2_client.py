@@ -140,11 +140,9 @@ class EC2Client:
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         states = [instance["State"]["Name"] for instance in instance_info]
-        if all(state == "pending" for state in states):
-            return False
         if all(state == "running" for state in states):
             return True
-        raise Exception(states)
+        return False
 
     def check_if_instances_down(self, instance_ids: List[str]) -> bool:
         """
