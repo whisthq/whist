@@ -11,36 +11,27 @@
 // storage changes.
 
 import { from } from "rxjs"
+import { switchMap } from "rxjs/operators"
 import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
-import { formatLogin } from "@app/utils/formatters"
 import { loginAction } from "@app/main/events/actions"
-import { factory } from "@app/utils/observables"
+import { gates } from "@app/utils/gates"
+import { loadingFrom } from "@app/utils/observables"
 
 export const {
-  request: loginRequest,
-  process: loginProcess,
   success: loginSuccess,
   failure: loginFailure,
   warning: loginWarning,
-  loading: loginLoading,
-} = factory<
-  { email: string; password: string },
+} = gates(
+  `login`,
+  loginAction.pipe(
+    switchMap(({ email, password }) => from(emailLogin(email, password)))
+  ),
   {
-    status: number
-    json: {
-      access_token: string
-      refresh_token: string
-      encrypted_config_token: string
-    }
+    success: (result: any) => emailLoginValid(result),
+    failure: (result: any) => emailLoginError(result),
+    warning: (result: any) =>
+      !emailLoginError(result) && !emailLoginValid(result),
   }
->("login", {
-  request: loginAction,
-  process: ({ email, password }) => from(emailLogin(email, password)),
-  success: (result) => emailLoginValid(result),
-  failure: (result) => emailLoginError(result),
-  warning: (result) => !emailLoginError(result) && !emailLoginValid(result),
-  logging: {
-    request: ["hiding password", ({ email }) => [email, "********"]],
-    success: ["only { json } tokens", formatLogin],
-  },
-})
+)
+
+export const loginLoading = loadingFrom(loginAction, loginFailure, loginWarning)
