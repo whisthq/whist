@@ -25,7 +25,7 @@ const Typeform = (props: {
   const { show, onClose, onSubmit } = props
 
   const typeformContainer = useCallback((node) => {
-    if (node !== undefined) {
+    if (node !== null) {
       typeformEmbed.createWidget(config.url.TYPEFORM_FORM_ID, {
         container: node,
         onSubmit: onSubmit
