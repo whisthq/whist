@@ -6,7 +6,7 @@ import sys
 import os
 
 
-LOAD_TEST_USER_PREFIX = "load_test_user_{user_num}"
+LOAD_TEST_USER_TEMPLATE = "load_test_user_{user_num}@fakeaddress.com"
 
 
 def get_task_definition_arn(web_url: str) -> str:

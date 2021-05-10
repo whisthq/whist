@@ -18,7 +18,7 @@ import locust
 import gevent
 
 from scripts.load_testing.load_test_utils import (
-    LOAD_TEST_USER_PREFIX,
+    LOAD_TEST_USER_TEMPLATE,
     get_task_definition_arn,
 )
 
@@ -49,7 +49,7 @@ class LoadTestUser(locust.HttpUser):
     # because each locust invocation is single-threaded and switches between tasks with gevent
     # so we can use variables that otherwise need lock-access:
     # number representing the largest unclaimed user number. on_start(...)
-    available_user_num = 0
+    available_user_num = 1
     # number of users that have finished.
     num_finished = 0
     # a user had an exception
@@ -67,9 +67,8 @@ class LoadTestUser(locust.HttpUser):
         try:
             self._on_start()
         except Exception as e:
-            print(f"User {self.user_num} got error {str(e)}")
+            print(f"User {self.user_num} got error: {str(e)}")
             LoadTestUser.user_fail = True
-            self.on_stop()
 
     def _on_start(self):
         """
@@ -97,6 +96,7 @@ class LoadTestUser(locust.HttpUser):
             time.sleep(1.0)
 
         assert task_id is not None
+        print(f"user {self.user_num} task: {task_id}")
 
         # poll host_service
         ip = None
@@ -120,6 +120,8 @@ class LoadTestUser(locust.HttpUser):
             # sleep and try again
             time.sleep(1.0)
 
+        assert ip is not None, "webserver did not return a host when polling /host_service"
+
         # send app config token; errors out on failure
         resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
         assert resp.ok, f"Got status code {resp.status_code} with content {resp.content}"
@@ -135,7 +137,7 @@ class LoadTestUser(locust.HttpUser):
         for how to do this but by choosing a specific cluster instead of letting webserver decide.
         """
         payload = {
-            "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+            "username": LOAD_TEST_USER_TEMPLATE.format(user_num=self.user_num),
             "app": "Google Chrome",
             "region": LOAD_TEST_CLUSTER_REGION,
         }
@@ -146,7 +148,7 @@ class LoadTestUser(locust.HttpUser):
         Make a GET request to webserver /host_service for container info
         """
         params = {
-            "username": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+            "username": LOAD_TEST_USER_TEMPLATE.format(user_num=self.user_num),
         }
         return make_get_request(WEB_URL, "/host_service", params=params, admin_token=ADMIN_TOKEN)
 
@@ -156,7 +158,7 @@ class LoadTestUser(locust.HttpUser):
         """
         host_service_url = f"https://{ip}:4678"
         payload = {
-            "user_id": LOAD_TEST_USER_PREFIX.format(user_num=self.user_num),
+            "user_id": LOAD_TEST_USER_TEMPLATE.format(user_num=self.user_num),
             "host_port": host_port,
             "config_encryption_token": APP_CONFIG_TOKEN,
             "client_app_auth_secret": client_app_auth_secret,

@@ -41,9 +41,10 @@ def run_local_load_test(web_url: str, admin_token: str, num_users: int, region_n
     # --host: webserver url
     # --headless: do not start a local web server showing results
     # --only-summary: only print result summaries
+    # --run-time: runtime of the locust test
     cmd = (
         f"locust -f {locust_file_path} -u {num_users} -r 10 --host {web_url} "
-        f"--headless --only-summary"
+        f"--headless --only-summary --run-time 10m"
     )
     # stdout is shared with the current process so we can see what happens
     ret = subprocess.run(cmd, shell=True)

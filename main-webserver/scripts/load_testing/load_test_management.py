@@ -16,7 +16,7 @@ from contextlib import contextmanager
 # this file is called from. We can now import from `scripts`.
 sys.path.append(os.path.join(os.getcwd(), os.path.dirname(__file__), "../.."))
 
-from scripts.load_testing.load_test_utils import LOAD_TEST_USER_PREFIX
+from scripts.load_testing.load_test_utils import LOAD_TEST_USER_TEMPLATE
 
 from scripts.utils import make_post_request
 
@@ -85,7 +85,7 @@ def downgrade_webserver(app_name):
 
 def make_load_test_user(web_url: str, admin_token: str, user_num: int):
     """
-    Create a user with the name LOAD_TEST_USER_PREFIX.format(user_num=user_num) for load testing
+    Create a user with the name LOAD_TEST_USER_TEMPLATE.format(user_num=user_num) for load testing
 
     Args:
         web_url: URL of the webserver to load test
@@ -95,7 +95,7 @@ def make_load_test_user(web_url: str, admin_token: str, user_num: int):
     Returns:
         None. Errors out if anything goes wrong.
     """
-    username = LOAD_TEST_USER_PREFIX.format(user_num=user_num)
+    username = LOAD_TEST_USER_TEMPLATE.format(user_num=user_num)
     endpoint = "/account/register"
     payload = {
         "username": username,

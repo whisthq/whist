@@ -477,7 +477,7 @@ def _assign_container(
     task_start_time = time.time()
     user = User.query.get(username)
 
-    assert user
+    assert user, f"user {user} does not exist in the Users table"
 
     existing_container: Optional[UserContainer] = None
 
@@ -540,7 +540,6 @@ def _assign_container(
             state="PENDING",
             meta={"msg": "No waiting container found -- creating a new one"},
         )
-        db.session.commit()
         if cluster_name is None:
             cluster_name = select_cluster(region_name)
         fractal_logger.info(

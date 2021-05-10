@@ -90,6 +90,8 @@ def set_container_state(
 
     obj = container_state_obj(user_id=keyuser)
 
+    fractal_logger.info("got obj")
+
     if force or can_update_container_state(keyuser, keytask, obj=obj):
         if obj:
             if task_id:
@@ -104,10 +106,12 @@ def set_container_state(
                 obj.port = port
             if user_id:
                 obj.user_id = user_id
+            fractal_logger.info("about to commit")
             db.session.commit()
         else:
             if not state:
                 state = PENDING
+            fractal_logger.info(f"setting to {state}")
             create_container_state(
                 keyuser,
                 keytask,
@@ -116,6 +120,7 @@ def set_container_state(
                 port=port,
                 client_app_auth_secret=client_app_auth_secret,
             )
+        fractal_logger.info("done")
 
 
 def create_container_state(
