@@ -159,6 +159,7 @@ def webhook():
         return jsonify(success=False)
 
     if event["type"] == "payment_intent.succeeded":
-        return {"message": event["id"]}
+        return jsonify(success=True)
+
     elif event["type"] == "invoice.payment_failed":
         print("payment failed")

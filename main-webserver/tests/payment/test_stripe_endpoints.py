@@ -7,36 +7,34 @@ import stripe
 from ..patches import function, Object
 from ..helpers.general.progress import queryStatus
 
-stripe.api_key = "sk_test_6ndCgv5edtzMuyqMoBbt1gXj00xy90yd4L"
 
-
+@pytest.mark.usefixtures("authorized")
 def test_expired_subscription(client):
     """Handle expired subscription."""
 
-    payment_method = stripe.PaymentMethod.create(
-        type="card",
-        card={
-            "number": "4242424242424242",
-            "exp_month": 5,
-            "exp_year": 2022,
-            "cvc": "314",
-        },
-    )
     customer = stripe.Customer.create(
         description="Test Customer",
     )
 
-    product = stripe.Product.list()["data"][0]["id"]
+    stripe.Customer.create_source(customer["id"], source="tok_visa")
 
-    price = stripe.Price.list()["data"][0]["id"]
+    product = stripe.Product.create(name="Test Subscription")
+
+    price = stripe.Price.create(
+        unit_amount=50,
+        currency="usd",
+        recurring={"interval": "month"},
+        product=product["id"],
+    )
 
     subscription = stripe.Subscription.create(
         customer=customer["id"],
         items=[
-            {"price": price},
+            {"price": price["id"]},
         ],
         trial_end="now",
     )
+
     resp = client.post(
         "/stripe/can_access_product",
         json=dict(stripe_id=customer["id"]),
