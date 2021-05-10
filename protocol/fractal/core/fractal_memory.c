@@ -79,9 +79,9 @@ DynamicBuffer* init_dynamic_buffer(bool use_memory_regions) {
         of db->size is undefined behavior
 
         Arguments:
-            use_memory_regions (bool): If true, will use OS-level memory regions [See allocate_region]
-                If false, will use malloc for db->buf
-                NOTE: The DynamicBuffer struct itself will always use malloc
+            use_memory_regions (bool): If true, will use OS-level memory regions [See
+       allocate_region] If false, will use malloc for db->buf NOTE: The DynamicBuffer struct itself
+       will always use malloc
 
         Returns:
             (DynamicBuffer*): The dynamic buffer (With initial size 0)
@@ -244,8 +244,8 @@ void free_block(BlockAllocator* blk_allocator_in, void* block) {
         Frees a block allocated by allocate_block
 
         Arguments:
-            blk_allocator_in (BlockAllocator*): The block allocator that the block was allocated from
-            block (void*): The block to free
+            blk_allocator_in (BlockAllocator*): The block allocator that the block was allocated
+                from block (void*): The block to free
     */
 
     InternalBlockAllocator* blk_allocator = (InternalBlockAllocator*)blk_allocator_in;
@@ -468,5 +468,3 @@ void deallocate_region(void* region) {
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }
-#endif
-}
