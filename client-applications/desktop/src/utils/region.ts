@@ -1,3 +1,6 @@
+/*
+  This file exists so that the client app can figure out which region is the closest to the user and connect to that cluster.
+*/
 import ping from "ping"
 
 import { AWSRegion } from "@app/@types/aws"
