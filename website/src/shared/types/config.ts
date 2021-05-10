@@ -1,6 +1,6 @@
 export interface FractalConfig {
   url: {
-    TYPEFORM_URL: string
+    TYPEFORM_FORM_ID: string
   }
   keys: {
     GOOGLE_ANALYTICS_TRACKING_CODES: string[]
