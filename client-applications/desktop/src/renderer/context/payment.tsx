@@ -85,10 +85,10 @@ export const StripeProvider = (props: {
   }
 
   useEffect(() => {
-    setAction(mainState.stripeAction.action ?? "")
-    mainState.stripeAction.action === "CHECKOUT"
-      ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
-      : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
+    setAction(mainState.stripeAction?.action ?? "")
+    mainState.stripeAction?.action === "CHECKOUT"
+      ? setStripeCheckoutId(mainState.stripeAction?.stripeCheckoutId ?? "")
+      : setStripePortalUrl(mainState.stripeAction?.stripePortalUrl ?? "")
   }, [mainState])
 
   useEffect(() => {
