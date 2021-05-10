@@ -9,13 +9,14 @@ import {
   stripePortalValid,
   stripePortalError,
 } from "@app/utils/payment"
-import { filter, map, share, exhaustMap } from "rxjs/operators"
+import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
 import {
   stripeCheckoutAction,
   stripePortalAction,
 } from "@app/main/events/actions"
 
 export const stripeCheckoutRequest = stripeCheckoutAction.pipe(
+  tap((req) => console.log(req)),
   filter(
     (req) => (req?.customerId ?? "") !== "" && (req?.priceId ?? "") !== ""
   ),

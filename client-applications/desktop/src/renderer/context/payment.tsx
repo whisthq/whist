@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from "react"
+import React, { useState, useEffect } from "react"
 import { useMainState } from "@app/utils/ipc"
 import { useStripe } from "@stripe/react-stripe-js"
-import { PaymentAction } from "@app/@types/actions"
+import { RendererAction } from "@app/@types/actions"
 
 interface StripeContextInterface {
   action: string
@@ -57,7 +57,7 @@ export const StripeProvider = (props: {
   ) => {
     setMainState({
       action: {
-        type: PaymentAction.CHECKOUT,
+        type: RendererAction.CHECKOUT,
         payload: {
           priceId,
           customerId,
@@ -72,7 +72,7 @@ export const StripeProvider = (props: {
   const getPortalSession = (customerId: string, returnUrl: string) => {
     setMainState({
       action: {
-        type: PaymentAction.PORTAL,
+        type: RendererAction.PORTAL,
         payload: {
           customerId,
           returnUrl,
@@ -83,6 +83,7 @@ export const StripeProvider = (props: {
   }
 
   useEffect(() => {
+    console.log(mainState)
     if (mainState.stripeAction && mainState.stripeAction.action != null) {
       setAction(mainState.stripeAction.action)
       mainState.stripeAction.action === "CHECKOUT"
@@ -120,8 +121,7 @@ export const StripeProvider = (props: {
     </StripeContext.Provider>
   )
 }
-export const withContext = () => {
-  const context = useContext(StripeContext)
-  if (context === undefined) throw new Error("No React context found")
-  return context
-}
+
+export const StripeConsumer = StripeContext.Consumer
+
+export default StripeContext

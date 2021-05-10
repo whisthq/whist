@@ -6,14 +6,11 @@ export enum MainAction {
 export enum RendererAction {
   LOGIN = "loginRequest",
   SIGNUP = "signupRequest",
-}
-
-export enum PaymentAction {
   CHECKOUT = "stripeCheckoutRequest",
-  PORTAL = "stripePortalRequest"
+  PORTAL = "stripePortalRequest",
 }
 
-export type ActionType = MainAction | RendererAction | PaymentAction
+export type ActionType = MainAction | RendererAction
 
 export interface Action {
   type: ActionType
