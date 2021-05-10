@@ -24,6 +24,7 @@ from typing import Callable, Tuple, Optional
 import ssl
 
 import redis
+from celery import current_task
 
 from app.helpers.utils.general.logs import fractal_logger
 
@@ -262,27 +263,6 @@ def try_deregister_task(task_id: int) -> bool:
     return success
 
 
-def get_arg_number(func: Callable, desired_arg: str) -> int:
-    """
-    Given a function `func`, this function gives the argument number of `desired_arg`
-    in `func`'s arguments.
-
-    Args:
-        func (Callable): a python function that takes arguments
-        desired_arg (str): the desired argument
-
-    Returns:
-        index in *args of desired_arg, -1 if not found.
-    """
-    args = inspect.getfullargspec(func).args
-    if args is None:
-        return -1
-    for argn, arg in enumerate(args):
-        if desired_arg == arg:
-            return argn
-    return -1
-
-
 def maintenance_track_task(func: Callable) -> Callable:
     """
     Decorator to do three things:
@@ -290,19 +270,15 @@ def maintenance_track_task(func: Callable) -> Callable:
         2. track a celery task during its execution
         3. clean up tracking of the celery task after it finishes
     """
-    # must have "self" argument
-    self_argn = get_arg_number(func, "self")
-    if self_argn == -1:
-        raise ValueError(f"Function {func.__name__} needs to have argument self to be tracked")
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        self_obj = args[self_argn]  # celery "self" object created with @shared_task(bind=True)
+
         # pre-function logic: register the task
-        if not try_register_task(self_obj.request.id):
+        if not try_register_task(current_task.request.id):
             msg = (
                 "Could not register a tracked task. "
-                f"Celery Task ID: {self_obj.request.id}. "
+                f"Celery Task ID: {current_task.request.id}. "
                 f"Function: {func.__name__}. "
                 f"Args: {args}. "
                 f"Kwargs: {kwargs}."
@@ -310,7 +286,7 @@ def maintenance_track_task(func: Callable) -> Callable:
             fractal_logger.info(msg)
             raise ValueError("MAINTENANCE ERROR. Failed to register task.")
 
-        fractal_logger.info(f"Registered tracked task: {self_obj.request.id}.")
+        fractal_logger.info(f"Registered tracked task: {current_task.request.id}.")
 
         exception = None
         try:
@@ -319,10 +295,10 @@ def maintenance_track_task(func: Callable) -> Callable:
             exception = e
 
         # post-function logic: deregister the task
-        if not try_deregister_task(self_obj.request.id):
+        if not try_deregister_task(current_task.request.id):
             msg = (
                 f"CRITICAL! Could not deregister a tracked task. "
-                f"Celery Task ID: {self_obj.request.id}. "
+                f"Celery Task ID: {current_task.request.id}. "
                 f"Function: {func.__name__}. "
                 f"Args: {args}. "
                 f"Kwargs: {kwargs}."
@@ -331,7 +307,7 @@ def maintenance_track_task(func: Callable) -> Callable:
             # exception can be None here
             raise ValueError("MAINTENANCE ERROR. Failed to deregister task.") from exception
 
-        fractal_logger.info(f"Deregistered tracked task: {self_obj.request.id}.")
+        fractal_logger.info(f"Deregistered tracked task: {current_task.request.id}.")
 
         # raise any exception to caller
         if exception is not None:
