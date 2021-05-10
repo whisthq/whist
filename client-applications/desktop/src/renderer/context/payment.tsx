@@ -49,6 +49,8 @@ export const StripeProvider = (props: {
   const [stripePortalUrl, setStripePortalUrl] = useState("")
   const stripe = useStripe()
 
+  // The two arguments priceId and customerId are required parameters;
+  // the url's are technically optional.
   const getCheckoutSession = (
     priceId: string,
     customerId: string,
@@ -83,13 +85,10 @@ export const StripeProvider = (props: {
   }
 
   useEffect(() => {
-    console.log(mainState)
-    if (mainState.stripeAction && mainState.stripeAction.action != null) {
-      setAction(mainState.stripeAction.action)
-      mainState.stripeAction.action === "CHECKOUT"
-        ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
-        : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
-    }
+    setAction(mainState.stripeAction.action ?? "")
+    mainState.stripeAction.action === "CHECKOUT"
+      ? setStripeCheckoutId(mainState.stripeAction.stripeCheckoutId ?? "")
+      : setStripePortalUrl(mainState.stripeAction.stripePortalUrl ?? "")
   }, [mainState])
 
   useEffect(() => {
