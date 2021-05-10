@@ -1,6 +1,9 @@
 import { fromEventPersist } from "@app/main/events/persist"
 import { loginSuccess } from "@app/main/observables/login"
-import { signupRequest, signupSuccess } from "@app/main/observables/signup"
+import {
+  signupConfigSuccess,
+  signupSuccess,
+} from "@app/main/observables/signup"
 import { debugObservables } from "@app/utils/logging"
 import { merge, from } from "rxjs"
 import { identity } from "lodash"
@@ -39,7 +42,7 @@ export const userConfigToken = merge(
     withLatestFrom(loginSuccess),
     switchMap(([pw, res]) => from(emailLoginConfigToken(res, pw)))
   ),
-  signupRequest.pipe(map(([_email, _password, token]) => token))
+  signupConfigSuccess
 ).pipe(filter(identity), share())
 
 export const userAccessToken = merge(

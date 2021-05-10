@@ -10,76 +10,55 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from } from "rxjs"
-import { loadingFrom } from "@app/utils/observables"
+import { from, combineLatest } from "rxjs"
 import {
   emailSignup,
   emailSignupValid,
   emailSignupError,
 } from "@app/utils/signup"
-import {
-  debugObservables,
-  errorObservables,
-  warningObservables,
-} from "@app/utils/logging"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
-import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
+import { switchMap } from "rxjs/operators"
 import { signupAction } from "@app/main/events/actions"
+import { gates } from "@app/utils/gates"
+import { loadingFrom } from "@app/utils/observables"
 
-export const signupRequest = signupAction.pipe(
-  filter(
-    (req) =>
-      ((req?.email as string) ?? "") !== "" &&
-      ((req?.password as string) ?? "") !== ""
-  ),
-  switchMap((req) =>
-    from(
-      createConfigToken()
-        .then(async (token) => await encryptConfigToken(token, req.password))
-        .then((token) => [req, token] as const)
+export const { success: signupConfigSuccess } = gates(
+  `signupConfig`,
+  signupAction.pipe(
+    switchMap((req) =>
+      from(
+        createConfigToken().then(
+          async (token) => await encryptConfigToken(token, req.password)
+        )
+      )
     )
   ),
-  map(([req, token]) => [req?.email, req?.password, token]),
-  share()
+  {
+    success: () => true,
+  }
 )
 
-export const signupProcess = signupRequest.pipe(
-  map(
-    async ([email, password, token]) =>
-      await emailSignup(email, password, token)
+export const {
+  success: signupSuccess,
+  failure: signupFailure,
+  warning: signupWarning,
+} = gates(
+  `signup`,
+  combineLatest([signupAction, signupConfigSuccess]).pipe(
+    switchMap(([req, token]) =>
+      from(emailSignup(req.email, req.password, token))
+    )
   ),
-  exhaustMap((req) => from(req)),
-  share()
-)
-
-export const signupWarning = signupProcess.pipe(
-  filter((res) => !emailSignupError(res)),
-  filter((res) => !emailSignupValid(res))
-)
-
-export const signupSuccess = signupProcess.pipe(
-  filter((res) => emailSignupValid(res))
-)
-
-export const signupFailure = signupProcess.pipe(
-  filter((res) => emailSignupError(res))
+  {
+    success: (result: any) => emailSignupValid(result),
+    failure: (result: any) => emailSignupError(result),
+    warning: (result: any) =>
+      !emailSignupError(result) && !emailSignupError(result),
+  }
 )
 
 export const signupLoading = loadingFrom(
-  signupRequest,
-  signupSuccess,
+  signupAction,
   signupFailure,
   signupWarning
 )
-
-// Logging
-
-debugObservables(
-  [signupRequest, "signupRequest"],
-  [signupSuccess, "signupSuccess"],
-  [signupLoading, "signupLoading"]
-)
-
-warningObservables([signupWarning, "signupWarning"])
-
-errorObservables([signupFailure, "signupFailure"])
