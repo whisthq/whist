@@ -468,3 +468,5 @@ void deallocate_region(void* region) {
     if (munmap(p, p->size) != 0) {
         LOG_FATAL("munmap failed!");
     }
+#endif
+}
