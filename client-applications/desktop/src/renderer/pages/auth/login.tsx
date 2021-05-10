@@ -11,6 +11,7 @@ import { FractalButton, FractalButtonState } from "@app/components/html/button"
 import { FractalNavigation } from "@app/components/custom/navigation"
 
 import { loginEnabled, checkEmail } from "@app/utils/auth"
+import { withContext } from "@app/renderer/context/payment"
 
 const Login = (props: {
   loading: boolean
@@ -32,7 +33,7 @@ const Login = (props: {
                 Callback function fired when login API call is sent, body of response
                 is passed in as argument
     */
-
+  const { getCheckoutSession, getPortalSession } = withContext()
   const buttonState = () => {
     if (props.loading) return FractalButtonState.PROCESSING
     if (loginEnabled(props.email, props.password)) {
@@ -89,6 +90,18 @@ const Login = (props: {
                 : FractalInputState.DEFAULT
             }
             className="mt-1"
+          />
+          <FractalButton
+            contents="Log In"
+            className="mt-4 w-full"
+            state={buttonState()}
+            onClick={handleSubmit}
+          />
+          <FractalButton
+            contents="Log In"
+            className="mt-4 w-full"
+            state={buttonState()}
+            onClick={handleSubmit}
           />
           <FractalButton
             contents="Log In"
