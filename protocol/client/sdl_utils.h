@@ -20,7 +20,7 @@ Includes
 */
 
 #include <fractal/core/fractal.h>
-#include "sdlscreeninfo.h"
+#include "sdl_screen_info.h"
 #include "video.h"
 
 /*

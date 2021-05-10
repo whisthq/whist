@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file sdlscreeninfo.c
+ * @file sdl_screen_info.c
  * @brief This file contains SDL screen info code, used to retrive information
  *        about SDL Windows.
 ============================
@@ -12,7 +12,7 @@ Use "physical screen" functions to retrieve real number of pixels (say,
 1440x900)
 */
 
-#include "sdlscreeninfo.h"
+#include "sdl_screen_info.h"
 
 int get_window_pixel_width(SDL_Window *window) {
     int w;

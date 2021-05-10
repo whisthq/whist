@@ -20,10 +20,45 @@ Includes
 */
 
 #include <fractal/network/network.h>
+#include <fractal/utils/clock.h>
 
 #define MAX_INIT_CONNECTION_ATTEMPTS (3)
 #define MAX_RECONNECTION_ATTEMPTS (10)
 #define MAX_IP_LEN (32)
+
+// This macro runs the code in ACTION every TIMEOUT
+// seconds. It should be called in an event loop.
+#define ON_TIMER(TIMEOUT, ACTION)                    \
+    {                                                \
+        static clock __on_timer_clock = NULL;        \
+        if (!__on_timer_clock) {                     \
+            start_timer(&__on_timer_clock);          \
+        }                                            \
+        if (get_timer(__on_timer_clock) > TIMEOUT) { \
+            ACTION;                                  \
+            start_timer(&__on_timer_clock);          \
+        }                                            \
+    }
+
+// This macro runs the code in ACTION when SIGNAL
+// is set to true, and resets SIGNAL.
+// It should be called in an event loop.
+#define ON_SIGNAL(SIGNAL, ACTION)                    \
+    {                                                \
+       if (SIGNAL) {                                 \
+            ACTION;                                  \
+            SIGNAL = false;                          \
+        }                                            \
+    }
+
+#define ON_SIGNAL_AND_TIMER(SIGNAL, TIMEOUT, ACTION) \
+    {                                                \
+        static clock __on_timer_clock = NULL;        \
+        if (!__on_timer_clock) {                     \
+            start_timer(&__on_timer_clock);          \
+        }                                            \
+        if (SIGNAL)
+    }
 
 /*
 ============================

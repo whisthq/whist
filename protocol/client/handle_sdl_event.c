@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file sdl_event_handler.c
+ * @file handle_sdl_event.c
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.
 ============================
@@ -8,7 +8,7 @@ Usage
 ============================
 
 handleSDLEvent() must be called on any SDL event that occurs. Any action
-trigged an SDL event must be triggered in sdl_event_handler.c
+trigged an SDL event must be triggered in handle_sdl_event.c
 */
 
 /*
@@ -17,10 +17,10 @@ Includes
 ============================
 */
 
-#include "sdl_event_handler.h"
+#include "handle_sdl_event.h"
 
 #include <fractal/utils/logging.h>
-#include "sdlscreeninfo.h"
+#include "sdl_screen_info.h"
 #include "sdl_utils.h"
 #include "audio.h"
 #include "client_utils.h"

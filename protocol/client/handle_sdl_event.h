@@ -1,8 +1,8 @@
-#ifndef SDL_EVENT_HANDLER_H
-#define SDL_EVENT_HANDLER_H
+#ifndef HANDLE_SDL_EVENT_H
+#define HANDLE_SDL_EVENT_H
 /**
  * Copyright Fractal Computers, Inc. 2020
- * @file sdl_event_handler.h
+ * @file handle_sdl_event.h
  * @brief This file contains client-specific wrappers to low-level network
  *        functions.
 ============================
@@ -10,7 +10,7 @@ Usage
 ============================
 
 handleSDLEvent() must be called on any SDL event that occurs. Any action
-trigged an SDL event must be triggered in sdl_event_handler.c
+trigged an SDL event must be triggered in handle_sdl_event.c
 */
 
 /*
@@ -43,4 +43,4 @@ int try_handle_sdl_event(void);
  */
 int handle_sdl_event(SDL_Event *event);
 
-#endif  // SDL_EVENT_HANDLER_H
+#endif  // HANDLE_SDL_EVENT_H

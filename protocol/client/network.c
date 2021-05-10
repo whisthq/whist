@@ -27,17 +27,18 @@ Includes
 extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 
 // Data
+double latency;
 extern volatile char binary_aes_private_key[16];
 extern char filename[300];
 extern char username[50];
 extern int udp_port;
 extern int tcp_port;
 extern int client_id;
-extern SocketContext packet_send_context;
-extern SocketContext packet_receive_context;
-extern SocketContext packet_tcp_context;
+SocketContext packet_udp_context = {0};
+SocketContext packet_tcp_context = {0};
 extern char *server_ip;
 extern int uid;
+
 
 #define TCP_CONNECTION_WAIT 300  // ms
 #define UDP_CONNECTION_WAIT 300  // ms
@@ -177,7 +178,7 @@ int connect_to_server(bool using_stun) {
         return -1;
     }
 
-    if (create_udp_context(&packet_send_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
+    if (create_udp_context(&packet_udp_context, server_ip, udp_port, 10, UDP_CONNECTION_WAIT,
                            using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_WARNING("Failed establish UDP connection from server");
         return -1;
@@ -188,7 +189,7 @@ int connect_to_server(bool using_stun) {
     // this is set to stop the kernel from buffering too much, thereby
     // getting the data to us faster for lower latency
     int a = 65535;
-    if (setsockopt(packet_send_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
+    if (setsockopt(packet_udp_context.socket, SOL_SOCKET, SO_RCVBUF, (const char *)&a,
                    sizeof(int)) == -1) {
         LOG_ERROR("Error setting socket opts: %d", get_last_network_error());
         return -1;
@@ -197,11 +198,9 @@ int connect_to_server(bool using_stun) {
     if (create_tcp_context(&packet_tcp_context, server_ip, tcp_port, 1, TCP_CONNECTION_WAIT,
                            using_stun, (char *)binary_aes_private_key) < 0) {
         LOG_ERROR("Failed to establish TCP connection with server.");
-        closesocket(packet_send_context.socket);
+        closesocket(packet_udp_context.socket);
         return -1;
     }
-
-    packet_receive_context = packet_send_context;
 
     return 0;
 }
@@ -214,8 +213,7 @@ int close_connections(void) {
             (int): 0 on success
     */
 
-    closesocket(packet_send_context.socket);
-    closesocket(packet_receive_context.socket);
+    closesocket(packet_udp_context.socket);
     closesocket(packet_tcp_context.socket);
     return 0;
 }
@@ -275,7 +273,60 @@ int send_fmsg(FractalClientMessage *fmsg) {
         }
         static int sent_packet_id = 0;
         sent_packet_id++;
-        return send_udp_packet(&packet_send_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
+        return send_udp_packet(&packet_udp_context, PACKET_MESSAGE, fmsg, get_fmsg_size(fmsg),
                                sent_packet_id, -1, NULL, NULL);
+    }
+}
+
+void send_message_ping() {
+    fmsg.type = MESSAGE_PING;
+    fmsg.ping_id = ping_id;
+
+    LOG_INFO("Ping %d sent", ping_id);
+    send_fmsg(&fmsg);
+    start_timer(&last_ping_timer);
+}
+
+void handle_pong(int pong_id) {
+    if (last_ping_id == pong_id) {
+        double ping_time = get_timer(last_ping_timer);
+        LOG_INFO("Pong %d received: round-trip time %f", pong_id, ping_time);
+
+        // We define latency according to an exponential moving average,
+        // since this is really easy to compute. The lambda=0.8 is to
+        // make sure we don't over-weight the most recent ping_time.
+        const double lambda = 0.8;
+        latency = lambda * latency + (1.0 - lambda) * ping_time;
+
+        ping_failures = 0;
+    } else {
+        LOG_INFO("Old pong %d received; expected pong %d", pong_id, last_ping_id);
+    }
+}
+
+void handle_ping() {
+    if (get_timer(last_ping_timer) > 1.0) {
+        LOG_WARNING("No server pong received in over a second");
+    }
+
+    if (last_ping_id > last_pong_id && get_timer(last_ping_timer) > 0.6) {
+        LOG_WARNING("Ping %d received no response", last_ping_id);
+        last_pong_id = last_ping_id;
+
+        ++ping_failures;
+        if (ping_failures == 3) {
+            LOG_ERROR("3 consecutive ping failures: disconnecting");
+            connected = false;
+        }
+    }
+
+    if (last_ping_id == last_pong_id && get_timer(last_ping_timer) > 0.5) {
+        send_message_ping(++last_ping_id);
+    }
+
+    static last_ping_attempt_number = 0;
+
+    if (last_ping_id != last_pong_id && get_timer(last_ping_timer) > 0.21) {
+        send_message_ping(last_ping_id);
     }
 }

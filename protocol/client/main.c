@@ -31,20 +31,21 @@ Includes
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>
 #include <fractal/core/fractal.h>
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
-#include "sdlscreeninfo.h"
+#include "sdl_screen_info.h"
 #include "audio.h"
 #include "client_utils.h"
 #include "network.h"
-#include "sdl_event_handler.h"
+#include "handle_sdl_event.h"
 #include "sdl_utils.h"
 #include "handle_server_message.h"
 #include "video.h"
-#include <SDL2/SDL_syswm.h>
+#include "renderer.h"
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 #include <fractal/utils/color.h>
@@ -125,9 +126,8 @@ volatile bool pending_resize_message =
 int receive_packets(void* opaque);
 int send_clipboard_packets(void* opaque);
 
-SocketContext packet_send_context = {0};
-SocketContext packet_receive_context = {0};
-SocketContext packet_tcp_context = {0};
+extern SocketContext packet_udp_context;
+extern SocketContext packet_tcp_context;
 
 volatile bool connected = true;
 volatile bool exiting = false;
@@ -146,12 +146,7 @@ Custom Types
 ============================
 */
 
-// UPDATER CODE - HANDLES ALL PERIODIC UPDATES
-struct UpdateData {
-    bool tried_to_update_dimension;
-    bool has_initialized_updated;
-    clock last_tcp_check_timer;
-} volatile update_data;
+
 
 /*
 ============================
@@ -159,145 +154,6 @@ Private Function Implementations
 ============================
 */
 
-static bool updater_initialized = false;
-
-void init_update() {
-    /*
-        Initialize client update handler.
-        Anything that will be continuously be called (within `update()`)
-        that changes program state should be initialized in here.
-    */
-
-    update_data.tried_to_update_dimension = false;
-
-    start_timer((clock*)&update_data.last_tcp_check_timer);
-    start_timer((clock*)&latency_timer);
-    ping_id = 1;
-    ping_failures = -2;
-
-    init_clipboard_synchronizer(true);
-
-    updater_initialized = true;
-}
-
-void destroy_update() {
-    /*
-        Runs the destruction sequence for anything that
-        was initialized in `init_update()` and needs to be
-        destroyed.
-    */
-
-    updater_initialized = false;
-    destroy_clipboard_synchronizer();
-}
-
-void update() {
-    /*
-        Check all pending updates, and act on those pending updates
-        to actually update the state of our program.
-        This function expects to be called at minimum every 5ms to keep
-        the program up-to-date.
-    */
-
-    if (!updater_initialized) {
-        LOG_ERROR("Tried to update, but updater not initialized!");
-    }
-
-    FractalClientMessage fmsg = {0};
-
-    // Check for a new clipboard update from the server, if it's been 25ms since
-    // the last time we checked the TCP socket, and the clipboard isn't actively
-    // busy
-    if (get_timer(update_data.last_tcp_check_timer) > 25.0 / MS_IN_SECOND &&
-        !is_clipboard_synchronizing()) {
-        // Check if TCP connction is active
-        int result = ack(&packet_tcp_context);
-        if (result < 0) {
-            LOG_ERROR("Lost TCP Connection (Error: %d)", get_last_network_error());
-            // TODO: Should exit or recover protocol if TCP connection is lost
-        }
-
-        // Receive tcp buffer, if a full packet has been received
-        FractalPacket* tcp_packet = read_tcp_packet(&packet_tcp_context, true);
-        if (tcp_packet) {
-            handle_server_message((FractalServerMessage*)tcp_packet->data,
-                                  (size_t)tcp_packet->payload_size);
-            free_tcp_packet(tcp_packet);
-        }
-
-        // Update the last tcp check timer
-        start_timer((clock*)&update_data.last_tcp_check_timer);
-    }
-
-    // If we haven't yet tried to update the dimension, and the dimensions don't
-    // line up, then request the proper dimension
-    if (!update_data.tried_to_update_dimension &&
-        (server_width != output_width || server_height != output_height ||
-         server_codec_type != output_codec_type)) {
-        send_message_dimensions();
-        update_data.tried_to_update_dimension = true;
-    }
-
-    // If the code has triggered a mbps update, then notify the server of the
-    // newly desired mbps
-    if (update_mbps) {
-        update_mbps = false;
-        fmsg.type = MESSAGE_MBPS;
-        fmsg.mbps = max_bitrate / (double)BYTES_IN_KILOBYTE / BYTES_IN_KILOBYTE;
-        LOG_INFO("Asking for server MBPS to be %f", fmsg.mbps);
-        send_fmsg(&fmsg);
-    }
-
-    // If it's been 1 second since the last ping, we should warn
-    if (get_timer(latency_timer) > 1.0) {
-        LOG_WARNING("Whoah, ping timer is way too old");
-    }
-
-    // If we're waiting for a ping, and it's been 600ms, then that ping will be
-    // noted as failed
-    if (is_timing_latency && get_timer(latency_timer) > 0.6) {
-        LOG_WARNING("Ping received no response: %d", ping_id);
-        is_timing_latency = false;
-
-        // Keep track of failures, and exit if too many failures
-        ping_failures++;
-        if (ping_failures == 3) {
-            LOG_ERROR("Server disconnected: 3 consecutive ping failures.");
-            connected = false;
-        }
-    }
-
-    static int num_ping_tries = 0;
-
-    // If 210ms has past since last ping, then it's taking a bit
-    // Ie, a ping try will occur every 210ms
-    bool taking_a_bit = is_timing_latency && get_timer(latency_timer) > 0.21 * (1 + num_ping_tries);
-    // If 500ms has past since the last resolved ping, then it's been a while
-    // and we should ping again (Last resolved ping is a ping that either has
-    // been received, or was noted as failed)
-    bool awhile_since_last_resolved_ping = !is_timing_latency && get_timer(latency_timer) > 0.5;
-
-    // If either of the two above conditions hold, then send a new ping
-    if (awhile_since_last_resolved_ping || taking_a_bit) {
-        if (is_timing_latency) {
-            // A continuation of an existing ping that's been taking a bit
-            num_ping_tries++;
-        } else {
-            // A brand new ping
-            ping_id++;
-            is_timing_latency = true;
-            start_timer((clock*)&latency_timer);
-            num_ping_tries = 0;
-        }
-
-        fmsg.type = MESSAGE_PING;
-        fmsg.ping_id = ping_id;
-
-        LOG_INFO("Ping! %d", ping_id);
-        send_fmsg(&fmsg);
-    }
-    // End Ping
-}
 
 int send_clipboard_packets(void* opaque) {
     /*
@@ -361,7 +217,7 @@ int send_clipboard_packets(void* opaque) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-int receive_packets(void* opaque) {
+int sync_udp_packets(void* opaque) {
     /*
         Receive any packets from the server and handle them appropriately
 
@@ -372,10 +228,8 @@ int receive_packets(void* opaque) {
             (int): 0 on success
     */
 
-    LOG_INFO("receive_packets running on Thread %p", SDL_GetThreadID(NULL));
+    LOG_INFO("sync_udp_packets running on Thread %p", SDL_GetThreadID(NULL));
     SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-    SocketContext socket_context = *(SocketContext*)opaque;
 
     /****
     Timers
@@ -421,17 +275,15 @@ int receive_packets(void* opaque) {
     bool is_currently_dropping = false;
     start_timer(&drop_test_timer);
 
-    // Initialize update handler
-    init_update();
-
     while (run_receive_packets) {
         if (get_timer(last_ack) > 5.0) {
-            ack(&socket_context);
+            ack(&packet_udp_context);
             start_timer(&last_ack);
         }
 
         // Handle all pending updates
-        update();
+        handle_ping();
+        send_server_updates();
 
         // TODO hash_time is never updated, leaving it in here in case it is
         // used in the future
@@ -489,7 +341,7 @@ int receive_packets(void* opaque) {
             LOG_INFO("DROPPING");
             packet = NULL;
         } else {
-            packet = read_udp_packet(&socket_context);
+            packet = read_udp_packet(&packet_udp_context);
         }
 
         double recvfrom_short_time = get_timer(recvfrom_timer);
@@ -612,7 +464,7 @@ int sync_keyboard_state(void) {
 
 volatile bool continue_pumping = false;
 
-int read_piped_arguments_thread_function(void* keep_piping) {
+int multithreaded_read_piped_args(void* keep_piping) {
     /*
         Thread function to read piped arguments from stdin
 
@@ -626,46 +478,6 @@ int read_piped_arguments_thread_function(void* keep_piping) {
     int ret = read_piped_arguments((bool*)keep_piping);
     continue_pumping = false;
     return ret;
-}
-
-static volatile bool run_renderer_thread = false;
-int32_t multithreaded_renderer(void* opaque) {
-    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
-
-    if (init_video_renderer() != 0) {
-        LOG_FATAL("Failed to initialize video renderer!");
-    }
-
-    while (run_renderer_thread) {
-        // Timer used in CI mode to exit after 1 min
-        static clock ci_timer;
-        start_timer(&ci_timer);
-
-        static clock ack_timer;
-        start_timer(&ack_timer);
-
-        if (get_timer(ack_timer) > 5) {
-            ack(&packet_send_context);
-            ack(&packet_tcp_context);
-            start_timer(&ack_timer);
-        }
-        // if we are running a CI test we run for time_to_run_ci seconds
-        // before exiting
-        if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
-            exiting = 1;
-            LOG_INFO("Exiting CI run");
-        }
-
-        // Render Audio
-        // is thread-safe regardless of what other function calls are being made to audio
-        render_audio();
-        // Render video
-        render_video();
-
-        SDL_Delay(1);
-    }
-
-    return 0;
 }
 
 void handle_single_icon_launch_client_app(int argc, char* argv[]) {
@@ -822,9 +634,7 @@ int main(int argc, char* argv[]) {
 #else
     init_video();
 #endif
-    run_renderer_thread = true;
-    SDL_Thread* renderer_thread =
-        SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
+    init_renderer();
 
     print_system_info();
     LOG_INFO("Fractal client revision %s", fractal_git_revision());
@@ -837,7 +647,7 @@ int main(int argc, char* argv[]) {
     continue_pumping = true;
     bool keep_piping = true;
     SDL_Thread* pipe_arg_thread =
-        SDL_CreateThread(read_piped_arguments_thread_function, "PipeArgThread", &keep_piping);
+        SDL_CreateThread(multithreaded_read_piped_args, "multithreaded_read_piped_args", &keep_piping);
     if (pipe_arg_thread == NULL) {
         failed = true;
     } else {
@@ -902,7 +712,7 @@ int main(int argc, char* argv[]) {
         // Create thread to receive all packets and handle them as needed
         run_receive_packets = true;
         SDL_Thread* receive_packets_thread =
-            SDL_CreateThread(receive_packets, "ReceivePackets", &packet_receive_context);
+            SDL_CreateThread(receive_packets, "ReceivePackets", NULL);
 
         // Create thread to send clipboard TCP packets
         run_send_clipboard_packets = true;
@@ -1016,8 +826,7 @@ int main(int argc, char* argv[]) {
 
     // Destroy any resources being used by the client
     LOG_INFO("Closing Client...");
-    run_renderer_thread = false;
-    SDL_WaitThread(renderer_thread, NULL);
+    destroy_renderer();
     destroy_video();
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();

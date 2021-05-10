@@ -7,11 +7,12 @@ add_executable(FractalClient
         audio.c
         client_utils.c
         network.c
-        sdl_event_handler.c
+        handle_sdl_event.c
         sdl_utils.c
         handle_server_message.c
         video.c
-        sdlscreeninfo.c
+        renderer.c
+        sdl_screen_info.c
         peercursor.c
         )
 

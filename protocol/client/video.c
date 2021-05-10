@@ -24,7 +24,7 @@ Includes
 #include <stdio.h>
 
 #include "peercursor.h"
-#include "sdlscreeninfo.h"
+#include "sdl_screen_info.h"
 #include <SDL2/SDL.h>
 #include <fractal/utils/color.h>
 #include <fractal/utils/png.h>

@@ -48,7 +48,7 @@ Throughout the life of the protocol, various messages will be send to and from t
 -   To handle a client message on the server, see `./server/handle_client_message.c`
 -   See `./fractal/core/fractal.h` for struct definitions.
 
-Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `./client/main.c` and handled in `sdl_event_handler.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
+Of course, input must also be sent from client to server. This is handled in the form of SDL Events, which are retrieved in `client/main.c` and handled in `handle_sdl_event.c`. These generally take the form of `fmsg`'s sent from client to server, over `UDP` for speed. We don't handle packet dropping, however, so sometimes the capslock and numlock will go out-of-sync. We use `sync_keyboard_state` to fix this, resyncing stateful keys every 50ms with an `fmsg`. This additionally handles the initial sync by-default.
 
 ## File Structure
 
@@ -62,9 +62,9 @@ Of course, input must also be sent from client to server. This is handled in the
 │   ├── handle_server_message.c <- Handle server fmsg's
 │   ├── main.c <- SDL Event loop, receive and categorize packets as fmsg/audio/video
 │   ├── network.c <- Functions to connect to server, and send_fmsg
-│   ├── sdl_event_handler.c <- Handle SDL Events
+│   ├── handl_sdl_event.c <- Handle SDL Events
 │   ├── sdl_utils.c <- Set window icon, resize handler
-│   ├── sdlscreeninfo.c <- Get monitor/window width/height functions
+│   ├── sdl_screen_info.c <- Get monitor/window width/height functions
 │   └── video.c <- Handle and render video packets
 ├── fractal
 │   ├── audio
@@ -75,7 +75,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   ├── clipboard
 │   │   ├── clipboard.c <- Wrappers for get_clipboard/set_clipboard
 │   │   ├── clipboard_synchronizer.c <- Multithreaded wrapper for get/set clipboard,
-|   |   |                               this is what actually gets used
+│   │   │                                 this is what actually gets used
 │   │   ├── mac_clipboard.c <- Mac implementation of {get,set}_clipboard
 │   │   ├── win_clipboard.c <- Windows implementation of {get,set}_clipboard
 │   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
@@ -88,7 +88,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   └── windowscursor.c <- get_current_cursor for Windows
 │   ├── input
 │   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
-|   |   ├── input_driver.h -> The following three c files share this h file
+│   │   ├── input_driver.h -> The following three c files share this h file
 │   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
 │   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press/touchpad code
 │   │   └── xtest_input_driver.c <- Linux X11 keyoard/mouse-press code

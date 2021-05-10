@@ -1,0 +1,25 @@
+event loops:
+
+main:
+    window title
+    window color
+    sync keyboard state
+    window resize
+    sdl event
+    mouse motion
+
+sync_udp_packets:
+    handle ping
+    send server updates
+    log statistics
+    update video
+    update audio
+    drop emulation
+    read udp packet
+    receive video
+    receive audio
+    handle server message
+
+render:
+    render_audio
+    render_video

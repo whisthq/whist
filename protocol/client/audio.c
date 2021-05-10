@@ -205,7 +205,7 @@ void render_audio() {
 
         if (audio_refresh) {
             // This gap between if audio_refresh == true and audio_refresh=false creates a minor
-            // race condition with sdl_event_handler.c trying to refresh the audio when the audio
+            // race condition with handle_sdl_event.c trying to refresh the audio when the audio
             // device has changed.
             audio_refresh = false;
             reinit_audio_device();
