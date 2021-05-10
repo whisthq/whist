@@ -1,6 +1,6 @@
 # Fractal Auth0 Hooks
 
-This repository contains the code -- plus some build and deploy scripts -- for Fractal's Auth0 hooks, which are small microservices triggered by Auth0 when certain events occur (user registration, password change, etc.). Hooks are deployed and run on Auth0's own servers.
+This repository contains the code -- plus some build and deploy scripts -- for Fractal's Auth0 hooks, which are small microservices triggered by Auth0 when certain events occur (user registration, password change, etc.). Auth0 is the identity management provider that Fractal uses, and handles sign-in, registration, and some aspects of user management. Hooks are deployed and run on Auth0's own servers.
 
 ## Development
 

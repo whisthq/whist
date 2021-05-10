@@ -1284,6 +1284,45 @@ jobs:
                   BODY = ":rotating_light: @releases Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+    
+    microservices-deploy-auth0:
+        name: "Deploy Auth0 hooks"
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: ./microservices/auth0
+        steps:
+            - name: Set Auth0 Client secret
+              id: set-client-secret
+              run: |
+                  # Grab branch_name from detect-branch
+                  BRANCH_NAME=${{ needs.fractal-publish-build-config.outputs.branch }}
+
+                  if [ "$BRANCH_NAME" == "prod" ]; then
+                      AUTH0_SECRET=${{ secrets.PROD_AUTH0_CLIENT_SECRET }}
+                  elif [ "$BRANCH_NAME" == "staging" ]; then
+                      AUTH0_SECRET=${{ secrets.STAGING_AUTH0_CLIENT_SECRET }}
+                  elif [ "$BRANCH_NAME" == "dev" ]; then
+                      AUTH0_SECRET=${{ secrets.DEV_AUTH0_CLIENT_SECRET }}
+                  else
+                      AUTH0_SECRET=null
+                  fi
+                  echo "::set-output name=auth0_secret::$AUTH0_SECRET"
+
+            - name: Download files from the current repository
+              uses: actions/checkout@v2
+            - name: Install Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: "12.x"
+            - name: Install the auth0-deploy-cli
+              run: npm install -g auth0-deploy-cli
+            - name: Build Auth0 hooks
+              run: npm run-script build
+            - name: Import changes to the Auth0 staging account
+              env:
+                  AUTH0_CLIENT_SECRET: ${{ steps.set-client-secret.outputs.auth0_secret }}
+              run: npm run deploy:${{ steps.extract_branch.outputs.branch }}
 
     # Create GitHub Tag
     # Create a GitHub Tag when promoting to the `prod` branch
