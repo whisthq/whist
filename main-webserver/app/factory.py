@@ -129,6 +129,8 @@ def register_blueprints(app):
     from .blueprints.mail.mail_blueprint import mail_bp
     from .blueprints.mail.newsletter_blueprint import newsletter_bp
 
+    from payments.stripe_blueprint import stripe_bp
+
     from .blueprints.host_service.host_service_blueprint import host_service_bp
 
     app.register_blueprint(celery_status_bp)
