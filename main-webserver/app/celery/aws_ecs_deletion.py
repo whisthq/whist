@@ -2,7 +2,7 @@ import time
 
 from typing import Union
 
-from celery import Task, shared_task
+from celery import shared_task, current_task
 from flask import current_app
 
 from app.celery.aws_ecs_modification import manual_scale_cluster
@@ -22,12 +22,11 @@ from app.helpers.utils.general.sql_commands import (
 from app.models import ClusterInfo, db, SortedClusters, UserContainer
 
 
-@shared_task(bind=True)
-def delete_container(self: Task, container_name: str, aes_key: str) -> None:
+@shared_task
+def delete_container(container_name: str, aes_key: str) -> None:
     """Delete a container.
 
     Args:
-        self: the Celery instance executing the task
         container_name (str): The ARN of the running container.
         aes_key (str): The 32-character AES key that the container uses to
             verify its identity.
@@ -79,8 +78,8 @@ def delete_container(self: Task, container_name: str, aes_key: str) -> None:
     # TODO: just pass task as param
     if not ecs_client.check_if_done(offset=0):
         ecs_client.stop_task(reason="API triggered task stoppage", offset=0)
-        self.update_state(
-            state="PENDING",
+        current_task.update_state(
+            state="STARTED",
             meta={
                 "msg": "Container {container_name} begun stoppage".format(
                     container_name=container_name,

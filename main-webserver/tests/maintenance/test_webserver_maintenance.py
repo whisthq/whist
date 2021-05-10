@@ -1,6 +1,7 @@
 import time
 
 import pytest
+from celery import current_task
 
 from app.maintenance.maintenance_manager import (
     _REDIS_TASKS_KEY,
@@ -29,7 +30,7 @@ def mock_create_cluster(*args, **kwargs):
     else:
         setattr(_create_new_cluster, "num_calls", 1)
 
-    celery_id = args[0].request.id
+    celery_id = current_task.request.id
     fractal_logger.info(f"Running mocked version of task {celery_id}")
 
     time.sleep(1)
@@ -46,7 +47,7 @@ def mock_assign_container(*args, **kwargs):
     else:
         setattr(_assign_container, "num_calls", 1)
 
-    celery_id = args[0].request.id
+    celery_id = current_task.request.id
     fractal_logger.info(f"Running mocked version of task {celery_id}")
 
     time.sleep(1)

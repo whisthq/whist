@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import requests
 
-from celery import Task, shared_task
+from celery import shared_task, current_task
 from flask import current_app
 from requests import ConnectionError, Timeout, TooManyRedirects
 
@@ -405,10 +405,9 @@ def _get_num_extra(taskdef: str, location: str) -> int:
     return 0
 
 
-@shared_task(bind=True)
+@shared_task
 @maintenance_track_task
 def assign_container(
-    self: Task,
     username: str,
     task_definition_arn: str,
     task_version: Optional[int] = None,
@@ -421,7 +420,6 @@ def assign_container(
     """
     Assigns a running container to a user, or creates one if none exists
 
-    :param self: the celery instance running the task
     :param username: the username of the requesting user
     :param task_definition_arn: which taskdef the user needs a container for
     :param task_version: the version of the taskdef to use. If None, uses latest in db.
@@ -436,7 +434,6 @@ def assign_container(
     does not exist for functions with celery decorators like this one.
     """
     return _assign_container(
-        self,
         username,
         task_definition_arn,
         task_version,
@@ -449,7 +446,6 @@ def assign_container(
 
 
 def _assign_container(
-    self: Task,
     username: str,
     task_definition_arn: str,
     task_version: Optional[int] = None,
@@ -466,8 +462,8 @@ def _assign_container(
 
     set_container_state(
         keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
         state=PENDING,
         force=True,  # necessary since check will fail otherwise
     )
@@ -524,19 +520,19 @@ def _assign_container(
         base_container.user_id = username
         base_container.dpi = dpi
         db.session.commit()
-        self.update_state(
+        current_task.update_state(
             state="PENDING",
             meta={"msg": "Container assigned"},
         )
     else:
         set_container_state(
             keyuser=username,
-            keytask=self.request.id,
-            task_id=self.request.id,
+            keytask=current_task.request.id,
+            task_id=current_task.request.id,
             state=SPINNING_UP_NEW,
             force=True,  # necessary since check will fail otherwise
         )
-        self.update_state(
+        current_task.update_state(
             state="PENDING",
             meta={"msg": "No waiting container found -- creating a new one"},
         )
@@ -551,7 +547,10 @@ def _assign_container(
 
         if cluster_info.status == "DEPROVISIONING":
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.error(
                 f"Cluster status is {cluster_info.status}",
@@ -564,7 +563,7 @@ def _assign_container(
         message = (
             f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
         )
-        self.update_state(
+        current_task.update_state(
             state="PENDING",
             meta={"msg": message},
         )
@@ -578,7 +577,10 @@ def _assign_container(
         )
         if curr_ip == -1 or curr_network_binding == -1:
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.error("Error generating task with running IP", extra={"label": username})
             raise Exception("Your app's network bindings were not created.")
@@ -617,7 +619,10 @@ def _assign_container(
         else:
 
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
@@ -634,7 +639,10 @@ def _assign_container(
             base_container = container
         else:
             set_container_state(
-                keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+                keyuser=username,
+                keytask=current_task.request.id,
+                task_id=current_task.request.id,
+                state=FAILURE,
             )
             fractal_logger.info(
                 f"SQL insertion of task ID {task_id} unsuccessful", extra={"label": username}
@@ -660,8 +668,8 @@ def _assign_container(
     # and for the container to ping the webserver
     set_container_state(
         keyuser=username,
-        keytask=self.request.id,
-        task_id=self.request.id,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
         state=WAITING_FOR_CLIENT_APP,
         ip=base_container.ip,
         client_app_auth_secret=client_app_auth_secret,
@@ -701,7 +709,10 @@ def _assign_container(
 
     if not _poll(base_container.container_id):
         set_container_state(
-            keyuser=username, keytask=self.request.id, task_id=self.request.id, state=FAILURE
+            keyuser=username,
+            keytask=current_task.request.id,
+            task_id=current_task.request.id,
+            state=FAILURE,
         )
 
         fractal_logger.info(
@@ -720,27 +731,29 @@ def _assign_container(
         extra={"label": username},
     )
 
-    self.update_state(
+    current_task.update_state(
         state="SUCCESS",
         meta=user_container_schema.dump(base_container),
     )
 
     set_container_state(
-        keyuser=username, keytask=self.request.id, task_id=self.request.id, state=READY
+        keyuser=username,
+        keytask=current_task.request.id,
+        task_id=current_task.request.id,
+        state=READY,
     )
 
     fractal_logger.info(
-        f"""Success, task ID is {self.request.id} and container is ready.""",
+        f"""Success, task ID is {current_task.request.id} and container is ready.""",
         extra={"label": username},
     )
 
     return user_container_schema.dump(base_container)
 
 
-@shared_task(bind=True)
+@shared_task
 @maintenance_track_task
 def prewarm_new_container(
-    self: Task,
     task_definition_arn: str,
     task_version: int,
     cluster_name: Optional[str] = None,
@@ -750,7 +763,6 @@ def prewarm_new_container(
     """Prewarm a new ECS container running a particular task.
 
     Arguments:
-        self: The instance running the celery task
         task_definition_arn: The task definition to use identified by its ARN.
         task_version: The version of the task def to use.
         region_name: The name of the region containing the cluster on which to
@@ -795,8 +807,8 @@ def prewarm_new_container(
         raise Exception(f"Cluster {cluster_info.cluster} is {cluster_info.status}.")
 
     message = f"Deploying {task_definition_arn}:{task_version} to {cluster_name} in {region_name}"
-    self.update_state(
-        state="PENDING",
+    current_task.update_state(
+        state="STARTED",
         meta={"msg": message},
     )
     fractal_logger.info(message)
@@ -868,10 +880,9 @@ def prewarm_new_container(
         raise Exception(f"We were unable to assign container {task_id} to you in our database.")
 
 
-@shared_task(bind=True)
+@shared_task
 @maintenance_track_task
 def create_new_cluster(
-    self: Task,
     cluster_name: Optional[str] = None,
     instance_type: Optional[str] = "g3.4xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
@@ -887,7 +898,6 @@ def create_new_cluster(
     does not exist for functions with celery decorators like this one.
 
     Args:
-        self: the celery instance running the task
         cluster_name (Optional[str]): the name of the created cluster
         instance_type (Optional[str]): size of instances to create in auto scaling group, defaults
             to t2.small
@@ -904,12 +914,11 @@ def create_new_cluster(
         user_cluster_schema: information on cluster created
     """
     return _create_new_cluster(
-        self, cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
+        cluster_name, instance_type, ami, region_name, min_size, max_size, availability_zones
     )
 
 
 def _create_new_cluster(
-    self: Task,
     cluster_name: Optional[str] = None,
     instance_type: Optional[str] = "g3.4xlarge",
     ami: Optional[str] = "ami-0decb4a089d867dc1",
@@ -935,8 +944,8 @@ def _create_new_cluster(
         ),
     )
     ecs_client = ECSClient(launch_type="EC2", region_name=region_name)
-    self.update_state(
-        state="PENDING",
+    current_task.update_state(
+        state="STARTED",
         meta={
             "msg": (
                 f"Creating new cluster on ECS with instance_type {instance_type} and ami {ami} in "
