@@ -1,6 +1,31 @@
 import { Observable } from "rxjs"
 import { map, filter, share, tap } from "rxjs/operators"
-import { mapValues } from "lodash"
+import { mapValues, truncate } from "lodash"
+import stringify from "json-stringify-safe"
+
+const logFormat = (...args: any[]) => {
+  let [title, message, value] = args
+  if (value === undefined) {
+    value = message
+    message = undefined
+  }
+  if (value === undefined && message === undefined) {
+    value = title
+    title = undefined
+  }
+  title = title ? `${title} -- ` : ""
+  message = message ? `${message} -- ` : ""
+
+  let output = truncate(stringify(value, null, 2), {
+    length: 1000,
+    omission: "...**logBase only prints 1000 characters per log**",
+  })
+  return `${title}${message}${output}`
+}
+
+const logDebug = (...args: any[]) => {
+  console.log(`DEBUG: ${logFormat(...args)}`)
+}
 
 const gateSplit = <T>(
   source: Observable<T>,
@@ -30,11 +55,7 @@ export const gates = <T>(
 ): Gate<T> =>
   mapValues(gateSplit(trigger, filters), (obs, key) =>
     obs.pipe(
-      tap((value) =>
-        console.log(
-          `DEBUG: ${name}.${key} -- ${logging?.[key]?.(value) ?? value}`
-        )
-      ),
+      tap((v) => logDebug(`${name}.${key}`, logging?.[key]?.(v) ?? v)),
       share()
     )
   )
