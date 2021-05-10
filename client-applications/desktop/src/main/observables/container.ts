@@ -6,22 +6,8 @@
 // These observables are subscribed by protocol launching observables, which
 // react to success container creation emissions from here.
 
-import { from, of, zip, combineLatest } from "rxjs"
-import {
-  map,
-  share,
-  delay,
-  takeUntil,
-  withLatestFrom,
-  takeWhile,
-} from "rxjs/operators"
-
 import {
   containerCreate,
-  containerCreateSuccess as createSuccess,
-  containerCreateErrorNoAccess,
-  containerCreateErrorUnauthorized,
-  containerCreateErrorInternal,
   containerInfo,
   containerInfoError,
   containerInfoSuccess,
@@ -34,67 +20,63 @@ import {
 } from "@app/main/observables/user"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 import { containerPollingTimeout } from "@app/utils/constants"
-import { pollMap, factory } from "@app/utils/observables"
-
-import { formatContainer, formatTokensArray } from "@app/utils/formatters"
-import { AsyncReturnType } from "@app/@types/state"
+import { loadingFrom, pollMap } from "@app/utils/observables"
+import { from, of, zip, combineLatest } from "rxjs"
+import {
+  map,
+  delay,
+  takeUntil,
+  withLatestFrom,
+  takeWhile,
+  switchMap,
+} from "rxjs/operators"
+import { gates } from "@app/utils/gates"
 
 export const {
-  request: containerCreateRequest,
-  process: containerCreateProcess,
   success: containerCreateSuccess,
   failure: containerCreateFailure,
-  loading: containerCreateLoading,
-} = factory<[string, string], AsyncReturnType<typeof containerCreate>>(
-  "containerCreate",
+  warning: containerCreateWarning,
+} = gates(
+  `containerCreate`,
+  combineLatest([
+    zip(userEmail, userAccessToken, userConfigToken),
+    eventUpdateNotAvailable,
+  ]).pipe(
+    map(([auth]) => auth), //discard the eventUpdateNotAvailable
+    switchMap(([email, token]) => from(containerCreate(email, token)))
+  ),
   {
-    request: combineLatest([
-      zip(userEmail, userAccessToken, userConfigToken),
-      eventUpdateNotAvailable,
-    ]).pipe(
-      map(([auth]) => auth),
-      map(([email, access, _]) => [email, access])
-    ),
-    process: ([email, token]) => from(containerCreate(email, token)),
-    success: (res) => createSuccess(res),
-    failure: (res) =>
-      containerCreateErrorInternal(res) ||
-      containerCreateErrorNoAccess(res) ||
-      containerCreateErrorUnauthorized(res),
+    success: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "",
+    failure: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "",
   }
 )
 
 export const {
-  request: containerPollingRequest,
-  process: containerPollingProcess,
   success: containerPollingSuccess,
   failure: containerPollingFailure,
-  loading: containerPollingLoading,
-} = factory<[string, string], AsyncReturnType<typeof containerInfo>>(
-  "containerPolling",
-  {
-    request: containerCreateSuccess.pipe(
-      withLatestFrom(userAccessToken),
-      map(([response, token]) => [response.json.ID, token] as [string, string])
+} = gates(
+  `containerPolling`,
+  containerCreateSuccess.pipe(
+    withLatestFrom(userAccessToken),
+    pollMap(
+      1000,
+      async ([response, token]) => await containerInfo(response.json.ID, token)
     ),
-    process: (args) =>
-      of(args).pipe(
-        pollMap(1000, async ([id, token]) => await containerInfo(id, token)),
-        takeWhile((res) => containerInfoPending(res), true),
-        takeWhile((res) => !containerInfoError(res), true),
-        takeUntil(of(true).pipe(delay(containerPollingTimeout))),
-        share()
-      ),
+    takeWhile((res) => containerInfoPending(res), true),
+    takeWhile((res) => !containerInfoError(res), true),
+    takeUntil(of(true).pipe(delay(containerPollingTimeout)))
+  ),
+  {
     success: (res) => containerInfoSuccess(res),
     failure: (res) =>
       containerInfoError(res) ||
       containerInfoPending(res) ||
       !containerInfoSuccess(res),
-    logging: {
-      request: ["only tokens", formatTokensArray],
-      process: ["omitting verbose response", formatContainer],
-      success: ["omitting verbose response", formatContainer],
-      failure: ["omitting verbose response", formatContainer],
-    },
   }
+)
+
+export const containerPollingLoading = loadingFrom(
+  containerCreateSuccess.pipe(withLatestFrom(userAccessToken)),
+  containerPollingSuccess,
+  containerPollingFailure
 )
