@@ -2,7 +2,7 @@
  * Copyright Fractal Computers, Inc. 2020
  * @file fractal_memory.h
  * @brief This file contains custom memory handling for Fractal.
-*/
+ */
 
 /**
  * @brief                          Wrapper around malloc that will correctly exit the

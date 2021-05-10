@@ -10,7 +10,7 @@
  * @file fractal.h
  * @brief This file contains the core of Fractal custom structs and definitions
  *        used throughout.
-*/
+ */
 
 /*
 ============================
@@ -629,8 +629,8 @@ typedef struct PeerUpdateMessage {
     int peer_id;
     int x;
     int y;
-    bool is_controlling;   // whether this is the controlling client
-    FractalRGBColor color; // client cursor color
+    bool is_controlling;    // whether this is the controlling client
+    FractalRGBColor color;  // client cursor color
 } PeerUpdateMessage;
 
 /* @brief   Packet destination. (unused)
