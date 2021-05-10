@@ -8,7 +8,12 @@ export enum RendererAction {
   SIGNUP = "signupRequest",
 }
 
-export type ActionType = MainAction | RendererAction
+export enum PaymentAction {
+  CHECKOUT = "stripeCheckoutRequest",
+  PORTAL = "stripePortalRequest"
+}
+
+export type ActionType = MainAction | RendererAction | PaymentAction
 
 export interface Action {
   type: ActionType

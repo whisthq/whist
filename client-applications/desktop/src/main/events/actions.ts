@@ -7,6 +7,7 @@ import {
   MainAction,
   RendererAction,
   Action,
+  PaymentAction,
 } from "@app/@types/actions"
 
 const action = (type: ActionType): Observable<any> => {
@@ -48,3 +49,6 @@ export const signupAction = action(RendererAction.SIGNUP)
 
 export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
 export const quitAction = action(MainAction.QUIT).pipe(share())
+
+export const stripeCheckoutAction = action(PaymentAction.CHECKOUT)
+export const stripePortalAction = action(PaymentAction.PORTAL)

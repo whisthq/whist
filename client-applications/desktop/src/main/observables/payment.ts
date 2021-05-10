@@ -10,8 +10,12 @@ import {
   stripePortalError,
 } from "@app/utils/payment"
 import { filter, map, share, exhaustMap } from "rxjs/operators"
+import {
+  stripeCheckoutAction,
+  stripePortalAction,
+} from "@app/main/events/actions"
 
-export const stripeCheckoutRequest = fromEventIPC("stripeCheckoutRequest").pipe(
+export const stripeCheckoutRequest = stripeCheckoutAction.pipe(
   filter(
     (req) => (req?.customerId ?? "") !== "" && (req?.priceId ?? "") !== ""
   ),
@@ -41,7 +45,7 @@ export const stripeCheckoutFailure = stripeCheckoutProcess.pipe(
   filter((res) => stripeCheckoutError(res))
 )
 
-export const stripePortalRequest = fromEventIPC("stripePortalRequest").pipe(
+export const stripePortalRequest = stripePortalAction.pipe(
   filter(
     (req) => (req?.customerId ?? "") !== "" && (req?.returnUrl ?? "") !== ""
   ),
