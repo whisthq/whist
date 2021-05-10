@@ -205,10 +205,3 @@ class EC2Client:
         for instance in instance_info:
             resdict[instance["InstanceId"]] = instance["PublicIpAddress"]
         return resdict
-
-
-if __name__ == "__main__":
-    ec2_client = EC2Client()
-    ids = ec2_client.start_instances("ami-037b96e43364db32c")
-    print(ids, ec2_client.get_ip_of_instances(ids))
-    ec2_client.stop_instances(ids)
