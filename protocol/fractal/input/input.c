@@ -100,7 +100,7 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
 #endif  // INPUT_DRIVER
             break;
         case MESSAGE_MULTIGESTURE:
-            LOG_WARNING("Multi-touch support not added yet!");
+            ret = emit_multigesture_event(input_device, fmsg->multigesture.d_theta, fmsg->multigesture.d_dist);
             break;
         default:
             LOG_ERROR("Unknown message type! %d", fmsg->type);
