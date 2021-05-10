@@ -1,13 +1,12 @@
 import { fromEventIPC } from "@app/main/events/ipc"
 import { eventTray } from "@app/main/events/tray"
 import { Observable } from "rxjs"
-import { filter, map, share } from "rxjs/operators"
+import { filter, map, share, tap } from "rxjs/operators"
 import {
   ActionType,
   MainAction,
   RendererAction,
   Action,
-  PaymentAction,
 } from "@app/@types/actions"
 
 const action = (type: ActionType): Observable<any> => {
@@ -50,5 +49,7 @@ export const signupAction = action(RendererAction.SIGNUP)
 export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
 export const quitAction = action(MainAction.QUIT).pipe(share())
 
-export const stripeCheckoutAction = action(PaymentAction.CHECKOUT)
-export const stripePortalAction = action(PaymentAction.PORTAL)
+export const stripeCheckoutAction = action(RendererAction.CHECKOUT).pipe(
+  tap(() => console.log("checkout"))
+)
+export const stripePortalAction = action(RendererAction.PORTAL)
