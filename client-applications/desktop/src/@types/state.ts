@@ -3,12 +3,6 @@ import { Trigger } from "@app/utils/flows"
 export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
   T extends (...args: any) => Promise<infer R> ? R : any
 
-interface StripeAction {
-  action?: string
-  stripeCheckoutId?: string
-  stripePortalUrl?: string
-}
-
 export interface StateIPC {
   email: string // User email returned by Auth0
   sub: string // Auth0 JWT subject, used as unique identifier
