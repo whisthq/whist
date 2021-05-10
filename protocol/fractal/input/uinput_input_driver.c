@@ -496,9 +496,9 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
 }
 
 int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist) {
-    if (fabs(event->mgesture.dTheta) > 3.14 / 180.0 ) {
+    if (fabs(d_theta) > 3.14 / 180.0 ) {
         LOG_INFO("multigesture rotate not implemented");
-    } else if (fabs(event->mgesture.dDist) > 0.002 ) {
+    } else if (fabs(d_dist) > 0.002 ) {
         emit_key_event(input_device, FK_LCTRL, true);
         emit_high_res_mouse_wheel_event(input_device, 0, d_dist);
     }
