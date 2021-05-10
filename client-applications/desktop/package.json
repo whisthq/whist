@@ -19,7 +19,8 @@
     "lint:check": "node ./scripts/lint",
     "lint:fix": "node ./scripts/lint --fix",
     "cache:clear": "electron ./scripts/clearAppData.js",
-    "test:manual": "node ./scripts/testManual.js"
+    "test:manual": "node ./scripts/testManual.js",
+    "test:unit": "jest"
   },
   "dependencies": {
     "@amplitude/node": "^1.6.0",
