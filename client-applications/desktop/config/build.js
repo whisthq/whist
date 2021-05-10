@@ -1,3 +1,8 @@
+/*
+  Build config
+  This file contains config variables used at build time
+*/
+
 const env = require("../env.json") || {}
 
 // Environment-specific configuration

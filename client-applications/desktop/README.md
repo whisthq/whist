@@ -124,6 +124,16 @@ import {
 
 This stuff matters. It's a design detail, but in a large file it can make code significantly more readable. It also helps with spelling errors, because you immediately notice that the alignment is off. This is one of many dimensions of program legibility, and it's one worth optimizing if you're picking between a few possible names.
 
+#### Config
+
+All config variables are stored in various files in the `config` folder in the application root. The configuration files are used in both the application itself and our build scripts.
+
+- `build.js` contains variables used in the build process
+- `environment.js` exports environment-specific variables used while the application is running
+- `paths.js` exports relevant OS-dependent paths
+
+In the electron app itself, these variables are re-exported by the files in `src/config`.
+
 #### Debugging
 
 Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
