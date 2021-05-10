@@ -1,6 +1,8 @@
 import {
   Observable,
+  ObservedValueOf,
   ObservableInput,
+  Subject,
   merge,
   race,
   interval,
@@ -213,4 +215,39 @@ export const factory = <T, A>(
     warning,
     loading,
   }
+}
+
+const objectSplit = <T extends Record<any, Observable<any>>>(
+  source: Observable<T>
+) => {
+  const cache: { [P in keyof T]?: Subject<ObservedValueOf<T[P]>> } = {}
+  const cacheInit = (key: keyof T) => {
+    if (!(key in cache)) cache[key] = new Subject<ObservedValueOf<T[keyof T]>>()
+  }
+  const handler = {
+    get: (
+      target: { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
+      key: keyof T
+    ) => {
+      if (!(key in target)) {
+        cacheInit(key)
+        target[key] = cache[key]!.asObservable()
+      }
+      return target[key]
+    },
+  }
+
+  source.subscribe((map) => {
+    Object.entries(map).forEach(([key, obs]) => {
+      obs.subscribe((value) => {
+        cacheInit(key)
+        cache[key]!.next(value)
+      })
+    })
+  })
+
+  return new Proxy(
+    {} as { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
+    handler
+  )
 }
