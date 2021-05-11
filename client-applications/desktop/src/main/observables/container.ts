@@ -54,7 +54,10 @@ const containerInfoGates: Flow = (name, trigger) =>
     {
       success: (result) => containerInfoSuccess(result),
       pending: (result) => containerInfoPending(result),
-      failure: (result) => containerInfoError(result),
+      failure: (result) =>
+        containerInfoError(result) ||
+        !containerInfoPending(result) ||
+        !containerInfoSuccess(result),
     }
   )
 
