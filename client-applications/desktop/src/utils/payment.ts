@@ -22,8 +22,13 @@ export const stripeCheckoutCreate = async (
   cancelUrl: string1To1000
 ) =>
   post({
-    endpoint: "/stripe/create-checkout-session",
-    body: { customerId, priceId, successUrl, cancelUrl },
+    endpoint: "/stripe/create_checkout_session",
+    body: {
+      customer_id: customerId,
+      price_id: priceId,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+    },
   })
 
 export const stripePortalCreate = async (
@@ -42,15 +47,18 @@ export const stripePortalCreate = async (
   returnUrl: string
 ) =>
   post({
-    endpoint: "/stripe/customer-portal",
-    body: { customerId, returnUrl },
+    endpoint: "/stripe/customer_portal",
+    body: {
+      customer_id: customerId,
+      return_url: returnUrl,
+    },
   })
 
 // Error checking for checkout portal creation
 type CheckoutResponseAuth = AsyncReturnType<typeof stripeCheckoutCreate>
 
 export const stripeCheckoutValid = (response: CheckoutResponseAuth) =>
-  (response?.json?.sessionId ?? "") !== ""
+  (response?.json?.session_id ?? "") !== ""
 
 export const stripeCheckoutError = (response: CheckoutResponseAuth) =>
   response.status !== 200
