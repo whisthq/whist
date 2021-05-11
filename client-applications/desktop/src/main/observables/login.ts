@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
+import { from, combineLatest, Observable } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailLogin,
@@ -21,15 +21,12 @@ import {
   emailLoginRefreshToken,
 } from "@app/utils/login"
 import { loginAction } from "@app/main/events/actions"
-import { Flow, gates } from "@app/utils/gates"
+import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { merge } from "lodash"
 
-const loginGates: Flow = (name, trigger) => {
-  const next = `${name}.loginGates`
-
-  const login = gates(
-    next,
+const loginGates = flow("loginGates", (_name, trigger) => {
+  const login = fork(
     loginAction.pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
     ),
@@ -45,23 +42,19 @@ const loginGates: Flow = (name, trigger) => {
     ...login,
     loading: loadingFrom(trigger, login.success, login.warning, login.failure),
   }
-}
+})
 
-export const loginFlow: Flow = (name, trigger) => {
-  const next = `${name}.loginFlow`
-
+export const loginFlow = flow("loginFlow", (name, trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
   })
 
-  input.subscribe((v) => console.log("LOGIN INPUT", v))
-
-  const login = loginGates(next, input)
+  const login = loginGates(name, input)
 
   const configToken = combineLatest([
     login.success,
-    input.pipe(pluck("password")),
+    input.pipe(pluck("password")) as Observable<string>,
   ]).pipe(
     switchMap((args) => from(emailLoginConfigToken(...args))),
     map((configToken) => ({ configToken }))
@@ -84,4 +77,4 @@ export const loginFlow: Flow = (name, trigger) => {
     warning: login.warning,
     loading: loadingFrom(result, login.failure, login.warning),
   }
-}
+})
