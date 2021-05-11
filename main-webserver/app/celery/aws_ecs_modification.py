@@ -130,7 +130,7 @@ def update_cluster(
         # instance from getting scaled in
         default_app = "Google Chrome"
         app_data = SupportedAppImages.query.get(default_app)
-        prewarm_new_container(
+        prewarm_new_container.run(
             task_definition_arn=app_data.task_definition,
             task_version=app_data.task_version,
             cluster_name=cluster_name,
