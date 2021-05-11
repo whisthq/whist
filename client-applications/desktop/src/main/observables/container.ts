@@ -28,6 +28,7 @@ import {
   take,
   repeatWhen,
   withLatestFrom,
+  tap,
 } from "rxjs/operators"
 import { gates, Flow } from "@app/utils/gates"
 
@@ -35,6 +36,7 @@ const containerCreateGates: Flow = (name, trigger) =>
   gates(
     name,
     trigger.pipe(
+      tap((args) => console.log("CREATE ARGS", args)),
       switchMap(([email, token]) => from(containerCreate(email, token)))
     ),
     {
