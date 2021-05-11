@@ -10,28 +10,75 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from } from "rxjs"
-import { switchMap } from "rxjs/operators"
-import { emailLogin, emailLoginValid, emailLoginError } from "@app/utils/login"
+import { from, combineLatest } from "rxjs"
+import { switchMap, map, pluck } from "rxjs/operators"
+import {
+  emailLogin,
+  emailLoginValid,
+  emailLoginError,
+  emailLoginConfigToken,
+  emailLoginAccessToken,
+  emailLoginRefreshToken,
+} from "@app/utils/login"
 import { loginAction } from "@app/main/events/actions"
-import { gates } from "@app/utils/gates"
-import { loadingFrom } from "@app/utils/observables"
+import { Flow, gates } from "@app/utils/gates"
+import { loadingFrom, objectCombine } from "@app/utils/observables"
 
-export const {
-  success: loginSuccess,
-  failure: loginFailure,
-  warning: loginWarning,
-} = gates(
-  `login`,
-  loginAction.pipe(
-    switchMap(({ email, password }) => from(emailLogin(email, password)))
-  ),
-  {
-    success: (result: any) => emailLoginValid(result),
-    failure: (result: any) => emailLoginError(result),
-    warning: (result: any) =>
-      !emailLoginError(result) && !emailLoginValid(result),
+const loginGates: Flow = (name, trigger) => {
+  const next = `${name}.loginGates`
+
+  const login = gates(
+    next,
+    loginAction.pipe(
+      switchMap(({ email, password }) => from(emailLogin(email, password)))
+    ),
+    {
+      success: (result: any) => emailLoginValid(result),
+      failure: (result: any) => emailLoginError(result),
+      warning: (result: any) =>
+        !emailLoginError(result) && !emailLoginValid(result),
+    }
+  )
+
+  return {
+    ...login,
+    loading: loadingFrom(trigger, login.success, login.warning, login.failure),
   }
-)
+}
 
-export const loginLoading = loadingFrom(loginAction, loginFailure, loginWarning)
+export const loginFlow: Flow = (name, trigger) => {
+  const next = `${name}.loginFlow`
+
+  const input = objectCombine({
+    email: trigger.pipe(pluck("email")),
+    password: trigger.pipe(pluck("password")),
+  })
+
+  const login = loginGates(next, input)
+
+  const configToken = combineLatest([
+    login.success,
+    input.pipe(pluck("password")),
+  ]).pipe(
+    switchMap((args) => from(emailLoginConfigToken(...args))),
+    map((configToken) => ({ configToken }))
+  )
+
+  const tokens = login.success.pipe(
+    map((response) => ({
+      accessToken: emailLoginAccessToken(response),
+      refreshToken: emailLoginRefreshToken(response),
+    }))
+  )
+
+  const result = combineLatest([input, tokens, configToken]).pipe(
+    map((...args) => ({ ...args }))
+  )
+
+  return {
+    success: result,
+    failure: login.failure,
+    warning: login.warning,
+    loading: loadingFrom(result, login.failure, login.warning),
+  }
+}

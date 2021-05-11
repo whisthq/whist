@@ -9,49 +9,28 @@
 import {
   containerCreate,
   containerInfo,
+  containerInfoIP,
+  containerInfoPorts,
+  containerInfoSecretKey,
   containerInfoError,
   containerInfoSuccess,
   containerInfoPending,
 } from "@app/utils/container"
-import {
-  userEmail,
-  userAccessToken,
-  userConfigToken,
-} from "@app/main/observables/user"
-import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
+import {} from "@app/utils/container"
 import { loadingFrom } from "@app/utils/observables"
-import { from, of, zip, combineLatest, interval, merge } from "rxjs"
-import {
-  map,
-  takeUntil,
-  switchMap,
-  take,
-  mapTo,
-  withLatestFrom,
-  tap,
-  share,
-} from "rxjs/operators"
+import { from, of, interval, merge } from "rxjs"
+import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { gates, Flow } from "@app/utils/gates"
 import { some } from "lodash"
 
-const containerCreateGates: Flow = (name, trigger) =>
-  gates(
-    name,
-    trigger.pipe(
-      switchMap(([email, token]) => {
-        return from(containerCreate(email, token))
-      })
-    ),
-    {
-      success: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "",
-      failure: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "",
-    }
-  )
-
 const containerInfoGates: Flow = (name, trigger) =>
   gates(
-    name,
-    trigger.pipe(switchMap(([id, token]) => from(containerInfo(id, token)))),
+    `${name}.containerInfoGates`,
+    trigger.pipe(
+      switchMap(({ containerID, accessToken }) =>
+        from(containerInfo(containerID, accessToken))
+      )
+    ),
     {
       success: (result) => containerInfoSuccess(result),
       pending: (result) => containerInfoPending(result),
@@ -74,9 +53,35 @@ const containerPollingInner: Flow = (name, trigger) => {
   }
 }
 
-const containerPollingFlow: Flow = (name, trigger) => {
+export const containerCreateFlow: Flow = (name, trigger) => {
+  const next = `${name}.containerCreateFlow`
+
+  const create = gates(
+    next,
+    trigger.pipe(
+      switchMap(({ email, accessToken }) =>
+        from(containerCreate(email, accessToken))
+      )
+    ),
+    {
+      success: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "",
+      failure: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "",
+    }
+  )
+
+  return {
+    success: create.success.pipe(
+      map((response) => ({ containerID: response.json.ID }))
+    ),
+    failure: create.failure,
+  }
+}
+
+export const containerPollingFlow: Flow = (name, trigger) => {
+  const next = `${name}.containerPollingFlow`
+
   const poll = trigger.pipe(
-    map((args) => containerPollingInner(name, of(args))),
+    map((args) => containerPollingInner(next, of(args))),
     share()
   )
 
@@ -85,31 +90,22 @@ const containerPollingFlow: Flow = (name, trigger) => {
   const pending = poll.pipe(switchMap((inner) => inner.pending))
   const loading = loadingFrom(trigger, success, failure)
 
-  return { success, failure, pending, loading }
+  // We probably won't subscribe to "pending" in the rest of the app,
+  // so we subscribe to it deliberately here. If it has no subscribers,
+  // it won't emit. We would like for it to emit for logging purposes.
+  // We must remeber to takeUntil so it stops when we're finished.
+  pending.pipe(takeUntil(merge(success, failure))).subscribe()
+
+  return {
+    success: success.pipe(
+      map((response) => ({
+        containerIP: containerInfoIP(response),
+        containerSecret: containerInfoSecretKey(response),
+        containerPorts: containerInfoPorts(response),
+      }))
+    ),
+    failure,
+    pending,
+    loading,
+  }
 }
-
-export const {
-  success: containerCreateSuccess,
-  failure: containerCreateFailure,
-  warning: containerCreateWarning,
-} = containerCreateGates(
-  `containerCreate`,
-  combineLatest([
-    zip(userEmail, userAccessToken, userConfigToken),
-    eventUpdateNotAvailable,
-  ]).pipe(map(([args]) => args))
-)
-
-export const {
-  success: containerPollingSuccess,
-  failure: containerPollingFailure,
-  loading: containerPollingLoading,
-  pending: containerPollingPending,
-} = containerPollingFlow(
-  `containerPolling`,
-  containerCreateSuccess.pipe(
-    map((response) => response.json.ID),
-    withLatestFrom(userAccessToken)
-  )
-)
-containerPollingPending.subscribe()
