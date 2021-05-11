@@ -7,7 +7,7 @@
 
 import time
 
-from typing import Any, Dict, Literal, List, Union
+from typing import Dict, List, Optional
 import boto3  # type: ignore
 
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
@@ -25,36 +25,22 @@ class EC2Client:
     This class governs everything you need to provision instances on EC2
     Args:
         region_name (str):  which AWS region you're running on
-        key_id (str): the AWS access key ID to use
-        access_key (str): the AWS access key going with that key_id
+        key_id (Optional[str]): the AWS access key ID to use
+        access_key (Optional[str]): the AWS access key going with that key_id
     """
 
     def __init__(
         self,
-        region_name: str = "us-east-1",
-        key_id: str = "",
-        access_key: str = "",
+        region_name: str,
+        key_id: Optional[str] = None,
+        access_key: Optional[str] = "",
     ):
-        self.key_id = key_id
-        self.region_name = region_name
-        self.access_key = access_key
-        self.ec2_client = self._make_client("ec2")
-
-    def _make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
-        """
-        Constructs an ECS client object with the given params
-        Args:
-            client_type (str): which ECS client you're trying to produce
-        Returns:
-            client: the constructed client object
-        """
-        client = boto3.client(
-            client_type,
-            aws_access_key_id=(self.key_id if len(self.key_id) > 0 else None),
-            aws_secret_access_key=(self.access_key if len(self.access_key) > 0 else None),
-            region_name=(self.region_name if len(self.region_name) > 0 else None),
+        self.ec2_client = boto3.client(
+            "ec2",
+            aws_access_key_id=key_id,
+            aws_secret_access_key=access_key,
+            region_name=region_name,
         )
-        return client
 
     def start_instances(
         self,
