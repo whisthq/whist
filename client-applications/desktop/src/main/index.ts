@@ -68,8 +68,6 @@ export const authFlow: Flow = (name, trigger) => {
   const login = loginFlow(next, loginAction)
   const signup = signupFlow(next, signupAction)
 
-  login.success.subscribe((data) => console.log("LOGIN", data))
-
   persisted.failure.subscribe(() => createAuthWindow((win: any) => win.show()))
 
   const success = merge(login.success, signup.success, persisted.success)
@@ -133,7 +131,6 @@ const mainFlow: Flow = (name, trigger) => {
   const protocol = protocolLaunchFlow(next, auth.success)
 
   zip(protocol.success, container.success).subscribe(([protocol, info]) => {
-    console.log("STREAMING INFO", info)
     protocolStreamInfo(protocol, info)
   })
 
