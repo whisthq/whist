@@ -50,9 +50,6 @@ if [ -f "$TIMEOUT_FILENAME" ]; then
     OPTIONS="$OPTIONS --timeout=$TIMEOUT"
 fi
 
-# Create a google_drive folder in the user's home
-ln -sf /fractal/cloudStorage/google_drive /home/fractal/
-
 # Start the application that this container runs
 /usr/share/fractal/run-as-fractal-user.sh "/usr/bin/run-fractal-application.sh" &
 fractal_application_runuser_pid=$!
