@@ -1,3 +1,4 @@
+import { Observable } from "rxjs"
 import { Action } from "@app/@types/actions"
 
 export type AsyncReturnType<
@@ -14,4 +15,10 @@ export interface StateIPC {
   errorRelaunchRequest: number
   updateInfo: string
   action: Action
+}
+
+export type FlowEvent = object
+
+export type FlowReturnType = {
+  [key: string]: Observable<FlowEvent>
 }

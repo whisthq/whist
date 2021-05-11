@@ -3,6 +3,8 @@ import { filter, share, tap } from "rxjs/operators"
 import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
 
+import { FlowReturnType } from "@app/@types/state"
+
 const logFormat = (...args: any[]) => {
   let [title, message, value] = args
   if (value === undefined) {
@@ -34,16 +36,16 @@ export const fork = <T>(
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
+
 export const flow = <A>(
   name: string,
   fn: (
     childName: string,
     trigger: Observable<A>
   ) => { [key: string]: Observable<any> }
-) => (childName: string, trigger: Observable<A>) =>
-  mapValues(fn(`${name}.${childName}`, trigger), (obs, key) =>
+) => (childName: string, trigger: Observable<A>):FlowReturnType =>
+  mapValues(fn(`${name}.${childName}`, trigger), (obs) =>
     obs.pipe(
-      tap((value) => logDebug(`${name}.${childName}.${key}`, value)),
       share()
     )
   )

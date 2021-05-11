@@ -5,15 +5,15 @@
 // Many of these observables emit the protocol ChildProcess object, which
 // carries important data about the state of the protocol process.
 
-import { map } from "rxjs/operators"
-import { protocolLaunch } from "@app/utils/protocol"
+import { map, take } from "rxjs/operators"
+import { protocolLaunch } from "@app/main/flows/protocol/protocol"
 import { ChildProcess } from "child_process"
 import { flow, fork } from "@app/utils/flows"
 
 export const protocolLaunchFlow = flow(
   "protocolLaunchFlow",
-  (_name, trigger) => {
-    const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
+  (_, trigger) => {
+    const launch = fork(trigger.pipe(take(1), map(() => protocolLaunch())), {
       success: () => true,
     })
 
@@ -23,10 +23,10 @@ export const protocolLaunchFlow = flow(
   }
 )
 
-export const protocolCloseFlow = flow<ChildProcess>(
+export const protocolCloseFlow = flow(
   "protocolCloseFlow",
-  (_name, trigger) => {
-    const close = fork(trigger, {
+  (_, trigger) => {
+    const close = fork<ChildProcess>(trigger, {
       success: (protocol) => !protocol.killed,
       failure: (protocol) => protocol.killed,
     })

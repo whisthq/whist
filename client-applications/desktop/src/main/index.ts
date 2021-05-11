@@ -16,19 +16,21 @@
 import { app } from "electron"
 import { flow, fork } from "@app/utils/flows"
 import { BehaviorSubject, merge, fromEvent, zip, combineLatest } from "rxjs"
+import { ChildProcess } from "child_process"
 import { switchMap, pluck, sample, map } from "rxjs/operators"
-import { signupFlow } from "@app/main/observables/signup"
-import { loginFlow } from "@app/main/observables/login"
-import { protocolLaunchFlow } from "@app/main/observables/protocol"
+import { has, every, omit } from "lodash"
+
+import { signupFlow } from "@app/main/flows/signup"
+import { loginFlow } from "@app/main/flows/login"
+import { protocolLaunchFlow } from "@app/main/flows/protocol"
 import {
   containerCreateFlow,
   containerPollingFlow,
-} from "@app/main/observables/container"
-import { hostServiceFlow } from "@app/main/observables/host"
+} from "@app/main/flows/container"
+import { hostServiceFlow } from "@app/main/flows/host"
 import { loginAction, signupAction } from "@app/main/events/actions"
 import { store, persist, onPersistChange } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
-import { has, every, omit } from "lodash"
 import { createAuthWindow } from "@app/utils/windows"
 
 // Auth is currently the only flow that requires any kind of persistence,
@@ -125,7 +127,7 @@ const mainFlow = flow("mainFlow", (name, trigger) => {
 
   const protocol = protocolLaunchFlow(name, auth.success)
 
-  zip(protocol.success, container.success).subscribe(([protocol, info]) => {
+  zip(protocol.success, container.success).subscribe(([protocol, info]: [ChildProcess, any]) => {
     protocolStreamInfo(protocol, info)
   })
 

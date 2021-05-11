@@ -31,8 +31,8 @@ const action = (type: ActionType): Observable<any> => {
   // the type passed in above
   const filterType = (observable: Observable<Action>) =>
     observable.pipe(
-      filter((x) => x !== undefined && x.type === type),
-      map((x) => x.payload)
+      filter((x: Action) => x !== undefined && x.type === type),
+      map((x: Action) => x.payload)
     )
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */

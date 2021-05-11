@@ -6,6 +6,10 @@
 // These observables are subscribed by protocol launching observables, which
 // react to success container creation emissions from here.
 
+import { from, of, interval, merge } from "rxjs"
+import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
+import { some } from "lodash"
+
 import {
   containerCreate,
   containerInfo,
@@ -18,12 +22,9 @@ import {
 } from "@app/utils/container"
 import {} from "@app/utils/container"
 import { loadingFrom } from "@app/utils/observables"
-import { from, of, interval, merge } from "rxjs"
-import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { fork, flow } from "@app/utils/flows"
-import { some } from "lodash"
 
-const containerInfoGates = flow<any>("containerInfoGates", (_name, trigger) =>
+const containerInfoRequest = flow("containerInfoRequest", (_, trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ containerID, accessToken }) =>
@@ -44,7 +45,7 @@ const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = containerInfoGates(name, tick)
+  const poll = containerInfoRequest(name, tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -72,7 +73,7 @@ export const containerCreateFlow = flow<any>(
 
     return {
       success: create.success.pipe(
-        map((response) => ({ containerID: response.json.ID }))
+        map((response: {json: {ID: string}}) => ({ containerID: response.json.ID }))
       ),
       failure: create.failure,
     }

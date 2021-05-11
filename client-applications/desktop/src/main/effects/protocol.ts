@@ -6,15 +6,15 @@
 import { zip, merge } from "rxjs"
 
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
-import { protocolLaunchSuccess } from "@app/main/observables/protocol"
-import { containerPollingSuccess } from "@app/main/observables/container"
+import { protocolLaunchSuccess } from "@app/main/flows/protocol"
+import { containerPollingSuccess } from "@app/main/flows/container"
 import {
   containerInfoIP,
   containerInfoPorts,
   containerInfoSecretKey,
 } from "@app/utils/container"
 import { quitAction, signoutAction } from "@app/main/events/actions"
-import { errorWindowRequest } from "@app/main/observables/error"
+import { errorWindowRequest } from "@app/main/flows/error"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a container is created and configured. To do this, we need it

@@ -9,7 +9,7 @@ import {
   hostServiceConfig,
   hostServiceConfigValid,
   hostServiceConfigError,
-} from "@app/utils/host"
+} from "@app/main/flows/host/utils"
 import { from, interval, of, merge, combineLatest } from "rxjs"
 import {
   map,

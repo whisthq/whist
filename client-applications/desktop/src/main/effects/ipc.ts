@@ -11,8 +11,8 @@ import { map, mapTo, withLatestFrom, startWith } from "rxjs/operators"
 import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
 import { SubscriptionMap, objectCombine } from "@app/utils/observables"
-import { loginLoading, loginWarning } from "@app/main/observables/login"
-import { signupLoading, signupWarning } from "@app/main/observables/signup"
+import { loginLoading, loginWarning } from "@app/main/flows/login"
+import { signupLoading, signupWarning } from "@app/main/flows/signup"
 import { eventDownloadProgress } from "@app/main/events/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.

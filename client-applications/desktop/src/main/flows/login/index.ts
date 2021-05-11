@@ -12,6 +12,8 @@
 
 import { from, combineLatest, Observable } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
+import { merge } from "lodash"
+
 import {
   emailLogin,
   emailLoginValid,
@@ -19,15 +21,13 @@ import {
   emailLoginConfigToken,
   emailLoginAccessToken,
   emailLoginRefreshToken,
-} from "@app/utils/login"
-import { loginAction } from "@app/main/events/actions"
+} from "@app/main/flows/login/utils"
 import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
-import { merge } from "lodash"
 
-const loginGates = flow("loginGates", (_name, trigger) => {
+const loginRequest = flow("loginRequest", (_, trigger) => {
   const login = fork(
-    loginAction.pipe(
+    trigger.pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
     ),
     {
@@ -44,37 +44,42 @@ const loginGates = flow("loginGates", (_name, trigger) => {
   }
 })
 
+const configTokenRequest = flow("configTokenRequest", (_, trigger) => {
+  return {
+    success: trigger.pipe(
+      switchMap((args: [object, string]) => from(emailLoginConfigToken(...args))),
+      map((configToken) => ({ configToken }))
+    )
+  }
+})
+
+const jwtRequest = flow("accessTokenRequest", (_, trigger) => {
+  return {
+    success: trigger.pipe(
+      map((response) => ({
+        accessToken: emailLoginAccessToken(response),
+        refreshToken: emailLoginRefreshToken(response),
+      }))
+    )
+  }
+})
+
 export const loginFlow = flow("loginFlow", (name, trigger) => {
-  const input = combineLatest({
-    email: trigger.pipe(pluck("email")),
-    password: trigger.pipe(pluck("password")),
-  })
+  const login = loginRequest(name, trigger)
 
-  const login = loginGates(name, input)
-
-  const configToken = combineLatest([
+  const configToken = configTokenRequest(name, combineLatest([
     login.success,
-    input.pipe(pluck("password")) as Observable<string>,
-  ]).pipe(
-    switchMap((args) => from(emailLoginConfigToken(...args))),
-    map((configToken) => ({ configToken }))
-  )
+    trigger.pipe(pluck("password"))
+  ]))
 
-  const tokens = login.success.pipe(
-    map((response) => ({
-      accessToken: emailLoginAccessToken(response),
-      refreshToken: emailLoginRefreshToken(response),
-    }))
-  )
-
-  const result = combineLatest([input, tokens, configToken]).pipe(
-    map(([...args]) => merge(...args))
-  )
+  const jwt = jwtRequest(name, login.success)
 
   return {
-    success: result,
+    success: combineLatest([trigger, jwt, configToken]).pipe(
+      map((args: [object, object, object]) => merge(...args))
+    ),
     failure: login.failure,
     warning: login.warning,
-    loading: loadingFrom(result, login.failure, login.warning),
+    loading: login.loading,
   }
 })
