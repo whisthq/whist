@@ -26,9 +26,10 @@ import {
   takeUntil,
   switchMap,
   take,
-  repeatWhen,
+  mapTo,
   withLatestFrom,
   tap,
+  share,
 } from "rxjs/operators"
 import { gates, Flow } from "@app/utils/gates"
 
@@ -36,8 +37,9 @@ const containerCreateGates: Flow = (name, trigger) =>
   gates(
     name,
     trigger.pipe(
-      tap((args) => console.log("CREATE ARGS", args)),
-      switchMap(([email, token]) => from(containerCreate(email, token)))
+      switchMap(([email, token]) => {
+        return from(containerCreate(email, token))
+      })
     ),
     {
       success: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "",
@@ -57,7 +59,9 @@ const containerInfoGates: Flow = (name, trigger) =>
   )
 
 const containerPollingInner: Flow = (name, trigger) => {
-  const tick = trigger.pipe(repeatWhen(() => interval(1000)))
+  const tick = trigger.pipe(
+    switchMap((args) => interval(1000).pipe(mapTo(args)))
+  )
   const poll = containerInfoGates(name, tick)
 
   return {
@@ -69,12 +73,14 @@ const containerPollingInner: Flow = (name, trigger) => {
 
 const containerPollingFlow: Flow = (name, trigger) => {
   const poll = trigger.pipe(
-    map(([res, token]) => [res.json.id, token]),
-    map((args) => containerPollingInner(name, of(args)))
+    map(([res, token]) => [res.json.ID, token]),
+    tap((args) => console.log("POLLING ARGS", args)),
+    map((args) => containerPollingInner(name, of(args))),
+    share()
   )
 
   const success = poll.pipe(switchMap((inner) => inner.success))
-  const failure = poll.pipe(switchMap((inner) => inner.success))
+  const failure = poll.pipe(switchMap((inner) => inner.failure))
   const pending = poll.pipe(switchMap((inner) => inner.pending))
   const loading = loadingFrom(trigger, success, failure)
 
@@ -90,14 +96,16 @@ export const {
   combineLatest([
     zip(userEmail, userAccessToken, userConfigToken),
     eventUpdateNotAvailable,
-  ])
+  ]).pipe(map(([args]) => args))
 )
 
 export const {
   success: containerPollingSuccess,
   failure: containerPollingFailure,
   loading: containerPollingLoading,
+  pending: containerPollingPending,
 } = containerPollingFlow(
   `containerPolling`,
   containerCreateSuccess.pipe(withLatestFrom(userAccessToken))
 )
+containerPollingPending.subscribe()
