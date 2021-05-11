@@ -59,18 +59,18 @@ export const protocolLaunch = () => {
 export const protocolStreamInfo = (
   protocol: ChildProcess,
   info: {
-    ports: {
+    containerIP: string
+    containerSecret: string
+    containerPorts: {
       port_32262: number
       port_32263: number
       port_32273: number
     }
-    secret_key: string
-    ip: string
   }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.ports)}`)
-  writeStream(protocol, `private-key?${info.secret_key}`)
-  writeStream(protocol, `ip?${info.ip}`)
+  writeStream(protocol, `ports?${serializePorts(info.containerPorts)}`)
+  writeStream(protocol, `private-key?${info.containerSecret}`)
+  writeStream(protocol, `ip?${info.containerIP}`)
   writeStream(protocol, "finished?0")
 }
 

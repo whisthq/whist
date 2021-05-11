@@ -21,6 +21,11 @@ export const persistKeys = (obj: Partial<StateIPC>, ...keys: string[]) => {
   }
 }
 
+export const onPersistChange = (fn: (n: any, o: any) => void) =>
+  store.onDidAnyChange((newStore: any, oldStore: any) => {
+    fn(newStore, oldStore)
+  })
+
 export const persistClear = () => {
   store.clear()
 }
