@@ -495,15 +495,21 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     return 0;
 }
 
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist) {
-    if (fabs(d_theta) > 3.14 / 180.0) {
-        LOG_INFO("multigesture rotate not implemented");
-    } else if (fabs(d_dist) > 0.002) {
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type) {
+    if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
         emit_key_event(input_device, FK_LCTRL, true);
         emit_high_res_mouse_wheel_event(input_device, 0, d_dist);
+    }
+    return 0;
+}
+
+int emit_touch_event(InputDevice* input_device, FractalTouchType touch_type, bool active_gesture) {
+    // If the user has released a finger mid-gesture, we release the lctrl key
+    if (active_gesture && touch_type == FINGER_UP) {
         emit_key_event(input_device, FK_LCTRL, false);
     }
     return 0;
 }
+
 
 #endif  // INPUT_DRIVER == UINPUT_INPUT_DRIVER
