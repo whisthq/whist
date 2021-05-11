@@ -33,7 +33,7 @@ class EC2Client:
         self,
         region_name: str,
         key_id: Optional[str] = None,
-        access_key: Optional[str] = "",
+        access_key: Optional[str] = None,
     ):
         self.ec2_client = boto3.client(
             "ec2",
