@@ -15,16 +15,6 @@ jobs:
     main-webserver-enumerate-all-instances:
         name: Main Webserver Enumerate All Instances
         runs-on: ubuntu-20.04
-        strategy:
-            matrix:
-                aws-region:
-                    - us-east-1
-                    - us-east-2
-                    - us-west-1
-                    - us-west-2
-                    - ca-central-1
-                    - eu-west-1
-                    - eu-central-1
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -46,16 +36,18 @@ jobs:
 
             - name: List Number of Instances in Slack
               shell: python3 {0}
+              with:
+                  AWS_REGIONS: "us-east-1 us-east-2 us-west-1 us-west-2 ca-central-1 eu-west-1 eu-central-1"
               run: |
                   from notifications.slack_bot import slack_post
                   from aws.resource_helpers import num_aws_instances
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#test"
-
-                  region = "${{ matrix.aws-region }}"
-                  (running_instances, total_instances) = num_aws_instances(region)
-                  BODY = "%s running instances in _%s_ (%s total)" % (running_instances, region, total_instances)
+                  BODY = "Number of Instances:"
+                  for region in ${{ env.AWS_REGIONS }}.split():
+                    (running_instances, total_instances) = num_aws_instances(region)
+                    BODY += "\n     - _%s_: %d running instances (%d total)" % (region, running_instances, total_instances)
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
