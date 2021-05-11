@@ -5,11 +5,6 @@ import boto3  # type: ignore
 
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
 
-"""
-This file holds our low-level utilities for spinning up,
-monitoring, and spinning down EC2 instances on AWS.
-"""
-
 
 def check_str_param(val: str, name: str) -> str:
     """

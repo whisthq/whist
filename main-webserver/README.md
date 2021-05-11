@@ -310,6 +310,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   ├── helpers_tests
 │   │   │   ├── aws_tests
 │   │   │   │   └── test_ecs_client.py --> basic tests of ECSClient functionality
+│   │   │   │   └── test_ec2_client.py --> basic tests of EC2Client functionality
 │   │   └── utils
 │   │       ├── aws -- > utility scripts for interfacing with AWS
 │   │       │   ├── autoscaling.py --> scripts for manipulating ASGs and their associated clusters
@@ -317,6 +318,7 @@ Note that all conftest files contain test fixtures for their respective director
 │   │       │   ├── aws_resource_integrity.py --> scripts that ensure certain AWS resources exist
 │   │       │   ├── aws_resource_locks.py --> scripts to ensure atomicity on AWS resource use
 │   │       │   ├── base_ecs_client.py -->  The majority of our AWS code lives here -- interfaces to clusters, containers, ASGs, and assorted other AWS endpoints
+│   │       │   ├── base_ec2_client.py -->  Utility libraries for monitoring and orchestrating EC2 instances.
 │   │       │   ├── ecs_deletion.py --> code used for cluster deletion
 │   │       │   └── utils.py --> general utility scripts for API reqs -- mostly retry code
 │   │       ├── datadog
