@@ -15,6 +15,12 @@ ignore=CVS,
        base_ecs_client.py,
        hash_bad_words.py,
        newsletter_blueprint.py,
+<<<<<<< HEAD
+=======
+       stripe_blueprint.py,
+       stripe_mail.py,
+       stripe_helpers.py
+>>>>>>> 274a1b0a3 (tests + clean up)
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
