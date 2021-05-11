@@ -12,7 +12,7 @@ import {
   stripePortalValid,
   stripePortalError,
 } from "@app/utils/payment"
-import { filter, map, share, exhaustMap, tap } from "rxjs/operators"
+import { filter, map, share, exhaustMap } from "rxjs/operators"
 import {
   stripeCheckoutAction,
   stripePortalAction,
@@ -20,7 +20,6 @@ import {
 
 // Listens for a checkout portal request from the main IPC channel
 export const stripeCheckoutRequest = stripeCheckoutAction.pipe(
-  tap((req) => console.log(req)),
   filter(
     (req) => (req?.customerId ?? "") !== "" && (req?.priceId ?? "") !== ""
   ),
