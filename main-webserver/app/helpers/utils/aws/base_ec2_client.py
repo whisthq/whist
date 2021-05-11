@@ -7,25 +7,10 @@
 
 import time
 
-from typing import Any, Dict, Literal, List, Optional, Union
+from typing import Any, Dict, Literal, List, Union
 import boto3  # type: ignore
 
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
-
-
-def check_str_param(val: str, name: str) -> str:
-    """
-    Checks the incoming type of a parameter
-    Args:
-        val: the value to check
-        name: the name of the incoming param
-
-    Returns: the value iff it's a string, else raises an exception
-
-    """
-    if isinstance(val, str):
-        return val
-    raise Exception("Value {} was supposed to be a string, but was a {}".format(name, type(val)))
 
 
 class EC2Client:
@@ -35,8 +20,6 @@ class EC2Client:
         region_name (str):  which AWS region you're running on
         key_id (str): the AWS access key ID to use
         access_key (str): the AWS access key going with that key_id
-        starter_ec2_client (boto3.client): starter log client, used for mocking
-        starter_iam_client (boto3.client): starter iam client, used for mocking
     """
 
     def __init__(
@@ -44,21 +27,14 @@ class EC2Client:
         region_name: str = "us-east-1",
         key_id: str = "",
         access_key: str = "",
-        starter_ec2_client: Optional[Any] = None,
-        starter_iam_client: Optional[Any] = None,
     ):
-        self.key_id = check_str_param(key_id, "key_id")
-        self.region_name = check_str_param(region_name, "region_name")
-        self.access_key = check_str_param(access_key, "access_key")
+        self.key_id = key_id
+        self.region_name = region_name
+        self.access_key = access_key
 
-        if starter_ec2_client is None:
-            self.ec2_client = self._make_client("ec2")
-        else:
-            self.ec2_client = starter_ec2_client
-        if starter_iam_client is None:
-            self.iam_client = self._make_client("iam")
-        else:
-            self.iam_client = starter_iam_client
+        self.ec2_client = self._make_client("ec2")
+
+        self.iam_client = self._make_client("iam")
 
     def _make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
         """
@@ -79,9 +55,9 @@ class EC2Client:
     def start_instances(
         self,
         ami_id: str,
+        instance_name: str,
         num_instances: int = 1,
         instance_type: str = "g3.4xlarge",
-        instance_name: str = "Leor-test-instance",
         poll_til_up: bool = False,
     ) -> List[str]:
         """
@@ -89,9 +65,9 @@ class EC2Client:
         actively running
         Args:
             ami_id: which AMI to use
+            instance_name: what name the instance should have
             num_instances: how many instances to start
             instance_type: which type of instance (hardwarewise) to start
-            instance_name: what name the instance should have
             poll_til_up: whether this call should block until instances are running
 
         Returns: the IDs of the started instances
