@@ -13,6 +13,13 @@ import boto3  # type: ignore
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
 
 
+class InstancesNotRunningException(Exception):
+    """
+    This exception is thrown when instances that are expected to be up
+    are not
+    """
+
+
 class EC2Client:
     """
     This class governs everything you need to provision instances on EC2
@@ -179,7 +186,7 @@ class EC2Client:
 
         """
         if not self.check_if_instances_up(instance_ids):
-            raise Exception("instances must be up to check IPs")
+            raise InstancesNotRunningException(str(instance_ids))
         resp = self.ec2_client.describe_instances(InstanceIds=instance_ids)
         instance_info = resp["Reservations"][0]["Instances"]
         resdict = dict()
