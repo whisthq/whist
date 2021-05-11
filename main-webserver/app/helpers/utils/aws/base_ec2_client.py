@@ -1,7 +1,9 @@
-# This file holds the utility library for EC2 instance orchestration
-# Specifically, it governs instance spinup, spindown, and getting
+# This file holds the utility library for EC2 (AWS cloud compute) instance orchestration
+# Specifically, it governs instance starting, stopping, and getting
 # the IPs of running instances, as well as some useful state checkers.
-# Tests live in helpers_tests/aws_tests/test_ec2_client.py
+# Tests live in helpers_tests/aws_tests/test_ec2_client.py, and those tests also demonstrate
+# common usage.
+
 
 import time
 
@@ -95,8 +97,8 @@ class EC2Client:
         Returns: the IDs of the started instances
 
         """
-        # rather than having some complex launch config, just make the kwargs
-        # at call time
+        # rather than having some complex launch config, just make the AWS instance
+        # parameters at call time
         kwargs = {
             "ImageId": ami_id,
             "InstanceType": instance_type,
