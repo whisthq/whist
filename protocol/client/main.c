@@ -113,6 +113,9 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
+// Whether a pinch zoom gesture is currently active
+bool pinching = false;
+
 // Window resizing state
 SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 clock window_resize_timer;

@@ -48,6 +48,8 @@ extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
+extern bool pinching;
+
 extern bool audio_refresh;
 
 /*
@@ -63,6 +65,7 @@ int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
 int handle_mouse_button_up_down(SDL_Event *event);
 int handle_multi_gesture(SDL_Event *event);
+int handle_touch(SDL_Event *event);
 
 /*
 ============================
@@ -335,19 +338,44 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers};
-    send_fmsg(&fmsg);
-    // LOG_INFO("multigesture detected!! d_theta: %d d_dist: %d, x: %d, y: %d, num_fingers: %d",
-        // event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
+    LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
+        event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
 
-    // if (fabs(event->mgesture.dTheta) > 3.14 / 180.0 ) {
-    //     LOG_INFO("ROTATE");
-    // } else if (fabs(event->mgesture.dDist) > 0.002 ) {
-    //     if (event->mgesture.dDist > 0) {
-    //         LOG_INFO("PINCH OPEN");
-    //     } else {
-    //         LOG_INFO("PINCH CLOSE");
-    //     }
-    // }
+    if (fabs(event->mgesture.dTheta) > 3.14 / 180.0 ) {
+        LOG_INFO("ROTATE");
+        fmsg.multigesture.gesture_type = ROTATE;
+    } else if (fabs(event->mgesture.dDist) > 0.002 ) {
+        pinching = true;
+        if (event->mgesture.dDist > 0) {
+            LOG_INFO("PINCH OPEN");
+            fmsg.multigesture.gesture_type = PINCH_OPEN;
+        } else {
+            LOG_INFO("PINCH CLOSE");
+            fmsg.multigesture.gesture_type = PINCH_CLOSE;
+        }
+    }
+
+    send_fmsg(&fmsg);
+
+    return 0;
+}
+
+int handle_touch_up(SDL_Event *event) {
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_TOUCH;
+    fmsg.touch = (FractalTouchMessage){.x = event->tfinger.x,
+                                       .y = event->tfinger.y,
+                                       .dx = event->tfinger.dx,
+                                       .dy = event->tfinger.dy,
+                                       .active_gesture = pinching};
+    fmsg.touch.touch_type = FINGER_UP;
+
+    send_fmsg(&fmsg);
+
+    // the multigesture has ended
+    if (pinching) {
+        pinching = false;
+    }
 
     return 0;
 }
@@ -435,6 +463,11 @@ int handle_sdl_event(SDL_Event *event) {
             break;
         case SDL_MULTIGESTURE:
             if (handle_multi_gesture(event) != 0) {
+                return -1;
+            }
+            break;
+        case SDL_FINGERUP:
+            if (handle_touch_up(event) != 0) {
                 return -1;
             }
             break;
