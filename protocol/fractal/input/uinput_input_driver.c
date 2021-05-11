@@ -437,6 +437,10 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
+    LOG_ERROR("*****EMITTING KEY EVENT*****");
+    LOG_ERROR("pressed: %d", pressed);
+    LOG_ERROR("LinuxKeyCode: 0x%x", GetLinuxKeyCode(fractal_keycode));
+
     emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fractal_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[fractal_keycode] = pressed;
