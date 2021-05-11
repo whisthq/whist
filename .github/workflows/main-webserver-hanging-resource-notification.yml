@@ -45,7 +45,7 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#test"
                   BODY = "Number of Instances:"
-                  for region in ${{ env.AWS_REGIONS }}.split():
+                  for region in "${{ env.AWS_REGIONS }}".split():
                     (running_instances, total_instances) = num_aws_instances(region)
                     BODY += "\n     - _%s_: %d running instances (%d total)" % (region, running_instances, total_instances)
 
