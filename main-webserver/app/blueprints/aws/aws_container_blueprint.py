@@ -203,7 +203,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["region_name"],
             kwargs["webserver_url"],
         )
-        task = update_region.delay(ami=ami, region_name=region_name, webserver_url=webserver_url)
+        task = update_region.delay(webserver_url=webserver_url, region_name=region_name, ami=ami)
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST

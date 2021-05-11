@@ -23,17 +23,18 @@ from app.helpers.utils.general.time import date_to_unix, get_today
 
 @shared_task
 def update_cluster(
+    cluster_name: str,
+    webserver_url: str,
     region_name: Optional[str] = "us-east-1",
-    cluster_name: Optional[str] = None,
     ami: Optional[str] = None,
-    webserver_url: Optional[str] = None,
 ) -> None:
     """
     Updates a specific cluster to use a new AMI
 
     Args:
+        cluster_name: which cluster to update
+        webserver_url: which webserver URL the prewarmed container in update_cluster should talk to
         region_name (Optional[str]): which region the cluster is in
-        cluster_name (Optional[str]): which cluster to update
         ami (Optional[str]): which AMI to use
 
     Returns:
@@ -143,15 +144,19 @@ def update_cluster(
 
 
 @shared_task
-def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
+def update_region(
+    webserver_url: str,
+    region_name: str,
+    ami: Optional[str] = None,
+):
     """
     Updates all clusters in a region to use a new AMI
     calls update_cluster under the hood
 
     Args:
-        region_name (Optional[str]): which region the cluster is in
-        ami (Optional[str]): which AMI to use
         webserver_url: which webserver URL the prewarmed container in update_cluster should talk to
+        region_name: which region the cluster is in
+        ami (Optional[str]): which AMI to use
 
     Returns:
          None, though which cluster was updated is in celery state
@@ -192,7 +197,12 @@ def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] =
     fractal_logger.info(f"Updating clusters: {all_clusters}")
     tasks = []
     for cluster in all_clusters:
-        task = update_cluster.delay(region_name, cluster.cluster, ami, webserver_url)
+        task = update_cluster.delay(
+            cluster_name=cluster.cluster,
+            webserver_url=webserver_url,
+            region_name=region_name,
+            ami=ami,
+        )
         tasks.append(task.id)
 
     fractal_logger.info(

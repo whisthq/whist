@@ -169,8 +169,9 @@ def test_update_cluster(monkeypatch, task_def_env):
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
-        region_name="us-east-1",
         cluster_name=pytest.cluster_name,
+        webserver_url=None,  # will go to dev
+        region_name="us-east-1",
         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
@@ -188,8 +189,9 @@ def test_update_cluster(monkeypatch, task_def_env):
 def test_update_bad_cluster(cluster):
     # Regression test for PR 665, tests that a dead cluster doesn't brick
     res = update_cluster.delay(
-        region_name="us-east-1",
         cluster_name=cluster.cluster,
+        webserver_url=None,
+        region_name="us-east-1",
         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
@@ -324,7 +326,7 @@ def test_update_region(client, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
     def mock_update_cluster(
-        region_name="us-east-1", cluster_name=None, ami=None, webserver_url=None
+        cluster_name=None, webserver_url=None, region_name="us-east-1", ami=None
     ):
         success = True
         # check that the arguments are as expected
