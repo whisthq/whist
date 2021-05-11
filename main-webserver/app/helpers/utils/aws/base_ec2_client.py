@@ -6,6 +6,12 @@ import boto3  # type: ignore
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
 
 
+# This file holds the utility library for EC2 instance orchestration
+# Specifically, it governs instance spinup, spindown, and getting
+# the IPs of running instances, as well as some useful state checkers.
+# Tests live in helpers_tests/aws_tests/test_ec2_client.py
+
+
 def check_str_param(val: str, name: str) -> str:
     """
     Checks the incoming type of a parameter
