@@ -49,7 +49,7 @@ class LoadTestUser(locust.HttpUser):
     # because each locust invocation is single-threaded and switches between tasks with gevent
     # so we can use variables that otherwise need lock-access:
     # number representing the largest unclaimed user number. on_start(...)
-    available_user_num = 1
+    available_user_num = 0
     # number of users that have finished.
     num_finished = 0
     # a user had an exception

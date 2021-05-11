@@ -514,8 +514,12 @@ def _assign_container(
             )
         except Exception:
             # If the `filter_by` gave us `None`, that is okay, we handle that below.
-            # Simply set the output appropriately.
-            pass
+            # For now, we end the session so that code from here runs in a new transaction
+            # This is necessary because if a lock timeout brought us here AND we do
+            # not end the session, then any future SQL commands run in the same bad
+            # erroring transaction and are invalidated. Basically, the rest of this
+            # function can never touch the db unless we end the session here.
+            db.session.close()
 
     else:
         num_extra = 0

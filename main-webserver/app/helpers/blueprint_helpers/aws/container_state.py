@@ -90,8 +90,6 @@ def set_container_state(
 
     obj = container_state_obj(user_id=keyuser)
 
-    fractal_logger.info("got obj")
-
     if force or can_update_container_state(keyuser, keytask, obj=obj):
         if obj:
             if task_id:
