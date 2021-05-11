@@ -19,7 +19,6 @@ import {
 import { loginFailure } from "@app/main/observables/login"
 import { signupFailure } from "@app/main/observables/signup"
 import { containerCreateFailure } from "@app/main/observables/container"
-import { protocolLaunchFailure } from "@app/main/observables/protocol"
 import { signoutAction } from "@app/main/events/actions"
 
 // We create observables for each piece of state we want to persist.
@@ -45,7 +44,6 @@ merge(
   loginFailure,
   signupFailure,
   containerCreateFailure,
-  protocolLaunchFailure,
   signoutAction
 ).subscribe(() => persistClear())
 

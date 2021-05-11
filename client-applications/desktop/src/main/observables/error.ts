@@ -26,7 +26,6 @@ import {
   containerPollingFailure,
   containerCreateFailure,
 } from "@app/main/observables/container"
-import { protocolLaunchFailure } from "@app/main/observables/protocol"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -47,8 +46,7 @@ export const errorWindowRequest = merge(
       return createContainerErrorWindowInternal
     })
   ),
-  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow)),
-  protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
+  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow))
 ).pipe(
   withLatestFrom(eventAppReady),
   map(([f, _]) => f)
