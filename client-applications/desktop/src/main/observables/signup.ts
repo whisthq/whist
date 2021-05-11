@@ -20,7 +20,7 @@ import {
   emailSignupRefreshToken,
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
-import { loadingFrom, objectCombine } from "@app/utils/observables"
+import { loadingFrom } from "@app/utils/observables"
 import { Flow, gates } from "@app/utils/gates"
 
 const signupGates: Flow = (name, trigger) =>
@@ -59,7 +59,7 @@ export const generateConfigTokenGate: Flow = (name, trigger) =>
 export const signupFlow: Flow = (name, trigger) => {
   const next = `${name}.signupFlow`
 
-  const input = objectCombine({
+  const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
     configToken: generateConfigTokenGate(next, trigger).success,
@@ -75,7 +75,7 @@ export const signupFlow: Flow = (name, trigger) => {
   )
 
   const result = combineLatest([input, tokens]).pipe(
-    map((...args) => ({ ...args }))
+    map(([...args]) => ({ ...args }))
   )
   return {
     success: result,
