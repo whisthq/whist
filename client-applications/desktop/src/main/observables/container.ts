@@ -32,6 +32,7 @@ import {
   share,
 } from "rxjs/operators"
 import { gates, Flow } from "@app/utils/gates"
+import { some } from "lodash"
 
 const containerCreateGates: Flow = (name, trigger) =>
   gates(
@@ -56,8 +57,7 @@ const containerInfoGates: Flow = (name, trigger) =>
       pending: (result) => containerInfoPending(result),
       failure: (result) =>
         containerInfoError(result) ||
-        !containerInfoPending(result) ||
-        !containerInfoSuccess(result),
+        !some([containerInfoPending(result), containerInfoSuccess(result)]),
     }
   )
 
@@ -76,8 +76,6 @@ const containerPollingInner: Flow = (name, trigger) => {
 
 const containerPollingFlow: Flow = (name, trigger) => {
   const poll = trigger.pipe(
-    map(([res, token]) => [res.json.ID, token]),
-    tap((args) => console.log("POLLING ARGS", args)),
     map((args) => containerPollingInner(name, of(args))),
     share()
   )
@@ -109,6 +107,9 @@ export const {
   pending: containerPollingPending,
 } = containerPollingFlow(
   `containerPolling`,
-  containerCreateSuccess.pipe(withLatestFrom(userAccessToken))
+  containerCreateSuccess.pipe(
+    map((response) => response.json.ID),
+    withLatestFrom(userAccessToken)
+  )
 )
 containerPollingPending.subscribe()
