@@ -53,12 +53,11 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#test"
-                  BODY = "Instances in each region:\n"
-                  for region in ${{ matrix.aws-region }}:
-                    client = boto3.client("ec2", region_name=region)
-                    response = client.describe_instances()
-                    BODY += "_${{ matrix.aws-region }}_: %s" % len(response["Reservations"]["Instances"])
-                    
+                  # BODY = "Instances in each region:\n"
+                  region = "${{ matrix.aws-region }}":
+                  client = boto3.client("ec2", region_name=region)
+                  response = client.describe_instances()
+                  BODY = "_${{ matrix.aws-region }}_: %s" % len(response["Reservations"]["Instances"])
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # main-webserver-hanging-resource-notification:
