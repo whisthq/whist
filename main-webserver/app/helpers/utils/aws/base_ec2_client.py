@@ -38,10 +38,7 @@ class EC2Client:
         self.key_id = key_id
         self.region_name = region_name
         self.access_key = access_key
-
         self.ec2_client = self._make_client("ec2")
-
-        self.iam_client = self._make_client("iam")
 
     def _make_client(self, client_type: Union[Literal["ec2"], Literal["iam"]]) -> Any:
         """
