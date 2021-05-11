@@ -1,4 +1,4 @@
-import { loadingFrom, objectCombine } from "@app/utils/observables"
+import { loadingFrom } from "@app/utils/observables"
 import {
   hostServiceInfo,
   hostServiceInfoValid,
@@ -10,7 +10,7 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError,
 } from "@app/utils/host"
-import { from, interval, of, merge } from "rxjs"
+import { from, interval, of, merge, combineLatest } from "rxjs"
 import {
   map,
   share,
@@ -35,7 +35,7 @@ const hostServiceInfoGates: Flow = (name, trigger) =>
       success: (result) => hostServiceInfoValid(result),
       pending: (result) => hostServiceInfoPending(result),
       failure: (result) =>
-        !some([hostServiceInfoValid(result), hostServiceInfoPending]),
+        !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
     }
   )
 
@@ -100,7 +100,7 @@ export const hostServiceFlow: Flow = (name, trigger) => {
 
   const config = hostConfigFlow(
     next,
-    objectCombine({
+    combineLatest({
       email: trigger.pipe(pluck("email")),
       configToken: trigger.pipe(pluck("configToken")),
       hostIP: info.success.pipe(pluck("containerIP")),

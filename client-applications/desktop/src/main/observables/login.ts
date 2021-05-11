@@ -22,7 +22,8 @@ import {
 } from "@app/utils/login"
 import { loginAction } from "@app/main/events/actions"
 import { Flow, gates } from "@app/utils/gates"
-import { loadingFrom, objectCombine } from "@app/utils/observables"
+import { loadingFrom } from "@app/utils/observables"
+import { merge } from "lodash"
 
 const loginGates: Flow = (name, trigger) => {
   const next = `${name}.loginGates`
@@ -49,10 +50,12 @@ const loginGates: Flow = (name, trigger) => {
 export const loginFlow: Flow = (name, trigger) => {
   const next = `${name}.loginFlow`
 
-  const input = objectCombine({
+  const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
   })
+
+  input.subscribe((v) => console.log("LOGIN INPUT", v))
 
   const login = loginGates(next, input)
 
@@ -72,7 +75,7 @@ export const loginFlow: Flow = (name, trigger) => {
   )
 
   const result = combineLatest([input, tokens, configToken]).pipe(
-    map((...args) => ({ ...args }))
+    map(([...args]) => merge(...args))
   )
 
   return {
