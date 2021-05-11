@@ -31,15 +31,13 @@ export const pollMap = <T>(
   )
 }
 
-export interface SubscriptionMap {
-  [key: string]: Observable<any>
-}
-
-export const objectCombine = (obj: SubscriptionMap) =>
+export const objectCombine = <T extends { [key: string]: Observable<any> }>(
+  obj: T
+) =>
   /*
         Description:
-            Takes in a SubscriptionMap and emits a key/value pair anytime any observable
-            inthe SubscriptionMap emits
+            Takes in a map of observable values and emits a key/value pair
+            anytime any observable in the map emits.
 
         Usage:
             const sMap = {
@@ -54,7 +52,7 @@ export const objectCombine = (obj: SubscriptionMap) =>
             // Output: {"a": 0} {"b": 1}
 
         Arguments:
-            obj (SubscriptionMap): Key/value mapping of observable names to observables
+            obj: Key/value mapping of observable names to observables
     */
 
   merge(
