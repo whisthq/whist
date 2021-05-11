@@ -6,11 +6,13 @@
 import { zip, merge } from "rxjs"
 
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
+import { protocolLaunchSuccess } from "@app/main/observables/protocol"
+import { containerPollingSuccess } from "@app/main/observables/container"
 import {
-  protocolLaunchProcess,
-  protocolLaunchSuccess,
-  protocolLaunchFailure,
-} from "@app/main/observables/protocol"
+  containerInfoIP,
+  containerInfoPorts,
+  containerInfoSecretKey,
+} from "@app/utils/container"
 import { quitAction, signoutAction } from "@app/main/events/actions"
 import { errorWindowRequest } from "@app/main/observables/error"
 
@@ -20,14 +22,18 @@ import { errorWindowRequest } from "@app/main/observables/error"
 //
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful container status response.
-zip(
-  protocolLaunchProcess,
-  protocolLaunchSuccess
-).subscribe(([protocol, info]) => protocolStreamInfo(protocol, info))
+zip(protocolLaunchSuccess, containerPollingSuccess).subscribe(
+  ([protocol, response]) =>
+    protocolStreamInfo(protocol, {
+      ip: containerInfoIP(response),
+      secret_key: containerInfoSecretKey(response),
+      ports: containerInfoPorts(response),
+    })
+)
 
 // If we have an error, close the protocol. We expect that an effect elsewhere
 // this application will take care of showing an appropriate error message.
 zip(
-  protocolLaunchProcess,
+  protocolLaunchSuccess,
   merge(signoutAction, quitAction, errorWindowRequest)
 ).subscribe(([protocol]) => protocolStreamKill(protocol))
