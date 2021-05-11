@@ -14,6 +14,8 @@ from app.helpers.blueprint_helpers.payment.stripe_post import (
 from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
+import stripe
+
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
