@@ -1,10 +1,10 @@
 {
-  "AUTH0_DOMAIN": "mingy98.us.auth0.com",
-  "AUTH0_CLIENT_ID": "N5ZqwACv1LumEs1v9MCCSkvTbA7ja3aj",
+  "AUTH0_DOMAIN": "fractal-dev.us.auth0.com",
+  "AUTH0_CLIENT_ID": "fGW4p3PX3zpOqOlMbszV4pdxD7V29bxZ",
   "AUTH0_ALLOW_DELETE": true,
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "APP_CALLBACKS": ["http://localhost/callback"],
-    "API_IDENTIFIER": "https://api.fractal.co/"
+    "API_IDENTIFIER": "http://dev-server.fractal.co"
   },
   "EXCLUDED_PROPS": {
     "clients": ["client_secret"],
