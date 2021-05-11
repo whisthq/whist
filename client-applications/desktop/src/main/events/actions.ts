@@ -49,7 +49,5 @@ export const signupAction = action(RendererAction.SIGNUP)
 export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
 export const quitAction = action(MainAction.QUIT).pipe(share())
 
-export const stripeCheckoutAction = action(RendererAction.CHECKOUT).pipe(
-  tap(() => console.log("checkout"))
-)
+export const stripeCheckoutAction = action(RendererAction.CHECKOUT)
 export const stripePortalAction = action(RendererAction.PORTAL)
