@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from app.helpers.utils.aws.base_ec2_client import EC2Client
+from app.helpers.utils.aws.base_ec2_client import EC2Client, InstancesNotRunningException
 
 
 def test_single() -> None:
@@ -34,5 +34,5 @@ def test_single() -> None:
     assert time.time() - down_start < 20, "stop should not be blocking"
     ec2_client.spin_til_instances_down(ids)
     assert ec2_client.check_if_instances_down(ids)
-    with pytest.raises(Exception, match="instances must be up to check IPs"):
+    with pytest.raises(InstancesNotRunningException):
         ec2_client.get_ip_of_instances(ids)
