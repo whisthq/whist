@@ -21,11 +21,10 @@ import {
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
-import { Flow, gates } from "@app/utils/gates"
+import { flow, fork } from "@app/utils/flows"
 
-const signupGates: Flow = (name, trigger) =>
-  gates(
-    `${name}.signupGates`,
+const signupGates = flow<any>("signupGates", (_name, trigger) =>
+  fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
         from(emailSignup(email, password, configToken))
@@ -38,34 +37,35 @@ const signupGates: Flow = (name, trigger) =>
         !emailSignupError(result) && !emailSignupError(result),
     }
   )
+)
 
-export const generateConfigTokenGate: Flow = (name, trigger) =>
-  gates(
-    `${name}.configTokenGate`,
-    trigger.pipe(
-      switchMap(({ password }) =>
-        from(
-          createConfigToken().then(
-            async (token) => await encryptConfigToken(token, password)
+export const generateConfigTokenGate = flow<any>(
+  "generateConfigTokenGate",
+  (_name, trigger) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ password }) =>
+          from(
+            createConfigToken().then(
+              async (token) => await encryptConfigToken(token, password)
+            )
           )
         )
-      )
-    ),
-    {
-      success: () => true,
-    }
-  )
+      ),
+      {
+        success: () => true,
+      }
+    )
+)
 
-export const signupFlow: Flow = (name, trigger) => {
-  const next = `${name}.signupFlow`
-
+export const signupFlow = flow("signupFlow", (name, trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
-    configToken: generateConfigTokenGate(next, trigger).success,
+    configToken: generateConfigTokenGate(name, trigger).success,
   })
 
-  const signup = signupGates(next, input)
+  const signup = signupGates(name, input)
 
   const tokens = signup.success.pipe(
     map((response) => ({
@@ -83,4 +83,4 @@ export const signupFlow: Flow = (name, trigger) => {
     warning: signup.warning,
     loading: loadingFrom(trigger, result, signup.failure, signup.warning),
   }
-}
+})

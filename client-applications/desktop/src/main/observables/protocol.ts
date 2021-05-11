@@ -7,30 +7,33 @@
 
 import { map } from "rxjs/operators"
 import { protocolLaunch } from "@app/utils/protocol"
-import { gates, Flow } from "@app/utils/gates"
+import { ChildProcess } from "child_process"
+import { flow, fork } from "@app/utils/flows"
 
-export const protocolLaunchFlow: Flow = (name, trigger) => {
-  const next = `${name}.protocolLaunchFlow`
+export const protocolLaunchFlow = flow(
+  "protocolLaunchFlow",
+  (_name, trigger) => {
+    const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
+      success: () => true,
+    })
 
-  const launch = gates(next, trigger.pipe(map(() => protocolLaunch())), {
-    success: () => true,
-  })
-
-  return {
-    success: launch.success,
+    return {
+      success: launch.success,
+    }
   }
-}
+)
 
-export const protocolCloseFlow: Flow = (name, trigger) => {
-  const next = `${name}.protocolCloseFlow`
+export const protocolCloseFlow = flow<ChildProcess>(
+  "protocolCloseFlow",
+  (_name, trigger) => {
+    const close = fork(trigger, {
+      success: (protocol) => !protocol.killed,
+      failure: (protocol) => protocol.killed,
+    })
 
-  const close = gates(next, trigger, {
-    success: (protocol) => !protocol.killed,
-    failure: (protocol) => protocol.killed,
-  })
-
-  return {
-    success: close.success,
-    failure: close.failure,
+    return {
+      success: close.success,
+      failure: close.failure,
+    }
   }
-}
+)
