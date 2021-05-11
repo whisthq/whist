@@ -39,6 +39,7 @@ extern volatile char hex_aes_private_key[33];
 extern volatile char *server_ip;
 extern volatile int output_width;
 extern volatile int output_height;
+extern volatile float dpi;
 extern volatile char *program_name;
 extern volatile CodecType output_codec_type;
 extern volatile SDL_Window *window;
@@ -851,8 +852,7 @@ void send_message_dimensions() {
     fmsg.dimensions.height = output_height;
     fmsg.dimensions.codec_type = (CodecType)output_codec_type;
     int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
-    float dpi;
-    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
+    SDL_GetDisplayDPI(display_index, NULL, (float*) &dpi, NULL);
     fmsg.dimensions.dpi = (int)dpi;
     LOG_INFO("Sending MESSAGE_DIMENSIONS: output=%dx%d, DPI=%d, codec=%d", output_width,
              output_height, (int)dpi, output_codec_type);

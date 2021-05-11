@@ -87,6 +87,7 @@ volatile bool native_window_color_update = false;
 
 volatile int output_width;
 volatile int output_height;
+volatile float dpi;
 volatile char* program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
@@ -113,8 +114,8 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
-// Whether a pinch zoom gesture is currently active
-bool pinching = false;
+// Whether a multigesture is currently active
+bool multigesture_active = false;
 
 // Window resizing state
 SDL_mutex* window_resize_mutex;  // protects pending_resize_message
