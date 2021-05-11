@@ -48,16 +48,15 @@ jobs:
               shell: python3 {0}
               run: |
                   from notifications.slack_bot import slack_post
-                  from aws.resource_helpers import hanging_resource
-                  import boto3
+                  from aws.resource_helpers import num_aws_instances
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#test"
-                  # BODY = "Instances in each region:\n"
+
                   region = "${{ matrix.aws-region }}"
-                  client = boto3.client("ec2", region_name=region)
-                  response = client.describe_instances()
-                  BODY = "_${{ matrix.aws-region }}_: %s" % len(response["Reservations"]["Instances"])
+                  (running_instances, total_instances) = num_aws_instances(region)
+                  BODY = "%s running instances in _%s_ (%s total)" % (running_instances, region, total_instances)
+
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # main-webserver-hanging-resource-notification:
