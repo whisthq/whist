@@ -29,10 +29,9 @@ import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
 import { signoutAction, quitAction } from "@app/main/events/actions"
 import {
-  protocolLaunchProcess,
-  protocolCloseRequest,
+  protocolCloseSuccess,
+  protocolCloseFailure,
   protocolLaunchSuccess,
-  protocolLaunchFailure,
 } from "@app/main/observables/protocol"
 import { errorWindowRequest } from "@app/main/observables/error"
 import {
@@ -82,7 +81,7 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 // to quit.
 
 merge(
-  protocolLaunchProcess,
+  protocolLaunchSuccess,
   loginSuccess,
   signupSuccess,
   errorWindowRequest,
@@ -91,12 +90,20 @@ merge(
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
+// When the protocol closes, upload protocol logs to S3
+combineLatest([
+  userEmail,
+  merge(protocolCloseSuccess, protocolCloseFailure),
+]).subscribe(([email]: [string, ChildProcess]) => {
+  uploadToS3(email).catch((err) => console.error(err))
+})
+
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchProcess, loginSuccess, signupSuccess).subscribe(() => {
+merge(protocolLaunchSuccess, loginSuccess, signupSuccess).subscribe(() => {
   closeWindows()
   hideAppDock()
   createTray(eventActionTypes)
@@ -116,27 +123,11 @@ eventUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-// When the protocol closes, upload protocol logs to S3
-combineLatest([
-  userEmail,
-  protocolCloseRequest,
-  merge(
-    protocolLaunchSuccess.pipe(mapTo(true)),
-    protocolLaunchFailure.pipe(mapTo(false))
-  ),
-]).subscribe(([email, , success]: [string, ChildProcess, boolean]) => {
-  uploadToS3(email)
-    .then(() => {
-      if (success) app.exit()
-    })
-    .catch((err) => {
-      console.error(err)
-      app.exit()
-    })
-})
-
-quitAction.subscribe(() => {
-  app.exit()
+zip(
+  merge(protocolCloseSuccess, protocolCloseFailure),
+  protocolLaunchSuccess.pipe(mapTo(true))
+).subscribe(([, success]) => {
+  if (success) app.quit()
 })
 
 signoutAction.subscribe(() => {

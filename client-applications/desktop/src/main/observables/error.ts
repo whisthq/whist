@@ -21,14 +21,10 @@ import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized,
 } from "@app/utils/container"
-import { warningObservables } from "@app/utils/logging"
 import {
   containerPollingFailure,
   containerCreateFailure,
 } from "@app/main/observables/container"
-import { protocolLaunchFailure } from "@app/main/observables/protocol"
-import { userEmail } from "@app/main/observables/user"
-import { eventUpdateError } from "@app/main/events/autoupdate"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -49,14 +45,9 @@ export const errorWindowRequest = merge(
       return createContainerErrorWindowInternal
     })
   ),
-  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow)),
-  protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow)),
-  eventUpdateError.pipe(mapTo(createProtocolErrorWindow))
+  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow))
 ).pipe(
   withLatestFrom(eventAppReady),
   map(([f, _]) => f)
 )
 
-// Logging
-
-warningObservables([errorRelaunchRequest, userEmail, "errorRelaunchRequest"])
