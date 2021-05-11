@@ -20,26 +20,28 @@ import {
   take,
   pluck,
 } from "rxjs/operators"
-import { gates, Flow } from "@app/utils/gates"
+import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates: Flow = (name, trigger) =>
-  gates(
-    name,
-    trigger.pipe(
-      switchMap(({ email, accessToken }) =>
-        from(hostServiceInfo(email, accessToken))
-      )
-    ),
-    {
-      success: (result) => hostServiceInfoValid(result),
-      pending: (result) => hostServiceInfoPending(result),
-      failure: (result) =>
-        !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
-    }
-  )
+const hostServiceInfoGates = flow<any>(
+  "hostServiceInfoGates",
+  (_name, trigger) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ email, accessToken }) =>
+          from(hostServiceInfo(email, accessToken))
+        )
+      ),
+      {
+        success: (result) => hostServiceInfoValid(result),
+        pending: (result) => hostServiceInfoPending(result),
+        failure: (result) =>
+          !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
+      }
+    )
+)
 
-const hostPollingInner: Flow = (name, trigger) => {
+const hostPollingInner = flow<any>("hostPollingInner", (name, trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
@@ -50,9 +52,9 @@ const hostPollingInner: Flow = (name, trigger) => {
     success: poll.success.pipe(take(1)),
     failure: poll.failure.pipe(take(1)),
   }
-}
+})
 
-const hostInfoFlow: Flow = (name, trigger) => {
+const hostInfoFlow = flow("hostInfoFlow", (name, trigger) => {
   const poll = trigger.pipe(
     map((args) => hostPollingInner(name, of(args))),
     share()
@@ -75,11 +77,10 @@ const hostInfoFlow: Flow = (name, trigger) => {
     pending,
     loading,
   }
-}
+})
 
-const hostConfigFlow: Flow = (name, trigger) =>
-  gates(
-    `${name}.hostConfigFlow`,
+const hostConfigFlow = flow<any>("hostConfigFlow", (_name, trigger) =>
+  fork(
     trigger.pipe(
       switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
         from(
@@ -92,8 +93,9 @@ const hostConfigFlow: Flow = (name, trigger) =>
       failure: (result) => hostServiceConfigError(result),
     }
   )
+)
 
-export const hostServiceFlow: Flow = (name, trigger) => {
+export const hostServiceFlow = flow("hostServiceFlow", (name, trigger) => {
   const next = `${name}.hostServiceFlow`
 
   const info = hostInfoFlow(next, trigger)
@@ -113,4 +115,4 @@ export const hostServiceFlow: Flow = (name, trigger) => {
     success: config.success,
     failure: merge(info.failure, config.failure),
   }
-}
+})
