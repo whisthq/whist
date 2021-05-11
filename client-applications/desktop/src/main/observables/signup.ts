@@ -10,55 +10,70 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
+import { from, merge } from "rxjs"
 import {
   emailSignup,
   emailSignupValid,
   emailSignupError,
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
-import { switchMap } from "rxjs/operators"
-import { signupAction } from "@app/main/events/actions"
-import { gates } from "@app/utils/gates"
+import { switchMap, map, withLatestFrom } from "rxjs/operators"
 import { loadingFrom } from "@app/utils/observables"
+import { Flow, gates } from "@app/utils/gates"
 
-export const { success: signupConfigSuccess } = gates(
-  `signupConfig`,
-  signupAction.pipe(
-    switchMap((req) =>
-      from(
-        createConfigToken().then(
-          async (token) => await encryptConfigToken(token, req.password)
+const signupConfigTokenGate: Flow = (name, trigger) =>
+  gates(
+    `${name}.configTokenGate`,
+    trigger.pipe(
+      switchMap(({ password }) =>
+        from(
+          createConfigToken().then(
+            async (token) => await encryptConfigToken(token, password)
+          )
         )
       )
-    )
-  ),
-  {
-    success: () => true,
-  }
-)
+    ),
+    {
+      success: () => true,
+    }
+  )
 
-export const {
-  success: signupSuccess,
-  failure: signupFailure,
-  warning: signupWarning,
-} = gates(
-  `signup`,
-  combineLatest([signupAction, signupConfigSuccess]).pipe(
-    switchMap(([req, token]) =>
-      from(emailSignup(req.email, req.password, token))
-    )
-  ),
-  {
-    success: (result: any) => emailSignupValid(result),
-    failure: (result: any) => emailSignupError(result),
-    warning: (result: any) =>
-      !emailSignupError(result) && !emailSignupError(result),
-  }
-)
+export const signupGates: Flow = (name, trigger) =>
+  gates(
+    `${name}.signupGates`,
+    trigger.pipe(
+      switchMap(({ email, password, configToken }) =>
+        from(emailSignup(email, password, configToken))
+      )
+    ),
+    {
+      success: (result: any) => emailSignupValid(result),
+      failure: (result: any) => emailSignupError(result),
+      warning: (result: any) =>
+        !emailSignupError(result) && !emailSignupError(result),
+    }
+  )
 
-export const signupLoading = loadingFrom(
-  signupAction,
-  signupFailure,
-  signupWarning
-)
+export const signupFlow: Flow = (name, trigger) => {
+  const nextName = `${name}.signupFlow`
+
+  const config = signupConfigTokenGate(nextName, trigger)
+
+  const signup = signupGates(
+    nextName,
+    trigger.pipe(
+      withLatestFrom(config.success),
+      map(([{ email, password }, configToken]) => ({
+        email,
+        password,
+        configToken,
+      }))
+    )
+  )
+
+  const success = signup.success
+  const failure = merge(config.failure, signup.failure)
+  const loading = loadingFrom(trigger, success, failure)
+
+  return { success, failure, loading }
+}
