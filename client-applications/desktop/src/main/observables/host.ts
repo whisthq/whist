@@ -3,11 +3,8 @@ import {
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
-import {
-  containerPollingFailure,
-  containerPollingLoading,
-} from "@app/main/observables/container"
-import { loadingFrom, pollMap } from "@app/utils/observables"
+import { containerCreateSuccess } from "@app/main/observables/container"
+import { loadingFrom } from "@app/utils/observables"
 import {
   hostServiceInfo,
   hostServiceInfoValid,
@@ -19,116 +16,106 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError,
 } from "@app/utils/host"
-import { debugObservables, errorObservables } from "@app/utils/logging"
-import { from } from "rxjs"
+import { from, interval, of, merge } from "rxjs"
 import {
   map,
   share,
-  filter,
-  takeLast,
-  takeWhile,
   takeUntil,
-  exhaustMap,
+  switchMap,
   withLatestFrom,
+  mapTo,
+  take,
 } from "rxjs/operators"
-import {
-  formatHostConfig,
-  formatHostInfo,
-  formatObservable,
-  formatTokensArray,
-} from "@app/utils/formatters"
+import { gates, Flow } from "@app/utils/gates"
+import { some } from "lodash"
 
-export const hostInfoRequest = containerPollingLoading.pipe(
-  withLatestFrom(userEmail, userAccessToken),
-  map(([_, email, token]) => [email, token] as [string, string]),
-  share()
+const hostServiceInfoGates: Flow = (name, trigger) =>
+  gates(
+    name,
+    trigger.pipe(
+      switchMap(([email, token]) => from(hostServiceInfo(email, token)))
+    ),
+    {
+      success: (result) => hostServiceInfoValid(result),
+      pending: (result) => hostServiceInfoPending(result),
+      failure: (result) =>
+        !some([hostServiceInfoValid(result), hostServiceInfoPending]),
+    }
+  )
+
+const hostPollingInner: Flow = (name, trigger) => {
+  const tick = trigger.pipe(
+    switchMap((args) => interval(1000).pipe(mapTo(args)))
+  )
+  const poll = hostServiceInfoGates(name, tick)
+
+  return {
+    pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
+    success: poll.success.pipe(take(1)),
+    failure: poll.failure.pipe(take(1)),
+  }
+}
+
+const hostInfoFlow: Flow = (name, trigger) => {
+  const poll = trigger.pipe(
+    map((args) => hostPollingInner(name, of(args))),
+    share()
+  )
+
+  const success = poll.pipe(switchMap((inner) => inner.success))
+  const failure = poll.pipe(switchMap((inner) => inner.failure))
+  const pending = poll.pipe(switchMap((inner) => inner.pending))
+  const loading = loadingFrom(trigger, success, failure)
+
+  return { success, failure, pending, loading }
+}
+
+const hostConfigGates: Flow = (name, trigger) =>
+  gates(
+    name,
+    trigger.pipe(
+      switchMap(([ip, port, secret, email, token]) =>
+        from(hostServiceConfig(ip, port, secret, email, token))
+      )
+    ),
+    {
+      success: (result) => hostServiceConfigValid(result),
+      failure: (result) => hostServiceConfigError(result),
+    }
+  )
+
+export const {
+  success: hostInfoSuccess,
+  failure: hostInfoFailure,
+  pending: hostInfoPending,
+} = hostInfoFlow(
+  "hostInfo",
+  containerCreateSuccess.pipe(
+    withLatestFrom(userEmail, userAccessToken),
+    map(([_, email, token]) => [email, token])
+  )
 )
 
-export const hostInfoPolling = hostInfoRequest.pipe(
-  pollMap(1000, async ([email, token]) => await hostServiceInfo(email, token)),
-  takeWhile((res) => hostServiceInfoPending(res), true),
-  takeUntil(containerPollingFailure),
-  share()
+export const {
+  success: hostConfigSuccess,
+  failure: hostConfigFailure,
+} = hostConfigGates(
+  "hostConfig",
+  hostInfoSuccess.pipe(
+    map((res) => [
+      hostServiceInfoIP(res),
+      hostServiceInfoPort(res),
+      hostServiceInfoSecret(res),
+    ]),
+    withLatestFrom(userEmail, userConfigToken),
+    map(([[ip, port, secret], email, token]) => [
+      ip,
+      port,
+      secret,
+      email,
+      token,
+    ])
+  )
 )
 
-hostInfoPolling.subscribe((res: any) =>
-  console.log("host poll", res?.status, res?.json)
-)
-
-export const hostInfoSuccess = hostInfoPolling.pipe(
-  takeLast(1),
-  filter((res) => hostServiceInfoValid(res))
-)
-
-export const hostInfoFailure = hostInfoPolling.pipe(
-  takeLast(1),
-  filter((res) => hostServiceInfoPending(res) || !hostServiceInfoValid(res))
-)
-
-export const hostInfoLoading = loadingFrom(
-  hostInfoRequest,
-  hostInfoSuccess,
-  hostInfoFailure
-)
-
-export const hostConfigRequest = hostInfoSuccess.pipe(
-  map((res) => [
-    hostServiceInfoIP(res),
-    hostServiceInfoPort(res),
-    hostServiceInfoSecret(res),
-  ]),
-  withLatestFrom(userEmail, userConfigToken),
-  map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
-)
-
-export const hostConfigProcess = hostConfigRequest.pipe(
-  exhaustMap(([ip, port, secret, email, token]) =>
-    from(hostServiceConfig(ip, port, secret, email, token))
-  ),
-  share()
-)
-
-export const hostConfigSuccess = hostConfigProcess.pipe(
-  filter((res: { status: number }) => hostServiceConfigValid(res))
-)
-
-export const hostConfigFailure = hostConfigProcess.pipe(
-  filter((res: { status: number }) => hostServiceConfigError(res))
-)
-
-export const hostConfigLoading = loadingFrom(
-  hostInfoRequest,
-  hostInfoSuccess,
-  hostInfoFailure
-)
-
-// Logging
-
-debugObservables(
-  [
-    formatObservable(hostInfoRequest, formatTokensArray),
-    userEmail,
-    "hostInfoRequest",
-  ],
-  [
-    formatObservable(hostInfoSuccess, formatHostInfo),
-    userEmail,
-    "hostInfoSuccess",
-  ],
-  [hostConfigRequest, userEmail, "hostConfigRequest"],
-  [
-    formatObservable(hostConfigProcess, formatHostConfig),
-    userEmail,
-    "hostConfigProcess",
-  ],
-  [
-    formatObservable(hostConfigSuccess, formatHostConfig),
-    userEmail,
-    "hostConfigSuccess",
-  ]
-)
-
-errorObservables(
-  [hostInfoFailure, userEmail, "hostInfoFailure"],
-  [hostConfigFailure, userEmail, "hostConfigFailure"]
-)
+hostInfoPending.subscribe()
