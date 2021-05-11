@@ -38,8 +38,11 @@ export const persistKeys = (obj: Partial<StateIPC>, ...keys: string[]) => {
   }
 }
 
-// With no arguments, delete everything in persistence. We should extend this
-// function to accept arguments so that we can delete specific keys.
+export const onPersistChange = (fn: (n: any, o: any) => void) =>
+  store.onDidAnyChange((newStore: any, oldStore: any) => {
+    fn(newStore, oldStore)
+  })
+
 export const persistClear = () => {
   store.clear()
 }

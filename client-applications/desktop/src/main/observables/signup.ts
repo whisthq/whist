@@ -10,18 +10,36 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, merge } from "rxjs"
+import { from, combineLatest } from "rxjs"
+import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
   emailSignupValid,
   emailSignupError,
+  emailSignupAccessToken,
+  emailSignupRefreshToken,
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
-import { switchMap, map, withLatestFrom } from "rxjs/operators"
-import { loadingFrom } from "@app/utils/observables"
+import { loadingFrom, objectCombine } from "@app/utils/observables"
 import { Flow, gates } from "@app/utils/gates"
 
-const signupConfigTokenGate: Flow = (name, trigger) =>
+const signupGates: Flow = (name, trigger) =>
+  gates(
+    `${name}.signupGates`,
+    trigger.pipe(
+      switchMap(({ email, password, configToken }) =>
+        from(emailSignup(email, password, configToken))
+      )
+    ),
+    {
+      success: (result: any) => emailSignupValid(result),
+      failure: (result: any) => emailSignupError(result),
+      warning: (result: any) =>
+        !emailSignupError(result) && !emailSignupError(result),
+    }
+  )
+
+export const generateConfigTokenGate: Flow = (name, trigger) =>
   gates(
     `${name}.configTokenGate`,
     trigger.pipe(
@@ -38,42 +56,31 @@ const signupConfigTokenGate: Flow = (name, trigger) =>
     }
   )
 
-export const signupGates: Flow = (name, trigger) =>
-  gates(
-    `${name}.signupGates`,
-    trigger.pipe(
-      switchMap(({ email, password, configToken }) =>
-        from(emailSignup(email, password, configToken))
-      )
-    ),
-    {
-      success: (result: any) => emailSignupValid(result),
-      failure: (result: any) => emailSignupError(result),
-      warning: (result: any) =>
-        !emailSignupError(result) && !emailSignupError(result),
-    }
-  )
-
 export const signupFlow: Flow = (name, trigger) => {
-  const nextName = `${name}.signupFlow`
+  const next = `${name}.signupFlow`
 
-  const config = signupConfigTokenGate(nextName, trigger)
+  const input = objectCombine({
+    email: trigger.pipe(pluck("email")),
+    password: trigger.pipe(pluck("password")),
+    configToken: generateConfigTokenGate(next, trigger).success,
+  })
 
-  const signup = signupGates(
-    nextName,
-    trigger.pipe(
-      withLatestFrom(config.success),
-      map(([{ email, password }, configToken]) => ({
-        email,
-        password,
-        configToken,
-      }))
-    )
+  const signup = signupGates(next, input)
+
+  const tokens = signup.success.pipe(
+    map((response) => ({
+      accessToken: emailSignupAccessToken(response),
+      refreshToken: emailSignupRefreshToken(response),
+    }))
   )
 
-  const success = signup.success
-  const failure = merge(config.failure, signup.failure)
-  const loading = loadingFrom(trigger, success, failure)
-
-  return { success, failure, loading }
+  const result = combineLatest([input, tokens]).pipe(
+    map((...args) => ({ ...args }))
+  )
+  return {
+    success: result,
+    failure: signup.failure,
+    warning: signup.warning,
+    loading: loadingFrom(trigger, result, signup.failure, signup.warning),
+  }
 }
