@@ -5,64 +5,42 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import AWS from "aws-sdk"
-import logzio from "logzio-nodejs"
 import { merge, Observable } from "rxjs"
 import stringify from "json-stringify-safe"
+import * as Amplitude from "@amplitude/node"
+import winston from "winston"
 
 import config, { loggingBaseFilePath } from "@app/config/environment"
 
-// Logging base function
+const logger = winston.createLogger({
+  level: "info",
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: "electron.log" }),
+  ],
+})
+const amplitude = Amplitude.init("f4009f8b53b3060953437879d9769e8b")
+const sessionID = new Date().getTime()
+
+// Log levels
 export enum LogLevel {
   DEBUG = "DEBUG",
   WARNING = "WARNING",
   ERROR = "ERROR",
 }
 
-// Initialize logz.io SDK
-const logzLogger = logzio.createLogger({
-  token: config.keys.LOGZ_API_KEY,
-  bufferSize: 1,
-  addTimestampWithNanoSecs: true,
-  sendIntervalMs: 50,
-})
-
-// Disable until we configure new logz.io endpoint
-logzLogger.close()
-
-// Open a file handle to append to the logs file.
-// Create the loggingBaseFilePath directory if it does not exist.
-const openLogFile = () => {
-  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-  const logPath = path.join(loggingBaseFilePath, "debug.log")
-  return fs.createWriteStream(logPath, { flags: "a" })
-}
-
-const logFile = openLogFile()
-
-// We use a special stringify function below before converting an object
-// to JSON. This is because certain objects in our application, like HTTP
-// responses and ChildProcess objects, have circular references in their
-// structure. This is normal NodeJS behavior, but it can cause a runtime error
-// if you blindly try to turn these objects into JSON. Our special stringify
-// function strips these circular references from the object.
-
-const logBase = (
-  logFile: fs.WriteStream,
-  title: string,
-  data?: any,
-  level?: LogLevel
-) => {
+const formatLogs = (title: string, data: object) => {
   /*
-  Description:
-      Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
-  Arguments:
-      logFile (fs.WriteStream): The file handle to which to append the logs
-      title (string): Log title
-      data (any): JSON or list
-      level (LogLevel): Log level, see enum LogLevel above
+
   */
 
-  const template = `DEBUG: ${title} -- \n ${
+  // We use a special stringify function below before converting an object
+  // to JSON. This is because certain objects in our application, like HTTP
+  // responses and ChildProcess objects, have circular references in their
+  // structure. This is normal NodeJS behavior, but it can cause a runtime error
+  // if you blindly try to turn these objects into JSON. Our special stringify
+  // function strips these circular references from the object.
+  const template = `DEBUG: ${title} -- ${sessionID.toString()} -- \n ${
     data !== undefined ? stringify(data, null, 2) : ""
   }`
 
@@ -71,18 +49,42 @@ const logBase = (
     omission: "...**logBase only prints 1000 characters per log**",
   })
 
-  if (app.isPackaged) {
-    /* stop sending to logz until we configure new logz endpoint
-    logzLogger.log({
-      message: debugLog,
-      level: level,
-    })
-    */
-  } else {
-    console.log(debugLog)
-  }
+  return `${util.format(debugLog)} \n`
+}
 
-  logFile.write(`${util.format(debugLog)} \n`)
+const winstonLog = (title: string, data: object, level?: LogLevel) => {
+  const logs = formatLogs(title, data)
+
+  if (level === LogLevel.ERROR) {
+    logger.error(logs)
+  } else if (level === LogLevel.WARNING) {
+    logger.warning(logs)
+  } else {
+    logger.info(logs)
+  }
+}
+
+const amplitudeLog = async (title: string, data: object, level?: LogLevel) => {
+  await amplitude.logEvent({
+    event_type: title,
+    session_id: sessionID,
+    user_id: "ming+3@fractal.co",
+    event_properties: data,
+  })
+}
+
+const logBase = async (title: string, data: object, level?: LogLevel) => {
+  /*
+  Description:
+      Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
+  Arguments:
+      title (string): Log title
+      data (any): JSON or list
+      level (LogLevel): Log level, see enum LogLevel above
+  */
+
+  if (app.isPackaged) await amplitudeLog(title, data, level)
+  winstonLog(title, data, level)
 }
 
 export const uploadToS3 = async (email: string) => {
@@ -96,12 +98,7 @@ export const uploadToS3 = async (email: string) => {
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-  logBase(
-    logFile,
-    "Logs upload to S3",
-    { s3FileName: s3FileName },
-    LogLevel.DEBUG
-  )
+  await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
@@ -149,37 +146,26 @@ export const uploadToS3 = async (email: string) => {
   await Promise.all(uploadPromises)
 }
 
-export const logObservable = (
-  logFile: fs.WriteStream,
-  level: LogLevel,
-  title: string
-) => {
+export const logObservable = (level: LogLevel, title: string) => {
   /*
     Description:
         Returns a custom operator that logs values emitted by an observable
     Arguments:
-        logFile (fs.WriteStream): The file handle to which to append the logs
         level (LogLevel): Level of log
         title (string): Name of observable, written to log
-        message (string): Additional log message
-        func (function | null | undefined): Function that transforms values emitted by the observable.
-        If func is not defined, values are not modified before being logged. If null, values are not written to the log.
     Returns:
         MonoTypeOperatorFunction: logging operator
     */
 
-  return tap<any>({
-    next(value) {
-      const data = identity(value)
-      logBase(logFile, title, data, level)
-    },
+  return tap(async (data: object) => {
+    await logBase(title, data, level)
   })
 }
 
 // Log level wrapper functions
-const debug = logObservable.bind(null, logFile, LogLevel.DEBUG)
-const warning = logObservable.bind(null, logFile, LogLevel.WARNING)
-const error = logObservable.bind(null, logFile, LogLevel.ERROR)
+const debug = logObservable.bind(null, LogLevel.DEBUG)
+const warning = logObservable.bind(null, LogLevel.WARNING)
+const error = logObservable.bind(null, LogLevel.ERROR)
 
 const logObservables = (
   func: typeof debug,

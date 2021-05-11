@@ -21,6 +21,7 @@
         "cache:clear": "electron ./scripts/clearAppData.js"
     },
     "dependencies": {
+        "@amplitude/node": "^1.5.4",
         "@fortawesome/fontawesome-svg-core": "^1.2.35",
         "@fortawesome/free-solid-svg-icons": "^5.15.3",
         "@fortawesome/react-fontawesome": "^0.1.14",
@@ -49,7 +50,8 @@
         "react-router-dom": "^5.2.0",
         "react-spring": "^9.1.2",
         "rxjs": "^7.0.0",
-        "ts-toolbelt": "^9.6.0"
+        "ts-toolbelt": "^9.6.0",
+        "winston": "^3.3.3"
     },
     "devDependencies": {
         "@snowpack/plugin-build-script": "^2.1.0",

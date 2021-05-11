@@ -1,0 +1,535 @@
+{"message":"DEBUG: eventUpdateNotAvailable -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 14517\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- \n [\n  \"8882d417-41e8-4719-b9bf-43f88f1c0481\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"11f47c261457a1adc58c17a83c3a8add\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 28961\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- \n [\n  \"52.29.104.217\",\n  28961,\n  \"11f47c261457a1adc58c17a83c3a8add\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"f53ac6db30d00377809fa5389a1b27ac\",\n  \"ports\": {\n    \"port_32262\": 28961,\n    \"port_32263\": 20016,\n    \"port_32273\": 19950\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 14517\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620743725080.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 14881\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- \n [\n  \"6e42bcc7-d360-40b8-b848-281378af8bc5\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"e8d4dbf399cb8cfb08457ed89790beb3\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 33161\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- \n [\n  \"52.29.104.217\",\n  33161,\n  \"e8d4dbf399cb8cfb08457ed89790beb3\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"0a5462364c212bf104b9c08f9a280bf4\",\n  \"ports\": {\n    \"port_32262\": 33161,\n    \"port_32263\": 11479,\n    \"port_32273\": 43156\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 14881\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620744501009.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 15319\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- \n [\n  \"c8a06ab2-d7c9-4fc3-93e6-8ad32159362c\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"ff5f5e3db44e99fce51fdf42cd808eef\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 8806\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- \n [\n  \"52.29.104.217\",\n  8806,\n  \"ff5f5e3db44e99fce51fdf42cd808eef\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"427c0024706b8c1fa752ea006f578220\",\n  \"ports\": {\n    \"port_32262\": 8806,\n    \"port_32263\": 23806,\n    \"port_32273\": 15541\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 15319\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620744900224.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620745040021 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620745040021 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620745040021 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620745040021 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620745040021 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 15590\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620745040021 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620745040021 -- \n [\n  \"eb392de4-6ed9-4194-a116-89e3abc1237a\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620745040021 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620745040021 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620745040021 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"1613797ec0e2ed6ee24354b6d78c40f1\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 47550\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620745040021 -- \n [\n  \"52.29.104.217\",\n  47550,\n  \"1613797ec0e2ed6ee24354b6d78c40f1\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620745040021 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620745040021 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620745040021 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620745040021 -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"368e11be025a78937db70bb507e81586\",\n  \"ports\": {\n    \"port_32262\": 47550,\n    \"port_32263\": 32456,\n    \"port_32273\": 13856\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620745040021 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620745040021 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 15590\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620745040021 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620745068426.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620749984219 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620749984219 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620749984219 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620749984219 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620749984219 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16125\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620749984219 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620749984219 -- \n [\n  \"068a53c0-e55f-4341-b4a1-c5e33b6fb7ae\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620749984219 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620749984219 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"STARTED\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"STARTED\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620749984219 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"41ca1a9946691a3aa7c75de858429de1\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 29423\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620749984219 -- \n [\n  \"52.29.104.217\",\n  29423,\n  \"41ca1a9946691a3aa7c75de858429de1\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620749984219 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620749984219 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620749984219 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620749984219 -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"9e23c076444bf04529f2f47f2b9fdd37\",\n  \"ports\": {\n    \"port_32262\": 29423,\n    \"port_32263\": 20621,\n    \"port_32273\": 19004\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620749984219 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620749984219 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16125\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620749984219 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620750009625.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750029387 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750029387 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750029387 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750029387 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750029387 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16395\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750029387 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750029387 -- \n [\n  \"1a2e1df0-e257-4142-b43a-c9b99288910b\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750029387 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750029387 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"STARTED\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620750029387 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"74336062fe8f769b92ee8d80227afab2\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 24413\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620750029387 -- \n [\n  \"52.29.104.217\",\n  24413,\n  \"74336062fe8f769b92ee8d80227afab2\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620750029387 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620750029387 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620750029387 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620750029387 -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"647085227015fd9333a289c89f5570ea\",\n  \"ports\": {\n    \"port_32262\": 24413,\n    \"port_32263\": 35278,\n    \"port_32273\": 29035\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750029387 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620750029387 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16395\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620750029387 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620750061009.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750140500 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750140500 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750140500 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750140500 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750140500 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16486\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750140500 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750140500 -- \n [\n  \"80530bce-86c4-4ae9-a85e-af05c2a8bc4b\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750140500 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750140500 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750162018 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750162018 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750162018 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750162018 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750162018 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16730\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750162018 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750162018 -- \n [\n  \"a9b32618-45ba-4434-8efc-f18e3f66b839\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750162018 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750162018 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620750162018 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"200e151799015aa012c101444c85e062\",\n    \"ip\": \"52.29.104.217\",\n    \"port\": 47628\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620750162018 -- \n [\n  \"52.29.104.217\",\n  47628,\n  \"200e151799015aa012c101444c85e062\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620750162018 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620750162018 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620750162018 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620750162018 -- \n {\n  \"ip\": \"52.29.104.217\",\n  \"secret_key\": \"872f516f838e69a722d9255fe12b7962\",\n  \"ports\": {\n    \"port_32262\": 47628,\n    \"port_32263\": 31604,\n    \"port_32273\": 23074\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750162018 -- \n false \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750233624 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750233624 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750233624 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750233624 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750233624 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16860\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750233624 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750233624 -- \n [\n  \"d8383bab-92e8-4317-8873-9bb9c90494e3\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750233624 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750233624 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620750233624 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 255,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16860\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620750233624 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620750238453.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620750233624 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"b54f62d41b77689991c1d6515fe13c25\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 26666\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620750233624 -- \n [\n  \"3.84.131.52\",\n  26666,\n  \"b54f62d41b77689991c1d6515fe13c25\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620750233624 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620750233624 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620750233624 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620750233624 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"e20c67095b2b760ced83c4b2cc22e377\",\n  \"ports\": {\n    \"port_32262\": 26666,\n    \"port_32263\": 18419,\n    \"port_32273\": 20761\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750233624 -- \n false \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750315832 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750315832 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750315832 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750315832 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750315832 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16930\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750315832 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750315832 -- \n [\n  \"b131ebae-f4e5-468a-85e0-f281c8175368\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750315832 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750315832 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620750315832 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"7334950da928315e76e72a65c2b3061f\",\n    \"ip\": \"35.182.81.146\",\n    \"port\": 48580\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620750315832 -- \n [\n  \"35.182.81.146\",\n  48580,\n  \"7334950da928315e76e72a65c2b3061f\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620750315832 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620750315832 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620750315832 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620750315832 -- \n {\n  \"ip\": \"35.182.81.146\",\n  \"secret_key\": \"0f8bad9283d02a556246a760e6fa0d04\",\n  \"ports\": {\n    \"port_32262\": 48580,\n    \"port_32263\": 13949,\n    \"port_32273\": 36308\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750315832 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620750315832 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 16930\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620750315832 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620750440607.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620750560652 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620750560652 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620750560652 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620750560652 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620750560652 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 17376\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750560652 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620750560652 -- \n [\n  \"77a414bc-66fa-4dc7-8220-18ad693e09c4\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620750560652 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620750560652 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620750560652 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"7f2d27ef170e6174a2c7c297342c3d39\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 43917\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620750560652 -- \n [\n  \"3.84.131.52\",\n  43917,\n  \"7f2d27ef170e6174a2c7c297342c3d39\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620750560652 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620750560652 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620750560652 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620750560652 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"a9f6c7047fdd77cb820573e594bee732\",\n  \"ports\": {\n    \"port_32262\": 43917,\n    \"port_32263\": 2066,\n    \"port_32273\": 27773\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620750560652 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620750560652 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 17376\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620750560652 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620750577802.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620751511770 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620751511770 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620751511770 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620751511770 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620751511770 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 17754\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751511770 -- \n true \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620751511770 -- \n {\n  \"connected\": false,\n  \"signalCode\": \"SIGINT\",\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 17754\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620751511770 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620751514416.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620751550216 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620751550216 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620751550216 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620751550216 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620751550216 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 17983\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751550216 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620751550216 -- \n [\n  \"dcf59405-2ada-4dc0-993b-d4bb41d1c8ab\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620751550216 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620751550216 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620751550216 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"a25fd16a80493d600a0f9a3e389d8a42\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 34710\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620751550216 -- \n [\n  \"3.84.131.52\",\n  34710,\n  \"a25fd16a80493d600a0f9a3e389d8a42\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620751550216 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620751550216 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620751550216 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620751550216 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"a4abb317cf5fbd23e1bdc3c0940bc71e\",\n  \"ports\": {\n    \"port_32262\": 34710,\n    \"port_32263\": 38106,\n    \"port_32273\": 37640\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751550216 -- \n false \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620751679413 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620751679413 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620751679413 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620751679413 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620751679413 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 18258\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751679413 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620751679413 -- \n [\n  \"af043362-2215-4695-ba03-cd24d7a80301\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620751679413 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620751679413 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751679413 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620751679413 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"15d98a79bb63c69017b059fa3fc55e20\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 42734\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620751679413 -- \n [\n  \"3.84.131.52\",\n  42734,\n  \"15d98a79bb63c69017b059fa3fc55e20\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751679413 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620751679413 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620751679413 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751679413 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751679413 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620751784145 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620751784145 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620751784145 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620751784145 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620751784145 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 18515\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751784145 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620751784145 -- \n [\n  \"c71e2707-8f57-4b32-87c7-182c38c01ac2\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620751784145 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620751784145 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751784145 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620751784145 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"67403025bc5a5c7da391294a440a268b\",\n    \"ip\": \"35.182.81.146\",\n    \"port\": 40180\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620751784145 -- \n [\n  \"35.182.81.146\",\n  40180,\n  \"67403025bc5a5c7da391294a440a268b\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751784145 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620751784145 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620751784145 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751784145 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751784145 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751784145 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620751887101 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620751887101 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620751887101 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620751887101 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620751887101 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 18814\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751887101 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620751887101 -- \n [\n  \"424e3a51-9547-4249-9643-75953ea47f06\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620751887101 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620751887101 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620751887101 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"d82f4e9d9d63da91620f7d1d78bec969\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 6739\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620751887101 -- \n [\n  \"3.84.131.52\",\n  6739,\n  \"d82f4e9d9d63da91620f7d1d78bec969\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620751887101 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620751887101 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620751887101 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620751887101 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"e18e6f60b47349856f11bd7edb5729a1\",\n  \"ports\": {\n    \"port_32262\": 6739,\n    \"port_32263\": 43665,\n    \"port_32273\": 27608\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620751887101 -- \n false \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620752031130 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620752031130 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620752031130 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620752031130 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620752031130 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 18956\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752031130 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620752031130 -- \n [\n  \"9cc756f9-2a67-4d10-8ee0-42a9d9c0dbe1\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620752031130 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620752031130 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620752031130 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"cca32fe246a6a80c5df4955303a55ddd\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 25680\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620752031130 -- \n [\n  \"3.84.131.52\",\n  25680,\n  \"cca32fe246a6a80c5df4955303a55ddd\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620752031130 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620752031130 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620752031130 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620752031130 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"6185d805a5439e4e8536c1e55b51311d\",\n  \"ports\": {\n    \"port_32262\": 25680,\n    \"port_32263\": 28462,\n    \"port_32273\": 45341\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752031130 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620752031130 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 18956\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620752031130 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620752069392.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620752090560 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620752090560 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620752090560 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620752090560 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620752090560 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19208\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752090560 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620752090560 -- \n [\n  \"bf60f955-198c-4dee-bd1b-3a00a928daac\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620752090560 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620752090560 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620752090560 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"8918b28c65d8d3d2a7acce92c6df9dc2\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 6936\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620752090560 -- \n [\n  \"3.84.131.52\",\n  6936,\n  \"8918b28c65d8d3d2a7acce92c6df9dc2\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620752090560 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620752090560 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620752090560 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620752090560 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"082bb11c200c1749d64802aaa31db13f\",\n  \"ports\": {\n    \"port_32262\": 6936,\n    \"port_32263\": 6114,\n    \"port_32273\": 27596\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752090560 -- \n false \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620752162378 -- \n null \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620752162378 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620752162378 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620752162378 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620752162378 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19464\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752162378 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620752162378 -- \n [\n  \"aa5e6c0f-0ac1-402c-81b8-2f2bc9028626\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620752162378 -- \n true \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620752162378 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620752162378 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"27b6f86b760aa0997b76c5b669f047cd\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 9935\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620752162378 -- \n [\n  \"3.84.131.52\",\n  9935,\n  \"27b6f86b760aa0997b76c5b669f047cd\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620752162378 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620752162378 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620752162378 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620752162378 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"704666f1783069d84d9d4090dfb54cb5\",\n  \"ports\": {\n    \"port_32262\": 9935,\n    \"port_32263\": 42181,\n    \"port_32273\": 48108\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620752162378 -- \n false \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620752162378 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19464\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620752162378 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620752192546.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620753090360 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620753090360 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620753090360 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753090360 -- \n true \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620753090360 -- \n null \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620753090360 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19864\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620753090360 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620753090360 -- \n [\n  \"bb32fdd9-c2ad-4691-8fb3-2e9291154bce\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620753090360 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620753090360 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"9802d815e98745956354d0f1c3a9996d\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 13034\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620753090360 -- \n [\n  \"3.84.131.52\",\n  13034,\n  \"9802d815e98745956354d0f1c3a9996d\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620753090360 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620753090360 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753090360 -- \n false \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620753090360 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620753090360 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"6513f2bcfecc66986b24947a7608830c\",\n  \"ports\": {\n    \"port_32262\": 13034,\n    \"port_32263\": 16379,\n    \"port_32273\": 18587\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620753090360 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19864\n} \n","level":"info"}
+{"message":"DEBUG: appExited -- 1620753090360 -- \n {} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620753090360 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620753124639.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620753200929 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620753200929 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620753200929 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753200929 -- \n true \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620753200929 -- \n null \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620753200929 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 19945\n} \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620753206234 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620753206234 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620753206234 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753206234 -- \n true \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620753206234 -- \n null \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620753206234 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 20011\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620753206234 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620753206234 -- \n [\n  \"ec75e179-6a36-4ef1-8565-cd0f5fc544c3\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620753206234 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620753206234 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"4594219873ae324299b81e59485738ce\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 18903\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620753206234 -- \n [\n  \"3.84.131.52\",\n  18903,\n  \"4594219873ae324299b81e59485738ce\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620753206234 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620753206234 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753206234 -- \n false \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620753206234 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620753206234 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"559344e4f3cf7431629a3bc38cbb1fe4\",\n  \"ports\": {\n    \"port_32262\": 18903,\n    \"port_32263\": 3384,\n    \"port_32273\": 12456\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620753206234 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 20011\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620753206234 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620753309819.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: appExited -- 1620753206234 -- \n {} \n","level":"info"}
+{"message":"DEBUG: userEmail -- 1620753334595 -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 1620753334595 -- \n \"b59d22b5fe02...\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- 1620753334595 -- \n \"eyJ0eXAiOiJK...\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753334595 -- \n true \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- 1620753334595 -- \n null \n","level":"info"}
+{"message":"DEBUG: protocolLaunchProcess -- 1620753334595 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": null,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 20265\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- 1620753334595 -- \n true \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- 1620753334595 -- \n [\n  \"2d493ad4-8ebf-4c51-965c-5fcf94ed3751\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- 1620753334595 -- \n [\n  \"ming+10@tryfractal.com\",\n  \"eyJ0eXAiOiJK...\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- 1620753334595 -- \n {\n  \"json\": {\n    \"client_app_auth_secret\": \"2747e828cec26a25627d998f068d7c12\",\n    \"ip\": \"3.84.131.52\",\n    \"port\": 41080\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 1620753334595 -- \n [\n  \"3.84.131.52\",\n  41080,\n  \"2747e828cec26a25627d998f068d7c12\",\n  \"ming+10@tryfractal.com\",\n  \"b59d22b5fe023180eae1fd74774f2ae653d63c486ac55e90b45a34e90eb23eb8565482b85fb06c7490b684deaab07dbd2add33dbb18beb652c1d61a69001eef81644dc272b583ebdc9d3c27dc2365e9324846ed25a1a064be49792faa1618bc929f136a2cc5e095fbe6dc2b6d1a3f295a9a9904769e3e823f863e72f27fc4067\"\n] \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- 1620753334595 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- 1620753334595 -- \n {\n  \"json\": \"\\\"{\\\\\\\"result\\\\\\\":\\\\\\\"\\\\\\\"}\\\"\",\n  \"status\": 200\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"PENDING\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- 1620753334595 -- \n false \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- 1620753334595 -- \n {\n  \"json\": {\n    \"state\": \"SUCCESS\"\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- 1620753334595 -- \n {\n  \"ip\": \"3.84.131.52\",\n  \"secret_key\": \"b9afc0cad788d1ee67e825f81465abb5\",\n  \"ports\": {\n    \"port_32262\": 41080,\n    \"port_32263\": 20544,\n    \"port_32273\": 45075\n  }\n} \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- 1620753334595 -- \n {\n  \"connected\": false,\n  \"signalCode\": null,\n  \"exitCode\": 0,\n  \"killed\": false,\n  \"spawnfile\": \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n  \"spawnargs\": [\n    \"/Users/Ming/Fractal/fractal/client-applications/desktop/protocol-build/client/_Fractal\",\n    \"--environment\",\n    \"production\",\n    \"--read-pipe\"\n  ],\n  \"pid\": 20265\n} \n","level":"info"}
+{"message":"DEBUG: Logs upload to S3 -- 1620753334595 -- \n {\n  \"s3FileName\": \"CLIENT_ming+10@tryfractal.com_1620753362780.txt\"\n} \n","level":"info"}
+{"message":"DEBUG: appExited -- 1620753334595 -- \n {} \n","level":"info"}
+{"message":"DEBUG: loginRequest -- hiding password -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: loginProcess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: loginSuccess -- only { json } tokens -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: loginFailure -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: loginWarning -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: loginLoading -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: signupRequest -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: signupSuccess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: signupLoading -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: signupFailure -- i -- \n \"m\" \n","level":"error"}
+{"message":"DEBUG: userEmail -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: userRefreshToken -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: eventUpdateAvailable -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: eventUpdateNotAvailable -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: eventDownloadProgress -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: eventUpdateDownloaded -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: eventUpdateError -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingProcess -- omitting verbose response -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingSuccess -- omitting verbose response -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingFailure -- omitting verbose response -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingWarning -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: containerPollingLoading -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostInfoSuccess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostConfigProcess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostConfigSuccess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: hostInfoFailure -- i -- \n \"m\" \n","level":"error"}
+{"message":"DEBUG: hostConfigFailure -- i -- \n \"m\" \n","level":"error"}
+{"message":"DEBUG: protocolLaunchProcess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchSuccess -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchLoading -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: protocolCloseRequest -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: protocolLaunchFailure -- i -- \n \"m\" \n","level":"error"}
+{"message":"DEBUG: userEmail -- i -- \n \"m\" \n","level":"info"}
+{"message":"DEBUG: userConfigToken -- 5 -- \n \"b\" \n","level":"info"}
+{"message":"DEBUG: userAccessToken -- y -- \n \"e\" \n","level":"info"}
+{"message":"DEBUG: containerPollingRequest -- only tokens -- eyJ0eXAiOiJK... -- \n \"44f888ea-f173-4d71-86cf-89ccd93cc7f5\" \n","level":"info"}
+{"message":"DEBUG: hostInfoRequest -- eyJ0eXAiOiJK... -- \n \"ming+10@tryfractal.com\" \n","level":"info"}
+{"message":"DEBUG: hostConfigRequest -- 27051 -- \n \"3.84.131.52\" \n","level":"info"}
