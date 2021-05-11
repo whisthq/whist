@@ -47,7 +47,7 @@ jobs:
                   BODY = "Number of Instances:"
                   for region in "${{ env.AWS_REGIONS }}".split():
                     (running_instances, total_instances) = num_aws_instances(region)
-                    BODY += "\n     - _%s_: %d running instances (%d total)" % (region, running_instances, total_instances)
+                    BODY += "\n     - %s: *%d running* (%d total)" % (region, running_instances, total_instances)
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
