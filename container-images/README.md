@@ -34,25 +34,17 @@ A tree structure is provided below:
 │       ├── fractal-protocol.service <- Systemd service to start the Fractal server protocol
 │       └── fractal-update-xorg-conf.service <- Systemd service to update the X Server to the Fractal configuration
 ├── browsers
-│   ├── brave
-│   │   ├── Dockerfile.20 <- Container image for Brave Browser
-│   │   └── install-extensions.sh <- Helper script to install Chromium extensions onto Brave
 │   ├── chrome
 │   │   ├── Dockerfile.20 <- Container image for Google Chrome
 │   │   ├── install-extensions.sh <- Helper script to install Chromium extensions onto Chrome
 │   │   └── start-chrome.sh <- Helper script to start Chrome with specific flags
 │   ├── firefox
 │   │   └── Dockerfile.20 <- Container image for Mozilla Firefox
-│   └── sidekick
-│       └── Dockerfile.20 <- Container image for Sidekick Browser
 ├── build_container_image.sh <- Helper script to build a specific Docker image
 ├── creative
 │   ├── blender
 │   │   ├── Dockerfile.20 <- Container image for Blender
 │   │   └── userpref.blend <- Fractal-provided default Blender user settings
-│   ├── gimp
-│   │   ├── Dockerfile.20 <- Container image for Gimp
-│   │   └── gimprc <- Fractal Gimp configuration file
 ├── helper-scripts
 │   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
