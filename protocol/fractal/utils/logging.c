@@ -73,7 +73,7 @@ extern bool using_sentry;
 
 // logger Semaphores and Mutexes
 static volatile FractalSemaphore logger_semaphore;
-static volatile FractalMutex logger_mutex;
+static volatile FractalMutex logger_queue_mutex;
 static volatile FractalMutex log_file_mutex;
 static volatile FractalMutex logger_queue_mutex;
 
@@ -162,7 +162,7 @@ void init_logger(char* log_dir) {
     }
 
     run_multithreaded_printf = true;
-    logger_mutex = fractal_create_mutex();
+    logger_queue_mutex = fractal_create_mutex();
     logger_semaphore = fractal_create_semaphore(0);
     log_file_mutex = fractal_create_mutex();
     logger_queue_mutex = fractal_create_mutex();
@@ -345,7 +345,7 @@ void flush_logs() {
     fractal_lock_mutex((FractalMutex)logger_queue_mutex);
     // Clear the queue into the cache,
     // And then let go of the mutex so that printf can continue accumulating
-    fractal_lock_mutex((FractalMutex)logger_mutex);
+    fractal_lock_mutex((FractalMutex)logger_queue_mutex);
     int cache_size = 0;
     cache_size = logger_queue_size;
     for (int i = 0; i < logger_queue_size; i++) {
@@ -362,7 +362,7 @@ void flush_logs() {
         }
     }
     logger_queue_size = 0;
-    fractal_unlock_mutex((FractalMutex)logger_mutex);
+    fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
 
     fractal_lock_mutex((FractalMutex)log_file_mutex);
     // Print all of the data into the cache
@@ -575,7 +575,7 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
 
 // Core multithreaded printf function, that accepts va_list and log boolean
 void mprintf(bool log, const char* tag, const char* fmt_str, va_list args) {
-    fractal_lock_mutex((FractalMutex)logger_mutex);
+    fractal_lock_mutex((FractalMutex)logger_queue_mutex);
 
     int index = (logger_queue_index + logger_queue_size) % LOGGER_QUEUE_SIZE;
     char* buf = NULL;
@@ -650,7 +650,7 @@ void mprintf(bool log, const char* tag, const char* fmt_str, va_list args) {
         fractal_post_semaphore((FractalSemaphore)logger_semaphore);
     }
 
-    fractal_unlock_mutex((FractalMutex)logger_mutex);
+    fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
 }
 
 FractalMutex crash_handler_mutex;
