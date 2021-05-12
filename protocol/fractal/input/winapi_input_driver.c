@@ -314,7 +314,6 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
-    LOG_ERROR("**************************EMITTING KEY EVENT**************************");
     UNUSED(input_device);
 
     INPUT ip;
