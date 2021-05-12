@@ -5,8 +5,9 @@
  */
 
 import { app } from "electron"
-import { closeWindows } from "@app/main/utils/window"
 
+import { closeWindows } from "@app/main/utils/window"
+import { fromTrigger } from "@app/main/utils/flows"
 
 // Other parts of the application need to know that an error has happened,
 // which is why we have observables like "errorWindowRequest" defined outside
@@ -21,3 +22,10 @@ import { closeWindows } from "@app/main/utils/window"
 //   closeWindows()
 //   windowFunction()
 // })
+
+fromTrigger("failure").subscribe((payload) => {
+    closeWindows()
+    if(payload.name === "containerCreateFlowFailure") {
+        // createErrorWindow(payload.name)
+    }
+})
