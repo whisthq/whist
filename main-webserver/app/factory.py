@@ -5,6 +5,7 @@ import stripe
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from flask_jwt_extended.default_callbacks import default_unauthorized_callback
 from flask_marshmallow import Marshmallow
 from flask_sendgrid import SendGrid
 
@@ -13,6 +14,7 @@ from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 import app.constants.env_names as env_names
+from auth0 import ScopeError
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -64,6 +66,7 @@ def create_app(testing=False):
 
     register_handlers(app)
     register_blueprints(app)
+
     return app
 
 
@@ -76,6 +79,10 @@ def register_handlers(app: Flask):
     from app.flask_handlers import can_process_requests_handler
 
     can_process_requests_handler(app)
+
+    @app.errorhandler(ScopeError)
+    def _handle_scope_error(e):
+        return default_unauthorized_callback(str(e))
 
 
 def register_blueprints(app):
