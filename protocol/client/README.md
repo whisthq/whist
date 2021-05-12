@@ -8,18 +8,40 @@ You can run `client.bat` (Windows) or `client` (\*nix) to restart your dev envir
 
 To compile, you should first run `cmake .` (MacOS/Linux) or `cmake -G "NMake Makefiles"` (Windows) from the root directory, `/protocol/`. You can then cd into this folder and run `make` (MacOS/Linux) or `nmake` (Windows).
 
-If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issue, you should delete the CmakeCache or start from a fresh repository.
+To compile on MacOS/Linux, you should run:
+
+```
+mkdir build
+cd build
+cmake -S .. -B .
+make -j
+```
+
+On Windows,
+
+```
+mkdir build
+cd build
+cmake -G "NMake Makefiles" -S .. -B .
+nmake -j
+```
+
+This will ensure that all built files end up in the `/build` directory and are easy to clean up.
+
+If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issues, you should delete the CmakeCache or start from a fresh repository.
+
+To recompile, just `cd` into the `/build` directory and run `make -j` or `nmake -j` again.
 
 ### Running
 
-From the `/client` directory, you can simply run:
+From the `/build` directory, you can simply run:
 
 ```
 Windows:
-client IP_ADDRESS [OPTION]...
+fclient IP_ADDRESS [OPTION]...
 
 MacOS/Linux:
-./client IP_ADDRESS [OPTION]...
+./fclient IP_ADDRESS [OPTION]...
 ```
 
 The option flags are as follows:
@@ -46,15 +68,5 @@ The option flags are as follows:
 For example, to run the protocol on IP address `0.0.0.0` in an `800x600` window on Linux, call:
 
 ```
-./client 0.0.0.0 --width 800 --height 600
-```
-
-Alternatively, if you want to run the executable directly, in the `/client/build64` directory, run:
-
-```
-Windows:
-FractalClient [OPTION]... IP ADDRESS
-
-MacOS/Linux:
-./FractalClient [OPTION]... IP ADDRESS
+./fclient 0.0.0.0 --width 800 --height 600
 ```

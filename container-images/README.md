@@ -171,6 +171,12 @@ Replace the environment variables `GH_PAT` and `GH_USERNAME` with your GitHub pe
 
 This is how we push to production. For every push to `prod`, all applications that have a Dockerfile get automatically built and pushed to all AWS regions specified under `aws-regions` in `.github/workflows/push-images.yml`. This will then automatically trigger a new release of all the ECS task definitions in `fractal/ecs-task-definitions`, which need to be updated in production to point to our new container image tags.
 
+### Useful Debugging Practices
+
+If `./build_container_images.sh` is failing, try running with `./build-container_images.sh -o` for logging output.
+
+If the error messages seem to be related to fetching archives, try `docker system prune -af`. It's possible that Docker has cached out-of-date steps generated from an old container image, and needs to be cleaned and rebuilt.
+
 ## Styling
 
 We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`.
