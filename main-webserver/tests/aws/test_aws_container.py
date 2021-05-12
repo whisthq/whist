@@ -84,7 +84,7 @@ def test_create_cluster(client, module_user):
     cluster_name = pytest.cluster_name
 
     db.session.add(module_user)
-    client.login(module_user.user_id)
+    client.login(module_user.user_id, admin=True)
     fractal_logger.info("Starting to create cluster {}".format(cluster_name))
 
     resp = client.post(
@@ -113,7 +113,7 @@ def test_create_cluster(client, module_user):
 @pytest.mark.container_serial
 @pytest.mark.usefixtures("celery_worker")
 def test_assign_container(client, module_user, monkeypatch, task_def_env):
-    client.login(module_user.user_id)
+    client.login(module_user.user_id, admin=True)
     monkeypatch.setattr(aws_ecs_creation, "_poll", function(returns=True))
     fractal_logger.info("Starting to assign container in cluster {}".format(pytest.cluster_name))
 
