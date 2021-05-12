@@ -78,10 +78,8 @@ def authorized(client, user, monkeypatch):
     Returns:
         An instance of the User model representing the authorized user.
     """
-    # mark the user as verified for admin access
-    user.verified = True
-    db.session.commit()
-    access_token = create_access_token(identity=user.user_id)
+
+    access_token = create_access_token(identity=user.user_id, additional_claims={"scope": "admin"})
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
@@ -445,9 +443,10 @@ def make_authorized_user(client, make_user, monkeypatch):
     """
 
     def _authorized_user(stripe_customer_id=None, domain="fractal.co", **kwargs):
-        kwargs["verified"] = True
         user = make_user(stripe_customer_id=stripe_customer_id, domain=domain, **kwargs)
-        access_token = create_access_token(identity=user.user_id)
+        access_token = create_access_token(
+            identity=user.user_id, additional_claims={"scope": "admin"}
+        )
 
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
