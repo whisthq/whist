@@ -1,33 +1,8 @@
 import { Observable } from "rxjs"
-import { filter, share, tap } from "rxjs/operators"
-import { mapValues, truncate } from "lodash"
-import stringify from "json-stringify-safe"
+import { filter, share, map } from "rxjs/operators"
+import { mapValues } from "lodash"
 
-import { FlowReturnType } from "@app/@types/state"
-
-const logFormat = (...args: any[]) => {
-  let [title, message, value] = args
-  if (value === undefined) {
-    value = message
-    message = undefined
-  }
-  if (value === undefined && message === undefined) {
-    value = title
-    title = undefined
-  }
-  title = title ? `${title} -- ` : ""
-  message = message ? `${message} -- ` : ""
-
-  let output = truncate(stringify(value, null, 2), {
-    length: 1000,
-    omission: "...**only printing 1000 characters per log**",
-  })
-  return `${title}${message}${output}`
-}
-
-const logDebug = (...args: any[]) => {
-  console.log(`DEBUG: ${logFormat(...args)}`)
-}
+import { FlowReturnType, FlowEvent } from "@app/@types/state"
 
 export const fork = <T>(
   source: Observable<T>,
@@ -43,9 +18,10 @@ export const flow = <A>(
     childName: string,
     trigger: Observable<A>
   ) => { [key: string]: Observable<any> }
-) => (childName: string, trigger: Observable<A>):FlowReturnType =>
+) => (childName: string, trigger: Observable<A>): FlowReturnType =>
   mapValues(fn(`${name}.${childName}`, trigger), (obs) =>
     obs.pipe(
+      map((x) => ({name: `${name}.${childName}`, payload: x} as FlowEvent)),
       share()
     )
   )

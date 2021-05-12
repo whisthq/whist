@@ -5,7 +5,7 @@
  */
 
 import { app } from "electron"
-import { closeWindows } from "@app/utils/windows"
+import { closeWindows } from "@app/main/flows/error/utils"
 
 import {
   errorRelaunchRequest,

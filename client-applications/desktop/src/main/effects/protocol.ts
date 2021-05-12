@@ -5,14 +5,14 @@
  */
 import { zip, merge } from "rxjs"
 
-import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
+import { protocolStreamInfo, protocolStreamKill } from "@app/main/flows/protocol/flows/launch/utils"
 import { protocolLaunchSuccess } from "@app/main/flows/protocol"
-import { containerPollingSuccess } from "@app/main/flows/container"
+import { containerPollingSuccess } from "@app/main/flows/container/flows/create"
 import {
   containerInfoIP,
   containerInfoPorts,
   containerInfoSecretKey,
-} from "@app/utils/container"
+} from "@app/main/flows/container/flows/create/utils"
 import { quitAction, signoutAction } from "@app/main/events/actions"
 import { errorWindowRequest } from "@app/main/flows/error"
 

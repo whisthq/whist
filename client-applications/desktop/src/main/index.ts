@@ -16,15 +16,15 @@
 import { app } from "electron"
 import { flow } from "@app/utils/flows"
 import { merge, fromEvent, zip } from "rxjs"
-import { ChildProcess } from "child_process"
+import { mapTo } from "rxjs/operators"
 
-import { protocolLaunchFlow } from "@app/main/flows/protocol"
+import protocolLaunchFlow from "@app/main/flows/protocol"
 import containerFlow from "@app/main/flows/container"
 import authFlow from "@app/main/flows/auth"
-import { protocolStreamInfo } from "@app/main/flows/protocol/protocol"
+import errorFlow from "@app/main/flows/error"
+import { protocolStreamInfo } from "@app/main/flows/protocol/flows/launch/utils"
 
-// Composes all other flows together, and is the "entry" point of the
-// application.
+// Composes all other flows together. This is the entry point of the application.
 const mainFlow = flow("mainFlow", (name, trigger) => {
   // First, authenticate the user
   const auth = authFlow(name, trigger)
@@ -34,17 +34,17 @@ const mainFlow = flow("mainFlow", (name, trigger) => {
   const protocol = protocolLaunchFlow(name, auth.success)
 
   // TODO: Move side effect out of the flow
-  zip(protocol.success, container.success).subscribe(
-    ([protocol, info]: [ChildProcess, any]) => {
-      protocolStreamInfo(protocol, info)
-    }
-  )
+  // zip(protocol.success, container.success).subscribe(
+  //   ([protocol, info]: [ChildProcess, any]) => {
+  //     protocolStreamInfo(protocol, info)
+  //   }
+  // )
 
   return {
-    success: zip(auth.success, container.success, protocol.success),
+    success: zip(auth.success, container.success, protocol.success).pipe(mapTo({})),
     failure: merge(auth.failure, container.failure, protocol.failure),
   }
 })
 
 // Kick off the main flow to run the app.
-mainFlow("app", fromEvent(app, "ready"))
+errorFlow("app", mainFlow("app", fromEvent(app, "ready")).failure)

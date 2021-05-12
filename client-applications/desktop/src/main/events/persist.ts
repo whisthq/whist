@@ -7,7 +7,7 @@
 import { eventAppReady } from "@app/main/events/app"
 import { Subject } from "rxjs"
 import { distinctUntilChanged, map } from "rxjs/operators"
-import { store } from "@app/utils/persist"
+import { store } from "@app/main/flows/auth/flows/persist/utils"
 
 // We create the persistence observables slightly differently from the
 // others across the project.

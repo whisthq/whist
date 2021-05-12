@@ -28,7 +28,7 @@ import { createTray } from "@app/utils/tray"
 import { signoutAction } from "@app/main/events/actions"
 import {
   loginFlow
-} from "@app/main/flows/login"
+} from "@app/main/flows/auth/flows/login"
 import {
   protocolLaunchFlow,
   protocolCloseFlow

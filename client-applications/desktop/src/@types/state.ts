@@ -1,5 +1,6 @@
 import { Observable } from "rxjs"
 import { Action } from "@app/@types/actions"
+import { Object } from "lodash"
 
 export type AsyncReturnType<
   T extends (...args: any) => Promise<any>
@@ -17,7 +18,10 @@ export interface StateIPC {
   action: Action
 }
 
-export type FlowEvent = object
+export type FlowEvent = {
+  name: string,
+  payload: object
+}
 
 export type FlowReturnType = {
   [key: string]: Observable<FlowEvent>
