@@ -11,30 +11,30 @@ import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { some } from "lodash"
 
 import {
-  containerInfo,
-  containerInfoIP,
-  containerInfoPorts,
-  containerInfoSecretKey,
-  containerInfoError,
-  containerInfoSuccess,
-  containerInfoPending,
-} from "@app/main/flows/container/flows/polling/utils"
+  containerPolling,
+  containerPollingIP,
+  containerPollingPorts,
+  containerPollingSecretKey,
+  containerPollingError,
+  containerPollingSuccess,
+  containerPollingPending,
+} from "@app/main/utils/containerPolling"
 import { loadingFrom } from "@app/utils/observables"
-import { fork, flow } from "@app/utils/flows"
+import { fork, flow } from "@app/main/utils/flows"
 
-const containerInfoRequest = flow("containerInfoRequest", (trigger) =>
+const containerPollingRequest = flow("containerPollingRequest", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ containerID, accessToken }) =>
-        from(containerInfo(containerID, accessToken))
+        from(containerPolling(containerID, accessToken))
       )
     ),
     {
-      success: (result) => containerInfoSuccess(result),
-      pending: (result) => containerInfoPending(result),
+      success: (result) => containerPollingSuccess(result),
+      pending: (result) => containerPollingPending(result),
       failure: (result) =>
-        containerInfoError(result) ||
-        !some([containerInfoPending(result), containerInfoSuccess(result)]),
+        containerPollingError(result) ||
+        !some([containerPollingPending(result), containerPollingSuccess(result)]),
     }
   )
 )
@@ -43,7 +43,7 @@ const containerPollingInner = flow("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = containerInfoRequest(tick)
+  const poll = containerPollingRequest(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -74,9 +74,9 @@ export default flow(
     return {
       success: success.pipe(
         map((response) => ({
-          containerIP: containerInfoIP(response),
-          containerSecret: containerInfoSecretKey(response),
-          containerPorts: containerInfoPorts(response),
+          containerIP: containerPollingIP(response),
+          containerSecret: containerPollingSecretKey(response),
+          containerPorts: containerPollingPorts(response),
         }))
       ),
       failure,

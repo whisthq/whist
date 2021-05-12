@@ -46,8 +46,12 @@ export const trigger = <A>(name: string, obs: Observable<A>): Observable<Trigger
     share()
   )
 
-export const fromTrigger = (name: string, status?: string) =>
+
+export const fromTrigger = (name: string) =>
   TriggerChannel.pipe(
-    filter((x: Trigger) => x.name === name),
-    map((x: Trigger) => x.payload)
+    // Filter out triggers by name. Note this allows for partial, case-insensitive string matching, 
+    // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
+    filter((x: Trigger) => x.name.toLowerCase().includes(name.toLowerCase())),
+    // Flatten the trigger so that it can be consumed by a subscriber without transforms
+    map((x: Trigger) => ({...x.payload, name: x.name}))
   )

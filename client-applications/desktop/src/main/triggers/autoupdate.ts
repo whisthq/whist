@@ -4,7 +4,7 @@ import EventEmitter from "events"
 import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
-import { trigger } from "@app/utils/flows"
+import { trigger } from "@app/main/utils/flows"
 
 export const updateAvailable = trigger("updateAvailable", fromEvent(
   autoUpdater as EventEmitter,

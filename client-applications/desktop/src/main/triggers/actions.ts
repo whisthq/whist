@@ -9,7 +9,7 @@ import {
   RendererAction,
   Action,
 } from "@app/@types/actions"
-import { trigger } from "@app/utils/flows"
+import { trigger } from "@app/main/utils/flows"
 
 const action = (type: ActionType): Observable<any> => {
   /*

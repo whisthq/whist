@@ -5,17 +5,10 @@
  */
 
 import { app, IpcMainEvent } from "electron"
+import path from "path"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip, combineLatest } from "@app/main/triggers/node_modules/rxjs"
-import { mapTo, takeUntil, take, concatMap } from "rxjs/operators"
-import { ChildProcess } from "child_process"
-
-import {
-  updateAvailable,
-  updateDownloaded,
-} from "@app/main/triggers/autoupdate"
-import { appReady, windowCreated } from "@app/main/triggers/app"
-import { eventActionTypes } from "@app/main/triggers/tray"
+import { fromEvent, merge, zip } from "rxjs"
+import { take, concatMap, mapTo } from "rxjs/operators"
 
 import {
   closeWindows,
@@ -23,62 +16,59 @@ import {
   createUpdateWindow,
   showAppDock,
   hideAppDock,
-} from "@app/main/flows/error/utils"
+  createErrorWindow,
+} from "@app/main/utils/window"
 import { createTray } from "@app/utils/tray"
 import { signoutAction } from "@app/main/triggers/actions"
-import {
-  loginFlow
-} from "@app/main/flows/login"
-import {
-  protocolLaunchFlow,
-  protocolCloseFlow
-} from "@app/main/flows/protocol"
-import { errorWindowRequest } from "@app/main/flows/error"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger } from "@app/main/utils/flows"
+import config from "@app/config/environment"
 
-// appReady only fires once, at the launch of the application.
-// We use takeUntil to make sure that the auth window only fires when
-// we have all of [userEmail, userAccessToken, userConfigToken]. If we
-// don't have all three, we clear them all and force the user to log in again.
-// eventAppReady
-//   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-//   .subscribe(() => {
-//     createAuthWindow((win: any) => win.show())
-//   })
-
-fromTrigger("appReady").pipe(take(1)).subscribe(async () => {
-  // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
-  // so we need to set autoDownload = false
-  autoUpdater.autoDownload = false
-  // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
-  // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
-  // we don't need to set it.
-  switch (env.PACKAGED_ENV) {
-    case FractalCIEnvironment.STAGING:
-      autoUpdater.channel = "staging-rc"
-      break
-    case FractalCIEnvironment.DEVELOPMENT:
-      autoUpdater.channel = "dev-rc"
-      break
-    default:
-      break
-  }
-
-  // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
-  // and fires an update if the current version is less than the version in latest.yml
-  await autoUpdater.checkForUpdatesAndNotify()
+// Set custom app data folder based on environment
+fromTrigger("appReady").subscribe(() => {
+  const { deployEnv } = config
+  const appPath = app.getPath("userData")
+  const newPath = path.join(appPath, deployEnv)
+  app.setPath("userData", newPath)
 })
+
+// Check for autoupdate. electron-updater will error if we look for an update more
+// than once, so we take(1) just to be extra careful
+fromTrigger("appReady")
+  .pipe(take(1))
+  .subscribe(async () => {
+    // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
+    // so we need to set autoDownload = false
+    autoUpdater.autoDownload = false
+    // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
+    // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
+    // we don't need to set it.
+    switch (env.PACKAGED_ENV) {
+      case FractalCIEnvironment.STAGING:
+        autoUpdater.channel = "staging-rc"
+        break
+      case FractalCIEnvironment.DEVELOPMENT:
+        autoUpdater.channel = "dev-rc"
+        break
+      default:
+        break
+    }
+
+    // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
+    // and fires an update if the current version is less than the version in latest.yml
+    await autoUpdater.checkForUpdatesAndNotify()
+  })
+
+fromTrigger("appReady").subscribe(() => createAuthWindow())
 
 // By default, the window-all-closed Electron event will cause the application
 // to close. We don't want this behavior for certain observables. For example,
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
-
 merge(
-  fromTrigger("protocolFlowSuccess"),
+  fromTrigger("protocolLaunchFlowSuccess"),
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess"),
   fromTrigger("errorWindow"),
@@ -100,11 +90,16 @@ merge(
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-// merge(protocolLaunchSuccess, loginSuccess, signupSuccess).subscribe(() => {
-//   closeWindows()
-//   hideAppDock()
-//   createTray(eventActionTypes)
-// })
+
+merge(
+  fromTrigger("protocolLaunchFlowSuccess"),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess")
+).subscribe(() => {
+  closeWindows()
+  hideAppDock()
+  // createTray(eventActionTypes)
+})
 
 // If the update is downloaded, quit the app and install the update
 
@@ -112,22 +107,25 @@ fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-fromTrigger("updateAvailable").subscribe(() => {
+fromTrigger("updateAvailable").subscribe(async () => {
   closeWindows()
   createUpdateWindow()
-  autoUpdater.downloadUpdate().catch((err) => console.error(err))
+  await autoUpdater.downloadUpdate()
 })
 
 fromTrigger("windowCreated").subscribe(() => showAppDock())
 
-// zip(
-//   merge(protocolCloseSuccess, protocolCloseFailure),
-//   protocolLaunchSuccess.pipe(mapTo(true))
-// ).subscribe(([, success]) => {
-//   if (success) app.quit()
-// })
+zip(
+  merge(
+    fromTrigger("protocolCloseFlowSuccess"),
+    fromTrigger("protocolCloseFlowFailure")
+  ),
+  fromTrigger("protocolLaunchSuccess").pipe(mapTo(true))
+).subscribe(([, success]: [any, boolean]) => {
+  if (success) app.quit()
+})
 
-signoutAction.subscribe(() => {
+fromTrigger("signoutAction").subscribe(() => {
   app.relaunch()
   app.exit()
 })

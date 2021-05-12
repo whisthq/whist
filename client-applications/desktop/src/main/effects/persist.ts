@@ -5,7 +5,7 @@
  */
 
 import { mapValues } from "lodash"
-import { persist, persistClear } from "@app/main/flows/auth/flows/persist/utils"
+import { persist, persistClear } from "@app/main/utils/persist"
 import { StateIPC } from "@app/@types/state"
 import { combineLatest, merge } from "@app/main/triggers/node_modules/rxjs"
 import { startWith } from "rxjs/operators"

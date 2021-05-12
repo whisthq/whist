@@ -4,7 +4,7 @@ import { pluck, sample } from "rxjs/operators"
 import containerCreateFlow from "@app/main/flows/container/flows/create"
 import containerPollingFlow from "@app/main/flows/container/flows/polling"
 import hostServiceFlow from "@app/main/flows/container/flows/host"
-import { flow } from "@app/utils/flows"
+import { flow } from "@app/main/utils/flows"
 
 
 export default flow("containerFlow", (trigger) => {

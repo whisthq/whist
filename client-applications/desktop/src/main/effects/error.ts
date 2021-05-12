@@ -5,7 +5,7 @@
  */
 
 import { app } from "electron"
-import { closeWindows } from "@app/main/flows/error/utils"
+import { closeWindows } from "@app/main/utils/window"
 
 
 // Other parts of the application need to know that an error has happened,

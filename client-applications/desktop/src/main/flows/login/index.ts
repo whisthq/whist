@@ -21,8 +21,8 @@ import {
   emailLoginConfigToken,
   emailLoginAccessToken,
   emailLoginRefreshToken,
-} from "@app/main/flows/auth/flows/login/utils"
-import { flow, fork } from "@app/utils/flows"
+} from "@app/main/utils/login"
+import { flow, fork } from "@app/main/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 
 const loginRequest = flow("loginRequest", (trigger) => {

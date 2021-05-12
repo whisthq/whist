@@ -18,10 +18,10 @@ import {
   emailSignupError,
   emailSignupAccessToken,
   emailSignupRefreshToken,
-} from "@app/main/flows/signup/signup"
+} from "@app/main/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork } from "@app/main/utils/flows"
 
 const signupRequest = flow("signupRequest", (trigger) =>
   fork(

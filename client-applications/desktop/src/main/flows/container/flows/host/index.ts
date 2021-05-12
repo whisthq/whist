@@ -9,7 +9,7 @@ import {
   hostServiceConfig,
   hostServiceConfigValid,
   hostServiceConfigError,
-} from "@app/main/flows/container/flows/host/utils"
+} from "@app/main/utils/host"
 import { from, interval, of, merge, combineLatest } from "rxjs"
 import {
   map,
@@ -20,7 +20,7 @@ import {
   take,
   pluck,
 } from "rxjs/operators"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork } from "@app/main/utils/flows"
 import { some } from "lodash"
 
 const hostServiceInfoGates = flow(

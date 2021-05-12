@@ -1,16 +1,15 @@
-import { app } from "electron"
-import { flow, withEffects } from "@app/utils/flows"
-import { merge, fromEvent, combineLatest } from "rxjs"
-import { mapTo } from "rxjs/operators"
-import { ChildProcess } from "child_process"
+import { merge, of, fromEvent } from "rxjs"
+import { mergeMap, map, zip } from "rxjs/operators"
+import { EventEmitter } from "events"
 
-import protocolLaunchFlow from "@app/main/flows/protocol"
+import protocolLaunchFlow from "@app/main/flows/launch"
+import protocolCloseFlow from "@app/main/flows/close"
 import containerFlow from "@app/main/flows/container"
 import loginFlow from "@app/main/flows/login"
 import signupFlow from "@app/main/flows/signup"
 import persistFlow from "@app/main/flows/persist"
 
-import { fromTrigger } from "@app/utils/flows"
+import { fromTrigger } from "@app/main/utils/flows"
 
 persistFlow(fromTrigger("autoupdateNotAvailable"))
 loginFlow(fromTrigger("loginAction"))
@@ -32,3 +31,13 @@ protocolLaunchFlow(
   )
 )
 
+protocolCloseFlow(
+  fromTrigger("protocolLaunchFlowSuccess").pipe(
+    mergeMap(({ protocol }) =>
+      zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
+    ),
+    map(([protocol]) => {
+      protocol
+    })
+  )
+)

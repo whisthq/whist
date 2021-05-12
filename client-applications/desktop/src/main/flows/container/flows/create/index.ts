@@ -12,8 +12,8 @@ import { map, switchMap } from "rxjs/operators"
 import {
   containerCreate,
   containerCreateSuccess,
-} from "@app/main/flows/container/flows/create/utils"
-import { fork, flow } from "@app/utils/flows"
+} from "@app/main/utils/containerCreate"
+import { fork, flow } from "@app/main/utils/flows"
 
 export default flow(
   "containerCreateFlow",
