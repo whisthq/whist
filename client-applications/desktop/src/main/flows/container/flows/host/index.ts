@@ -9,7 +9,7 @@ import {
   hostServiceConfig,
   hostServiceConfigValid,
   hostServiceConfigError,
-} from "@app/main/flows/host/utils"
+} from "@app/main/flows/container/flows/host/utils"
 import { from, interval, of, merge, combineLatest } from "rxjs"
 import {
   map,
@@ -95,7 +95,7 @@ const hostConfigFlow = flow<any>("hostConfigFlow", (_name, trigger) =>
   )
 )
 
-export const hostServiceFlow = flow("hostServiceFlow", (name, trigger) => {
+export default flow("hostServiceFlow", (name, trigger) => {
   const next = `${name}.hostServiceFlow`
 
   const info = hostInfoFlow(next, trigger)

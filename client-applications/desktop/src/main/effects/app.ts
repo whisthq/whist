@@ -23,7 +23,7 @@ import {
   createUpdateWindow,
   showAppDock,
   hideAppDock,
-} from "@app/utils/windows"
+} from "@app/main/flows/error/utils"
 import { createTray } from "@app/utils/tray"
 import { signoutAction } from "@app/main/events/actions"
 import {

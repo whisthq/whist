@@ -1,115 +1,39 @@
-// This file is home to observables that manage container creation.
-// Their responsibilities are to listen for state that will trigger protocol
-// launches. These observables then communicate with the webserver and
-// poll the state of the containers while they spin up.
-//
-// These observables are subscribed by protocol launching observables, which
-// react to success container creation emissions from here.
+import { combineLatest, zip, merge } from "rxjs"
+import { pluck, sample } from "rxjs/operators"
 
-import { from, of, interval, merge } from "rxjs"
-import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
-import { some } from "lodash"
+import containerCreateFlow from "@app/main/flows/container/flows/create"
+import containerPollingFlow from "@app/main/flows/container/flows/polling"
+import hostServiceFlow from "@app/main/flows/container/flows/host"
+import { flow } from "@app/utils/flows"
 
-import {
-  containerCreate,
-  containerInfo,
-  containerInfoIP,
-  containerInfoPorts,
-  containerInfoSecretKey,
-  containerInfoError,
-  containerInfoSuccess,
-  containerInfoPending,
-} from "@app/utils/container"
-import {} from "@app/utils/container"
-import { loadingFrom } from "@app/utils/observables"
-import { fork, flow } from "@app/utils/flows"
 
-const containerInfoRequest = flow("containerInfoRequest", (_, trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ containerID, accessToken }) =>
-        from(containerInfo(containerID, accessToken))
-      )
-    ),
-    {
-      success: (result) => containerInfoSuccess(result),
-      pending: (result) => containerInfoPending(result),
-      failure: (result) =>
-        containerInfoError(result) ||
-        !some([containerInfoPending(result), containerInfoSuccess(result)]),
-    }
+export default flow("containerFlow", (name, trigger) => {
+  const create = containerCreateFlow(
+    name,
+    combineLatest({
+      email: trigger.pipe(pluck("email")),
+      accessToken: trigger.pipe(pluck("accessToken")),
+    })
   )
-)
 
-const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
-  const tick = trigger.pipe(
-    switchMap((args) => interval(1000).pipe(mapTo(args)))
+  const ready = containerPollingFlow(
+    name,
+    combineLatest({
+      containerID: create.success.pipe(pluck("containerID")),
+      accessToken: trigger.pipe(pluck("accessToken")),
+    })
   )
-  const poll = containerInfoRequest(name, tick)
+
+  const host = hostServiceFlow(
+    name,
+    combineLatest({
+      email: trigger.pipe(pluck("email")),
+      accessToken: trigger.pipe(pluck("accessToken")),
+    }).pipe(sample(create.success))
+  )
 
   return {
-    pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
-    success: poll.success.pipe(take(1)),
-    failure: poll.failure.pipe(take(1)),
+    success: zip(ready.success, host.success).pipe(map(([a]) => a)),
+    failure: merge(create.failure, ready.failure, host.failure),
   }
 })
-
-export const containerCreateFlow = flow<any>(
-  "containerCreateFlow",
-  (_name, trigger) => {
-    const create = fork(
-      trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(containerCreate(email, accessToken))
-        )
-      ),
-      {
-        success: (req: { json: { ID: string } }) =>
-          (req?.json?.ID ?? "") !== "",
-        failure: (req: { json: { ID: string } }) =>
-          (req?.json?.ID ?? "") === "",
-      }
-    )
-
-    return {
-      success: create.success.pipe(
-        map((response: {json: {ID: string}}) => ({ containerID: response.json.ID }))
-      ),
-      failure: create.failure,
-    }
-  }
-)
-
-export const containerPollingFlow = flow(
-  "containerPollingFlow",
-  (name, trigger) => {
-    const poll = trigger.pipe(
-      map((args) => containerPollingInner(name, of(args))),
-      share()
-    )
-
-    const success = poll.pipe(switchMap((inner) => inner.success))
-    const failure = poll.pipe(switchMap((inner) => inner.failure))
-    const pending = poll.pipe(switchMap((inner) => inner.pending))
-    const loading = loadingFrom(trigger, success, failure)
-
-    // We probably won't subscribe to "pending" in the rest of the app,
-    // so we subscribe to it deliberately here. If it has no subscribers,
-    // it won't emit. We would like for it to emit for logging purposes.
-    // We must remeber to takeUntil so it stops when we're finished.
-    pending.pipe(takeUntil(merge(success, failure))).subscribe()
-
-    return {
-      success: success.pipe(
-        map((response) => ({
-          containerIP: containerInfoIP(response),
-          containerSecret: containerInfoSecretKey(response),
-          containerPorts: containerInfoPorts(response),
-        }))
-      ),
-      failure,
-      pending,
-      loading,
-    }
-  }
-)

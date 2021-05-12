@@ -7,8 +7,8 @@ import { eventIPC } from "@app/main/events/ipc"
 import { eventAppReady } from "@app/main/events/app"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
-import { loginFailure } from "@app/main/observables/login"
-import { signupFailure } from "@app/main/observables/signup"
+import { loginFailure } from "@app/main/flows/auth/flows/login"
+import { signupFailure } from "@app/main/flows/auth/flows/signup"
 import {
   createAuthErrorWindow,
   createContainerErrorWindowNoAccess,
@@ -16,16 +16,16 @@ import {
   createContainerErrorWindowInternal,
   assignContainerErrorWindow,
   createProtocolErrorWindow,
-} from "@app/utils/windows"
+} from "@app/main/flows/error/utils"
 import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized,
-} from "@app/utils/container"
+} from "@app/main/flows/container/flows/create/utils"
 import { warningObservables } from "@app/utils/logging"
 import {
   containerPollingFailure,
   containerCreateFailure,
-} from "@app/main/observables/container"
+} from "@app/main/flows/container/flows/create"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),

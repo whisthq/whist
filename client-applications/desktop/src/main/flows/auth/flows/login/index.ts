@@ -21,7 +21,7 @@ import {
   emailLoginConfigToken,
   emailLoginAccessToken,
   emailLoginRefreshToken,
-} from "@app/main/flows/login/utils"
+} from "@app/main/flows/auth/flows/login/utils"
 import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 
@@ -64,7 +64,7 @@ const jwtRequest = flow("accessTokenRequest", (_, trigger) => {
   }
 })
 
-export const loginFlow = flow("loginFlow", (name, trigger) => {
+export default flow("loginFlow", (name, trigger) => {
   const login = loginRequest(name, trigger)
 
   const configToken = configTokenRequest(name, combineLatest([
