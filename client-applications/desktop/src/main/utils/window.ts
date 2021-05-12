@@ -1,7 +1,7 @@
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config, { FractalCIEnvironment } from "@app/config/environment"
-
+import { FractalError } from "@app/main/utils/error"
 
 export const WindowHashAuth = "AUTH"
 

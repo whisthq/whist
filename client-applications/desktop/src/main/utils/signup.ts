@@ -19,7 +19,7 @@ export const emailSignup = async (
     },
   })
 
-type ResponseAuth = AsyncReturnType<typeof emailSignup>
+export type ResponseAuth = AsyncReturnType<typeof emailSignup>
 
 export const emailSignupValid = (response: ResponseAuth) =>
   (response?.json?.access_token ?? "") !== ""

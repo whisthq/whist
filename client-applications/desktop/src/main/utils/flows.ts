@@ -22,11 +22,11 @@ export const fork = <T>(
 }
 
 // TODO: flow() and trigger() look pretty similar, can we combine them?
-export const flow = (
+export const flow = <A>(
   name: string,
-  fn: (trigger: Observable<Trigger>) => { [key: string]: Observable<any> }
-) => (trigger: Observable<Trigger>): FlowOutput =>
-  mapValues(fn(trigger.payload), (obs, key) =>
+  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
+) => (trigger: Observable<A>) =>
+  mapValues(fn(trigger), (obs, key) =>
     obs.pipe(
       // Map success/failure/etc. to an Observable<Trigger>
       tap((x) =>
@@ -39,15 +39,15 @@ export const flow = (
     )
   )
 
-export const trigger = <A>(name: string, obs: Observable<A>): Observable<Trigger> =>
+export const trigger = <A>(name: string, obs: Observable<A>) =>
   obs.pipe(
     // Pipe to the TriggerChannel
-    tap((x: Trigger) => TriggerChannel.next({ name: `${name}`, payload: x })),
+    tap((x: A) => TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)),
     share()
   )
 
 
-export const fromTrigger = (name: string) =>
+export const fromTrigger = (name: string): Observable<Record<string, any>> =>
   TriggerChannel.pipe(
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching, 
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.

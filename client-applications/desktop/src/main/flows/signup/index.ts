@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
+import { from, combineLatest, Observable } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -22,26 +22,35 @@ import {
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
 import { flow, fork } from "@app/main/utils/flows"
+import { ResponseAuth } from "@app/main/utils/signup"
 
-const signupRequest = flow("signupRequest", (trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ email, password, configToken }) =>
-        from(emailSignup(email, password, configToken))
-      )
-    ),
-    {
-      success: (result: any) => emailSignupValid(result),
-      failure: (result: any) => emailSignupError(result),
-      warning: (result: any) =>
-        !emailSignupError(result) && !emailSignupError(result),
-    }
-  )
+const signupRequest = flow(
+  "signupRequest",
+  (
+    trigger: Observable<{
+      email: string
+      password: string
+      configToken: string
+    }>
+  ) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ email, password, configToken }) =>
+          from(emailSignup(email, password, configToken))
+        )
+      ),
+      {
+        success: (result: any) => emailSignupValid(result),
+        failure: (result: any) => emailSignupError(result),
+        warning: (result: any) =>
+          !emailSignupError(result) && !emailSignupError(result),
+      }
+    )
 )
 
 const generateConfigToken = flow(
   "generateConfigToken",
-  (trigger) =>
+  (trigger: Observable<{ password: string }>) =>
     fork(
       trigger.pipe(
         switchMap(({ password }) =>
@@ -58,29 +67,32 @@ const generateConfigToken = flow(
     )
 )
 
-export default flow("signupFlow", (trigger) => {
-  const input = combineLatest({
-    email: trigger.pipe(pluck("email")),
-    password: trigger.pipe(pluck("password")),
-    configToken: generateConfigToken(trigger).success,
-  })
+export default flow(
+  "signupFlow",
+  (trigger: Observable<{ email: string; password: string }>) => {
+    const input = combineLatest({
+      email: trigger.pipe(pluck("email")),
+      password: trigger.pipe(pluck("password")),
+      configToken: generateConfigToken(trigger).success,
+    })
 
-  const signup = signupRequest(input)
+    const signup = signupRequest(input)
 
-  const tokens = signup.success.pipe(
-    map((response) => ({
-      accessToken: emailSignupAccessToken(response),
-      refreshToken: emailSignupRefreshToken(response),
-    }))
-  )
+    const tokens = signup.success.pipe(
+      map((response) => ({
+        accessToken: emailSignupAccessToken(response),
+        refreshToken: emailSignupRefreshToken(response),
+      }))
+    )
 
-  const result = combineLatest([input, tokens]).pipe(
-    map(([...args]) => ({ ...args }))
-  )
-  return {
-    success: result,
-    failure: signup.failure,
-    warning: signup.warning,
-    loading: loadingFrom(trigger, result, signup.failure, signup.warning),
+    const result = combineLatest([input, tokens]).pipe(
+      map(([...args]) => ({ ...args }))
+    )
+    return {
+      success: result,
+      failure: signup.failure,
+      warning: signup.warning,
+      loading: loadingFrom(trigger, result, signup.failure, signup.warning),
+    }
   }
-})
+)

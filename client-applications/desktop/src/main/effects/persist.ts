@@ -7,7 +7,7 @@
 import { mapValues } from "lodash"
 import { persist, persistClear } from "@app/main/utils/persist"
 import { StateIPC } from "@app/@types/state"
-import { combineLatest, merge } from "@app/main/triggers/node_modules/rxjs"
+import { combineLatest, merge } from "rxjs"
 import { startWith } from "rxjs/operators"
 
 import { signoutAction } from "@app/main/triggers/actions"

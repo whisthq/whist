@@ -3,7 +3,7 @@
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
-import { zip, merge } from "@app/main/triggers/node_modules/rxjs"
+import { zip, merge } from "rxjs"
 import { ChildProcess } from "child_process"
 
 import {
@@ -27,8 +27,8 @@ import { fromTrigger } from "@app/main/utils/flows"
 zip(
   fromTrigger("protocolLaunchFlowSuccess"),
   fromTrigger("containerFlowSuccess")
-).subscribe(([protocol, response]: [ChildProcess, any]) =>
-  protocolStreamInfo(protocol, {
+).subscribe(([launch, response]: [{protocol: ChildProcess}, any]) =>
+  protocolStreamInfo(launch.protocol, {
     containerIP: containerPollingIP(response),
     containerSecret: containerPollingSecretKey(response),
     containerPorts: containerPollingPorts(response),

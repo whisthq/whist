@@ -2,6 +2,9 @@ import { merge, of, fromEvent } from "rxjs"
 import { mergeMap, map, zip } from "rxjs/operators"
 import { EventEmitter } from "events"
 
+import "@app/main/effects"
+import "@app/main/triggers"
+
 import protocolLaunchFlow from "@app/main/flows/launch"
 import protocolCloseFlow from "@app/main/flows/close"
 import containerFlow from "@app/main/flows/container"
@@ -11,7 +14,7 @@ import persistFlow from "@app/main/flows/persist"
 
 import { fromTrigger } from "@app/main/utils/flows"
 
-persistFlow(fromTrigger("autoupdateNotAvailable"))
+persistFlow(fromTrigger("updateNotAvailable"))
 loginFlow(fromTrigger("loginAction"))
 signupFlow(fromTrigger("signupAction"))
 

@@ -22,24 +22,29 @@ import {
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/main/utils/flows"
 
-const containerPollingRequest = flow("containerPollingRequest", (trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ containerID, accessToken }) =>
-        from(containerPolling(containerID, accessToken))
-      )
-    ),
-    {
-      success: (result) => containerPollingSuccess(result),
-      pending: (result) => containerPollingPending(result),
-      failure: (result) =>
-        containerPollingError(result) ||
-        !some([containerPollingPending(result), containerPollingSuccess(result)]),
-    }
-  )
+const containerPollingRequest = flow<Record<string, string>>(
+  "containerPollingRequest",
+  (trigger) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ containerID, accessToken }) =>
+          from(containerPolling(containerID, accessToken))
+        )
+      ),
+      {
+        success: (result) => containerPollingSuccess(result),
+        pending: (result) => containerPollingPending(result),
+        failure: (result) =>
+          containerPollingError(result) ||
+          !some([
+            containerPollingPending(result),
+            containerPollingSuccess(result),
+          ]),
+      }
+    )
 )
 
-const containerPollingInner = flow("containerPollingInner", (trigger) => {
+const containerPollingInner = flow<Record<string, string>>("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
@@ -52,11 +57,13 @@ const containerPollingInner = flow("containerPollingInner", (trigger) => {
   }
 })
 
-export default flow(
+export default flow<Record<string, string>>(
   "containerPollingFlow",
   (trigger) => {
     const poll = trigger.pipe(
-      map((args) => containerPollingInner(of(args))),
+      map((args: Record<string, string>) =>
+        containerPollingInner(of(args))
+      ),
       share()
     )
 

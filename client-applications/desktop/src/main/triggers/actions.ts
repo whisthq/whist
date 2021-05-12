@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { filter, map, share } from "rxjs/operators"
 
-import { fromEventIPC } from "@app/main/triggers/ipc"
+// import { fromEventIPC } from "@app/main/triggers/ipc"
 import { eventTray } from "@app/main/triggers/tray"
 import {
   ActionType,
@@ -38,8 +38,8 @@ const action = (type: ActionType): Observable<any> => {
     )
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */
-  if ((<any>Object).values(RendererAction).includes(type))
-    return filterType(fromEventIPC("action")).pipe(share())
+  // if ((<any>Object).values(RendererAction).includes(type))
+  //   return filterType(fromEventIPC("action")).pipe(share())
 
   return filterType(eventTray).pipe(share())
 }

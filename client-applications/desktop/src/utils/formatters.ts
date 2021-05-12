@@ -1,6 +1,6 @@
 import { ChildProcess } from "child_process"
 import { omit, pick, truncate, fromPairs, toPairs, isFunction } from "lodash"
-import { Observable } from "@app/main/triggers/node_modules/rxjs"
+import { Observable } from "rxjs"
 import { map } from "rxjs/operators"
 
 const omitJson = ["status", "statusText", "response"]
