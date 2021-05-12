@@ -13,7 +13,6 @@ The code for each hook can be found in the `src` directory. Each hook should exp
 tenant.yaml represents the full configuration of an auth0 tenant. We have a separate tenant for `dev`, `staging`, and `prod`. The configuration for all of these tenants should be the same, save for certain variables such as the API url (API_IDENTIFIER). These variables are stored in each tenant's respective config file (`config/dev.json`, `config/staging.json`, `config/prod.json`). Note that these variables are referenced in tenant.yaml, for example in this snippet:
 
 ```yaml
-
 ---
 resourceServers:
   - name: Fractal API

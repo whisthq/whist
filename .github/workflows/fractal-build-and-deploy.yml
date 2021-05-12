@@ -155,7 +155,7 @@ jobs:
                   fi
                   echo "webserver_url is set to: $WEBSERVER_URL"
                   echo "::set-output name=webserver_url::$WEBSERVER_URL"
-            
+
             - name: Set Auth0 Client secret based on Git Branch (prod, staging, dev)
               id: set-auth0-client-secret
               run: |
@@ -1300,7 +1300,7 @@ jobs:
                   BODY = ":rotating_light: @releases Client Applications: Build & Publish to AWS S3 failure (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
-    
+
     microservices-deploy-auth0:
         name: "Deploy Auth0 hooks"
         runs-on: ubuntu-20.04
