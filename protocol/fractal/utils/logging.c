@@ -683,8 +683,10 @@ void print_stacktrace() {
         SymFromAddr(process, (DWORD64)(stack[i]), 0, symbol);
 
         fprintf(stdout, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name, symbol->Address);
-        fprintf(mprintf_log_file, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
-                symbol->Address);
+        if (mprintf_log_file != NULL) {
+            fprintf(mprintf_log_file, "%i: %s - 0x%0llx\n", frames - i - 1, symbol->Name,
+                    symbol->Address);
+        }
     }
 #else
 #define HANDLER_ARRAY_SIZE 100
@@ -704,7 +706,9 @@ void print_stacktrace() {
     // Print backtrace messages
     for (int i = 1; i < (int)trace_size; i++) {
         fprintf(stdout, "[backtrace #%02d] %s\n", i, messages[i]);
-        fprintf(mprintf_log_file, "[backtrace #%02d] %s\n", i, messages[i]);
+        if (mprintf_log_file != NULL) {
+            fprintf(mprintf_log_file, "[backtrace #%02d] %s\n", i, messages[i]);
+        }
     }
     // Print addr2line commands
     for (int i = 1; i < (int)trace_size; i++) {
@@ -731,9 +735,11 @@ void print_stacktrace() {
 #endif
     // Print out the final newlines, flush, then unlock the log file
     fprintf(stdout, "\n\n");
-    fprintf(mprintf_log_file, "\n\n");
     fflush(stdout);
-    fflush(mprintf_log_file);
+    if (mprintf_log_file != NULL) {
+        fprintf(mprintf_log_file, "\n\n");
+        fflush(mprintf_log_file);
+    }
     fractal_unlock_mutex((FractalMutex)log_file_mutex);
 
     fractal_unlock_mutex(crash_handler_mutex);
