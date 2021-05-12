@@ -1,8 +1,7 @@
 {
-  "name": "microservices",
+  "name": "fractal-auth0",
   "version": "1.0.0",
-  "description": "Fractal microservices",
-  "main": "index.js",
+  "description": "Auth0 configuration and hooks",
   "repository": "https://github.com/fractal/fractal.git",
   "license": "UNLICENSED",
   "private": true,
