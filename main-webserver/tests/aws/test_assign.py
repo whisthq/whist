@@ -382,19 +382,20 @@ def test_assignment_logic(test_assignment_replacement_code, location):
 
 
 @pytest.mark.parametrize(
-    "email_domain, subscribed, status_code",
+    "admin, subscribed, status_code",
     (
-        ("fractal.co", True, HTTPStatus.ACCEPTED),
-        ("fractal.co", False, HTTPStatus.ACCEPTED),
-        ("gmail.com", True, HTTPStatus.ACCEPTED),
-        ("gmail.com", False, HTTPStatus.PAYMENT_REQUIRED),
+        (True, True, HTTPStatus.ACCEPTED),
+        (True, False, HTTPStatus.ACCEPTED),
+        (False, True, HTTPStatus.ACCEPTED),
+        (False, False, HTTPStatus.PAYMENT_REQUIRED),
     ),
 )
 @pytest.mark.usefixtures("celery_app")
 @pytest.mark.usefixtures("celery_worker")
-def test_payment(client, email_domain, make_authorized_user, monkeypatch, status_code, subscribed):
-    user = make_authorized_user(domain=email_domain)
+def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
+    user = make_user()
 
+    client.login(user.user_id, admin=admin)
     monkeypatch.delattr(User, "subscribed")
     monkeypatch.setattr(assign_container, "run", function())
     monkeypatch.setattr(user, "subscribed", subscribed, raising=False)
