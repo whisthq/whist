@@ -6,6 +6,7 @@ export enum MainAction {
 export enum RendererAction {
   LOGIN = "loginRequest",
   SIGNUP = "signupRequest",
+  RELAUNCH = "relaunchRequest"
 }
 
 export type ActionType = MainAction | RendererAction

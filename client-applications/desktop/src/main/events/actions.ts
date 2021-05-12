@@ -45,6 +45,7 @@ const action = (type: ActionType): Observable<any> => {
 // Should all actions be "hot"?
 export const loginAction = action(RendererAction.LOGIN)
 export const signupAction = action(RendererAction.SIGNUP)
+export const rendererAction = action(RendererAction.RELAUNCH)
 
 export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
 export const quitAction = action(MainAction.QUIT).pipe(share())
