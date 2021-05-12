@@ -3,7 +3,7 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { eventIPC } from "@app/main/events/ipc"
+import { eventIPC } from "@app/main/triggers/ipc"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, mapTo, withLatestFrom, startWith } from "rxjs/operators"
@@ -13,7 +13,7 @@ import { getWindows } from "@app/utils/windows"
 import { SubscriptionMap, objectCombine } from "@app/utils/observables"
 import { loginLoading, loginWarning } from "@app/main/flows/auth/flows/login"
 import { signupLoading, signupWarning } from "@app/main/flows/auth/flows/signup"
-import { eventDownloadProgress } from "@app/main/events/autoupdate"
+import { eventDownloadProgress } from "@app/main/triggers/autoupdate"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a

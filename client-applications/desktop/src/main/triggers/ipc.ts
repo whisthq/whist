@@ -8,9 +8,11 @@ import { ipcMain } from "electron"
 import { fromEvent } from "rxjs"
 import { get, identity } from "lodash"
 import { map, share, startWith, filter } from "rxjs/operators"
-import { StateChannel } from "@app/utils/constants"
 import { StateIPC } from "@app/@types/state"
 import { Object } from "ts-toolbelt"
+
+import { StateChannel } from "@app/utils/constants"
+import { trigger } from "@app/utils/flows"
 
 // This file listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -35,19 +37,19 @@ import { Object } from "ts-toolbelt"
 // state object to emit at the beginning of the application so downstream
 // observables can initialize.
 
-export const eventIPC = fromEvent(ipcMain, StateChannel).pipe(
+export const eventIPC = trigger("eventIPC", fromEvent(ipcMain, StateChannel).pipe(
   map((args) => {
     if (!Array.isArray(args)) return {} as Partial<StateIPC>
     return args[1] as Partial<StateIPC>
   }),
   startWith({}),
   share()
-)
+))
 
 export const fromEventIPC = <T extends Object.Paths<StateIPC>>(...keys: T) =>
-  eventIPC.pipe(
+  trigger("fromEventIPC", eventIPC.pipe(
     map((obj) => get(obj as Partial<StateIPC>, keys)),
     filter(identity),
     map((obj) => obj as NonNullable<Object.Path<StateIPC, T>>),
     share()
-  )
+  ))

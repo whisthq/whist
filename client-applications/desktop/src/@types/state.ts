@@ -17,12 +17,3 @@ export interface StateIPC {
   updateInfo: string
   action: Action
 }
-
-export type FlowEvent = {
-  name: string,
-  payload: object
-}
-
-export type FlowReturnType = {
-  [key: string]: Observable<FlowEvent>
-}

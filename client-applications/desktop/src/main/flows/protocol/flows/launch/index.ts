@@ -9,7 +9,7 @@ import { map, take } from "rxjs/operators"
 import { protocolLaunch } from "@app/main/flows/protocol/flows/launch/utils"
 import { flow, fork } from "@app/utils/flows"
 
-export default flow("protocolLaunchFlow", (_, trigger) => {
+export default flow("protocolLaunchFlow", (trigger) => {
   const launch = fork(
     trigger.pipe(
       take(1),

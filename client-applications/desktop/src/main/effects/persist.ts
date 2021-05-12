@@ -7,10 +7,10 @@
 import { mapValues } from "lodash"
 import { persist, persistClear } from "@app/main/flows/auth/flows/persist/utils"
 import { StateIPC } from "@app/@types/state"
-import { combineLatest, merge } from "rxjs"
+import { combineLatest, merge } from "@app/main/triggers/node_modules/rxjs"
 import { startWith } from "rxjs/operators"
 
-import { signoutAction } from "@app/main/events/actions"
+import { signoutAction } from "@app/main/triggers/actions"
 
 // We create observables for each piece of state we want to persist.
 // Each observable subscribes to the parts of the application that provide

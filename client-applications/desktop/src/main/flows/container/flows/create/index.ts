@@ -17,7 +17,7 @@ import { fork, flow } from "@app/utils/flows"
 
 export default flow(
   "containerCreateFlow",
-  (_name, trigger) => {
+  (trigger) => {
     const create = fork(
       trigger.pipe(
         switchMap(({ email, accessToken }) =>

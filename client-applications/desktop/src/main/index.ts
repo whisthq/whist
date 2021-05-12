@@ -6,55 +6,29 @@ import { ChildProcess } from "child_process"
 
 import protocolLaunchFlow from "@app/main/flows/protocol"
 import containerFlow from "@app/main/flows/container"
-import authFlow from "@app/main/flows/auth"
-import errorFlow from "@app/main/flows/error"
-import { protocolStreamInfo } from "@app/main/flows/protocol/flows/launch/utils"
-import { eventAppReady } from "@app/main/events/app"
+import loginFlow from "@app/main/flows/login"
+import signupFlow from "@app/main/flows/signup"
+import persistFlow from "@app/main/flows/persist"
 
-// Flow to launch Google Chrome
-const chromeFlow = flow("chromeFlow", (name, trigger) => {
-  // Trigger container creation and protocol launch asynchronously
-  const container = containerFlow(name, trigger)
-  const protocol = protocolLaunchFlow(name, trigger)
+import { fromTrigger } from "@app/utils/flows"
 
-  return {
-    success: combineLatest({
-      protocol: protocol.success,
-      container: container.success,
-    }),
-    failure: merge(container.failure, protocol.failure),
-  }
-})
+persistFlow(fromTrigger("autoupdateNotAvailable"))
+loginFlow(fromTrigger("loginAction"))
+signupFlow(fromTrigger("signupAction"))
 
-// Composes all other flows together. This is the entry point of the application.
-const mainFlow = flow("mainFlow", (name, trigger) => {
-  // First, authenticate the user
-  const auth = authFlow(name, trigger)
-
-  // Then, launch Google Chrome
-  const chrome = withEffects(
-    chromeFlow(name, auth.success),
-    (args: {
-      protocol: ChildProcess
-      info: {
-        containerIP: string
-        containerSecret: string
-        containerPorts: {
-          port_32262: number
-          port_32263: number
-          port_32273: number
-        }
-      }
-    }) => {
-      protocolStreamInfo(args.protocol, args.info)
-    }
+containerFlow(
+  merge(
+    fromTrigger("persistFlowSuccess"),
+    fromTrigger("loginFlowSuccess"),
+    fromTrigger("signupFlowSuccess")
   )
+)
 
-  return {
-    success: combineLatest([auth.success, chrome.success]).pipe(mapTo({})),
-    failure: merge(auth.failure, chrome.failure),
-  }
-})
+protocolLaunchFlow(
+  merge(
+    fromTrigger("persistFlowSuccess"),
+    fromTrigger("loginFlowSuccess"),
+    fromTrigger("signupFlowSuccess")
+  )
+)
 
-// Kick off the main flow to run the app.
-errorFlow("app", mainFlow("app", eventAppReady).failure)

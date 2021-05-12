@@ -2,12 +2,12 @@ import {
   store,
   persist,
   onPersistChange,
-} from "@app/main/flows/auth/flows/persist/utils"
+} from "@app/main/flows/persist/utils"
 import { BehaviorSubject } from "rxjs"
 import { switchMap } from "rxjs/operators"
 import { has, every } from "lodash"
 
-import { flow, fork } from "@app/utils/fork"
+import { flow, fork } from "@app/utils/flows"
 
 const persistStore = new BehaviorSubject(store.store)
 onPersistChange((store: any) => persistStore.next(store))
@@ -21,7 +21,7 @@ const persistedCredsValid = (store: any) =>
     has(store, key)
   )
 
-export default flow("persistedFlow", (_, trigger) =>
+export default flow("persistedFlow", (trigger) =>
   fork(trigger.pipe(switchMap(() => persistStore)), {
     success: (store) => persistedCredsValid(store),
     failure: (store) => !persistedCredsValid(store),

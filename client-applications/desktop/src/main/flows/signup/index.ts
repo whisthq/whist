@@ -18,12 +18,12 @@ import {
   emailSignupError,
   emailSignupAccessToken,
   emailSignupRefreshToken,
-} from "@app/main/flows/auth/flows/signup/signup"
+} from "@app/main/flows/signup/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
 import { flow, fork } from "@app/utils/flows"
 
-const signupRequest = flow<any>("signupRequest", (_name, trigger) =>
+const signupRequest = flow("signupRequest", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
@@ -41,7 +41,7 @@ const signupRequest = flow<any>("signupRequest", (_name, trigger) =>
 
 const generateConfigToken = flow(
   "generateConfigToken",
-  (_name, trigger) =>
+  (trigger) =>
     fork(
       trigger.pipe(
         switchMap(({ password }) =>
@@ -58,14 +58,14 @@ const generateConfigToken = flow(
     )
 )
 
-export default flow("signupFlow", (name, trigger) => {
+export default flow("signupFlow", (trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
-    configToken: generateConfigToken(name, trigger).success,
+    configToken: generateConfigToken(trigger).success,
   })
 
-  const signup = signupRequest(name, input)
+  const signup = signupRequest(input)
 
   const tokens = signup.success.pipe(
     map((response) => ({

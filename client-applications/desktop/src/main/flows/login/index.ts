@@ -25,7 +25,7 @@ import {
 import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 
-const loginRequest = flow("loginRequest", (_, trigger) => {
+const loginRequest = flow("loginRequest", (trigger) => {
   const login = fork(
     trigger.pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
@@ -44,7 +44,7 @@ const loginRequest = flow("loginRequest", (_, trigger) => {
   }
 })
 
-const configTokenRequest = flow("configTokenRequest", (_, trigger) => {
+const configTokenRequest = flow("configTokenRequest", (trigger) => {
   return {
     success: trigger.pipe(
       switchMap((args: [object, string]) => from(emailLoginConfigToken(...args))),
@@ -53,7 +53,7 @@ const configTokenRequest = flow("configTokenRequest", (_, trigger) => {
   }
 })
 
-const jwtRequest = flow("accessTokenRequest", (_, trigger) => {
+const jwtRequest = flow("accessTokenRequest", (trigger) => {
   return {
     success: trigger.pipe(
       map((response) => ({
@@ -64,15 +64,15 @@ const jwtRequest = flow("accessTokenRequest", (_, trigger) => {
   }
 })
 
-export default flow("loginFlow", (name, trigger) => {
-  const login = loginRequest(name, trigger)
+export default flow("loginFlow", (trigger) => {
+  const login = loginRequest(trigger)
 
-  const configToken = configTokenRequest(name, combineLatest([
+  const configToken = configTokenRequest(combineLatest([
     login.success,
     trigger.pipe(pluck("password"))
   ]))
 
-  const jwt = jwtRequest(name, login.success)
+  const jwt = jwtRequest(login.success)
 
   return {
     success: combineLatest([trigger, jwt, configToken]).pipe(

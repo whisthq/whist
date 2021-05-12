@@ -22,7 +22,7 @@ import {
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/utils/flows"
 
-const containerInfoRequest = flow("containerInfoRequest", (_, trigger) =>
+const containerInfoRequest = flow("containerInfoRequest", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ containerID, accessToken }) =>
@@ -39,11 +39,11 @@ const containerInfoRequest = flow("containerInfoRequest", (_, trigger) =>
   )
 )
 
-const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
+const containerPollingInner = flow("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = containerInfoRequest(name, tick)
+  const poll = containerInfoRequest(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -54,9 +54,9 @@ const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
 
 export default flow(
   "containerPollingFlow",
-  (name, trigger) => {
+  (trigger) => {
     const poll = trigger.pipe(
-      map((args) => containerPollingInner(name, of(args))),
+      map((args) => containerPollingInner(of(args))),
       share()
     )
 

@@ -1,4 +1,4 @@
-import { combineLatest, zip, merge } from "rxjs"
+import { combineLatest, zip, merge, map } from "rxjs"
 import { pluck, sample } from "rxjs/operators"
 
 import containerCreateFlow from "@app/main/flows/container/flows/create"
@@ -7,9 +7,8 @@ import hostServiceFlow from "@app/main/flows/container/flows/host"
 import { flow } from "@app/utils/flows"
 
 
-export default flow("containerFlow", (name, trigger) => {
+export default flow("containerFlow", (trigger) => {
   const create = containerCreateFlow(
-    name,
     combineLatest({
       email: trigger.pipe(pluck("email")),
       accessToken: trigger.pipe(pluck("accessToken")),
@@ -17,7 +16,6 @@ export default flow("containerFlow", (name, trigger) => {
   )
 
   const ready = containerPollingFlow(
-    name,
     combineLatest({
       containerID: create.success.pipe(pluck("containerID")),
       accessToken: trigger.pipe(pluck("accessToken")),
@@ -25,7 +23,6 @@ export default flow("containerFlow", (name, trigger) => {
   )
 
   const host = hostServiceFlow(
-    name,
     combineLatest({
       email: trigger.pipe(pluck("email")),
       accessToken: trigger.pipe(pluck("accessToken")),

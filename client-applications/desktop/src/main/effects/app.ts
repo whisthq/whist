@@ -6,16 +6,16 @@
 
 import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { fromEvent, merge, zip, combineLatest } from "@app/main/triggers/node_modules/rxjs"
 import { mapTo, takeUntil, take, concatMap } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
 import {
-  eventUpdateAvailable,
-  eventUpdateDownloaded,
-} from "@app/main/events/autoupdate"
-import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
-import { eventActionTypes } from "@app/main/events/tray"
+  updateAvailable,
+  updateDownloaded,
+} from "@app/main/triggers/autoupdate"
+import { appReady, windowCreated } from "@app/main/triggers/app"
+import { eventActionTypes } from "@app/main/triggers/tray"
 
 import {
   closeWindows,
@@ -25,10 +25,10 @@ import {
   hideAppDock,
 } from "@app/main/flows/error/utils"
 import { createTray } from "@app/utils/tray"
-import { signoutAction } from "@app/main/events/actions"
+import { signoutAction } from "@app/main/triggers/actions"
 import {
   loginFlow
-} from "@app/main/flows/auth/flows/login"
+} from "@app/main/flows/login"
 import {
   protocolLaunchFlow,
   protocolCloseFlow
@@ -37,6 +37,7 @@ import { errorWindowRequest } from "@app/main/flows/error"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
+import { fromTrigger } from "@app/utils/flows"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -48,7 +49,7 @@ import { FractalCIEnvironment } from "@app/config/environment"
 //     createAuthWindow((win: any) => win.show())
 //   })
 
-eventAppReady.pipe(take(1)).subscribe(() => {
+fromTrigger("appReady").pipe(take(1)).subscribe(async () => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false
@@ -68,7 +69,7 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 
   // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
   // and fires an update if the current version is less than the version in latest.yml
-  autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
+  await autoUpdater.checkForUpdatesAndNotify()
 })
 
 // By default, the window-all-closed Electron event will cause the application
@@ -77,11 +78,11 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 // to quit.
 
 merge(
-  // protocolLaunchSuccess,
-  // loginSuccess,
-  // signupSuccess,
-  errorWindowRequest,
-  eventUpdateAvailable
+  fromTrigger("protocolFlowSuccess"),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess"),
+  fromTrigger("errorWindow"),
+  fromTrigger("updateAvailable")
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
@@ -107,17 +108,17 @@ merge(
 
 // If the update is downloaded, quit the app and install the update
 
-eventUpdateDownloaded.subscribe(() => {
+fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-eventUpdateAvailable.subscribe(() => {
+fromTrigger("updateAvailable").subscribe(() => {
   closeWindows()
-  createUpdateWindow((win: any) => win.show())
+  createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 
-eventWindowCreated.subscribe(() => showAppDock())
+fromTrigger("windowCreated").subscribe(() => showAppDock())
 
 // zip(
 //   merge(protocolCloseSuccess, protocolCloseFailure),

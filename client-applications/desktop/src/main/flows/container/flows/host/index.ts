@@ -23,9 +23,9 @@ import {
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates = flow<any>(
+const hostServiceInfoGates = flow(
   "hostServiceInfoGates",
-  (_name, trigger) =>
+  (trigger) =>
     fork(
       trigger.pipe(
         switchMap(({ email, accessToken }) =>
@@ -41,11 +41,11 @@ const hostServiceInfoGates = flow<any>(
     )
 )
 
-const hostPollingInner = flow<any>("hostPollingInner", (name, trigger) => {
+const hostPollingInner = flow("hostPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = hostServiceInfoGates(name, tick)
+  const poll = hostServiceInfoGates(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -54,9 +54,9 @@ const hostPollingInner = flow<any>("hostPollingInner", (name, trigger) => {
   }
 })
 
-const hostInfoFlow = flow("hostInfoFlow", (name, trigger) => {
+const hostInfoFlow = flow("hostInfoFlow", (trigger) => {
   const poll = trigger.pipe(
-    map((args) => hostPollingInner(name, of(args))),
+    map((args) => hostPollingInner(of(args))),
     share()
   )
 
@@ -79,7 +79,7 @@ const hostInfoFlow = flow("hostInfoFlow", (name, trigger) => {
   }
 })
 
-const hostConfigFlow = flow<any>("hostConfigFlow", (_name, trigger) =>
+const hostConfigFlow = flow("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
@@ -95,13 +95,10 @@ const hostConfigFlow = flow<any>("hostConfigFlow", (_name, trigger) =>
   )
 )
 
-export default flow("hostServiceFlow", (name, trigger) => {
-  const next = `${name}.hostServiceFlow`
-
-  const info = hostInfoFlow(next, trigger)
+export default flow("hostServiceFlow", (trigger) => {
+  const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(
-    next,
     combineLatest({
       email: trigger.pipe(pluck("email")),
       configToken: trigger.pipe(pluck("configToken")),

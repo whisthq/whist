@@ -8,7 +8,7 @@
 import { ChildProcess } from "child_process"
 import { flow, fork } from "@app/utils/flows"
 
-export default flow("protocolCloseFlow", (_, trigger) => {
+export default flow("protocolCloseFlow", (trigger) => {
   const close = fork<ChildProcess>(trigger, {
     success: (protocol) => !protocol.killed,
     failure: (protocol) => protocol.killed,

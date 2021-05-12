@@ -1,13 +1,15 @@
-import { fromEventIPC } from "@app/main/events/ipc"
-import { eventTray } from "@app/main/events/tray"
 import { Observable } from "rxjs"
 import { filter, map, share } from "rxjs/operators"
+
+import { fromEventIPC } from "@app/main/triggers/ipc"
+import { eventTray } from "@app/main/triggers/tray"
 import {
   ActionType,
   MainAction,
   RendererAction,
   Action,
 } from "@app/@types/actions"
+import { trigger } from "@app/utils/flows"
 
 const action = (type: ActionType): Observable<any> => {
   /*
@@ -37,15 +39,14 @@ const action = (type: ActionType): Observable<any> => {
 
   /* eslint-disable @typescript-eslint/strict-boolean-expressions */
   if ((<any>Object).values(RendererAction).includes(type))
-    return filterType(fromEventIPC("action"))
+    return filterType(fromEventIPC("action")).pipe(share())
 
-  return filterType(eventTray)
+  return filterType(eventTray).pipe(share())
 }
 
-// Should all actions be "hot"?
-export const loginAction = action(RendererAction.LOGIN)
-export const signupAction = action(RendererAction.SIGNUP)
-export const rendererAction = action(RendererAction.RELAUNCH)
-
-export const signoutAction = action(MainAction.SIGNOUT).pipe(share())
-export const quitAction = action(MainAction.QUIT).pipe(share())
+// Action triggers
+export const loginAction = trigger("loginAction", action(RendererAction.LOGIN))
+export const signupAction = trigger("signupAction", action(RendererAction.SIGNUP))
+export const rendererAction = trigger("rendererAction", action(RendererAction.RELAUNCH))
+export const signoutAction = trigger("signoutAction", action(MainAction.SIGNOUT))
+export const quitAction = trigger("quitAction", action(MainAction.QUIT))
