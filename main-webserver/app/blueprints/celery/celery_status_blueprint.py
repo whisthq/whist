@@ -2,24 +2,23 @@ from uuid import UUID
 
 from celery import current_app
 from flask import abort, Blueprint, jsonify, make_response
-from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
 from app.celery.dummy import dummy_task
-from app.helpers.utils.general.auth import check_developer, developer_required
+from app.helpers.utils.general.auth import developer_required
 from app.constants.http_codes import (
     ACCEPTED,
     SUCCESS,
     BAD_REQUEST,
     WEBSERVER_MAINTENANCE,
 )
+from auth0 import has_scope
 
 celery_status_bp = Blueprint("celery_status_bp", __name__)
 
 
 @celery_status_bp.route("/status/<task_id>", methods=["GET"])
 @fractal_pre_process
-@jwt_required(optional=True)
 def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
     try:
         # The UUID constuctor will attempt to parse the supplied task ID, treated as a hex string,
@@ -59,7 +58,8 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
             )
         # handle error normally
         msg = None
-        if check_developer():
+
+        if has_scope("admin"):
             # give traceback to developers
             msg = f"Experienced an error. Error trace: {result_data.get('traceback')}"
         else:
@@ -76,7 +76,6 @@ def celery_status(task_id, **kwargs):  # pylint: disable=unused-argument
 
 @celery_status_bp.route("/dummy", methods=["GET"])
 @fractal_pre_process
-@jwt_required()
 @developer_required
 def celery_dummy(**kwargs):  # pylint: disable=unused-argument
     task = dummy_task.apply_async([])
