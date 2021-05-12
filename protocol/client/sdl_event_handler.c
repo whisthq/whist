@@ -53,6 +53,8 @@ extern bool multigesture_active;
 
 extern bool audio_refresh;
 
+bool active_scroll = false;
+
 /*
 ============================
 Private Functions
@@ -323,6 +325,8 @@ int handle_mouse_wheel(SDL_Event *event) {
             (int): 0 on success
     */
 
+    active_scroll = true;
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
@@ -347,14 +351,15 @@ int handle_multi_gesture(SDL_Event *event) {
     // LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
     //     event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
 
-    if (fabs(event->mgesture.dDist) > 10.0 / ((float) output_width)) {
+    // If not scrolling and detected pinch, then populate fmsg to send pinch event to server
+    if (!active_scroll && fabs(event->mgesture.dDist) > 10.0 / ((float) output_width)) {
         multigesture_active = true;
         if (event->mgesture.dDist > 0) {
             current_gesture_type = PINCH_OPEN;
-            LOG_INFO("START PINCH OPEN - %f, %d, %d", 10.0 / ((float) output_width), output_width, output_height);
+            LOG_INFO("START PINCH OPEN - %f > %f, %d, %d", event->mgesture.dDist, 10.0 / ((float) output_width), output_width, output_height);
         } else {
             current_gesture_type = PINCH_CLOSE;
-            LOG_INFO("START PINCH CLOSE");
+            LOG_INFO("START PINCH CLOSE - %f > %f, %d, %d", event->mgesture.dDist, 10.0 / ((float) output_width), output_width, output_height);
         }
     // } else if (!multigesture_active) {
     } else {
@@ -390,10 +395,11 @@ int handle_touch_up(SDL_Event *event) {
 
     send_fmsg(&fmsg);
 
-    // the multigesture has ended
-    if (multigesture_active) {
+    // the multigesture or scroll has ended
+    if (multigesture_active || active_scroll) {
         LOG_INFO("RELEASED GESTURE");
         multigesture_active = false;
+        active_scroll = false;
     }
 
     return 0;
