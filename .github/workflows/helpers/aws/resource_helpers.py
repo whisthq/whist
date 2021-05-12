@@ -94,18 +94,41 @@ def delete_if_older_than_one_day(region, task, cluster, time):
 
 def get_all_aws_instances(region):
     """
-    Gets all instances from a given region
+    Gets all instances (and their info) from a given region
 
     Args:
         region (str): current region
 
     Returns:
-        arr: array containing all instances from the given region
+        arr: array containing all instances (and info) from the given region
     """
     client = boto3.client("ec2", region_name=region)
     response = client.describe_instances()
 
     return response["Reservations"]
+
+
+def num_aws_instances(region):
+    """
+    Gets number of all instances in a given region
+
+    Args:
+        region (str): current region
+
+    Returns:
+        tuple(int, int): (# running instances, total # instances)
+    """
+    reservations = get_all_aws_instances(region)
+    running_instances = sum(
+        [
+            1 if instance["State"]["Code"] == 16 else 0
+            for res in reservations
+            for instance in res["Instances"]
+        ]
+    )
+    total_instances = sum([len(res["Instances"]) for res in reservations])
+
+    return (running_instances, total_instances)
 
 
 def get_all_aws_asgs(region):
