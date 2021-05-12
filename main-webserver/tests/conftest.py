@@ -82,7 +82,7 @@ def authorized(client, user, monkeypatch):
         A string representing the authorized user's identity.
     """
 
-    access_token = create_access_token(identity=user, additional_claims={"scope": "admin"})
+    access_token = create_access_token(identity=user.user_id, additional_claims={"scope": "admin"})
 
     # environ_base contains base data that is used to construct every request that the client
     # sends. Here, we are injecting a value into the field that contains the base HTTP
@@ -381,9 +381,11 @@ def make_authorized_user(client, make_user, monkeypatch):
     See tests.conftest.user.
     """
 
-    def _authorized_user(**kwargs):
-        username = make_user(**kwargs)
-        access_token = create_access_token(identity=username, additional_claims={"scope": "admin"})
+    def _authorized_user(stripe_customer_id=None, domain="fractal.co", **kwargs):
+        user = make_user(stripe_customer_id=stripe_customer_id, domain=domain, **kwargs)
+        access_token = create_access_token(
+            identity=user.user_id, additional_claims={"scope": "admin"}
+        )
 
         monkeypatch.setitem(client.environ_base, "HTTP_AUTHORIZATION", f"Bearer {access_token}")
 
