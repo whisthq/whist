@@ -136,7 +136,7 @@ def test_region():
 
 
 def test_prod_name():
-    current_app.testing = False
+    current_app.testing = False  # pylint: disable=assigning-non-slot
     assert not ECSClient.generate_name().startswith("test-")
 
 
