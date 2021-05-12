@@ -16,7 +16,6 @@ from flask_jwt_extended import create_access_token, verify_jwt_in_request
 
 from app.config import _callback_webserver_hostname
 from app.flask_handlers import can_process_requests, set_web_requests_status
-from app.helpers.utils.general.auth import check_developer
 from app.helpers.utils.general.logs import fractal_logger
 from app.helpers.utils.aws.utils import Retry, retry_with_backoff
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
@@ -138,106 +137,6 @@ def test_celery_sigterm(fractal_celery_app, fractal_celery_proc):
     # tests that start a celery worker which then runs the above task before the tasks it is
     # supposed to run in the test
     fractal_celery_app.control.purge()
-
-
-@pytest.mark.parametrize(
-    "username, verified, is_developer",
-    (
-        ("developer@fractal.co", True, True),
-        ("fake_developer@fractal.co", False, False),
-        ("jeff@amazon.com", True, False),
-        ("h4x0r@fractal.co@gmail.com", True, False),
-    ),
-)
-def test_check_developer(app, make_user, is_developer, username, verified):
-    """Handle authorized requests from normal users correctly."""
-    make_user(user_id=username, verified=verified)
-    access_token = create_access_token(username)
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-        assert check_developer() == is_developer
-
-
-def test_check_developer_verified_mapping(app, make_user):
-    """
-    Make sure a developer can make a test account with the format verified+anything@fractal.co
-    where verified is the name of an already verified developer account.
-    """
-    developer_name = "definitely_real_developer"
-    # make verified developer account
-    make_user(user_id=f"{developer_name}@fractal.co", verified=True)
-
-    # 1. valid new test account that the developer wants to make
-    username = f"{developer_name}+test1@fractal.co"
-    make_user(user_id=username, verified=False)
-    access_token = create_access_token(username)
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-        assert check_developer() is True
-
-    # 2. invalid new test account that the developer wants to make
-    username = f"test1+{developer_name}@fractal.co"  # test1 must come AFTER developer
-    make_user(user_id=username, verified=False)
-    access_token = create_access_token(username)
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-        assert check_developer() is False
-
-    # 3. more pathalogical version of 2
-    username = f"test1+test1+*{developer_name}@fractal.co"  # test1 must come AFTER developer
-    make_user(user_id=username, verified=False)
-    access_token = create_access_token(username)
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-        assert check_developer() is False
-
-    # 4. invalid new test account because wrong domain
-    username = f"{developer_name}+test1@gmail.com"
-    make_user(user_id=username, verified=False)
-    access_token = create_access_token(username)
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-        assert check_developer() is False
-
-
-def test_check_admin(app):
-    """Make sure check_developer() returns True when the requester is the admin user."""
-
-    access_token = create_access_token(app.config["DASHBOARD_USERNAME"])
-
-    with app.test_request_context("/", headers={"Authorization": f"Bearer {access_token}"}):
-        verify_jwt_in_request()
-
-        assert check_developer() is True
-
-
-def test_check_authorization_optional():
-    """Make sure check_developer() returns False within an unauthorized request's context."""
-
-    verify_jwt_in_request(optional=True)
-
-    assert check_developer() is False
-
-
-def test_check_before_verify():
-    """Make sure check_developer() raises a RuntimeError when called first.
-
-    Specifically, make sure check_developer() raises a RuntimeError when called before both
-    @jwt_required() and verify_jwt_in_request() while processing an unauthenticated request.
-    """
-
-    with pytest.raises(
-        RuntimeError,
-        match=re.escape(
-            "You must call `@jwt_required()` or `verify_jwt_in_request()` before using this method"
-        ),
-    ):
-        check_developer()
 
 
 def test_retry():
