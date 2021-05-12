@@ -25,3 +25,13 @@ export const flow = <A>(
       share()
     )
   )
+
+export const withEffects = (flow: FlowReturnType, fn: (args: any) => void) => {
+  flow.success.subscribe(
+    (x: FlowEvent) => {
+      fn(x.payload)
+    }
+  )
+
+  return flow
+}

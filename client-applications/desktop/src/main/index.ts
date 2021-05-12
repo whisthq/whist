@@ -1,22 +1,8 @@
-// This is the application's main entry point. No code should live here, this
-// file's only purpose is to "initialize" other files in the application by
-// importing them.
-//
-// This file should import every other file in the top-level of the "main
-// folder. While many of those files import each other and would run anyways,
-// we import everything here first for the sake of being explicit.
-//
-// If you've created a new file in "main/" and you're not seeing it run, you
-// probably haven't imported it here.
-
-// import "@app/main/observables"
-// import "@app/main/events"
-// import "@app/main/effects"
-
 import { app } from "electron"
-import { flow } from "@app/utils/flows"
-import { merge, fromEvent, zip } from "rxjs"
+import { flow, withEffects } from "@app/utils/flows"
+import { merge, fromEvent, zip, combineLatest } from "rxjs"
 import { mapTo } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 
 import protocolLaunchFlow from "@app/main/flows/protocol"
 import containerFlow from "@app/main/flows/container"
@@ -24,25 +10,37 @@ import authFlow from "@app/main/flows/auth"
 import errorFlow from "@app/main/flows/error"
 import { protocolStreamInfo } from "@app/main/flows/protocol/flows/launch/utils"
 
+// Flow to launch Google Chrome
+const chromeFlow = flow("chromeFlow", (name, trigger) => {
+  // Trigger container creation and protocol launch asynchronously
+  const container = containerFlow(name, trigger)
+  const protocol = protocolLaunchFlow(name, trigger)
+
+  return {
+    success: combineLatest({
+      protocol: protocol.success,
+      container: container.success,
+    }),
+    failure: merge(container.failure, protocol.failure),
+  }
+})
+
 // Composes all other flows together. This is the entry point of the application.
 const mainFlow = flow("mainFlow", (name, trigger) => {
   // First, authenticate the user
   const auth = authFlow(name, trigger)
-
-  // Once the user is authenticated, trigger container creation and protocol launch asynchronously
-  const container = containerFlow(name, auth.success)
-  const protocol = protocolLaunchFlow(name, auth.success)
-
-  // TODO: Move side effect out of the flow
-  // zip(protocol.success, container.success).subscribe(
-  //   ([protocol, info]: [ChildProcess, any]) => {
-  //     protocolStreamInfo(protocol, info)
-  //   }
-  // )
+  
+  // Then, launch Google Chrome
+  const chrome = withEffects(
+    chromeFlow(name, auth.success),
+    (args: { protocol: ChildProcess; info: any }) => {
+      protocolStreamInfo(args.protocol, args.info)
+    }
+  )
 
   return {
-    success: zip(auth.success, container.success, protocol.success).pipe(mapTo({})),
-    failure: merge(auth.failure, container.failure, protocol.failure),
+    success: zip(auth.success, chrome.success).pipe(mapTo({})),
+    failure: merge(auth.failure, chrome.failure),
   }
 })
 
