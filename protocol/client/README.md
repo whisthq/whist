@@ -4,11 +4,7 @@ This folder builds a client to receive a server stream via Fractal. It supports 
 
 ### Development
 
-You can run `client.bat` (Windows) or `client` (\*nix) to restart your dev environment.
-
-To compile, you should first run `cmake .` (MacOS/Linux) or `cmake -G "NMake Makefiles"` (Windows) from the root directory, `/protocol/`. You can then cd into this folder and run `make` (MacOS/Linux) or `nmake` (Windows).
-
-To compile on MacOS/Linux, you should run:
+To compile on MacOS/Linux, run:
 
 ```
 mkdir build
@@ -26,7 +22,7 @@ cmake -G "NMake Makefiles" -S .. -B .
 nmake -j
 ```
 
-This will ensure that all built files end up in the `/build` directory and are easy to clean up.
+Either should be run from the root `/protocol/` directory. This will ensure that all built files end up in the `/build` directory and are easy to clean up.
 
 If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issues, you should delete the CmakeCache or start from a fresh repository.
 

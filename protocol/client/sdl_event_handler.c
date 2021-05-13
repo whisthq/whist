@@ -199,6 +199,9 @@ int handle_key_up_down(SDL_Event *event) {
     if (keycode == FK_LCTRL) {
         ctrl_pressed = is_pressed;
     }
+    if (keycode == FK_RCTRL) {
+        ctrl_pressed = is_pressed;
+    }
     if (keycode == FK_LGUI) {
         lgui_pressed = is_pressed;
     }
@@ -395,6 +398,10 @@ int handle_sdl_event(SDL_Event *event) {
             if (event->key.keysym.scancode == FK_LGUI) {
                 event->key.keysym.scancode = (SDL_Scancode)FK_LCTRL;
                 event->key.keysym.sym = SDLK_LCTRL;
+            }
+            if (event->key.keysym.scancode == FK_RGUI) {
+                event->key.keysym.scancode = (SDL_Scancode)FK_RCTRL;
+                event->key.keysym.sym = SDLK_RCTRL;
             }
 #endif
 
