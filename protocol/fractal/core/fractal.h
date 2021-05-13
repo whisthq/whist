@@ -484,6 +484,7 @@ typedef struct FractalMultigestureMessage {
     float x;                                ///< Normalized gesture x-axis center.
     float y;                                ///< Normalized gesture y-axis center.
     uint16_t num_fingers;                   ///< Number of fingers used in the gesture.
+    bool active_gesture;                    ///< Whether a multigesture is active.
     FractalMultigestureType gesture_type;   ///< Multigesture type
 } FractalMultigestureMessage;
 
