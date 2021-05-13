@@ -743,12 +743,12 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
+            # this must be run before ami update, because that prewarms a container running the new task version
             - name: Update webserver task definitions if new ones were published
               id: update-webserver-taskdefs
               if: needs.ecs-task-definitions-deploy-task-definitions-ecs.result == 'success'
               working-directory: main-webserver
               shell: python3 {0}
-              # this must be run before ami update, because that prewarms a container running the new task version
               run: |
                   import sys; sys.path.append(".") # this allows us to import from `scripts`
                   from scripts.misc_scripts import login

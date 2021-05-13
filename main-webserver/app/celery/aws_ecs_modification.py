@@ -38,7 +38,7 @@ def update_cluster(
         ami (Optional[str]): which AMI to use
 
     Returns:
-        None, though cluster update info stored in state
+        A dict containing the field "msg", which describes what happened to the cluster.
     """
     # import this here to get around a circular import
     from app.celery.aws_ecs_creation import prewarm_new_container
@@ -159,7 +159,7 @@ def update_region(
         ami (Optional[str]): which AMI to use
 
     Returns:
-         None, though which cluster was updated is in celery state
+         A dict containing the field "msg", which describes what happened to the region.
     """
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
