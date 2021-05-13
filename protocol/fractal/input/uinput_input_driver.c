@@ -495,9 +495,11 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     return 0;
 }
 
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type) {
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type, bool active_gesture) {
     if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
-        emit_key_event(input_device, FK_LCTRL, true);
+        if (!active_gesture) {
+            emit_key_event(input_device, FK_LCTRL, true);
+        }
         emit_high_res_mouse_wheel_event(input_device, 0, d_dist);
     }
     return 0;
