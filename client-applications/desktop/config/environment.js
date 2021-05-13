@@ -22,12 +22,6 @@ const FractalCIEnvironment = {
   PRODUCTION: 'prod'
 }
 
-const auth0Config = {
-  auth0Domain: "mingy98.us.auth0.com",
-  clientId: "uzqjXsnbxl9IzLEzJinJrqvbeIO6moTS",
-  apiIdentifier: "https://api.fractal.co/&"
-}
-
 /*
     Webserver URLs
 */
@@ -58,6 +52,11 @@ const environment = {
       WEBSERVER_URL: webservers.local,
       FRONTEND_URL: 'http://localhost:3000'
     },
+    auth0: {
+      auth0Domain: "fractal-dev.us.auth0.com",
+      clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I",
+      apiIdentifier: "https://api.fractal.co"
+    },
     deployEnv: 'dev',
     sentryEnv: 'development',
     clientDownloadURLs: {
@@ -77,6 +76,11 @@ const environment = {
     url: {
       WEBSERVER_URL: webservers.dev,
       FRONTEND_URL: 'https://dev.fractal.co'
+    },
+    auth0: {
+      auth0Domain: "fractal-dev.us.auth0.com",
+      clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I",
+      apiIdentifier: "https://api.fractal.co"
     },
     deployEnv: 'dev',
     sentryEnv: 'development',
@@ -98,6 +102,11 @@ const environment = {
       WEBSERVER_URL: webservers.staging,
       FRONTEND_URL: 'https://staging.fractal.co'
     },
+    auth0: {
+      auth0Domain: "fractal-staging.us.auth0.com",
+      clientId: "iCSxaFGY9gO866H9yJ4Jy05APFyfMTSk",
+      apiIdentifier: "https://staging-server.fractal.co"
+    },
     deployEnv: 'staging',
     sentryEnv: 'staging',
     clientDownloadURLs: {
@@ -118,6 +127,11 @@ const environment = {
       WEBSERVER_URL: webservers.production,
       FRONTEND_URL: 'https://fractal.co'
     },
+    auth0: {
+      auth0Domain: "fractal-prod.us.auth0.com",
+      clientId: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv",
+      apiIdentifier: "https://prod-server.fractal.co"
+    },
     deployEnv: 'prod',
     sentryEnv: 'production',
     clientDownloadURLs: {
@@ -136,6 +150,5 @@ module.exports = {
   webservers,
   environment,
   loggingBaseFilePath,
-  userDataFolderNames,
-  auth0Config
+  userDataFolderNames
 }

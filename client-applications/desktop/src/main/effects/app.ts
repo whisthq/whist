@@ -7,13 +7,14 @@
 import { app } from "electron"
 import { autoUpdater } from "electron-updater"
 import EventEmitter from "events"
-import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { fromEvent, merge, combineLatest } from "rxjs"
 import {
   eventUpdateAvailable,
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
 import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 import { eventActionTypes } from "@app/main/events/tray"
+import { authEvents } from "@app/main/events/auth"
 import { takeUntil, take, concatMap } from "rxjs/operators"
 import {
   closeWindows,
@@ -37,24 +38,24 @@ import {
 import { errorWindowRequest } from "@app/main/observables/error"
 import { autoUpdateAvailable } from "@app/main/observables/autoupdate"
 import {
-  userEmail,
+  userSub,
   userConfigToken,
   userAccessToken,
   userRefreshToken,
 } from "@app/main/observables/user"
+import { authSuccess } from "@app/main/observables/auth"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
+import { clearKeys } from "@app/utils/persist"
 import { FractalCIEnvironment } from "@app/config/environment"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
-// we have all of [userEmail, userAccessToken, userConfigToken]. If we
+// we have all of [userSub, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
-eventAppReady
-  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-  .subscribe(() => {
-    createAuthWindow((win: any) => win.show())
-  })
+eventAppReady.pipe(takeUntil(authSuccess)).subscribe(() => {
+  createAuthWindow((win: any) => win.show())
+})
 
 eventAppReady.pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
@@ -93,7 +94,7 @@ merge(protocolLaunchProcess, errorWindowRequest, eventUpdateAvailable)
   .subscribe((event) => event.preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
-combineLatest([userEmail, protocolCloseRequest]).subscribe(([email, _]) => {
+combineLatest([userSub, protocolCloseRequest]).subscribe(([email, _]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
 
@@ -129,16 +130,18 @@ quitAction.subscribe(() => {
 })
 
 signoutAction.subscribe(() => {
+  clearKeys("refreshToken", "accessToken")
   app.relaunch()
   app.exit()
 })
 
 // If no valid access token exists, we regenerate one
 userRefreshToken
-  .pipe(takeUntil(userAccessToken))
-  .subscribe((refreshToken: string) => {
-    // eslint-disable-next-line no-void
-    void refreshTokens(refreshToken)
+  .pipe(takeUntil(authSuccess))
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  .subscribe(async (refreshToken: string) => {
+    const data = await refreshTokens(refreshToken)
+    authEvents.refreshTokens(data)
   })
 
 // If no config token, randomly generate one and store it

@@ -1,5 +1,5 @@
 import {
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
@@ -43,7 +43,7 @@ import {
 export const hostInfoRequest = containerAssignPolling.pipe(
   skipWhile((res) => res?.json.state !== "PENDING"),
   take(1),
-  withLatestFrom(userEmail, userAccessToken),
+  withLatestFrom(userSub, userAccessToken),
   map(([_, email, token]) => [email, token]),
   share()
 )
@@ -81,7 +81,7 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     hostServiceInfoPort(res),
     hostServiceInfoSecret(res),
   ]),
-  withLatestFrom(userEmail, userConfigToken),
+  withLatestFrom(userSub, userConfigToken),
   map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
 )
 

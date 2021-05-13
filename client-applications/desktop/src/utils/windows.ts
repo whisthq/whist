@@ -11,6 +11,7 @@ import {
 } from "@app/utils/constants"
 import config, { FractalCIEnvironment } from "@app/config/environment"
 import { getAuthenticationURL, loadTokens } from "@app/utils/auth"
+import { authEvents } from "@app/main/events/auth"
 
 const { buildRoot } = config
 
@@ -128,7 +129,8 @@ export const createAuthWindow: CreateWindowFunction = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
   webRequest.onBeforeRequest(filter, async ({ url }) => {
-    await loadTokens(url)
+    const data = await loadTokens(url)
+    authEvents.loadTokens(data)
   })
 
   return win

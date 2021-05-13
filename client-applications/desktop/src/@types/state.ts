@@ -6,6 +6,7 @@ export type AsyncReturnType<
 
 export interface StateIPC {
   email: string
+  sub: string
   password: string
   errorRelaunchRequest: number
   updateInfo: string

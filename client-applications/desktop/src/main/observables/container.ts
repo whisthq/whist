@@ -14,7 +14,7 @@ import {
   containerInfoPending,
 } from "@app/utils/container"
 import {
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
@@ -41,7 +41,7 @@ import {
 } from "@app/utils/formatters"
 
 export const containerCreateRequest = zip(
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken
 ).pipe(

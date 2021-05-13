@@ -36,5 +36,4 @@ export default config
 
 // Re-exporting
 export { FractalCIEnvironment } from "../../config/environment"
-export { auth0Config } from "../../config/environment"
 export { loggingBaseFilePath } from "../../config/paths"
