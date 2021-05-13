@@ -23,21 +23,10 @@ export const fork = <T>(
 
 export const flow = <A>(
   name: string,
-  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> },
-  broadcast?: boolean
+  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
 ) => (trigger: Observable<A>) =>
   mapValues(fn(trigger), (obs, key) =>
     obs.pipe(
-      // Make the output of this flow public through the trigger channel if 
-      // broadcast = true
-      tap(
-        (x) =>
-          broadcast &&
-          TriggerChannel.next({
-            name: `${name}${key.charAt(0).toUpperCase() + key.slice(1)}`,
-            payload: x,
-          } as Trigger)
-      ),
       share()
     )
   )

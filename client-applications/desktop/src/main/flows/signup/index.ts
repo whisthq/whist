@@ -21,7 +21,7 @@ import {
 } from "@app/main/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
-import { flow, fork } from "@app/main/utils/flows"
+import { flow, fork, trigger } from "@app/main/utils/flows"
 import { ResponseAuth } from "@app/main/utils/signup"
 
 const signupRequest = flow(
@@ -89,11 +89,10 @@ export default flow(
       map(([...args]) => ({ ...args }))
     )
     return {
-      success: result,
-      failure: signup.failure,
+      success: trigger("signupFlowSuccess", result),
+      failure: trigger("signupFlowFailure", signup.failure),
       warning: signup.warning,
       loading: loadingFrom(trigger, result, signup.failure, signup.warning),
     }
-  },
-  true
+  }
 )

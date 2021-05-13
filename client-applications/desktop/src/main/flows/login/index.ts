@@ -22,7 +22,7 @@ import {
   emailLoginAccessToken,
   emailLoginRefreshToken,
 } from "@app/main/utils/login"
-import { flow, fork, fromTrigger } from "@app/main/utils/flows"
+import { flow, fork, trigger } from "@app/main/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { ResponseAuth } from "@app/main/utils/login"
 
@@ -70,30 +70,24 @@ const jwtRequest = flow<ResponseAuth>("accessTokenRequest", (trigger) => {
   }
 })
 
-export default flow<Record<string, string>>(
-  "loginFlow",
-  (trigger) => {
-    const login = loginRequest(trigger)
+export default flow<Record<string, string>>("loginFlow", (trigger) => {
+  const login = loginRequest(trigger)
 
-    const configToken = configTokenRequest(
-      combineLatest([
-        fromTrigger("loginRequestSuccess"),
-        trigger.pipe(pluck("password")),
-      ])
-    )
+  const configToken = configTokenRequest(
+    combineLatest([login.success, trigger.pipe(pluck("password"))])
+  )
 
-    const jwt = jwtRequest(fromTrigger("loginRequestSuccess"))
+  const jwt = jwtRequest(login.success)
 
-    return {
-      success: combineLatest([
-        login.success,
-        jwt.success,
-        configToken.success,
-      ]).pipe(map((args: [any, any, any]) => merge(...args))),
-      failure: login.failure,
-      warning: login.warning,
-      loading: login.loading,
-    }
-  },
-  true
-)
+  return {
+    success: trigger(
+      "loginFlowSuccess",
+      combineLatest([login.success, jwt.success, configToken.success]).pipe(
+        map((args: [any, any, any]) => merge(...args))
+      )
+    ),
+    failure: trigger("loginFlowFailure", login.failure),
+    warning: login.warning,
+    loading: login.loading,
+  }
+})
