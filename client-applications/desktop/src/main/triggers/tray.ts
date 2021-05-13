@@ -4,14 +4,8 @@
  * @brief This file contains all RXJS observables created from events caused by clicking on the tray.
  */
 
-import { Subject } from "rxjs"
-
-import { MainAction, Action } from "@app/@types/actions"
+import { signout, quit } from "@app/main/utils/tray"
 import { trigger } from "@app/main/utils/flows"
 
-export const eventTray = trigger("eventTray", new Subject<Action>())
-
-export const eventActionTypes = {
-  signout: () => eventTray.next({ type: MainAction.SIGNOUT, payload: null }),
-  quit: () => eventTray.next({ type: MainAction.QUIT, payload: null }),
-}
+trigger("signoutAction", signout)
+trigger("quitAction", quit)

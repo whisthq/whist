@@ -37,25 +37,14 @@ import { trigger } from "@app/main/utils/flows"
 // state object to emit at the beginning of the application so downstream
 // observables can initialize.
 
-// export const eventIPC = trigger(
-//   "eventIPC",
-//   fromEvent(ipcMain, StateChannel).pipe(
-//     map((args) => {
-//       if (!Array.isArray(args)) return {} as Partial<StateIPC>
-//       return args[1] as Partial<StateIPC>
-//     }),
-//     startWith({}),
-//     share()
-//   )
-// )
-
-// export const fromEventIPC = <T extends Object.Paths<StateIPC>>(...keys: T) =>
-//   trigger(
-//     "fromEventIPC",
-//     eventIPC.pipe(
-//       map((obj) => get(obj as Partial<StateIPC>, keys)),
-//       filter(identity),
-//       map((obj) => obj as NonNullable<Object.Path<StateIPC, T>>),
-//       share()
-//     )
-//   )
+export const eventIPC = trigger(
+  "eventIPC",
+  fromEvent(ipcMain, StateChannel).pipe(
+    map((args) => {
+      if (!Array.isArray(args)) return {} as Partial<StateIPC>
+      return args[1] as Partial<StateIPC>
+    }),
+    startWith({}),
+    share()
+  )
+)

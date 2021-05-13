@@ -1,13 +1,25 @@
+import { Subject } from "rxjs"
+
 import { Menu, Tray, nativeImage } from "electron"
 import { trayIconPath } from "@app/config/files"
 
 let tray: Tray | null = null
 
+const createNativeImage = () => {
+  let image = nativeImage.createFromPath(trayIconPath)
+  image = image.resize({ width: 16 })
+  image.setTemplateImage(true)
+  return image
+}
+
+export const signout = new Subject()
+export const quit = new Subject()
+
 export const createTray = (eventActionTypes: {
   signout: () => any
   quit: () => any
 }) => {
-  // we should only have one tray at any given time
+  // We should only have one tray at any given time
   if (tray != null) {
     tray.destroy()
   }
@@ -16,13 +28,13 @@ export const createTray = (eventActionTypes: {
     {
       label: "Sign out",
       click: () => {
-        eventActionTypes.signout()
+        signout.next()
       },
     },
     {
       label: "Quit",
       click: () => {
-        eventActionTypes.quit()
+        quit.next()
       },
     },
   ])
@@ -31,11 +43,4 @@ export const createTray = (eventActionTypes: {
 
 export const doesTrayExist = () => {
   return tray != null && !tray.isDestroyed()
-}
-
-const createNativeImage = () => {
-  let image = nativeImage.createFromPath(trayIconPath)
-  image = image.resize({ width: 16 })
-  image.setTemplateImage(true)
-  return image
 }
