@@ -23,7 +23,7 @@ import { fromTrigger } from "@app/main/utils/flows"
 //   windowFunction()
 // })
 
-fromTrigger("failure").subscribe((payload) => {
+fromTrigger("failure").subscribe((payload: {name: string}) => {
     closeWindows()
     if(payload.name === "containerCreateFlowFailure") {
         // createErrorWindow(payload.name)

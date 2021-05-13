@@ -4,7 +4,7 @@ import { mapValues, values, toPairs } from "lodash"
 
 export type Trigger = {
   name: string
-  payload: Record<string, any>
+  payload: any
 }
 
 export type FlowOutput = {
@@ -21,19 +21,22 @@ export const fork = <T>(
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
 
-// TODO: flow() and trigger() look pretty similar, can we combine them?
 export const flow = <A>(
   name: string,
-  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
+  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> },
+  broadcast?: boolean
 ) => (trigger: Observable<A>) =>
   mapValues(fn(trigger), (obs, key) =>
     obs.pipe(
-      // Map success/failure/etc. to an Observable<Trigger>
-      tap((x) =>
-        TriggerChannel.next({
-          name: `${name}${key.charAt(0).toUpperCase() + key.slice(1)}`,
-          payload: x,
-        } as Trigger)
+      // Make the output of this flow public through the trigger channel if 
+      // broadcast = true
+      tap(
+        (x) =>
+          broadcast &&
+          TriggerChannel.next({
+            name: `${name}${key.charAt(0).toUpperCase() + key.slice(1)}`,
+            payload: x,
+          } as Trigger)
       ),
       share()
     )
@@ -42,16 +45,17 @@ export const flow = <A>(
 export const trigger = <A>(name: string, obs: Observable<A>) =>
   obs.pipe(
     // Pipe to the TriggerChannel
-    tap((x: A) => TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)),
+    tap((x: A) =>
+      TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
+    ),
     share()
   )
 
-
 export const fromTrigger = (name: string): Observable<Record<string, any>> =>
   TriggerChannel.pipe(
-    // Filter out triggers by name. Note this allows for partial, case-insensitive string matching, 
+    // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name.toLowerCase().includes(name.toLowerCase())),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
-    map((x: Trigger) => ({...x.payload, name: x.name}))
+    map((x: Trigger) => ({ ...x.payload, name: x.name }))
   )

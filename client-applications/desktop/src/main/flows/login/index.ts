@@ -70,26 +70,30 @@ const jwtRequest = flow<ResponseAuth>("accessTokenRequest", (trigger) => {
   }
 })
 
-export default flow<Record<string, string>>("loginFlow", (trigger) => {
-  const login = loginRequest(trigger)
+export default flow<Record<string, string>>(
+  "loginFlow",
+  (trigger) => {
+    const login = loginRequest(trigger)
 
-  const configToken = configTokenRequest(
-    combineLatest([
-      fromTrigger("loginRequestSuccess"),
-      trigger.pipe(pluck("password")),
-    ])
-  )
+    const configToken = configTokenRequest(
+      combineLatest([
+        fromTrigger("loginRequestSuccess"),
+        trigger.pipe(pluck("password")),
+      ])
+    )
 
-  const jwt = jwtRequest(fromTrigger("loginRequestSuccess"))
+    const jwt = jwtRequest(fromTrigger("loginRequestSuccess"))
 
-  return {
-    success: combineLatest([
-      login.success,
-      jwt.success,
-      configToken.success,
-    ]).pipe(map((args: [any, any, any]) => merge(...args))),
-    failure: login.failure,
-    warning: login.warning,
-    loading: login.loading,
-  }
-})
+    return {
+      success: combineLatest([
+        login.success,
+        jwt.success,
+        configToken.success,
+      ]).pipe(map((args: [any, any, any]) => merge(...args))),
+      failure: login.failure,
+      warning: login.warning,
+      loading: login.loading,
+    }
+  },
+  true
+)

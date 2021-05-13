@@ -21,7 +21,7 @@ const persistedCredsValid = (store: any) =>
     has(store, key)
   )
 
-export default flow("persistedFlow", (trigger) =>
+export default flow("persistFlow", (trigger) =>
   fork(trigger.pipe(switchMap(() => persistStore)), {
     success: (store) => persistedCredsValid(store),
     failure: (store) => !persistedCredsValid(store),

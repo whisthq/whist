@@ -94,5 +94,6 @@ export default flow(
       warning: signup.warning,
       loading: loadingFrom(trigger, result, signup.failure, signup.warning),
     }
-  }
+  },
+  true
 )
