@@ -1,22 +1,15 @@
-| Ticket | Title             |
-| ------ | ----------------- |
-| Closes #nb    | Insert Title Here |
+| Ticket     |
+| ---------- | 
+| Closes #nb |
 
 ## Description
 
-Give a brief description and context of what you are working on.
 
 ## Implementation / Approach
 
-Briefly describe your approach, design, and implementation to solve the problem if applicable.
 
-## Tests
+## Documentation Added
 
-List all the possible scenarios/edge cases that you tested and the programmatic tests you wrote.
 
-## Checklist
+## Tests Written / Performed
 
-- [ ] Appropriate documentation coverage
-- [ ] Appropriate unit and integration test coverage
-- [ ] Manual testing has been performed
-- [ ] This PR is linted, tested and follows the best practices of the organization
