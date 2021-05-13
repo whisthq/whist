@@ -169,9 +169,11 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
  *
  * @param gesture_type             The gesture type (rotate, pinch open, pinch close)
  *
+ * @param active_gesture           Whether this event happened mid-multigesture
+ *
  * @returns                        0 on success, -1 on failure
  */
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type);
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type, bool active_gesture);
 
 /**
  * @brief                          Emit a finger touch event
