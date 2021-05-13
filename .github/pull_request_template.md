@@ -1,6 +1,5 @@
-| Ticket     |
-| ---------- | 
-| Closes #nb |
+## Ticket(s) Closed
+- Closes #
 
 ## Description
 
