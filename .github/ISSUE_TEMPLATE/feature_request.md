@@ -12,5 +12,5 @@ assignees: ""
 **The Problem It Fixes**
 
 
-**How to Implement**
+**Potential Implementation(s)**
 
