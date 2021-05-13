@@ -5,7 +5,8 @@
  */
 import { app } from "electron"
 import EventEmitter from "events"
-import { fromEvent } from "rxjs"
+import { fromEvent, interval } from "rxjs"
+import { tap } from "rxjs/operators"
 
 import { trigger } from "@app/main/utils/flows"
 

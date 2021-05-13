@@ -4,7 +4,6 @@
  * @brief This file contains RXJS observables that deal with state persistence (i.e. shared state).
  */
 
-import { appReady } from "@app/main/triggers/app"
 import { Subject } from "rxjs"
 import { distinctUntilChanged, map } from "rxjs/operators"
 import { store } from "@app/main/utils/persist"
@@ -47,6 +46,6 @@ store.onDidAnyChange((newStore: any, _oldStore: any) => {
 })
 
 // TODO: Move to effects
-appReady.subscribe(() => {
-  persisted.next(store.store)
-})
+// appReady.subscribe(() => {
+//   persisted.next(store.store)
+// })

@@ -4,12 +4,12 @@ import { filter, map, pluck } from "rxjs/operators"
 import { trigger, fromTrigger } from "@app/main/utils/flows"
 
 const filterByName = (
-  observable: Observable<{ name: string; payload: any } | undefined>,
+  observable: Observable<{ name: string; payload: any }>,
   name: string
 ) =>
   observable.pipe(
     filter(
-      (x: { name: string; payload: any } | undefined) =>
+      (x: { name: string; payload: any }) =>
         x !== undefined && x.name === name
     ),
     map((x: { name: string; payload: any }) => x.payload)

@@ -30,8 +30,8 @@ const subscribed = {
   updateInfo: fromTrigger("downloadProgress").pipe(map((obj) => JSON.stringify(obj))),
 }
 
-objectCombine(subscribed)
-  .pipe(withLatestFrom(fromTrigger("eventIPC").pipe(startWith({}))))
-  .subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
-    ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
-  })
+// objectCombine(subscribed)
+//   .pipe(withLatestFrom(fromTrigger("eventIPC").pipe(startWith({}))))
+//   .subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
+//     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
+//   })

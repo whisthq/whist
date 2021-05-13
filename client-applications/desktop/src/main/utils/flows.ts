@@ -25,14 +25,16 @@ export const flow = <A>(
   name: string,
   fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
 ) => (trigger: Observable<A>) =>
-  mapValues(fn(trigger), (obs, key) =>
+  mapValues(fn(trigger), (obs) =>
     obs.pipe(
+      tap(() => console.log(name)),
       share()
     )
   )
 
 export const trigger = <A>(name: string, obs: Observable<A>) =>
   obs.pipe(
+    tap(() => console.log("Trigger created for ", name)),
     // Pipe to the TriggerChannel
     tap((x: A) =>
       TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
@@ -40,7 +42,7 @@ export const trigger = <A>(name: string, obs: Observable<A>) =>
     share()
   )
 
-export const fromTrigger = (name: string): Observable<Record<string, any>> =>
+export const fromTrigger = (name: string): Observable<any> =>
   TriggerChannel.pipe(
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.

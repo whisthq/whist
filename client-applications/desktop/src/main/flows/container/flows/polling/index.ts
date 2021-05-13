@@ -22,29 +22,33 @@ import {
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/main/utils/flows"
 
-const containerPollingRequest = flow<Record<string, string>>(
-  "containerPollingRequest",
-  (trigger) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ containerID, accessToken }) =>
-          from(containerPolling(containerID, accessToken))
-        )
-      ),
-      {
-        success: (result) => containerPollingSuccess(result),
-        pending: (result) => containerPollingPending(result),
-        failure: (result) =>
-          containerPollingError(result) ||
-          !some([
-            containerPollingPending(result),
-            containerPollingSuccess(result),
-          ]),
-      }
-    )
+const containerPollingRequest = flow<{
+  containerID: string
+  accessToken: string
+}>("containerPollingRequest", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ containerID, accessToken }) =>
+        from(containerPolling(containerID, accessToken))
+      )
+    ),
+    {
+      success: (result) => containerPollingSuccess(result),
+      pending: (result) => containerPollingPending(result),
+      failure: (result) =>
+        containerPollingError(result) ||
+        !some([
+          containerPollingPending(result),
+          containerPollingSuccess(result),
+        ]),
+    }
+  )
 )
 
-const containerPollingInner = flow<Record<string, string>>("containerPollingInner", (trigger) => {
+const containerPollingInner = flow<{
+  containerID: string
+  accessToken: string
+}>("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
@@ -57,11 +61,11 @@ const containerPollingInner = flow<Record<string, string>>("containerPollingInne
   }
 })
 
-export default flow<Record<string, string>>(
+export default flow<{ containerID: string; accessToken: string }>(
   "containerPollingFlow",
   (trigger) => {
     const poll = trigger.pipe(
-      map((args: Record<string, string>) =>
+      map((args: { containerID: string; accessToken: string }) =>
         containerPollingInner(of(args))
       ),
       share()

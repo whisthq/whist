@@ -19,7 +19,6 @@ import {
   createErrorWindow,
 } from "@app/main/utils/window"
 import { createTray } from "@app/main/utils/tray"
-import { signout } from "@app/main/triggers/renderer"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"

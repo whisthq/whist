@@ -4,21 +4,21 @@ import { pluck, sample, map } from "rxjs/operators"
 import containerCreateFlow from "@app/main/flows/container/flows/create"
 import containerPollingFlow from "@app/main/flows/container/flows/polling"
 import hostServiceFlow from "@app/main/flows/container/flows/host"
-import { flow, trigger } from "@app/main/utils/flows"
+import { flow, trigger as _trigger } from "@app/main/utils/flows"
 
 export default flow("containerFlow", (trigger) => {
   const create = containerCreateFlow(
     combineLatest({
-      email: trigger.pipe(pluck("email")),
-      accessToken: trigger.pipe(pluck("accessToken")),
+      email: trigger.pipe(pluck("email")) as Observable<string>,
+      accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
     })
   )
 
   const ready = containerPollingFlow(
     combineLatest({
-      containerID: create.success.pipe(pluck("containerID")),
-      accessToken: trigger.pipe(pluck("accessToken")),
-    } as Observable<Record<string, string>>)
+      containerID: create.success.pipe(pluck("containerID")) as Observable<string>,
+      accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
+    })
   )
 
   const host = hostServiceFlow(
@@ -29,11 +29,11 @@ export default flow("containerFlow", (trigger) => {
   )
 
   return {
-    success: trigger(
+    success: _trigger(
       "containerFlowSuccess",
       zip(ready.success, host.success).pipe(map(([a]) => a))
     ),
-    failure: trigger(
+    failure: _trigger(
       "containerFlowFailure",
       merge(create.failure, ready.failure, host.failure)
     ),

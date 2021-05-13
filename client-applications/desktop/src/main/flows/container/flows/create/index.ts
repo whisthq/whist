@@ -15,7 +15,7 @@ import {
 } from "@app/main/utils/containerCreate"
 import { fork, flow } from "@app/main/utils/flows"
 
-export default flow(
+export default flow<{email: string, accessToken: string}>(
   "containerCreateFlow",
   (trigger) => {
     const create = fork(
