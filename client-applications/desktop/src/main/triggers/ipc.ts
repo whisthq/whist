@@ -37,7 +37,7 @@ import { trigger } from "@app/main/utils/flows"
 // state object to emit at the beginning of the application so downstream
 // observables can initialize.
 
-export const eventIPC = trigger(
+trigger(
   "eventIPC",
   fromEvent(ipcMain, StateChannel).pipe(
     map((args) => {

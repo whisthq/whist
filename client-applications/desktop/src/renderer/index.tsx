@@ -34,7 +34,6 @@ import {
 
 import { browserHistory } from "@app/utils/history"
 import { useMainState } from "@app/utils/ipc"
-import { RendererAction } from "@app/@types/actions"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -56,7 +55,7 @@ const RootComponent = () => {
 
   const errorContinue = () =>
     setMainState({
-      action: { type: RendererAction.RELAUNCH, payload: { time: Date.now() } },
+      trigger: { name: "relaunch", payload: { time: Date.now() } },
     })
 
   if (show === WindowHashAuth) {

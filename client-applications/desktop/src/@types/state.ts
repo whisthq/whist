@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import { Action } from "@app/@types/actions"
+import { Trigger } from "@app/main/utils/flows"
 import { Object } from "lodash"
 
 export type AsyncReturnType<
@@ -15,5 +15,5 @@ export interface StateIPC {
   signupLoading: boolean
   errorRelaunchRequest: number
   updateInfo: string
-  action: Action
+  trigger: Trigger
 }

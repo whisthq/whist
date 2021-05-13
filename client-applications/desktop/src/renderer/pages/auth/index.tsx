@@ -4,7 +4,6 @@ import { Route } from "react-router-dom"
 import Login from "@app/renderer/pages/auth/login"
 import Signup from "@app/renderer/pages/auth/signup"
 import { useMainState } from "@app/utils/ipc"
-import { RendererAction } from "@app/@types/actions"
 
 const Auth = () => {
   /*
@@ -25,8 +24,8 @@ const Auth = () => {
   const onLogin = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.LOGIN,
+      trigger: {
+        name: "login",
         payload: {
           email,
           password,
@@ -38,8 +37,8 @@ const Auth = () => {
   const onSignup = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.SIGNUP,
+      trigger: {
+        name: "signup",
         payload: {
           email,
           password,

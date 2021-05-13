@@ -1,5 +1,5 @@
 import { Subject } from "rxjs"
-
+import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
 import { trayIconPath } from "@app/config/files"
 
@@ -12,8 +12,7 @@ const createNativeImage = () => {
   return image
 }
 
-export const signout = new Subject()
-export const quit = new Subject()
+export const trayEvent = new events.EventEmitter()
 
 export const createTray = (eventActionTypes: {
   signout: () => any
@@ -28,13 +27,13 @@ export const createTray = (eventActionTypes: {
     {
       label: "Sign out",
       click: () => {
-        signout.next()
+        trayEvent.emit("signout")
       },
     },
     {
       label: "Quit",
       click: () => {
-        quit.next()
+        trayEvent.emit("quit")
       },
     },
   ])

@@ -1,26 +1,29 @@
 import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
-import { eventIPC } from "@app/main/triggers/ipc"
-import { ActionType, RendererAction, Action } from "@app/@types/actions"
-import { trigger } from "@app/main/utils/flows"
+import { trigger, fromTrigger } from "@app/main/utils/flows"
 
-const filterType = (observable: Observable<Action>, type: ActionType) =>
+const filterByName = (
+  observable: Observable<{ name: string; payload: any } | undefined>,
+  name: string
+) =>
   observable.pipe(
-    filter((x: Action) => x !== undefined && x.type === type),
-    map((x: Action) => x.payload)
+    filter(
+      (x: { name: string; payload: any } | undefined) =>
+        x !== undefined && x.name === name
+    ),
+    map((x: { name: string; payload: any }) => x.payload)
   )
 
-// Action triggers
 trigger(
-  "loginAction",
-  filterType(eventIPC.pipe(pluck("action")), RendererAction.LOGIN)
+  "login",
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "login")
 )
 trigger(
-  "signupAction",
-  filterType(eventIPC.pipe(pluck("action")), RendererAction.SIGNUP)
+  "signup",
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "signup")
 )
 trigger(
-  "relaunchAction",
-  filterType(eventIPC.pipe(pluck("action")), RendererAction.RELAUNCH)
+  "relaunch",
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "relaunch")
 )

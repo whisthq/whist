@@ -15,8 +15,8 @@ import persistFlow from "@app/main/flows/persist"
 import { fromTrigger } from "@app/main/utils/flows"
 
 persistFlow(fromTrigger("updateNotAvailable"))
-loginFlow(fromTrigger("loginAction"))
-signupFlow(fromTrigger("signupAction"))
+loginFlow(fromTrigger("login"))
+signupFlow(fromTrigger("signup"))
 
 containerFlow(
   merge(

@@ -10,7 +10,7 @@ import { StateIPC } from "@app/@types/state"
 import { combineLatest, merge } from "rxjs"
 import { startWith } from "rxjs/operators"
 
-import { signoutAction } from "@app/main/triggers/actions"
+import { signout } from "@app/main/triggers/renderer"
 
 // We create observables for each piece of state we want to persist.
 // Each observable subscribes to the parts of the application that provide
@@ -35,7 +35,7 @@ import { signoutAction } from "@app/main/triggers/actions"
 //   loginFailure,
 //   signupFailure,
 //   containerCreateFailure,
-//   signoutAction
+//   signout
 // ).subscribe(() => persistClear())
 
 // Uncomment this line to clear credentials in development.

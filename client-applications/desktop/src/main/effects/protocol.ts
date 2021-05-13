@@ -40,8 +40,8 @@ zip(
 zip(
   fromTrigger("protocolLaunchFlowSuccess"),
   merge(
-    fromTrigger("signoutAction"),
-    fromTrigger("quitAction"),
+    fromTrigger("signout"),
+    fromTrigger("quit"),
     fromTrigger("errorWindow")
   )
 ).subscribe(([protocol]: [ChildProcess]) => protocolStreamKill(protocol))
