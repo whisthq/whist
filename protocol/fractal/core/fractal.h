@@ -479,13 +479,13 @@ typedef enum FractalMultigestureType {
  * @details Message from multigesture event on touchpad.
  */
 typedef struct FractalMultigestureMessage {
-    float d_theta;                          ///< The amount the fingers rotated.
-    float d_dist;                           ///< The amount the fingers pinched.
-    float x;                                ///< Normalized gesture x-axis center.
-    float y;                                ///< Normalized gesture y-axis center.
-    uint16_t num_fingers;                   ///< Number of fingers used in the gesture.
-    bool active_gesture;                    ///< Whether a multigesture is active.
-    FractalMultigestureType gesture_type;   ///< Multigesture type
+    float d_theta;                         ///< The amount the fingers rotated.
+    float d_dist;                          ///< The amount the fingers pinched.
+    float x;                               ///< Normalized gesture x-axis center.
+    float y;                               ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
+    bool active_gesture;                   ///< Whether a multigesture is active.
+    FractalMultigestureType gesture_type;  ///< Multigesture type
 } FractalMultigestureMessage;
 
 /**
@@ -503,12 +503,12 @@ typedef enum FractalTouchType {
  * @details Message from touch message on trackpad.
  */
 typedef struct FractalTouchMessage {
-    float x;                       ///< Normalized gesture x-axis center.
-    float y;                       ///< Normalized gesture y-axis center.
-    float dx;                      ///< Distance moved on x-axis.
-    float dy;                      ///< Distance moved on y-axis.
-    bool active_gesture;           ///< Whether a multigesture is active.
-    FractalTouchType touch_type;   ///< Touch type
+    float x;                      ///< Normalized gesture x-axis center.
+    float y;                      ///< Normalized gesture y-axis center.
+    float dx;                     ///< Distance moved on x-axis.
+    float dy;                     ///< Distance moved on y-axis.
+    bool active_gesture;          ///< Whether a multigesture is active.
+    FractalTouchType touch_type;  ///< Touch type
 } FractalTouchMessage;
 
 /**
@@ -588,7 +588,7 @@ typedef struct FractalClientMessage {
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
 
         // MESSAGE_TOUCH
-        FractalTouchMessage touch; ///< Finger touch message.
+        FractalTouchMessage touch;  ///< Finger touch message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;
