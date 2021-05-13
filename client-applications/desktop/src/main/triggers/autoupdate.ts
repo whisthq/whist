@@ -6,22 +6,22 @@ import { takeWhile } from "rxjs/operators"
 
 import { trigger } from "@app/main/utils/flows"
 
-export const updateAvailable = trigger("updateAvailable", fromEvent(
+trigger("updateAvailable", fromEvent(
   autoUpdater as EventEmitter,
   "update-available"
 ))
 
-export const downloadProgress = trigger("downloadProgress", fromEvent(
+trigger("downloadProgress", fromEvent(
   autoUpdater as EventEmitter,
   "download-progress"
 ))
 
-export const uppdateDownloaded = trigger("updateDownloaded", fromEvent(
+trigger("updateDownloaded", fromEvent(
   autoUpdater as EventEmitter,
   "update-downloaded"
 ))
 
-export const updateNotAvailable = trigger(
+trigger(
   "updateNotAvailable",
   merge(
     of(null).pipe(takeWhile(() => !app.isPackaged)),

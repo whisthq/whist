@@ -7,8 +7,9 @@
 import { Subject } from "rxjs"
 
 import { MainAction, Action } from "@app/@types/actions"
+import { trigger } from "@app/main/utils/flows"
 
-export const eventTray = new Subject<Action>()
+export const eventTray = trigger("eventTray", new Subject<Action>())
 
 export const eventActionTypes = {
   signout: () => eventTray.next({ type: MainAction.SIGNOUT, payload: null }),

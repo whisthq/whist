@@ -45,8 +45,8 @@ const action = (type: ActionType): Observable<any> => {
 }
 
 // Action triggers
-export const loginAction = trigger("loginAction", action(RendererAction.LOGIN))
-export const signupAction = trigger("signupAction", action(RendererAction.SIGNUP))
-export const rendererAction = trigger("rendererAction", action(RendererAction.RELAUNCH))
-export const signoutAction = trigger("signoutAction", action(MainAction.SIGNOUT))
-export const quitAction = trigger("quitAction", action(MainAction.QUIT))
+trigger("loginAction", action(RendererAction.LOGIN))
+trigger("signupAction", action(RendererAction.SIGNUP))
+trigger("rendererAction", action(RendererAction.RELAUNCH))
+trigger("signoutAction", action(MainAction.SIGNOUT))
+trigger("quitAction", action(MainAction.QUIT))
