@@ -44,7 +44,6 @@ extern volatile SDL_Window *window;
 
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile float dpi;
 extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
@@ -340,11 +339,20 @@ int handle_mouse_wheel(SDL_Event *event) {
 
 int handle_multi_gesture(SDL_Event *event) {
     static FractalMultigestureType current_gesture_type = NONE; // static, so only set to NONE on first call
+    static float accumulated_dist = 0;
+    if (!multigesture_active) {
+        accumulated_dist = 0;
+    }
+    accumulated_dist += event->mgesture.dDist;
+
+    int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
+    float dpi;
+    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
 
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = event->mgesture.dDist * (int)dpi,
+                                                     .d_dist = accumulated_dist * (int) dpi,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers,
@@ -352,30 +360,22 @@ int handle_multi_gesture(SDL_Event *event) {
     // LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
     //     event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
 
-    // If not scrolling and detected pinch, then populate fmsg to send pinch event to server
-    if (!active_scroll && fabs(event->mgesture.dDist) > 10.0 / ((float) output_width)) {
+    // If not scrolling [[[ and not rotate ]]], then populate fmsg to send pinch event to server
+    if (!active_scroll && fabs(accumulated_dist) > 10.0 / ((float) output_width)) {
         multigesture_active = true;
-        if (event->mgesture.dDist > 0) {
+        if (accumulated_dist > 0) {
             current_gesture_type = PINCH_OPEN;
-            LOG_INFO("START PINCH OPEN - %f > %f, %d, %d", event->mgesture.dDist, 10.0 / ((float) output_width), output_width, output_height);
+            LOG_INFO("START PINCH OPEN - %f > %f, %d, %d; dpi %d", accumulated_dist, 10.0 / ((float) output_width), output_width, output_height, (int)dpi);
         } else {
             current_gesture_type = PINCH_CLOSE;
-            LOG_INFO("START PINCH CLOSE - %f > %f, %d, %d", event->mgesture.dDist, 10.0 / ((float) output_width), output_width, output_height);
+            LOG_INFO("START PINCH CLOSE - %f > %f, %d, %d; dpi %d", accumulated_dist, 10.0 / ((float) output_width), output_width, output_height, (int)dpi);
         }
-    // } else if (!multigesture_active) {
+        accumulated_dist = 0;
     } else {
-        // if there is no active scroll and this is not a valid multigesture, then return
+        // if there is a scroll happening, then this is not a multigesture, and return
         current_gesture_type = NONE;
         return 0;
     }
-
-    // if (current_gesture_type == ROTATE) {
-    //     LOG_INFO("ROTATING");
-    // } else if (current_gesture_type == PINCH_OPEN) {
-    //     LOG_INFO("PINCHING OPEN d_dist: %f", event->mgesture.dDist);
-    // } else if (current_gesture_type == PINCH_CLOSE) {
-    //     LOG_INFO("PINCHING CLOSED d_dist: %f", event->mgesture.dDist);
-    // }
 
     fmsg.multigesture.gesture_type = current_gesture_type;
 
