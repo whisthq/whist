@@ -46,12 +46,11 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
+extern bool audio_refresh;
+
 extern MouseMotionAccumulation mouse_state;
 
 extern bool multigesture_active;
-
-extern bool audio_refresh;
-
 bool active_scroll = false;
 
 /*
