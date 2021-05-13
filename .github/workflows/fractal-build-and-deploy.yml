@@ -916,7 +916,6 @@ jobs:
                   else
                       echo 'Error: Invalid branch' && false
                   fi
-                  HEROKU_APP_NAME="fractal-serv-jmather625-2pps2r"
                   echo "HEROKU_APP_NAME=$HEROKU_APP_NAME" >> $GITHUB_ENV
 
                   heroku git:remote --app $HEROKU_APP_NAME --remote heroku-fractal-server
@@ -929,8 +928,8 @@ jobs:
                   | sudo tar -zxp --directory /usr/local/bin/
 
             - name: Deploy the webserver atomically
-              shell: bash -e {0}
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              shell: bash -e {0}
               run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
             - name: Notify Slack on database migration
@@ -951,7 +950,7 @@ jobs:
 
                   BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "alerts-test" # f"#alerts-{BRANCH_NAME}"
+                  SLACK_CHANNEL = f"#alerts-{BRANCH_NAME}"
 
                   slack_redirect = f"You can take a look the commit here:\n{ISSUE_URL}"
 
@@ -971,7 +970,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "alerts-test" # #alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   HEROKU_APP_NAME = os.environ["HEROKU_APP_NAME"]
                   BODY = f":rocket: Webserver for branch `${{ needs.fractal-publish-build-config.outputs.branch }}` deployed to Heroku app `{HEROKU_APP_NAME}` :heroku: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 

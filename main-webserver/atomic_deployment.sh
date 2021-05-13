@@ -21,7 +21,7 @@ cd "$DIR/.."
 
 HEROKU_APP_NAME=${1}
 
-# if true, a future step will send a slack notification 
+# if true, a future step will send a slack notification
 echo "DB_MIGRATION_PERFORMED=false" >> "${GITHUB_ENV}"
 
 # Get the DB associated with the app. If this fails, the entire deploy will fail.
@@ -71,8 +71,8 @@ if [ $DIFF_EXIT_CODE == "2" ] || [ $DIFF_EXIT_CODE == "3" ]; then
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
-    # git push -f heroku-fractal-server workflows-private/main-webserver:master
-    
+    git push -f heroku-fractal-server workflows-private/main-webserver:master
+
     # bring webserver back online
     heroku ps:scale web=1 --app "${HEROKU_APP_NAME}"
     heroku ps:scale celery=1 --app "${HEROKU_APP_NAME}"
@@ -84,8 +84,8 @@ elif [ $DIFF_EXIT_CODE == "0" ]; then
 
     echo "Redeploying webserver..."
     # this should redeploy the webserver with code that corresponds to the new schema
-    # git push -f heroku-fractal-server workflows-private/main-webserver:master
-    
+    git push -f heroku-fractal-server workflows-private/main-webserver:master
+
 else
     echo "Diff script exited poorly. We are not redeploying the webserver because"
     echo "the ORM might be inconsistent with the live webserver db. This is an"

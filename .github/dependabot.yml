@@ -98,6 +98,12 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
+    directory: "/main-webserver/db_migration" # looks for requirements.txt in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "pip"
     directory: "/main-webserver/scripts" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
