@@ -1,14 +1,14 @@
-## Ticket(s) Closed
+**Ticket(s) Closed**
 - Closes #
 
-## Description
+**Description**
 
 
-## Implementation / Approach
+**Implementation / Approach**
 
 
-## Documentation Added
+**Documentation Added**
 
 
-## Tests Written / Performed
+**Tests Written / Performed**
 
