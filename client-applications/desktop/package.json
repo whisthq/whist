@@ -50,8 +50,7 @@
         "react-router-dom": "^5.2.0",
         "react-spring": "^9.1.2",
         "rxjs": "^7.0.0",
-        "ts-toolbelt": "^9.6.0",
-        "winston": "^3.3.3"
+        "ts-toolbelt": "^9.6.0"
     },
     "devDependencies": {
         "@snowpack/plugin-build-script": "^2.1.0",
