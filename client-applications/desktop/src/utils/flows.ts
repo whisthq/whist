@@ -1,8 +1,8 @@
 import { Observable } from "rxjs"
-import { filter, share, tap } from "rxjs/operators"
+import { filter, share, tap, map } from "rxjs/operators"
 import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
-
+import { test } from "@app/main/testing/index"
 const logFormat = (...args: any[]) => {
   let [title, message, value] = args
   if (value === undefined) {
@@ -44,6 +44,7 @@ export const flow = <A>(
   mapValues(fn(`${name}.${childName}`, trigger), (obs, key) =>
     obs.pipe(
       tap((value) => logDebug(`${name}.${childName}.${key}`, value)),
+      map((value) => test(value)),
       share()
     )
   )
