@@ -60,7 +60,6 @@ int get_logger_history_len();
 void init_backtrace_handler();
 
 // TAG Strings
-const char* printf_tag = "PRINTF";
 const char* debug_tag = "DEBUG";
 const char* info_tag = "INFO";
 const char* warning_tag = "WARNING";
@@ -549,25 +548,13 @@ void internal_logging_printf(const char* tag, const char* fmt_str, ...) {
     va_list args;
     va_start(args, fmt_str);
 
-    if (tag == PRINTF_TAG) {
-        if (mprintf_thread != NULL) {
-            LOG_ERROR(
-                "Error! initLogger has already been called, but LOG_PRINTF was still used anyway! "
-                "Printing message below...");
-            LOG_INFO(fmt_str, args);
-        } else {
-            vprintf(fmt_str, args);
-        }
+    if (mprintf_thread == NULL) {
+        // If the logger isn't initialized yet, just write to stdout
+        vprintf(fmt_str, args);
+        fflush(stdout);
     } else {
-        if (mprintf_thread == NULL) {
-            printf("initLogger has not been called! Printing message below...\n");
-            vprintf(fmt_str, args);
-            fflush(stdout);
-            return;
-        } else {
-            // Map LOG_XYZ to mprintf
-            mprintf(WRITE_MPRINTF_TO_LOG, tag, fmt_str, args);
-        }
+        // Otherwise, use mprintf
+        mprintf(WRITE_MPRINTF_TO_LOG, tag, fmt_str, args);
     }
 
     va_end(args);

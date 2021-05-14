@@ -729,6 +729,16 @@ NORETURN void terminate_protocol();
 bool safe_strncpy(char* destination, const char* source, size_t num);
 
 /**
+ * @brief                          This will exit on error, and log a warning if this
+ *                                 function is used when the logger is already initialized.
+ *                                 If the logger is initialized, please use LOG_INFO.
+ *
+ * @param fmt                      The format string
+ * @param ...                      The rest of the arguments
+ */
+#define safe_printf UNINITIALIZED_LOG
+
+/**
  * @brief                          Returns a short string representing the current git commit
  *                                 of fractal at the time of compilation
  *
