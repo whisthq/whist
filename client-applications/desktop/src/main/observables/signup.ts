@@ -25,6 +25,7 @@ import {
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { filter, map, share, exhaustMap, switchMap } from "rxjs/operators"
 import { signupAction } from "@app/main/events/actions"
+import { userEmail } from "@app/main/observables/user"
 
 export const signupRequest = signupAction.pipe(
   filter(
@@ -75,11 +76,11 @@ export const signupLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [signupRequest, "signupRequest"],
-  [signupSuccess, "signupSuccess"],
-  [signupLoading, "signupLoading"]
+  [signupRequest, userEmail, "signupRequest"],
+  [signupSuccess, userEmail, "signupSuccess"],
+  [signupLoading, userEmail, "signupLoading"]
 )
 
-warningObservables([signupWarning, "signupWarning"])
+warningObservables([signupWarning, userEmail, "signupWarning"])
 
-errorObservables([signupFailure, "signupFailure"])
+errorObservables([signupFailure, userEmail, "signupFailure"])

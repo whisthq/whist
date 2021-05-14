@@ -92,13 +92,6 @@ merge(
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
-// When the protocol closes, upload protocol logs to S3
-combineLatest([userEmail, protocolCloseRequest]).subscribe(
-  ([email]: [string, ChildProcess]) => {
-    uploadToS3(email).catch((err) => console.error(err))
-  }
-)
-
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
 // If not, the filters on the application closing observable don't run.
@@ -124,14 +117,20 @@ eventUpdateAvailable.subscribe(() => {
 
 eventWindowCreated.subscribe(() => showAppDock())
 
-zip(
+// When the protocol closes, upload protocol logs to S3
+combineLatest([
+  userEmail,
   protocolCloseRequest,
   merge(
     protocolLaunchSuccess.pipe(mapTo(true)),
     protocolLaunchFailure.pipe(mapTo(false))
-  )
-).subscribe(([, success]: [ChildProcess, boolean]) => {
-  if (success) app.exit()
+  ),
+]).subscribe(([email, , success]: [string, ChildProcess, boolean]) => {
+  uploadToS3(email)
+    .then(() => {
+      if (success) app.exit()
+    })
+    .catch((err) => console.error(err))
 })
 
 signoutAction.subscribe(() => {

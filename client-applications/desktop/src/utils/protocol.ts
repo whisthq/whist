@@ -45,7 +45,9 @@ export const protocolLaunch = () => {
 
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
-    stdio: ["pipe", process.stdout, process.stderr],
+    // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the
+    // output. We only pipe stdin since that's how we send args to the protocol
+    stdio: ["pipe", "ignore", "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading

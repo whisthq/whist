@@ -105,14 +105,30 @@ export const hostConfigLoading = loadingFrom(
 // Logging
 
 debugObservables(
-  [formatObservable(hostInfoRequest, formatTokensArray), "hostInfoRequest"],
-  [formatObservable(hostInfoSuccess, formatHostInfo), "hostInfoSuccess"],
-  [hostConfigRequest, "hostConfigRequest"],
-  [formatObservable(hostConfigProcess, formatHostConfig), "hostConfigProcess"],
-  [formatObservable(hostConfigSuccess, formatHostConfig), "hostConfigSuccess"]
+  [
+    formatObservable(hostInfoRequest, formatTokensArray),
+    userEmail,
+    "hostInfoRequest",
+  ],
+  [
+    formatObservable(hostInfoSuccess, formatHostInfo),
+    userEmail,
+    "hostInfoSuccess",
+  ],
+  [hostConfigRequest, userEmail, "hostConfigRequest"],
+  [
+    formatObservable(hostConfigProcess, formatHostConfig),
+    userEmail,
+    "hostConfigProcess",
+  ],
+  [
+    formatObservable(hostConfigSuccess, formatHostConfig),
+    userEmail,
+    "hostConfigSuccess",
+  ]
 )
 
 errorObservables(
-  [hostInfoFailure, "hostInfoFailure"],
-  [hostConfigFailure, "hostConfigFailure"]
+  [hostInfoFailure, userEmail, "hostInfoFailure"],
+  [hostConfigFailure, userEmail, "hostConfigFailure"]
 )

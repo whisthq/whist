@@ -1,8 +1,9 @@
 import {
   environment,
-  FractalCIEnvironment,
   FractalNodeEnvironment,
+  FractalCIEnvironment,
 } from "../../config/environment"
+
 import env from "@app/utils/env"
 
 const getDevelopmentEnv = () => {
