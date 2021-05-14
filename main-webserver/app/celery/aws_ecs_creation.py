@@ -751,8 +751,9 @@ def _assign_container(
     return user_container_schema.dump(base_container)
 
 
+# this does not need maintenance protections because it is only called by contexts that already
+# have maintenance protection (assign_container, update_cluster)
 @shared_task
-@maintenance_track_task
 def prewarm_new_container(
     task_definition_arn: str,
     task_version: int,

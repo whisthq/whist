@@ -1049,12 +1049,13 @@ class ECSClient:
             ]
         )["AutoScalingGroups"][0]
         current_cap = int(asg_info["DesiredCapacity"])
-        if current_cap < asg_info["MaxSize"]:
+        desired_cap = current_cap + 1  # start a new instance with the new ami
+        if desired_cap <= asg_info["MaxSize"]:
             # if we can open a new instance, do so to handle new reqs
             # Since aws doesn't realize that we need new undrained instances
             self.auto_scaling_client.set_desired_capacity(
                 AutoScalingGroupName=asg_name,
-                DesiredCapacity=current_cap + 1,
+                DesiredCapacity=desired_cap,
             )
         self.auto_scaling_client.delete_launch_configuration(
             LaunchConfigurationName=old_launch_config_name

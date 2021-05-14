@@ -23,21 +23,26 @@ from app.helpers.utils.general.time import date_to_unix, get_today
 
 @shared_task
 def update_cluster(
+    cluster_name: str,
+    webserver_url: str,
     region_name: Optional[str] = "us-east-1",
-    cluster_name: Optional[str] = None,
     ami: Optional[str] = None,
 ) -> None:
     """
     Updates a specific cluster to use a new AMI
 
     Args:
+        cluster_name: which cluster to update
+        webserver_url: which webserver URL the prewarmed container in update_cluster should talk to
         region_name (Optional[str]): which region the cluster is in
-        cluster_name (Optional[str]): which cluster to update
         ami (Optional[str]): which AMI to use
 
     Returns:
-        None, though cluster update info stored in state
+        A dict containing the field "msg", which describes what happened to the cluster.
     """
+    # import this here to get around a circular import
+    from app.celery.aws_ecs_creation import prewarm_new_container
+
     all_regions = RegionToAmi.query.all()
     region_to_ami = {region.region_name: region.ami_id for region in all_regions}
     if ami is None:
@@ -121,24 +126,40 @@ def update_cluster(
             "msg": f"Cluster {cluster_name} in region {region_name} did not exist.",
         }
     else:
-        # The cluster did exist, and was updated successfully.
+        # The cluster did exist, and was updated successfully. Now we prewarm a task to stop this
+        # instance from getting scaled in
+        default_app = "Google Chrome"
+        app_data = SupportedAppImages.query.get(default_app)
+        prewarm_new_container.run(
+            task_definition_arn=app_data.task_definition,
+            task_version=app_data.task_version,
+            cluster_name=cluster_name,
+            region_name=region_name,
+            webserver_url=webserver_url,
+        )
+
         return {
             "msg": f"updated cluster {cluster_name} to ami {ami} in region {region_name}",
         }
 
 
 @shared_task
-def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] = None):
+def update_region(
+    webserver_url: str,
+    region_name: str,
+    ami: Optional[str] = None,
+):
     """
     Updates all clusters in a region to use a new AMI
     calls update_cluster under the hood
 
     Args:
-        region_name (Optional[str]): which region the cluster is in
+        webserver_url: which webserver URL the prewarmed container in update_cluster should talk to
+        region_name: which region the cluster is in
         ami (Optional[str]): which AMI to use
 
     Returns:
-         None, though which cluster was updated is in celery state
+         A dict containing the field "msg", which describes what happened to the region.
     """
     region_to_ami = RegionToAmi.query.filter_by(
         region_name=region_name,
@@ -176,7 +197,12 @@ def update_region(region_name: Optional[str] = "us-east-1", ami: Optional[str] =
     fractal_logger.info(f"Updating clusters: {all_clusters}")
     tasks = []
     for cluster in all_clusters:
-        task = update_cluster.delay(region_name, cluster.cluster, ami)
+        task = update_cluster.delay(
+            cluster_name=cluster.cluster,
+            webserver_url=webserver_url,
+            region_name=region_name,
+            ami=ami,
+        )
         tasks.append(task.id)
 
     fractal_logger.info(

@@ -6,6 +6,7 @@ from flask_jwt_extended import create_access_token
 
 from app.celery import aws_ecs_creation
 from app.celery import aws_ecs_modification
+from app.celery.aws_ecs_creation import prewarm_new_container
 from app.celery.aws_ecs_deletion import delete_cluster
 from app.celery.aws_ecs_modification import manual_scale_cluster, update_cluster
 from app.helpers.utils.aws.base_ecs_client import ECSClient
@@ -147,18 +148,39 @@ def test_assign_container(client, module_user, monkeypatch, task_def_env):
 
 
 @pytest.mark.usefixtures("celery_worker")
-def test_update_cluster():
+def test_update_cluster(monkeypatch, task_def_env):
+    success = False
+
+    def mock_prewarm(
+        task_definition_arn, task_version, cluster_name, region_name, webserver_url
+    ):  # pylint:disable=unused-argument
+        # ensure:
+        # - task def is chrome for the correct task environment
+        # - cluster is correct
+        nonlocal success
+        success = (task_definition_arn == f"fractal-{task_def_env}-browsers-chrome") and (
+            cluster_name == pytest.cluster_name
+        )
+
+    # mock calling prewarm new container because we are upgrading the AMI to something that will
+    # not support prewarming a container
+    monkeypatch.setattr(prewarm_new_container, "run", mock_prewarm)
+
     # right now we have manually verified this actually does something on AWS.
     # AWS/boto3 _should_ error out if something went wrong.
     res = update_cluster.delay(
-        region_name="us-east-1",
         cluster_name=pytest.cluster_name,
+        webserver_url=None,  # will go to dev
+        region_name="us-east-1",
         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
     # wait for operation to finish
     res.get(timeout=30)
 
+    # make sure mock prewarm was called and succeeded
+    assert success is True
+    # make sure task succeeded
     assert res.successful()
     assert res.state == "SUCCESS"
 
@@ -167,8 +189,9 @@ def test_update_cluster():
 def test_update_bad_cluster(cluster):
     # Regression test for PR 665, tests that a dead cluster doesn't brick
     res = update_cluster.delay(
-        region_name="us-east-1",
         cluster_name=cluster.cluster,
+        webserver_url=None,
+        region_name="us-east-1",
         ami=GENERIC_UBUNTU_SERVER_2004_LTS_AMI,
     )
 
@@ -302,7 +325,9 @@ def test_delete_container(client, monkeypatch):
 def test_update_region(client, monkeypatch):
     # this makes update_cluster behave like dummy_update_cluster. undone after test finishes.
     # we use update_cluster.delay in update_region, but here we override with a mock
-    def mock_update_cluster(region_name="us-east-1", cluster_name=None, ami=None):
+    def mock_update_cluster(
+        cluster_name=None, webserver_url=None, region_name="us-east-1", ami=None
+    ):
         success = True
         # check that the arguments are as expected
         if cluster_name != pytest.cluster_name:
