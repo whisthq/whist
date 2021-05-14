@@ -27,6 +27,7 @@ import {
   containerCreateFailure,
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
+import { userEmail } from "@app/main/observables/user"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -56,4 +57,4 @@ export const errorWindowRequest = merge(
 
 // Logging
 
-warningObservables([errorRelaunchRequest, "errorRelaunchRequest"])
+warningObservables([errorRelaunchRequest, userEmail, "errorRelaunchRequest"])

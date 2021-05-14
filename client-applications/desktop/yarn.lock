@@ -7,6 +7,38 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.0.3.tgz#bc5b5532ecafd923a61f2fb097e3b108c0106a3f"
   integrity sha512-GLyWIFBbGvpKPGo55JyRZAo4lVbnBiD52cKlw/0Vt+wnmKvWJkpZvsjVoaIolyBXDeAQKSicRtqFNPem9w0WYA==
 
+"@amplitude/identify@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.5.4.tgz#c190f4f161d10437c3427c09b619c0e4ea236b67"
+  integrity sha512-sjay2V7eRvHWFx4cm6LVvn4feynOa+0LKPcDERilJyglpPBC3VB7vrhg5l5jApnHxFBJQlMRBWSM5vBuJDx/7Q==
+  dependencies:
+    "@amplitude/types" "^1.5.4"
+    "@amplitude/utils" "^1.5.4"
+    tslib "^1.9.3"
+
+"@amplitude/node@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.5.4.tgz#9614fb28429897314ca17ca629a8e592abf76dca"
+  integrity sha512-B8zw4LSAWU8KX0xclG1taJBnKlUDfaCLpNv1Il4cAkmL6JcyIZQ47gWdTRrR10W1x9w+YUYxNwzu65v6cMQTBA==
+  dependencies:
+    "@amplitude/identify" "^1.5.4"
+    "@amplitude/types" "^1.5.4"
+    "@amplitude/utils" "^1.5.4"
+    tslib "^1.9.3"
+
+"@amplitude/types@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.5.4.tgz#7fcbcbfb321d794b6367596cd950a92c752431d1"
+  integrity sha512-+e+wqlO5E4lNTM19lATf+lJldV+VD2RGzrDEy45cPEtfpXxHJUHwhfOKZkKg/zlx+YAubcpNhWLm2NSPpHUs9A==
+
+"@amplitude/utils@^1.5.4":
+  version "1.5.4"
+  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.5.4.tgz#457e847d751522ac8dd910037667d780ef501642"
+  integrity sha512-VAd/ibhwBBeL8pKqCz8tjCnSx8epOvUa+Je6sA3AB4R8855xl+bdrDjYwMmOWOILvEH3Pltq2jVJCE2thBoFdQ==
+  dependencies:
+    "@amplitude/types" "^1.5.4"
+    tslib "^1.9.3"
+
 "@babel/code-frame@7.12.11":
   version "7.12.11"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.12.11.tgz#f4ad435aa263db935b8f10f2c552d23fb716a63f"
@@ -5376,7 +5408,7 @@ tsconfig-paths@^3.9.0:
     minimist "^1.2.0"
     strip-bom "^3.0.0"
 
-tslib@^1.8.1, tslib@^1.9.0:
+tslib@^1.8.1, tslib@^1.9.0, tslib@^1.9.3:
   version "1.14.1"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-1.14.1.tgz#cf2d38bdc34a134bcaf1091c41f6619e2f672d00"
   integrity sha512-Xni35NKzjgMrwevysHTCArtLDpPvye8zV/0E4EyYn43P7/7qvQwPh9BGkHewbMulVntbigmcT7rdX3BNo9wRJg==

@@ -8,8 +8,7 @@ import {
   EMPTY,
 } from "rxjs"
 import { map, mapTo, switchMap, filter, takeLast, share } from "rxjs/operators"
-import { toPairs, identity, isEmpty } from "lodash"
-import { debugObservables } from "@app/utils/logging"
+import { toPairs, identity } from "lodash"
 
 export const loadingFrom = (
   /*
@@ -214,25 +213,6 @@ export const factory = <T, A>(
   // We can infer the loading state from the emissions of request + the
   // "completion" states (success, failure, warning).
   const loading = loadingFrom(request, success, failure, warning)
-
-  const logging = [
-    ["Request", request, ...(fx?.logging?.request ?? [])],
-    ["Process", process, ...(fx?.logging?.process ?? [])],
-    ["Success", success, ...(fx?.logging?.success ?? [])],
-    ["Failure", failure, ...(fx?.logging?.failure ?? [])],
-    ["Warning", warning, ...(fx?.logging?.warning ?? [])],
-    ["Loading", loading, ...(fx?.logging?.loading ?? [])],
-  ] as Array<[string, Observable<any>?, string?, ((...args: any[]) => any)?]>
-
-  debugObservables(
-    ...logging.map(
-      ([stage, obs, message = "", transform]) =>
-        [
-          obs?.pipe?.(map(transform ?? identity)) ?? EMPTY,
-          `${name}${stage}${isEmpty(message) ? message : " -- "}${message}`,
-        ] as [Observable<any>, string]
-    )
-  )
 
   return {
     request,

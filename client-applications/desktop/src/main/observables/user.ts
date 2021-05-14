@@ -1,7 +1,6 @@
 import { fromEventPersist } from "@app/main/events/persist"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupRequest, signupSuccess } from "@app/main/observables/signup"
-import { debugObservables } from "@app/utils/logging"
 import { merge, from } from "rxjs"
 import { identity } from "lodash"
 import {
@@ -23,7 +22,6 @@ import {
   emailSignupRefreshToken,
 } from "@app/utils/signup"
 import { loginAction, signupAction } from "@app/main/events/actions"
-import { formatObservable, formatTokens } from "@app/utils/formatters"
 
 export const userEmail = merge(
   fromEventPersist("userEmail"),
@@ -53,11 +51,3 @@ export const userRefreshToken = merge(
   loginSuccess.pipe(map(emailLoginRefreshToken)),
   signupSuccess.pipe(map(emailSignupRefreshToken))
 ).pipe(filter(identity), share())
-
-// Logging
-debugObservables(
-  [userEmail, "userEmail"],
-  [formatObservable(userConfigToken, formatTokens), "userConfigToken"],
-  [formatObservable(userAccessToken, formatTokens), "userAccessToken"],
-  [formatObservable(userRefreshToken, formatTokens), "userRefreshToken"]
-)
