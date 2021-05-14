@@ -928,16 +928,42 @@ jobs:
                   wget -qO - https://github.com/splitsh/lite/releases/download/v1.0.1/lite_linux_amd64.tar.gz
                   | sudo tar -zxp --directory /usr/local/bin/
 
-            - name: Split off and checkout main-webserver subtree
-              run: |
-                  splitsh-lite --prefix main-webserver --target refs/heads/workflows-private/main-webserver
-                  git checkout workflows-private/main-webserver
-
-            - name: Push to Heroku remote, deploying the app # force push is only necessary for the transition period, then should be removed
+            - name: Deploy the webserver atomically
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
-              run: git push -f heroku-fractal-server workflows-private/main-webserver:master
+              shell: bash -e {0}
+              run: main-webserver/atomic_deployment.sh $HEROKU_APP_NAME
 
-            - name: Notify Slack
+            - name: Notify Slack on database migration
+              shell: python3 {0}
+              run: |
+                  import os
+                  import sys
+                  import urllib.parse
+                  from notifications.slack_bot import slack_post
+
+                  # This should be set by main-webserver/atomic_deployment.sh
+                  if os.environ.get("DB_MIGRATION_PERFORMED", "false") != "true":
+                    sys.exit(0)
+
+                  GITHUB_SHA = "${{ github.sha }}"
+                  GITHUB_SHA_URL = "https://github.com/fractal/fractal/commit/"
+                  ISSUE_URL = urllib.parse.urljoin(GITHUB_SHA_URL, GITHUB_SHA)
+
+                  BRANCH_NAME = "${{ needs.fractal-publish-build-config.outputs.branch }}"
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = f"#alerts-{BRANCH_NAME}"
+
+                  slack_redirect = f"You can take a look the commit here:\n{ISSUE_URL}"
+
+                  title = ":construction: Database migration performed :construction:"
+                  body = (f"A PR was merged and triggered "
+                          + "an automatic schema migration on branch: "
+                          + f"`{BRANCH_NAME}`.\n\n"
+                          + "Check the GitHub Actions logs for details. "
+                          + slack_redirect)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=body, title=title)
+
+            - name: Notify Slack on successful deploy
               if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
               shell: python3 {0}
               run: |
