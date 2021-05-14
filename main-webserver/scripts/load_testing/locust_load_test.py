@@ -67,9 +67,8 @@ class LoadTestUser(locust.HttpUser):
         try:
             self._on_start()
         except Exception as e:
-            print(f"User {self.user_num} got error {str(e)}")
+            print(f"User {self.user_num} got error: {str(e)}")
             LoadTestUser.user_fail = True
-            self.on_stop()
 
     def _on_start(self):
         """
@@ -97,6 +96,7 @@ class LoadTestUser(locust.HttpUser):
             time.sleep(1.0)
 
         assert task_id is not None
+        print(f"user {self.user_num} task: {task_id}")
 
         # poll host_service
         ip = None
@@ -119,6 +119,8 @@ class LoadTestUser(locust.HttpUser):
                 )
             # sleep and try again
             time.sleep(1.0)
+
+        assert ip is not None, "webserver did not return a host when polling /host_service"
 
         # send app config token; errors out on failure
         resp = self.send_app_config_token(ip, host_port, client_app_auth_secret)
