@@ -22,7 +22,7 @@ import {
   containerPollingFailure,
 } from "@app/main/observables/container"
 import {
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
@@ -32,7 +32,7 @@ import { formatObservable, formatChildProcess } from "@app/utils/formatters"
 import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 
 export const protocolLaunchProcess = combineLatest([
-  zip(userEmail, userAccessToken, userConfigToken),
+  zip(userSub, userAccessToken, userConfigToken),
   eventUpdateNotAvailable,
 ]).pipe(
   take(1),
@@ -79,16 +79,16 @@ export const protocolCloseSuccess = protocolCloseRequest.pipe(
 debugObservables(
   [
     formatObservable(protocolLaunchProcess, formatChildProcess),
-    userEmail,
+    userSub,
     "protocolLaunchProcess",
   ],
-  [protocolLaunchSuccess, userEmail, "protocolLaunchSuccess"],
-  [protocolLoading, userEmail, "protocolLaunchLoading"],
+  [protocolLaunchSuccess, userSub, "protocolLaunchSuccess"],
+  [protocolLoading, userSub, "protocolLaunchLoading"],
   [
     formatObservable(protocolCloseRequest, formatChildProcess),
-    userEmail,
+    userSub,
     "protocolCloseRequest",
   ]
 )
 
-errorObservables([protocolLaunchFailure, userEmail, "protocolLaunchFailure"])
+errorObservables([protocolLaunchFailure, userSub, "protocolLaunchFailure"])

@@ -14,7 +14,7 @@ import {
   containerInfoPending,
 } from "@app/utils/container"
 import {
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
@@ -36,12 +36,9 @@ import { formatContainer, formatTokensArray } from "@app/utils/formatters"
 import { AsyncReturnType } from "@app/@types/state"
 
 export const containerCreateRequest = combineLatest([
-  zip(userEmail, userAccessToken, userConfigToken),
+  zip(userSub, userAccessToken, userConfigToken),
   eventUpdateNotAvailable,
-]).pipe(
-  map(([auth]) => auth),
-  map(([email, access, _]) => [email, access])
-)
+]).pipe(map(([auth]) => auth))
 
 export const containerCreateProcess = containerCreateRequest.pipe(
   exhaustMap(([email, token]) => from(containerCreate(email, token))),

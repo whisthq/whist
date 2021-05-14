@@ -6,14 +6,16 @@ import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import {
   WindowHashAuth,
   WindowHashUpdate,
-  WindowHashAuthError,
   WindowHashProtocolError,
   WindowHashCreateContainerErrorNoAccess,
   WindowHashCreateContainerErrorUnauthorized,
   WindowHashCreateContainerErrorInternal,
   WindowHashAssignContainerError,
 } from "@app/utils/constants"
-import config, { FractalEnvironments } from "@app/config/environment"
+import config from "@app/config/environment"
+import { getAuthenticationURL, loadTokens } from "@app/utils/auth"
+import { authEvents } from "@app/main/events/auth"
+import { FractalEnvironments } from "@app/config/environment"
 
 const { buildRoot } = config
 
@@ -85,6 +87,7 @@ export const getWindowTitle = () => {
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,
+  customUrl?: string,
   onReady?: (win: BrowserWindow) => any,
   onClose?: (win: BrowserWindow) => any
 ) => {
@@ -100,18 +103,15 @@ export const createWindow = (
   // be to use separate index.html files for each window, which we want to avoid.
   const params = "?show=" + show
 
-  // We need to load index.html differently if we're developing. We want to
-  // use Snowpack's development server to manage our reload, so we load from
-  // the server's localhost port as opposed to our build folder.
-  // Electron's API for passing query parameters is inconsistent, so we must
-  // be careful to pass them correctly for each environment.
-  if (app.isPackaged) {
+  if (app.isPackaged && customUrl === undefined) {
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
-      .loadURL("http://localhost:8080" + params)
+      .loadURL(
+        customUrl !== undefined ? customUrl : "http://localhost:8080" + params
+      )
       .then(() => {
         // We manually open devTools, because we want to make sure that
         // both the main/renderer processes are in a "ready" state before we
@@ -139,19 +139,34 @@ export const createWindow = (
 // The rest of the application doesn't need to know anything about how to
 // configure an Electron window.
 
-export const createAuthWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuth, {
-    ...base,
-    ...width.sm,
-    ...height.md,
-  } as BrowserWindowConstructorOptions)
+export const createAuthWindow: CreateWindowFunction = () => {
+  const win = createWindow(
+    WindowHashAuth,
+    {
+      ...base,
+      ...width.md,
+      ...height.lg,
+    } as BrowserWindowConstructorOptions,
+    getAuthenticationURL()
+  )
 
-export const createAuthErrorWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuthError, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
+  // Authentication
+  const {
+    session: { webRequest },
+  } = win.webContents
+
+  const filter = {
+    urls: ["http://localhost/callback*"],
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  webRequest.onBeforeRequest(filter, async ({ url }) => {
+    const data = await loadTokens(url)
+    authEvents.loadTokens(data)
+  })
+
+  return win
+}
 
 export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
   createWindow(WindowHashCreateContainerErrorNoAccess, {

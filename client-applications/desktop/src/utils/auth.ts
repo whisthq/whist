@@ -1,100 +1,86 @@
-const MINIMUM_EMAIL_LENGTH = 5
-const MINIMUM_PASSWORD_LENGTH = 8
-const PASSWORD_REQUIRE_LOWERCASE = true
-const PASSWORD_REQUIRE_UPPERCASE = true
-const PASSWORD_REQUIRE_NUMBER = true
+import jwtDecode from "jwt-decode"
+import { URL } from "url"
+import { config } from "@app/config/environment"
+import { persist } from "@app/utils/persist"
+import { randomBytes } from "crypto"
+import { configPost } from "@fractal/core-ts"
 
-const passwordLowercase = /^(?=.*[a-z])/
-const passwordUppercase = /^(?=.*[A-Z])/
-const passwordNumber = /^(?=.*[0-9])/
+const { apiIdentifier, auth0Domain, clientId } = config.auth0
 
-/* eslint-disable no-control-regex */
-// http://emailregex.com/
-// the hex is for tabs and spaces of different types I think
-const email99Percent =
-  /^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])/
-/* eslint-enable no-control-regex */
+const redirectUri = "http://localhost/callback"
 
-export const checkEmail = (email: string): boolean => {
-  return email99Percent.test(email)
+const auth0HttpConfig = {
+  server: `https://${auth0Domain}`,
+}
+const post = configPost(auth0HttpConfig)
+
+export const getAuthenticationURL = () => {
+  return [
+    `https://${auth0Domain}/authorize`,
+    `?audience=${apiIdentifier}`,
+    "&scope=openid profile offline_access email",
+    "&response_type=code&",
+    `client_id=${clientId}&`,
+    `redirect_uri=${redirectUri}`,
+  ].join("")
 }
 
-export const checkPassword = (password: string): boolean => {
-  if (password.length < MINIMUM_PASSWORD_LENGTH) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_LOWERCASE && !passwordLowercase.test(password)) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_UPPERCASE && !passwordUppercase.test(password)) {
-    return false
-  }
-  if (PASSWORD_REQUIRE_NUMBER && !passwordNumber.test(password)) {
-    return false
-  }
-  return true
+export const refreshTokens = async (refreshToken: string) => {
+  const response = await post({
+    endpoint: "/oauth/token",
+    headers: { "content-type": "application/json" },
+    body: {
+      grant_type: "refresh_token",
+      client_id: clientId,
+      refresh_token: refreshToken,
+    },
+  })
+  const data = response.json
+  return extractTokens(data)
 }
 
-export const checkPasswordVerbose = (password: string): string => {
-  if (password.length === 0) {
-    return ""
+export const loadTokens = async (callbackURL: string) => {
+  const url = new URL(callbackURL)
+  const code = url.searchParams.get("code")
+
+  const body = {
+    grant_type: "authorization_code",
+    client_id: clientId,
+    code,
+    redirect_uri: redirectUri,
   }
-  if (password.length < MINIMUM_PASSWORD_LENGTH && password.length > 0) {
-    return "Too short"
-  } else if (!passwordLowercase.test(password) && PASSWORD_REQUIRE_LOWERCASE) {
-    return "Needs lowercase letter"
-  } else if (!passwordUppercase.test(password) && PASSWORD_REQUIRE_UPPERCASE) {
-    return "Needs uppercase letter"
-  } else if (!passwordNumber.test(password) && PASSWORD_REQUIRE_NUMBER) {
-    return "Needs number"
-  } else {
-    return ""
+
+  const response = await post({
+    endpoint: "/oauth/token",
+    headers: { "content-type": "application/json" },
+    body,
+  })
+  const data = response.json
+  return extractTokens(data)
+}
+
+export const extractTokens = (response: Record<string, string>) => {
+  const profile: Record<string, string> = jwtDecode(response.id_token)
+  const { sub, email } = profile
+  return {
+    sub,
+    email,
+    refreshToken: response.refresh_token,
+    accessToken: response.access_token,
   }
 }
 
-export const checkEmailVerbose = (email: string): string => {
-  if (
-    email.length === 0 ||
-    (email.length >= MINIMUM_EMAIL_LENGTH &&
-      email.includes("@") &&
-      email.includes("."))
-  ) {
-    return ""
-  } else {
-    return "Invalid email"
-  }
+// Returns true if JWT is expired, false otherwise
+export const checkJWTExpired = (token: string) => {
+  const jwt: any = jwtDecode(token)
+  return jwt.exp < Date.now() / 1000
 }
 
-export const signupEnabled = (
-  email: string,
-  password: string,
-  confirmPassword: string
-): boolean => {
-  return (
-    checkEmail(email) && checkPassword(password) && password === confirmPassword
-  )
+export const generateRandomConfigToken = () => {
+  const buffer = randomBytes(48)
+  return buffer.toString("base64")
 }
 
-export const loginEnabled = (email: string, password: string): boolean =>
-  checkEmail(email) && password.length >= MINIMUM_PASSWORD_LENGTH
-
-export const checkConfirmPassword = (
-  password: string,
-  confirmPassword: string
-) => {
-  const valid =
-    confirmPassword === password &&
-    password.length > 0 &&
-    confirmPassword.length > 0
-  return valid
-}
-
-export const checkConfirmPasswordVerbose = (
-  password: string,
-  confirmPassword: string
-) => {
-  if (confirmPassword.length === 0) {
-    return ""
-  }
-  return checkConfirmPassword(password, confirmPassword) ? "" : "Doesn't match"
+export const storeConfigToken = async (configToken: string) => {
+  await persist({ userConfigToken: configToken })
 }

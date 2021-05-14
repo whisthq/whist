@@ -1,5 +1,5 @@
 import {
-  userEmail,
+  userSub,
   userAccessToken,
   userConfigToken,
 } from "@app/main/observables/user"
@@ -39,7 +39,7 @@ import {
 } from "@app/utils/formatters"
 
 export const hostInfoRequest = containerPollingLoading.pipe(
-  withLatestFrom(userEmail, userAccessToken),
+  withLatestFrom(userSub, userAccessToken),
   map(([_, email, token]) => [email, token] as [string, string]),
   share()
 )
@@ -77,7 +77,7 @@ export const hostConfigRequest = hostInfoSuccess.pipe(
     hostServiceInfoPort(res),
     hostServiceInfoSecret(res),
   ]),
-  withLatestFrom(userEmail, userConfigToken),
+  withLatestFrom(userSub, userConfigToken),
   map(([[ip, port, secret], email, token]) => [ip, port, secret, email, token])
 )
 
@@ -107,28 +107,28 @@ export const hostConfigLoading = loadingFrom(
 debugObservables(
   [
     formatObservable(hostInfoRequest, formatTokensArray),
-    userEmail,
+    userSub,
     "hostInfoRequest",
   ],
   [
     formatObservable(hostInfoSuccess, formatHostInfo),
-    userEmail,
+    userSub,
     "hostInfoSuccess",
   ],
-  [hostConfigRequest, userEmail, "hostConfigRequest"],
+  [hostConfigRequest, userSub, "hostConfigRequest"],
   [
     formatObservable(hostConfigProcess, formatHostConfig),
-    userEmail,
+    userSub,
     "hostConfigProcess",
   ],
   [
     formatObservable(hostConfigSuccess, formatHostConfig),
-    userEmail,
+    userSub,
     "hostConfigSuccess",
   ]
 )
 
 errorObservables(
-  [hostInfoFailure, userEmail, "hostInfoFailure"],
-  [hostConfigFailure, userEmail, "hostConfigFailure"]
+  [hostInfoFailure, userSub, "hostInfoFailure"],
+  [hostConfigFailure, userSub, "hostConfigFailure"]
 )

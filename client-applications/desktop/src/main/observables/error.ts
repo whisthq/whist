@@ -7,10 +7,7 @@ import { eventIPC } from "@app/main/events/ipc"
 import { eventAppReady } from "@app/main/events/app"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
-import { loginFailure } from "@app/main/observables/login"
-import { signupFailure } from "@app/main/observables/signup"
 import {
-  createAuthErrorWindow,
   createContainerErrorWindowNoAccess,
   createContainerErrorWindowUnauthorized,
   createContainerErrorWindowInternal,
@@ -27,8 +24,7 @@ import {
   containerCreateFailure,
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
-import { userEmail } from "@app/main/observables/user"
-import { eventUpdateError } from "@app/main/events/autoupdate"
+import { userSub } from "@app/main/observables/user"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -36,8 +32,6 @@ export const errorRelaunchRequest = eventIPC.pipe(
 )
 
 export const errorWindowRequest = merge(
-  loginFailure.pipe(mapTo(createAuthErrorWindow)),
-  signupFailure.pipe(mapTo(createAuthErrorWindow)),
   containerCreateFailure.pipe(
     map((response) => {
       if (containerCreateErrorNoAccess(response)) {
@@ -59,4 +53,4 @@ export const errorWindowRequest = merge(
 
 // Logging
 
-warningObservables([errorRelaunchRequest, userEmail, "errorRelaunchRequest"])
+warningObservables([errorRelaunchRequest, userSub, "errorRelaunchRequest"])

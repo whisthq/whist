@@ -5,7 +5,7 @@ import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
 import { debugObservables } from "@app/utils/logging"
-import { userEmail } from "@app/main/observables/user"
+import { userSub } from "@app/main/observables/user"
 
 export const eventUpdateAvailable = fromEvent(
   autoUpdater as EventEmitter,
@@ -31,9 +31,9 @@ export const eventUpdateNotAvailable = merge(
 )
 
 debugObservables(
-  [eventUpdateAvailable, userEmail, "eventUpdateAvailable"],
-  [eventUpdateNotAvailable, userEmail, "eventUpdateNotAvailable"],
-  [eventDownloadProgress, userEmail, "eventDownloadProgress"],
-  [eventUpdateDownloaded, userEmail, "eventUpdateDownloaded"],
-  [eventUpdateError, userEmail, "eventUpdateError"]
+  [eventUpdateAvailable, userSub, "eventUpdateAvailable"],
+  [eventUpdateNotAvailable, userSub, "eventUpdateNotAvailable"],
+  [eventDownloadProgress, userSub, "eventDownloadProgress"],
+  [eventUpdateDownloaded, userSub, "eventUpdateDownloaded"],
+  [eventUpdateError, userSub, "eventUpdateError"]
 )
