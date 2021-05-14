@@ -66,7 +66,7 @@ const amplitudeLog = async (
 ) => {
   if (userID !== undefined) {
     await amplitude.logEvent({
-      event_type: `[${env.PACKAGED_ENV ?? "LOCAL"}] ${title}`,
+      event_type: `[${(env.PACKAGED_ENV as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
       user_id: userID,
       event_properties: data,
