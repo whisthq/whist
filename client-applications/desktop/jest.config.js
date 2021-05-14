@@ -3,7 +3,7 @@
  * https://jestjs.io/docs/en/configuration.html
  */
 
-export default {
+module.exports = {
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "babel",
   // An array of file extensions your modules use
