@@ -48,8 +48,8 @@ echo "Getting the current schema..."
 pg_dump --no-owner --no-privileges --schema-only "${DB_URL}" >> "$CURRENT_DB_SCHEMA_PATH"
 
 echo "Calling schema diff script..."
-set +e # allow any exit-code; we will semantically parse this
-python db_migration/schema_diff.py "${CURRENT_DB_SCHEMA_PATH}" "${NEW_DB_SCHEMA_PATH}" "${OUT_DIFF}"
+set +e # allow any exit-code; we will handle return codes directly
+(python db_migration/schema_diff.py "${CURRENT_DB_SCHEMA_PATH}" "${NEW_DB_SCHEMA_PATH}") > "${OUT_DIFF}"
 DIFF_EXIT_CODE=$?
 set -e # undo allowing any exit-code
 
