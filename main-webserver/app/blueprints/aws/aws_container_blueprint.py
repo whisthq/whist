@@ -198,11 +198,12 @@ def test_endpoint(action, **kwargs):
         return jsonify({"ID": task.id}), ACCEPTED
 
     if action == "update_region":
-        ami, region_name = (
+        ami, region_name, webserver_url = (
             kwargs["body"].get("ami", None),
             kwargs["body"]["region_name"],
+            kwargs["webserver_url"],
         )
-        task = update_region.delay(ami=ami, region_name=region_name)
+        task = update_region.delay(webserver_url=webserver_url, region_name=region_name, ami=ami)
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
