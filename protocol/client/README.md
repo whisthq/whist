@@ -13,20 +13,17 @@ cmake -S .. -B .
 make -j
 ```
 
+This should be run from the root `/protocol/` directory. This will ensure that all built files end up in the `/build` directory and are easy to clean up. To recompile, just `cd` into the `/build` directory and run `make -j` again.
+
 On Windows,
 
 ```
-mkdir build
-cd build
-cmake -G "NMake Makefiles" -S .. -B .
-nmake -j
+.\cninja.bat
 ```
 
-Either should be run from the root `/protocol/` directory. This will ensure that all built files end up in the `/build` directory and are easy to clean up.
+The `cninja.bat` script lives in the `/protocol/` directory, but can be called from anywhere.
 
 If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issues, you should delete the CmakeCache or start from a fresh repository.
-
-To recompile, just `cd` into the `/build` directory and run `make -j` or `nmake -j` again.
 
 ### Running
 
