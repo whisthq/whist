@@ -79,14 +79,16 @@ export const protocolCloseSuccess = protocolCloseRequest.pipe(
 debugObservables(
   [
     formatObservable(protocolLaunchProcess, formatChildProcess),
+    userEmail,
     "protocolLaunchProcess",
   ],
-  [protocolLaunchSuccess, "protocolLaunchSuccess"],
-  [protocolLoading, "protocolLaunchLoading"],
+  [protocolLaunchSuccess, userEmail, "protocolLaunchSuccess"],
+  [protocolLoading, userEmail, "protocolLaunchLoading"],
   [
     formatObservable(protocolCloseRequest, formatChildProcess),
+    userEmail,
     "protocolCloseRequest",
   ]
 )
 
-errorObservables([protocolLaunchFailure, "protocolLaunchFailure"])
+errorObservables([protocolLaunchFailure, userEmail, "protocolLaunchFailure"])

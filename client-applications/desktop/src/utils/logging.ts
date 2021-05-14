@@ -1,26 +1,29 @@
 import { app } from "electron"
 import { tap } from "rxjs/operators"
-import { identity, truncate } from "lodash"
+import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
 import AWS from "aws-sdk"
-import { merge, Observable } from "rxjs"
+import { merge, Observable, zip, of } from "rxjs"
 import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
-import winston from "winston"
 
 import config, { loggingBaseFilePath } from "@app/config/environment"
+import env from "@app/utils/env"
 
-const logger = winston.createLogger({
-  level: "info",
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: "electron.log" }),
-  ],
-})
-const amplitude = Amplitude.init("f4009f8b53b3060953437879d9769e8b")
+const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
+
+// Open a file handle to append to the logs file.
+// Create the loggingBaseFilePath directory if it does not exist.
+const openLogFile = () => {
+  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
+  const logPath = path.join(loggingBaseFilePath, "debug.log")
+  return fs.createWriteStream(logPath)
+}
+
+const logFile = openLogFile()
 
 // Log levels
 export enum LogLevel {
@@ -29,18 +32,14 @@ export enum LogLevel {
   ERROR = "ERROR",
 }
 
-const formatLogs = (title: string, data: object) => {
-  /*
-
-  */
-
+const formatLogs = (title: string, data: object, level: LogLevel) => {
   // We use a special stringify function below before converting an object
   // to JSON. This is because certain objects in our application, like HTTP
   // responses and ChildProcess objects, have circular references in their
   // structure. This is normal NodeJS behavior, but it can cause a runtime error
   // if you blindly try to turn these objects into JSON. Our special stringify
   // function strips these circular references from the object.
-  const template = `DEBUG: ${title} -- ${sessionID.toString()} -- \n ${
+  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${
     data !== undefined ? stringify(data, null, 2) : ""
   }`
 
@@ -52,28 +51,35 @@ const formatLogs = (title: string, data: object) => {
   return `${util.format(debugLog)} \n`
 }
 
-const winstonLog = (title: string, data: object, level?: LogLevel) => {
-  const logs = formatLogs(title, data)
+const localLog = (title: string, data: object, level: LogLevel) => {
+  const logs = formatLogs(title, data, level)
 
-  if (level === LogLevel.ERROR) {
-    logger.error(logs)
-  } else if (level === LogLevel.WARNING) {
-    logger.warning(logs)
-  } else {
-    logger.info(logs)
+  if (!app.isPackaged) console.log(logs)
+
+  logFile.write(logs)
+}
+
+const amplitudeLog = async (
+  title: string,
+  data: object,
+  userID: string | undefined
+) => {
+  if (userID !== undefined) {
+    await amplitude.logEvent({
+      event_type: title,
+      session_id: sessionID,
+      user_id: userID,
+      event_properties: { ...data, environment: env.PACKAGED_ENV ?? "local" },
+    })
   }
 }
 
-const amplitudeLog = async (title: string, data: object, level?: LogLevel) => {
-  await amplitude.logEvent({
-    event_type: title,
-    session_id: sessionID,
-    user_id: "ming+3@fractal.co",
-    event_properties: data,
-  })
-}
-
-const logBase = async (title: string, data: object, level?: LogLevel) => {
+export const logBase = async (
+  title: string,
+  data: object,
+  level: LogLevel,
+  userID?: string
+) => {
   /*
   Description:
       Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
@@ -83,8 +89,8 @@ const logBase = async (title: string, data: object, level?: LogLevel) => {
       level (LogLevel): Log level, see enum LogLevel above
   */
 
-  if (app.isPackaged) await amplitudeLog(title, data, level)
-  winstonLog(title, data, level)
+  await amplitudeLog(title, data, userID)
+  localLog(title, data, level)
 }
 
 export const uploadToS3 = async (email: string) => {
@@ -98,7 +104,12 @@ export const uploadToS3 = async (email: string) => {
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
-  await logBase("Logs upload to S3", { s3FileName: s3FileName }, LogLevel.DEBUG)
+  await logBase(
+    "Logs upload to S3",
+    { s3FileName: s3FileName },
+    LogLevel.DEBUG,
+    email
+  )
 
   const uploadHelper = async (localFilePath: string) => {
     const accessKey = config.keys.AWS_ACCESS_KEY
@@ -157,8 +168,8 @@ export const logObservable = (level: LogLevel, title: string) => {
         MonoTypeOperatorFunction: logging operator
     */
 
-  return tap(async (data: object) => {
-    await logBase(title, data, level)
+  return tap((args: [object, string]) => {
+    logBase(title, args[0], level, args[1]).catch((err) => console.error(err))
   })
 }
 
@@ -169,8 +180,13 @@ const error = logObservable.bind(null, LogLevel.ERROR)
 
 const logObservables = (
   func: typeof debug,
-  ...args: Array<[Observable<any>, string]>
-) => merge(...args.map(([obs, title]) => obs.pipe(func(title)))).subscribe()
+  ...args: Array<[Observable<any>, Observable<string>, string]>
+) =>
+  merge(
+    ...args.map(([obs, userID, title]) =>
+      zip(obs, userID ?? of(undefined)).pipe(func(title))
+    )
+  ).subscribe()
 
 export const debugObservables = logObservables.bind(null, debug)
 export const warningObservables = logObservables.bind(null, warning)

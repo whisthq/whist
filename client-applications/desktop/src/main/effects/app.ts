@@ -43,7 +43,6 @@ import {
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
-import { logBase } from "@app/utils/logging"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
@@ -126,15 +125,15 @@ combineLatest([
     protocolLaunchSuccess.pipe(mapTo(true)),
     protocolLaunchFailure.pipe(mapTo(false))
   ),
-]).subscribe(async ([email,, success]: [string, ChildProcess, boolean]) => {
-  await uploadToS3(email)
-  if (success) {
-    await logBase("appExited", {})
-    app.exit()
-  }
+]).subscribe(([email, , success]: [string, ChildProcess, boolean]) => {
+  uploadToS3(email)
+    .then(() => {
+      if (success) app.exit()
+    })
+    .catch((err) => console.error(err))
 })
 
-signoutAction.subscribe(async () => {
+signoutAction.subscribe(() => {
   app.relaunch()
   app.exit()
 })

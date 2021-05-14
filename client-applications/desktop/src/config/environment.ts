@@ -1,9 +1,4 @@
-import {
-  environment,
-  FractalCIEnvironment,
-  FractalNodeEnvironment,
-} from "../../config/environment"
-import env from "@app/utils/env"
+import { environment, FractalNodeEnvironment } from "../../config/environment"
 
 const getDevelopmentEnv = () => {
   // switch (process.env.DEVELOPMENT_ENV) {

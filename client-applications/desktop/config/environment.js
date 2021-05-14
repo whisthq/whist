@@ -37,7 +37,7 @@ const webservers = {
 const keys = {
   AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU", // only permissioned for S3 client-apps buckets
   AWS_SECRET_KEY: "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",
-  LOGZ_API_KEY: "IroqVsvNytmNricZSTLUSVtJbxNYBgxp",
+  AMPLITUDE_KEY: "f4009f8b53b3060953437879d9769e8b",
 }
 
 /*
