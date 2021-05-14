@@ -21,6 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #define _POSIX_C_SOURCE 199309L
+#include <fractal/core/fractal.h>  // For logging
 
 #include <stdlib.h>
 #include <stdio.h>
