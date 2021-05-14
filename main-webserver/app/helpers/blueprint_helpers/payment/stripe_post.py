@@ -79,10 +79,7 @@ def hasAccess(customer_id: str) -> bool:
     """
     client = StripeClient(current_app.config["STRIPE_SECRET"])
 
-    if client.is_paying(customer_id) or client.is_trialed(customer_id):
-        return True
-    return False
-
+    return client.is_paying(customer_id) or client.is_trialed(customer_id)
 
 def retrieveHelper(email: str) -> Tuple[str, int]:
     client = StripeClient(current_app.config["STRIPE_SECRET"])

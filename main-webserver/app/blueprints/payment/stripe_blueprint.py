@@ -16,7 +16,7 @@ from app.helpers.utils.general.auth import fractal_auth
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 
 import stripe
-
+import json
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
@@ -89,12 +89,12 @@ def payment(action, **kwargs):
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
-@fractal_auth
-def can_access_product():
+def can_access_product(**kwargs):
+    body = kwargs["body"]
     try:
-        stripe_id = json.loads(request.data)["stripe_id"]
+        stripe_id = body["stripe_id"]
     except:
-        abort(400)
+        return jsonify(success=False)
     if hasAccess(stripe_id):
         return jsonify(subscribed=True)
     return jsonify(subscribed=False)
