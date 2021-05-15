@@ -23,7 +23,7 @@ import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
 import { flow, fork } from "@app/utils/flows"
 
-const signupGates = flow<any>("signupGates", (_name, trigger) =>
+const signupGates = flow<any>("signupGates", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
@@ -41,7 +41,7 @@ const signupGates = flow<any>("signupGates", (_name, trigger) =>
 
 export const generateConfigTokenGate = flow<any>(
   "generateConfigTokenGate",
-  (_name, trigger) =>
+  (trigger) =>
     fork(
       trigger.pipe(
         switchMap(({ password }) =>
@@ -58,14 +58,14 @@ export const generateConfigTokenGate = flow<any>(
     )
 )
 
-export const signupFlow = flow("signupFlow", (name, trigger) => {
+export const signupFlow = flow("signupFlow", (trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
-    configToken: generateConfigTokenGate(name, trigger).success,
+    configToken: generateConfigTokenGate(trigger).success,
   })
 
-  const signup = signupGates(name, input)
+  const signup = signupGates(input)
 
   const tokens = signup.success.pipe(
     map((response) => ({

@@ -25,7 +25,7 @@ import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { merge } from "lodash"
 
-const loginGates = flow("loginGates", (_name, trigger) => {
+const loginGates = flow("loginGates", (trigger) => {
   const login = fork(
     loginAction.pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
@@ -44,13 +44,13 @@ const loginGates = flow("loginGates", (_name, trigger) => {
   }
 })
 
-export const loginFlow = flow("loginFlow", (name, trigger) => {
+export const loginFlow = flow("loginFlow", (trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
   })
 
-  const login = loginGates(name, input)
+  const login = loginGates(input)
 
   const configToken = combineLatest([
     login.success,

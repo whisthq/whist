@@ -23,7 +23,7 @@ import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { fork, flow } from "@app/utils/flows"
 import { some } from "lodash"
 
-const containerInfoGates = flow<any>("containerInfoGates", (_name, trigger) =>
+const containerInfoGates = flow<any>("containerInfoGates", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ containerID, accessToken }) =>
@@ -40,11 +40,11 @@ const containerInfoGates = flow<any>("containerInfoGates", (_name, trigger) =>
   )
 )
 
-const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
+const containerPollingInner = flow("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = containerInfoGates(name, tick)
+  const poll = containerInfoGates(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -55,7 +55,7 @@ const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
 
 export const containerCreateFlow = flow<any>(
   "containerCreateFlow",
-  (_name, trigger) => {
+  (trigger) => {
     const create = fork(
       trigger.pipe(
         switchMap(({ email, accessToken }) =>
@@ -81,9 +81,9 @@ export const containerCreateFlow = flow<any>(
 
 export const containerPollingFlow = flow(
   "containerPollingFlow",
-  (name, trigger) => {
+  (trigger) => {
     const poll = trigger.pipe(
-      map((args) => containerPollingInner(name, of(args))),
+      map((args) => containerPollingInner(of(args))),
       share()
     )
 

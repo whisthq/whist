@@ -34,16 +34,17 @@ export const fork = <T>(
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
+
+
 export const flow = <A>(
   name: string,
   fn: (
-    childName: string,
     trigger: Observable<A>
   ) => { [key: string]: Observable<any> }
-) => (childName: string, trigger: Observable<A>) =>
-  mapValues(fn(`${name}.${childName}`, trigger), (obs, key) =>
+) => (trigger: Observable<A>) =>
+  mapValues(fn(trigger), (obs, key) =>
     obs.pipe(
-      tap((value) => logDebug(`${name}.${childName}.${key}`, value)),
+      tap((value) => logDebug(`${name}.${key}`, value)),
       share()
     )
   )
