@@ -9,10 +9,13 @@ import { fromEvent } from "rxjs"
 import path from "path"
 import config from "@app/config/environment"
 
+import { createTrigger } from "@app/utils/flows"
+
 // rxjs and Typescript are not fully agreeing on the type inference here,
 // so we coerce to EventEmitter to keep everyone happy.
 
 export const eventAppReady = fromEvent(app as EventEmitter, "ready")
+createTrigger("appReady", fromEvent(app as EventEmitter, "ready"))
 
 export const eventAppActivation = fromEvent(app as EventEmitter, "activate")
 

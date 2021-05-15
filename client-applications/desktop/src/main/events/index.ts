@@ -1,4 +1,4 @@
-// import "@app/main/events/app"
+import "@app/main/events/app"
 // import "@app/main/events/ipc"
 // import "@app/main/events/persist"
 // import "@app/main/events/tray"

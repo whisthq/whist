@@ -1,7 +1,19 @@
-import { Observable } from "rxjs"
-import { filter, share, tap } from "rxjs/operators"
-import { mapValues, truncate } from "lodash"
+import { Observable, Subject } from "rxjs"
+import { filter, share, tap, map } from "rxjs/operators"
+import { mapValues, truncate, values, toPairs } from "lodash"
 import stringify from "json-stringify-safe"
+
+
+export type Trigger = {
+  name: string
+  payload: any
+}
+
+export type FlowOutput = {
+  [key: string]: Observable<Trigger>
+}
+
+export const TriggerChannel = new Subject<Trigger>()
 
 const logFormat = (...args: any[]) => {
   let [title, message, value] = args
@@ -47,4 +59,21 @@ export const flow = <A>(
       tap((value) => logDebug(`${name}.${key}`, value)),
       share()
     )
+  )
+
+export const createTrigger = <A>(name: string, obs: Observable<A>) => {
+  obs.subscribe((x) => {
+    console.log("Trigger created for ", name)
+    TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
+  })
+}
+
+export const fromTrigger = (name: string): Observable<any> =>
+  TriggerChannel.pipe(
+    tap(x => console.log("TRIGGER CHANNEL", x)),
+    // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
+    // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
+    filter((x: Trigger) => x.name.toLowerCase().includes(name.toLowerCase())),
+    // Flatten the trigger so that it can be consumed by a subscriber without transforms
+    map((x: Trigger) => ({ ...x.payload, name: x.name }))
   )

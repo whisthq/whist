@@ -10,12 +10,12 @@
 // probably haven't imported it here.
 
 // import "@app/main/observables"
-// import "@app/main/events"
+import "@app/main/events"
 // import "@app/main/effects"
 
 import { app } from "electron"
 import { flow, fork } from "@app/utils/flows"
-import { BehaviorSubject, merge, fromEvent, zip, combineLatest } from "rxjs"
+import { BehaviorSubject, merge, fromEvent, zip, combineLatest, interval } from "rxjs"
 import { switchMap, pluck, sample, map, tap } from "rxjs/operators"
 import { signupFlow } from "@app/main/observables/signup"
 import { loginFlow } from "@app/main/observables/login"
@@ -30,6 +30,9 @@ import { store, persist, onPersistChange } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { has, every, omit } from "lodash"
 import { createAuthWindow } from "@app/utils/windows"
+
+import { fromTrigger } from "@app/utils/flows"
+import { eventAppReady } from "@app/main/events/app"
 
 // Auth is currently the only flow that requires any kind of persistence,
 // so for now we might as well just leave the persistence setup close to
@@ -134,4 +137,6 @@ const mainFlow = flow("mainFlow", (trigger) => {
 })
 
 // Kick off the main flow to run the app.
-mainFlow(fromEvent(app, "ready"))
+// mainFlow(fromEvent(app, "ready"))
+mainFlow(fromTrigger("appReady"))
+
