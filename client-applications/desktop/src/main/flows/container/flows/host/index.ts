@@ -25,33 +25,43 @@ import {
 import { flow, fork } from "@app/main/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates = flow<{ email: string; accessToken: string }>(
-  "hostServiceInfoGates",
-  (trigger) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(hostServiceInfo(email, accessToken))
-        )
-      ),
-      {
-        success: (result: HostServiceInfoResponse) =>
-          hostServiceInfoValid(result),
-        pending: (result: HostServiceInfoResponse) =>
-          hostServiceInfoPending(result),
-        failure: (result: HostServiceInfoResponse) =>
-          !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
-      }
-    )
+const hostServiceInfoRequest = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostServiceInfoRequest", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ email, accessToken }) =>
+        from(hostServiceInfo(email, accessToken))
+      )
+    ),
+    {
+      success: (result: HostServiceInfoResponse) =>
+        hostServiceInfoValid(result),
+      pending: (result: HostServiceInfoResponse) =>
+        hostServiceInfoPending(result),
+      failure: (result: HostServiceInfoResponse) =>
+        !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
+    }
+  )
 )
 
-const hostPollingInner = flow("hostPollingInner", (trigger) => {
+const hostPollingInner = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostPollingInner", (trigger) => {
   const tick = trigger.pipe(
-    switchMap((args) =>
-      interval(1000).pipe(mapTo(args))
-    )
+    switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = hostServiceInfoGates(tick)
+  const poll = hostServiceInfoRequest(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -60,7 +70,14 @@ const hostPollingInner = flow("hostPollingInner", (trigger) => {
   }
 })
 
-const hostInfoFlow = flow("hostInfoFlow", (trigger) => {
+const hostInfoFlow = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostInfoFlow", (trigger) => {
   const poll = trigger.pipe(
     map((args) => hostPollingInner(of(args))),
     share()
@@ -91,6 +108,7 @@ const hostConfigFlow = flow<{
   hostSecret: string
   email: string
   configToken: string
+  accessToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
@@ -109,7 +127,14 @@ const hostConfigFlow = flow<{
   )
 )
 
-export default flow("hostServiceFlow", (trigger) => {
+export default flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostServiceFlow", (trigger) => {
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(

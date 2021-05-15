@@ -4,7 +4,7 @@ import { pluck, sample, map } from "rxjs/operators"
 import containerCreateFlow from "@app/main/flows/container/flows/create"
 import containerPollingFlow from "@app/main/flows/container/flows/polling"
 import hostServiceFlow from "@app/main/flows/container/flows/host"
-import { flow, trigger as _trigger } from "@app/main/utils/flows"
+import { flow, createTrigger } from "@app/main/utils/flows"
 
 export default flow("containerFlow", (trigger) => {
   const create = containerCreateFlow(
@@ -29,11 +29,11 @@ export default flow("containerFlow", (trigger) => {
   )
 
   return {
-    success: _trigger(
+    success: createTrigger(
       "containerFlowSuccess",
       zip(ready.success, host.success).pipe(map(([a]) => a))
     ),
-    failure: _trigger(
+    failure: createTrigger(
       "containerFlowFailure",
       merge(create.failure, ready.failure, host.failure)
     ),

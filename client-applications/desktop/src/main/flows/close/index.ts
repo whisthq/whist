@@ -6,7 +6,7 @@
 // carries important data about the state of the protocol process.
 
 import { ChildProcess } from "child_process"
-import { flow, fork, trigger as _trigger } from "@app/main/utils/flows"
+import { flow, fork, createTrigger } from "@app/main/utils/flows"
 
 export default flow(
   "protocolCloseFlow",
@@ -17,8 +17,8 @@ export default flow(
     })
 
     return {
-      success: _trigger("protocolCloseFlowSuccess", close.success),
-      failure: _trigger("protocolCloseFlowFailure", close.failure),
+      success: createTrigger("protocolCloseFlowSuccess", close.success),
+      failure: createTrigger("protocolCloseFlowFailure", close.failure),
     }
   },
 )

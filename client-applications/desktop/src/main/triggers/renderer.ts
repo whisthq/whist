@@ -1,7 +1,7 @@
 import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
-import { trigger, fromTrigger } from "@app/main/utils/flows"
+import { createTrigger, fromTrigger } from "@app/main/utils/flows"
 
 const filterByName = (
   observable: Observable<{ name: string; payload: any }>,
@@ -15,15 +15,15 @@ const filterByName = (
     map((x: { name: string; payload: any }) => x.payload)
   )
 
-trigger(
+createTrigger(
   "login",
   filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "login")
 )
-trigger(
+createTrigger(
   "signup",
   filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "signup")
 )
-trigger(
+createTrigger(
   "relaunch",
   filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "relaunch")
 )

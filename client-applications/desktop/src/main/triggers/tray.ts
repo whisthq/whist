@@ -6,8 +6,8 @@
 import { fromEvent } from "rxjs"
 
 import { trayEvent } from "@app/main/utils/tray"
-import { trigger } from "@app/main/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 import { EventEmitter } from "events"
 
-trigger("signout", fromEvent(trayEvent as EventEmitter, "signout"))
-trigger("quit", fromEvent(trayEvent as EventEmitter, "quit"))
+createTrigger("signout", fromEvent(trayEvent as EventEmitter, "signout"))
+createTrigger("quit", fromEvent(trayEvent as EventEmitter, "quit"))

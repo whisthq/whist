@@ -22,7 +22,7 @@ import {
   emailLoginAccessToken,
   emailLoginRefreshToken,
 } from "@app/main/utils/login"
-import { flow, fork, trigger as _trigger } from "@app/main/utils/flows"
+import { flow, fork, createTrigger } from "@app/main/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { ResponseAuth } from "@app/main/utils/login"
 
@@ -82,13 +82,13 @@ export default flow<{ email: string; password: string }>(
     const jwt = jwtRequest(login.success)
 
     return {
-      success: _trigger(
+      success: createTrigger(
         "loginFlowSuccess",
         combineLatest([login.success, jwt.success, configToken.success]).pipe(
           map((args: [any, any, any]) => merge(...args))
         )
       ),
-      failure: _trigger("loginFlowFailure", login.failure),
+      failure: createTrigger("loginFlowFailure", login.failure),
       warning: login.warning,
       loading: login.loading,
     }

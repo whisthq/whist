@@ -5,16 +5,15 @@
  */
 import { app } from "electron"
 import EventEmitter from "events"
-import { fromEvent, interval } from "rxjs"
-import { tap } from "rxjs/operators"
+import { fromEvent } from "rxjs"
 
-import { trigger } from "@app/main/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 
 // rxjs and Typescript are not fully agreeing on the type inference here,
 // so we coerce to EventEmitter to keep everyone happy.
-trigger("appReady", fromEvent(app as EventEmitter, "ready"))
+createTrigger("appReady", fromEvent(app as EventEmitter, "ready"))
 
-trigger("windowCreated", fromEvent(
+createTrigger("windowCreated", fromEvent(
   app as EventEmitter,
   "browser-window-created"
 ))

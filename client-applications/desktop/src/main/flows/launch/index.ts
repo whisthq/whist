@@ -7,7 +7,7 @@
 
 import { map, take } from "rxjs/operators"
 import { protocolLaunch } from "@app/main/utils/protocol"
-import { flow, fork, trigger as _trigger } from "@app/main/utils/flows"
+import { flow, fork, createTrigger } from "@app/main/utils/flows"
 
 export default flow("protocolLaunchFlow", (trigger) => {
   const launch = fork(
@@ -21,6 +21,6 @@ export default flow("protocolLaunchFlow", (trigger) => {
   )
 
   return {
-    success: _trigger("protocolLaunchFlowSuccess", launch.success),
+    success: createTrigger("protocolLaunchFlowSuccess", launch.success),
   }
 })

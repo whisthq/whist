@@ -32,7 +32,7 @@ export const flow = <A>(
     )
   )
 
-export const trigger = <A>(name: string, obs: Observable<A>) =>
+export const createTrigger = <A>(name: string, obs: Observable<A>) =>
   obs.pipe(
     tap(() => console.log("Trigger created for ", name)),
     // Pipe to the TriggerChannel

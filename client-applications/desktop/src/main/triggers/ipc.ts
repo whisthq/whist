@@ -12,7 +12,7 @@ import { StateIPC } from "@app/@types/state"
 import { Object } from "ts-toolbelt"
 
 import { StateChannel } from "@app/utils/constants"
-import { trigger } from "@app/main/utils/flows"
+import { createTrigger } from "@app/main/utils/flows"
 
 // This file listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -37,7 +37,7 @@ import { trigger } from "@app/main/utils/flows"
 // state object to emit at the beginning of the application so downstream
 // observables can initialize.
 
-trigger(
+createTrigger(
   "eventIPC",
   fromEvent(ipcMain, StateChannel).pipe(
     map((args) => {
