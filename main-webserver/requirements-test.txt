@@ -1,6 +1,6 @@
 -e app/helpers
 
-black==21.5b0
+black==21.5b1
 flake8==3.9.1
 mailslurp-client==11.9.6
 moto==2.0.1
