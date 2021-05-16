@@ -1,4 +1,4 @@
-Flask==1.1.2
+Flask==2.0.0
 celery==5.0.5
 redis==3.5.3
 gevent==21.1.2
