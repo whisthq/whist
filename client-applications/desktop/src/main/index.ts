@@ -32,7 +32,6 @@ import { has, every, omit } from "lodash"
 import { createAuthWindow } from "@app/utils/windows"
 
 import { fromTrigger } from "@app/utils/flows"
-import { eventAppReady } from "@app/main/events/app"
 
 // Auth is currently the only flow that requires any kind of persistence,
 // so for now we might as well just leave the persistence setup close to

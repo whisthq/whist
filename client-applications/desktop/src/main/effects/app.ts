@@ -14,7 +14,6 @@ import {
   eventUpdateAvailable,
   eventUpdateDownloaded,
 } from "@app/main/events/autoupdate"
-import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
 import { eventActionTypes } from "@app/main/events/tray"
 
 import {
@@ -42,18 +41,19 @@ import {
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
+import { fromTrigger } from "@app/main/utils/flows"
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
-eventAppReady
+fromTrigger("appReady")
   .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
   .subscribe(() => {
     createAuthWindow((win: any) => win.show())
   })
 
-eventAppReady.pipe(take(1)).subscribe(() => {
+fromTrigger("appReady").pipe(take(1)).subscribe(() => {
   // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
   // so we need to set autoDownload = false
   autoUpdater.autoDownload = false
@@ -122,7 +122,7 @@ eventUpdateAvailable.subscribe(() => {
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 
-eventWindowCreated.subscribe(() => showAppDock())
+fromTrigger("windowCreated").subscribe(() => showAppDock())
 
 zip(
   merge(protocolCloseSuccess, protocolCloseFailure),

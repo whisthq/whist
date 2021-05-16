@@ -4,17 +4,19 @@
  * @brief This file contains RXJS observables that deal with state persistence (i.e. shared state).
  */
 
-import { eventAppReady } from "@app/main/events/app"
 import { Subject } from "rxjs"
 import { distinctUntilChanged, map } from "rxjs/operators"
 import { store } from "@app/utils/persist"
+
+import { fromTrigger } from "@app/main/utils"
+
 
 // We create the persistence observables slightly differently from the
 // others across the project.
 //
 // A Subject is "multicast" by default, and we can also "push" values onto
 // it by calling its "next()" method. This is important here, because we don't
-// want to load the persisted storage right away. We must wait for eventAppReady,
+// want to load the persisted storage right away. We must wait for app ready,
 // because we want all the observable subscriptions throughout the project to
 // be setup. If they are not set up and we load the persisted storage too early,
 // then they will not receive the data from this initial "load" event, and they
@@ -46,6 +48,6 @@ store.onDidAnyChange((newStore: any, _oldStore: any) => {
   persisted.next(newStore)
 })
 
-eventAppReady.subscribe(() => {
+fromTrigger("appReady").subscribe(() => {
   persisted.next(store.store)
 })

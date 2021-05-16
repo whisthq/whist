@@ -4,7 +4,6 @@
 
 import { identity } from "lodash"
 import { eventIPC } from "@app/main/events/ipc"
-import { eventAppReady } from "@app/main/events/app"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
 import { loginFailure } from "@app/main/observables/login"
@@ -26,6 +25,7 @@ import {
   containerPollingFailure,
   containerCreateFailure,
 } from "@app/main/observables/container"
+import { fromTrigger } from "@app/main/utils"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -48,7 +48,7 @@ export const errorWindowRequest = merge(
   ),
   containerPollingFailure.pipe(mapTo(assignContainerErrorWindow))
 ).pipe(
-  withLatestFrom(eventAppReady),
+  withLatestFrom(fromTrigger("appReady")),
   map(([f, _]) => f)
 )
 
