@@ -145,7 +145,7 @@ quitAction.subscribe(() => {
 })
 
 signoutAction.subscribe(() => {
-  clearKeys("refreshToken", "accessToken")
+  clearKeys("refreshToken", "accessToken", "userConfigToken")
   app.relaunch()
   app.exit()
 })

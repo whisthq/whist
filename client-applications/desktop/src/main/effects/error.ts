@@ -18,7 +18,6 @@ import {
 // of the Effects module of the application.
 
 errorRelaunchRequest.subscribe(() => {
-  clearKeys("refreshToken", "accessToken") // force user to re-login
   app.relaunch()
   app.exit()
 })
