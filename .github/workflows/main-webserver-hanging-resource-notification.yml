@@ -182,6 +182,6 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-dev"
-                  BODY = ":rotating_light: Hanging Resource Notification Failed"
+                  BODY = ":rotating_light: @releases Hanging Resource Notification Failed"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)

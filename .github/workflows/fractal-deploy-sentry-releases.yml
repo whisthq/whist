@@ -90,7 +90,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
-                  BODY = ":rotating_light: Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
+                  BODY = ":rotating_light: @releases Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
