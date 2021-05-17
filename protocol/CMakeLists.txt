@@ -87,7 +87,7 @@ OPTION(CI OFF)
 
 find_program(CPPCHECK cppcheck HINTS $ENV{PROGRAMFILES}/cppcheck)
 if (CPPCHECK)
-    message(STATUS "found cppcheck")
+    message(STATUS "cppcheck found: ${CPPCHECK}")
 else()
     message(STATUS "cppcheck not found")
 endif()
