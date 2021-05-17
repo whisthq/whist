@@ -4,35 +4,30 @@ import EventEmitter from "events"
 import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
-import { debugObservables } from "@app/utils/logging"
+import { createTrigger } from "@app/utils/flows"
 
-export const eventUpdateAvailable = fromEvent(
-  autoUpdater as EventEmitter,
-  "update-available"
+// Fires if autoupdate is available
+createTrigger(
+  "updateAvailable",
+  fromEvent(autoUpdater as EventEmitter, "update-available")
+)
+// Fires if autoupdate is not available, if app is not packaged, or if there's an updating error
+createTrigger(
+  "updateNotAvailable",
+  merge(
+    of(null).pipe(takeWhile(() => !app.isPackaged)),
+    fromEvent(autoUpdater as EventEmitter, "error"),
+    fromEvent(autoUpdater as EventEmitter, "update-not-available")
+  )
+)
+// Fires if autoupdate is downloading, returns object with download speed, size, etc.
+createTrigger(
+  "downloadProgress",
+  fromEvent(autoUpdater as EventEmitter, "download-progress")
+)
+// Fires if autoupdate is downloaded successfully
+createTrigger(
+  "updateDownloaded",
+  fromEvent(autoUpdater as EventEmitter, "update-downloaded")
 )
 
-export const eventDownloadProgress = fromEvent(
-  autoUpdater as EventEmitter,
-  "download-progress"
-)
-
-export const eventUpdateDownloaded = fromEvent(
-  autoUpdater as EventEmitter,
-  "update-downloaded"
-)
-
-export const eventUpdateError = fromEvent(autoUpdater as EventEmitter, "error")
-
-export const eventUpdateNotAvailable = merge(
-  of(null).pipe(takeWhile(() => !app.isPackaged)),
-  eventUpdateError,
-  fromEvent(autoUpdater as EventEmitter, "update-not-available")
-)
-
-debugObservables(
-  [eventUpdateAvailable, "eventUpdateAvailable"],
-  [eventUpdateNotAvailable, "eventUpdateNotAvailable"],
-  [eventDownloadProgress, "eventDownloadProgress"],
-  [eventUpdateDownloaded, "eventUpdateDownloaded"],
-  [eventUpdateError, "eventUpdateError"]
-)

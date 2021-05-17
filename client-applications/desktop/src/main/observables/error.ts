@@ -3,11 +3,8 @@
 // for error-related side-effects defined in effects.ts.
 
 import { identity } from "lodash"
-import { eventIPC } from "@app/main/events/ipc"
 import { merge } from "rxjs"
 import { pluck, filter, map, mapTo, withLatestFrom } from "rxjs/operators"
-import { loginFailure } from "@app/main/observables/login"
-import { signupFailure } from "@app/main/observables/signup"
 import {
   createAuthErrorWindow,
   createContainerErrorWindowNoAccess,
@@ -21,37 +18,31 @@ import {
   containerCreateErrorUnauthorized,
 } from "@app/utils/container"
 import { warningObservables } from "@app/utils/logging"
-import {
-  containerPollingFailure,
-  containerCreateFailure,
-} from "@app/main/observables/container"
 import { fromTrigger } from "@app/main/utils"
 
-export const errorRelaunchRequest = eventIPC.pipe(
-  pluck("errorRelaunchRequest"),
-  filter(identity)
-)
+// export const errorRelaunchRequest = fromTrigger("eventIPC").pipe(
+//   pluck("errorRelaunchRequest"),
+//   filter(identity)
+// )
 
-export const errorWindowRequest = merge(
-  loginFailure.pipe(mapTo(createAuthErrorWindow)),
-  signupFailure.pipe(mapTo(createAuthErrorWindow)),
-  containerCreateFailure.pipe(
-    map((response) => {
-      if (containerCreateErrorNoAccess(response)) {
-        return createContainerErrorWindowNoAccess
-      }
-      if (containerCreateErrorUnauthorized(response)) {
-        return createContainerErrorWindowUnauthorized
-      }
-      return createContainerErrorWindowInternal
-    })
-  ),
-  containerPollingFailure.pipe(mapTo(assignContainerErrorWindow))
-).pipe(
-  withLatestFrom(fromTrigger("appReady")),
-  map(([f, _]) => f)
-)
+// export const errorWindowRequest = merge(
+//   loginFailure.pipe(mapTo(createAuthErrorWindow)),
+//   signupFailure.pipe(mapTo(createAuthErrorWindow)),
+//   containerCreateFailure.pipe(
+//     map((response) => {
+//       if (containerCreateErrorNoAccess(response)) {
+//         return createContainerErrorWindowNoAccess
+//       }
+//       if (containerCreateErrorUnauthorized(response)) {
+//         return createContainerErrorWindowUnauthorized
+//       }
+//       return createContainerErrorWindowInternal
+//     })
+//   ),
+//   containerPollingFailure.pipe(mapTo(assignContainerErrorWindow))
+// ).pipe(
+//   withLatestFrom(fromTrigger("appReady")),
+//   map(([f, _]) => f)
+// )
 
 // Logging
-
-warningObservables([errorRelaunchRequest, "errorRelaunchRequest"])

@@ -3,13 +3,12 @@ import { filter, share, tap, map } from "rxjs/operators"
 import { mapValues, truncate, values, toPairs } from "lodash"
 import stringify from "json-stringify-safe"
 
-
-export type Trigger = {
+export interface Trigger {
   name: string
   payload: any
 }
 
-export type FlowOutput = {
+export interface FlowOutput {
   [key: string]: Observable<Trigger>
 }
 
@@ -28,7 +27,7 @@ const logFormat = (...args: any[]) => {
   title = title ? `${title} -- ` : ""
   message = message ? `${message} -- ` : ""
 
-  let output = truncate(stringify(value, null, 2), {
+  const output = truncate(stringify(value, null, 2), {
     length: 1000,
     omission: "...**only printing 1000 characters per log**",
   })
@@ -47,12 +46,9 @@ export const fork = <T>(
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
 
-
 export const flow = <A>(
   name: string,
-  fn: (
-    trigger: Observable<A>
-  ) => { [key: string]: Observable<any> }
+  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
 ) => (trigger: Observable<A>) =>
   mapValues(fn(trigger), (obs, key) =>
     obs.pipe(
@@ -70,7 +66,6 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
 
 export const fromTrigger = (name: string): Observable<any> =>
   TriggerChannel.pipe(
-    tap(x => console.log("TRIGGER CHANNEL", x)),
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name.toLowerCase().includes(name.toLowerCase())),

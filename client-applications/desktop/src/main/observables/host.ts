@@ -23,22 +23,20 @@ import {
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates = flow<any>(
-  "hostServiceInfoGates",
-  (trigger) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(hostServiceInfo(email, accessToken))
-        )
-      ),
-      {
-        success: (result) => hostServiceInfoValid(result),
-        pending: (result) => hostServiceInfoPending(result),
-        failure: (result) =>
-          !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
-      }
-    )
+const hostServiceInfoGates = flow<any>("hostServiceInfoGates", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ email, accessToken }) =>
+        from(hostServiceInfo(email, accessToken))
+      )
+    ),
+    {
+      success: (result) => hostServiceInfoValid(result),
+      pending: (result) => hostServiceInfoPending(result),
+      failure: (result) =>
+        !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
+    }
+  )
 )
 
 const hostPollingInner = flow<any>("hostPollingInner", (trigger) => {

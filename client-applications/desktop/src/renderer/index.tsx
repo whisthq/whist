@@ -53,7 +53,8 @@ const show = chain(window.location.search.substring(1))
 const RootComponent = () => {
   const [, setMainState] = useMainState()
 
-  const errorContinue = () => setMainState({ errorRelaunchRequest: Date.now() })
+  const errorContinue = () =>
+    setMainState({ trigger: { name: "relaunch", payload: Date.now() } })
 
   if (show === WindowHashAuth) {
     return (

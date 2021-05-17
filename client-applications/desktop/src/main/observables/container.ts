@@ -16,7 +16,7 @@ import {
   containerInfoSuccess,
   containerInfoPending,
 } from "@app/utils/container"
-import {} from "@app/utils/container"
+
 import { loadingFrom } from "@app/utils/observables"
 import { from, of, interval, merge } from "rxjs"
 import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
@@ -79,36 +79,33 @@ export const containerCreateFlow = flow<any>(
   }
 )
 
-export const containerPollingFlow = flow(
-  "containerPollingFlow",
-  (trigger) => {
-    const poll = trigger.pipe(
-      map((args) => containerPollingInner(of(args))),
-      share()
-    )
+export const containerPollingFlow = flow("containerPollingFlow", (trigger) => {
+  const poll = trigger.pipe(
+    map((args) => containerPollingInner(of(args))),
+    share()
+  )
 
-    const success = poll.pipe(switchMap((inner) => inner.success))
-    const failure = poll.pipe(switchMap((inner) => inner.failure))
-    const pending = poll.pipe(switchMap((inner) => inner.pending))
-    const loading = loadingFrom(trigger, success, failure)
+  const success = poll.pipe(switchMap((inner) => inner.success))
+  const failure = poll.pipe(switchMap((inner) => inner.failure))
+  const pending = poll.pipe(switchMap((inner) => inner.pending))
+  const loading = loadingFrom(trigger, success, failure)
 
-    // We probably won't subscribe to "pending" in the rest of the app,
-    // so we subscribe to it deliberately here. If it has no subscribers,
-    // it won't emit. We would like for it to emit for logging purposes.
-    // We must remeber to takeUntil so it stops when we're finished.
-    pending.pipe(takeUntil(merge(success, failure))).subscribe()
+  // We probably won't subscribe to "pending" in the rest of the app,
+  // so we subscribe to it deliberately here. If it has no subscribers,
+  // it won't emit. We would like for it to emit for logging purposes.
+  // We must remeber to takeUntil so it stops when we're finished.
+  pending.pipe(takeUntil(merge(success, failure))).subscribe()
 
-    return {
-      success: success.pipe(
-        map((response) => ({
-          containerIP: containerInfoIP(response),
-          containerSecret: containerInfoSecretKey(response),
-          containerPorts: containerInfoPorts(response),
-        }))
-      ),
-      failure,
-      pending,
-      loading,
-    }
+  return {
+    success: success.pipe(
+      map((response) => ({
+        containerIP: containerInfoIP(response),
+        containerSecret: containerInfoSecretKey(response),
+        containerPorts: containerInfoPorts(response),
+      }))
+    ),
+    failure,
+    pending,
+    loading,
   }
-)
+})

@@ -10,18 +10,15 @@ import { protocolLaunch } from "@app/utils/protocol"
 import { ChildProcess } from "child_process"
 import { flow, fork } from "@app/utils/flows"
 
-export const protocolLaunchFlow = flow(
-  "protocolLaunchFlow",
-  (trigger) => {
-    const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
-      success: () => true,
-    })
+export const protocolLaunchFlow = flow("protocolLaunchFlow", (trigger) => {
+  const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
+    success: () => true,
+  })
 
-    return {
-      success: launch.success,
-    }
+  return {
+    success: launch.success,
   }
-)
+})
 
 export const protocolCloseFlow = flow<ChildProcess>(
   "protocolCloseFlow",

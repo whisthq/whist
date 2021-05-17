@@ -14,8 +14,15 @@ import "@app/main/events"
 // import "@app/main/effects"
 
 import { app } from "electron"
-import { flow, fork } from "@app/utils/flows"
-import { BehaviorSubject, merge, fromEvent, zip, combineLatest, interval } from "rxjs"
+import { flow, fork, fromTrigger } from "@app/utils/flows"
+import {
+  BehaviorSubject,
+  merge,
+  fromEvent,
+  zip,
+  combineLatest,
+  interval,
+} from "rxjs"
 import { switchMap, pluck, sample, map, tap } from "rxjs/operators"
 import { signupFlow } from "@app/main/observables/signup"
 import { loginFlow } from "@app/main/observables/login"
@@ -25,13 +32,10 @@ import {
   containerPollingFlow,
 } from "@app/main/observables/container"
 import { hostServiceFlow } from "@app/main/observables/host"
-import { loginAction, signupAction } from "@app/main/events/actions"
 import { store, persist, onPersistChange } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { has, every, omit } from "lodash"
 import { createAuthWindow } from "@app/utils/windows"
-
-import { fromTrigger } from "@app/utils/flows"
 
 // Auth is currently the only flow that requires any kind of persistence,
 // so for now we might as well just leave the persistence setup close to
@@ -66,8 +70,8 @@ const persistedFlow = flow("persistedFlow", (trigger: Observable<any>) =>
 
 export const authFlow = flow("authFlow", (trigger) => {
   const persisted = persistedFlow(trigger)
-  const login = loginFlow(loginAction)
-  const signup = signupFlow(signupAction)
+  const login = loginFlow(fromTrigger("login"))
+  const signup = signupFlow(fromTrigger("signup"))
 
   persisted.failure.subscribe(() => createAuthWindow((win: any) => win.show()))
 
@@ -138,4 +142,3 @@ const mainFlow = flow("mainFlow", (trigger) => {
 // Kick off the main flow to run the app.
 // mainFlow(fromEvent(app, "ready"))
 mainFlow(fromTrigger("appReady"))
-

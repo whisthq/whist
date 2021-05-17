@@ -20,14 +20,13 @@ import {
   emailLoginAccessToken,
   emailLoginRefreshToken,
 } from "@app/utils/login"
-import { loginAction } from "@app/main/events/actions"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork, fromTrigger } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { merge } from "lodash"
 
 const loginGates = flow("loginGates", (trigger) => {
   const login = fork(
-    loginAction.pipe(
+    fromTrigger("login").pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
     ),
     {

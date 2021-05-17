@@ -25,8 +25,8 @@ const Auth = () => {
   const onLogin = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.LOGIN,
+      trigger: {
+        name: "login",
         payload: {
           email,
           password,
@@ -38,8 +38,8 @@ const Auth = () => {
   const onSignup = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.SIGNUP,
+      trigger: {
+        name: "signup",
         payload: {
           email,
           password,

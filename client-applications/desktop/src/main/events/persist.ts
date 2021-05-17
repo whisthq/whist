@@ -8,8 +8,7 @@ import { Subject } from "rxjs"
 import { distinctUntilChanged, map } from "rxjs/operators"
 import { store } from "@app/utils/persist"
 
-import { fromTrigger } from "@app/main/utils"
-
+import { fromTrigger } from "@app/utils/flows"
 
 // We create the persistence observables slightly differently from the
 // others across the project.
