@@ -111,6 +111,6 @@ jobs:
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-staging"
                   WEBSERVER_URL= "${{ env.webserver_url }}"
-                  BODY = f"@channel Failed load testing webserver at {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+                  BODY = f":rotating_light: Failed load testing webserver at {WEBSERVER_URL} (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
