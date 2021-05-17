@@ -1,7 +1,7 @@
 import { fromEventIPC } from "@app/main/events/ipc"
 import { eventTray } from "@app/main/events/tray"
 import { Observable } from "rxjs"
-import { filter, map, share, tap } from "rxjs/operators"
+import { filter, map, share } from "rxjs/operators"
 import {
   ActionType,
   MainAction,

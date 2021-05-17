@@ -6,7 +6,6 @@ import stripe
 
 from pyzipcode import ZipCodeDatabase
 
-
 from app.models import db, User
 from app.serializers.public import UserSchema
 
@@ -190,17 +189,17 @@ class StripeClient:
         self, success_url: str, cancel_url: str, customer_id: str, price_id: str
     ) -> str:
         """
-        Returns checkout session id from Stripe client
+            Returns checkout session id from Stripe client
 
-        Args:
-            customer_id (str): the stripe id of the user
-            price_id (str): the price id of the product (subscription)
-            success_url (str): url to redirect to upon completion success
-            cancel_url (str): url to redirect to upon cancelation
+            Args:
+                customer_id (str): the stripe id of the user
+                price_id (str): the price id of the product (subscription)
+                success_url (str): url to redirect to upon completion success
+                cancel_url (str): url to redirect to upon cancelation
 
-        Returns:
-            json, int: Json containing session id and status code
-    \    """
+            Returns:
+                json, int: Json containing session id and status code
+        \ """
         try:
             checkout_session = stripe.checkout.Session.create(
                 success_url=success_url,
