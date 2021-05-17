@@ -1,30 +1,27 @@
 import Store from "electron-store"
-import { get } from "lodash"
-
-import { StateIPC } from "@app/@types/state"
+import events from "events"
+import { isEmpty, pickBy } from "lodash"
 
 export const store = new Store({ watch: true })
+export const persisted = new events.EventEmitter()
 
-export const persist = (obj: Partial<StateIPC>) => {
-  for (const key in obj) {
-    const value = get(obj, key, "")
-    if (value !== "" && value !== store.get(key)) store.set(key, value)
+const cache = {
+  accessToken: store.get("accessToken") ?? "",
+  configToken: store.get("configToken") ?? "",
+  email: store.get("email") ?? "",
+}
+
+export const emitCache = () => {
+  if (isEmpty(pickBy(cache, (x) => x === ""))) {
+    persisted.emit("data-persisted", cache)
+  } else {
+    persisted.emit("data-not-persisted")
   }
 }
 
-export const persistKeys = (obj: Partial<StateIPC>, ...keys: string[]) => {
-  for (const key of keys) {
-    const value = get(obj, key, "")
-    if (value !== "" && value !== store.get(key)) {
-      store.set(key, value)
-    }
-  }
+export const persist = (key: string, value: string) => {
+  store.set(key, value)
 }
-
-export const onPersistChange = (fn: (n: any, o: any) => void) =>
-  store.onDidAnyChange((newStore: any, oldStore: any) => {
-    fn(newStore, oldStore)
-  })
 
 export const persistClear = () => {
   store.clear()

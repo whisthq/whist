@@ -27,9 +27,8 @@ export default flow("containerFlow", (trigger) => {
     combineLatest({
       email: trigger.pipe(pluck("email")) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
-      configToken: trigger.pipe(pluck("configToken") as Observable<string>),
+      configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
     }).pipe(
-      tap((x) => console.log("HOST SERVICE", x)),
       sample(create.success)
     )
   )

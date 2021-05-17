@@ -23,6 +23,7 @@ import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import config from "@app/config/environment"
+import { emitCache } from "@app/utils/persist"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -30,14 +31,6 @@ fromTrigger("appReady").subscribe(() => {
   const appPath = app.getPath("userData")
   const newPath = path.join(appPath, deployEnv)
   app.setPath("userData", newPath)
-})
-
-// appReady only fires once, at the launch of the application.
-// We use takeUntil to make sure that the auth window only fires when
-// we have all of [userEmail, userAccessToken, userConfigToken]. If we
-// don't have all three, we clear them all and force the user to log in again.
-fromTrigger("appReady").subscribe(() => {
-  createAuthWindow()
 })
 
 fromTrigger("appReady")
@@ -64,6 +57,16 @@ fromTrigger("appReady")
     // and fires an update if the current version is less than the version in latest.yml
     autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
   })
+
+fromTrigger("appReady").subscribe(() => emitCache())
+
+// appReady only fires once, at the launch of the application.
+// We use takeUntil to make sure that the auth window only fires when
+// we have all of [userEmail, userAccessToken, userConfigToken]. If we
+// don't have all three, we clear them all and force the user to log in again.
+fromTrigger("notPersisted").subscribe(() => {
+  createAuthWindow()
+})
 
 // By default, the window-all-closed Electron event will cause the application
 // to close. We don't want this behavior for certain observables. For example,
