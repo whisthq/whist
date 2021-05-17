@@ -13,7 +13,7 @@ import {
   WindowHashCreateContainerErrorInternal,
   WindowHashAssignContainerError,
 } from "@app/utils/constants"
-import config, { FractalCIEnvironment } from "@app/config/environment"
+import config, { FractalEnvironments } from "@app/config/environment"
 
 const { buildRoot } = config
 
@@ -73,7 +73,7 @@ export const hideAppDock = () => {
 
 export const getWindowTitle = () => {
   const { deployEnv } = config
-  if (deployEnv === FractalCIEnvironment.PRODUCTION) {
+  if (deployEnv === FractalEnvironments.PRODUCTION) {
     return "Fractal"
   }
   return `Fractal (${deployEnv})`

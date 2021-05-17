@@ -8,7 +8,7 @@
 const path = require("path")
 const { app } = require("electron")
 const fs = require("fs-extra")
-const { userDataFolderNames } = require("../config/environment")
+const { userDataFolderNames } = require("../config/configs")
 
 let foldersToDelete
 

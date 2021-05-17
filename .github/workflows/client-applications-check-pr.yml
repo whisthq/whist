@@ -124,6 +124,10 @@ jobs:
             - name: Build the Windows Electron Application
               if: runner.os == 'Windows'
               shell: cmd # Acts as Visual Studio Developer Command Prompt due to ilammy/msvc-dev-cmd@v1
+              env:
+                  AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+                  AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+                  AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
               working-directory: client-applications\desktop
               run: |
                   REM Build the Fractal protocol and package the Electron application, using a hardcoded test version
@@ -136,6 +140,9 @@ jobs:
             - name: Build the macOS Electron Application
               if: runner.os == 'macOS'
               env:
+                  AWS_ACCESS_KEY: ${{ secrets.CLIENTAPP_AWS_ACCESS_KEY }}
+                  AWS_SECRET_KEY: ${{ secrets.CLIENTAPP_AWS_SECRET_KEY }}
+                  AMPLITUDE_KEY: ${{ secrets.CLIENTAPP_AMPLITUDE_KEY }}
                   FRACTAL_OSX_SYSROOT: "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk" # Necessary for building on macOS (protocol does NOT support 10.15+ SDKs)
                   FRACTAL_NOTARIZE_APPLE_ID: ${{ secrets.FRACTAL_NOTARIZE_APPLE_ID }}
                   FRACTAL_NOTARIZE_APPLE_PASSWORD: ${{ secrets.FRACTAL_NOTARIZE_APPLE_PASSWORD }}

@@ -10,7 +10,6 @@ import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
 import config, { loggingBaseFilePath } from "@app/config/environment"
-import env from "@app/utils/env"
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
@@ -66,7 +65,7 @@ const amplitudeLog = async (
 ) => {
   if (userID !== undefined) {
     await amplitude.logEvent({
-      event_type: `[${(env.PACKAGED_ENV as string) ?? "LOCAL"}] ${title}`,
+      event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
       user_id: userID,
       event_properties: data,

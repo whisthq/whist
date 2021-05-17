@@ -1,7 +1,17 @@
 /*
-  Environment config
-  This file exports environment-specific variables used at runtime
+  Environment configs
+  This file exports environment-specific variables used at build and runtime.
+
+  This is the only file in this directory (except build.js) that should be
+  imported by any file outside this directory; it re-exports anything that
+  needs to be used by anything in `src/`, instance.
 */
+
+const {
+  FractalEnvironments,
+  FractalNodeEnvironments,
+  FractalWebservers,
+} = require("./constants")
 
 const {
   baseFilePath,
@@ -12,46 +22,22 @@ const {
   buildRoot,
 } = require("./paths")
 
-const FractalNodeEnvironment = {
-  DEVELOPMENT: "development",
-  PRODUCTION: "production",
-}
-
-const FractalCIEnvironment = {
-  LOCAL: "local",
-  DEVELOPMENT: "dev",
-  STAGING: "staging",
-  PRODUCTION: "prod",
-}
+const { keys } = require("./keys")
+const { appEnvironment, iconName } = require("./build")
 
 /*
-    Webserver URLs
+    All environment variables.
 */
-const webservers = {
-  local: "http://127.0.0.1:7730",
-  dev: "http://dev-server.fractal.co",
-  staging: "https://staging-server.fractal.co",
-  production: "https://prod-server.fractal.co",
-}
-
-const keys = {
-  AWS_ACCESS_KEY: "AKIA24A776SSHLVMSAVU", // only permissioned for S3 client-apps buckets
-  AWS_SECRET_KEY: "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",
-  AMPLITUDE_KEY: "f4009f8b53b3060953437879d9769e8b",
-}
-
-/*
-    All environment variables. All secret keys have permission restrictions.
-*/
-const environment = {
+const configs = {
   LOCAL: {
+    appEnvironment,
     keys,
     baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: webservers.local,
+      WEBSERVER_URL: FractalWebservers.local,
       FRONTEND_URL: "http://localhost:3000",
     },
     deployEnv: "dev",
@@ -64,13 +50,14 @@ const environment = {
     title: "Fractal (local)",
   },
   DEVELOPMENT: {
+    appEnvironment,
     keys,
     baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: webservers.dev,
+      WEBSERVER_URL: FractalWebservers.dev,
       FRONTEND_URL: "https://dev.fractal.co",
     },
     deployEnv: "dev",
@@ -83,13 +70,14 @@ const environment = {
     title: "Fractal (development)",
   },
   STAGING: {
+    appEnvironment,
     keys,
     baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: webservers.staging,
+      WEBSERVER_URL: FractalWebservers.staging,
       FRONTEND_URL: "https://staging.fractal.co",
     },
     deployEnv: "staging",
@@ -103,13 +91,14 @@ const environment = {
     title: "Fractal (staging)",
   },
   PRODUCTION: {
+    appEnvironment,
     keys,
     baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
     url: {
-      WEBSERVER_URL: webservers.production,
+      WEBSERVER_URL: FractalWebservers.production,
       FRONTEND_URL: "https://fractal.co",
     },
     deployEnv: "prod",
@@ -124,10 +113,12 @@ const environment = {
 }
 
 module.exports = {
-  FractalNodeEnvironment,
-  FractalCIEnvironment,
-  webservers,
-  environment,
+  appEnvironment,
+  iconName,
+  configs,
   loggingBaseFilePath,
   userDataFolderNames,
+  FractalNodeEnvironments,
+  FractalEnvironments,
+  FractalWebservers,
 }

@@ -25,7 +25,14 @@ helpers.buildTailwind()
 helpers.configureCodeSigning(true)
 
 // For testing, we just hardcode the environment to dev
-helpers.setPackageEnv("dev")
+helpers.setPackagedEnv("dev")
+
+// We test setting the secret keys
+helpers.populateSecretKeys([
+  "AWS_ACCESS_KEY",
+  "AWS_SECRET_KEY",
+  "AMPLITUDE_KEY",
+])
 
 helpers.snowpackBuild({ VERSION: argv.version })
 helpers.electronBuild()
