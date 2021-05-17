@@ -52,6 +52,7 @@ extern MouseMotionAccumulation mouse_state;
 
 extern bool multigesture_active;
 bool active_scroll = false;
+bool active_click = false;
 
 /*
 ============================
@@ -304,6 +305,11 @@ int handle_mouse_button_up_down(SDL_Event *event) {
     // Record if left / right / middle button
     fmsg.mouseButton.button = event->button.button;
     fmsg.mouseButton.pressed = event->button.type == SDL_MOUSEBUTTONDOWN;
+    if (event->button.type == SDL_MOUSEBUTTONDOWN) {
+        active_click = true;
+    } else {
+        active_click = false;
+    }
     if (fmsg.mouseButton.button == MOUSE_L) {
         SDL_CaptureMouse(fmsg.mouseButton.pressed);
     }
@@ -371,10 +377,10 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .num_fingers = event->mgesture.numFingers,
                                                      .active_gesture = multigesture_active};
 
-    // If not scrolling and at least 10 pixels have been pinched,
+    // If not scrolling or dragging and at least 10 pixels have been pinched,
     //     then populate fmsg to send pinch event to server
     // NOTE: we currently only handle pinch, not rotate
-    if (!active_scroll && fabs(accumulated_dist) > 10.0 / ((float)output_width)) {
+    if (!active_scroll && !active_click && fabs(accumulated_dist) > 10.0 / ((float)output_width)) {
         multigesture_active = true;
         if (accumulated_dist > 0) {
             current_gesture_type = PINCH_OPEN;
