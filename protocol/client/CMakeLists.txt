@@ -84,7 +84,7 @@ message(VERBOSE "c debug flags${CMAKE_C_FLAGS_DEBUG}")
 
 # FFmpeg, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(STATUS ${LIB})
+    message(VERBOSE "linking lib for FractalClient: ${LIB}")
     target_link_libraries(FractalClient ${LIB})
 endforeach(LIB)
 
