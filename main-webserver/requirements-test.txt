@@ -1,7 +1,7 @@
 -e app/helpers
 
 black==21.5b0
-flake8==3.9.1
+flake8==3.9.2
 mailslurp-client==11.9.6
 moto==2.0.1
 progressbar==2.5
