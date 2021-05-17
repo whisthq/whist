@@ -24,4 +24,3 @@ GOTO loop1
 
 cd client\build64
 FractalClient %RESTVAR%
-cd ..\..
