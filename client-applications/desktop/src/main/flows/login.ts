@@ -97,7 +97,7 @@ export default flow<{ email: string; password: string }>(
     return {
       success: createTrigger(
         "loginFlowSuccess",
-        combineLatest([login.success, jwt.success, configToken.success]).pipe(
+        combineLatest([trigger, jwt.success, configToken.success]).pipe(
           map((args: [any, any, any]) => merge(...args))
         )
       ),

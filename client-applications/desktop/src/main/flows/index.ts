@@ -1,6 +1,7 @@
 import { merge, of, fromEvent } from "rxjs"
-import { mergeMap, map, zip } from "rxjs/operators"
+import { mergeMap, map, tap } from "rxjs/operators"
 import { EventEmitter } from "events"
+import { ChildProcess } from "child_process"
 
 import loginFlow from "@app/main/flows/login"
 import containerFlow from "@app/main/flows/container"
@@ -18,6 +19,8 @@ containerFlow(
     fromTrigger("persistFlowSuccess"),
     fromTrigger("loginFlowSuccess"),
     fromTrigger("signupFlowSuccess")
+  ).pipe(
+    tap(x => console.log("INDEX FLOW", x))
   )
 )
 
@@ -29,13 +32,13 @@ protocolLaunchFlow(
   )
 )
 
-protocolCloseFlow(
-  fromTrigger("protocolLaunchFlowSuccess").pipe(
-    mergeMap(({ protocol }) =>
-      zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
-    ),
-    map(([protocol]) => {
-      protocol
-    })
-  )
-)
+// protocolCloseFlow(
+//   fromTrigger("protocolLaunchFlowSuccess").pipe(
+//     mergeMap((protocol: ChildProcess) =>
+//       zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
+//     ),
+//     map(([protocol]) => {
+//       protocol
+//     })
+//   )
+// )

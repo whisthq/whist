@@ -11,6 +11,7 @@ import { fromTrigger } from "@app/utils/flows"
 // For any failure, close all windows and display error window
 fromTrigger("failure").subscribe((payload: { name: string }) => {
   closeWindows()
+  
   if (payload.name === "containerCreateFlowFailure") {
     createErrorWindow(NoAccessError)
   } else {

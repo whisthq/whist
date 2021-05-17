@@ -26,12 +26,8 @@ export const serializePorts = (ps: {
 }) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
 
 export const writeStream = (process: ChildProcess, message: string) => {
-  process.stdin?.write(message)
-  process.stdin?.write("\n")
-}
-
-export const endStream = (process: ChildProcess, message: string) => {
-  process.stdin?.end(message)
+  process?.stdin?.write?.(message)
+  process?.stdin?.write?.("\n")
 }
 
 export const protocolLaunch = () => {
@@ -75,7 +71,7 @@ export const protocolStreamInfo = (
 }
 
 export const protocolStreamKill = (protocol: ChildProcess) => {
-  console.log("THE PROTOCOL IS", protocol)
   writeStream(protocol, "kill?0")
+  // We send SIGINT just in case
   protocol?.kill?.("SIGINT")
 }

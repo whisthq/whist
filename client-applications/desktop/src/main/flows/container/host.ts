@@ -21,17 +21,15 @@ import {
   mapTo,
   take,
   pluck,
+  tap
 } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
 const hostServiceInfoRequest = flow<{
   email: string
-  configToken: string
-  containerIP: number
-  containerPort: string
-  containerSecret: string
   accessToken: string
+  configToken: string
 }>("hostServiceInfoRequest", (trigger) =>
   fork(
     trigger.pipe(
@@ -52,11 +50,8 @@ const hostServiceInfoRequest = flow<{
 
 const hostPollingInner = flow<{
   email: string
-  configToken: string
-  containerIP: number
-  containerPort: string
-  containerSecret: string
   accessToken: string
+  configToken: string
 }>("hostPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
@@ -72,11 +67,8 @@ const hostPollingInner = flow<{
 
 const hostInfoFlow = flow<{
   email: string
-  configToken: string
-  containerIP: number
-  containerPort: string
-  containerSecret: string
   accessToken: string
+  configToken: string
 }>("hostInfoFlow", (trigger) => {
   const poll = trigger.pipe(
     map((args) => hostPollingInner(of(args))),
@@ -108,7 +100,6 @@ const hostConfigFlow = flow<{
   containerSecret: string
   email: string
   configToken: string
-  accessToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
@@ -129,12 +120,11 @@ const hostConfigFlow = flow<{
 
 export default flow<{
   email: string
-  configToken: string
-  containerIP: number
-  containerPort: string
-  containerSecret: string
   accessToken: string
+  configToken: string
 }>("hostServiceFlow", (trigger) => {
+  trigger.pipe(tap(x => console.log("HOST CONFIG", trigger)))
+
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(

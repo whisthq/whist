@@ -8,9 +8,6 @@ export interface Trigger {
   payload: any
 }
 
-export interface FlowOutput {
-  [key: string]: Observable<Trigger>
-}
 
 export const TriggerChannel = new Subject<Trigger>()
 
@@ -41,7 +38,7 @@ const logDebug = (...args: any[]) => {
 export const fork = <T>(
   source: Observable<T>,
   filters: { [gate: string]: (result: T) => boolean }
-) => {
+):{[key: string]: Observable<T>} => {
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
@@ -64,6 +61,8 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
     console.log("Trigger detected for", name)
     TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
   })
+
+  return obs
 }
 
 export const fromTrigger = (name: string): Observable<any> =>

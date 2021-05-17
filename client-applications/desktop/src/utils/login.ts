@@ -2,11 +2,14 @@ import { post } from "@app/utils/api"
 import { AsyncReturnType } from "@app/@types/state"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 
-export const emailLogin = async (username: string, password: string) =>
-  post({
+export const emailLogin = async (username: string, password: string) => {
+  console.log("LOGIN REQUEST", username, password)
+
+  return post({
     endpoint: "/account/login",
     body: { username, password },
   })
+}
 
 export type ResponseAuth = AsyncReturnType<typeof emailLogin>
 

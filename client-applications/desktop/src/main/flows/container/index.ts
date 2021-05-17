@@ -1,5 +1,5 @@
 import { combineLatest, merge, zip, Observable } from "rxjs"
-import { pluck, sample, map } from "rxjs/operators"
+import { pluck, sample, tap } from "rxjs/operators"
 
 import containerCreateFlow from "@app/main/flows/container/create"
 import containerPollingFlow from "@app/main/flows/container/polling"
@@ -25,16 +25,17 @@ export default flow("containerFlow", (trigger) => {
 
   const host = hostServiceFlow(
     combineLatest({
-      email: trigger.pipe(pluck("email")),
-      accessToken: trigger.pipe(pluck("accessToken")),
-    }).pipe(sample(create.success))
+      email: trigger.pipe(pluck("email")) as Observable<string>,
+      accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
+      configToken: trigger.pipe(pluck("configToken") as Observable<string>),
+    }).pipe(
+      tap((x) => console.log("HOST SERVICE", x)),
+      sample(create.success)
+    )
   )
 
   return {
-    success: createTrigger(
-      "containerFlowSuccess",
-      polling.success
-    ),
+    success: createTrigger("containerFlowSuccess", polling.success),
     failure: createTrigger(
       "containerFlowFailure",
       merge(create.failure, polling.failure, host.failure)
