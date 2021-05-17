@@ -1,40 +1,55 @@
+import { app } from "electron"
+
 import {
-  environment,
-  FractalNodeEnvironment,
-  FractalCIEnvironment,
-} from "../../config/environment"
+  appEnvironment,
+  configs,
+  FractalEnvironments,
+  FractalNodeEnvironments,
+} from "../../config/configs"
 
-import env from "@app/utils/env"
-
-const getDevelopmentEnv = () => {
-  switch (process.env.DEVELOPMENT_ENV) {
-    case FractalCIEnvironment.LOCAL:
-      return environment.LOCAL
+const getDevelopmentConfig = () => {
+  const devEnv = process.env.DEVELOPMENT_ENV as string
+  switch (devEnv) {
+    case FractalEnvironments.LOCAL:
+      return configs.LOCAL
+    case FractalEnvironments.DEVELOPMENT:
+      return configs.DEVELOPMENT
+    case FractalEnvironments.STAGING:
+      return configs.STAGING
+    case FractalEnvironments.PRODUCTION:
+      return configs.PRODUCTION
     default:
-      return environment.DEVELOPMENT
+      console.warn(
+        `Got an unrecognized DEVELOPMENT_ENV: ${devEnv}. Defaulting to ${FractalEnvironments.DEVELOPMENT}`
+      )
+      return configs.DEVELOPMENT
   }
 }
 
-const getProductionEnv = () => {
-  switch (env.PACKAGED_ENV) {
-    case FractalCIEnvironment.DEVELOPMENT:
-      return environment.DEVELOPMENT
-    case FractalCIEnvironment.STAGING:
-      return environment.STAGING
-    case FractalCIEnvironment.PRODUCTION:
-      return environment.PRODUCTION
+const getProductionConfig = () => {
+  if (!app.isPackaged) {
+    return configs.PRODUCTION
+  }
+
+  switch (appEnvironment) {
+    case FractalEnvironments.DEVELOPMENT:
+      return configs.DEVELOPMENT
+    case FractalEnvironments.STAGING:
+      return configs.STAGING
+    case FractalEnvironments.PRODUCTION:
+      return configs.PRODUCTION
     default:
-      return environment.PRODUCTION
+      return configs.PRODUCTION
   }
 }
 
 export const config =
-  process.env.NODE_ENV === FractalNodeEnvironment.DEVELOPMENT
-    ? getDevelopmentEnv()
-    : getProductionEnv()
+  process.env.NODE_ENV === FractalNodeEnvironments.DEVELOPMENT
+    ? getDevelopmentConfig()
+    : getProductionConfig()
 
 export default config
 
 // Re-exporting
-export { FractalCIEnvironment } from "../../config/environment"
+export { FractalEnvironments } from "../../config/constants"
 export { loggingBaseFilePath } from "../../config/paths"

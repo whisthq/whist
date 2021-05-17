@@ -1,16 +1,30 @@
 /*
   Build config
-  This file contains config variables used at build time
+  This file exports the variables used at build time
 */
 
-const env = require("../env.json") || {}
+const { FractalEnvironments } = require("./constants")
+const envOverrides = require("./envOverrides")
+const assert = require("assert").strict
 
-// Environment-specific configuration
+const { appEnvironment = FractalEnvironments.PRODUCTION } = envOverrides
 
-const { PACKAGED_ENV = "prod" } = env
-const iconName = PACKAGED_ENV === "prod" ? "icon" : `icon_${PACKAGED_ENV}`
+// Make sure we have a valid appEnvironment
+assert(
+  appEnvironment === FractalEnvironments.LOCAL ||
+    appEnvironment === FractalEnvironments.DEVELOPMENT ||
+    appEnvironment === FractalEnvironments.STAGING ||
+    appEnvironment === FractalEnvironments.PRODUCTION
+)
+
+// Icon name
+const iconName =
+  appEnvironment === FractalEnvironments.PRODUCTION ||
+  appEnvironment === FractalEnvironments.LOCAL
+    ? "icon"
+    : `icon_${appEnvironment}`
 
 module.exports = {
+  appEnvironment,
   iconName,
-  PACKAGED_ENV,
 }

@@ -6,6 +6,39 @@ const fs = require("fs")
 const fse = require("fs-extra")
 const path = require("path")
 
+const envOverrideFile = "env_overrides.json"
+
+const readExistingEnvOverrides = () => {
+  let envFileContents = ""
+
+  try {
+    envFileContents = fs.readFileSync(envOverrideFile, "utf-8")
+  } catch (err) {
+    if (err.code !== "ENOENT") {
+      console.error(`Error reading contents of ${envOverrideFile}: ${err}`)
+      process.exit(-1)
+    }
+  }
+
+  // Treat an empty/non-existent file as valid
+  envFileContents = envFileContents.trim() === "" ? "{}" : envFileContents
+  const existingEnv = JSON.parse(envFileContents)
+
+  return existingEnv
+}
+
+const addEnvOverride = (envs) => {
+  const existingEnv = readExistingEnvOverrides()
+
+  const newEnv = {
+    ...existingEnv,
+    ...envs,
+  }
+
+  const envString = JSON.stringify(newEnv)
+  fs.writeFileSync(envOverrideFile, envString)
+}
+
 module.exports = {
   // Build the protocol and copy it into the expected location
   buildAndCopyProtocol: () => {
@@ -142,18 +175,27 @@ module.exports = {
   },
 
   // Function to set the packaging environment, which gets hardcoded into the
-  // electron bundle. Acceptable arguments: dev|staging|prod
-  setPackageEnv: (e) => {
+  // electron bundle via `env_overrides.json`. Acceptable arguments:
+  // dev|staging|prod
+  setPackagedEnv: (e) => {
     if (e === "dev" || e === "staging" || e === "prod") {
-      const env = {
-        PACKAGED_ENV: e,
-      }
-      const envString = JSON.stringify(env)
-      fs.writeFileSync("env.json", envString)
+      addEnvOverride({ appEnvironment: e })
     } else {
-      console.error(`setPackageEnv passed a bad environment: ${e}`)
+      console.error(`setPackagedEnv passed a bad environment: ${e}`)
       process.exit(-1)
     }
+  },
+
+  // Function that stores the provided environment variables as key:value pairs
+  // in `env_overrides.json`. This function is used to populate the client app
+  // configuration with secrets we don't want to store in version control.
+  populateSecretKeys: (keys) => {
+    const newEnv = {}
+    for (const k in keys) {
+      newEnv[k] = process.env[k]
+    }
+
+    addEnvOverride(newEnv)
   },
 
   // This function reinitializes yarn to ensure clean packaging in CI

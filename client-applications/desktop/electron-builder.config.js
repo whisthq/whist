@@ -1,15 +1,15 @@
 // This configuration specifies the name, description, and other
 // metadata regarding the Fractal application.
 
-const { iconName, PACKAGED_ENV } = require("./config/build")
+const { iconName, appEnvironment } = require("./config/build")
 
 const appDetails = {
   appId:
     "com.fractalcomputers.fractal" +
-    (PACKAGED_ENV === "prod" ? "" : `-${PACKAGED_ENV}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
+    (appEnvironment === "prod" ? "" : `-${appEnvironment}`), // Standard Apple appId format: <domain-extension>.<domain>.<company-name>
   copyright: "Copyright © Fractal Computers, Inc.",
   productName:
-    "Fractal" + (PACKAGED_ENV === "prod" ? "" : ` (${PACKAGED_ENV})`),
+    "Fractal" + (appEnvironment === "prod" ? "" : ` (${appEnvironment})`),
 }
 
 // This configuration controls how the application is bundled,
@@ -39,7 +39,7 @@ const bundleConfig = {
 
   extraFiles: ["loading/"],
 
-  extraResources: ["env.json"],
+  extraResources: ["env_overrides.json"],
 
   mac: {
     category: "public.app-category.productivity",

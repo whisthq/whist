@@ -7,7 +7,7 @@ helpers.buildTailwind()
 helpers.configureCodeSigning(false)
 
 // For testing, we just hardcode the environment to dev
-helpers.setPackageEnv("dev")
+helpers.setPackagedEnv("dev")
 
 // For package-local, we don't want to increment the version so we use existing version
 helpers.snowpackBuild({ VERSION: helpers.getCurrentClientAppVersion() })

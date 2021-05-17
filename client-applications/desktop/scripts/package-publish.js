@@ -29,7 +29,12 @@ helpers.buildTailwind()
 
 helpers.configureCodeSigning(true)
 
-helpers.setPackageEnv(argv.environment)
+helpers.setPackagedEnv(argv.environment)
+helpers.populateSecretKeys([
+  "AWS_ACCESS_KEY",
+  "AWS_SECRET_KEY",
+  "AMPLITUDE_KEY",
+])
 
 helpers.snowpackBuild({ VERSION: argv.version })
 
