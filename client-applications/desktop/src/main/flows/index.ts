@@ -5,6 +5,7 @@ import { EventEmitter } from "events"
 import loginFlow from "@app/main/flows/login"
 import containerFlow from "@app/main/flows/container"
 import protocolLaunchFlow from "@app/main/flows/launch"
+import protocolCloseFlow from "@app/main/flows/close"
 
 import { fromTrigger } from "@app/utils/flows"
 
@@ -28,13 +29,13 @@ protocolLaunchFlow(
   )
 )
 
-// protocolCloseFlow(
-//   fromTrigger("protocolLaunchFlowSuccess").pipe(
-//     mergeMap(({ protocol }) =>
-//       zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
-//     ),
-//     map(([protocol]) => {
-//       protocol
-//     })
-//   )
-// )
+protocolCloseFlow(
+  fromTrigger("protocolLaunchFlowSuccess").pipe(
+    mergeMap(({ protocol }) =>
+      zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
+    ),
+    map(([protocol]) => {
+      protocol
+    })
+  )
+)

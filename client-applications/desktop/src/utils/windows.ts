@@ -89,10 +89,12 @@ export const createWindow = (
   )
   win.on("close", () => onClose?.(win))
 
+  win.show()
+  
   return win
 }
 
-export const createAuthWindow = () =>
+export const createAuthWindow = () => 
   createWindow(WindowHashAuth, {
     ...base,
     ...width.sm,

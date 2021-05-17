@@ -37,7 +37,7 @@ fromTrigger("appReady").subscribe(() => {
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
 fromTrigger("appReady").subscribe(() => {
-  createAuthWindow((win: BrowserWindow) => win.show())
+  createAuthWindow()
 })
 
 fromTrigger("appReady")
@@ -111,7 +111,7 @@ fromTrigger("updateDownloaded").subscribe(() => {
 
 fromTrigger("updateAvailable").subscribe(() => {
   closeWindows()
-  createUpdateWindow((win: BrowserWindow) => win.show())
+  createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 

@@ -103,18 +103,18 @@ const hostInfoFlow = flow<{
 })
 
 const hostConfigFlow = flow<{
-  hostIP: string
-  hostPort: number
-  hostSecret: string
+  containerIP: string
+  containerPort: number
+  containerSecret: string
   email: string
   configToken: string
   accessToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
-      switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
+      switchMap(({ containerIP, containerPort, containerSecret, email, configToken }) =>
         from(
-          hostServiceConfig(hostIP, hostPort, hostSecret, email, configToken)
+          hostServiceConfig(containerIP, containerPort, containerSecret, email, configToken)
         )
       )
     ),
@@ -141,9 +141,9 @@ export default flow<{
     combineLatest({
       email: trigger.pipe(pluck("email")) as Observable<string>,
       configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
-      hostIP: info.success.pipe(pluck("containerIP")) as Observable<string>,
-      hostPort: info.success.pipe(pluck("containerPort")) as Observable<number>,
-      hostSecret: info.success.pipe(
+      containerIP: info.success.pipe(pluck("containerIP")) as Observable<string>,
+      containerPort: info.success.pipe(pluck("containerPort")) as Observable<number>,
+      containerSecret: info.success.pipe(
         pluck("containerSecret")
       ) as Observable<string>,
     })
