@@ -7,8 +7,6 @@
 import { app } from "electron"
 import EventEmitter from "events"
 import { fromEvent } from "rxjs"
-import path from "path"
-import config from "@app/config/environment"
 
 import { createTrigger } from "@app/utils/flows"
 

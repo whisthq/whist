@@ -9,8 +9,10 @@ import {
   hostServiceConfig,
   hostServiceConfigValid,
   hostServiceConfigError,
+  HostServiceInfoResponse,
+  HostServiceConfigResponse,
 } from "@app/utils/host"
-import { from, interval, of, merge, combineLatest } from "rxjs"
+import { from, interval, of, merge, combineLatest, Observable } from "rxjs"
 import {
   map,
   share,
@@ -23,7 +25,14 @@ import {
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates = flow<any>("hostServiceInfoGates", (trigger) =>
+const hostServiceInfoRequest = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostServiceInfoRequest", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ email, accessToken }) =>
@@ -31,19 +40,28 @@ const hostServiceInfoGates = flow<any>("hostServiceInfoGates", (trigger) =>
       )
     ),
     {
-      success: (result) => hostServiceInfoValid(result),
-      pending: (result) => hostServiceInfoPending(result),
-      failure: (result) =>
+      success: (result: HostServiceInfoResponse) =>
+        hostServiceInfoValid(result),
+      pending: (result: HostServiceInfoResponse) =>
+        hostServiceInfoPending(result),
+      failure: (result: HostServiceInfoResponse) =>
         !some([hostServiceInfoValid(result), hostServiceInfoPending(result)]),
     }
   )
 )
 
-const hostPollingInner = flow<any>("hostPollingInner", (trigger) => {
+const hostPollingInner = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = hostServiceInfoGates(tick)
+  const poll = hostServiceInfoRequest(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -52,7 +70,14 @@ const hostPollingInner = flow<any>("hostPollingInner", (trigger) => {
   }
 })
 
-const hostInfoFlow = flow("hostInfoFlow", (trigger) => {
+const hostInfoFlow = flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostInfoFlow", (trigger) => {
   const poll = trigger.pipe(
     map((args) => hostPollingInner(of(args))),
     share()
@@ -77,7 +102,14 @@ const hostInfoFlow = flow("hostInfoFlow", (trigger) => {
   }
 })
 
-const hostConfigFlow = flow<any>("hostConfigFlow", (trigger) =>
+const hostConfigFlow = flow<{
+  hostIP: string
+  hostPort: number
+  hostSecret: string
+  email: string
+  configToken: string
+  accessToken: string
+}>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
@@ -87,22 +119,33 @@ const hostConfigFlow = flow<any>("hostConfigFlow", (trigger) =>
       )
     ),
     {
-      success: (result) => hostServiceConfigValid(result),
-      failure: (result) => hostServiceConfigError(result),
+      success: (result: HostServiceConfigResponse) =>
+        hostServiceConfigValid(result),
+      failure: (result: HostServiceConfigResponse) =>
+        hostServiceConfigError(result),
     }
   )
 )
 
-export const hostServiceFlow = flow("hostServiceFlow", (trigger) => {
+export default flow<{
+  email: string
+  configToken: string
+  containerIP: number
+  containerPort: string
+  containerSecret: string
+  accessToken: string
+}>("hostServiceFlow", (trigger) => {
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(
     combineLatest({
-      email: trigger.pipe(pluck("email")),
-      configToken: trigger.pipe(pluck("configToken")),
-      hostIP: info.success.pipe(pluck("containerIP")),
-      hostPort: info.success.pipe(pluck("containerPort")),
-      hostSecret: info.success.pipe(pluck("containerSecret")),
+      email: trigger.pipe(pluck("email")) as Observable<string>,
+      configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
+      hostIP: info.success.pipe(pluck("containerIP")) as Observable<string>,
+      hostPort: info.success.pipe(pluck("containerPort")) as Observable<number>,
+      hostSecret: info.success.pipe(
+        pluck("containerSecret")
+      ) as Observable<string>,
     })
   )
 

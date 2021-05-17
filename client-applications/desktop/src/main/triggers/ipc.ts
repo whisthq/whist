@@ -9,7 +9,7 @@ import { fromEvent } from "rxjs"
 import { map, share, startWith } from "rxjs/operators"
 import { StateChannel } from "@app/utils/constants"
 import { StateIPC } from "@app/@types/state"
-import { createTrigger, fromTrigger } from "@app/utils/flows"
+import { createTrigger } from "@app/utils/flows"
 
 // Listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent

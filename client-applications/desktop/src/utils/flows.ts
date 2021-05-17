@@ -1,6 +1,6 @@
-import { Observable, Subject } from "rxjs"
+import { Observable, Subject, EMPTY } from "rxjs"
 import { filter, share, tap, map } from "rxjs/operators"
-import { mapValues, truncate, values, toPairs } from "lodash"
+import { mapValues, truncate} from "lodash"
 import stringify from "json-stringify-safe"
 
 export interface Trigger {
@@ -51,15 +51,17 @@ export const flow = <A>(
   fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
 ) => (trigger: Observable<A>) =>
   mapValues(fn(trigger), (obs, key) =>
-    obs.pipe(
-      tap((value) => logDebug(`${name}.${key}`, value)),
-      share()
-    )
+    obs !== undefined
+      ? obs.pipe(
+          tap((value) => logDebug(`${name}.${key}`, value)),
+          share()
+        )
+      : EMPTY
   )
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
-  obs.subscribe((x) => {
-    console.log("Trigger created for ", name)
+  obs.subscribe((x: A) => {
+    console.log("Trigger created for", name, x)
     TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
   })
 }

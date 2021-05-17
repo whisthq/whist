@@ -17,15 +17,15 @@ const filterByName = (
 // Fires when login button is clicked
 createTrigger(
   "login",
-  filterByName(fromTrigger("eventIPC").pipe(pluck("action")), "login")
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "login")
 )
 // Fires when signup button is clicked
 createTrigger(
   "signup",
-  filterByName(fromTrigger("eventIPC").pipe(pluck("action")), "signup")
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "signup")
 )
 // Fires when "Continue" button is clicked on error window popup
 createTrigger(
   "relaunch",
-  filterByName(fromTrigger("eventIPC").pipe(pluck("action")), "relaunch")
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "relaunch")
 )

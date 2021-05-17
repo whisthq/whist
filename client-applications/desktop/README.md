@@ -102,23 +102,23 @@ There are some great tutorials for RxJS out there, like [this one](https://www.l
 
 Main process functions are grouped primarily by level of abstraction, and then sub-grouped based on their functionality. This means that we have several files named, for example, `container.ts`, in locations like `utils/container.ts`, `effects/container.ts`, and `observables/container.ts`. It should feel natural to choose a place to put a new function, or where to look for an existing one.
 
-You can identify a level of abstraction by "what the functions know about". Generally, the `utils` folder is for the lowest level of abstraction. `utils/container.ts` knows about the NodeJS standard library, `core-ts`, and HTTP responses. The functions inside it are tiny, only a few lines each. Files like this tend to be bags of functions that all have a similar return type, like an HTTP response, and provide helpers to extract data or perform validation. For example, `containerInfo` returns an HTTP response, and comes with `containerInfoValid` to check if the response is successful. It also brings along `containerInfoIP` and `containerInfoPorts` to extract the IP address and ports from the response.
+You can identify a level of abstraction by "what the functions know about". Generally, the `utils` folder is for the lowest level of abstraction. `utils/container.ts` knows about the NodeJS standard library, `core-ts`, and HTTP responses. The functions inside it are tiny, only a few lines each. Files like this tend to be bags of functions that all have a similar return type, like an HTTP response, and provide helpers to extract data or perform validation. For example, `containerPolling` returns an HTTP response, and comes with `containerPollingValid` to check if the response is successful. It also brings along `containerPollingIP` and `containerPollingPorts` to extract the IP address and ports from the response.
 
-This format makes function names verbose, but it allows for higher-levels of abstraction to be expressed much more concisely. `observables/container.ts` now doesn't need to know that it's dealing with an HTTP response. It can be entirely devoted to scheduling `containerInfo` requests and managing relationships with other observables. This becomes especially useful when you realize that `containerInfo`, when triggered by an event, needs to poll the webserver every second until certain other parts of application state receive certain data. This requires complex business logic that's much easier to manage when you're not complecting it with details like HTTP status codes.
+This format makes function names verbose, but it allows for higher-levels of abstraction to be expressed much more concisely. `observables/container.ts` now doesn't need to know that it's dealing with an HTTP response. It can be entirely devoted to scheduling `containerPolling` requests and managing relationships with other observables. This becomes especially useful when you realize that `containerPolling`, when triggered by an event, needs to poll the webserver every second until certain other parts of application state receive certain data. This requires complex business logic that's much easier to manage when you're not complecting it with details like HTTP status codes.
 
-Consistency is a key design goal of this project. It should be easy to choose a name for a function or observable when you need to. Names tend to be prefixed by their functionality, like `containerInfo` and `containerAssign`, and are often trailed by some sort of state like `Request`, `Warning`, `Success`, `Failure`, or `Loading`. Try and re-use these key terms as often as possible.
+Consistency is a key design goal of this project. It should be easy to choose a name for a function or observable when you need to. Names tend to be prefixed by their functionality, like `containerPolling` and `containerAssign`, and are often trailed by some sort of state like `Request`, `Warning`, `Success`, `Failure`, or `Loading`. Try and re-use these key terms as often as possible.
 
 A good indication of well-organized functions is visual consistency. Functions on the same level of abstraction that return similar data will often look similar, especially if they don't do too much and use consistent parameter names. In fact, visual coherence is so important that we often carefully pick names that have the same letter count. For example:
 
 ```js
 import {
-  containerInfoRequest,
-  containerInfoSuccess,
-  containerInfoFailure,
-  containerInfoLoading,
-  containerInfoWarning,
-  containerInfoProcess,
-  containerInfoPolling,
+  containerPollingRequest,
+  containerPollingSuccess,
+  containerPollingFailure,
+  containerPollingLoading,
+  containerPollingWarning,
+  containerPollingProcess,
+  containerPollingPolling,
 } from "@app/observables/container"
 ```
 
@@ -128,7 +128,7 @@ This stuff matters. It's a design detail, but in a large file it can make code s
 
 Subscribers to observables can live anywhere in your codebase, which allows for complete decoupling of logging and logic. By "spying" on the emissions of each observable, we can implement sophisticated logging without peppering every function with `log` statements.
 
-You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerInfoRequest` and `containerInfoSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
+You can even set up loggers based on the the behavior of multiple observables to test your expectations about the program. You might subscribe to both `containerPollingRequest` and `containerPollingSuccess`, and fire a `log.warning` if you see two requests before a success. That would be a pretty difficult task with traditional, imperative logging.
 
 A handy file during development is `main/debug.ts`. When the environment variable `DEBUG` is `true`, `debug.ts` will print out the value of almost any observable when that observable emits a new value. It has a simple schema to control which observables print and what their ouput looks like. You might find keeping it on all the time because it adds so much visibility into the program.
 
