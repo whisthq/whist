@@ -4,19 +4,16 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { app } from "electron"
 import { closeWindows } from "@app/utils/windows"
+import { createErrorWindow, NoAccessError, NavigationError } from "@app/utils/error"
+import { fromTrigger } from "@app/utils/flows"
 
-// Other parts of the application need to know that an error has happened,
-// which is why we have observables like "errorWindowRequest" defined outside
-// of the Effects module of the application.
-
-// errorRelaunchRequest.subscribe(() => {
-//   app.relaunch()
-//   app.exit()
-// })
-
-// errorWindowRequest.subscribe((windowFunction) => {
-//   closeWindows()
-//   windowFunction()
-// })
+// For any failure, close all windows and display error window
+fromTrigger("failure").subscribe((payload: { name: string }) => {
+  closeWindows()
+  if (payload.name === "containerCreateFlowFailure") {
+    createErrorWindow(NoAccessError)
+  } else {
+    createErrorWindow(NavigationError)
+  }
+})

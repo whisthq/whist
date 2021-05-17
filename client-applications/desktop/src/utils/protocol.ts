@@ -75,6 +75,7 @@ export const protocolStreamInfo = (
 }
 
 export const protocolStreamKill = (protocol: ChildProcess) => {
+  console.log("THE PROTOCOL IS", protocol)
   writeStream(protocol, "kill?0")
-  protocol.kill("SIGINT")
+  protocol?.kill?.("SIGINT")
 }

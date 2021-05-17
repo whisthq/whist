@@ -127,7 +127,7 @@ zip(
   if (success) app.quit()
 })
 
-fromTrigger("signout").subscribe(() => {
+fromTrigger("signoutAction").subscribe(() => {
   app.relaunch()
   app.exit()
 })

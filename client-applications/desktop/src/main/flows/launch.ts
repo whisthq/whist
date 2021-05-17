@@ -14,7 +14,7 @@ export default flow("protocolLaunchFlow", (trigger) => {
   const launch = fork(
     trigger.pipe(
       take(1),
-      map(() => ({ protocol: protocolLaunch() }))
+      map(() => protocolLaunch())
     ),
     {
       success: () => true,

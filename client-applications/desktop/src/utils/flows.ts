@@ -61,7 +61,7 @@ export const flow = <A>(
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   obs.subscribe((x: A) => {
-    console.log("Trigger created for", name, x)
+    console.log("Trigger detected for", name)
     TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
   })
 }

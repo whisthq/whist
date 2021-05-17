@@ -9,5 +9,5 @@ import { trayEvent } from "@app/utils/tray"
 import { createTrigger } from "@app/utils/flows"
 import { EventEmitter } from "events"
 
-createTrigger("signout", fromEvent(trayEvent as EventEmitter, "signout"))
-createTrigger("quit", fromEvent(trayEvent as EventEmitter, "quit"))
+createTrigger("signoutAction", fromEvent(trayEvent as EventEmitter, "signout"))
+createTrigger("quitAction", fromEvent(trayEvent as EventEmitter, "quit"))

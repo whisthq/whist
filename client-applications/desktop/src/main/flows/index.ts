@@ -9,8 +9,8 @@ import protocolLaunchFlow from "@app/main/flows/launch"
 import { fromTrigger } from "@app/utils/flows"
 
 // persistFlow(fromTrigger("updateNotAvailable"))
-loginFlow(fromTrigger("login"))
-// signupFlow(fromTrigger("signup"))
+loginFlow(fromTrigger("loginAction"))
+// signupFlow(fromTrigger("signupAction"))
 
 containerFlow(
   merge(

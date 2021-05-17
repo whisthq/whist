@@ -38,5 +38,5 @@ zip(
 // this application will take care of showing an appropriate error message.
 zip(
   fromTrigger("protocolLaunchFlowSuccess"),
-  merge(fromTrigger("signout"), fromTrigger("quit"), fromTrigger("failure"))
+  merge(fromTrigger("signoutAction"), fromTrigger("quitAction"), fromTrigger("failure"))
 ).subscribe(([protocol,]: [ChildProcess, any]) => protocolStreamKill(protocol))
