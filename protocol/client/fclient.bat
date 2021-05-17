@@ -1,5 +1,8 @@
 @echo off
 
+REM cd to parent directory of this script
+cd %~dp0
+
 REM Bypass "Terminate Batch Job" prompt.
 if "%~1"=="-FIXED_CTRL_C" (
    REM Remove the -FIXED_CTRL_C parameter
