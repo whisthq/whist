@@ -36,12 +36,6 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/container-images/browsers/brave" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
     directory: "/container-images/browsers/chrome" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
@@ -54,19 +48,7 @@ updates:
     open-pull-requests-limit: 10
 
   - package-ecosystem: "docker"
-    directory: "/container-images/browsers/sidekick" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
     directory: "/container-images/creative/blender" # looks for Dockerfile in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
-
-  - package-ecosystem: "docker"
-    directory: "/container-images/creative/gimp" # looks for Dockerfile in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
