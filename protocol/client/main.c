@@ -113,9 +113,6 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
-// Whether a multigesture is currently active
-bool multigesture_active = false;
-
 // Window resizing state
 SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 clock window_resize_timer;

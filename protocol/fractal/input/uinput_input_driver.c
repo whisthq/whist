@@ -681,6 +681,9 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
 
         // Pass a scroll event equivalent to the pinch distance
         emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
+    } else if (gesture_type == CANCEL) {
+        // When the pinch action has been changed, then release the lctrl key
+        emit_key_event(input_device, FK_LCTRL, false);
     }
     return 0;
 }

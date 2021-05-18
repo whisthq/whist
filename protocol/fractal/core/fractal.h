@@ -472,6 +472,7 @@ typedef enum FractalMultigestureType {
     PINCH_OPEN = 1,
     PINCH_CLOSE = 2,
     ROTATE = 3,
+    CANCEL = 4
 } FractalMultigestureType;
 
 /**

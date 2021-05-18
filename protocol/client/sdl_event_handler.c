@@ -50,8 +50,13 @@ extern bool audio_refresh;
 
 extern MouseMotionAccumulation mouse_state;
 
-extern bool multigesture_active;
+// Whether a multigesture is currently active:
+//    gets set to true when a multigesture becomes active,
+//    gets set to false when a multigesture ends or scroll/click takes over
+bool active_multigesture = false;
+// Whether a scroll is currently active
 bool active_scroll = false;
+// Whether a click is currently active
 bool active_click = false;
 
 /*
@@ -359,11 +364,9 @@ int handle_multi_gesture(SDL_Event *event) {
 
     // Accumulate distance pinched by fingers during an active gesture
     static float accumulated_dist = 0;  // static, so accumulates distance with each call
-    if (!multigesture_active) {
-        accumulated_dist = 0;
-    }
     accumulated_dist += event->mgesture.dDist;
 
+    // Get the DPI to scale the pinch distance
     int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
     float dpi;
     SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
@@ -371,26 +374,44 @@ int handle_multi_gesture(SDL_Event *event) {
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = accumulated_dist * (int)dpi,
+                                                     .d_dist = event->mgesture.dDist * (int)dpi,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers,
-                                                     .active_gesture = multigesture_active};
+                                                     .active_gesture = active_multigesture};
 
     // If not scrolling or dragging and at least 10 pixels have been pinched,
     //     then populate fmsg to send pinch event to server
     // NOTE: we currently only handle pinch, not rotate
-    if (!active_scroll && !active_click && fabs(accumulated_dist) > 10.0 / ((float)output_width)) {
-        multigesture_active = true;
+    if (!active_scroll && !active_click) {
+        // If there is no pinch yet and the accumulated pinch distance is too small, then return.
+        //    We do this because we want to keep accumulating the distance until a pinch is
+        //    detected, or a different event takes over.
+        if (!active_multigesture && fabs(accumulated_dist) < 10.0 / ((float)output_width)) {
+            return 0;
+        }
+        active_multigesture = true;
         if (accumulated_dist > 0) {
             current_gesture_type = PINCH_OPEN;
         } else {
             current_gesture_type = PINCH_CLOSE;
         }
-        accumulated_dist = 0;
+    } else if (active_multigesture) {
+        // If a multigesture was interrupted to become a different event, then send a cancel message
+        current_gesture_type = CANCEL;
+        active_multigesture = false;
     } else {
         // If there is a scroll happening, then this is not a multigesture, and return
         current_gesture_type = NONE;
+        return 0;
+    }
+
+    // After a message has been formulated and ready to send, reset accumulated dist to 0.
+    //    The only case in which the accumulated dist does not reset is if it has not yet
+    //    reached 10 pixels and we have no other active event (scroll, click, gesture, etc.).
+    accumulated_dist = 0;
+
+    if (current_gesture_type == NONE) {
         return 0;
     }
 
@@ -417,14 +438,14 @@ int handle_touch_up(SDL_Event *event) {
                                        .y = event->tfinger.y,
                                        .dx = event->tfinger.dx,
                                        .dy = event->tfinger.dy,
-                                       .active_gesture = multigesture_active};
+                                       .active_gesture = active_multigesture};
     fmsg.touch.touch_type = FINGER_UP;
 
     send_fmsg(&fmsg);
 
     // The multigesture or scroll has ended
-    if (multigesture_active || active_scroll) {
-        multigesture_active = false;
+    if (active_multigesture || active_scroll) {
+        active_multigesture = false;
         active_scroll = false;
     }
 
