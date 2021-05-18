@@ -135,6 +135,10 @@ combineLatest([
     })
 })
 
+quitAction.subscribe(() => {
+  app.exit()
+})
+
 signoutAction.subscribe(() => {
   app.relaunch()
   app.exit()
