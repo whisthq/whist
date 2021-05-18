@@ -61,6 +61,10 @@ int discover_ports(bool *using_stun) {
             (int): 0 on success, -1 on failure
     */
 
+    clock stopwatch;
+    start_timer(&stopwatch);
+    LOG_INFO("CLIENT STOPWATCH started: %f", get_timer(stopwatch));
+
     // Create TCP context
     SocketContext context;
     LOG_INFO("Trying to connect (Using STUN: %s)", *using_stun ? "true" : "false");
@@ -74,6 +78,7 @@ int discover_ports(bool *using_stun) {
             return -1;
         }
     }
+    LOG_INFO("CLIENT STOPWATCH finished first if block: %f", get_timer(stopwatch));
 
     // Create and send discovery request packet
     FractalClientMessage fcmsg = {0};
@@ -87,7 +92,7 @@ int discover_ports(bool *using_stun) {
         closesocket(context.socket);
         return -1;
     }
-    LOG_INFO("Sent discovery packet");
+    LOG_INFO("CLIENT STOPWATCH Sent discovery packet: %f", get_timer(stopwatch));
 
     // Receive discovery packets from server
     FractalPacket *tcp_packet = NULL;
@@ -98,6 +103,7 @@ int discover_ports(bool *using_stun) {
         SDL_Delay(5);
     } while (tcp_packet == NULL && get_timer(timer) < 15.0);
     closesocket(context.socket);
+    LOG_INFO("CLIENT STOPWATCH finished discovery packet while loop: %f", get_timer(stopwatch));
 
     // If no tcp packet was found, just return -1
     // Otherwise, parse the tcp packet's FractalDiscoveryReplyMessage

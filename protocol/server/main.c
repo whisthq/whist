@@ -722,6 +722,10 @@ int32_t send_audio(void* opaque) {
 #include <time.h>
 
 int do_discovery_handshake(SocketContext* context, int* client_id) {
+    clock stopwatch;
+    start_timer(&stopwatch);
+    LOG_INFO("STOPWATCH starting: %f", get_timer(stopwatch));
+
     FractalPacket* tcp_packet;
     clock timer;
     start_timer(&timer);
@@ -735,6 +739,7 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
         closesocket(context->socket);
         return -1;
     }
+    LOG_INFO("STOPWATCH finished first do-while loop: %f", get_timer(stopwatch));
 
     FractalClientMessage* fcmsg = (FractalClientMessage*)tcp_packet->data;
     int user_id = fcmsg->discoveryRequest.user_id;
@@ -809,10 +814,10 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     free(cwd);
 #endif
 
-    LOG_INFO("Sending discovery packet");
+    LOG_INFO("STOPWATCH Sending discovery packet: %f", get_timer(stopwatch));
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
     if (send_tcp_packet(context, PACKET_MESSAGE, (uint8_t*)fsmsg, (int)fsmsg_size) < 0) {
-        LOG_ERROR("Failed to send send discovery reply message.");
+        LOG_ERROR("STOPWATCH Failed to send send discovery reply message: %f", get_timer(stopwatch));
         closesocket(context->socket);
         free(fsmsg);
         return -1;
