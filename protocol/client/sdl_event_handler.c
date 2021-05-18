@@ -347,8 +347,7 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .d_dist = event->mgesture.dDist * (int)dpi,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
-                                                     .num_fingers = event->mgesture.numFingers,
-                                                     .active_gesture = multigesture_active};
+                                                     .num_fingers = event->mgesture.numFingers};
     // LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
     //     event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
 
@@ -364,7 +363,7 @@ int handle_multi_gesture(SDL_Event *event) {
         }
     // } else if (!multigesture_active) {
     } else {
-        // if there is no active scroll and this is not a valid multigesture, then return
+        // if there is no active multigesture and this is not a valid multigesture, then return
         current_gesture_type = NONE;
         return 0;
     }
