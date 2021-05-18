@@ -78,13 +78,14 @@ add_custom_command(TARGET FractalClient PRE_BUILD
         $<TARGET_FILE_DIR:FractalClient>/loading)
 
 # Print out compile flags in verbose mode of CMake
-message(VERBOSE "c base flags${CMAKE_C_FLAGS}")
-message(VERBOSE "c release flags${CMAKE_C_FLAGS_RELEASE}")
-message(VERBOSE "c debug flags${CMAKE_C_FLAGS_DEBUG}")
+message(VERBOSE "client C base flags: ${CMAKE_C_FLAGS}")
+message(VERBOSE "client C release flags: ${CMAKE_C_FLAGS_RELEASE}")
+message(VERBOSE "client C debug flags: ${CMAKE_C_FLAGS_DEBUG}")
+message(VERBOSE "client C CI flags: ${CMAKE_C_FLAGS_CI}")
 
 # FFmpeg, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(STATUS ${LIB})
+    message(VERBOSE "linking lib for FractalClient: ${LIB}")
     target_link_libraries(FractalClient ${LIB})
 endforeach(LIB)
 
@@ -158,10 +159,6 @@ endif()
 ################## WINDOWS ##################
 ]]
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-    message(STATUS c base flags${CMAKE_C_FLAGS})
-    message(STATUS c release flags${CMAKE_C_FLAGS_RELEASE})
-    message(STATUS c debug flags${CMAKE_C_FLAGS_DEBUG})
-    message(STATUS c CI flags${CMAKE_C_FLAGS_CI})
     # Linked flags: LNK4099 is when the linker cannot find the .pdb for debugging symbols
     # this comes up when we used precompiled libraries which we do not have .pdb files for
     set(CMAKE_EXE_LINKER_FLAGS "/nodefaultlib /nologo /ignore:4099	")
@@ -170,6 +167,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
     set_property(TARGET FractalClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    if(CMAKE_CUDA_COMPILER)
+        set_property(TARGET FractalClient PROPERTY CUDA_ARCHITECTURES OFF)
+    endif()
 
     # Link to system libs
     target_link_libraries(FractalClient

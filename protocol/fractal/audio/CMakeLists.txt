@@ -18,6 +18,6 @@ set_property(TARGET fractalAudio PROPERTY
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(STATUS ${LIB})
+    message(VERBOSE "linking lib for fractalAudio: ${LIB}")
     target_link_libraries(fractalAudio ${LIB})
 endforeach(LIB)
