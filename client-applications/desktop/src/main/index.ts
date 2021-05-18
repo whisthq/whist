@@ -16,7 +16,7 @@
 import { app } from "electron"
 import { flow, fork } from "@app/utils/flows"
 import { BehaviorSubject, merge, fromEvent, zip, combineLatest } from "rxjs"
-import { switchMap, pluck, sample, map } from "rxjs/operators"
+import { switchMap, pluck, sample, map, tap } from "rxjs/operators"
 import { signupFlow } from "@app/main/observables/signup"
 import { loginFlow } from "@app/main/observables/login"
 import { protocolLaunchFlow } from "@app/main/observables/protocol"

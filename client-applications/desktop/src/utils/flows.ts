@@ -1,6 +1,6 @@
 import { Observable } from "rxjs"
-import { filter, share, tap, map } from "rxjs/operators"
-import { mapValues, truncate } from "lodash"
+import { filter, share, tap, map, mergeMap } from "rxjs/operators"
+import { mapValues, truncate, values } from "lodash"
 import stringify from "json-stringify-safe"
 import { mockState } from "@app/main/testing"
 
@@ -35,6 +35,7 @@ export const fork = <T>(
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
+
 export const flow = <A>(
   name: string,
   fn: (
@@ -42,11 +43,18 @@ export const flow = <A>(
     trigger: Observable<A>
   ) => { [key: string]: Observable<any> }
 ) => (childName: string, trigger: Observable<A>) =>
-  mapValues(fn(`${name}.${childName}`, trigger), (obs, key) =>
-    obs.pipe(
-      map((value) => stringify(value, null, 2)),
-      map((value) => mockState(value)),
-      tap((value) => logDebug(`${name}.${childName}.${key}`, value)),
+{
+  const channels = fn(`${name}.${childName}`, trigger)
+  if ( ) {     // if is testing
+    return values(channels)
+  }
+  return mapValues(channels, (obs, key) => {
+    console.log("FLOW NAME: ", name, "FLOW KEY ", key)
+    
+    return obs.pipe(
+      // mergeMap((value) => mockState(value, name, key)),
+      tap((value) => logDebug(`${name}.${key}`, value)),
       share()
     )
-  )
+  })
+}
