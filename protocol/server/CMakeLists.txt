@@ -64,7 +64,7 @@ message(VERBOSE "c debug flags ${CMAKE_C_FLAGS_DEBUG}")
 
 # FFMPEG, Threading and Dynamic linking libs
 foreach(LIB ${FFMPEG_LIBS_PATHS})
-    message(STATUS ${LIB})
+    message(VERBOSE "linking lib for FractalServer: ${LIB}")
     target_link_libraries(FractalServer ${LIB})
 endforeach(LIB)
 
@@ -144,6 +144,10 @@ if (${WIN32})
     #see https://cmake.org/cmake/help/v3.15/variable/CMAKE_MSVC_RUNTIME_LIBRARY.html#variable:CMAKE_MSVC_RUNTIME_LIBRARY
     set_property(TARGET FractalServer PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+    if(CMAKE_CUDA_COMPILER)
+        set_property(TARGET FractalServer PROPERTY CUDA_ARCHITECTURES OFF)
+    endif()
 
     # Link to system libs
     target_link_libraries(FractalServer
