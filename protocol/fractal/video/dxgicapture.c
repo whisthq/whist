@@ -149,7 +149,7 @@ int create_capture_device(CaptureDevice* device, UINT width, UINT height, UINT d
     }
 
     for (UINT k = 0; k < num_display_modes && ratio_closeness > 0.0; k++) {
-        LOG_INFO("Possible Resolution: %dx%d", p_descs[k].Width, p_descs[k].Height);
+        /* LOG_INFO("Possible Resolution: %dx%d", p_descs[k].Width, p_descs[k].Height); */
 
         double current_ratio_closeness =
             fabs(1.0 * p_descs[k].Width / p_descs[k].Height - 1.0 * width / height) + 0.001;
