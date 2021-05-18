@@ -40,6 +40,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
             COMMAND ${CMAKE_COMMAND} -E copy
             ${CMAKE_BINARY_DIR}/sentry-native/crashpad_build/handler/crashpad_handler.exe
             $<TARGET_FILE_DIR:FractalServer>)
+    add_custom_command(
+            TARGET FractalServer POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/server/fserver.bat
+            ${CMAKE_BINARY_DIR})
 endif()
 
 # OpenSSL/libcrypto --- on Windows, we need to copy the DLL into the right
