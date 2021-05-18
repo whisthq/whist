@@ -96,7 +96,7 @@ int discover_ports(bool *using_stun) {
     do {
         tcp_packet = read_tcp_packet(&context, true);
         SDL_Delay(5);
-    } while (tcp_packet == NULL && get_timer(timer) < 5.0);
+    } while (tcp_packet == NULL && get_timer(timer) < 15.0);
     closesocket(context.socket);
 
     // If no tcp packet was found, just return -1

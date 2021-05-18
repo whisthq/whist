@@ -1295,6 +1295,7 @@ int create_udp_server_context(SocketContext* context, int port, int recvfrom_tim
     }
 
     LOG_INFO("Waiting for client to connect to %s:%d...\n", "localhost", port);
+    fractal_sleep(1200);
 
     socklen_t slen = sizeof(context->addr);
     int recv_size;
