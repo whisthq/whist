@@ -13,7 +13,6 @@
 #include <dirent.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <math.h>
 
 // we control this to specify the normalization to uinput during device creation; we run into
 // annoying overflow issues if this is on the order of magnitude 0xffff
@@ -501,7 +500,7 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
         if (!active_gesture) {
             emit_key_event(input_device, FK_LCTRL, true);
         }
-        emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
+        emit_high_res_mouse_wheel_event(input_device, 0, d_dist);
     }
     return 0;
 }

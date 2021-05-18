@@ -87,6 +87,7 @@ volatile bool native_window_color_update = false;
 
 volatile int output_width;
 volatile int output_height;
+volatile float dpi;
 volatile char* program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
