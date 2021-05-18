@@ -464,52 +464,16 @@ typedef struct FractalMouseMotionMessage {
 } FractalMouseMotionMessage;
 
 /**
- * @brief   Multigesture type.
- * @details The type of multigesture.
- */
-typedef enum FractalMultigestureType {
-    NONE = 0,
-    PINCH_OPEN = 1,
-    PINCH_CLOSE = 2,
-    ROTATE = 3,
-} FractalMultigestureType;
-
-/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
 typedef struct FractalMultigestureMessage {
-    float d_theta;                         ///< The amount the fingers rotated.
-    float d_dist;                          ///< The amount the fingers pinched.
-    float x;                               ///< Normalized gesture x-axis center.
-    float y;                               ///< Normalized gesture y-axis center.
-    uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
-    bool active_gesture;                   ///< Whether a multigesture is active.
-    FractalMultigestureType gesture_type;  ///< Multigesture type
+    float d_theta;         ///< The amount the fingers rotated.
+    float d_dist;          ///< The amount the fingers pinched.
+    float x;               ///< Normalized gesture x-axis center.
+    float y;               ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;  ///< Number of fingers used in the gesture.
 } FractalMultigestureMessage;
-
-/**
- * @brief   Touch type.
- * @details The type of finger touch on a trackpad.
- */
-typedef enum FractalTouchType {
-    FINGER_UP = 1,
-    FINGER_DOWN = 2,
-    FINGER_MOTION = 3,
-} FractalTouchType;
-
-/**
- * @brief   Touch message.
- * @details Message from touch message on trackpad.
- */
-typedef struct FractalTouchMessage {
-    float x;                      ///< Normalized gesture x-axis center.
-    float y;                      ///< Normalized gesture y-axis center.
-    float dx;                     ///< Distance moved on x-axis.
-    float dy;                     ///< Distance moved on y-axis.
-    bool active_gesture;          ///< Whether a multigesture is active.
-    FractalTouchType touch_type;  ///< Touch type
-} FractalTouchMessage;
 
 /**
  * @brief   Discovery request message.
@@ -543,7 +507,7 @@ typedef struct FractalDiscoveryReplyMessage {
 typedef enum FractalClientMessageType {
     CMESSAGE_NONE = 0,     ///< No Message
     MESSAGE_KEYBOARD = 1,  ///< `keyboard` FractalKeyboardMessage is valid in
-                           ///< FractalClientMessage.
+                           ///< FractClientMessage.
     MESSAGE_KEYBOARD_STATE = 2,
     MESSAGE_MOUSE_BUTTON = 3,  ///< `mouseButton` FractalMouseButtonMessage is
                                ///< valid in FractClientMessage.
@@ -553,8 +517,7 @@ typedef enum FractalClientMessageType {
 
     MESSAGE_MOUSE_INACTIVE = 6,
     MESSAGE_MULTIGESTURE = 7,  ///< Gesture Event
-    MESSAGE_TOUCH = 8,         ///< Finger touch event
-    MESSAGE_RELEASE = 9,       ///< Message instructing the host to release all input
+    MESSAGE_RELEASE = 8,       ///< Message instructing the host to release all input
                                ///< that is currently pressed.
     MESSAGE_MBPS = 107,        ///< `mbps` double is valid in FractClientMessage.
     MESSAGE_PING = 108,
@@ -586,9 +549,6 @@ typedef struct FractalClientMessage {
 
         // MESSAGE_MULTIGESTURE
         FractalMultigestureMessage multigesture;  ///< Multigesture message.
-
-        // MESSAGE_TOUCH
-        FractalTouchMessage touch;  ///< Finger touch message.
 
         // CMESSAGE_INTERACTION_MODE
         InteractionMode interaction_mode;
