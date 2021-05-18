@@ -55,6 +55,18 @@ export const flow = <A>(
       : EMPTY
   )
 
+export const initFlow = <A>(
+  trigger: Observable<A>,
+  flow: (trigger: Observable<A>) => any,
+  effects: Array<(x: A) => void>
+) => {
+  flow(trigger)
+
+  trigger.subscribe((x: A) => {
+    effects.forEach((effect) => effect(x))
+  })
+}
+
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   obs.subscribe((x: A) => {
     TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
@@ -71,13 +83,3 @@ export const fromTrigger = (name: string): Observable<any> =>
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )
-
-export const withEffect = <A>(
-  trigger: Observable<A>,
-  flow: (trigger: Observable<A>) => any,
-  effect: (x: A) => void
-) => {
-  trigger.subscribe((x: A) => {
-    effect(x)
-  })
-}
