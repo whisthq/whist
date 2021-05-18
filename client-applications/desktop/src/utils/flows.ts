@@ -58,12 +58,12 @@ export const flow = <A>(
 export const initFlow = <A>(
   trigger: Observable<A>,
   flow: (trigger: Observable<A>) => any,
-  effects: Array<(x: A) => void>
+  ...effects: Array<(x: A) => void>
 ) => {
   flow(trigger)
 
   trigger.subscribe((x: A) => {
-    effects.forEach((effect) => effect(x))
+    effects?.forEach((effect) => effect(x))
   })
 }
 
