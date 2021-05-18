@@ -88,7 +88,7 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
  *
  * @param input_device             The initialized input device to write
  *
- * @param fractal_keycode          The Fractal keycode to modify
+ * @param fractal_keycode              The Fractal keycode to modify
  *
  * @param pressed                  1 for a key press, 0 for a key unpress
  *
@@ -173,8 +173,7 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
  *
  * @returns                        0 on success, -1 on failure
  */
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture);
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist, FractalMultigestureType gesture_type, bool active_gesture);
 
 /**
  * @brief                          Emit a finger touch event
