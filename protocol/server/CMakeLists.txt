@@ -145,6 +145,10 @@ if (${WIN32})
     set_property(TARGET FractalServer PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+    if(CMAKE_CUDA_COMPILER)
+        set_property(TARGET FractalServer PROPERTY CUDA_ARCHITECTURES OFF)
+    endif()
+
     # Link to system libs
     target_link_libraries(FractalServer
             ${LIB_OPENSSL}

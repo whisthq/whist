@@ -168,6 +168,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set_property(TARGET FractalClient PROPERTY
             MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+    if(CMAKE_CUDA_COMPILER)
+        set_property(TARGET FractalClient PROPERTY CUDA_ARCHITECTURES OFF)
+    endif()
+
     # Link to system libs
     target_link_libraries(FractalClient
             ${LIB_OPENSSL}
