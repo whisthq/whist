@@ -4,9 +4,7 @@ import { IpcRendererEvent, BrowserWindow } from "electron"
 import { StateIPC } from "@app/@types/state"
 import { ErrorIPC, StateChannel } from "@app/utils/constants"
 
-export const useMainState = ():
-  | [StateIPC, (s: Partial<StateIPC>) => void]
-  | never => {
+export const useMainState = (): [any, (s: object) => void] | never => {
   // the window type doesn't have ipcRenderer, but we've manually
   // added that in preload.js with electron.contextBridge
   // so we ignore the type error in the next line
@@ -14,10 +12,10 @@ export const useMainState = ():
   const ipc = window.ipcRenderer
   if (!every([ipc, ipc.on, ipc.send])) throw new Error(ErrorIPC)
 
-  const [mainState, setState] = useState({} as StateIPC)
+  const [mainState, setState] = useState({} as object)
 
   useEffect(() => {
-    const listener = (_: IpcRendererEvent, state: StateIPC) => setState(state)
+    const listener = (_: IpcRendererEvent, state: object) => setState(state)
     ipc.on(StateChannel, listener)
     return () => {
       ipc.removeListener?.(StateChannel, listener)

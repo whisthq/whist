@@ -10,8 +10,8 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest, Observable } from "rxjs"
-import { switchMap, map, pluck } from "rxjs/operators"
+import { from, combineLatest, Observable, of, zip } from "rxjs"
+import { switchMap, map, pluck, share, withLatestFrom } from "rxjs/operators"
 import {
   emailLogin,
   emailLoginValid,
@@ -20,14 +20,15 @@ import {
   emailLoginAccessToken,
   emailLoginRefreshToken,
 } from "@app/utils/login"
-import { loginAction } from "@app/main/events/actions"
 import { flow, fork } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
 import { merge } from "lodash"
 
-const loginGates = flow("loginGates", (_name, trigger) => {
-  const login = fork(
-    loginAction.pipe(
+type LoginTrigger = Observable<{ email: string; password: string }>
+
+const loginGates = flow("loginGates", (trigger: LoginTrigger) =>
+  fork(
+    trigger.pipe(
       switchMap(({ email, password }) => from(emailLogin(email, password)))
     ),
     {
@@ -37,25 +38,18 @@ const loginGates = flow("loginGates", (_name, trigger) => {
         !emailLoginError(result) && !emailLoginValid(result),
     }
   )
+)
 
-  return {
-    ...login,
-    loading: loadingFrom(trigger, login.success, login.warning, login.failure),
-  }
-})
-
-export const loginFlow = flow("loginFlow", (name, trigger) => {
+export const loginFlow = flow("loginFlow", (trigger: LoginTrigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
   })
 
-  const login = loginGates(name, input)
+  const login = loginGates(input)
 
-  const configToken = combineLatest([
-    login.success,
-    input.pipe(pluck("password")) as Observable<string>,
-  ]).pipe(
+  const configToken = login.success.pipe(
+    withLatestFrom(trigger.pipe(pluck("password"))),
     switchMap((args) => from(emailLoginConfigToken(...args))),
     map((configToken) => ({ configToken }))
   )
@@ -67,7 +61,7 @@ export const loginFlow = flow("loginFlow", (name, trigger) => {
     }))
   )
 
-  const result = combineLatest([input, tokens, configToken]).pipe(
+  const result = zip([input, tokens, configToken]).pipe(
     map(([...args]) => merge(...args))
   )
 
@@ -75,6 +69,6 @@ export const loginFlow = flow("loginFlow", (name, trigger) => {
     success: result,
     failure: login.failure,
     warning: login.warning,
-    loading: loadingFrom(result, login.failure, login.warning),
+    loading: loadingFrom(trigger, result, login.failure, login.warning),
   }
 })

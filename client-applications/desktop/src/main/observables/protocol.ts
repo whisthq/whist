@@ -10,30 +10,28 @@ import { map } from "rxjs/operators"
 import { protocolLaunch } from "@app/utils/protocol"
 import { flow, fork } from "@app/utils/flows"
 
-export const protocolLaunchFlow = flow(
-  "protocolLaunchFlow",
-  (_name, trigger) => {
-    const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
-      success: () => true,
-    })
+export const protocolLaunchFlow = flow("protocolLaunchFlow", (trigger) => {
+  const launch = fork(trigger.pipe(map(() => protocolLaunch())), {
+    success: () => true,
+  })
 
-    return {
-      success: launch.success,
-    }
+  return {
+    success: launch.success,
   }
-)
+})
 
 export const protocolCloseFlow = flow(
   "protocolCloseFlow",
-  (_name, trigger: Observable<any>) => {
-    const close = fork(trigger, {
+  (trigger: Observable<ChildProcess>) =>
+    fork(trigger as Observable<ChildProcess>, {
       success: (protocol) => !protocol.killed,
       failure: (protocol) => protocol.killed,
     })
-
-    return {
-      success: close.success,
-      failure: close.failure,
-    }
-  }
 )
+
+export const testFlow = flow("test", (trigger: Observable<ChildProcess>) => {
+  return {
+    success: trigger,
+    failure: trigger,
+  }
+})

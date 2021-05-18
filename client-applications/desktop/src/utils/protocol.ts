@@ -39,7 +39,7 @@ export const protocolLaunch = () => {
 
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
-    stdio: ["pipe", process.stdout, process.stderr],
+    stdio: ["pipe"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading

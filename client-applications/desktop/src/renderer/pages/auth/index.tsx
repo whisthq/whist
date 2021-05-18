@@ -17,36 +17,16 @@ const Auth = () => {
   const [password, setPassword] = useState("Password1234")
   const [confirmPassword, setConfirmPassword] = useState("Password1234")
 
+  console.log("STATE", mainState)
+
   const clearPassword = () => {
     setPassword("")
     setConfirmPassword("")
   }
 
-  const onLogin = () => {
-    setMainState({
-      email,
-      action: {
-        type: RendererAction.LOGIN,
-        payload: {
-          email,
-          password,
-        },
-      },
-    })
-  }
+  const onLogin = () => setMainState({login: { email, password },})
 
-  const onSignup = () => {
-    setMainState({
-      email,
-      action: {
-        type: RendererAction.SIGNUP,
-        payload: {
-          email,
-          password,
-        },
-      },
-    })
-  }
+  const onSignup = () => setMainState({signup: { email, password },})
 
   return (
     <>
@@ -57,8 +37,8 @@ const Auth = () => {
           <Login
             email={email}
             password={password}
-            warning={mainState?.loginWarning}
-            loading={mainState?.loginLoading}
+            warning={mainState?.login?.warning?.statusText}
+            loading={mainState?.login?.loading}
             onLogin={onLogin}
             onNavigate={clearPassword}
             onChangeEmail={setEmail}
@@ -74,8 +54,8 @@ const Auth = () => {
             email={email}
             password={password}
             confirmPassword={confirmPassword}
-            warning={mainState?.signupWarning}
-            loading={mainState?.signupLoading}
+            warning={mainState?.signup?.warning?.statusText}
+            loading={mainState?.signup?.loading}
             onSignup={onSignup}
             onNavigate={clearPassword}
             onChangeEmail={setEmail}

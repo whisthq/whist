@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest, Observable } from "rxjs"
+import { from, combineLatest, zip } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -23,7 +23,7 @@ import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
 import { flow, fork } from "@app/utils/flows"
 
-const signupGates = flow("signupGates", (_name, trigger: Observable<any>) =>
+const signupGates = flow<any>("signupGates", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
@@ -41,7 +41,7 @@ const signupGates = flow("signupGates", (_name, trigger: Observable<any>) =>
 
 export const generateConfigTokenGate = flow(
   "generateConfigTokenGate",
-  (_name, trigger: Observable<any>) =>
+  (trigger) =>
     fork(
       trigger.pipe(
         switchMap(({ password }) =>
@@ -58,14 +58,14 @@ export const generateConfigTokenGate = flow(
     )
 )
 
-export const signupFlow = flow("signupFlow", (name, trigger) => {
+export const signupFlow = flow("signupFlow", (trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
-    configToken: generateConfigTokenGate(name, trigger).success,
+    configToken: generateConfigTokenGate(trigger).success,
   })
 
-  const signup = signupGates(name, input)
+  const signup = signupGates(input)
 
   const tokens = signup.success.pipe(
     map((response) => ({
@@ -74,9 +74,7 @@ export const signupFlow = flow("signupFlow", (name, trigger) => {
     }))
   )
 
-  const result = combineLatest([input, tokens]).pipe(
-    map(([...args]) => ({ ...args }))
-  )
+  const result = zip([input, tokens]).pipe(map(([...args]) => ({ ...args })))
   return {
     success: result,
     failure: signup.failure,

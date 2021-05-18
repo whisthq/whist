@@ -15,29 +15,27 @@
 
 import { app } from "electron"
 import { flow, fork } from "@app/utils/flows"
+import { authWindowEffect } from "@app/utils/effects"
 import { BehaviorSubject, merge, fromEvent, zip, combineLatest } from "rxjs"
-import { switchMap, pluck, sample, map, tap } from "rxjs/operators"
+import { switchMapTo, pluck, sample, map, withLatestFrom } from "rxjs/operators"
 import { signupFlow } from "@app/main/observables/signup"
 import { loginFlow } from "@app/main/observables/login"
+import { hostServiceFlow } from "@app/main/observables/host"
 import { protocolLaunchFlow } from "@app/main/observables/protocol"
 import {
   containerCreateFlow,
   containerPollingFlow,
 } from "@app/main/observables/container"
-import { hostServiceFlow } from "@app/main/observables/host"
-import { loginAction, signupAction } from "@app/main/events/actions"
 import { store, persist, onPersistChange } from "@app/utils/persist"
 import { protocolStreamInfo } from "@app/utils/protocol"
 import { has, every, omit } from "lodash"
-import { createAuthWindow } from "@app/utils/windows"
 
 // Auth is currently the only flow that requires any kind of persistence,
 // so for now we might as well just leave the persistence setup close to
 // the auth flow.
-//
+
 // We use a BehaviorSubject because we need an "initial value" for the
 // persistStore as soon as the application loads.
-//
 
 const persistStore = new BehaviorSubject(store.store)
 onPersistChange((store: any) => persistStore.next(store))
@@ -51,29 +49,36 @@ const persistedCredsValid = (store: any) =>
     has(store, key)
   )
 
-const persistedFlow = flow("persistedFlow", (_name, trigger) =>
-  fork(trigger.pipe(switchMap(() => persistStore)), {
-    success: (store) => persistedCredsValid(store),
-    failure: (store) => !persistedCredsValid(store),
-  })
+const persistedFlow = flow("persistedFlow", (trigger) =>
+  fork(
+    trigger.pipe(
+      withLatestFrom(persistStore),
+      map(([a]) => a)
+    ),
+    {
+      success: (store) => persistedCredsValid(store),
+      failure: (store) => !persistedCredsValid(store),
+    }
+  )
 )
 
 // Auth flow
 // The shape of data is the same, whether from signup, login, or persitence.
 // Emits: { email, password, accessToken, configToken }
 
-export const authFlow = flow("authFlow", (name, trigger) => {
-  const persisted = persistedFlow(name, trigger)
-  const login = loginFlow(name, loginAction)
-  const signup = signupFlow(name, signupAction)
+export const authFlow = flow("authFlow", (trigger) => {
+  const persisted = persistedFlow(trigger)
 
-  persisted.failure.subscribe(() => createAuthWindow((win: any) => win.show()))
+  const { login, signup } = authWindowEffect(persisted.failure, {
+    login: loginFlow,
+    signup: signupFlow,
+  })
 
   const success = merge(login.success, signup.success, persisted.success)
   const failure = merge(login.failure, signup.failure)
 
   merge(login.success, signup.success).subscribe((creds) =>
-    persist(omit(creds, ["password"]))
+    persist(omit(creds as object, ["password"]))
   )
 
   return { success, failure }
@@ -83,9 +88,8 @@ export const authFlow = flow("authFlow", (name, trigger) => {
 // Creates and assigns a container. Also polls host service and sends
 // config token.
 
-const containerFlow = flow("containerFlow", (name, trigger) => {
+const containerFlow = flow("containerFlow", (trigger) => {
   const create = containerCreateFlow(
-    name,
     combineLatest({
       email: trigger.pipe(pluck("email")),
       accessToken: trigger.pipe(pluck("accessToken")),
@@ -93,7 +97,6 @@ const containerFlow = flow("containerFlow", (name, trigger) => {
   )
 
   const ready = containerPollingFlow(
-    name,
     combineLatest({
       containerID: create.success.pipe(pluck("containerID")),
       accessToken: trigger.pipe(pluck("accessToken")),
@@ -101,7 +104,6 @@ const containerFlow = flow("containerFlow", (name, trigger) => {
   )
 
   const host = hostServiceFlow(
-    name,
     combineLatest({
       email: trigger.pipe(pluck("email")),
       accessToken: trigger.pipe(pluck("accessToken")),
@@ -109,7 +111,7 @@ const containerFlow = flow("containerFlow", (name, trigger) => {
   )
 
   return {
-    success: zip(ready.success, host.success).pipe(map(([a]) => a)),
+    success: zip([ready.success, host.success]).pipe(map(([a]) => a)),
     failure: merge(create.failure, ready.failure, host.failure),
   }
 })
@@ -118,25 +120,27 @@ const containerFlow = flow("containerFlow", (name, trigger) => {
 // Composes all other flows together, and is the "entry" point of the
 // application.
 
-const mainFlow = flow("mainFlow", (name, trigger) => {
-  const auth = authFlow(name, trigger)
+const mainFlow = flow("mainFlow", (trigger) => {
+  trigger
+    .pipe(switchMapTo(fromEvent(app, "window-all-closed")))
+    .subscribe((e: any) => e.preventDefault())
 
-  const container = containerFlow(name, auth.success)
+  const auth = authFlow(trigger)
 
-  const protocol = protocolLaunchFlow(name, auth.success)
+  const container = containerFlow(auth.success)
+
+  const protocol = protocolLaunchFlow(auth.success)
 
   zip(protocol.success, container.success).subscribe(([protocol, info]) => {
-    protocolStreamInfo(protocol as any, info)
+    console.log("STREAMING INFO", protocol, info)
+    protocolStreamInfo(protocol, info)
   })
 
   return {
-    success: zip(auth.success, container.success, protocol.success),
-    failure: merge(auth.failure, container.failure),
+    success: zip([auth.success, container.success, protocol.success]),
+    failure: merge(auth.failure, container.failure, protocol.failure),
   }
 })
 
 // Kick off the main flow to run the app.
-const main = mainFlow("app", fromEvent(app, "ready"))
-
-main.success.subscribe()
-main.failure.subscribe()
+mainFlow(fromEvent(app, "ready"))

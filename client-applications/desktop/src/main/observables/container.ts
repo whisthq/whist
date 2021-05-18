@@ -23,30 +23,28 @@ import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { fork, flow } from "@app/utils/flows"
 import { some } from "lodash"
 
-const containerInfoGates = flow(
-  "containerInfoGates",
-  (_name, trigger: Observable<any>) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ containerID, accessToken }) =>
-          from(containerInfo(containerID, accessToken))
-        )
-      ),
-      {
-        success: (result) => containerInfoSuccess(result),
-        pending: (result) => containerInfoPending(result),
-        failure: (result) =>
-          containerInfoError(result) ||
-          !some([containerInfoPending(result), containerInfoSuccess(result)]),
-      }
-    )
+const containerInfoGates = flow<any>("containerInfoGates", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ containerID, accessToken }) =>
+        from(containerInfo(containerID, accessToken))
+      )
+    ),
+    {
+      success: (result) => containerInfoSuccess(result),
+      pending: (result) => containerInfoPending(result),
+      failure: (result) =>
+        containerInfoError(result) ||
+        !some([containerInfoPending(result), containerInfoSuccess(result)]),
+    }
+  )
 )
 
-const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
+const containerPollingInner = flow("containerPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
-  const poll = containerInfoGates(name, tick)
+  const poll = containerInfoGates(tick)
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
@@ -55,62 +53,54 @@ const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
   }
 })
 
-export const containerCreateFlow = flow(
-  "containerCreateFlow",
-  (_name, trigger: Observable<any>) => {
-    const create = fork(
-      trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(containerCreate(email, accessToken))
-        )
-      ),
-      {
-        success: (req: { json: { ID: string } }) =>
-          (req?.json?.ID ?? "") !== "",
-        failure: (req: { json: { ID: string } }) =>
-          (req?.json?.ID ?? "") === "",
-      }
-    )
-
-    return {
-      success: create.success.pipe(
-        map((response) => ({ containerID: response.json.ID }))
-      ),
-      failure: create.failure,
+export const containerCreateFlow = flow("containerCreateFlow", (trigger) => {
+  const create = fork(
+    trigger.pipe(
+      switchMap(({ email, accessToken }) =>
+        from(containerCreate(email, accessToken))
+      )
+    ),
+    {
+      success: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") !== "",
+      failure: (req: { json: { ID: string } }) => (req?.json?.ID ?? "") === "",
     }
+  )
+
+  return {
+    success: create.success.pipe(
+      map((response) => ({ containerID: response.json.ID }))
+    ),
+    failure: create.failure,
   }
-)
+})
 
-export const containerPollingFlow = flow(
-  "containerPollingFlow",
-  (name, trigger) => {
-    const poll = trigger.pipe(
-      map((args) => containerPollingInner(name, of(args))),
-      share()
-    )
+export const containerPollingFlow = flow("containerPollingFlow", (trigger) => {
+  const poll = trigger.pipe(
+    map((args) => containerPollingInner(of(args))),
+    share()
+  )
 
-    const success = poll.pipe(switchMap((inner) => inner.success))
-    const failure = poll.pipe(switchMap((inner) => inner.failure))
-    const pending = poll.pipe(switchMap((inner) => inner.pending))
-    const loading = loadingFrom(trigger, success, failure)
+  const success = poll.pipe(switchMap((inner) => inner.success))
+  const failure = poll.pipe(switchMap((inner) => inner.failure))
+  const pending = poll.pipe(switchMap((inner) => inner.pending))
+  const loading = loadingFrom(trigger, success, failure)
 
-    // We probably won't subscribe to "pending" in the rest of the app,
-    // so we subscribe to it deliberately here. If it has no subscribers,
-    // it won't emit. We would like for it to emit for logging purposes.
-    // We must remeber to takeUntil so it stops when we're finished.
-    pending.pipe(takeUntil(merge(success, failure))).subscribe()
+  // We probably won't subscribe to "pending" in the rest of the app,
+  // so we subscribe to it deliberately here. If it has no subscribers,
+  // it won't emit. We would like for it to emit for logging purposes.
+  // We must remeber to takeUntil so it stops when we're finished.
+  pending.pipe(takeUntil(merge(success, failure))).subscribe()
 
-    return {
-      success: success.pipe(
-        map((response) => ({
-          containerIP: containerInfoIP(response),
-          containerSecret: containerInfoSecretKey(response),
-          containerPorts: containerInfoPorts(response),
-        }))
-      ),
-      failure,
-      pending,
-      loading,
-    }
+  return {
+    success: success.pipe(
+      map((response) => ({
+        containerIP: containerInfoIP(response),
+        containerSecret: containerInfoSecretKey(response),
+        containerPorts: containerInfoPorts(response),
+      }))
+    ),
+    failure,
+    pending,
+    loading,
   }
-)
+})

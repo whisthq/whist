@@ -215,7 +215,7 @@ export const factory = <T, A>(
   }
 }
 
-const objectSplit = <T extends Record<any, Observable<any>>>(
+export const objectSplit = <T extends { [key: string]: Observable<any> }>(
   source: Observable<T>
 ) => {
   const cache: { [P in keyof T]?: Subject<ObservedValueOf<T[P]>> } = {}

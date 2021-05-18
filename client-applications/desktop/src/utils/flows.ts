@@ -28,7 +28,7 @@ const logDebug = (...args: any[]) => {
   console.log(`DEBUG: ${logFormat(...args)}`)
 }
 
-export const fork = <T, A extends { [gate: string]: (result: T) => boolean }>(
+export const fork = <T, A extends { [key: string]: (result: T) => boolean }>(
   source: Observable<T>,
   filters: A
 ): { [P in keyof A]: Observable<T> } => {
@@ -37,12 +37,12 @@ export const fork = <T, A extends { [gate: string]: (result: T) => boolean }>(
 }
 
 export const flow =
-  <T, A extends { [key: string]: Observable<any> }>(
+  <T extends Observable<any>>(
     name: string,
-    fn: (c: string, t: Observable<T>) => A
-  ): ((c: string, t: Observable<T>) => { [P in keyof A]: Observable<any> }) =>
-  (_childName: string, trigger: Observable<T>) => {
-    let channels = fn(name, trigger)
+    fn: (trigger: T) => { [key: string]: Observable<any> }
+  ) =>
+  (trigger: T) => {
+    let channels = fn(trigger)
 
     return mapValues(withMocking(name, trigger, channels), (obs, key) =>
       obs.pipe(
