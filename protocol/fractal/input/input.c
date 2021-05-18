@@ -108,6 +108,10 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
             ret =
                 emit_touch_event(input_device, fmsg->touch.touch_type, fmsg->touch.active_gesture);
             break;
+        case MESSAGE_RELEASE:
+            LOG_WARNING("MESSAGE_RELEASE not implemented");
+            break;
+            /* ret = emit_touch_event(input_device, fmsg->touch.touch_type, fmsg->touch.active_gesture); */
         default:
             LOG_ERROR("Unknown message type! %d", fmsg->type);
             break;

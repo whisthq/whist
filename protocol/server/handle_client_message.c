@@ -114,6 +114,8 @@ int handle_client_message(FractalClientMessage *fmsg, int client_id, bool is_con
         case MESSAGE_MOUSE_WHEEL:
         case MESSAGE_MOUSE_MOTION:
         case MESSAGE_MULTIGESTURE:
+        case MESSAGE_TOUCH:
+        case MESSAGE_RELEASE:
             return handle_user_input_message(fmsg, client_id, is_controlling);
         case MESSAGE_KEYBOARD_STATE:
             return handle_keyboard_state_message(fmsg, client_id, is_controlling);
