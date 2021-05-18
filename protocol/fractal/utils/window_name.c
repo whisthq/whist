@@ -20,13 +20,13 @@ destroy_window_name_getter();
 #if defined(_WIN32)
 
 // TODO: implement functionality for windows servers
-void init_window_name_getter() { LOG_ERROR("UNIMPLEMENTED: init_window_name_getter on Win32"); }
+void init_window_name_getter() {  }
 int get_focused_window_name(char* name_return) {
-    LOG_ERROR("UNIMPLEMENTED: get_focused_window_name on Win32");
+    /* LOG_ERROR("UNIMPLEMENTED: get_focused_window_name on Win32"); */
     return -1;
 }
 void destroy_window_name_getter() {
-    LOG_ERROR("UNIMPLEMENTED: destroy_window_name_getter on Win32");
+    /* LOG_ERROR("UNIMPLEMENTED: destroy_window_name_getter on Win32"); */
 }
 
 #elif __linux__
