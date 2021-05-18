@@ -1,8 +1,13 @@
 #!/bin/bash
 
-systemctl --user stop fractal
+set -Eeuo pipefail
+
+# Retrieve source directory of this script
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+
+systemctl --user stop fractal ||:
 export DISPLAY=$(systemctl --user show-environment | awk -F = '/DISPLAY/{print $2}')
 export XAUTHORITY=$(systemctl --user show-environment | awk -F = '/XAUTHORITY/{print $2}')
 
-cd ./server/build64
-./FractalServer ${@:1}
+cd "$DIR/server/build64" && ./FractalServer ${@:1}
