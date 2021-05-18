@@ -4,12 +4,6 @@
  * Copyright Fractal Computers, Inc. 2020
  **/
 
-/*
-============================
-Includes
-============================
-*/
-
 #include "input_driver.h"
 
 #if INPUT_DRIVER == UINPUT_INPUT_DRIVER
@@ -19,23 +13,10 @@ Includes
 #include <dirent.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <math.h>
-
-/*
-============================
-Defines
-============================
-*/
 
 // we control this to specify the normalization to uinput during device creation; we run into
 // annoying overflow issues if this is on the order of magnitude 0xffff
 #define UINPUT_MOUSE_COORDINATE_RANGE 0xfff
-
-/*
-============================
-Custom Types
-============================
-*/
 
 // @brief Linux keycodes for replaying Fractal user inputs on server
 // @details index is Fractal keycode, value is Linux keycode.
@@ -320,26 +301,8 @@ const int linux_mouse_buttons[6] = {
 #define GetLinuxKeyCode(fractal_keycode) linux_keycodes[fractal_keycode]
 #define GetLinuxMouseButton(fractal_button) linux_mouse_buttons[fractal_button]
 
-/*
-============================
-Private Function Implementations
-============================
-*/
-
 // see http://www.normalesup.org/~george/comp/libancillary/ for reference
 int recv_fds(int sock, int* fds, unsigned n_fds) {
-    /*
-        Receive uinput mouse and keyboard file descriptors over the uinput socket
-
-        Arguments:
-            sock (int): uinput socket
-            fds (int*): where received file descriptors should be stored
-            n_fds (unsigned): number of file descriptors to receive
-
-        Returns:
-            (int): `n_fds` is successful, else -1
-    */
-
     int buffer_size = sizeof(struct cmsghdr) + sizeof(int) * n_fds;
     void* buffer = safe_malloc(buffer_size);
 
@@ -377,44 +340,7 @@ int recv_fds(int sock, int* fds, unsigned n_fds) {
     return n_fds;
 }
 
-void emit_input_event(int fd, int type, int code, int val) {
-    /*
-        Emit a generic input event to a file descriptor
-
-        Arguments:
-            fd (int): File descriptor of the input device to write
-            type (int): The input event type
-            code (int): The code of the input event
-            val (int): The value for the input event
-    */
-
-    struct input_event ie;
-    ie.type = type;
-    ie.code = code;
-    ie.value = val;
-
-    ie.time.tv_sec = 0;
-    ie.time.tv_usec = 0;
-
-    write(fd, &ie, sizeof(ie));
-}
-
-/*
-============================
-Public Function Implementations
-============================
-*/
-
 InputDevice* create_input_device() {
-    /*
-        Create an input device struct to receive user actions to
-        be replayed on a server
-
-        Returns:
-            (InputDevice*): Initialized input device struct defining
-                mouse and keyboard states
-    */
-
     LOG_INFO("creating uinput input driver");
 
     struct sockaddr_un addr;
@@ -461,14 +387,6 @@ InputDevice* create_input_device() {
 }
 
 void destroy_input_device(InputDevice* input_device) {
-    /*
-        Destroy and free the memory of an input device struct
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device struct
-                to destroy and free the memory of
-    */
-
     if (!input_device) {
         LOG_INFO("destroy_input_device: Nothing to do, device is null!");
         return;
@@ -489,19 +407,19 @@ void destroy_input_device(InputDevice* input_device) {
     free(input_device);
 }
 
+void emit_input_event(int fd, int type, int code, int val) {
+    struct input_event ie;
+    ie.type = type;
+    ie.code = code;
+    ie.value = val;
+
+    ie.time.tv_sec = 0;
+    ie.time.tv_usec = 0;
+
+    write(fd, &ie, sizeof(ie));
+}
+
 int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
-    /*
-        Get the active/inactive state of a key modifier (caps lock, num lock, etc.)
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            fractal_keycode (FractalKeycode): The Fractal keycode of the modifier to
-                query (`FK_CAPSLOCK` or `FK_NUMLOCK`)
-
-        Returns:
-            (int): 1 if the queried modifier is active, 0 if inactive, and -1 on error
-    */
-
     switch (fractal_keycode) {
         case FK_CAPSLOCK:
             return input_device->caps_lock;
@@ -514,34 +432,11 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
 }
 
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
-    /*
-        Get the pressed/unpressed state of a keyboard key
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            fractal_keycode (FractalKeycode): The Fractal keycode to query
-
-        Returns:
-            (int): 1 if the queried key is pressed, 0 if unpressed, and -1 on error
-    */
-
     return input_device->keyboard_state[fractal_keycode];
     return -1;
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
-    /*
-        Emit a keyboard press/unpress event
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            fractal_keycode (FractalKeycode): The Fractal keycode to modify
-            pressed (int): 1 for a key press, 0 for a key unpress
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fractal_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);
     input_device->keyboard_state[fractal_keycode] = pressed;
@@ -557,25 +452,6 @@ int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, in
 }
 
 int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int relative) {
-    /*
-        Emit a relative/absolute mouse motion event
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            x (int32_t): The normalized x coordinate of the mouse event,
-                on a scale from 0 to `MOUSE_SCALING_FACTOR` in the
-                case of absolute mouse motion, or signed in pixels
-                in the case of relative mouse motion
-            y (int32_t): The normalized y coordinate of the mouse event,
-                on a scale from 0 to `MOUSE_SCALING_FACTOR` in the
-                case of absolute mouse motion, or signed in pixels
-                in the case of relative mouse motion
-            relative (int): 1 for relative, 0 for absolute
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     if (relative) {
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_X, x);
         emit_input_event(input_device->fd_relmouse, EV_REL, REL_Y, y);
@@ -595,35 +471,11 @@ int emit_mouse_motion_event(InputDevice* input_device, int32_t x, int32_t y, int
 }
 
 int emit_mouse_button_event(InputDevice* input_device, FractalMouseButton button, int pressed) {
-    /*
-        Emit a mouse button press/unpress event
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            pressed (bool): 1 for a button press, 0 for a button unpress
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     emit_input_event(input_device->fd_relmouse, EV_KEY, GetLinuxMouseButton(button), pressed);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
     return 0;
 }
 int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t y) {
-    /*
-        Emit a low-resolution vertical or horizontal mouse scroll event, for
-        click-wheel mouse inputs.
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            x (int32_t): Horizontal scroll direction/amount (-1,0,+1 always work)
-            y (int32_t): Vertical scroll direction/amount (-1,0,+1 always work)
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL, y);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL, x);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
@@ -636,73 +488,10 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
 #define LIBINPUT_WHEEL_DELTA 120
 
 int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y) {
-    /*
-        Emit a high-resolution vertical or horizontal mouse scroll event, for
-        trackpads or smooth mouse wheels.
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            x (float): Horizontal scroll value as a float
-            y (float): Vertical scroll value as a float
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_WHEEL_HI_RES, y * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES,
                      x * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
-    return 0;
-}
-
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
-                            FractalMultigestureType gesture_type, bool active_gesture) {
-    /*
-        Emit a trackpad multigesture event. Only handles pinch events
-        for now by holding the LCTRL key and scrolling.
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            d_theta (float): How much the fingers rotated during this motion
-            d_dist (float): How much the fingers pinched during this motion
-            gesture_type (FractalMultigestureType): The gesture type (rotate, pinch open, pinch
-       close) active_gesture (bool): Whether this event happened mid-multigesture
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
-        // If the gesture is not active yet, then start holding the LCTRL key
-        if (!active_gesture) {
-            emit_key_event(input_device, FK_LCTRL, true);
-        }
-
-        // Pass a scroll event equivalent to the pinch distance
-        emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
-    }
-    return 0;
-}
-
-int emit_touch_event(InputDevice* input_device, FractalTouchType touch_type, bool active_gesture) {
-    /*
-        Emit a finger touch event to the input device. In particular,
-        release the LCTRL key to stop treating scrolls as zooms.
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            touch_type (FractalTouchType): The touch type (up, down, motion)
-            active_gesture (bool): Whether this event happened mid-multigesture
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    // If the user has released a finger mid-gesture, we release the lctrl key
-    if (active_gesture && touch_type == FINGER_UP) {
-        emit_key_event(input_device, FK_LCTRL, false);
-    }
     return 0;
 }
 

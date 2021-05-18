@@ -46,12 +46,9 @@ extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 
-extern bool audio_refresh;
-
 extern MouseMotionAccumulation mouse_state;
 
-extern bool multigesture_active;
-bool active_scroll = false;
+extern bool audio_refresh;
 
 /*
 ============================
@@ -66,7 +63,6 @@ int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
 int handle_mouse_button_up_down(SDL_Event *event);
 int handle_multi_gesture(SDL_Event *event);
-int handle_touch_up(SDL_Event *event);
 
 /*
 ============================
@@ -323,8 +319,6 @@ int handle_mouse_wheel(SDL_Event *event) {
             (int): 0 on success
     */
 
-    active_scroll = true;
-
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
@@ -337,90 +331,14 @@ int handle_mouse_wheel(SDL_Event *event) {
 }
 
 int handle_multi_gesture(SDL_Event *event) {
-    /*
-        Handle the SDL multigesture event. This function currently only
-        handles pinch events (no rotates).
-
-        Arguments:
-            event (SDL_Event*): SDL event for multigesture event
-
-        Result:
-            (int): 0 on success
-    */
-
-    static FractalMultigestureType current_gesture_type =
-        NONE;  // static, so only set to NONE on first call
-
-    // Accumulate distance pinched by fingers during an active gesture
-    static float accumulated_dist = 0;  // static, so accumulates distance with each call
-    if (!multigesture_active) {
-        accumulated_dist = 0;
-    }
-    accumulated_dist += event->mgesture.dDist;
-
-    int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
-    float dpi;
-    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
-
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = accumulated_dist * (int)dpi,
+                                                     .d_dist = event->mgesture.dDist,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
-                                                     .num_fingers = event->mgesture.numFingers,
-                                                     .active_gesture = multigesture_active};
-
-    // If not scrolling and at least 10 pixels have been pinched,
-    //     then populate fmsg to send pinch event to server
-    // NOTE: we currently only handle pinch, not rotate
-    if (!active_scroll && fabs(accumulated_dist) > 10.0 / ((float)output_width)) {
-        multigesture_active = true;
-        if (accumulated_dist > 0) {
-            current_gesture_type = PINCH_OPEN;
-        } else {
-            current_gesture_type = PINCH_CLOSE;
-        }
-        accumulated_dist = 0;
-    } else {
-        // If there is a scroll happening, then this is not a multigesture, and return
-        current_gesture_type = NONE;
-        return 0;
-    }
-
-    fmsg.multigesture.gesture_type = current_gesture_type;
+                                                     .num_fingers = event->mgesture.numFingers};
     send_fmsg(&fmsg);
-
-    return 0;
-}
-
-int handle_touch_up(SDL_Event *event) {
-    /*
-        Handle the SDL finger touch up event
-
-        Arguments:
-            event (SDL_Event*): SDL event for finger touch event
-
-        Result:
-            (int): 0 on success
-    */
-
-    FractalClientMessage fmsg = {0};
-    fmsg.type = MESSAGE_TOUCH;
-    fmsg.touch = (FractalTouchMessage){.x = event->tfinger.x,
-                                       .y = event->tfinger.y,
-                                       .dx = event->tfinger.dx,
-                                       .dy = event->tfinger.dy,
-                                       .active_gesture = multigesture_active};
-    fmsg.touch.touch_type = FINGER_UP;
-
-    send_fmsg(&fmsg);
-
-    // The multigesture or scroll has ended
-    if (multigesture_active || active_scroll) {
-        multigesture_active = false;
-        active_scroll = false;
-    }
 
     return 0;
 }
@@ -509,11 +427,6 @@ int handle_sdl_event(SDL_Event *event) {
             break;
         case SDL_MULTIGESTURE:
             if (handle_multi_gesture(event) != 0) {
-                return -1;
-            }
-            break;
-        case SDL_FINGERUP:
-            if (handle_touch_up(event) != 0) {
                 return -1;
             }
             break;
