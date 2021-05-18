@@ -4,7 +4,7 @@
   "AUTH0_ALLOW_DELETE": true,
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "APP_CALLBACKS": ["http://localhost/callback"],
-    "API_IDENTIFIER": "http://dev-server.fractal.co"
+    "API_IDENTIFIER": "https://api.fractal.co"
   },
   "EXCLUDED_PROPS": {
     "clients": ["client_secret"],
