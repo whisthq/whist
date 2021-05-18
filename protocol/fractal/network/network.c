@@ -865,7 +865,7 @@ int create_tcp_server_context(SocketContext* context, int port, int recvfrom_tim
         return -1;
     }
 
-    LOG_INFO("PORT: %d", context->addr.sin_port);
+    LOG_INFO("PORT: %d", ntohs(context->addr.sin_port));
 
     closesocket(context->socket);
     context->socket = new_socket;
