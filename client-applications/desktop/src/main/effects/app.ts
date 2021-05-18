@@ -27,7 +27,7 @@ import {
 import { createTray } from "@app/utils/tray"
 import { loginSuccess } from "@app/main/observables/login"
 import { signupSuccess } from "@app/main/observables/signup"
-import { signoutAction } from "@app/main/events/actions"
+import { signoutAction, quitAction } from "@app/main/events/actions"
 import {
   protocolLaunchProcess,
   protocolCloseRequest,
@@ -129,7 +129,10 @@ combineLatest([
     .then(() => {
       if (success) app.exit()
     })
-    .catch((err) => console.error(err))
+    .catch((err) => {
+      console.error(err)
+      app.exit()
+    })
 })
 
 signoutAction.subscribe(() => {
