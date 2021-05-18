@@ -366,15 +366,10 @@ int handle_multi_gesture(SDL_Event *event) {
     static float accumulated_dist = 0;  // static, so accumulates distance with each call
     accumulated_dist += event->mgesture.dDist;
 
-    // Get the DPI to scale the pinch distance
-    int display_index = SDL_GetWindowDisplayIndex((SDL_Window *)window);
-    float dpi;
-    SDL_GetDisplayDPI(display_index, NULL, &dpi, NULL);
-
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = event->mgesture.dDist * (int)dpi,
+                                                     .d_dist = event->mgesture.dDist,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers,

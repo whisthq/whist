@@ -457,6 +457,12 @@ InputDevice* create_input_device() {
     input_device->num_lock = false;
     input_device->mouse_has_moved = false;
 
+    // Get DPI
+    char* dpi_string;
+    runcmd("xrdb -display :10 -query dpi", &dpi_string);
+    input_device->dpi = atoi(strchr(dpi_string, '\t'));
+    free(dpi_string);
+
     return input_device;
 }
 
@@ -672,6 +678,9 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
         Returns:
             (int): 0 on success, -1 on failure
     */
+
+    // Scale the pinch distance by the DPI
+    d_dist *= input_device->dpi;
 
     if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
         // If the gesture is not active yet, then start holding the LCTRL key
