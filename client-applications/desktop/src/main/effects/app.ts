@@ -4,11 +4,12 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app, IpcMainEvent, BrowserWindow } from "electron"
+import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip } from "rxjs"
-import { mapTo, take, concatMap } from "rxjs/operators"
+import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { mapTo, take, concatMap, pluck } from "rxjs/operators"
 import path from "path"
+import { ChildProcess } from "child_process"
 
 import {
   closeWindows,
@@ -84,12 +85,19 @@ merge(
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
-// combineLatest([
-//   userEmail,
-//   merge(protocolCloseSuccess, protocolCloseFailure),
-// ]).subscribe(([email]: [string, ChildProcess]) => {
-//   uploadToS3(email).catch((err) => console.error(err))
-// })
+combineLatest([
+  merge(
+    fromTrigger("persisted"),
+    fromTrigger("loginFlowSuccess"),
+    fromTrigger("signupFlowSuccess")
+  ).pipe(pluck("email")),
+  merge(
+    fromTrigger("protocolCloseFlowSuccess"),
+    fromTrigger("protocolCloseFlowSuccess")
+  ),
+]).subscribe(([email,]: [string, ChildProcess]) => {
+  uploadToS3(email).catch((err) => console.error(err))
+})
 
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
@@ -103,11 +111,12 @@ merge(
 ).subscribe(() => {
   closeWindows()
   hideAppDock()
-  // createTray(eventActionTypes)
+  createTray()
 })
 
-// If the update is downloaded, quit the app and install the update
+fromTrigger("windowCreated").subscribe(() => showAppDock())
 
+// If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()
 })
@@ -117,8 +126,6 @@ fromTrigger("updateAvailable").subscribe(() => {
   createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
-
-fromTrigger("windowCreated").subscribe(() => showAppDock())
 
 zip(
   merge(

@@ -3,6 +3,8 @@ import path from "path"
 import { spawn, ChildProcess } from "child_process"
 import config from "@app/config/environment"
 
+import { fromEvent } from "rxjs"
+
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments
@@ -35,7 +37,7 @@ export const protocolLaunch = () => {
 
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
-    stdio: ["pipe", "ignore", "ignore"],
+    stdio: ["pipe", process.stdout, process.stderr],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading
@@ -49,6 +51,7 @@ export const protocolLaunch = () => {
         cwd: path.join(protocolFolder, "../.."),
       }),
   })
+
   return protocol
 }
 

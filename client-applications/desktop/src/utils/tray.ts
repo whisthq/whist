@@ -13,10 +13,7 @@ const createNativeImage = () => {
 
 export const trayEvent = new events.EventEmitter()
 
-export const createTray = (eventActionTypes: {
-  signout: () => any
-  quit: () => any
-}) => {
+export const createTray = () => {
   // We should only have one tray at any given time
   if (tray != null) {
     tray.destroy()
