@@ -44,12 +44,11 @@ extern volatile SDL_Window *window;
 
 extern volatile int output_width;
 extern volatile int output_height;
-extern volatile float dpi;
 extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
-extern bool multigesture_active;
+extern bool pinching;
 
 extern bool audio_refresh;
 
@@ -335,43 +334,29 @@ int handle_mouse_wheel(SDL_Event *event) {
 }
 
 int handle_multi_gesture(SDL_Event *event) {
-    static FractalMultigestureType current_gesture_type = NONE; // static, so only set to NONE on first call
-
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = event->mgesture.dTheta,
-                                                     .d_dist = event->mgesture.dDist * (int)dpi,
+                                                     .d_dist = event->mgesture.dDist,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers};
-    // LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
-    //     event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
+    LOG_INFO("multigesture detected!! d_theta: %f d_dist: %f, x: %d, y: %d, num_fingers: %u",
+        event->mgesture.dTheta, event->mgesture.dDist, event->mgesture.x, event->mgesture.y, event->mgesture.numFingers);
 
-    if (fabs(event->mgesture.dDist) > 10.0 / ((float) output_width)) {
-        multigesture_active = true;
+    if (fabs(event->mgesture.dTheta) > 3.14 / 180.0 ) {
+        LOG_INFO("ROTATE");
+        fmsg.multigesture.gesture_type = ROTATE;
+    } else if (fabs(event->mgesture.dDist) > 0.002 ) {
+        pinching = true;
         if (event->mgesture.dDist > 0) {
-            current_gesture_type = PINCH_OPEN;
-            LOG_INFO("START PINCH OPEN - %f, %d, %d", 10.0 / ((float) output_width), output_width, output_height);
+            LOG_INFO("PINCH OPEN");
+            fmsg.multigesture.gesture_type = PINCH_OPEN;
         } else {
-            current_gesture_type = PINCH_CLOSE;
-            LOG_INFO("START PINCH CLOSE");
+            LOG_INFO("PINCH CLOSE");
+            fmsg.multigesture.gesture_type = PINCH_CLOSE;
         }
-    // } else if (!multigesture_active) {
-    } else {
-        // if there is no active multigesture and this is not a valid multigesture, then return
-        current_gesture_type = NONE;
-        return 0;
     }
-
-    // if (current_gesture_type == ROTATE) {
-    //     LOG_INFO("ROTATING");
-    // } else if (current_gesture_type == PINCH_OPEN) {
-    //     LOG_INFO("PINCHING OPEN d_dist: %f", event->mgesture.dDist);
-    // } else if (current_gesture_type == PINCH_CLOSE) {
-    //     LOG_INFO("PINCHING CLOSED d_dist: %f", event->mgesture.dDist);
-    // }
-
-    fmsg.multigesture.gesture_type = current_gesture_type;
 
     send_fmsg(&fmsg);
 
@@ -385,15 +370,14 @@ int handle_touch_up(SDL_Event *event) {
                                        .y = event->tfinger.y,
                                        .dx = event->tfinger.dx,
                                        .dy = event->tfinger.dy,
-                                       .active_gesture = multigesture_active};
+                                       .active_gesture = pinching};
     fmsg.touch.touch_type = FINGER_UP;
 
     send_fmsg(&fmsg);
 
     // the multigesture has ended
-    if (multigesture_active) {
-        LOG_INFO("RELEASED GESTURE");
-        multigesture_active = false;
+    if (pinching) {
+        pinching = false;
     }
 
     return 0;
@@ -430,8 +414,8 @@ int handle_sdl_event(SDL_Event *event) {
             (int): 0 on success, -1 on failure
     */
 
-    // LOG_INFO("sdl event->type: 0x%x; mgesture: 0x%x; motion: %d; tfinger: %d",
-    //     event->type, event->mgesture.type, event->motion.which, event->tfinger.type);
+    LOG_INFO("sdl event->type: 0x%x; mgesture: 0x%x; motion: %d; tfinger: %d",
+        event->type, event->mgesture.type, event->motion.which, event->tfinger.type);
 
     switch (event->type) {
         case SDL_WINDOWEVENT:
