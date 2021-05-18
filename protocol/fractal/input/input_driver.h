@@ -158,17 +158,4 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
  */
 int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y);
 
-/**
- * @brief                          Emit a trackpad multigesture event (e.g. pinch)
- *
- * @param input_device             The initialized input device to write
- *
- * @param d_theta                  How much the fingers rotated during this motion
- *
- * @param d_dist                   How much the fingers pinched during this motion
- *
- * @returns                        0 on success, -1 on failure
- */
-int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist);
-
 #endif  // INPUT_DRIVER_H
