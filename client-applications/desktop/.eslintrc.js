@@ -23,4 +23,9 @@ module.exports = {
     "@typescript-eslint/consistent-type-assertions": "off",
     "prettier/prettier": "error",
   },
+  settings: {
+    react: {
+      version: "detect",
+    },
+  },
 }

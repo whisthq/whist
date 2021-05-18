@@ -160,12 +160,13 @@ export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
     ...height.xs,
   } as BrowserWindowConstructorOptions)
 
-export const createContainerErrorWindowUnauthorized: CreateWindowFunction = () =>
-  createWindow(WindowHashCreateContainerErrorUnauthorized, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
+export const createContainerErrorWindowUnauthorized: CreateWindowFunction =
+  () =>
+    createWindow(WindowHashCreateContainerErrorUnauthorized, {
+      ...base,
+      ...width.md,
+      ...height.xs,
+    } as BrowserWindowConstructorOptions)
 
 export const createContainerErrorWindowInternal: CreateWindowFunction = () =>
   createWindow(WindowHashCreateContainerErrorInternal, {
