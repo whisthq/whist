@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 import boto3  # type: ignore
 
 from app.helpers.utils.aws.ec2_userdata.no_ecs_userdata import userdata_template
+from app.helpers.utils.cloud_interface.base_cloud_interface import CloudClient
 
 
 class InstancesNotRunningException(Exception):
@@ -20,7 +21,7 @@ class InstancesNotRunningException(Exception):
     """
 
 
-class EC2Client:
+class EC2Client(CloudClient):
     """
     This class governs everything you need to provision instances on EC2
     Args:
@@ -44,17 +45,16 @@ class EC2Client:
 
     def start_instances(
         self,
-        ami_id: str,
+        image_id: str,
         instance_name: str,
         num_instances: int = 1,
         instance_type: str = "g3.4xlarge",
-        poll_til_up: bool = False,
     ) -> List[str]:
         """
         Starts AWS instances with the given properties, not returning until they're
         actively running
         Args:
-            ami_id: which AMI to use
+            image_id: which AMI to use
             instance_name: what name the instance should have
             num_instances: how many instances to start
             instance_type: which type of instance (hardwarewise) to start
@@ -66,7 +66,7 @@ class EC2Client:
         # rather than having some complex launch config, just make the AWS instance
         # parameters at call time
         kwargs = {
-            "ImageId": ami_id,
+            "ImageId": image_id,
             "InstanceType": instance_type,
             "MaxCount": num_instances,
             "MinCount": num_instances,
@@ -83,14 +83,10 @@ class EC2Client:
         }
         resp = self.ec2_client.run_instances(**kwargs)
         instance_ids = [instance["InstanceId"] for instance in resp["Instances"]]
-        if poll_til_up:
-            time.sleep(5)
-            # AWS takes a bit of time to recognize that these resources actually exist
-            self.spin_til_instances_up(instance_ids)
 
         return instance_ids
 
-    def stop_instances(self, instance_ids: List[str], poll_til_down: bool = False) -> None:
+    def stop_instances(self, instance_ids: List[str]) -> None:
         """
         Turns off all instances passed in
         Args:
@@ -98,8 +94,6 @@ class EC2Client:
             poll_til_down: whether to block until instances terminate
         """
         self.ec2_client.terminate_instances(InstanceIds=instance_ids)
-        if poll_til_down:
-            self.spin_til_instances_down(instance_ids)
 
     def check_if_instances_up(self, instance_ids: List[str]) -> bool:
         """
