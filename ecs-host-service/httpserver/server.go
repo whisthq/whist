@@ -80,55 +80,6 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// MountCloudStorageRequest defines the (unauthenticated) mount_cloud_storage
-// endpoint
-type MountCloudStorageRequest struct {
-	HostPort     int                `json:"host_port"`     // Port on the host to mount the cloud storage drive to
-	Provider     string             `json:"provider"`      // Cloud storage provider (i.e. google_drive)
-	AccessToken  string             `json:"access_token"`  // Cloud storage access token
-	RefreshToken string             `json:"refresh_token"` // Cloud storage access token refresher
-	Expiry       string             `json:"expiry"`        // Expiration date of access_token
-	TokenType    string             `json:"token_type"`    // Type of access_token, currently always "bearer"
-	ClientID     string             `json:"client_id"`     // ID to tell cloud storage provider that we are the Fractal client they approved
-	ClientSecret string             `json:"client_secret"` // Secret associated with client_id
-	resultChan   chan requestResult // Channel to pass cloud storage mounting result between goroutines
-}
-
-// ReturnResult is called to pass the result of a request back to the HTTP
-// request handler.
-func (s *MountCloudStorageRequest) ReturnResult(result string, err error) {
-	s.resultChan <- requestResult{result, err}
-}
-
-// createResultChan is called to create the Go channel to pass request result
-// back to the HTTP request handler via ReturnResult.
-func (s *MountCloudStorageRequest) createResultChan() {
-	if s.resultChan == nil {
-		s.resultChan = make(chan requestResult)
-	}
-}
-
-// Process an HTTP request for mounting a cloud storage folder to a container, to be handled in ecs-host-service.go
-func processMountCloudStorageRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
-	// Verify that it is a POST
-	if verifyRequestType(w, r, http.MethodPost) != nil {
-		return
-	}
-
-	// Verify authorization and unmarshal into the right object type
-	var reqdata MountCloudStorageRequest
-	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
-		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
-		return
-	}
-
-	// Send request to queue, then wait for result
-	queue <- &reqdata
-	res := <-reqdata.resultChan
-
-	res.send(w)
-}
-
 // SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
 type SetContainerStartValuesRequest struct {
 	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
@@ -388,7 +339,6 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	// Create a custom HTTP Request Multiplexer
 	mux := http.NewServeMux()
 	mux.Handle("/", http.NotFoundHandler())
-	mux.HandleFunc("/mount_cloud_storage", createHandler(processMountCloudStorageRequest))
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
 	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
 	if logger.GetAppEnvironment() == logger.EnvLocalDev {

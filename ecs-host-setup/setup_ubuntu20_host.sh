@@ -104,10 +104,10 @@ sudo cp docker-daemon-config/seccomp-filter.json /etc/docker/seccomp-filter.json
 sudo systemctl restart docker
 
 echo "================================================"
-echo "Installing Cloud Storage Dependencies..."
+echo "Installing Other Host Service Dependencies..."
 echo "================================================"
 
-sudo apt-get install -y rclone openssl
+sudo apt-get install -y openssl
 
 echo "================================================"
 echo "Installing Other Utilities..."
