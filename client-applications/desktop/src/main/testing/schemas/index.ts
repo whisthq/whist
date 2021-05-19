@@ -1,6 +1,5 @@
 import loginError from "./loginError"
-import { MockSchema } from "@app/@types/schema"
 
-const schemas: { [index: string]: MockSchema } = { loginError }
+const schemas = { loginError }
 
 export default schemas
