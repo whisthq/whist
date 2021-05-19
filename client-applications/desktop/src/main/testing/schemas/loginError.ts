@@ -1,11 +1,5 @@
-import { Observable } from "rxjs"
 import { mapTo, tap, delay } from "rxjs/operators"
-
-type MockSchema = {
-  [key: string]: (trigger: Observable<any>) => {
-    [key: string]: Observable<any>
-  }
-}
+import { MockSchema } from "@app/@types/schema"
 
 const loginError: MockSchema = {
   loginFlow: (trigger) => ({
@@ -17,4 +11,4 @@ const loginError: MockSchema = {
   }),
 }
 
-export default { loginError }
+export default loginError
