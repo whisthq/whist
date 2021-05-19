@@ -28,6 +28,7 @@ import {
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
 import { userEmail } from "@app/main/observables/user"
+import { eventUpdateNotAvailable } from "@app/main/events/autoupdate"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
@@ -49,7 +50,8 @@ export const errorWindowRequest = merge(
     })
   ),
   containerPollingFailure.pipe(mapTo(assignContainerErrorWindow)),
-  protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow))
+  protocolLaunchFailure.pipe(mapTo(createProtocolErrorWindow)),
+  eventUpdateNotAvailable.pipe(mapTo(createProtocolErrorWindow))
 ).pipe(
   withLatestFrom(eventAppReady),
   map(([f, _]) => f)
