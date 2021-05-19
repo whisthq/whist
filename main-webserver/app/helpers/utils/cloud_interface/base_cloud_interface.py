@@ -49,3 +49,27 @@ class CloudClient(metaclass=abc.ABCMeta):
 
         """
         raise NotImplementedError
+
+    @abc.abstractmethod
+    def spin_til_instances_up(self, instance_ids: List[str], time_wait=10) -> None:
+        """
+        Polls the cloud provider every time_wait seconds until all specified instances are up
+        Args:
+            instance_ids: which instances to check
+            time_wait: how long to wait between polls
+
+        Returns: None
+
+        """
+
+    @abc.abstractmethod
+    def spin_til_instances_down(self, instance_ids: List[str], time_wait=10) -> None:
+        """
+        Polls the cloud provider every time_wait seconds until all specified instances are down
+        Args:
+            instance_ids: which instances to check
+            time_wait: how long to wait between polls
+
+        Returns: None
+
+        """
