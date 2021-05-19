@@ -1,5 +1,1 @@
-import loginError from "./loginError"
-
-const schemas = { loginError }
-
-export default schemas
+export { default as loginError } from "./loginError"
