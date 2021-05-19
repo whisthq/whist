@@ -2,30 +2,21 @@ import { Observable } from "rxjs"
 import { filter, share, tap } from "rxjs/operators"
 import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
-import loggingMap from "../main/logging"
-import { get, identity } from "lodash"
 
-const logFormat = (...args: any[]) => {
-  let [title, value] = args
-  let [flowName, key] = title.split(".").slice(-2)
-  let [message, transformFn] = get(loggingMap, [flowName, key], [null, null])
-  if (message) {
-    if (!transformFn) {
-      transformFn = identity
-    }
-    let output = truncate(stringify(transformFn(value), null, 2), {
-      length: 1000,
-      omission: "...**only printing 1000 characters per log**",
-    })
-    return `${title} -- ${message} -- ${output}`
-  }
+import { transformLog } from "@app/utils/logging"
+
+const logFormat = (title: string, message: string, value: any) => {
+  value = truncate(stringify(value, null, 2), {
+    length: 1000,
+    omission: "...**only printing 1000 characters per log**",
+  })
+  return `${title} -- ${message} -- ${value}`
 }
 
-const logDebug = (...args: any[]) => {
-  const formatted = logFormat(...args)
-  if (formatted) {
-    console.log(`DEBUG: ${formatted}`)
-  }
+const logDebug = (title: string, value: any) => {
+  const [message, fn] = transformLog(title)
+  const formatted = logFormat(title, message, fn(value))
+  console.log(`DEBUG: ${formatted}`)
 }
 
 export const fork = <T>(

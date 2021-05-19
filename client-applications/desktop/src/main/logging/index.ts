@@ -1,9 +1,9 @@
 import host from "./host"
 
-type LoggingMap = Record<string, Record<string, any>>
+type LoggingMap = Record<string, Record<string, any[]>>
 
 const loggingMap: LoggingMap = {
-  ...host
+  ...host,
 }
 
 export default loggingMap

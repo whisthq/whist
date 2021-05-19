@@ -1,6 +1,6 @@
 import { app } from "electron"
 import { tap } from "rxjs/operators"
-import { identity, truncate } from "lodash"
+import { identity, truncate, get } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
@@ -9,6 +9,7 @@ import logzio from "logzio-nodejs"
 import { merge, Observable } from "rxjs"
 import stringify from "json-stringify-safe"
 
+import loggingMap from "@app/main/logging"
 import config, { loggingBaseFilePath } from "@app/config/environment"
 
 // Logging base function
@@ -147,6 +148,12 @@ export const uploadToS3 = async (email: string) => {
   })
 
   await Promise.all(uploadPromises)
+}
+
+export const transformLog = (name: string) => {
+  const [flowName, key] = name.split(".").slice(-2)
+  const [message = "", fn = identity] = get(loggingMap, [flowName, key], [])
+  return [message, fn]
 }
 
 export const logObservable = (
