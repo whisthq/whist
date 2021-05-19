@@ -69,7 +69,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A service that performs administrative operations on the web server
+    description: A service that performs administrative operations on the fractal webservers
       on behalf of Fractal developers.
     grant_types:
       - password
@@ -129,7 +129,7 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A tool that developers use to test Fractal's API.
+    description: A tool that developers use to test Fractal's APIs.
     grant_types:
       - password
       - http://auth0.com/oauth/grant-type/password-realm
@@ -199,7 +199,10 @@ tenant:
   picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
   support_email: support@fractal.co
   support_url: ""
-  universal_login: {}
+  universal_login:
+    colors:
+      page_background: "#ebf2ff"
+      primary: "#4f35de"
 emailProvider: {}
 emailTemplates: []
 clientGrants:
@@ -231,12 +234,16 @@ guardianPhoneFactorMessageTypes:
   message_types: []
 roles:
   - name: Developer
-    description: A fractal developer
+    description: A Fractal developer
     permissions:
       - permission_name: admin
         resource_server_identifier: "##API_IDENTIFIER##"
 branding:
+  colors:
+    page_background: "#ebf2ff"
+    primary: "#4f35de"
   logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
 prompts:
   universal_login_experience: new
+  identifier_first: true
 migrations: {}
