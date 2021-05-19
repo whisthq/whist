@@ -2,7 +2,7 @@ better-profanity==0.7.0
 blinker==1.4
 boto3==1.17.22
 celery==5.0.5
-click==8.0.0
+click==7.1.2
 cryptography==3.4.7
 Flask==2.0.0
 Flask-Cors==3.0.10

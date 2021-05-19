@@ -1,2 +1,2 @@
 requests==2.25.1
-locust==1.5.2
+locust==1.5.3
