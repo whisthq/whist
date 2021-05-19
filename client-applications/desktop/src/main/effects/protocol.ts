@@ -9,8 +9,8 @@ import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import {
   protocolLaunchProcess,
   protocolLaunchSuccess,
-  protocolLaunchFailure,
 } from "@app/main/observables/protocol"
+import { errorWindowRequest } from "@app/main/observables/error"
 import { quitAction, signoutAction } from "@app/main/events/actions"
 
 // The current implementation of the protocol process shows its own loading
@@ -27,5 +27,5 @@ zip(protocolLaunchProcess, protocolLaunchSuccess).subscribe(
 // this application will take care of showing an appropriate error message.
 zip(
   protocolLaunchProcess,
-  merge(signoutAction, quitAction, protocolLaunchFailure)
+  merge(signoutAction, quitAction, errorWindowRequest)
 ).subscribe(([protocol]) => protocolStreamKill(protocol))
