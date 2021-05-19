@@ -36,10 +36,6 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip
-              working-directory: main-webserver
-              run: pip install --upgrade pip
-
             - name: Install Dependencies
               working-directory: main-webserver
               run: pip install -r requirements.txt -r requirements-test.txt
