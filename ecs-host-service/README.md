@@ -1,6 +1,6 @@
 # Fractal ECS Host Service
 
-This subfolder contains the code for the Fractal ECS host service, which is responsible for orchestrating containers on Fractal EC2 instances, which are referred to as **hosts** throughout the codebase. The host service is responsible for making Docker calls to start and stop containers, for enabling multiple containers to run concurrently on the same host by dynamically assigning TTYs, and for passing startup data to the containers from the Fractal webserver(s), like DPI and third-party cloud storage providers folders to mount. If you are just interested in what endpoints the host service exposes (i.e. for developing on the client application or webserver, check the file `httpserver/server.go`).
+This subfolder contains the code for the Fractal ECS host service, which is responsible for orchestrating containers on Fractal EC2 instances, which are referred to as **hosts** throughout the codebase. The host service is responsible for making Docker calls to start and stop containers, for enabling multiple containers to run concurrently on the same host by dynamically assigning TTYs, and for passing startup data to the containers from the Fractal webserver(s), like DPI. If you are just interested in what endpoints the host service exposes (i.e. for developing on the client application or webserver, check the file `httpserver/server.go`).
 
 ## Development
 
@@ -62,10 +62,6 @@ For testing, you can also use the `upload` target in the makefile, which builds 
 │   └── seelog_bridge.go <- A wrapper for the ecsagent logging to integrate with our own
 ├── ecs-host-service.go <- The main file, contains the main logic and the most comments to explain the design decisions of the host service
 ├── fractalcontainer <- package for the abstraction of a container managed by Fractal
-│   ├── cloudstorage <- package for cloud storage-specific functionality
-│   │   ├── provider.go <- file that defines possible cloud storage providers
-│   │   └── rclone.go <- file that implements all the actual interfacing with rclone
-│   ├── cloud_storage.go <- fractalcontainer wrapper of the cloudstorage package
 │   ├── fractal_container.go <- the main file in the fractalcontainer package, defines the types and implements the simple functions associated with Fractal-managed containers
 │   ├── portbindings <- package for the abstraction of port bindings between the container and the host
 │   │   ├── port_bindings.go <- provides helper functions for port bindings

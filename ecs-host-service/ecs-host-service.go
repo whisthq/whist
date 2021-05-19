@@ -25,7 +25,6 @@ import (
 
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/httpserver"
 
@@ -135,7 +134,6 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		"create", "-it",
 		`-v`, `/sys/fs/cgroup:/sys/fs/cgroup:ro`,
 		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/containerResourceMappings:/fractal/resourceMappings:ro`,
-		`-v`, `/fractalCloudStorage/` + string(fc.GetFractalID()) + `:/fractal/cloudStorage:rshared`,
 		`-v`, `/fractal/temp/` + string(fc.GetFractalID()) + `/sockets:/tmp/sockets`,
 		`-v`, `/run/udev/data:/run/udev/data:ro`,
 		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/userConfigs/unpacked_configs:/fractal/userConfigs:rshared`,
@@ -295,44 +293,6 @@ func handleStartValuesRequest(globalCtx context.Context, globalCancel context.Ca
 	req.ReturnResult("", nil)
 }
 
-// We make this function send back the result for the provided request so that
-// we can run in its own goroutine and not block the event loop goroutine with
-// `rclone mount` commands (which are fast in the happy path, but can take a
-// minute in the worst case).
-func handleCloudStorageRequest(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.MountCloudStorageRequest) {
-	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleCloudStorageRequest(): "+fmt, v...)
-		logger.Error(err)
-		req.ReturnResult("", err)
-	}
-
-	// Verify identifying hostPort value
-	if req.HostPort > math.MaxUint16 || req.HostPort < 0 {
-		logAndReturnError("Invalid HostPort: %v", req.HostPort)
-		return
-	}
-	hostPort := uint16(req.HostPort)
-
-	fc, err := fractalcontainer.LookUpByIdentifyingHostPort(hostPort)
-	if err != nil {
-		logAndReturnError("%s", err)
-		return
-	}
-
-	provider, err := cloudstorage.GetProvider(req.Provider)
-	if err != nil {
-		logAndReturnError("Unable to parse provider: %s", err)
-		return
-	}
-
-	err = fc.AddCloudStorage(goroutineTracker, provider, req.AccessToken, req.RefreshToken, req.Expiry, req.TokenType, req.ClientID, req.ClientSecret)
-	if err != nil {
-		logAndReturnError(err.Error())
-	}
-
-	req.ReturnResult("", nil)
-}
-
 // Handle tasks to be completed when a container dies
 func containerDieHandler(id string) {
 	// Exit if we are not dealing with a Fractal container, or if it has already
@@ -351,7 +311,7 @@ func containerDieHandler(id string) {
 // ---------------------------
 
 // Create the directory used to store the container resource allocations
-// (e.g. TTYs and cloud storage folders) on disk
+// (e.g. TTYs) on disk
 func initializeFilesystem(globalCancel context.CancelFunc) {
 	// check if "/fractal" already exists --- if so, panic, since
 	// we don't know why it's there or if it's valid
@@ -382,16 +342,6 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 		logger.Panicf(globalCancel, "Failed to create directory %s: error: %s\n", httpserver.FractalPrivatePath, err)
 	}
 
-	// Create cloud storage directory and make it owned by a non-root user so
-	// it's accessible by a non-root user inside the container. Notably, we also
-	// disable the executable bit for this directory.
-	err = os.MkdirAll(fractalcontainer.FractalCloudStorageDir, 0666)
-	if err != nil {
-		logger.Panicf(globalCancel, "Could not mkdir path %s. Error: %s", fractalcontainer.FractalCloudStorageDir, err)
-	}
-	cmd := exec.Command("chown", "-R", "ubuntu", fractalcontainer.FractalCloudStorageDir)
-	cmd.Run()
-
 	// Create fractal temp directory
 	err = os.MkdirAll(logger.TempDir, 0777)
 	if err != nil {
@@ -400,9 +350,8 @@ func initializeFilesystem(globalCancel context.CancelFunc) {
 }
 
 // Delete the directory used to store the container resource allocations (e.g.
-// TTYs and cloud storage folders) on disk, as well as the directory used to
-// store the SSL certificate we use for the httpserver, and our temporary
-// directory.
+// TTYs) on disk, as well as the directory used to store the SSL certificate we
+// use for the httpserver, and our temporary directory.
 func uninitializeFilesystem() {
 	err := os.RemoveAll(logger.FractalDir)
 	if err != nil {
@@ -424,9 +373,6 @@ func uninitializeFilesystem() {
 	} else {
 		logger.Infof("Successfully deleted directory %s\n", logger.TempDir)
 	}
-
-	// We don't want to delete the cloud storage directory on exit, since that
-	// might delete files from people's cloud storage drives.
 }
 
 func main() {
@@ -603,9 +549,6 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 
 				case *httpserver.SetConfigEncryptionTokenRequest:
 					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
-
-				case *httpserver.MountCloudStorageRequest:
-					go handleCloudStorageRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.MountCloudStorageRequest))
 
 				case *httpserver.SpinUpContainerRequest:
 					go SpinUpContainer(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SpinUpContainerRequest))

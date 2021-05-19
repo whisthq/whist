@@ -8,7 +8,6 @@ import (
 	"context"
 	"sync"
 
-	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/cloudstorage"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
@@ -123,8 +122,6 @@ type FractalContainer interface {
 	// If both tasks have completed, then get the user's config and set the
 	// container as ready.
 	CompleteContainerSetup(userID UserID, clientAppAccessToken ClientAppAccessToken, callerFunction SetupEndpoint) error
-
-	AddCloudStorage(goroutineTracker *sync.WaitGroup, Provider cloudstorage.Provider, AccessToken string, RefreshToken string, Expiry string, TokenType string, ClientID string, ClientSecret string) error
 
 	Close()
 }
