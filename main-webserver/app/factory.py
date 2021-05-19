@@ -1,10 +1,12 @@
 import os
 
+from http import HTTPStatus
 from urllib.parse import urlunsplit
 
+import requests
 import stripe
 
-from flask import current_app, Flask
+from flask import current_app, Flask, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
@@ -41,6 +43,39 @@ def decode_key_callback(unverified_headers, _unverified_payload):
     jwks_client = PyJWKClient(urlunsplit(parts))
 
     return jwks_client.get_signing_key(unverified_headers["kid"]).key
+
+
+@jwtManager.user_lookup_loader
+def user_lookup_callback(_unverified_headers, _unverified_payload):
+    """Download the authenticated user's OpenID identity from the appropriate Auth0 tenant.
+
+    An Auth0 /v2/userinfo endpoint exposes the contents of the user's OpenID identity token in
+    plaintext. This callback effectively verifies that the user to whom the Auth0 tenant issued the
+    access token that is used to authorize a GET request to the /v2/userinfo endpoint actually
+    exists by attempting to download the user's OpenID identity.
+
+    Specification:
+        https://flask-jwt-extended.readthedocs.io/en/stable/api/#flask_jwt_extended.JWTManager.user_lookup_loader
+
+    Returns:
+        The dictionary returned by sending an authenticated GET request to the Auth0 tenant's
+        /userinfo endpoint if the user exists. None if the user does not exist.
+    """
+
+    parts = ("https", current_app.config["AUTH0_DOMAIN"], "/v2/userinfo", None, None)
+    response = requests.get(
+        urlunsplit(parts),
+        headers={k: v for k, v in request.headers.items() if k == "Authorization"},
+    )
+
+    if response.ok:
+        user = response.json()
+    elif response.status_code == HTTPStatus.UNAUTHORIZED:
+        user = None
+    else:
+        response.raise_for_status()
+
+    return user
 
 
 def create_app(testing=False):
