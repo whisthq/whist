@@ -4,11 +4,7 @@ from typing import Dict, List
 
 class CloudClient(metaclass=abc.ABCMeta):
     """
-    This class governs everything you need to provision instances on EC2
-    Args:
-        region_name (str):  which AWS region you're running on
-        key_id (Optional[str]): the AWS access key ID to use
-        access_key (Optional[str]): the AWS access key going with that key_id
+    This class defines the interface all our cloud providers should implement.
     """
 
     @abc.abstractmethod
