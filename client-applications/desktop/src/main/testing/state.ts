@@ -1,14 +1,20 @@
-// export const loginError = {
-//   status: 400,
-//   json: {
-//     access_token: "",
-//   },
-// }
-import { EMPTY, of } from "rxjs"
+import { Observable } from "rxjs"
+import { mapTo, tap, delay } from "rxjs/operators"
 
-export const loginError = {
-  authFlow: {
-    success: () => EMPTY,
-    failure: () => of({ status: 400, json: { access_token: "" } }),
-  },
+type MockSchema = {
+  [key: string]: (trigger: Observable<any>) => {
+    [key: string]: Observable<any>
+  }
 }
+
+const loginError: MockSchema = {
+  loginFlow: (trigger) => ({
+    failure: trigger.pipe(
+      delay(2000),
+      mapTo({ status: 400, json: { access_token: "" } }),
+      tap(() => console.log("MOCKED FAILURE"))
+    ),
+  }),
+}
+
+export default { loginError }

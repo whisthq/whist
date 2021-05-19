@@ -126,14 +126,17 @@ const mainFlow = flow("mainFlow", (name, trigger) => {
   const protocol = protocolLaunchFlow(name, auth.success)
 
   zip(protocol.success, container.success).subscribe(([protocol, info]) => {
-    protocolStreamInfo(protocol, info)
+    protocolStreamInfo(protocol as any, info)
   })
 
   return {
     success: zip(auth.success, container.success, protocol.success),
-    failure: merge(auth.failure, container.failure, protocol.failure),
+    failure: merge(auth.failure, container.failure),
   }
 })
 
 // Kick off the main flow to run the app.
-mainFlow("app", fromEvent(app, "ready"))
+const main = mainFlow("app", fromEvent(app, "ready"))
+
+main.success.subscribe()
+main.failure.subscribe()
