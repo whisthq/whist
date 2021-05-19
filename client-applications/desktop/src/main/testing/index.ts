@@ -25,7 +25,7 @@ const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 const getMocks = () => {
   const args = getMockArgs()
   return args.reduce((result, value) => {
-    const schema = schemas[value]
+    const schema = get(schemas, value)
     if (schema) return { ...result, ...schema }
     return result
   }, {})
