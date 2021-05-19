@@ -43,7 +43,7 @@ const width = {
 const height = {
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
-  md: { height: 16 * 40 },
+  md: { height: 16 * 44 },
   lg: { height: 16 * 56 },
   xl: { height: 16 * 64 },
   xl2: { height: 16 * 80 },
@@ -144,8 +144,8 @@ export const createAuthWindow: CreateWindowFunction = () => {
     WindowHashAuth,
     {
       ...base,
-      ...width.md,
-      ...height.lg,
+      ...width.sm,
+      ...height.md,
     } as BrowserWindowConstructorOptions,
     getAuthenticationURL()
   )
