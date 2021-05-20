@@ -95,7 +95,6 @@ volatile bool update_device = true;
 InputDevice* input_device = NULL;
 extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern bool using_sentry;
-char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
 
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
@@ -557,24 +556,27 @@ int32_t send_video(void* opaque) {
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
+                    static char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
                     Frame* frame = (Frame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
-                    frame->size = encoder->encoded_frame_size;
-                    frame->cursor = get_current_cursor();
-                    // True if this frame does not require previous frames to
+                    FractalCursorImage cursor = get_current_cursor();
+                    set_fractal_cursor_image(frame, &cursor);
+
+                    // frame is an iframe if this frame does not require previous frames to
                     // render
                     frame->is_iframe = encoder->is_iframe;
-                    video_encoder_write_buffer(encoder, (void*)frame->compressed_frame);
+
+                    frame->compressed_frame_size = encoder->encoded_frame_size;
+                    video_encoder_write_buffer(encoder, (void*)get_compressed_frame(frame));
 
                     // LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
-                    PeerUpdateMessage* peer_update_msgs =
-                        (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
+                    PeerUpdateMessage* peer_update_msgs = get_peer_messages(frame);
 
                     size_t num_msgs;
                     read_lock(&is_active_rwlock);
@@ -590,7 +592,7 @@ int32_t send_video(void* opaque) {
                     // Send video packet to client
                     if (broadcast_udp_packet(
                             PACKET_VIDEO, (uint8_t*)frame,
-                            frame_size + sizeof(PeerUpdateMessage) * (int)num_msgs, id,
+                            get_total_frame_size(frame), id,
                             STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
                             video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
                         LOG_WARNING("Could not broadcast video frame ID %d", id);
