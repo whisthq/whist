@@ -323,7 +323,8 @@ void set_fractal_cursor_image(Frame* frame, FractalCursorImage* cursor) {
         memcpy(frame->data, cursor, sizeof(FractalCursorImage));
     }
 }
-void set_compressed_frame(Frame* frame, unsigned char* compressed_frame, int compressed_frame_size) {
+void set_compressed_frame(Frame* frame, unsigned char* compressed_frame,
+                          int compressed_frame_size) {
     unsigned char* buf = frame->data;
     if (frame->has_cursor) {
         buf += sizeof(FractalCursorImage);
@@ -346,7 +347,7 @@ unsigned char* get_compressed_frame(Frame* frame) {
     return ret;
 }
 PeerUpdateMessage* get_peer_messages(Frame* frame) {
-    return get_compressed_frame(frame) + frame->compressed_frame_size;
+    return (PeerUpdateMessage*)(get_compressed_frame(frame) + frame->compressed_frame_size);
 }
 int get_total_frame_size(Frame* frame) {
     int ret = frame->compressed_frame_size;
