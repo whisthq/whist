@@ -32,7 +32,7 @@ build_all = args.all
 # If --all is passed, generate image_paths procedurally
 if build_all:
     files_process = subprocess.Popen(
-        "./helper-scripts/find_images_in_git_repo.sh",
+        "./helper_scripts/find_images_in_git_repo.sh",
         shell=True,
         stdout=subprocess.PIPE,
     )

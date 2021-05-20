@@ -18,4 +18,4 @@ image=fractal/$app_path:current-build
 mount="mount" # Mount fractal build binaries rather than copying them
 
 # Run the container image stored locally
-./helper-scripts/run_container_image.sh $image $mount
+./helper_scripts/run_container_image.sh $image $mount

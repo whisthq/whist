@@ -38,7 +38,7 @@ You can run `systemctl status` to see all the running services in the container.
 
 `/usr/share/fractal/log.txt` contains the Fractal protocol logs. They can also be found in the systemd logs with `journalctl | grep FractalServer`.
 
-`/testing-scripts` contains some little test scripts that can help debug problems on the host machine.
+`/testing_scripts` contains some little test scripts that can help debug problems on the host machine.
 
 ## Running
 

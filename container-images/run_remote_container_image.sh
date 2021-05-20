@@ -31,4 +31,4 @@ echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin $ghcr_u
 docker pull "$image"
 
 # Run the container image retrieved from GHCR
-./helper-scripts/run_container_image.sh "$image" "$mount"
+./helper_scripts/run_container_image.sh "$image" "$mount"
