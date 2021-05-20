@@ -58,7 +58,6 @@ class EC2Client(CloudClient):
             instance_name: what name the instance should have
             num_instances: how many instances to start
             instance_type: which type of instance (hardwarewise) to start
-            poll_til_up: whether this call should block until instances are running
 
         Returns: the IDs of the started instances
 
@@ -91,7 +90,6 @@ class EC2Client(CloudClient):
         Turns off all instances passed in
         Args:
             instance_ids: which instances to disable
-            poll_til_down: whether to block until instances terminate
         """
         self.ec2_client.terminate_instances(InstanceIds=instance_ids)
 
