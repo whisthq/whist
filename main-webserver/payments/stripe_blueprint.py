@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_jwt_extended import jwt_required
 
 from app import fractal_pre_process
@@ -10,11 +10,9 @@ from payments.stripe_helpers import (
     checkout_helper,
     billing_portal_helper,
     has_access_helper,
+    webhook_helper,
 )
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
-
-import stripe
-import json
 
 stripe_bp = Blueprint("stripe_bp", __name__)
 
@@ -56,6 +54,8 @@ def can_access_product(**kwargs):
     except:
         return {"error": "The request body is incorrectly formatted."}, BAD_REQUEST
 
+    # TODO: use jwt _+ Auth0 to figure out a user's stripe customer_id
+
     return has_access_helper(customer_id)
 
 
@@ -69,7 +69,6 @@ def create_checkout_session(**kwargs):
 
     Args:
         customer_id (str): the stripe id of the user
-        price_id (str): the price id of the product (subscription)
         success_url (str): url to redirect to upon completion success
         cancel_url (str): url to redirect to upon cancelation
 
@@ -90,12 +89,14 @@ def create_checkout_session(**kwargs):
     body = kwargs["body"]
     try:
         customer_id = body["customer_id"]
-        price_id = body["price_id"]
         success_url = body["success_url"]
         cancel_url = body["cancel_url"]
     except:
         return {"error": "The request body is incorrectly formatted."}, BAD_REQUEST
-    return checkout_helper(success_url, cancel_url, customer_id, price_id)
+
+    # TODO: use jwt _+ Auth0 to figure out a user's stripe customer_id
+
+    return checkout_helper(success_url, cancel_url, customer_id)
 
 
 @stripe_bp.route("/stripe/customer_portal", methods=["POST"])
@@ -131,25 +132,40 @@ def customer_portal(**kwargs):
         return_url = body["return_url"]
     except:
         return {"error": "The request body is incorrectly formatted."}, BAD_REQUEST
+
+    # TODO: use jwt _+ Auth0 to figure out a user's stripe customer_id
+
     return billing_portal_helper(customer_id, return_url)
 
 
 @fractal_pre_process
 @stripe_bp.route("/stripe/webhook", methods=["POST"])
 def webhook():
+    """
+    Endpoint for receiving all stripe webhook calls
+    """
     event = None
-    payload = request.data
-
     try:
-        event = json.loads(payload)
+        event = webhook_helper(request)
+    except Exception as e:
+        # ValueError: Invalid payload
+        # stripe.error.SignatureVerificationError: Invalid signature
+        return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
 
-        if event["type"] == "invoice.created":
-            print("invoice created")
-        elif event["type"] == "invoice.payment_failed":
-            print("payment failed")
-        else:
-            print("Unhandled event type {}".format(event["type"]))
-    except (json.JSONDecodeError, TypeError):
-        print("Webhook error while parsing basic request.")
+    # TODO: uncomment this once the webhook is in the stripe dashboard and STRIPE_WEBHOOK_SECRET has been populated
+    # if event.type == "invoice.created":
+    #     print("invoice created")
+    # elif event.type == "invoice.payment_failed":
+    #     print("payment failed")
+    # else:
+    #     print("Unhandled event type {}".format(event.type))
+
+    # TODO: delete this once the webhook is in the stripe dashboard and STRIPE_WEBHOOK_SECRET has been populated
+    if event["type"] == "invoice.created":
+        print("invoice created")
+    elif event["type"] == "invoice.payment_failed":
+        print("payment failed")
+    else:
+        print("Unhandled event type {}".format(event.type))
 
     return "OK", SUCCESS

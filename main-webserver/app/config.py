@@ -198,6 +198,7 @@ class DeploymentConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STRIPE_SECRET = property(getter("STRIPE_SECRET"))
     STRIPE_PRICE_ID = property(getter("STRIPE_PRICE_ID"))
+    STRIPE_WEBHOOK_SECRET = property(getter("STRIPE_WEBHOOK_SECRET"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE"))
     SENTRY_DSN = property(getter("SENTRY_DSN", fetch=False))
 
