@@ -289,23 +289,27 @@ CREATE TABLE hardware.instance_info (
 --
 
 CREATE VIEW hardware.instance_sorted AS
- SELECT sub_with_running.instance_id,
+  SELECT sub_with_running.instance_id,
     sub_with_running.instance_type,
-    sub_with_running."maxContainers" as max_containers,
+    sub_with_running.location,
+    sub_with_running."maxContainers" AS max_containers,
     sub_with_running.running_containers
    FROM ( SELECT base_table.instance_id,
             base_table.instance_type,
+            base_table.location,
             base_table."maxContainers",
-            COALESCE(base_table.count, (0)::bigint) AS running_containers
+            COALESCE(base_table.count, 0::bigint) AS running_containers
            FROM (( SELECT instance_info.instance_id,
                     instance_info.instance_type,
+                    instance_info.location,
                     instance_info."maxContainers"
                    FROM hardware.instance_info) instances
              LEFT JOIN ( SELECT count(*) AS count,
                     container_info.instance_id AS cont_inst
                    FROM hardware.container_info
-                  GROUP BY container_info.instance_id) containers ON (((instances.instance_id)::text = (containers.cont_inst)::text))) base_table) sub_with_running
-  WHERE (sub_with_running.running_containers < sub_with_running."maxContainers");
+                  GROUP BY container_info.instance_id) containers ON instances.instance_id::text = containers.cont_inst::text) base_table) sub_with_running
+  WHERE sub_with_running.running_containers < sub_with_running."maxContainers"
+  ORDER BY sub_with_running.location, sub_with_running.running_containers DESC;
 
 
 --
