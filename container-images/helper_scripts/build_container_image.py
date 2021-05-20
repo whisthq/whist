@@ -31,16 +31,16 @@ build_all = args.all
 
 # If --all is passed, generate image_paths procedurally
 if build_all:
-    files_process = subprocess.Popen(
+    with subprocess.Popen(
         "./helper_scripts/find_images_in_git_repo.sh",
         shell=True,
         stdout=subprocess.PIPE,
-    )
-    image_paths = files_process.communicate()[0].decode("utf-8").strip().split(" ")
-    print(
-        "All files requested, will be building the following image paths: "
-        + " ".join(image_paths)
-    )
+    ) as files_process:
+        image_paths = files_process.communicate()[0].decode("utf-8").strip().split(" ")
+        print(
+            "All files requested, will be building the following image paths: "
+            + " ".join(image_paths)
+        )
 
 # Get dependency path from given image path
 def get_dependency_from_image(img_path):  # returns dep_path
@@ -91,12 +91,14 @@ def build_image_path(img_path):
     )
     if not show_output:
         command += " >> .build_output 2>&1"
-    build_process = subprocess.Popen(command, shell=True)
-    build_process.wait()
-    if build_process.returncode != 0:
-        # If _any_ build fails, we exit with return code 1
-        print("Build of " + img_path + " failed, terminating")
-        sys.exit(1)
+
+    with subprocess.Popen(command, shell=True) as build_process:
+        build_process.wait()
+        if build_process.returncode != 0:
+            # If _any_ build fails, we exit with return code 1
+            print("Build of " + img_path + " failed, terminating")
+            sys.exit(1)
+
     # Notify successful build
     print("Built " + img_path + "!")
 
