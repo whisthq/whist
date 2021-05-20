@@ -167,7 +167,7 @@ class InstanceInfo(db.Model):
     CPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
     GPURemainingInInstance = db.Column(db.Float, nullable=False, default=1024.0)
     memoryRemainingInInstanceInMb = db.Column(db.Float, nullable=False, default=2000.0)
-    runningTasksCount = db.Column(db.Integer, nullable=False, default=0)
+    maxContainers = db.Column(db.Integer, nullable=False, default=0)
     last_pinged = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
 
