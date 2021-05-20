@@ -45,7 +45,7 @@ A tree structure is provided below:
 │   ├── blender
 │   │   ├── Dockerfile.20 <- Container image for Blender
 │   │   └── userpref.blend <- Fractal-provided default Blender user settings
-├── helper-scripts
+├── helper_scripts
 │   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
@@ -53,7 +53,7 @@ A tree structure is provided below:
 ├── push_container_image.sh <- Helper script to push a built container image to GHCR
 ├── run_local_container_image.sh <- Helper script to run a locally-built container image
 ├── run_remote_container_image.sh <- Helper script to fetch and run a container image stored on GHCR
-└── testing-scripts
+└── testing_scripts
     ├── connection_tester.py <- Helper script to test UDP/TCP connectivity between a Fractal protocol server in a container and a client
     ├── uinput_server.c <- Helper script to set up a Linux uinput server in a container
     └── uinput_tester.py <- Helper script to test sending uinput events to a uinput server in a container

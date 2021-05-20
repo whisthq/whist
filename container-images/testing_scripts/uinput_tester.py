@@ -1,25 +1,31 @@
 import os
 import time
-import socket
 import uinput
 
 BUS_USB = 0x03
 
 # hotfix uinput to include new hi res scrolling
-uinput.REL_WHEEL_HI_RES = (0x02, 0x0b)
-uinput.REL_HWHEEL_HI_RES = (0x02, 0x0c)
+uinput.REL_WHEEL_HI_RES = (0x02, 0x0B)
+uinput.REL_HWHEEL_HI_RES = (0x02, 0x0C)
 
 # absmouse = uinput.Device([uinput.ABS_X, uinput.ABS_Y])
-relmouse = uinput.Device([
-    uinput.REL_X,
-    uinput.REL_Y,
-    uinput.BTN_LEFT,
-    uinput.BTN_RIGHT,
-    uinput.REL_WHEEL,
-    uinput.REL_HWHEEL,
-    uinput.REL_WHEEL_HI_RES,
-    uinput.REL_HWHEEL_HI_RES
-], name="Fractal Virtual Relative Input", bustype=BUS_USB, vendor=0xf4c1, product=0x1123, version=0x1)
+relmouse = uinput.Device(
+    [
+        uinput.REL_X,
+        uinput.REL_Y,
+        uinput.BTN_LEFT,
+        uinput.BTN_RIGHT,
+        uinput.REL_WHEEL,
+        uinput.REL_HWHEEL,
+        uinput.REL_WHEEL_HI_RES,
+        uinput.REL_HWHEEL_HI_RES,
+    ],
+    name="Fractal Virtual Relative Input",
+    bustype=BUS_USB,
+    vendor=0xF4C1,
+    product=0x1123,
+    version=0x1,
+)
 
 keycodes = [
     uinput.KEY_A,
@@ -150,16 +156,27 @@ keycodes = [
     uinput.KEY_STOPCD,
     uinput.KEY_PLAYPAUSE,
     uinput.KEY_MUTE,
-    uinput.KEY_SELECT
+    uinput.KEY_SELECT,
 ]
 
-keyboard = uinput.Device(keycodes, name="Fractal Virtual Keyboard", bustype=BUS_USB, vendor=0xf4c1, product=0x1122, version=0x1)
+keyboard = uinput.Device(
+    keycodes,
+    name="Fractal Virtual Keyboard",
+    bustype=BUS_USB,
+    vendor=0xF4C1,
+    product=0x1122,
+    version=0x1,
+)
 
-os.system('clear')
+os.system("clear")
 print(f"pid: {os.getpid()}")
-# print(f"absmouse file descriptor: {absmouse._Device__uinput_fd}")
-print(f"relmouse file descriptor: {relmouse._Device__uinput_fd}")
-print(f"keyboard file descriptor: {keyboard._Device__uinput_fd}")
+# print(f"absmouse file descriptor: {absmouse._Device__uinput_fd}") # pylint: disable=protected-access, line-too-long
+print(
+    f"relmouse file descriptor: {relmouse._Device__uinput_fd}"
+)  # pylint: disable=protected-access, line-too-long
+print(
+    f"keyboard file descriptor: {keyboard._Device__uinput_fd}"
+)  # pylint: disable=protected-access, line-too-long
 
 while True:
     # time.sleep(1)
@@ -172,6 +189,7 @@ while True:
     relmouse.emit(uinput.REL_WHEEL_HI_RES, 30)
     print("scrolling")
 
+# import socket
 # SOCKET_PATH = "/tmp/uinput.sock"
 
 # if os.path.exists(SOCKET_PATH):
@@ -196,4 +214,3 @@ while True:
 #                 break
 #     finally:
 #         conn.close()
-
