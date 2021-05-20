@@ -50,6 +50,10 @@ extern MouseMotionAccumulation mouse_state;
 
 extern bool audio_refresh;
 
+extern bool multigesture_active;
+bool active_scroll = false;
+bool active_pinch = false;
+
 /*
 ============================
 Private Functions
@@ -63,6 +67,8 @@ int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
 int handle_mouse_button_up_down(SDL_Event *event);
 int handle_multi_gesture(SDL_Event *event);
+int handle_touch_up(SDL_Event *event);
+int handle_pinch(SDL_Event *event);
 
 /*
 ============================
@@ -319,12 +325,47 @@ int handle_mouse_wheel(SDL_Event *event) {
             (int): 0 on success
     */
 
+    if (active_pinch) {
+        return 0;
+    }
+
+    active_scroll = true;
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
     fmsg.mouseWheel.precise_x = event->wheel.preciseX;
     fmsg.mouseWheel.precise_y = event->wheel.preciseY;
+    send_fmsg(&fmsg);
+
+    return 0;
+}
+
+int handle_pinch(SDL_Event* event) {
+    LOG_INFO("HANDLING PINCH %f %d", event->pinch.magnification, active_pinch);
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MULTIGESTURE;
+    fmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
+                                                     .d_dist = event->pinch.scroll_amount,
+                                                     .x = 0,
+                                                     .y = 0,
+                                                     .num_fingers = 0,
+                                                     .active_gesture = active_pinch};
+
+    fmsg.multigesture.gesture_type = NONE;
+    active_pinch = true;
+    if (event->pinch.magnification < 0) {
+        fmsg.multigesture.gesture_type = PINCH_CLOSE;
+    } else if (event->pinch.magnification > 0) {
+        fmsg.multigesture.gesture_type = PINCH_OPEN;
+    } else if (active_pinch) {
+        // 0 magnification means that the pinch gesture is complete
+        fmsg.multigesture.gesture_type = CANCEL;
+        active_pinch = false;
+        LOG_INFO("SETTING ACTIVE PINCH TO FALSE");
+    }
+
     send_fmsg(&fmsg);
 
     return 0;
@@ -339,6 +380,38 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .y = event->mgesture.y,
                                                      .num_fingers = event->mgesture.numFingers};
     send_fmsg(&fmsg);
+
+    return 0;
+}
+
+int handle_touch_up(SDL_Event *event) {
+    /*
+        Handle the SDL finger touch up event
+
+        Arguments:
+            event (SDL_Event*): SDL event for finger touch event
+
+        Result:
+            (int): 0 on success
+    */
+
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_TOUCH;
+    fmsg.touch = (FractalTouchMessage){.x = event->tfinger.x,
+                                       .y = event->tfinger.y,
+                                       .dx = event->tfinger.dx,
+                                       .dy = event->tfinger.dy,
+                                       .active_gesture = multigesture_active};
+    fmsg.touch.touch_type = FINGER_UP;
+
+    send_fmsg(&fmsg);
+
+    // The multigesture or scroll has ended
+    if (active_pinch || multigesture_active || active_scroll) {
+        multigesture_active = false;
+        active_scroll = false;
+        active_pinch = false;
+    }
 
     return 0;
 }
@@ -374,8 +447,11 @@ int handle_sdl_event(SDL_Event *event) {
             (int): 0 on success, -1 on failure
     */
 
+    LOG_INFO("EVENT: type: %d", event->type);
+
     switch (event->type) {
-        case SDL_WINDOWEVENT:
+        case SDL_WINDOWEVENT: {
+            LOG_INFO("SDL WINDOW EVENT %d", event->window.event);
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                 if (handle_window_size_changed(event) != 0) {
                     return -1;
@@ -386,6 +462,7 @@ int handle_sdl_event(SDL_Event *event) {
                 }
             }
             break;
+        }
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED:
             // Refresh the audio device
@@ -430,6 +507,18 @@ int handle_sdl_event(SDL_Event *event) {
                 return -1;
             }
             break;
+        case SDL_FINGERUP:
+            if (handle_touch_up(event) != 0) {
+                return -1;
+            }
+            break;
+        case SDL_PINCH: {
+            LOG_INFO("DETECTED PINCH EVENT WITH MAGNIFICATION %f", event->pinch.magnification);
+            if (handle_pinch(event) != 0) {
+                return -1;
+            }
+            break;
+        }
         case SDL_QUIT:
             LOG_INFO("Forcefully Quitting...");
             exiting = true;

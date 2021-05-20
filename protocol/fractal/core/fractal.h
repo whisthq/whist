@@ -464,6 +464,18 @@ typedef struct FractalMouseMotionMessage {
 } FractalMouseMotionMessage;
 
 /**
+ * @brief   Multigesture type.
+ * @details The type of multigesture.
+ */
+typedef enum FractalMultigestureType {
+    NONE = 0,
+    PINCH_OPEN = 1,
+    PINCH_CLOSE = 2,
+    ROTATE = 3,
+    CANCEL = 4,
+} FractalMultigestureType;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */

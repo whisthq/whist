@@ -83,3 +83,12 @@ int set_native_window_color(SDL_Window *window, FractalRGBColor color) {
                                                   count:4]];
     return 0;
 }
+
+// - (void)magnifyWithEvent:(NSEvent *)event {
+//     SDL_SysWMinfo sys_info = {0};
+//     SDL_GetWindowWMInfo(window, &sys_info);
+//     NSWindow *native_window = sys_info.info.cocoa.window;
+
+//     float magnification = [event magnification];
+//     LOG_INFO("magnification: %f", magnification);
+// }
