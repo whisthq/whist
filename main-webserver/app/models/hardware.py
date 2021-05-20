@@ -154,7 +154,7 @@ class InstanceInfo(db.Model):
         CPURemainingPerInstance (float): CPU that isn't in use
         GPURemainingPerInstance (float): GPU that isn't in use
         memoryRemainingPerInstance (float): RAM not in use
-        runningTasksCount (int): how many containers are running?
+        maxContainers (int): how many containers can run at once?
         last_pinged (int): when did this instance last tell us it existed?
         ami_id (str): what image is this machine based on?
     """
@@ -172,6 +172,25 @@ class InstanceInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     last_pinged = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
+
+
+class InstanceSorted(db.Model):
+    """
+    compute instance information
+
+    Attributes:
+        instance_id (string): instance id from AWS console
+        instance_type (string): what hardware is the instance running on?
+        max_containers (int): how many containers
+        running_containers (int): how many containers are running?
+    """
+
+    __tablename__ = "instance_info"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
+    max_containers = db.Column(db.Integer, nullable=False)
+    instance_type = db.Column(db.String(250), nullable=False)
+    running_containers = db.Column(db.Integer, nullable=False)
 
 
 class RegionToAmi(db.Model):
