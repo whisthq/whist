@@ -312,6 +312,8 @@ Note that all conftest files contain test fixtures for their respective director
 │   │   │   │   └── test_ecs_client.py --> basic tests of ECSClient functionality
 │   │   │   │   └── test_ec2_client.py --> basic tests of EC2Client functionality
 │   │   └── utils
+│   │       ├── cloud_interface -- > our cloud-general library/interface
+│   │       │   ├── base_cloud_interface.py --> our abstract interface for cloud provisioning clients
 │   │       ├── aws -- > utility scripts for interfacing with AWS
 │   │       │   ├── autoscaling.py --> scripts for manipulating ASGs and their associated clusters
 │   │       │   ├── aws_general.py --> a few general utilities for AWS
