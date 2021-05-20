@@ -1,6 +1,9 @@
 // Build the protocol, build tailwind, and run `snowpack dev` with
 // test positional arguments. Extra arguments are added as a comma separated list
-// and passed in as an environment variable
+// and passed in as an environment variable.
+//
+// Ex: yarn build:manual loginError containerPollingError
+//
 
 const helpers = require("./build-package-helpers")
 

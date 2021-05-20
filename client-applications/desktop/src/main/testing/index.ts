@@ -7,7 +7,7 @@ import * as schemas from "@app/main/testing/schemas"
 const isMockingEnabled = () => process.env.MANUAL_TEST === "true"
 
 // Arguments are passed through environment varialbes as positional arguments
-// separated by commas
+// separated by commas processed in scripts/testManual.js
 const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 
 // The form of this map will be something like:
@@ -18,9 +18,13 @@ const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 //    }
 // }
 // We only need to create this map once at program start, so the below
-// variable holds a map that looks like the example above.
+// function creates a map that looks like the example above.
 // The withMocking function will check this map for a name like "authFlow".
 // If found, withMocking will use the value at "authFlow" as its output.
+// Just as a note, getMocks() will run with every invocation of flow(), albeit
+// only in testing mode. Some optimization here can be desired eventually,
+// such as only calling the mocks once instead of every time in withMocking()
+// when a flow is created.
 const getMocks = () => {
   const args = getMockArgs()
   return args.reduce((result, value) => {
