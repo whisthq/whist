@@ -43,12 +43,12 @@ if build_all:
     )
 
 # Get dependency path from given image path
-def get_dep_from_image(image_path):  # returns dep_path
+def get_dependency_from_image(img_path):  # returns dep_path
     # Open Dockerfile for the image path
-    with open(image_path + "/Dockerfile.20") as f:
+    with open(img_path + "/Dockerfile.20") as file:
         # Regex match the Dockerfile dependency, with a capture group on the dependency name
         regex = re.compile("^[ ]*FROM[ ]+fractal/([^:]*):current-build")
-        for line in f:
+        for line in file:
             result = regex.search(line)
             if result:
                 # Grab the capture group
@@ -70,23 +70,23 @@ dependencies = {}
 i = 0
 while i < len(image_paths):
     image_path = image_paths[i]
-    dependency = get_dep_from_image(image_path)
-    dependencies[image_path] = dependency
-    if dependency and dependency not in image_paths:
-        image_paths.append(dependency)
+    dep = get_dependency_from_image(image_path)
+    dependencies[image_path] = dep
+    if dep and dep not in image_paths:
+        image_paths.append(dep)
     i += 1
 
 
-def build_image_path(image_path):
+def build_image_path(img_path):
     # Build image path
-    print("Building " + image_path + "...")
+    print("Building " + img_path + "...")
     command = (
         "docker build -f "
-        + image_path
+        + img_path
         + "/Dockerfile.20 "
-        + image_path
+        + img_path
         + " -t fractal/"
-        + image_path
+        + img_path
         + ":current-build"
     )
     if not show_output:
@@ -95,21 +95,21 @@ def build_image_path(image_path):
     build_process.wait()
     if build_process.returncode != 0:
         # If _any_ build fails, we exit with return code 1
-        print("Build of " + image_path + " failed, terminating")
+        print("Build of " + img_path + " failed, terminating")
         sys.exit(1)
     # Notify successful build
-    print("Built " + image_path + "!")
+    print("Built " + img_path + "!")
 
-    # Take all of the image_paths that depended on this image_path,
-    # and save them as the next layer of image_paths to build
+    # Take all of the image_paths that depended on this img_path, and save them
+    # as the next layer of image_paths to build
     next_layer = []
     for lhs in dependencies:
         dependency = dependencies[lhs]
-        if dependency and dependency == image_path:
-            # Clear out dependencies that used to depend on image_path,
-            # as this image_path has just finished building
+        if dependency and dependency == img_path:
+            # Clear out dependencies that used to depend on img_path, as this
+            # img_path has just finished building
             dependencies[lhs] = None
-            # Save next layer image_path
+            # Save next layer img_path
             next_layer.append(lhs)
 
     # Build all of those next-layer image_paths asynchronously
@@ -130,7 +130,7 @@ def build_image_path(image_path):
 # Get all image_path's with no dependencies
 root_level_images = []
 for image_path in dependencies:
-    if dependencies[image_path] == None:
+    if dependencies[image_path] is None:
         root_level_images.append(image_path)
 
 # Build all root_level_images
