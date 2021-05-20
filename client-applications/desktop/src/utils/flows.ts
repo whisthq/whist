@@ -55,16 +55,16 @@ export const flow = <A>(
       : EMPTY
   )
 
-export const initFlow = <A>(
+export const withEffect = <A>(
   trigger: Observable<A>,
-  flow: (trigger: Observable<A>) => any,
-  ...effects: Array<(x: A) => void>
+  flows: Record<string, any>,
+  effect?: (x: A) => void
 ) => {
-  flow(trigger)
-
-  trigger.subscribe((x: A) => {
-    effects?.forEach((effect) => effect(x))
+  mapValues(flows).forEach((flow: any) => {
+    flow(trigger)
   })
+
+  trigger.subscribe((x: A) => effect?.(x))
 }
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
