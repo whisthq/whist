@@ -6,9 +6,8 @@ import * as schemas from "@app/main/testing/schemas"
 // that we're in "testing mode". We'll just set to true for now.
 const isMockingEnabled = () => process.env.MANUAL_TEST === "true"
 
-// These arguments should probably be passed through the `yarn test:manual`
-// command or however we enter testing mode.
-// For now, we'll just return a static list of the loginError string.
+// Arguments are passed through environment varialbes as positional arguments
+// separated by commas
 const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 
 // The form of this map will be something like:

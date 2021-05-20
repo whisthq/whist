@@ -1,4 +1,5 @@
-// Build the protocol, build tailwind, and run `snowpack dev`
+// Build the protocol, build tailwind, and run `snowpack dev` with
+// test positional arguments. Extra arguments are added
 
 const helpers = require("./build-package-helpers")
 
