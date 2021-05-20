@@ -7,13 +7,8 @@ interface StripeContextInterface {
   action: string
   stripeCheckoutId: string
   stripePortalUrl: string
-  getCheckoutSession: (
-    priceId: string,
-    customerId: string,
-    successUrl: string,
-    cancelUrl: string
-  ) => void
-  getPortalSession: (customerId: string, returnUrl: string) => void
+  getCheckoutSession: (successUrl: string, cancelUrl: string) => void
+  getPortalSession: (returnUrl: string) => void
 }
 
 const StripeContext = React.createContext<StripeContextInterface>({
@@ -49,20 +44,13 @@ export const StripeProvider = (props: {
   const [stripePortalUrl, setStripePortalUrl] = useState("")
   const stripe = useStripe()
 
-  // The two arguments priceId and customerId are required parameters;
-  // the url's are technically optional.
-  const getCheckoutSession = (
-    priceId: string,
-    customerId: string,
-    successUrl: string,
-    cancelUrl: string
-  ) => {
+  // The arguments customerId and priceId are filled in by the payments webserver;
+  // the urls are technically optional.
+  const getCheckoutSession = (successUrl: string, cancelUrl: string) => {
     setMainState({
       action: {
         type: RendererAction.CHECKOUT,
         payload: {
-          priceId,
-          customerId,
           successUrl,
           cancelUrl,
         },
@@ -71,12 +59,11 @@ export const StripeProvider = (props: {
     })
   }
 
-  const getPortalSession = (customerId: string, returnUrl: string) => {
+  const getPortalSession = (returnUrl: string) => {
     setMainState({
       action: {
         type: RendererAction.PORTAL,
         payload: {
-          customerId,
           returnUrl,
         },
       },
