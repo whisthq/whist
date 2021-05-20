@@ -1,6 +1,5 @@
 import os
 import time
-import socket
 import uinput
 
 BUS_USB = 0x03
@@ -171,9 +170,13 @@ keyboard = uinput.Device(
 
 os.system("clear")
 print(f"pid: {os.getpid()}")
-# print(f"absmouse file descriptor: {absmouse._Device__uinput_fd}")
-print(f"relmouse file descriptor: {relmouse._Device__uinput_fd}")
-print(f"keyboard file descriptor: {keyboard._Device__uinput_fd}")
+# print(f"absmouse file descriptor: {absmouse._Device__uinput_fd}") # pylint: disable=protected-access, line-too-long
+print(
+    f"relmouse file descriptor: {relmouse._Device__uinput_fd}"
+)  # pylint: disable=protected-access, line-too-long
+print(
+    f"keyboard file descriptor: {keyboard._Device__uinput_fd}"
+)  # pylint: disable=protected-access, line-too-long
 
 while True:
     # time.sleep(1)
@@ -186,6 +189,7 @@ while True:
     relmouse.emit(uinput.REL_WHEEL_HI_RES, 30)
     print("scrolling")
 
+# import socket
 # SOCKET_PATH = "/tmp/uinput.sock"
 
 # if os.path.exists(SOCKET_PATH):
