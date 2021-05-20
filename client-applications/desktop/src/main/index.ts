@@ -16,7 +16,7 @@
 import { app } from "electron"
 import { flow, fork } from "@app/utils/flows"
 import { BehaviorSubject, merge, fromEvent, zip, combineLatest } from "rxjs"
-import { switchMap, pluck, sample, map } from "rxjs/operators"
+import { switchMap, pluck, sample, map, tap } from "rxjs/operators"
 import { signupFlow } from "@app/main/observables/signup"
 import { loginFlow } from "@app/main/observables/login"
 import { protocolLaunchFlow } from "@app/main/observables/protocol"
@@ -126,14 +126,17 @@ const mainFlow = flow("mainFlow", (name, trigger) => {
   const protocol = protocolLaunchFlow(name, auth.success)
 
   zip(protocol.success, container.success).subscribe(([protocol, info]) => {
-    protocolStreamInfo(protocol, info)
+    protocolStreamInfo(protocol as any, info)
   })
 
   return {
     success: zip(auth.success, container.success, protocol.success),
-    failure: merge(auth.failure, container.failure, protocol.failure),
+    failure: merge(auth.failure, container.failure),
   }
 })
 
 // Kick off the main flow to run the app.
-mainFlow("app", fromEvent(app, "ready"))
+const main = mainFlow("app", fromEvent(app, "ready"))
+
+main.success.subscribe()
+main.failure.subscribe()

@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
+import { from, combineLatest, Observable } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -23,7 +23,7 @@ import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
 import { flow, fork } from "@app/utils/flows"
 
-const signupGates = flow<any>("signupGates", (_name, trigger) =>
+const signupGates = flow("signupGates", (_name, trigger: Observable<any>) =>
   fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
@@ -39,9 +39,9 @@ const signupGates = flow<any>("signupGates", (_name, trigger) =>
   )
 )
 
-export const generateConfigTokenGate = flow<any>(
+export const generateConfigTokenGate = flow(
   "generateConfigTokenGate",
-  (_name, trigger) =>
+  (_name, trigger: Observable<any>) =>
     fork(
       trigger.pipe(
         switchMap(({ password }) =>
