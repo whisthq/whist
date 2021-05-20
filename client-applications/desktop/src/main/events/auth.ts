@@ -13,24 +13,26 @@ export interface AuthEvent {
 }
 
 export enum AuthEventType {
-  SIGNOUT = "signoutRequest",
-  QUIT = "quitRequest",
+  LOAD = "loadTokens",
+  REFRESH = "refreshTokens",
 }
 
 export const eventAuth = new Subject<AuthEvent>()
 
 export const authEvents = {
   loadTokens: (data: Record<string, string>) =>
-    eventAuth.next({ type: AuthEventType.SIGNOUT, payload: data }),
+    eventAuth.next({ type: AuthEventType.LOAD, payload: data }),
   refreshTokens: (data: Record<string, string>) =>
-    eventAuth.next({ type: AuthEventType.QUIT, payload: data }),
+    eventAuth.next({ type: AuthEventType.REFRESH, payload: data }),
 }
 
+// Observable for when tokens are loaded for the first time
 export const loadTokens = eventAuth.pipe(
   filter((x) => x !== undefined),
   map((x) => x.payload)
 )
 
+// Observable for when tokens are regenerated using a refresh token
 export const refreshTokens = eventAuth.pipe(
   filter((x) => x !== undefined),
   map((x) => x.payload)

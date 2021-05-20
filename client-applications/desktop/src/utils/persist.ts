@@ -44,6 +44,7 @@ export const persistClear = () => {
   store.clear()
 }
 
+// Clears the keys given as arguments
 export const clearKeys = (...keys: string[]) => {
   for (const key of keys) {
     store.set(key, "")

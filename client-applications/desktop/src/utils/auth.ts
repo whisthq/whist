@@ -7,6 +7,7 @@ import { configPost } from "@fractal/core-ts"
 
 const { apiIdentifier, auth0Domain, clientId } = config.auth0
 
+// URI that Auth0 redirects authenticated users to
 const redirectUri = "http://localhost/callback"
 
 const auth0HttpConfig = {
@@ -14,6 +15,7 @@ const auth0HttpConfig = {
 }
 const post = configPost(auth0HttpConfig)
 
+// Auth0 login page URL
 export const getAuthenticationURL = () => {
   return [
     `https://${auth0Domain}/authorize`,
@@ -25,6 +27,7 @@ export const getAuthenticationURL = () => {
   ].join("")
 }
 
+// Refreshes access token
 export const refreshTokens = async (refreshToken: string) => {
   const response = await post({
     endpoint: "/oauth/token",
@@ -59,6 +62,7 @@ export const loadTokens = async (callbackURL: string) => {
   return extractTokens(data)
 }
 
+// Returns tokens and profile data from Auth0 response
 export const extractTokens = (response: Record<string, string>) => {
   const profile: Record<string, string> = jwtDecode(response.id_token)
   const { sub, email } = profile
