@@ -51,9 +51,6 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip
-              run: pip install --upgrade pip
-
             - name: Install requirements
               working-directory: .github/workflows/helpers
               run: pip install -r requirements.txt -r aws/requirements.txt -r notifications/requirements.txt
