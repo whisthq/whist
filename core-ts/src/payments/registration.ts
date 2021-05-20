@@ -12,13 +12,16 @@ import { StripeClient } from './'
  */
 export async function registerWithTrial(
   this: StripeClient,
-  priceId: string,
-  trialLength: number,
-  email: string,
-  phone: string,
-  id: string,
-  username: string
+  args: {
+    priceId: string,
+    trialLength: number,
+    email: string,
+    phone: string,
+    id: string,
+    username: string
+  }
 ) {
+  const { email, phone, id, username, trialLength, priceId } = args;
   const customer = await this._stripe.customers.create({
     email,
     phone,
