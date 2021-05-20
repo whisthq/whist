@@ -1,6 +1,7 @@
 import time
 from datetime import timedelta
 from typing import Dict, Optional
+from flask import current_app
 
 import stripe
 
@@ -8,6 +9,8 @@ from pyzipcode import ZipCodeDatabase
 
 from app.models import db, User
 from app.serializers.public import UserSchema
+
+import json
 
 
 class NonexistentUser(Exception):
@@ -157,20 +160,17 @@ class StripeClient:
         trial_val: Optional[time.struct_time] = self.get_customer_info(customer_id)["trial_end"]
         return trial_val is not None and trial_val > time.localtime(time.time())
 
-    def create_checkout_session(
-        self, success_url: str, cancel_url: str, customer_id: str, price_id: str
-    ) -> str:
+    def create_checkout_session(self, success_url: str, cancel_url: str, customer_id: str) -> str:
         """
-        Returns checkout session id from Stripe client
+                Returns checkout session id from Stripe client
 
-        Args:
-            customer_id (str): the stripe id of the user
-            price_id (str): the price id of the product (subscription)
-            success_url (str): url to redirect to upon completion success
-            cancel_url (str): url to redirect to upon cancelation
+                Args:
+                    customer_id (str): the stripe id of the user
+        =            success_url (str): url to redirect to upon completion success
+                    cancel_url (str): url to redirect to upon cancelation
 
-        Returns:
-            str: checkout session id
+                Returns:
+                    str: checkout session id
         """
         try:
             checkout_session = stripe.checkout.Session.create(
@@ -179,7 +179,7 @@ class StripeClient:
                 customer=customer_id,
                 payment_method_types=["card"],
                 mode="subscription",
-                line_items=[{"price": price_id, "quantity": 1}],
+                line_items=[{"price": current_app.config["STRIPE_PRICE_ID"], "quantity": 1}],
             )
 
             return checkout_session["id"]
@@ -202,5 +202,30 @@ class StripeClient:
                 customer=customer_id, return_url=return_url
             )
             return billing_session.url
+        except Exception as e:
+            raise e
+
+    def authorize_webhook(self, payload, signature_header: str) -> stripe.Event:
+        """
+        Authenticates any requests made to the webhook endpoint.
+
+        Args:
+            payload (HTTP Request payload, unaltered): payload of the HTTP request
+            signature_header (str): header with stripe signature
+
+        Returns:
+            stripe.Event: stripe event constructed from the args
+        """
+        try:
+            # TODO: uncomment this once the webhook is in the stripe dashboard and STRIPE_WEBHOOK_SECRET has been populated
+            # return stripe.Webhook.construct_event(
+            #     payload, signature_header, current_app.config["STRIPE_WEBHOOK_SECRET"]
+            # )
+
+            # TODO: delete this once the webhook is in the stripe dashboard and STRIPE_WEBHOOK_SECRET has been populated
+            event = json.loads(payload)
+            event_type = event["type"]
+            return event
+
         except Exception as e:
             raise e
