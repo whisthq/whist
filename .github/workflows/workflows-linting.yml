@@ -52,7 +52,6 @@ jobs:
                   python-version: 3.8
 
             - name: Upgrade pip
-              working-directory: main-webserver
               run: pip install --upgrade pip
 
             - name: Install requirements

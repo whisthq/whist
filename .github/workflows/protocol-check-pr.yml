@@ -15,7 +15,7 @@ on:
             - "protocol/**"
             - "!protocol/README.md"
             - ".github/workflows/protocol-check-pr.yml"
-            - "container-images/helper-scripts/copy_protocol_build.sh"
+            - "container-images/helper_scripts/copy_protocol_build.sh"
     workflow_dispatch:
 
 jobs:
@@ -220,4 +220,4 @@ jobs:
             - name: Ensure that all protocol build files are present
               if: runner.os == 'Linux'
               working-directory: container-images
-              run: ./helper-scripts/copy_protocol_build.sh
+              run: ./helper_scripts/copy_protocol_build.sh
