@@ -288,7 +288,7 @@ CREATE TABLE hardware.instance_info (
 CREATE VIEW hardware.instance_sorted AS
  SELECT sub_with_running.instance_id,
     sub_with_running.instance_type,
-    sub_with_running."maxContainers",
+    sub_with_running."maxContainers" as max_containers,
     sub_with_running.running_containers
    FROM ( SELECT base_table.instance_id,
             base_table.instance_type,
