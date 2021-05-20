@@ -191,10 +191,9 @@ module.exports = {
   // configuration with secrets we don't want to store in version control.
   populateSecretKeys: (keys) => {
     const newEnv = {}
-    for (const k in keys) {
+    keys.forEach((k) => {
       newEnv[k] = process.env[k]
-    }
-
+    })
     addEnvOverride(newEnv)
   },
 
