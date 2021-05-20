@@ -52,7 +52,6 @@ jobs:
             deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
             webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
-            auth0_client_secret: ${{ steps.set-auth0-client-secret.outputs.auth0_secret }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -155,21 +154,6 @@ jobs:
                   fi
                   echo "webserver_url is set to: $WEBSERVER_URL"
                   echo "::set-output name=webserver_url::$WEBSERVER_URL"
-
-            - name: Set Auth0 Client secret based on Git Branch (prod, staging, dev)
-              id: set-auth0-client-secret
-              run: |
-                  # Grab branch_name from detect-branch
-                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
-
-                  if [ "$BRANCH_NAME" == "prod" ]; then
-                      AUTH0_SECRET=${{ secrets.PROD_AUTH0_CLIENT_SECRET }}
-                  elif [ "$BRANCH_NAME" == "staging" ]; then
-                      AUTH0_SECRET=${{ secrets.STAGING_AUTH0_CLIENT_SECRET }}
-                  else
-                      AUTH0_SECRET=${{ secrets.DEV_AUTH0_CLIENT_SECRET }}
-                  fi
-                  echo "::set-output name=auth0_secret::$AUTH0_SECRET"
 
             # This will create a "jobs" variable, containing the list of jobs to run (Each wrapped in a |)
             - name: Detect Job(s)
@@ -1307,6 +1291,7 @@ jobs:
         defaults:
             run:
                 working-directory: ./microservices/auth0
+        needs: [fractal-publish-build-config]
         steps:
             - name: Download files from the current repository
               uses: actions/checkout@v2
@@ -1324,7 +1309,7 @@ jobs:
 
             - name: Deploy changes to the Auth0 tenant
               env:
-                  AUTH0_CLIENT_SECRET: ${{ needs.fractal-publish-build-config.outputs.auth0_client_secret }}
+                  AUTH0_CLIENT_SECRET: ${{ secrets[format('{0}_AUTH0_CLIENT_SECRET', needs.fractal-publish-build-config.outputs.branch)] }}
               run: npm run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
     # Create GitHub Tag
