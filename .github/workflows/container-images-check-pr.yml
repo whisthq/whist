@@ -56,9 +56,6 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Upgrade pip
-              run: pip install --upgrade pip
-
             - name: Install requirements
               working-directory: container-images
               run: pip install -r helper_scripts/requirements.txt -r testing_scripts/requirements.txt
