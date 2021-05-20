@@ -218,6 +218,32 @@ int send_clipboard_packets(void* opaque) {
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
 int sync_udp_packets(void* opaque) {
+    LOG_INFO("sync_udp_packets running on thread %p", SDL_GetThreadID(NULL));
+    SDL_SetThreadPriority(SDL_THREAD_PRIORITY_HIGH);
+
+    while (run_sync_udp_packets) {
+        ON_TIMER(5.0, ack(&packet_udp_context));
+
+
+        FractalPacket *packet = read_udp_packet(&packet_udp_context);
+        if (packet) {
+            switch (packet->type) {
+                case PACKET_VIDEO:
+                    handle_video_frame(packet);
+                case PACKET_AUDIO:
+                    handle_audio_frame(packet);
+                case PACKET_MESSAGE:
+                    handle_server_message((FractalServerMessage*)packet->data,
+                                          (size_t)packet->payload_size);
+                default:
+                    LOG_WARNING("UDP packet received of invalid type %d", packet->type);
+                    break;
+            }
+        }
+    }
+}
+
+int sync_udp_packets(void* opaque) {
     /*
         Receive any packets from the server and handle them appropriately
 
@@ -265,16 +291,6 @@ int sync_udp_packets(void* opaque) {
     clock last_ack;
     start_timer(&last_ack);
 
-    // NOTE: FOR DEBUGGING
-    // This code will drop packets intentionally to test protocol's ability to
-    // handle such events drop_distance_sec is the number of seconds in-between
-    // simulated drops drop_time_ms is how long the drop will last for
-    clock drop_test_timer;
-    int drop_time_ms = 250;
-    int drop_distance_sec = -1;
-    bool is_currently_dropping = false;
-    start_timer(&drop_test_timer);
-
     while (run_receive_packets) {
         if (get_timer(last_ack) > 5.0) {
             ack(&packet_udp_context);
@@ -319,30 +335,9 @@ int sync_udp_packets(void* opaque) {
         // Time the following recvfrom code
         start_timer(&recvfrom_timer);
 
-        // START DROP EMULATION
-        if (is_currently_dropping) {
-            if (drop_time_ms > 0 && get_timer(drop_test_timer) * MS_IN_SECOND > drop_time_ms) {
-                is_currently_dropping = false;
-                start_timer(&drop_test_timer);
-            }
-        } else {
-            if (drop_distance_sec > 0 && get_timer(drop_test_timer) > drop_distance_sec) {
-                is_currently_dropping = true;
-                start_timer(&drop_test_timer);
-            }
-        }
-        // END DROP EMULATION
-
         FractalPacket* packet;
 
-        if (is_currently_dropping) {
-            // Simulate dropping packets by just not calling recvp
-            SDL_Delay(1);
-            LOG_INFO("DROPPING");
-            packet = NULL;
-        } else {
-            packet = read_udp_packet(&packet_udp_context);
-        }
+        packet = read_udp_packet(&packet_udp_context);
 
         double recvfrom_short_time = get_timer(recvfrom_timer);
 
