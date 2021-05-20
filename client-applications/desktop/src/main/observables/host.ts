@@ -10,7 +10,7 @@ import {
   hostServiceConfigValid,
   hostServiceConfigError,
 } from "@app/utils/host"
-import { from, interval, of, merge, combineLatest } from "rxjs"
+import { from, interval, of, merge, combineLatest, Observable } from "rxjs"
 import {
   map,
   share,
@@ -23,9 +23,9 @@ import {
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
 
-const hostServiceInfoGates = flow<any>(
+const hostServiceInfoGates = flow(
   "hostServiceInfoGates",
-  (_name, trigger) =>
+  (_name, trigger: Observable<any>) =>
     fork(
       trigger.pipe(
         switchMap(({ email, accessToken }) =>
@@ -41,7 +41,7 @@ const hostServiceInfoGates = flow<any>(
     )
 )
 
-const hostPollingInner = flow<any>("hostPollingInner", (name, trigger) => {
+const hostPollingInner = flow("hostPollingInner", (name, trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
@@ -79,20 +79,22 @@ const hostInfoFlow = flow("hostInfoFlow", (name, trigger) => {
   }
 })
 
-const hostConfigFlow = flow<any>("hostConfigFlow", (_name, trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
-        from(
-          hostServiceConfig(hostIP, hostPort, hostSecret, email, configToken)
+const hostConfigFlow = flow(
+  "hostConfigFlow",
+  (_name, trigger: Observable<any>) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ hostIP, hostPort, hostSecret, email, configToken }) =>
+          from(
+            hostServiceConfig(hostIP, hostPort, hostSecret, email, configToken)
+          )
         )
-      )
-    ),
-    {
-      success: (result) => hostServiceConfigValid(result),
-      failure: (result) => hostServiceConfigError(result),
-    }
-  )
+      ),
+      {
+        success: (result) => hostServiceConfigValid(result),
+        failure: (result) => hostServiceConfigError(result),
+      }
+    )
 )
 
 export const hostServiceFlow = flow("hostServiceFlow", (name, trigger) => {

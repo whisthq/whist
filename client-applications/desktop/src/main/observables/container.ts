@@ -18,26 +18,28 @@ import {
 } from "@app/utils/container"
 import {} from "@app/utils/container"
 import { loadingFrom } from "@app/utils/observables"
-import { from, of, interval, merge } from "rxjs"
+import { from, of, interval, merge, Observable } from "rxjs"
 import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
 import { fork, flow } from "@app/utils/flows"
 import { some } from "lodash"
 
-const containerInfoGates = flow<any>("containerInfoGates", (_name, trigger) =>
-  fork(
-    trigger.pipe(
-      switchMap(({ containerID, accessToken }) =>
-        from(containerInfo(containerID, accessToken))
-      )
-    ),
-    {
-      success: (result) => containerInfoSuccess(result),
-      pending: (result) => containerInfoPending(result),
-      failure: (result) =>
-        containerInfoError(result) ||
-        !some([containerInfoPending(result), containerInfoSuccess(result)]),
-    }
-  )
+const containerInfoGates = flow(
+  "containerInfoGates",
+  (_name, trigger: Observable<any>) =>
+    fork(
+      trigger.pipe(
+        switchMap(({ containerID, accessToken }) =>
+          from(containerInfo(containerID, accessToken))
+        )
+      ),
+      {
+        success: (result) => containerInfoSuccess(result),
+        pending: (result) => containerInfoPending(result),
+        failure: (result) =>
+          containerInfoError(result) ||
+          !some([containerInfoPending(result), containerInfoSuccess(result)]),
+      }
+    )
 )
 
 const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
@@ -53,9 +55,9 @@ const containerPollingInner = flow("containerPollingInner", (name, trigger) => {
   }
 })
 
-export const containerCreateFlow = flow<any>(
+export const containerCreateFlow = flow(
   "containerCreateFlow",
-  (_name, trigger) => {
+  (_name, trigger: Observable<any>) => {
     const create = fork(
       trigger.pipe(
         switchMap(({ email, accessToken }) =>
