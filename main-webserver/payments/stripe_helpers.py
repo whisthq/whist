@@ -22,15 +22,12 @@ from payments.stripe_client import (
 )
 
 
-def checkout_helper(
-    success_url: str, cancel_url: str, customer_id: str, price_id: str
-) -> Tuple[str, int]:
+def checkout_helper(success_url: str, cancel_url: str, customer_id: str) -> Tuple[str, int]:
     """
     Returns checkout session id from Stripe client
 
     Args:
         customer_id (str): the stripe id of the user
-        price_id (str): the price id of the product (subscription)
         success_url (str): url to redirect to upon completion success
         cancel_url (str): url to redirect to upon cancelation
 
@@ -39,7 +36,7 @@ def checkout_helper(
     """
     client = StripeClient(current_app.config["STRIPE_SECRET"])
     try:
-        checkout_id = client.create_checkout_session(success_url, cancel_url, customer_id, price_id)
+        checkout_id = client.create_checkout_session(success_url, cancel_url, customer_id)
         return (
             jsonify({"session_id": checkout_id}),
             SUCCESS,
@@ -67,7 +64,7 @@ def billing_portal_helper(customer_id: str, return_url: str) -> Tuple[str, int]:
         return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
 
 
-def has_access_helper(stripe_id: str) -> bool:
+def has_access_helper(stripe_id: str) -> Tuple[str, int]:
     """
     Returns whether customer is subscribed or trialed
 
@@ -83,3 +80,23 @@ def has_access_helper(stripe_id: str) -> bool:
         return jsonify(subscribed=subscribed), SUCCESS
     except Exception as e:
         return jsonify({"error": {"message": str(e)}}), BAD_REQUEST
+
+
+def webhook_helper(request):
+    """
+    Authenticates any requests made to the webhook endpoint.
+
+    Args:
+        payload (HTTP Request payload, unaltered): payload of the HTTP request
+        signature_header (str): header with stripe signature
+
+    Returns:
+        stripe.Event: stripe event constructed from the args
+    """
+    client = StripeClient(current_app.config["STRIPE_SECRET"])
+    try:
+        payload = request.data
+        signature_header = request.headers["HTTP_STRIPE_SIGNATURE"]
+        return client.authorize_webhook(payload, signature_header)
+    except Exception as e:
+        raise e

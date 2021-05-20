@@ -20,15 +20,7 @@ import {
 
 // Listens for a checkout portal request from the main IPC channel
 export const stripeCheckoutRequest = stripeCheckoutAction.pipe(
-  filter(
-    (req) => (req?.customerId ?? "") !== "" && (req?.priceId ?? "") !== ""
-  ),
-  map(({ customerId, priceId, successUrl, cancelUrl }) => [
-    customerId,
-    priceId,
-    successUrl,
-    cancelUrl,
-  ]),
+  map(({ successUrl, cancelUrl }) => [successUrl, cancelUrl]),
   share()
 )
 
@@ -36,8 +28,8 @@ export const stripeCheckoutRequest = stripeCheckoutAction.pipe(
 // back to the renderer thread
 export const stripeCheckoutProcess = stripeCheckoutRequest.pipe(
   map(
-    async ([customerId, priceId, successUrl, cancelUrl]) =>
-      await stripeCheckoutCreate(customerId, priceId, successUrl, cancelUrl)
+    async ([successUrl, cancelUrl]) =>
+      await stripeCheckoutCreate(successUrl, cancelUrl)
   ),
   exhaustMap((req) => from(req)),
   share()
@@ -55,20 +47,15 @@ export const stripeCheckoutFailure = stripeCheckoutProcess.pipe(
 
 // Listens for a customer portal request from the main IPC channel
 export const stripePortalRequest = stripePortalAction.pipe(
-  filter(
-    (req) => (req?.customerId ?? "") !== "" && (req?.returnUrl ?? "") !== ""
-  ),
-  map(({ customerId, returnUrl }) => [customerId, returnUrl]),
+  filter((req) => (req?.returnUrl ?? "") !== ""),
+  map(({ returnUrl }) => [returnUrl]),
   share()
 )
 
 // Waits for a webserver call to get the customer portal URL to send
 // back to the renderer thread.
 export const stripePortalProcess = stripePortalRequest.pipe(
-  map(
-    async ([customerId, returnUrl]) =>
-      await stripePortalCreate(customerId, returnUrl)
-  ),
+  map(async ([returnUrl]) => await stripePortalCreate(returnUrl)),
   exhaustMap((req) => from(req)),
   share()
 )
