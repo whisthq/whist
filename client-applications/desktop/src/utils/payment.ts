@@ -8,24 +8,18 @@ export const stripeCheckoutCreate = async (
       Makes a webserver call to get a stripe checkout id 
     
     Arguments: 
-      customerId (str): stripe customer id of the user 
-      priceId (str): price id of the product 
       successUrl (str): URL to redirect to upon success 
       cancelUrl (str): URL to redirect to upon cancelation
     
     Returns: 
       JSON request containing checkout id 
   */
-  customerId: string,
-  priceId: string,
   successUrl: string,
   cancelUrl: string1To1000
 ) =>
   post({
     endpoint: "/stripe/create_checkout_session",
     body: {
-      customer_id: customerId,
-      price_id: priceId,
       success_url: successUrl,
       cancel_url: cancelUrl,
     },
@@ -37,19 +31,16 @@ export const stripePortalCreate = async (
       Makes a webserver call to get a stripe customer portal url 
     
     Arguments: 
-      customerId (str): stripe customer id of the user 
       returnUrl (str): URL to redirect to upon after leaving the portal
     
     Returns: 
       JSON request containing stripe customer portal url 
   */
-  customerId: string,
   returnUrl: string
 ) =>
   post({
     endpoint: "/stripe/customer_portal",
     body: {
-      customer_id: customerId,
       return_url: returnUrl,
     },
   })
