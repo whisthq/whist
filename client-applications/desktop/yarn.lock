@@ -7,21 +7,21 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.0.3.tgz#bc5b5532ecafd923a61f2fb097e3b108c0106a3f"
   integrity sha512-GLyWIFBbGvpKPGo55JyRZAo4lVbnBiD52cKlw/0Vt+wnmKvWJkpZvsjVoaIolyBXDeAQKSicRtqFNPem9w0WYA==
 
-"@amplitude/identify@^1.5.5":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.5.5.tgz#12c1b1b453bdf8d0b1023b1b656b16c3864c1602"
-  integrity sha512-31m1ElVGqTRbWdS0NdXnAc0a5/VDWHYLYuQdRzbHAP7eSz4msl3dCyjJe/yeFtB+v6tVeWQ7+2V6+PEfUli1rg==
+"@amplitude/identify@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.6.0.tgz#b5495faa1beca0586a86d6eef314b2511eb2de70"
+  integrity sha512-KgHorDe8o/OLfx7e2jIEFqvwrCZTSycTRXaIWPHypLfrF5oRrbKDK4xUSfzEi18zGBeBfjVsfGb6UxxNAlGzVw==
   dependencies:
     "@amplitude/types" "^1.5.5"
     "@amplitude/utils" "^1.5.5"
     tslib "^1.9.3"
 
-"@amplitude/node@^1.5.5":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.5.5.tgz#02b394b431c26203ddb15b0c4ce6e2689c5ece22"
-  integrity sha512-NjgdgQmCl7SuXpoQldEtC5Q0ECsrKWAP8Evp0di3Qdjr90k5Vt0BtCt3vN6hpAjm4cwdZaITk4vd8L5ritUwfQ==
+"@amplitude/node@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.6.0.tgz#3c10adc3d369004553d55e9a6f21a02e354d2dea"
+  integrity sha512-q7R3iXoil9f10FBCDGBvaRU7Y3OOxWYsy3qNjxBEDkOSvrlp5+oMhTe5+l5H0Ra00k49a7w64XoEZbzUkC8alg==
   dependencies:
-    "@amplitude/identify" "^1.5.5"
+    "@amplitude/identify" "^1.6.0"
     "@amplitude/types" "^1.5.5"
     "@amplitude/utils" "^1.5.5"
     tslib "^1.9.3"
