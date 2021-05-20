@@ -26,7 +26,7 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
-import { signoutAction } from "@app/main/events/actions"
+import { signoutAction, quitAction } from "@app/main/events/actions"
 import {
   refreshTokens,
   generateRandomConfigToken,

@@ -110,7 +110,8 @@ export const createWindow = (
   } else {
     win
       .loadURL(
-        customUrl !== undefined ? customUrl : "http://localhost:8080" + params
+        customUrl !== undefined ? customUrl : "http://localhost:8080" + params,
+        { userAgent: "Fractal" }
       )
       .then(() => {
         // We manually open devTools, because we want to make sure that

@@ -25,6 +25,7 @@ import {
 } from "@app/main/observables/container"
 import { protocolLaunchFailure } from "@app/main/observables/protocol"
 import { userSub } from "@app/main/observables/user"
+import { eventUpdateError } from "@app/main/events/autoupdate"
 
 export const errorRelaunchRequest = eventIPC.pipe(
   pluck("errorRelaunchRequest"),
