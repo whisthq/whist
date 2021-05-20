@@ -206,10 +206,13 @@ typedef struct Frame {
     int width;
     int height;
     CodecType codec_type;
-    int size;
     bool is_iframe;
     int num_peer_update_msgs;
-    unsigned char compressed_frame[];
+
+    bool has_cursor;
+    int compressed_frame_size;
+
+    unsigned char data[];
 } Frame;
 
 /**
@@ -716,6 +719,14 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  * @returns                        The size of the Fractal Client Message struct
  */
 int get_fmsg_size(FractalClientMessage* fmsg);
+
+
+void set_fractal_cursor_image(Frame* frame, FractalCursorImage* cursor);
+void set_compressed_frame(Frame* frame, unsigned char* compressed_frame, int compressed_frame_size);
+FractalCursorImage* get_fractal_cursor_image(Frame* frame);
+unsigned char* get_compressed_frame(Frame* frame);
+PeerUpdateMessage* get_peer_messages(Frame* frame);
+int get_total_frame_size(Frame* frame);
 
 /**
  * @brief                          Terminates the protocol

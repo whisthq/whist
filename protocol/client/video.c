@@ -281,8 +281,7 @@ int render_video() {
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)render_context.frame_buffer;
-        PeerUpdateMessage* peer_update_msgs =
-            (PeerUpdateMessage*)(((char*)frame->compressed_frame) + frame->size);
+        PeerUpdateMessage* peer_update_msgs = get_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
@@ -297,12 +296,10 @@ int render_video() {
                      frame->is_iframe ? "(I-Frame)" : "");
         }
 
-        if ((int)(sizeof(Frame) + frame->size +
-                  sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs) !=
+        if ((int)(get_total_frame_size(frame)) !=
             render_context.frame_size) {
             LOG_INFO("Incorrect Frame Size! %d instead of %d",
-                     sizeof(Frame) + frame->size +
-                         sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs,
+                     get_total_frame_size(frame),
                      render_context.frame_size);
         }
 
@@ -324,7 +321,7 @@ int render_video() {
         clock decode_timer;
         start_timer(&decode_timer);
 
-        if (!video_decoder_decode(video_context.decoder, frame->compressed_frame, frame->size)) {
+        if (!video_decoder_decode(video_context.decoder, get_compressed_frame(frame), frame->compressed_frame_size)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             // Since we're done, we free the frame buffer
             free_block(frame_buffer_allocator, render_context.frame_buffer);
