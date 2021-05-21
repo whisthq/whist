@@ -404,41 +404,44 @@ int render_video() {
 
         // Set cursor to frame's desired cursor type
         FractalCursorImage* cursor = get_fractal_cursor_image(frame);
-        if ((FractalCursorID)cursor->cursor_id != last_cursor ||
-            cursor->cursor_use_bmp) {
-            if (cursor) {
-                SDL_FreeCursor((SDL_Cursor*)cursor);
-            }
-            if (cursor->cursor_use_bmp) {
-                // use bitmap data to set cursor
+        // Only update the cursor, if a cursor image is even embedded in the frame at all.
+        if (cursor) {
+            if ((FractalCursorID)cursor->cursor_id != last_cursor ||
+                cursor->cursor_use_bmp) {
+                if (sdl_cursor) {
+                    SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
+                }
+                if (cursor->cursor_use_bmp) {
+                    // use bitmap data to set cursor
 
-                SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    cursor->cursor_bmp, cursor->cursor_bmp_width,
-                    cursor->cursor_bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * cursor->cursor_bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
-                    CURSORIMAGE_B, CURSORIMAGE_A);
-                // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
-                // pre-alpha multplied
-                sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->cursor_bmp_hot_x,
-                                               cursor->cursor_bmp_hot_y);
-                SDL_FreeSurface(cursor_surface);
-            } else {
-                // use cursor id to set cursor
-                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
-            }
-            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
+                    SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
+                        cursor->cursor_bmp, cursor->cursor_bmp_width,
+                        cursor->cursor_bmp_height, sizeof(uint32_t) * 8,
+                        sizeof(uint32_t) * cursor->cursor_bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                        CURSORIMAGE_B, CURSORIMAGE_A);
+                    // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
+                    // pre-alpha multplied
+                    sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->cursor_bmp_hot_x,
+                                                cursor->cursor_bmp_hot_y);
+                    SDL_FreeSurface(cursor_surface);
+                } else {
+                    // use cursor id to set cursor
+                    sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
+                }
+                SDL_SetCursor((SDL_Cursor*)sdl_cursor);
 
-            last_cursor = (FractalCursorID)cursor->cursor_id;
-        }
-
-        if (cursor->cursor_state != cursor_state) {
-            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
-                SDL_SetRelativeMouseMode(SDL_TRUE);
-            } else {
-                SDL_SetRelativeMouseMode(SDL_FALSE);
+                last_cursor = (FractalCursorID)cursor->cursor_id;
             }
 
-            cursor_state = cursor->cursor_state;
+            if (cursor->cursor_state != cursor_state) {
+                if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
+                    SDL_SetRelativeMouseMode(SDL_TRUE);
+                } else {
+                    SDL_SetRelativeMouseMode(SDL_FALSE);
+                }
+
+                cursor_state = cursor->cursor_state;
+            }
         }
 
         // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
