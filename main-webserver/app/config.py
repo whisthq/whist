@@ -370,13 +370,6 @@ class LocalConfig(DeploymentConfig):
 
     STRIPE_SECRET = property(getter("STRIPE_RESTRICTED"))
     AWS_TASKS_PER_INSTANCE = property(getter("AWS_TASKS_PER_INSTANCE", default=10, fetch=False))
-    MAILSLURP_API_KEY = property(
-        getter(
-            "MAILSLURP_API_KEY",
-            default="ade68d47a8ba39c57a8e8358e5e86d6d99a04cf8aeebf9c11c08f851f2fa438f",
-            fetch=False,
-        )
-    )
     # TODO remove type: ignore once resolved -> https://github.com/python/mypy/issues/4125
     SENTRY_DSN = ""  # type: ignore
 
