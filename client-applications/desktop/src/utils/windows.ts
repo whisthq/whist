@@ -104,3 +104,11 @@ export const createUpdateWindow = () =>
     ...width.sm,
     ...height.md,
   } as BrowserWindowConstructorOptions)
+
+export const createErrorWindow = (error: FractalError) => {
+  createWindow(error.hash, {
+    ...base,
+    ...width.md,
+    ...height.xs,
+  } as BrowserWindowConstructorOptions)
+}
