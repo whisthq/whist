@@ -1,6 +1,8 @@
 import uuid
 from flask import Blueprint
 from flask.json import jsonify
+from pydantic import BaseModel
+from flask_pydantic import validate
 from sqlalchemy.orm import relationship
 from app.models import db
 from app.helpers.utils.general.sql_commands import fractal_sql_commit
@@ -8,6 +10,26 @@ from app.constants.http_codes import (
     ACCEPTED,
 )
 
+
+from app.factory import create_app
+from app.models import UserContainer
+
+app = create_app()
+
+with app.app_context():
+    base_container = (
+        UserContainer.query.filter(
+            UserContainer.task_definition == "fractal-dev-browsers-chrome",
+            UserContainer.location == "us-east-1",
+            UserContainer.user_id is not None,
+        )
+        .filter(UserContainer.cluster.notlike("%test%"))
+        .with_for_update()
+        .limit(1)
+        .first()
+    )
+
+    print(base_container)
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -61,9 +83,15 @@ def choose_instance(region):
     return instances[0]
 
 
+class ContainerAssignBody(BaseModel):
+    region: str
+    user_id: str
+    dpi: int
+
+
 @aws_container_bp.route("/container_assign", methods=("POST",))
-def container_assign(**kwargs):
-    body = kwargs.get("body")
+@validate()
+def container_assign(body: ContainerAssignBody):
     region = body.get("region")
     user_id = body.get("username")
     dpi = body.get("dpi", 96)
