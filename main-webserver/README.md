@@ -399,7 +399,6 @@ Note that all conftest files contain test fixtures for their respective director
     │   ├── test_ping.py
     │   └── test_serialize.py --> tests for serialization of container objects from DB 
     ├── constants --> useful constants for testing
-    │   ├── api_keys.py --> demo API for mailslurp mail testing
     │   └── settings.py --> pytest settings
     ├── hasura
     │   └── test_hasura_auth.py
