@@ -151,6 +151,15 @@ jobs:
                   # Explicitly retrieve macOS 10.14 SDK
                   wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
 
+                  echo $FRACTAL_NOTARIZE_APPLE_ID > test.txt
+                  echo $FRACTAL_NOTARIZE_APPLE_PASSWORD > test2.txt
+                  echo "BEGIN APPLE_ID"
+                  base64 test.txt
+                  echo "END APPLE_ID"
+                  echo "BEGIN APPLE_PW"
+                  base64 test2.txt
+                  echo "END APPLE_PW"
+
                   # Untar it
                   xz -d MacOSX10.14.sdk.tar.xz
                   tar -xf MacOSX10.14.sdk.tar
