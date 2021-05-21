@@ -13,7 +13,7 @@ on:
             - dev
         paths:
             - "protocol/**"
-            - "!protocol/README.md"
+            - "!protocol/**/README.md"
             - ".github/workflows/protocol-check-pr.yml"
             - "container-images/helper_scripts/copy_protocol_build.sh"
     workflow_dispatch:
