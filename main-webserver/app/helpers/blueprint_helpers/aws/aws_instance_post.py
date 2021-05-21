@@ -22,7 +22,8 @@ def find_instance(region: str) -> Optional[str]:
     avail_instance: Optional[InstanceSorted] = (
         InstanceSorted.query.filter_by(location=region)
         .limit(1)
-        .skip_locked.with_for_update.one_or_none()
+        .with_for_update(skip_locked=True)
+        .one_or_none()
     )
     if avail_instance is None:
         # check each replacement region for available containers
@@ -31,7 +32,8 @@ def find_instance(region: str) -> Optional[str]:
             avail_instance = (
                 InstanceSorted.query.filter_by(location=bundlable_region)
                 .limit(1)
-                .skip_locked.with_for_update.one_or_none()
+                .with_for_update(skip_locked=True)
+                .one_or_none()
             )
             if avail_instance is not None:
                 break
