@@ -540,8 +540,6 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
             (int): 0 on success, -1 on failure
     */
 
-    d_dist *= input_device->dpi;
-
     if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
         // If the gesture is not active yet, then start holding the LCTRL key
         if (!active_gesture) {
