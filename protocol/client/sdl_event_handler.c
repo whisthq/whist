@@ -338,7 +338,7 @@ int handle_mouse_wheel(SDL_Event *event) {
     return 0;
 }
 
-int handle_pinch(SDL_Event* event) {
+int handle_pinch(SDL_Event *event) {
     /*
         Handle the SDL pinch event
 

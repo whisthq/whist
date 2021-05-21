@@ -480,12 +480,12 @@ typedef enum FractalMultigestureType {
  * @details Message from multigesture event on touchpad.
  */
 typedef struct FractalMultigestureMessage {
-    float d_theta;         ///< The amount the fingers rotated.
-    float d_dist;          ///< The amount the fingers pinched.
-    float x;               ///< Normalized gesture x-axis center.
-    float y;               ///< Normalized gesture y-axis center.
-    uint16_t num_fingers;  ///< Number of fingers used in the gesture.
-    bool active_gesture;   ///< Whether this multigesture is already active.
+    float d_theta;                         ///< The amount the fingers rotated.
+    float d_dist;                          ///< The amount the fingers pinched.
+    float x;                               ///< Normalized gesture x-axis center.
+    float y;                               ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
+    bool active_gesture;                   ///< Whether this multigesture is already active.
     FractalMultigestureType gesture_type;  ///< Multigesture type
 } FractalMultigestureMessage;
 

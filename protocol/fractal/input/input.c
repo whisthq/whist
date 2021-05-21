@@ -27,7 +27,8 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
     bool client_caps_lock_holding = fmsg->keyboard_state.keyboard_state[FK_CAPSLOCK];
     bool client_num_lock_holding = fmsg->keyboard_state.keyboard_state[FK_NUMLOCK];
 
-    for (int fractal_keycode = 0; fractal_keycode < fmsg->keyboard_state.num_keycodes; ++fractal_keycode) {
+    for (int fractal_keycode = 0; fractal_keycode < fmsg->keyboard_state.num_keycodes;
+         ++fractal_keycode) {
         if (ignore_key_state(input_device, fractal_keycode, fmsg->keyboard_state.active_pinch)) {
             continue;
         }
@@ -49,7 +50,8 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
 
     if (!!server_caps_lock != !!fmsg->keyboard_state.caps_lock) {
         LOG_INFO("Caps lock out of sync, updating! From %s to %s\n",
-                 server_caps_lock ? "caps" : "no caps", fmsg->keyboard_state.caps_lock ? "caps" : "no caps");
+                 server_caps_lock ? "caps" : "no caps",
+                 fmsg->keyboard_state.caps_lock ? "caps" : "no caps");
         if (client_caps_lock_holding) {
             KeyUp(input_device, FK_CAPSLOCK);
             KeyDown(input_device, FK_CAPSLOCK);
@@ -103,9 +105,9 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
 #endif  // INPUT_DRIVER
             break;
         case MESSAGE_MULTIGESTURE:
-            ret = emit_multigesture_event(input_device, fmsg->multigesture.d_theta,
-                fmsg->multigesture.d_dist, fmsg->multigesture.gesture_type,
-                fmsg->multigesture.active_gesture);
+            ret = emit_multigesture_event(
+                input_device, fmsg->multigesture.d_theta, fmsg->multigesture.d_dist,
+                fmsg->multigesture.gesture_type, fmsg->multigesture.active_gesture);
             break;
         default:
             LOG_ERROR("Unknown message type! %d", fmsg->type);
