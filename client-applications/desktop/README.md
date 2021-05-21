@@ -196,6 +196,10 @@ This repository has basic continuous integration through GitHub Actions. For eve
 
 Changes in the `protocol/` subrepo will also trigger the client-apps to be rebuilt.
 
+### Running Tests
+
+We use `jest` as our main test runner for the client-app. Tests files should be placed in the `testing` folder with a `.test` suffix in the file name for Jest to detect. From there on `jest` can be run using the command `yarn test:unit`. `babel` is also required for typescript compilation, and the config file can be found under `babel.config.js` in the root of this project. Any additional `jest` configuration can be found in `jest.config.js`.
+
 ## Traps!
 
 Abstractions leak. Bugs hide. Things don't work the way they seem. This is programming, and sometimes we have to get our hands dirty with implementation details that we shouldn't have to know about. Here's some for this project.
