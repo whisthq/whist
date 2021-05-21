@@ -49,7 +49,7 @@ export const flow =
     fn: (t: Observable<T>) => { [key: string]: Observable<any> }
   ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
   (trigger: Observable<T>) => {
-    let channels = fn(trigger)
+    const channels = fn(trigger)
 
     return mapValues(withMocking(name, trigger, channels), (obs, key) =>
       obs.pipe(

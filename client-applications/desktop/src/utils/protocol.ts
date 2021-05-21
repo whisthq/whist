@@ -3,8 +3,6 @@ import path from "path"
 import { spawn, ChildProcess } from "child_process"
 import config from "@app/config/environment"
 
-import { fromEvent } from "rxjs"
-
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments

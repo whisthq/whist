@@ -30,4 +30,3 @@ createTrigger(
   "updateDownloaded",
   fromEvent(autoUpdater as EventEmitter, "update-downloaded")
 )
-

@@ -9,10 +9,7 @@
 import { from } from "rxjs"
 import { map, switchMap } from "rxjs/operators"
 
-import {
-  containerCreate,
-  containerCreateSuccess,
-} from "@app/utils/container"
+import { containerCreate, containerCreateSuccess } from "@app/utils/container"
 import { fork, flow } from "@app/utils/flows"
 
 export default flow<{ email: string; accessToken: string }>(

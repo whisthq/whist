@@ -1,9 +1,6 @@
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
-import {
-  WindowHashAuth,
-  WindowHashUpdate,
-} from "@app/utils/constants"
+import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
 import config, { FractalCIEnvironment } from "@app/config/environment"
 
 const { buildRoot } = config
@@ -90,11 +87,11 @@ export const createWindow = (
   win.on("close", () => onClose?.(win))
 
   win.show()
-  
+
   return win
 }
 
-export const createAuthWindow = () => 
+export const createAuthWindow = () =>
   createWindow(WindowHashAuth, {
     ...base,
     ...width.sm,

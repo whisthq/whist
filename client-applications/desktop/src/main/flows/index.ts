@@ -1,6 +1,7 @@
 import { merge, zip, fromEvent, of } from "rxjs"
 import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
+import { ChildProcess } from "child_process"
 
 import loginFlow from "@app/main/flows/login"
 import signupFlow from "@app/main/flows/signup"
@@ -33,11 +34,9 @@ protocolLaunchFlow(
 
 protocolCloseFlow(
   fromTrigger("protocolLaunchFlowSuccess").pipe(
-    mergeMap((protocol) =>
+    mergeMap((protocol: ChildProcess) =>
       zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
     ),
-    map(([protocol]) => {
-      protocol
-    })
+    map(([protocol]) => protocol)
   )
 )

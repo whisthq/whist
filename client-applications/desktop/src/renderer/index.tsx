@@ -131,7 +131,7 @@ const RootComponent = () => {
 
 // TODO: actually pass version number through IPC.
 const WindowBackground = (props: any) => {
-  const win = (window as unknown) as { VERSION: number }
+  const win = window as unknown as { VERSION: number }
   const version = win.VERSION
   return (
     <div className="relative w-full h-full">

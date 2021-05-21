@@ -21,9 +21,9 @@ import {
 import { createTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import env from "@app/utils/env"
-import { FractalCIEnvironment } from "@app/config/environment"
+import config, { FractalCIEnvironment } from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
-import config from "@app/config/environment"
+
 import { emitCache, persistClear } from "@app/utils/persist"
 
 // Set custom app data folder based on environment
@@ -95,7 +95,7 @@ combineLatest([
     fromTrigger("protocolCloseFlowSuccess"),
     fromTrigger("protocolCloseFlowSuccess")
   ),
-]).subscribe(([email,]: [string, ChildProcess]) => {
+]).subscribe(([email]: [string, ChildProcess]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
 

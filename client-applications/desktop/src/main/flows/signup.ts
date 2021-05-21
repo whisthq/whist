@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest, Observable } from "rxjs"
+import { from, combineLatest } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -39,23 +39,21 @@ const signupRequest = flow<any>("signupRequest", (trigger) =>
   )
 )
 
-const generateConfigToken = flow<any>(
-  "generateConfigToken",
-  (trigger) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ password }) =>
-          from(
-            createConfigToken().then(
-              async (token) => await encryptConfigToken(token, password)
-            )
+const generateConfigToken = flow<any>("generateConfigToken", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ password }) =>
+        from(
+          createConfigToken().then(
+            async (token) => await encryptConfigToken(token, password)
           )
         )
-      ),
-      {
-        success: () => true,
-      }
-    )
+      )
+    ),
+    {
+      success: () => true,
+    }
+  )
 )
 
 export default flow("signupFlow", (trigger) => {

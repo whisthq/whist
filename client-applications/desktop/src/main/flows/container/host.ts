@@ -21,7 +21,7 @@ import {
   mapTo,
   take,
   pluck,
-  tap
+  tap,
 } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 import { some } from "lodash"
@@ -103,10 +103,17 @@ const hostConfigFlow = flow<{
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
-      switchMap(({ containerIP, containerPort, containerSecret, email, configToken }) =>
-        from(
-          hostServiceConfig(containerIP, containerPort, containerSecret, email, configToken)
-        )
+      switchMap(
+        ({ containerIP, containerPort, containerSecret, email, configToken }) =>
+          from(
+            hostServiceConfig(
+              containerIP,
+              containerPort,
+              containerSecret,
+              email,
+              configToken
+            )
+          )
       )
     ),
     {
@@ -123,16 +130,20 @@ export default flow<{
   accessToken: string
   configToken: string
 }>("hostServiceFlow", (trigger) => {
-  trigger.pipe(tap(x => console.log("HOST CONFIG", trigger)))
+  trigger.pipe(tap((x) => console.log("HOST CONFIG", trigger)))
 
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(
     combineLatest({
-      email: trigger.pipe(pluck("email")) as Observable<string>,
-      configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
-      containerIP: info.success.pipe(pluck("containerIP")) as Observable<string>,
-      containerPort: info.success.pipe(pluck("containerPort")) as Observable<number>,
+      email: trigger.pipe(pluck("email")),
+      configToken: trigger.pipe(pluck("configToken")),
+      containerIP: info.success.pipe(
+        pluck("containerIP")
+      ) as Observable<string>,
+      containerPort: info.success.pipe(
+        pluck("containerPort")
+      ) as Observable<number>,
       containerSecret: info.success.pipe(
         pluck("containerSecret")
       ) as Observable<string>,

@@ -2,7 +2,7 @@ import { BrowserWindowConstructorOptions } from "electron"
 
 import { createWindow, base, width, height } from "@app/utils/windows"
 
-export type FractalError = {
+export interface FractalError {
   hash: string
   title: string
   message: string

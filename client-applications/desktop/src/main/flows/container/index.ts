@@ -1,5 +1,5 @@
-import { combineLatest, merge, zip, Observable } from "rxjs"
-import { pluck, sample, tap } from "rxjs/operators"
+import { combineLatest, merge, Observable } from "rxjs"
+import { pluck, sample } from "rxjs/operators"
 
 import containerCreateFlow from "@app/main/flows/container/create"
 import containerPollingFlow from "@app/main/flows/container/polling"
@@ -28,9 +28,7 @@ export default flow("containerFlow", (trigger) => {
       email: trigger.pipe(pluck("email")) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
       configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
-    }).pipe(
-      sample(create.success)
-    )
+    }).pipe(sample(create.success))
   )
 
   return {

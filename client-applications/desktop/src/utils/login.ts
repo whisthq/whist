@@ -2,7 +2,7 @@ import { post } from "@app/utils/api"
 import { AsyncReturnType } from "@app/@types/state"
 import { createConfigToken, decryptConfigToken } from "@app/utils/crypto"
 
-export const emailLogin = async (username: string, password: string) => 
+export const emailLogin = async (username: string, password: string) =>
   post({
     endpoint: "/account/login",
     body: { username, password },

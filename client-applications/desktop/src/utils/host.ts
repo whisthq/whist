@@ -38,7 +38,9 @@ export const hostServiceConfig = async (
 
 export type HostServiceInfoResponse = AsyncReturnType<typeof hostServiceInfo>
 
-export type HostServiceConfigResponse = AsyncReturnType<typeof hostServiceConfig>
+export type HostServiceConfigResponse = AsyncReturnType<
+  typeof hostServiceConfig
+>
 
 export const hostServiceInfoIP = (res: HostServiceInfoResponse) => res.json?.ip
 

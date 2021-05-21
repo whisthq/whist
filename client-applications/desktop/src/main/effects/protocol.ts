@@ -30,13 +30,16 @@ zip(
         port_32273: number
       }
     }
-  ]) =>
-    protocolStreamInfo(protocol, response)
+  ]) => protocolStreamInfo(protocol, response)
 )
 
 // If we have an error, close the protocol. We expect that an effect elsewhere
 // this application will take care of showing an appropriate error message.
 zip(
   fromTrigger("protocolLaunchFlowSuccess"),
-  merge(fromTrigger("signoutAction"), fromTrigger("quitAction"), fromTrigger("failure"))
-).subscribe(([protocol,]: [ChildProcess, any]) => protocolStreamKill(protocol))
+  merge(
+    fromTrigger("signoutAction"),
+    fromTrigger("quitAction"),
+    fromTrigger("failure")
+  )
+).subscribe(([protocol]: [ChildProcess, any]) => protocolStreamKill(protocol))

@@ -11,7 +11,7 @@
 // storage changes.
 
 import { from, combineLatest } from "rxjs"
-import { switchMap, map, pluck, tap } from "rxjs/operators"
+import { switchMap, map, pluck } from "rxjs/operators"
 import { merge } from "lodash"
 
 import {
@@ -21,10 +21,10 @@ import {
   emailLoginConfigToken,
   emailLoginAccessToken,
   emailLoginRefreshToken,
+  ResponseAuth,
 } from "@app/utils/login"
 import { flow, fork, createTrigger } from "@app/utils/flows"
 import { loadingFrom } from "@app/utils/observables"
-import { ResponseAuth } from "@app/utils/login"
 
 const loginRequest = flow<{ email: string; password: string }>(
   "loginRequest",
@@ -84,12 +84,7 @@ export default flow<{ email: string; password: string }>(
     const login = loginRequest(trigger)
 
     const configToken = configTokenRequest(
-      combineLatest([
-        login.success,
-        trigger.pipe(
-          pluck("password")
-        ),
-      ])
+      combineLatest([login.success, trigger.pipe(pluck("password"))])
     )
 
     const jwt = jwtRequest(login.success)

@@ -5,19 +5,10 @@
  */
 
 import { fromEvent } from "rxjs"
-import { filter } from "rxjs/operators"
 import { persisted } from "@app/utils/persist"
-import { EventEmitter } from "events"
 
 import { createTrigger } from "@app/utils/flows"
 
-createTrigger(
-  "persisted",
-  fromEvent(persisted as EventEmitter, "data-persisted")
-)
+createTrigger("persisted", fromEvent(persisted, "data-persisted"))
 
-createTrigger(
-  "notPersisted",
-  fromEvent(persisted as EventEmitter, "data-not-persisted"
-  )
-)
+createTrigger("notPersisted", fromEvent(persisted, "data-not-persisted"))

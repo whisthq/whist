@@ -5,9 +5,8 @@
  */
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, mapTo, withLatestFrom, startWith } from "rxjs/operators"
+import { map, withLatestFrom, startWith } from "rxjs/operators"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
 import { objectCombine } from "@app/utils/observables"
 import { fromTrigger } from "@app/utils/flows"
@@ -30,7 +29,9 @@ import { fromTrigger } from "@app/utils/flows"
 const subscribed = {
   // loginLoading: loginLoading,
   // loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: fromTrigger("downloadProgress").pipe(map((obj) => JSON.stringify(obj))),
+  updateInfo: fromTrigger("downloadProgress").pipe(
+    map((obj) => JSON.stringify(obj))
+  ),
   // signupLoading: signupLoading,
   // signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
