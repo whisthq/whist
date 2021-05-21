@@ -68,22 +68,6 @@ int parse_args(int argc, char* argv[]);
 int read_piped_arguments(bool* keep_waiting);
 
 /**
- * @brief                          Get directory of Fractal log
- *
- * @returns                        Log directory string
- */
-char* get_log_dir(void);
-
-/**
- * @brief                          Write connection id to connection_id log file
- *
- * @param connection_id            Connection ID
- *
- * @returns                        Returns -1 on failure, 0 on success
- */
-int log_connection_id(int connection_id);
-
-/**
  * @brief                          Initialize the Windows socket library
  *                                 (Does not do anything for non-Windows)
  *
@@ -112,13 +96,6 @@ int alloc_parsed_args(void);
  * @returns                        Returns -1 on failure, 0 on success
  */
 int free_parsed_args(void);
-
-/**
- * @brief                          Configure the cache folder for non-Windows
- *
- * @returns                        Returns 0 on success
- */
-int configure_cache(void);
 
 /**
  * @brief                          Prepare for initial request to server by setting

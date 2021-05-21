@@ -23,4 +23,5 @@ GOTO loop1
 :after_loop
 
 cd client\build64
-FractalClient %RESTVAR%
+echo "Running client protocol silently. Logs are in client.log..."
+FractalClient %RESTVAR% > %~dp0\client.log

@@ -30,8 +30,6 @@ Includes
 
 #include <stddef.h>
 
-extern char filename[300];
-extern char username[50];
 extern bool exiting;
 extern int audio_frequency;
 extern volatile bool is_timing_latency;
@@ -42,7 +40,6 @@ extern volatile int ping_failures;
 extern volatile int try_amount;
 extern volatile char *window_title;
 extern volatile bool should_update_window_title;
-extern int client_id;
 
 /*
 ============================

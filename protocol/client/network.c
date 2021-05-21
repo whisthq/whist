@@ -19,6 +19,7 @@ Includes
 #include "network.h"
 
 #include <fractal/core/fractal.h>
+#include <fractal/utils/error_monitor.h>
 #include "network.h"
 #include "client_utils.h"
 #include "audio.h"
@@ -28,8 +29,6 @@ extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
 
 // Data
 extern volatile char binary_aes_private_key[16];
-extern char filename[300];
-extern char username[50];
 extern int udp_port;
 extern int tcp_port;
 extern int client_id;
@@ -140,14 +139,7 @@ int discover_ports(bool *using_stun) {
     tcp_port = reply_msg->TCP_port;
     LOG_INFO("Assigned client ID: %d. UDP Port: %d, TCP Port: %d", client_id, udp_port, tcp_port);
 
-    memcpy(filename, reply_msg->filename, min(sizeof(filename), sizeof(reply_msg->filename)));
-    memcpy(username, reply_msg->username, min(sizeof(username), sizeof(reply_msg->username)));
-
-    if (log_connection_id(reply_msg->connection_id) < 0) {
-        LOG_ERROR("Failed to log connection ID.");
-        free_tcp_packet(tcp_packet);
-        return -1;
-    }
+    error_monitor_set_connection_id(reply_msg->connection_id);
 
     // fsmsg and reply_msg are pointers into tcp_packet,
     // but at this point, we're done.

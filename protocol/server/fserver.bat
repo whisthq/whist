@@ -23,4 +23,5 @@ GOTO loop1
 :after_loop
 
 cd server\build64
-FractalServer %RESTVAR%
+echo "Running server protocol silently. Logs are in server.log..."
+FractalServer %RESTVAR% > %~dp0\server.log

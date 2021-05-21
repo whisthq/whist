@@ -21,7 +21,6 @@ Includes
 ============================
 */
 
-#include <sentry.h>
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -36,6 +35,7 @@ Includes
 #include <fractal/utils/aes.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
+#include <fractal/utils/error_monitor.h>
 #include "sdlscreeninfo.h"
 #include "audio.h"
 #include "client_utils.h"
@@ -68,7 +68,6 @@ volatile bool update_mbps = false;
 // Global state variables
 volatile char binary_aes_private_key[16];
 volatile char hex_aes_private_key[33];
-volatile int connection_id;
 volatile SDL_Window* window;
 volatile char* window_title;
 volatile bool should_update_window_title;
@@ -90,11 +89,8 @@ volatile int output_height;
 volatile char* program_name = NULL;
 volatile CodecType output_codec_type = CODEC_TYPE_H264;
 volatile char* server_ip;
-int time_to_run_ci = 300;  // Seconds to run CI tests for
-volatile int running_ci = 0;
 char user_email[FRACTAL_ARGS_MAXLEN + 1];
 char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
-extern bool using_sentry;
 bool using_stun = true;
 
 // given by server protocol during port discovery. tells client the ports to use
@@ -135,10 +131,6 @@ SocketContext packet_tcp_context = {0};
 volatile bool connected = true;
 volatile bool exiting = false;
 volatile int try_amount;
-
-// Data
-char filename[300];
-char username[50];
 
 // Defines
 #define MAX_APP_PATH_LEN 1024
@@ -654,12 +646,6 @@ int32_t multithreaded_renderer(void* opaque) {
             ack(&packet_tcp_context);
             start_timer(&ack_timer);
         }
-        // if we are running a CI test we run for time_to_run_ci seconds
-        // before exiting
-        if (running_ci && get_timer(ci_timer) > time_to_run_ci) {
-            exiting = 1;
-            LOG_INFO("Exiting CI run");
-        }
 
         // Render Audio
         // is thread-safe regardless of what other function calls are being made to audio
@@ -745,28 +731,14 @@ void handle_single_icon_launch_client_app(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
+    init_logger();
+
     handle_single_icon_launch_client_app(argc, argv);
 
     init_networking();
 
     srand(rand() * (unsigned int)time(NULL) + rand());
     uid = rand();
-
-    char* log_dir = get_log_dir();
-    if (log_dir == NULL) {
-        return -1;
-    }
-
-    // cache should be the first thing!
-    if (configure_cache() != 0) {
-        LOG_ERROR("Failed to configure cache.");
-        return -1;
-    }
-
-    init_logger(log_dir);
-    free(log_dir);
-
-    LOG_INFO("Client protocol started.");
 
     if (init_socket_library() != 0) {
         LOG_FATAL("Failed to initialize socket library.");
@@ -787,9 +759,13 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
-    // Now that parsed_args() has been called and we've checked for the environment flag,
-    // we can rename the log file accordingly
-    rename_log_file();
+    LOG_INFO("Client protocol started.");
+
+    // Initialize the error monitor, and tell it we are the client.
+    error_monitor_initialize(true);
+
+    // Set error monitor username based on email from parsed arguments.
+    error_monitor_set_username(user_email);
 
     // Initialize the SDL window
     window = init_sdl(output_width, output_height, (char*)program_name, icon_png_filename);
@@ -802,31 +778,8 @@ int main(int argc, char* argv[]) {
     // Make sure that ctrl+click is processed as a right click on Mac
     SDL_SetHint(SDL_HINT_MAC_CTRL_CLICK_EMULATE_RIGHT_CLICK, "1");
 
-    // Set sentry user here based on email from command line args
-    // It defaults to None, so we only inform sentry if the client app passes in a user email
-    // We do this here instead of in initLogger because initLogger is used both by the client and
-    // the server so we have to do it for both in their respective main.c files.
-    if (using_sentry) {
-        sentry_set_tag("connection_id", "no connection yet");
-
-        if (strcmp(user_email, "None") != 0) {
-            sentry_value_t user = sentry_value_new_object();
-            sentry_value_set_by_key(user, "email", sentry_value_new_string(user_email));
-        }
-    }
-
-    if (running_ci) {
-        LOG_INFO("Running in CI mode");
-    }
-
-// Windows GHA VM cannot render, it just segfaults on creating the renderer
-#if defined(_WIN32)
-    if (!running_ci) {
-        init_video();
-    }
-#else
     init_video();
-#endif
+
     run_renderer_thread = true;
     SDL_Thread* renderer_thread =
         SDL_CreateThread(multithreaded_renderer, "multithreaded_renderer", NULL);
@@ -1003,20 +956,12 @@ int main(int argc, char* argv[]) {
         connected = false;
     }
 
-    if (failed && using_sentry) {
-        sentry_value_t event = sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_ERROR,
-            /*  logger */ "client-errors",
-            /* message */ "Failure in main loop");
-        sentry_capture_event(event);
+    if (failed) {
+        LOG_ERROR("Failure in main loop!");
     }
 
-    if (try_amount >= 3 && using_sentry) {
-        sentry_value_t event = sentry_value_new_message_event(
-            /*   level */ SENTRY_LEVEL_ERROR,
-            /*  logger */ "client-errors",
-            /* message */ "Failed to connect after three attemps");
-        sentry_capture_event(event);
+    if (try_amount >= 3) {
+        LOG_ERROR("Failed to connect after three attempts!");
     }
 
     // Destroy any resources being used by the client
@@ -1027,6 +972,7 @@ int main(int argc, char* argv[]) {
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();
+    error_monitor_shutdown();
     destroy_logger();
     return (try_amount < 3 && !failed) ? 0 : -1;
 }

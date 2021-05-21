@@ -18,9 +18,6 @@ Includes
 
 #include "../utils/sysinfo.h"
 
-char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
-bool using_sentry = false;
-
 /*
 ============================
 Private Function Implementations
