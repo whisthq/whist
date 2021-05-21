@@ -349,6 +349,8 @@ int handle_pinch(SDL_Event* event) {
             (int): 0 on success
     */
 
+    LOG_INFO("sending pinch %f", event->pinch.scroll_amount);
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
@@ -359,11 +361,12 @@ int handle_pinch(SDL_Event* event) {
                                                      .active_gesture = active_pinch};
 
     fmsg.multigesture.gesture_type = NONE;
-    active_pinch = true;
     if (event->pinch.magnification < 0) {
         fmsg.multigesture.gesture_type = PINCH_CLOSE;
+        active_pinch = true;
     } else if (event->pinch.magnification > 0) {
         fmsg.multigesture.gesture_type = PINCH_OPEN;
+        active_pinch = true;
     } else if (active_pinch) {
         // 0 magnification means that the pinch gesture is complete
         fmsg.multigesture.gesture_type = CANCEL;
