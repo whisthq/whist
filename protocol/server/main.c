@@ -563,7 +563,7 @@ int32_t send_video(void* opaque) {
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
-                    int last_cursor_id = -1;
+                    static int last_cursor_id = -1;
                     FractalCursorImage cursor = get_current_cursor();
                     if (cursor.cursor_use_bmp || ((int)cursor.cursor_id != last_cursor_id)) {
                         set_fractal_cursor_image(frame, &cursor);
