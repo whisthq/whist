@@ -1,4 +1,4 @@
-import { Observable, Subject } from "rxjs"
+import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, tap, map } from "rxjs/operators"
 import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
@@ -9,7 +9,7 @@ export interface Trigger {
   payload: any
 }
 
-export const TriggerChannel = new Subject<Trigger>()
+export const TriggerChannel = new ReplaySubject<Trigger>()
 
 const logFormat = (...args: any[]) => {
   let [title, message, value] = args
@@ -67,11 +67,13 @@ export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   return obs
 }
 
-export const fromTrigger = (name: string): Observable<any> =>
-  TriggerChannel.pipe(
+export const fromTrigger = (name: string): Observable<any> => {
+  return TriggerChannel.pipe(
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
     // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
     filter((x: Trigger) => x.name === name),
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )
+ 
+}

@@ -15,15 +15,10 @@ import { fromTrigger } from "@app/utils/flows"
 loginFlow(fromTrigger("loginAction"))
 signupFlow(fromTrigger("signupAction"))
 
-fromTrigger("updateNotAvailable").subscribe(() =>
-  console.log("UPDATE SHOULD PRINT HERE")
-)
-
 const launchTrigger = merge(
   combineLatest([
     fromTrigger("persisted"),
     fromTrigger("updateNotAvailable"),
-    // ^^^^^^ protocol won't launch because this isn't firing
   ]).pipe(map(([a]) => a)),
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess")
