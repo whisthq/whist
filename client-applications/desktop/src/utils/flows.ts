@@ -1,7 +1,8 @@
-import { Observable, Subject, EMPTY } from "rxjs"
+import { Observable, Subject } from "rxjs"
 import { filter, share, tap, map } from "rxjs/operators"
 import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
+import { withMocking } from "@app/main/testing"
 
 export interface Trigger {
   name: string
@@ -37,35 +38,26 @@ const logDebug = (...args: any[]) => {
 export const fork = <T>(
   source: Observable<T>,
   filters: { [gate: string]: (result: T) => boolean }
-): { [key: string]: Observable<T> } => {
+): { [gate: string]: Observable<T> } => {
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
 
-export const flow = <A>(
-  name: string,
-  fn: (trigger: Observable<A>) => { [key: string]: Observable<any> }
-) => (trigger: Observable<A>) =>
-  mapValues(fn(trigger), (obs, key) =>
-    obs !== undefined
-      ? obs.pipe(
-          tap((value) => logDebug(`${name}.${key}`, value)),
-          share()
-        )
-      : EMPTY
-  )
+export const flow =
+  <T>(
+    name: string,
+    fn: (t: Observable<T>) => { [key: string]: Observable<any> }
+  ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
+  (trigger: Observable<T>) => {
+    let channels = fn(trigger)
 
-export const withEffect = <A>(
-  trigger: Observable<A>,
-  flows: Record<string, any>,
-  effect?: (x: A) => void
-) => {
-  mapValues(flows).forEach((flow: any) => {
-    flow(trigger)
-  })
-
-  trigger.subscribe((x: A) => effect?.(x))
-}
+    return mapValues(withMocking(name, trigger, channels), (obs, key) =>
+      obs.pipe(
+        tap((value) => logDebug(`${name}.${key}`, value)),
+        share()
+      )
+    )
+  }
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
   obs.subscribe((x: A) => {

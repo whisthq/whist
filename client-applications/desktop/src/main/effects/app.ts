@@ -24,7 +24,7 @@ import env from "@app/utils/env"
 import { FractalCIEnvironment } from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import config from "@app/config/environment"
-import { emitCache } from "@app/utils/persist"
+import { emitCache, persistClear } from "@app/utils/persist"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -138,6 +138,7 @@ zip(
 })
 
 fromTrigger("signoutAction").subscribe(() => {
+  persistClear()
   app.relaunch()
   app.exit()
 })
