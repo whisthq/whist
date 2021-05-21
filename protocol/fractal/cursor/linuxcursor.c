@@ -64,24 +64,23 @@ FractalCursorImage get_current_cursor() {
                 ci->width, ci->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
 
-        image.cursor_bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
-        image.cursor_bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
-        image.cursor_bmp_hot_x = ci->xhot;
-        image.cursor_bmp_hot_y = ci->yhot;
+        image.bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
+        image.bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
+        image.bmp_hot_x = ci->xhot;
+        image.bmp_hot_y = ci->yhot;
 
-        for (int k = 0; k < image.cursor_bmp_width * image.cursor_bmp_height; ++k) {
+        for (int k = 0; k < image.bmp_width * image.bmp_height; ++k) {
             // we need to do this in case ci->pixels uses 8 bytes per pixel
             uint32_t argb = (uint32_t)ci->pixels[k];
-            image.cursor_bmp[k] = argb;
+            image.bmp[k] = argb;
         }
 
-        if (memcmp(image.cursor_bmp, last_cursor,
+        if (memcmp(image.bmp, last_cursor,
                    sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT)) {
-            image.cursor_use_bmp = true;
-            memcpy(last_cursor, image.cursor_bmp,
-                   sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT);
+            image.using_bmp = true;
+            memcpy(last_cursor, image.bmp, sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT);
         } else {
-            image.cursor_use_bmp = false;
+            image.using_bmp = false;
         }
 
         XFree(ci);
