@@ -14,7 +14,7 @@ import VerticalTemplate from './verticalTemplate'
 
 export const Middle = () => {
   /*
-        Pricing section of Blender product page
+        Pricing section of product page
 
         Arguments: none
     */
