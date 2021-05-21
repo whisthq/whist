@@ -2,6 +2,7 @@ import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
 import config, { FractalCIEnvironment } from "@app/config/environment"
+import { FractalError } from "@app/utils/error"
 
 const { buildRoot } = config
 

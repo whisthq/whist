@@ -137,8 +137,10 @@ zip(
   if (success) app.quit()
 })
 
-fromTrigger("signoutAction").subscribe(() => {
-  persistClear()
-  app.relaunch()
-  app.exit()
-})
+merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
+  () => {
+    persistClear()
+    app.relaunch()
+    app.exit()
+  }
+)

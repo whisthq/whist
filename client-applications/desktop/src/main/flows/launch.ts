@@ -23,7 +23,7 @@ export default flow("protocolLaunchFlow", (trigger) => {
   )
 
   return {
-    success: createTrigger<ChildProcess>(
+    success: createTrigger(
       "protocolLaunchFlowSuccess",
       launch.success
     ),

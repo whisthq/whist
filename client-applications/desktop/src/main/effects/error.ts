@@ -4,8 +4,9 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { merge, Observable } from "rxjs"
-import { skipUntil } from "rxjs/operators"
+import { merge, Observable, combineLatest } from "rxjs"
+import { skipUntil, startWith, tap, map } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 
 import {
   containerCreateErrorNoAccess,
@@ -20,13 +21,21 @@ import {
   AuthError,
   FractalError,
 } from "@app/utils/error"
-import { 
-  createErrorWindow 
-} from "@app/utils/windows"
+import { createErrorWindow } from "@app/utils/windows"
+import { protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
 
 const wait = (obs: Observable<any>) =>
-  obs.pipe(skipUntil(fromTrigger("appReady")))
+  combineLatest(
+    obs,
+    fromTrigger("protocolLaunchFlowSuccess").pipe(startWith(undefined))
+  ).pipe(
+    skipUntil(fromTrigger("appReady")),
+    tap(([, protocol]: [any, ChildProcess]) => {
+      protocolStreamKill(protocol)
+    }),
+    map(([x]: [any, ChildProcess]) => x)
+  )
 
 const handleError = (error: FractalError) => {
   closeWindows()

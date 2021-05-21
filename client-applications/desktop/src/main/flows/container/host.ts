@@ -130,8 +130,6 @@ export default flow<{
   accessToken: string
   configToken: string
 }>("hostServiceFlow", (trigger) => {
-  trigger.pipe(tap((x) => console.log("HOST CONFIG", trigger)))
-
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(
