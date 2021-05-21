@@ -591,6 +591,7 @@ typedef struct FractalClientMessage {
             bool caps_lock;
             bool num_lock;
             char keyboard_state[NUM_KEYCODES];
+            bool active_pinch;
         };
 
         // MESSAGE_IFRAME_REQUEST

@@ -442,6 +442,27 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     return -1;
 }
 
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+    /*
+        Determine whether to ignore the client key state
+
+        Argument:
+            input_device (InputDevice*): The initialized input device to query
+            fractal_keycode (FractalKeycode): The Fractal keycode to query
+            active_pinch (bool): Whether the client has an active pinch gesture
+
+        Returns:
+            (int): 1 if we ignore the client key state, 0 if we take the client key state
+    */
+
+    // If there is an active pinch happening, we preserve the server LCTRL state
+    if (fractal_keycode == FK_LCTRL && active_pinch) {
+        return 1;
+    }
+
+    return 0;
+}
+
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
     emit_input_event(input_device->fd_keyboard, EV_KEY, GetLinuxKeyCode(fractal_keycode), pressed);
     emit_input_event(input_device->fd_keyboard, EV_SYN, SYN_REPORT, 0);

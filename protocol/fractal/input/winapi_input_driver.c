@@ -313,6 +313,10 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(fractal_keycode))) >> 15;
 }
 
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+    return 0;
+}
+
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
     UNUSED(input_device);
 

@@ -113,6 +113,10 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
+// Whether a multigesture is currently active
+bool multigesture_active = false;
+extern bool active_pinch;
+
 // Window resizing state
 SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 clock window_resize_timer;
@@ -604,6 +608,8 @@ int sync_keyboard_state(void) {
 
     fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
     fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
+
+    fmsg.active_pinch = active_pinch;
 
     send_fmsg(&fmsg);
 

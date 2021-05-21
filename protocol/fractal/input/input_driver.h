@@ -84,6 +84,20 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode);
 
 /**
+ * @brief                          Determine whether to ignore the client key state
+ *
+ * @param input_device             The initialized input device to query
+ *
+ * @param fractal_keycode          The Fractal keycode to query
+ *
+ * @param active_pinch             Whether the client has an active pinch gesture
+ *
+ * @returns                        1 if we ignore the client key state,
+ *                                 0 if we take the client key state
+ */
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch);
+
+/**
  * @brief                          Emit a keyboard press/unpress event
  *
  * @param input_device             The initialized input device to write

@@ -28,6 +28,9 @@ void update_keyboard_state(InputDevice* input_device, FractalClientMessage* fmsg
     bool client_num_lock_holding = fmsg->keyboard_state[FK_NUMLOCK];
 
     for (int fractal_keycode = 0; fractal_keycode < fmsg->num_keycodes; ++fractal_keycode) {
+        if (ignore_key_state(input_device, fractal_keycode, fmsg->active_pinch)) {
+            continue;
+        }
         if (!fmsg->keyboard_state[fractal_keycode] &&
             get_keyboard_key_state(input_device, fractal_keycode)) {
             KeyUp(input_device, fractal_keycode);
