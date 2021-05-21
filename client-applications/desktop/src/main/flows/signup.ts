@@ -21,7 +21,8 @@ import {
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork, createTrigger } from "@app/utils/flows"
+import { merge } from "lodash"
 
 const signupRequest = flow<any>("signupRequest", (trigger) =>
   fork(
@@ -73,11 +74,12 @@ export default flow("signupFlow", (trigger) => {
   )
 
   const result = combineLatest([input, tokens]).pipe(
-    map(([...args]) => ({ ...args }))
+    map(([...args]) => merge(...args))
   )
+
   return {
-    success: result,
-    failure: signup.failure,
+    success: createTrigger("signupFlowSuccess", result),
+    failure: createTrigger("signupFlowFailure", signup.failure),
     warning: signup.warning,
     loading: loadingFrom(trigger, result, signup.failure, signup.warning),
   }
