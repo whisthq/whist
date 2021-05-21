@@ -202,7 +202,6 @@ typedef enum CodecType {
  * @details Video frame to be rendered.
  */
 typedef struct Frame {
-    FractalCursorImage cursor;
     int width;
     int height;
     CodecType codec_type;
