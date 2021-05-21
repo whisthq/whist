@@ -533,7 +533,8 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
             d_theta (float): How much the fingers rotated during this motion
             d_dist (float): How much the fingers pinched during this motion
             gesture_type (FractalMultigestureType): The gesture type (rotate, pinch open, pinch
-       close) active_gesture (bool): Whether this event happened mid-multigesture
+                close)
+            active_gesture (bool): Whether this event happened mid-multigesture
 
         Returns:
             (int): 0 on success, -1 on failure

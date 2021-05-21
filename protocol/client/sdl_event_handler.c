@@ -349,8 +349,6 @@ int handle_pinch(SDL_Event* event) {
             (int): 0 on success
     */
 
-    LOG_INFO("sending pinch %f", event->pinch.scroll_amount);
-
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MULTIGESTURE;
     fmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
