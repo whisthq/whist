@@ -1,3 +1,4 @@
+
 --
 -- PostgreSQL database dump
 --
@@ -24,7 +25,6 @@ CREATE SCHEMA hardware;
 
 
 --
--- TOC entry 9 (class 2615 OID 16387)
 -- Name: hdb_catalog; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -32,7 +32,6 @@ CREATE SCHEMA hdb_catalog;
 
 
 --
--- TOC entry 8 (class 2615 OID 16388)
 -- Name: hdb_pro_catalog; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -40,7 +39,6 @@ CREATE SCHEMA hdb_pro_catalog;
 
 
 --
--- TOC entry 5 (class 2615 OID 16389)
 -- Name: hdb_views; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -48,7 +46,6 @@ CREATE SCHEMA hdb_views;
 
 
 --
--- TOC entry 12 (class 2615 OID 16390)
 -- Name: sales; Type: SCHEMA; Schema: -; Owner: -
 --
 
@@ -56,7 +53,34 @@ CREATE SCHEMA sales;
 
 
 --
--- TOC entry 250 (class 1255 OID 16393)
+-- Name: pg_stat_statements; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pg_stat_statements; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pg_stat_statements IS 'track execution statistics of all SQL statements executed';
+
+
+--
+-- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
+--
+
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+
+
+--
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
+
+
+--
 -- Name: check_violation(text); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -70,7 +94,6 @@ $$;
 
 
 --
--- TOC entry 251 (class 1255 OID 16394)
 -- Name: event_trigger_table_name_update(); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -89,7 +112,6 @@ $$;
 
 
 --
--- TOC entry 252 (class 1255 OID 16395)
 -- Name: hdb_schema_update_event_notifier(); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -116,7 +138,6 @@ $$;
 
 
 --
--- TOC entry 253 (class 1255 OID 16396)
 -- Name: inject_table_defaults(text, text, text, text); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -134,7 +155,6 @@ $$;
 
 
 --
--- TOC entry 254 (class 1255 OID 16397)
 -- Name: insert_event_log(text, text, text, text, json); Type: FUNCTION; Schema: hdb_catalog; Owner: -
 --
 
@@ -185,7 +205,6 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 207 (class 1259 OID 16398)
 -- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -202,26 +221,6 @@ CREATE TABLE hardware.cluster_info (
     location character varying
 );
 
-
---
--- TOC entry 209 (class 1259 OID 16410)
--- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
---
-
-CREATE VIEW hardware.cluster_sorted AS
- SELECT cluster_info.cluster,
-    cluster_info."maxCPURemainingPerInstance",
-    cluster_info."maxMemoryRemainingPerInstance",
-    cluster_info."pendingTasksCount",
-    cluster_info."runningTasksCount",
-    cluster_info."registeredContainerInstancesCount",
-    cluster_info."minContainers",
-    cluster_info."maxContainers",
-    cluster_info.status,
-    cluster_info.location
-   FROM hardware.cluster_info
-  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance" = (0)::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
-  ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
 
 
 --
@@ -308,9 +307,35 @@ CREATE VIEW hardware.instance_sorted AS
   WHERE sub_with_running.running_containers < sub_with_running."maxContainers"
   ORDER BY sub_with_running.location, sub_with_running.running_containers DESC;
 
+);
+
 
 --
--- TOC entry 210 (class 1259 OID 16415)
+-- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
+-- NOTE:  the complex OR condition is to handle both clusters that are
+-- underloaded and clusters that have just been created
+-- since AWS default returns 0 for max memory for clusters
+-- early in their lifecycle
+--
+
+
+CREATE VIEW hardware.cluster_sorted AS
+ SELECT cluster_info.cluster,
+    cluster_info."maxCPURemainingPerInstance",
+    cluster_info."maxMemoryRemainingPerInstance",
+    cluster_info."pendingTasksCount",
+    cluster_info."runningTasksCount",
+    cluster_info."registeredContainerInstancesCount",
+    cluster_info."minContainers",
+    cluster_info."maxContainers",
+    cluster_info.status,
+    cluster_info.location
+   FROM hardware.cluster_info
+  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance"::double precision = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
+  ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
+
+
+--
 -- Name: region_to_ami; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -323,7 +348,6 @@ CREATE TABLE hardware.region_to_ami (
 
 
 --
--- TOC entry 211 (class 1259 OID 16423)
 -- Name: supported_app_images; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -331,19 +355,18 @@ CREATE TABLE hardware.supported_app_images (
     app_id character varying NOT NULL,
     logo_url character varying,
     task_definition character varying,
-    task_version integer,
+    task_version integer DEFAULT NULL,
     category character varying,
     description character varying,
     long_description character varying,
     url character varying,
     tos character varying,
     active boolean NOT NULL,
-    preboot_number double precision DEFAULT 0.0 NOT NULL
+    preboot_number float DEFAULT 0.0 NOT NULL
 );
 
 
 --
--- TOC entry 212 (class 1259 OID 16430)
 -- Name: user_app_state; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -358,7 +381,6 @@ CREATE TABLE hardware.user_app_state (
 
 
 --
--- TOC entry 213 (class 1259 OID 16436)
 -- Name: user_containers; Type: TABLE; Schema: hardware; Owner: -
 --
 
@@ -375,13 +397,46 @@ CREATE TABLE hardware.user_containers (
     port_32273 bigint DEFAULT '-1'::integer NOT NULL,
     secret_key text NOT NULL,
     task_definition character varying,
-    task_version integer,
+    task_version integer DEFAULT NULL,
     dpi integer DEFAULT 96
 );
 
 
 --
--- TOC entry 214 (class 1259 OID 16452)
+-- Name: event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp without time zone DEFAULT now()
+);
+
+
+--
+-- Name: event_log; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.event_log (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    schema_name text NOT NULL,
+    table_name text NOT NULL,
+    trigger_name text NOT NULL,
+    payload jsonb NOT NULL,
+    delivered boolean DEFAULT false NOT NULL,
+    error boolean DEFAULT false NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp without time zone DEFAULT now(),
+    locked boolean DEFAULT false NOT NULL,
+    next_retry_at timestamp without time zone,
+    archived boolean DEFAULT false NOT NULL
+);
+
+
+--
 -- Name: event_triggers; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -396,7 +451,6 @@ CREATE TABLE hdb_catalog.event_triggers (
 
 
 --
--- TOC entry 215 (class 1259 OID 16458)
 -- Name: hdb_action; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -409,7 +463,25 @@ CREATE TABLE hdb_catalog.hdb_action (
 
 
 --
--- TOC entry 216 (class 1259 OID 16468)
+-- Name: hdb_action_log; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_action_log (
+    id uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    action_name text,
+    input_payload jsonb NOT NULL,
+    request_headers jsonb NOT NULL,
+    session_variables jsonb NOT NULL,
+    response_payload jsonb,
+    errors jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    response_received_at timestamp with time zone,
+    status text NOT NULL,
+    CONSTRAINT hdb_action_log_status_check CHECK ((status = ANY (ARRAY['created'::text, 'processing'::text, 'completed'::text, 'error'::text])))
+);
+
+
+--
 -- Name: hdb_action_permission; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -422,7 +494,6 @@ CREATE TABLE hdb_catalog.hdb_action_permission (
 
 
 --
--- TOC entry 217 (class 1259 OID 16475)
 -- Name: hdb_allowlist; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -432,7 +503,6 @@ CREATE TABLE hdb_catalog.hdb_allowlist (
 
 
 --
--- TOC entry 218 (class 1259 OID 16481)
 -- Name: hdb_check_constraint; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -448,7 +518,6 @@ CREATE VIEW hdb_catalog.hdb_check_constraint AS
 
 
 --
--- TOC entry 219 (class 1259 OID 16486)
 -- Name: hdb_computed_field; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -462,7 +531,6 @@ CREATE TABLE hdb_catalog.hdb_computed_field (
 
 
 --
--- TOC entry 220 (class 1259 OID 16492)
 -- Name: hdb_computed_field_function; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -482,7 +550,36 @@ CREATE VIEW hdb_catalog.hdb_computed_field_function AS
 
 
 --
--- TOC entry 221 (class 1259 OID 16502)
+-- Name: hdb_cron_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_cron_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_cron_events (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    trigger_name text NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
 -- Name: hdb_cron_triggers; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -499,7 +596,23 @@ CREATE TABLE hdb_catalog.hdb_cron_triggers (
 
 
 --
--- TOC entry 222 (class 1259 OID 16509)
+-- Name: hdb_cron_events_stats; Type: VIEW; Schema: hdb_catalog; Owner: -
+--
+
+CREATE VIEW hdb_catalog.hdb_cron_events_stats AS
+ SELECT ct.name,
+    COALESCE(ce.upcoming_events_count, (0)::bigint) AS upcoming_events_count,
+    COALESCE(ce.max_scheduled_time, now()) AS max_scheduled_time
+   FROM (hdb_catalog.hdb_cron_triggers ct
+     LEFT JOIN ( SELECT hdb_cron_events.trigger_name,
+            count(*) AS upcoming_events_count,
+            max(hdb_cron_events.scheduled_time) AS max_scheduled_time
+           FROM hdb_catalog.hdb_cron_events
+          WHERE ((hdb_cron_events.tries = 0) AND (hdb_cron_events.status = 'scheduled'::text))
+          GROUP BY hdb_cron_events.trigger_name) ce ON ((ct.name = ce.trigger_name)));
+
+
+--
 -- Name: hdb_custom_types; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -509,7 +622,6 @@ CREATE TABLE hdb_catalog.hdb_custom_types (
 
 
 --
--- TOC entry 223 (class 1259 OID 16515)
 -- Name: hdb_foreign_key_constraint; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -549,7 +661,6 @@ CREATE VIEW hdb_catalog.hdb_foreign_key_constraint AS
 
 
 --
--- TOC entry 224 (class 1259 OID 16520)
 -- Name: hdb_function; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -562,7 +673,6 @@ CREATE TABLE hdb_catalog.hdb_function (
 
 
 --
--- TOC entry 225 (class 1259 OID 16528)
 -- Name: hdb_function_agg; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -608,7 +718,6 @@ CREATE VIEW hdb_catalog.hdb_function_agg AS
 
 
 --
--- TOC entry 226 (class 1259 OID 16533)
 -- Name: hdb_function_info_agg; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -635,7 +744,6 @@ CREATE VIEW hdb_catalog.hdb_function_info_agg AS
 
 
 --
--- TOC entry 227 (class 1259 OID 16538)
 -- Name: hdb_permission; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -652,7 +760,6 @@ CREATE TABLE hdb_catalog.hdb_permission (
 
 
 --
--- TOC entry 228 (class 1259 OID 16546)
 -- Name: hdb_permission_agg; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -666,7 +773,6 @@ CREATE VIEW hdb_catalog.hdb_permission_agg AS
 
 
 --
--- TOC entry 229 (class 1259 OID 16550)
 -- Name: hdb_primary_key; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -715,7 +821,6 @@ CREATE VIEW hdb_catalog.hdb_primary_key AS
 
 
 --
--- TOC entry 230 (class 1259 OID 16555)
 -- Name: hdb_query_collection; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -728,7 +833,6 @@ CREATE TABLE hdb_catalog.hdb_query_collection (
 
 
 --
--- TOC entry 231 (class 1259 OID 16562)
 -- Name: hdb_relationship; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -745,7 +849,6 @@ CREATE TABLE hdb_catalog.hdb_relationship (
 
 
 --
--- TOC entry 232 (class 1259 OID 16570)
 -- Name: hdb_remote_relationship; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -758,7 +861,6 @@ CREATE TABLE hdb_catalog.hdb_remote_relationship (
 
 
 --
--- TOC entry 233 (class 1259 OID 16576)
 -- Name: hdb_role; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -772,7 +874,40 @@ CREATE VIEW hdb_catalog.hdb_role AS
 
 
 --
--- TOC entry 234 (class 1259 OID 16586)
+-- Name: hdb_scheduled_event_invocation_logs; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_event_invocation_logs (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    event_id text,
+    status integer,
+    request json,
+    response json,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: hdb_scheduled_events; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_scheduled_events (
+    id text DEFAULT public.gen_random_uuid() NOT NULL,
+    webhook_conf json NOT NULL,
+    scheduled_time timestamp with time zone NOT NULL,
+    retry_conf json,
+    payload json,
+    header_conf json,
+    status text DEFAULT 'scheduled'::text NOT NULL,
+    tries integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    next_retry_at timestamp with time zone,
+    comment text,
+    CONSTRAINT valid_status CHECK ((status = ANY (ARRAY['scheduled'::text, 'locked'::text, 'delivered'::text, 'error'::text, 'dead'::text])))
+);
+
+
+--
 -- Name: hdb_schema_update_event; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -784,7 +919,6 @@ CREATE TABLE hdb_catalog.hdb_schema_update_event (
 
 
 --
--- TOC entry 235 (class 1259 OID 16593)
 -- Name: hdb_table; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -798,7 +932,6 @@ CREATE TABLE hdb_catalog.hdb_table (
 
 
 --
--- TOC entry 236 (class 1259 OID 16601)
 -- Name: hdb_table_info_agg; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -836,7 +969,6 @@ CREATE VIEW hdb_catalog.hdb_table_info_agg AS
 
 
 --
--- TOC entry 237 (class 1259 OID 16606)
 -- Name: hdb_unique_constraint; Type: VIEW; Schema: hdb_catalog; Owner: -
 --
 
@@ -852,7 +984,19 @@ CREATE VIEW hdb_catalog.hdb_unique_constraint AS
 
 
 --
--- TOC entry 238 (class 1259 OID 16614)
+-- Name: hdb_version; Type: TABLE; Schema: hdb_catalog; Owner: -
+--
+
+CREATE TABLE hdb_catalog.hdb_version (
+    hasura_uuid uuid DEFAULT public.gen_random_uuid() NOT NULL,
+    version text NOT NULL,
+    upgraded_on timestamp with time zone NOT NULL,
+    cli_state jsonb DEFAULT '{}'::jsonb NOT NULL,
+    console_state jsonb DEFAULT '{}'::jsonb NOT NULL
+);
+
+
+--
 -- Name: migration_settings; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -863,7 +1007,6 @@ CREATE TABLE hdb_catalog.migration_settings (
 
 
 --
--- TOC entry 239 (class 1259 OID 16620)
 -- Name: remote_schemas; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -876,7 +1019,6 @@ CREATE TABLE hdb_catalog.remote_schemas (
 
 
 --
--- TOC entry 240 (class 1259 OID 16626)
 -- Name: remote_schemas_id_seq; Type: SEQUENCE; Schema: hdb_catalog; Owner: -
 --
 
@@ -889,8 +1031,6 @@ CREATE SEQUENCE hdb_catalog.remote_schemas_id_seq
 
 
 --
--- TOC entry 3222 (class 0 OID 0)
--- Dependencies: 240
 -- Name: remote_schemas_id_seq; Type: SEQUENCE OWNED BY; Schema: hdb_catalog; Owner: -
 --
 
@@ -898,7 +1038,6 @@ ALTER SEQUENCE hdb_catalog.remote_schemas_id_seq OWNED BY hdb_catalog.remote_sch
 
 
 --
--- TOC entry 241 (class 1259 OID 16628)
 -- Name: schema_migrations; Type: TABLE; Schema: hdb_catalog; Owner: -
 --
 
@@ -909,7 +1048,6 @@ CREATE TABLE hdb_catalog.schema_migrations (
 
 
 --
--- TOC entry 242 (class 1259 OID 16631)
 -- Name: hdb_instances_ref; Type: TABLE; Schema: hdb_pro_catalog; Owner: -
 --
 
@@ -920,7 +1058,6 @@ CREATE TABLE hdb_pro_catalog.hdb_instances_ref (
 
 
 --
--- TOC entry 243 (class 1259 OID 16634)
 -- Name: hdb_pro_config; Type: TABLE; Schema: hdb_pro_catalog; Owner: -
 --
 
@@ -932,7 +1069,6 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_config (
 
 
 --
--- TOC entry 244 (class 1259 OID 16641)
 -- Name: hdb_pro_state; Type: TABLE; Schema: hdb_pro_catalog; Owner: -
 --
 
@@ -946,13 +1082,12 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 
 
 --
--- TOC entry 245 (class 1259 OID 16648)
 -- Name: users; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.users (
     user_id character varying(250) NOT NULL,
-    encrypted_config_token character varying(256) DEFAULT ''::character varying NOT NULL,
+    encrypted_config_token character varying(256) NOT NULL DEFAULT ''::character varying,
     token character varying(250),
     name character varying(250),
     password character varying(250) NOT NULL,
@@ -964,7 +1099,6 @@ CREATE TABLE public.users (
 
 
 --
--- TOC entry 246 (class 1259 OID 16657)
 -- Name: email_templates; Type: TABLE; Schema: sales; Owner: -
 --
 
@@ -976,15 +1110,6 @@ CREATE TABLE sales.email_templates (
 
 
 --
--- TOC entry 3002 (class 2604 OID 16789)
--- Name: container_info container_id; Type: DEFAULT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.container_info ALTER COLUMN container_id SET DEFAULT nextval('hardware.container_info_container_id_seq'::regclass);
-
-
---
--- TOC entry 2996 (class 2604 OID 16663)
 -- Name: remote_schemas id; Type: DEFAULT; Schema: hdb_catalog; Owner: -
 --
 
@@ -992,7 +1117,6 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval(
 
 
 --
--- TOC entry 3004 (class 2606 OID 16665)
 -- Name: cluster_info cluster_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1001,25 +1125,6 @@ ALTER TABLE ONLY hardware.cluster_info
 
 
 --
--- TOC entry 3065 (class 2606 OID 16794)
--- Name: container_info container_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT container_info_pkey PRIMARY KEY (container_id);
-
-
---
--- TOC entry 3006 (class 2606 OID 16783)
--- Name: instance_info instance_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.instance_info
-    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_id);
-
-
---
--- TOC entry 3008 (class 2606 OID 16667)
 -- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1028,7 +1133,6 @@ ALTER TABLE ONLY hardware.region_to_ami
 
 
 --
--- TOC entry 3010 (class 2606 OID 16669)
 -- Name: supported_app_images supported_app_images_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1037,7 +1141,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 
 
 --
--- TOC entry 3012 (class 2606 OID 16671)
 -- Name: supported_app_images unique_taskdef; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1046,7 +1149,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 
 
 --
--- TOC entry 3014 (class 2606 OID 16673)
 -- Name: user_app_state user_app_state_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1055,7 +1157,6 @@ ALTER TABLE ONLY hardware.user_app_state
 
 
 --
--- TOC entry 3020 (class 2606 OID 16675)
 -- Name: user_containers user_containers_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1064,7 +1165,22 @@ ALTER TABLE ONLY hardware.user_containers
 
 
 --
--- TOC entry 3022 (class 2606 OID 16677)
+-- Name: event_invocation_logs event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_invocation_logs
+    ADD CONSTRAINT event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: event_log event_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_log
+    ADD CONSTRAINT event_log_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: event_triggers event_triggers_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1073,7 +1189,14 @@ ALTER TABLE ONLY hdb_catalog.event_triggers
 
 
 --
--- TOC entry 3026 (class 2606 OID 16679)
+-- Name: hdb_action_log hdb_action_log_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_action_log
+    ADD CONSTRAINT hdb_action_log_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: hdb_action_permission hdb_action_permission_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1082,7 +1205,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_action_permission
 
 
 --
--- TOC entry 3024 (class 2606 OID 16681)
 -- Name: hdb_action hdb_action_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1091,7 +1213,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_action
 
 
 --
--- TOC entry 3028 (class 2606 OID 16683)
 -- Name: hdb_allowlist hdb_allowlist_collection_name_key; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1100,7 +1221,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_allowlist
 
 
 --
--- TOC entry 3030 (class 2606 OID 16685)
 -- Name: hdb_computed_field hdb_computed_field_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1109,7 +1229,22 @@ ALTER TABLE ONLY hdb_catalog.hdb_computed_field
 
 
 --
--- TOC entry 3032 (class 2606 OID 16687)
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_cron_events hdb_cron_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_events
+    ADD CONSTRAINT hdb_cron_events_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: hdb_cron_triggers hdb_cron_triggers_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1118,7 +1253,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_cron_triggers
 
 
 --
--- TOC entry 3034 (class 2606 OID 16689)
 -- Name: hdb_function hdb_function_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1127,7 +1261,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_function
 
 
 --
--- TOC entry 3036 (class 2606 OID 16691)
 -- Name: hdb_permission hdb_permission_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1136,7 +1269,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_permission
 
 
 --
--- TOC entry 3038 (class 2606 OID 16693)
 -- Name: hdb_query_collection hdb_query_collection_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1145,7 +1277,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_query_collection
 
 
 --
--- TOC entry 3040 (class 2606 OID 16695)
 -- Name: hdb_relationship hdb_relationship_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1154,7 +1285,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_relationship
 
 
 --
--- TOC entry 3042 (class 2606 OID 16697)
 -- Name: hdb_remote_relationship hdb_remote_relationship_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1163,7 +1293,22 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
 
 
 --
--- TOC entry 3045 (class 2606 OID 16699)
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hdb_scheduled_events hdb_scheduled_events_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_events
+    ADD CONSTRAINT hdb_scheduled_events_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: hdb_table hdb_table_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1172,7 +1317,14 @@ ALTER TABLE ONLY hdb_catalog.hdb_table
 
 
 --
--- TOC entry 3047 (class 2606 OID 16701)
+-- Name: hdb_version hdb_version_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_version
+    ADD CONSTRAINT hdb_version_pkey PRIMARY KEY (hasura_uuid);
+
+
+--
 -- Name: migration_settings migration_settings_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1181,7 +1333,6 @@ ALTER TABLE ONLY hdb_catalog.migration_settings
 
 
 --
--- TOC entry 3049 (class 2606 OID 16703)
 -- Name: remote_schemas remote_schemas_name_key; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1190,7 +1341,6 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas
 
 
 --
--- TOC entry 3051 (class 2606 OID 16705)
 -- Name: remote_schemas remote_schemas_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1199,7 +1349,6 @@ ALTER TABLE ONLY hdb_catalog.remote_schemas
 
 
 --
--- TOC entry 3053 (class 2606 OID 16707)
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1208,7 +1357,6 @@ ALTER TABLE ONLY hdb_catalog.schema_migrations
 
 
 --
--- TOC entry 3055 (class 2606 OID 16709)
 -- Name: hdb_pro_config hdb_pro_config_pkey; Type: CONSTRAINT; Schema: hdb_pro_catalog; Owner: -
 --
 
@@ -1217,7 +1365,6 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_config
 
 
 --
--- TOC entry 3057 (class 2606 OID 16711)
 -- Name: hdb_pro_state hdb_pro_state_pkey; Type: CONSTRAINT; Schema: hdb_pro_catalog; Owner: -
 --
 
@@ -1242,7 +1389,6 @@ ALTER TABLE ONLY public.users
 
 
 --
--- TOC entry 3063 (class 2606 OID 16717)
 -- Name: email_templates email_templates_pkey; Type: CONSTRAINT; Schema: sales; Owner: -
 --
 
@@ -1251,7 +1397,6 @@ ALTER TABLE ONLY sales.email_templates
 
 
 --
--- TOC entry 3015 (class 1259 OID 16718)
 -- Name: fki_app_id_fk; Type: INDEX; Schema: hardware; Owner: -
 --
 
@@ -1259,7 +1404,6 @@ CREATE INDEX fki_app_id_fk ON hardware.user_containers USING btree (task_definit
 
 
 --
--- TOC entry 3016 (class 1259 OID 16719)
 -- Name: fki_cluster_name_fk; Type: INDEX; Schema: hardware; Owner: -
 --
 
@@ -1267,7 +1411,6 @@ CREATE INDEX fki_cluster_name_fk ON hardware.user_containers USING btree (cluste
 
 
 --
--- TOC entry 3017 (class 1259 OID 16720)
 -- Name: ip_and_port; Type: INDEX; Schema: hardware; Owner: -
 --
 
@@ -1275,7 +1418,6 @@ CREATE INDEX ip_and_port ON hardware.user_containers USING btree (ip, port_32262
 
 
 --
--- TOC entry 3018 (class 1259 OID 16721)
 -- Name: loc_taskdef_uid; Type: INDEX; Schema: hardware; Owner: -
 --
 
@@ -1283,7 +1425,55 @@ CREATE INDEX loc_taskdef_uid ON hardware.user_containers USING btree (location, 
 
 
 --
--- TOC entry 3043 (class 1259 OID 16722)
+-- Name: event_invocation_logs_event_id_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_invocation_logs_event_id_idx ON hdb_catalog.event_invocation_logs USING btree (event_id);
+
+
+--
+-- Name: event_log_created_at_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_created_at_idx ON hdb_catalog.event_log USING btree (created_at);
+
+
+--
+-- Name: event_log_delivered_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_delivered_idx ON hdb_catalog.event_log USING btree (delivered);
+
+
+--
+-- Name: event_log_locked_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_locked_idx ON hdb_catalog.event_log USING btree (locked);
+
+
+--
+-- Name: event_log_trigger_name_idx; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX event_log_trigger_name_idx ON hdb_catalog.event_log USING btree (trigger_name);
+
+
+--
+-- Name: hdb_cron_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_cron_event_status ON hdb_catalog.hdb_cron_events USING btree (status);
+
+
+--
+-- Name: hdb_scheduled_event_status; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE INDEX hdb_scheduled_event_status ON hdb_catalog.hdb_scheduled_events USING btree (status);
+
+
+--
 -- Name: hdb_schema_update_event_one_row; Type: INDEX; Schema: hdb_catalog; Owner: -
 --
 
@@ -1291,7 +1481,13 @@ CREATE UNIQUE INDEX hdb_schema_update_event_one_row ON hdb_catalog.hdb_schema_up
 
 
 --
--- TOC entry 3077 (class 2620 OID 16723)
+-- Name: hdb_version_one_row; Type: INDEX; Schema: hdb_catalog; Owner: -
+--
+
+CREATE UNIQUE INDEX hdb_version_one_row ON hdb_catalog.hdb_version USING btree (((version IS NOT NULL)));
+
+
+--
 -- Name: hdb_table event_trigger_table_name_update_trigger; Type: TRIGGER; Schema: hdb_catalog; Owner: -
 --
 
@@ -1299,7 +1495,6 @@ CREATE TRIGGER event_trigger_table_name_update_trigger AFTER UPDATE ON hdb_catal
 
 
 --
--- TOC entry 3076 (class 2620 OID 16724)
 -- Name: hdb_schema_update_event hdb_schema_update_event_notifier; Type: TRIGGER; Schema: hdb_catalog; Owner: -
 --
 
@@ -1307,16 +1502,6 @@ CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_ca
 
 
 --
--- TOC entry 3075 (class 2606 OID 16795)
--- Name: container_info instance_id_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.container_info
-    ADD CONSTRAINT instance_id_fk FOREIGN KEY (instance_id) REFERENCES hardware.instance_info(instance_id) ON UPDATE CASCADE ON DELETE CASCADE;
-
-
---
--- TOC entry 3066 (class 2606 OID 16725)
 -- Name: user_containers task_definition_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1325,7 +1510,6 @@ ALTER TABLE ONLY hardware.user_containers
 
 
 --
--- TOC entry 3067 (class 2606 OID 16730)
 -- Name: user_containers user_containers_cluster_fkey; Type: FK CONSTRAINT; Schema: hardware; Owner: -
 --
 
@@ -1342,7 +1526,14 @@ ALTER TABLE ONLY hardware.user_containers
 
 
 --
--- TOC entry 3069 (class 2606 OID 16740)
+-- Name: event_invocation_logs event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.event_invocation_logs
+    ADD CONSTRAINT event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.event_log(id);
+
+
+--
 -- Name: hdb_action_permission hdb_action_permission_action_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1351,7 +1542,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_action_permission
 
 
 --
--- TOC entry 3070 (class 2606 OID 16745)
 -- Name: hdb_allowlist hdb_allowlist_collection_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1360,7 +1550,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_allowlist
 
 
 --
--- TOC entry 3071 (class 2606 OID 16750)
 -- Name: hdb_computed_field hdb_computed_field_table_schema_table_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1369,7 +1558,22 @@ ALTER TABLE ONLY hdb_catalog.hdb_computed_field
 
 
 --
--- TOC entry 3072 (class 2606 OID 16755)
+-- Name: hdb_cron_event_invocation_logs hdb_cron_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_event_invocation_logs
+    ADD CONSTRAINT hdb_cron_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_cron_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
+-- Name: hdb_cron_events hdb_cron_events_trigger_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_cron_events
+    ADD CONSTRAINT hdb_cron_events_trigger_name_fkey FOREIGN KEY (trigger_name) REFERENCES hdb_catalog.hdb_cron_triggers(name) ON UPDATE CASCADE ON DELETE CASCADE;
+
+
+--
 -- Name: hdb_permission hdb_permission_table_schema_table_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1378,7 +1582,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_permission
 
 
 --
--- TOC entry 3073 (class 2606 OID 16760)
 -- Name: hdb_relationship hdb_relationship_table_schema_table_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1387,7 +1590,6 @@ ALTER TABLE ONLY hdb_catalog.hdb_relationship
 
 
 --
--- TOC entry 3074 (class 2606 OID 16765)
 -- Name: hdb_remote_relationship hdb_remote_relationship_table_schema_table_name_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
 --
 
@@ -1395,7 +1597,13 @@ ALTER TABLE ONLY hdb_catalog.hdb_remote_relationship
     ADD CONSTRAINT hdb_remote_relationship_table_schema_table_name_fkey FOREIGN KEY (table_schema, table_name) REFERENCES hdb_catalog.hdb_table(table_schema, table_name) ON UPDATE CASCADE;
 
 
--- Completed on 2021-05-20 07:54:09
+--
+-- Name: hdb_scheduled_event_invocation_logs hdb_scheduled_event_invocation_logs_event_id_fkey; Type: FK CONSTRAINT; Schema: hdb_catalog; Owner: -
+--
+
+ALTER TABLE ONLY hdb_catalog.hdb_scheduled_event_invocation_logs
+    ADD CONSTRAINT hdb_scheduled_event_invocation_logs_event_id_fkey FOREIGN KEY (event_id) REFERENCES hdb_catalog.hdb_scheduled_events(id) ON UPDATE CASCADE ON DELETE CASCADE;
+
 
 --
 -- PostgreSQL database dump complete
