@@ -1,5 +1,4 @@
 import uuid
-from flask import Blueprint
 from flask.json import jsonify
 from pydantic import BaseModel
 from flask_pydantic import validate
@@ -9,29 +8,9 @@ from app.helpers.utils.general.sql_commands import fractal_sql_commit
 from app.constants.http_codes import (
     ACCEPTED,
 )
-
-
 from app.factory import create_app
-from app.models import UserContainer
 
 app = create_app()
-
-with app.app_context():
-    base_container = (
-        UserContainer.query.filter(
-            UserContainer.task_definition == "fractal-dev-browsers-chrome",
-            UserContainer.location == "us-east-1",
-            UserContainer.user_id is not None,
-        )
-        .filter(UserContainer.cluster.notlike("%test%"))
-        .with_for_update()
-        .limit(1)
-        .first()
-    )
-
-    print(base_container)
-
-aws_container_bp = Blueprint("aws_container_bp", __name__)
 
 
 class InstanceInfo(db.Model):
@@ -83,13 +62,27 @@ def choose_instance(region):
     return instances[0]
 
 
+# With pydantic, we can define our query/body datastructures with
+# "one-time use" classes like this. They need to inherit from the pydantic
+# BaseModel, but no other boilerplate after that. The type signatures are
+# fully mypy compatible.
 class ContainerAssignBody(BaseModel):
     region: str
     user_id: str
     dpi: int
 
 
-@aws_container_bp.route("/container_assign", methods=("POST",))
+# flask-pydantic ships a decorator called validate().
+# When validate() is used, flask-pydantic can populate the arguments to your
+# route function automatically.
+#
+# It's important to note that flask-pydantic actually uses the name of the
+# parameter to decide which data to pass to it. So "body" must be used to
+# access the request body, "query" must be used to access the query parameters.
+# It must also have a type signature of a class thats inherited from BaseModel.
+#
+# That's it! No more boilerplate, the rest of the validation comes for free.
+@app.route("/container_assign", methods=("POST",))
 @validate()
 def container_assign(body: ContainerAssignBody):
     region = body.get("region")
@@ -106,3 +99,20 @@ def container_assign(body: ContainerAssignBody):
     )
 
     return jsonify({"ID": instance.id}), ACCEPTED
+
+
+# If any of the required parameters to ContainerAssignBody are missing,
+# the response will automatically 400 BAD REQUEST, and the response json
+# will be something like the following:
+#
+# {
+#    'validation_error': {
+#        'query_params': [
+#           {
+#             'loc': ['dpi'],
+#             'msg': ['field required'],
+#             'type': ['value_error.missing'],
+#           }
+#        ]
+#    }
+# }
