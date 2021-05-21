@@ -485,6 +485,8 @@ typedef struct FractalMultigestureMessage {
     float x;               ///< Normalized gesture x-axis center.
     float y;               ///< Normalized gesture y-axis center.
     uint16_t num_fingers;  ///< Number of fingers used in the gesture.
+    bool active_gesture;   ///< Whether this multigesture is already active.
+    FractalMultigestureType gesture_type;  ///< Multigesture type
 } FractalMultigestureMessage;
 
 /**
@@ -592,7 +594,7 @@ typedef struct FractalClientMessage {
             bool num_lock;
             char keyboard_state[NUM_KEYCODES];
             bool active_pinch;
-        };
+        } keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;

@@ -557,25 +557,4 @@ int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_di
     return 0;
 }
 
-int emit_touch_event(InputDevice* input_device, FractalTouchType touch_type, bool active_gesture) {
-    /*
-        Emit a finger touch event to the input device. In particular,
-        release the LCTRL key to stop treating scrolls as zooms.
-
-        Arguments:
-            input_device (InputDevice*): The initialized input device to write
-            touch_type (FractalTouchType): The touch type (up, down, motion)
-            active_gesture (bool): Whether this event happened mid-multigesture
-
-        Returns:
-            (int): 0 on success, -1 on failure
-    */
-
-    // If the user has released a finger mid-gesture, we release the lctrl key
-    if (active_gesture && touch_type == FINGER_UP) {
-        emit_key_event(input_device, FK_LCTRL, false);
-    }
-    return 0;
-}
-
 #endif  // INPUT_DRIVER == UINPUT_INPUT_DRIVER
