@@ -103,7 +103,9 @@ bool replay_user_input(InputDevice* input_device, FractalClientMessage* fmsg) {
 #endif  // INPUT_DRIVER
             break;
         case MESSAGE_MULTIGESTURE:
-            ret = emit_multigesture_event(input_device, fmsg->d_theta, fmsg->d_dist, fmsg->gesture_type, fmsg->active_gesture);
+            ret = emit_multigesture_event(input_device, fmsg->multigesture.d_theta,
+                fmsg->multigesture.d_dist, fmsg->multigesture.gesture_type,
+                fmsg->multigesture.active_gesture);
             break;
         default:
             LOG_ERROR("Unknown message type! %d", fmsg->type);
