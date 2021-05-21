@@ -9,7 +9,10 @@ import { merge, Observable, zip, of } from "rxjs"
 import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
-import config, { loggingBaseFilePath } from "@app/config/environment"
+import config, {
+  loggingBaseFilePath,
+  loggingFiles,
+} from "@app/config/environment"
 
 const amplitude = Amplitude.init(config.keys.AMPLITUDE_KEY)
 const sessionID = new Date().getTime()
@@ -18,7 +21,7 @@ const sessionID = new Date().getTime()
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
   fs.mkdirSync(loggingBaseFilePath, { recursive: true })
-  const logPath = path.join(loggingBaseFilePath, "debug.log")
+  const logPath = path.join(loggingBaseFilePath, loggingFiles.client)
   return fs.createWriteStream(logPath)
 }
 
@@ -81,7 +84,7 @@ export const logBase = async (
 ) => {
   /*
   Description:
-      Sends a log to console, debug.log file, and/or logz.io depending on if the app is packaged
+      Sends a log to console, client.log file, and/or logz.io depending on if the app is packaged
   Arguments:
       title (string): Log title
       data (any): JSON or list
@@ -139,21 +142,11 @@ export const uploadToS3 = async (email: string) => {
     })
   }
 
-  const uploadPromises: Array<Promise<any>> = []
+  const logLocation = path.join(loggingBaseFilePath, loggingFiles.protocol)
 
-  const logLocations = [
-    path.join(loggingBaseFilePath, "log-dev.txt"),
-    path.join(loggingBaseFilePath, "log-staging.txt"),
-    path.join(loggingBaseFilePath, "log.txt"),
-  ]
-
-  logLocations.forEach((filePath: string) => {
-    if (fs.existsSync(filePath)) {
-      uploadPromises.push(uploadHelper(filePath))
-    }
-  })
-
-  await Promise.all(uploadPromises)
+  if (fs.existsSync(logLocation)) {
+    await uploadHelper(logLocation)
+  }
 }
 
 export const logObservable = (level: LogLevel, title: string) => {

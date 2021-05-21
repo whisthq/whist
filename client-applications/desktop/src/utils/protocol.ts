@@ -4,8 +4,12 @@
 
 import { app } from "electron"
 import path from "path"
+import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
-import config from "@app/config/environment"
+import config, {
+  loggingBaseFilePath,
+  loggingFiles,
+} from "@app/config/environment"
 
 const { protocolName, protocolFolder } = config
 
@@ -40,14 +44,27 @@ export const endStream = (process: ChildProcess, message: string) => {
 }
 
 // Spawn the child process with the initial arguments passed in
-export const protocolLaunch = () => {
+export const protocolLaunch = async () => {
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
+
+  // Create a pipe to the protocol logs file
+  fs.mkdirSync(loggingBaseFilePath, { recursive: true })
+  const protocolLogFile = fs.createWriteStream(
+    path.join(loggingBaseFilePath, loggingFiles.protocol)
+  )
+
+  // In order to pipe a child process to this stream, we must wait until an underlying file
+  // descriptor is created. This corresponds to the "open" event in the stream.
+  await new Promise<void>((resolve) => {
+    protocolLogFile.on("open", () => resolve())
+  })
 
   const protocol = spawn(protocolPath, protocolArguments, {
     detached: false,
     // options are for [stdin, stdout, stderr]. pipe creates a pipe, ignore will ignore the
-    // output. We only pipe stdin since that's how we send args to the protocol
-    stdio: ["pipe", "ignore", "ignore"],
+    // output. We only pipe stdin since that's how we send args to the protocol. Meanwhile,
+    // we will write stdout to the log file client.log.
+    stdio: ["pipe", protocolLogFile, "ignore"],
 
     // On packaged macOS, the protocol is moved to the MacOS folder,
     // but expects to be in the Fractal.app root alongside the loading
