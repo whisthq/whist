@@ -565,12 +565,12 @@ int32_t send_video(void* opaque) {
 
                     static int last_cursor_id = -1;
                     FractalCursorImage cursor = get_current_cursor();
-                    if (cursor.cursor_use_bmp || ((int)cursor.cursor_id != last_cursor_id)) {
+                    if (cursor.using_bmp || ((int)cursor.cursor_id != last_cursor_id)) {
                         set_fractal_cursor_image(frame, &cursor);
                     } else {
                         set_fractal_cursor_image(frame, NULL);
                     }
-                    if (cursor.cursor_use_bmp) {
+                    if (cursor.using_bmp) {
                         last_cursor_id = -1;
                     } else {
                         last_cursor_id = cursor.cursor_id;
