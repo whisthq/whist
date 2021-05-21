@@ -62,7 +62,7 @@ extern volatile bool native_window_color_update;
 
 // START VIDEO VARIABLES
 volatile FractalCursorState cursor_state = CURSOR_STATE_VISIBLE;
-volatile SDL_Cursor* cursor = NULL;
+volatile SDL_Cursor* sdl_cursor = NULL;
 volatile FractalCursorID last_cursor = (FractalCursorID)SDL_SYSTEM_CURSOR_ARROW;
 volatile bool pending_sws_update = false;
 volatile bool pending_texture_update = false;
@@ -403,41 +403,42 @@ int render_video() {
         }
 
         // Set cursor to frame's desired cursor type
-        if ((FractalCursorID)frame->cursor.cursor_id != last_cursor ||
-            frame->cursor.cursor_use_bmp) {
+        FractalCursorImage* cursor = get_fractal_cursor_image(frame);
+        if ((FractalCursorID)cursor->cursor_id != last_cursor ||
+            cursor->cursor_use_bmp) {
             if (cursor) {
                 SDL_FreeCursor((SDL_Cursor*)cursor);
             }
-            if (frame->cursor.cursor_use_bmp) {
+            if (cursor->cursor_use_bmp) {
                 // use bitmap data to set cursor
 
                 SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                    frame->cursor.cursor_bmp, frame->cursor.cursor_bmp_width,
-                    frame->cursor.cursor_bmp_height, sizeof(uint32_t) * 8,
-                    sizeof(uint32_t) * frame->cursor.cursor_bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                    cursor->cursor_bmp, cursor->cursor_bmp_width,
+                    cursor->cursor_bmp_height, sizeof(uint32_t) * 8,
+                    sizeof(uint32_t) * cursor->cursor_bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
                     CURSORIMAGE_B, CURSORIMAGE_A);
                 // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
                 // pre-alpha multplied
-                cursor = SDL_CreateColorCursor(cursor_surface, frame->cursor.cursor_bmp_hot_x,
-                                               frame->cursor.cursor_bmp_hot_y);
+                sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->cursor_bmp_hot_x,
+                                               cursor->cursor_bmp_hot_y);
                 SDL_FreeSurface(cursor_surface);
             } else {
                 // use cursor id to set cursor
-                cursor = SDL_CreateSystemCursor((SDL_SystemCursor)frame->cursor.cursor_id);
+                sdl_cursor = SDL_CreateSystemCursor((SDL_SystemCursor)cursor->cursor_id);
             }
-            SDL_SetCursor((SDL_Cursor*)cursor);
+            SDL_SetCursor((SDL_Cursor*)sdl_cursor);
 
-            last_cursor = (FractalCursorID)frame->cursor.cursor_id;
+            last_cursor = (FractalCursorID)cursor->cursor_id;
         }
 
-        if (frame->cursor.cursor_state != cursor_state) {
-            if (frame->cursor.cursor_state == CURSOR_STATE_HIDDEN) {
+        if (cursor->cursor_state != cursor_state) {
+            if (cursor->cursor_state == CURSOR_STATE_HIDDEN) {
                 SDL_SetRelativeMouseMode(SDL_TRUE);
             } else {
                 SDL_SetRelativeMouseMode(SDL_FALSE);
             }
 
-            cursor_state = frame->cursor.cursor_state;
+            cursor_state = cursor->cursor_state;
         }
 
         // LOG_INFO("Client Frame Time for ID %d: %f", renderContext.id,
