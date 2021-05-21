@@ -8,7 +8,7 @@ export const WarningSignupInvalid =
 
 export const WarningLoginInvalid = "Invalid email or password"
 
-export const containerPollingTimeout = 120000
+export const ContainerPollingTimeout = 120000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
@@ -55,10 +55,10 @@ export const ContainerCreateErrorTitleUnauthorized =
 export const ContainerCreateErrorTextUnauthorized =
   "Please try logging in again."
 
-export const containerPollingErrorTitle =
+export const ContainerPollingErrorTitle =
   "Fractal servers experienced an unexpected error."
 
-export const containerPollingErrorText =
+export const ContainerPollingErrorText =
   "Try again in a few minutes, or contact support@fractal.co for help."
 
 export const ProtocolErrorTitle = "The Fractal browser encountered an error."
