@@ -157,6 +157,7 @@ class InstanceInfo(db.Model):
         maxContainers (int): how many containers can run at once?
         last_pinged (int): when did this instance last tell us it existed?
         ami_id (str): what image is this machine based on?
+        containers (Iterable[ContainerInfo]):  which containers are running on this instance?
     """
 
     __tablename__ = "instance_info"
@@ -172,6 +173,12 @@ class InstanceInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     last_pinged = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
+    containers = relationship(
+        "ContainerInfo",
+        back_populates="parent_instance",
+        lazy="dynamic",
+        passive_deletes=True,
+    )
 
 
 class InstanceSorted(db.Model):
@@ -181,6 +188,7 @@ class InstanceSorted(db.Model):
     Attributes:
         instance_id (string): instance id from AWS console
         instance_type (string): what hardware is the instance running on?
+        location (string): where is the instance?
         max_containers (int): how many containers
         running_containers (int): how many containers are running?
     """
@@ -190,7 +198,29 @@ class InstanceSorted(db.Model):
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
     max_containers = db.Column(db.Integer, nullable=False)
     instance_type = db.Column(db.String(250), nullable=False)
+    location = db.Column(db.String(250), nullable=False)
     running_containers = db.Column(db.Integer, nullable=False)
+
+
+class ContainerInfo(db.Model):
+    """
+    compute instance information
+
+    Attributes:
+        container_id (int):  which container is this?
+        instance_id (string): which instance is it on?
+        user_id (string): who's running it?
+        status (string): is it running?
+        parent_instance (InstanceInfo): what instance is this on?
+    """
+
+    __tablename__ = "container_info"
+    __table_args__ = {"extend_existing": True, "schema": "hardware"}
+    container_id = db.Column(db.Integer, primary_key=True, unique=True)
+    instance_id = db.Column(db.String(250), nullable=False)
+    user_id = db.Column(db.String(250), nullable=False)
+    status = db.Column(db.String(250), nullable=False)
+    parent_instance = relationship("InstanceInfo", back_populates="containers")
 
 
 class RegionToAmi(db.Model):
