@@ -72,12 +72,12 @@ typedef enum FractalCursorID {
 typedef struct FractalCursorImage {
     FractalCursorID cursor_id;
     FractalCursorState cursor_state;
-    bool cursor_use_bmp;
-    unsigned short cursor_bmp_width;
-    unsigned short cursor_bmp_height;
-    unsigned short cursor_bmp_hot_x;
-    unsigned short cursor_bmp_hot_y;
-    uint32_t cursor_bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
+    bool using_bmp;
+    unsigned short bmp_width;
+    unsigned short bmp_height;
+    unsigned short bmp_hot_x;
+    unsigned short bmp_hot_y;
+    uint32_t bmp[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT];
 } FractalCursorImage;
 
 /*

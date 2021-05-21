@@ -405,21 +405,21 @@ int render_video() {
         FractalCursorImage* cursor = get_fractal_cursor_image(frame);
         // Only update the cursor, if a cursor image is even embedded in the frame at all.
         if (cursor) {
-            if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->cursor_use_bmp) {
+            if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {
                 if (sdl_cursor) {
                     SDL_FreeCursor((SDL_Cursor*)sdl_cursor);
                 }
-                if (cursor->cursor_use_bmp) {
+                if (cursor->using_bmp) {
                     // use bitmap data to set cursor
 
                     SDL_Surface* cursor_surface = SDL_CreateRGBSurfaceFrom(
-                        cursor->cursor_bmp, cursor->cursor_bmp_width, cursor->cursor_bmp_height,
-                        sizeof(uint32_t) * 8, sizeof(uint32_t) * cursor->cursor_bmp_width,
-                        CURSORIMAGE_R, CURSORIMAGE_G, CURSORIMAGE_B, CURSORIMAGE_A);
+                        cursor->bmp, cursor->bmp_width, cursor->bmp_height, sizeof(uint32_t) * 8,
+                        sizeof(uint32_t) * cursor->bmp_width, CURSORIMAGE_R, CURSORIMAGE_G,
+                        CURSORIMAGE_B, CURSORIMAGE_A);
                     // potentially SDL_SetSurfaceBlendMode since X11 cursor BMPs are
                     // pre-alpha multplied
-                    sdl_cursor = SDL_CreateColorCursor(cursor_surface, cursor->cursor_bmp_hot_x,
-                                                       cursor->cursor_bmp_hot_y);
+                    sdl_cursor =
+                        SDL_CreateColorCursor(cursor_surface, cursor->bmp_hot_x, cursor->bmp_hot_y);
                     SDL_FreeSurface(cursor_surface);
                 } else {
                     // use cursor id to set cursor
