@@ -719,7 +719,6 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  */
 int get_fmsg_size(FractalClientMessage* fmsg);
 
-
 void set_fractal_cursor_image(Frame* frame, FractalCursorImage* cursor);
 void set_compressed_frame(Frame* frame, unsigned char* compressed_frame, int compressed_frame_size);
 FractalCursorImage* get_fractal_cursor_image(Frame* frame);
