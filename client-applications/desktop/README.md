@@ -35,20 +35,16 @@ Finally, you can open PR to `dev`.
 
 ### App State and Logging
 
-Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the following locations:
+Application data are written and stored in the following locations:
 
-- On macOS, look in `~/Library/Application\ Support/{Electron,Fractal}/config.json`
-- On Linux, look in `~/.config/{Electron,Fractal}/Cache/config.json`
-- On Windows, look in `%APPDATA%\{Electron,Fractal}\Cache\config.json`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
+- On macOS, look in `~/Library/Application\ Support/{Electron,fractal}/{dev,staging,prod}`
+- On Linux, look in `~/.config/{Electron,fractal}/{dev,staging,prod}`
+- On Windows, look in `%APPDATA%\{Electron,fractal}\{dev,staging,prod}`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming`.
+  The unpackaged app will have `Electron` in the path while the packaged app will have `fractal`. You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
 
-The unpackaged app will have `Electron` in the path while the packaged app will have `Fractal`.
+Some pieces of state, such as the user's authentication token, are stored in the file system and persist between app launches. This state is persisted in the file `config.json`.
 
-You can clear these files to re-trigger behavior, such as a re-running the login flow, by deleting them via `yarn cache:clear`.
-
-Note the locations of the logfiles as well:
-
-- On macOS/Linux, `~/.fractal/log{,-dev,staging}.txt`
-- On Windows, `%APPDATA%\Fractal\log{,-dev,staging}.txt`. Note that `%APPDATA%` usually corresponds to `C:\Users\<user>\AppData\Roaming\`.
+Similarly, logs from the client app will be stored in `logs/client.log` and logs from the protocol will be stored in `logs/protocol.log` within the application data folder.
 
 ## Client Application Source Code
 

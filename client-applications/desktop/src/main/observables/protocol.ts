@@ -36,7 +36,7 @@ export const protocolLaunchProcess = combineLatest([
   eventUpdateNotAvailable,
 ]).pipe(
   take(1),
-  map(() => protocolLaunch()),
+  mergeMap(async () => await protocolLaunch()),
   share()
 ) as Observable<ChildProcess>
 

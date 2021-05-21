@@ -30,22 +30,15 @@ const getProtocolFolder = () => {
   }
 }
 
-const getBaseFilePath = () => {
-  if (process.platform === "win32") {
-    return path.join(app.getPath("appData"), "Fractal")
-  } else {
-    return path.join(app.getPath("home"), ".fractal")
-  }
-}
-
-const baseFilePath = getBaseFilePath()
 const protocolName = getProtocolName()
 const protocolFolder = getProtocolFolder()
+const loggingBaseFilePath = path.join(app.getPath("userData"), "logs")
 
-const loggingBaseFilePath =
-  process.platform === "win32"
-    ? path.join(app.getPath("appData"), "Fractal")
-    : path.join(app.getPath("home"), ".fractal")
+// Log file names
+const loggingFiles = {
+  client: "client.log",
+  protocol: "protocol.log",
+}
 
 // Root folder of built application
 const buildRoot = app.isPackaged
@@ -55,14 +48,14 @@ const buildRoot = app.isPackaged
 // Cache/persistence folder name
 const userDataFolderNames = {
   development: "Electron",
-  production: "Fractal",
+  production: "fractal",
 }
 
 module.exports = {
-  baseFilePath,
   protocolName,
   protocolFolder,
   loggingBaseFilePath,
+  loggingFiles,
   userDataFolderNames,
   buildRoot,
 }

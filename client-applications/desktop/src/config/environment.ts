@@ -52,4 +52,4 @@ export default config
 
 // Re-exporting
 export { FractalEnvironments } from "../../config/constants"
-export { loggingBaseFilePath } from "../../config/paths"
+export { loggingBaseFilePath, loggingFiles } from "../../config/paths"
