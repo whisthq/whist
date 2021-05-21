@@ -14,10 +14,10 @@ const {
 } = require("./constants")
 
 const {
-  baseFilePath,
   protocolName,
   protocolFolder,
   loggingBaseFilePath,
+  loggingFiles,
   userDataFolderNames,
   buildRoot,
 } = require("./paths")
@@ -32,7 +32,6 @@ const configs = {
   LOCAL: {
     appEnvironment,
     keys,
-    baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
@@ -52,7 +51,7 @@ const configs = {
   DEVELOPMENT: {
     appEnvironment,
     keys,
-    baseFilePath,
+
     protocolName,
     protocolFolder,
     buildRoot,
@@ -72,7 +71,6 @@ const configs = {
   STAGING: {
     appEnvironment,
     keys,
-    baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
@@ -93,7 +91,6 @@ const configs = {
   PRODUCTION: {
     appEnvironment,
     keys,
-    baseFilePath,
     protocolName,
     protocolFolder,
     buildRoot,
@@ -117,6 +114,7 @@ module.exports = {
   iconName,
   configs,
   loggingBaseFilePath,
+  loggingFiles,
   userDataFolderNames,
   FractalNodeEnvironments,
   FractalEnvironments,
