@@ -1118,8 +1118,13 @@ jobs:
                     # increment version by staging-rc.1
                     NEW_STAGING_RC=$(echo "print( ${STAGING_RC} + 1)" | python)
 
+                    # set temporary variable for upcoming micro version which is 1 ahead of current, since
+                    # staging/dev are release candiates (rc) for the next version
+                    # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+                    UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
                     # set new desktop app version
-                    NEW_VERSION="${MAJOR}.${MINOR}.${MICRO}-staging-rc.${NEW_STAGING_RC}"
+                    NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-staging-rc.${NEW_STAGING_RC}"
 
                     # store NEW_STAGING_RC in GITHUB_ENV to push to GraphQL API
                     echo "new_staging_rc_version=${NEW_STAGING_RC}" >> $GITHUB_ENV
@@ -1128,8 +1133,13 @@ jobs:
                     # increment version by dev-rc.1
                     NEW_DEV_RC=$(echo "print( ${DEV_RC} + 1)" | python)
 
+                    # set temporary variable for upcoming micro version which is 1 ahead of current, since
+                    # staging/dev are release candiates (rc) for the next version
+                    # we don't push that micro version to GraphQL in staging/dev, only on prod when it becomes current
+                    UPCOMING_MICRO=$(echo "print( ${MICRO} + 1)" | python)
+
                     # set new desktop app version
-                    NEW_VERSION="${MAJOR}.${MINOR}.${MICRO}-dev-rc.${NEW_DEV_RC}"
+                    NEW_VERSION="${MAJOR}.${MINOR}.${UPCOMING_MICRO}-dev-rc.${NEW_DEV_RC}"
 
                     # store NEW_DEV_RC in GITHUB_ENV to push to GraphQL API
                     echo "new_dev_rc_version=${NEW_DEV_RC}" >> $GITHUB_ENV
@@ -1142,7 +1152,7 @@ jobs:
                   # store new desktop app version as GitHub env to substitute in client-apps package.json
                   echo "desktop_app_new_version=${NEW_VERSION}" >> $GITHUB_ENV
 
-                  # store new desktop app version as GitHub step output to substitute in GitHub release tag creation
+                  # store new desktop app version as GitHub step output to substitute in GitHub Release tag creation
                   echo "::set-output name=release_version::${NEW_VERSION}"
 
             # Bump the package version in package.json using jq
