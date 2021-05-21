@@ -1,5 +1,5 @@
-import { merge, zip, fromEvent, of } from "rxjs"
-import { map, mergeMap, take, tap } from "rxjs/operators"
+import { merge, zip, fromEvent, of, combineLatest } from "rxjs"
+import { map, mergeMap, take, tap, sample, switchMapTo } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
@@ -15,22 +15,25 @@ import { fromTrigger } from "@app/utils/flows"
 loginFlow(fromTrigger("loginAction"))
 signupFlow(fromTrigger("signupAction"))
 
-// Container flow
-containerFlow(
-  merge(
-    fromTrigger("persisted"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ).pipe(take(1))
+fromTrigger("updateNotAvailable").subscribe(() =>
+  console.log("UPDATE SHOULD PRINT HERE")
 )
 
-protocolLaunchFlow(
-  merge(
+const launchTrigger = merge(
+  combineLatest([
     fromTrigger("persisted"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ).pipe(take(1))
-)
+    fromTrigger("updateNotAvailable"),
+    // ^^^^^^ protocol won't launch because this isn't firing
+  ]).pipe(map(([a]) => a)),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess")
+).pipe(take(1))
+
+// Container flow
+containerFlow(launchTrigger)
+
+// Protocol flow
+protocolLaunchFlow(launchTrigger)
 
 protocolCloseFlow(
   fromTrigger("protocolLaunchFlowSuccess").pipe(
