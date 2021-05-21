@@ -69,8 +69,8 @@ clients:
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
-    description: A service that performs administrative operations on the fractal webservers
-      on behalf of Fractal developers.
+    description: A service that performs administrative operations on the fractal
+      webservers on behalf of Fractal developers.
     grant_types:
       - password
       - http://auth0.com/oauth/grant-type/password-realm
@@ -174,6 +174,18 @@ databases:
     realms:
       - Username-Password-Authentication
 connections:
+  - name: apple
+    strategy: apple
+    enabled_clients:
+      - Fractal
+    is_domain_connection: false
+    options:
+      kid: D3T9SSLTY5
+      name: true
+      email: true
+      scope: name email
+      team_id: 757Z8TDNJL
+      client_id: com.fractalcomputers.fractalauth
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
@@ -181,10 +193,40 @@ connections:
     is_domain_connection: false
     options:
       email: true
+      gmail: false
+      orkut: false
       scope:
         - email
         - profile
+      sites: false
+      tasks: false
+      blogger: false
       profile: true
+      youtube: false
+      calendar: false
+      contacts: false
+      analytics: false
+      client_id: 581514545734-4r65pae9m63dci2rq6isstvaapuqp85l.apps.googleusercontent.com
+      moderator: false
+      coordinate: false
+      picasa_web: false
+      google_plus: false
+      google_books: false
+      google_drive: false
+      spreadsheets: false
+      document_list: false
+      latitude_best: false
+      latitude_city: false
+      url_shortener: false
+      webmaster_tools: false
+      chrome_web_store: false
+      allowed_audiences: ""
+      adsense_management: false
+      google_drive_files: false
+      coordinate_readonly: false
+      google_cloud_storage: false
+      content_api_for_shopping: false
+      google_affiliate_network: false
 tenant:
   default_audience: ""
   default_directory: Username-Password-Authentication
