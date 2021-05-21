@@ -16,6 +16,13 @@ exports.default = async function afterSign(context) {
     const appleId = process.env.FRACTAL_NOTARIZE_APPLE_ID ?? ""
     const applePassword = process.env.FRACTAL_NOTARIZE_APPLE_PASSWORD ?? ""
 
+    if (appleId === "" || applePassword === "") {
+      console.error(
+        "Got a blank FRACTAL_NOTARIZE_APPLE_ID or FRACTAL_NOTARIZE_APPLE_PASSWORD!"
+      )
+      process.exit(-1)
+    }
+
     const appName = context.packager.appInfo.productFilename
 
     if (appleId && applePassword) {
