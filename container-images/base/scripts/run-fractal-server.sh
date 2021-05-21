@@ -16,6 +16,7 @@ WEBSERVER_URL_FILENAME=/usr/share/fractal/private/webserver_url
 SENTRY_ENV_FILENAME=/usr/share/fractal/private/sentry_env
 TIMEOUT_FILENAME=$FRACTAL_MAPPINGS_DIR/timeout
 FRACTAL_APPLICATION_PID_FILE=/home/fractal/fractal-application-pid
+LOG_FILENAME=/usr/share/fractal/log.txt
 
 # Define a string-format identifier for this container
 IDENTIFIER=$(cat $FRACTAL_MAPPINGS_DIR/$IDENTIFIER_FILENAME)
@@ -77,7 +78,8 @@ echo "Done sleeping until there are X clients..."
 OPTIONS="$OPTIONS --identifier=$IDENTIFIER"
 
 # Allow the command to fail without the script exiting, since we want to send logs/clean up the container.
-/usr/share/fractal/FractalServer $OPTIONS &
+# The point of the named pipe redirection is so that $! will give us the PID of FractalServer, not of tee.
+/usr/share/fractal/FractalServer $OPTIONS > >(tee $LOG_FILENAME) &
 fractal_server_pid=$!
 
 # Wait for either fractal-application or FractalServer to exit (both backgrounded processes)
@@ -103,19 +105,6 @@ if [[ ! ${WEBSERVER_URL+x} ]]; then
     exit 0
 fi
 
-# Find the correctly named log file
-case ${SENTRY_ENV:-"dev"} in
-    "production" )
-        LOG_FILENAME="log.txt"
-        ;;
-    "staging" )
-        LOG_FILENAME="log-staging.txt"
-        ;;
-    * )
-        LOG_FILENAME="log-dev.txt"
-        ;;
-esac
-
 # POST $WEBSERVER_URL/logs
 #   Upload the logs from the protocol run to S3.
 # JSON Parameters:
@@ -136,7 +125,7 @@ LOGS_TASK_ID=$(curl \
     "sender": "server",
     "identifier": "$CONTAINER_ID",
     "secret_key": "$FRACTAL_AES_KEY",
-    "logs": $(jq -Rs . </usr/share/fractal/$LOG_FILENAME)
+    "logs": $(jq -Rs . < $LOG_FILENAME)
 }
 END
 )
