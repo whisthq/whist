@@ -7,7 +7,16 @@
 // react to success container creation emissions from here.
 
 import { from, of, interval, merge } from "rxjs"
-import { map, takeUntil, switchMap, take, mapTo, share } from "rxjs/operators"
+import {
+  map,
+  takeUntil,
+  switchMap,
+  take,
+  mapTo,
+  share,
+  delay,
+  sample,
+} from "rxjs/operators"
 import { some } from "lodash"
 
 import {
@@ -19,6 +28,7 @@ import {
   containerPollingSuccess,
   containerPollingPending,
 } from "@app/utils/container"
+import { ContainerPollingTimeout } from "@app/utils/constants"
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/utils/flows"
 
@@ -52,12 +62,17 @@ const containerPollingInner = flow<{
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
+
+  const limit = trigger.pipe(delay(ContainerPollingTimeout))
+
   const poll = containerPollingRequest(tick)
+
+  const timeout = poll.pending.pipe(sample(limit)).pipe(take(1))
 
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
     success: poll.success.pipe(take(1)),
-    failure: poll.failure.pipe(take(1)),
+    failure: merge(timeout, poll.failure.pipe(take(1))),
   }
 })
 
