@@ -556,14 +556,25 @@ int32_t send_video(void* opaque) {
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
-                    static char buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
+                    static char
+                        buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
                     Frame* frame = (Frame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
+                    int last_cursor_id = -1;
                     FractalCursorImage cursor = get_current_cursor();
-                    set_fractal_cursor_image(frame, &cursor);
+                    if (cursor.cursor_use_bmp || ((int)cursor.cursor_id != last_cursor_id)) {
+                        set_fractal_cursor_image(frame, &cursor);
+                    } else {
+                        set_fractal_cursor_image(frame, NULL);
+                    }
+                    if (cursor.cursor_use_bmp) {
+                        last_cursor_id = -1;
+                    } else {
+                        last_cursor_id = cursor.cursor_id;
+                    }
 
                     // frame is an iframe if this frame does not require previous frames to
                     // render
@@ -591,8 +602,7 @@ int32_t send_video(void* opaque) {
 
                     // Send video packet to client
                     if (broadcast_udp_packet(
-                            PACKET_VIDEO, (uint8_t*)frame,
-                            get_total_frame_size(frame), id,
+                            PACKET_VIDEO, (uint8_t*)frame, get_total_frame_size(frame), id,
                             STARTING_BURST_BITRATE, video_buffer[id % VIDEO_BUFFER_SIZE],
                             video_buffer_packet_len[id % VIDEO_BUFFER_SIZE]) != 0) {
                         LOG_WARNING("Could not broadcast video frame ID %d", id);
