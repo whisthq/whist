@@ -5,10 +5,11 @@
  */
 
 import { fromEvent } from "rxjs"
-import { persisted } from "@app/utils/persist"
+import { persisted as persistEvent } from "@app/utils/persist"
 
 import { createTrigger } from "@app/utils/flows"
+import { persisted, notPersisted } from "@app/main/triggers/constants"
 
-createTrigger("persisted", fromEvent(persisted, "data-persisted"))
+createTrigger(persisted, fromEvent(persistEvent, "data-persisted"))
 
-createTrigger("notPersisted", fromEvent(persisted, "data-not-persisted"))
+createTrigger(notPersisted, fromEvent(persistEvent, "data-not-persisted"))

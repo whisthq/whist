@@ -10,6 +10,7 @@ import { map, share, startWith } from "rxjs/operators"
 import { StateChannel } from "@app/utils/constants"
 import { StateIPC } from "@app/@types/state"
 import { createTrigger } from "@app/utils/flows"
+import { eventIPC } from "@app/main/triggers/constants"
 
 // Listens for incoming messages on the single Electron IPC channel
 // that our app uses to communicate with renderer processes. Messages are sent
@@ -30,8 +31,9 @@ import { createTrigger } from "@app/utils/flows"
 // It's important that we manually startWith a value here. We need an initial
 // state object to emit at the beginning of the application so downstream
 // observables can initialize.
+
 createTrigger(
-  "eventIPC",
+  eventIPC,
   fromEvent(ipcMain, StateChannel).pipe(
     map((args) => {
       if (!Array.isArray(args)) return {} as Partial<StateIPC>

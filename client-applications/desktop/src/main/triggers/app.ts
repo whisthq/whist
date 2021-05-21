@@ -9,11 +9,12 @@ import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
+import { appReady, windowCreated } from "@app/main/triggers/constants"
 
 // Fires when Electron starts; this is the first event to fire
-createTrigger("appReady", fromEvent(app as EventEmitter, "ready"))
+createTrigger(appReady, fromEvent(app as EventEmitter, "ready"))
 // Fires whenever a BrowserWindow is created
 createTrigger(
-  "windowCreated",
+  windowCreated,
   fromEvent(app as EventEmitter, "browser-window-created")
 )
