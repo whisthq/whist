@@ -1,8 +1,15 @@
-import { Observable } from "rxjs"
-import { filter, share, tap, map, mergeMap } from "rxjs/operators"
-import { mapValues, truncate, values } from "lodash"
+import { Observable, ReplaySubject } from "rxjs"
+import { filter, share, tap, map } from "rxjs/operators"
+import { mapValues, truncate } from "lodash"
 import stringify from "json-stringify-safe"
 import { withMocking } from "@app/main/testing"
+
+export interface Trigger {
+  name: string
+  payload: any
+}
+
+export const TriggerChannel = new ReplaySubject<Trigger>()
 
 const logFormat = (...args: any[]) => {
   let [title, message, value] = args
@@ -17,7 +24,7 @@ const logFormat = (...args: any[]) => {
   title = title ? `${title} -- ` : ""
   message = message ? `${message} -- ` : ""
 
-  let output = truncate(stringify(value, null, 2), {
+  const output = truncate(stringify(value, null, 2), {
     length: 1000,
     omission: "...**only printing 1000 characters per log**",
   })
@@ -28,21 +35,21 @@ const logDebug = (...args: any[]) => {
   console.log(`DEBUG: ${logFormat(...args)}`)
 }
 
-export const fork = <T, A extends { [gate: string]: (result: T) => boolean }>(
+export const fork = <T>(
   source: Observable<T>,
-  filters: A
-): { [P in keyof A]: Observable<T> } => {
+  filters: { [gate: string]: (result: T) => boolean }
+): { [gate: string]: Observable<T> } => {
   const shared = source.pipe(share())
   return mapValues(filters, (fn) => shared.pipe(filter(fn)))
 }
 
 export const flow =
-  <T, A extends { [key: string]: Observable<any> }>(
+  <T>(
     name: string,
-    fn: (c: string, t: Observable<T>) => A
-  ): ((c: string, t: Observable<T>) => { [P in keyof A]: Observable<any> }) =>
-  (_childName: string, trigger: Observable<T>) => {
-    let channels = fn(name, trigger)
+    fn: (t: Observable<T>) => { [key: string]: Observable<any> }
+  ): ((t: Observable<T>) => { [key: string]: Observable<any> }) =>
+  (trigger: Observable<T>) => {
+    const channels = fn(trigger)
 
     return mapValues(withMocking(name, trigger, channels), (obs, key) =>
       obs.pipe(
@@ -51,3 +58,22 @@ export const flow =
       )
     )
   }
+
+export const createTrigger = <A>(name: string, obs: Observable<A>) => {
+  obs.subscribe((x: A) => {
+    TriggerChannel.next({ name: `${name}`, payload: x } as Trigger)
+  })
+
+  return obs
+}
+
+export const fromTrigger = (name: string): Observable<any> => {
+  return TriggerChannel.pipe(
+    // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
+    // so filtering for "failure" will emit every time any trigger with "failure" in the name fires.
+    filter((x: Trigger) => x.name === name),
+    // Flatten the trigger so that it can be consumed by a subscriber without transforms
+    map((x: Trigger) => x.payload)
+  )
+ 
+}

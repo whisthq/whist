@@ -1,8 +1,8 @@
-// import "@app/main/effects/app"
-// import "@app/main/effects/error"
-// import "@app/main/effects/ipc"
-// import "@app/main/effects/persist"
-// import "@app/main/effects/protocol"
+import "@app/main/effects/app"
+import "@app/main/effects/error"
+import "@app/main/effects/ipc"
+import "@app/main/effects/persist"
+import "@app/main/effects/protocol"
 
 // Effects are subscriptions that cause side effects throughout
 // the program. Any observable from any other file in the application

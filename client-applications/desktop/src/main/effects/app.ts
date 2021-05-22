@@ -7,15 +7,9 @@
 import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
-import { mapTo, takeUntil, take, concatMap } from "rxjs/operators"
+import { mapTo, take, concatMap, pluck } from "rxjs/operators"
+import path from "path"
 import { ChildProcess } from "child_process"
-
-import {
-  eventUpdateAvailable,
-  eventUpdateDownloaded,
-} from "@app/main/events/autoupdate"
-import { eventAppReady, eventWindowCreated } from "@app/main/events/app"
-import { eventActionTypes } from "@app/main/events/tray"
 
 import {
   closeWindows,
@@ -25,54 +19,54 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
-import { loginSuccess } from "@app/main/observables/login"
-import { signupSuccess } from "@app/main/observables/signup"
-import { signoutAction, quitAction } from "@app/main/events/actions"
-import {
-  protocolCloseSuccess,
-  protocolCloseFailure,
-  protocolLaunchSuccess,
-} from "@app/main/observables/protocol"
-import { errorWindowRequest } from "@app/main/observables/error"
-import {
-  userEmail,
-  userAccessToken,
-  userConfigToken,
-} from "@app/main/observables/user"
 import { uploadToS3 } from "@app/utils/logging"
-import { config, FractalEnvironments } from "@app/config/environment"
+import env from "@app/utils/env"
+import config, { FractalCIEnvironment } from "@app/config/environment"
+import { fromTrigger } from "@app/utils/flows"
+
+import { emitCache, persistClear } from "@app/utils/persist"
+
+// Set custom app data folder based on environment
+fromTrigger("appReady").subscribe(() => {
+  const { deployEnv } = config
+  const appPath = app.getPath("userData")
+  const newPath = path.join(appPath, deployEnv)
+  app.setPath("userData", newPath)
+})
+
+fromTrigger("appReady")
+  .pipe(take(1))
+  .subscribe(() => {
+    // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
+    // so we need to set autoDownload = false
+    autoUpdater.autoDownload = false
+    // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
+    // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
+    // we don't need to set it.
+    switch (env.PACKAGED_ENV) {
+      case FractalCIEnvironment.STAGING:
+        autoUpdater.channel = "staging-rc"
+        break
+      case FractalCIEnvironment.DEVELOPMENT:
+        autoUpdater.channel = "dev-rc"
+        break
+      default:
+        break
+    }
+
+    // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
+    // and fires an update if the current version is less than the version in latest.yml
+    autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
+  })
+
+fromTrigger("appReady").subscribe(() => emitCache())
 
 // appReady only fires once, at the launch of the application.
 // We use takeUntil to make sure that the auth window only fires when
 // we have all of [userEmail, userAccessToken, userConfigToken]. If we
 // don't have all three, we clear them all and force the user to log in again.
-eventAppReady
-  .pipe(takeUntil(zip(userEmail, userAccessToken, userConfigToken)))
-  .subscribe(() => {
-    createAuthWindow((win: any) => win.show())
-  })
-
-eventAppReady.pipe(take(1)).subscribe(() => {
-  // We want to manually control when we download the update via autoUpdater.quitAndInstall(),
-  // so we need to set autoDownload = false
-  autoUpdater.autoDownload = false
-  // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
-  // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
-  // we don't need to set it.
-  switch (config.appEnvironment) {
-    case FractalEnvironments.STAGING:
-      autoUpdater.channel = "staging-rc"
-      break
-    case FractalEnvironments.DEVELOPMENT:
-      autoUpdater.channel = "dev-rc"
-      break
-    default:
-      break
-  }
-
-  // This is what looks for a latest.yml file in the S3 bucket in electron-builder.config.js,
-  // and fires an update if the current version is less than the version in latest.yml
-  autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
+fromTrigger("notPersisted").subscribe(() => {
+  createAuthWindow()
 })
 
 // By default, the window-all-closed Electron event will cause the application
@@ -81,19 +75,26 @@ eventAppReady.pipe(take(1)).subscribe(() => {
 // to quit.
 
 merge(
-  protocolLaunchSuccess,
-  loginSuccess,
-  signupSuccess,
-  errorWindowRequest,
-  eventUpdateAvailable
+  fromTrigger("protocolLaunchFlowSuccess"),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess"),
+  fromTrigger("updateAvailable"),
+  fromTrigger("failure")
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
 combineLatest([
-  userEmail,
-  merge(protocolCloseSuccess, protocolCloseFailure),
+  merge(
+    fromTrigger("persisted"),
+    fromTrigger("loginFlowSuccess"),
+    fromTrigger("signupFlowSuccess")
+  ).pipe(pluck("email")),
+  merge(
+    fromTrigger("protocolCloseFlowSuccess"),
+    fromTrigger("protocolCloseFlowSuccess")
+  ),
 ]).subscribe(([email]: [string, ChildProcess]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
@@ -103,34 +104,43 @@ combineLatest([
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(protocolLaunchSuccess, loginSuccess, signupSuccess).subscribe(() => {
+merge(
+  fromTrigger("protocolLaunchFlowSuccess"),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess")
+).subscribe(() => {
   closeWindows()
   hideAppDock()
-  createTray(eventActionTypes)
+  createTray()
 })
 
-// If the update is downloaded, quit the app and install the update
+fromTrigger("windowCreated").subscribe(() => showAppDock())
 
-eventUpdateDownloaded.subscribe(() => {
+// If the update is downloaded, quit the app and install the update
+fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
-eventUpdateAvailable.subscribe(() => {
+fromTrigger("updateAvailable").subscribe(() => {
   closeWindows()
-  createUpdateWindow((win: any) => win.show())
+  createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 
-eventWindowCreated.subscribe(() => showAppDock())
-
 zip(
-  merge(protocolCloseSuccess, protocolCloseFailure),
-  protocolLaunchSuccess.pipe(mapTo(true))
-).subscribe(([, success]) => {
+  merge(
+    fromTrigger("protocolCloseFlowSuccess"),
+    fromTrigger("protocolCloseFlowfailure")
+  ),
+  fromTrigger("protocolLaunchFlowSuccess").pipe(mapTo(true))
+).subscribe(([, success]: [any, boolean]) => {
   if (success) app.quit()
 })
 
-signoutAction.subscribe(() => {
-  app.relaunch()
-  app.exit()
-})
+merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
+  () => {
+    persistClear()
+    app.relaunch()
+    app.exit()
+  }
+)
