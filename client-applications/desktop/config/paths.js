@@ -32,7 +32,11 @@ const getProtocolFolder = () => {
 
 const protocolName = getProtocolName()
 const protocolFolder = getProtocolFolder()
-const loggingBaseFilePath = path.join(app.getPath("userData"), "logs")
+
+// We do this because we currently set userData in src/main/events/app.ts,
+// and doing so does not play nice with our import order. We instead need
+// to recompute this whenever we want to use it.
+const getLoggingBaseFilePath = () => path.join(app.getPath("userData"), "logs")
 
 // Log file names
 const loggingFiles = {
@@ -54,7 +58,7 @@ const userDataFolderNames = {
 module.exports = {
   protocolName,
   protocolFolder,
-  loggingBaseFilePath,
+  getLoggingBaseFilePath,
   loggingFiles,
   userDataFolderNames,
   buildRoot,
