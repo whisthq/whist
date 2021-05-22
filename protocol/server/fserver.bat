@@ -22,6 +22,10 @@ GOTO loop1
 
 :after_loop
 
+REM We use the ~dp0 syntax to put our logs in the parent directory
+REM of this script. Note that we must cd to server\build64 for
+REM the FractalServer working directory to include DLLs and loading
+REM PNGs properly.
 cd server\build64
 echo "Running server protocol silently. Logs are in server.log..."
 FractalServer %RESTVAR% > %~dp0\server.log

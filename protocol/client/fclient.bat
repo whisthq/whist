@@ -22,6 +22,11 @@ GOTO loop1
 
 :after_loop
 
+REM We use the ~dp0 syntax to put our logs in the parent directory
+REM of this script. Note that we must cd to client\build64 for
+REM the FractalClient working directory to include DLLs and loading
+REM PNGs properly.
+
 cd client\build64
 echo "Running client protocol silently. Logs are in client.log..."
 FractalClient %RESTVAR% > %~dp0\client.log
