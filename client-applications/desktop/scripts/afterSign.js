@@ -13,18 +13,22 @@ exports.default = async function afterSign(context) {
     // should not need to notarize locally.
     // If you believe you do need to notarize locally, please check Notion
     // or ask for our Apple credentials.
-    const appleId = process.env.FRACTAL_NOTARIZE_APPLE_ID ?? ""
-    const applePassword = process.env.FRACTAL_NOTARIZE_APPLE_PASSWORD ?? ""
-
+    const appleApiKey = process.env.APPLE_API_KEY_ID ?? ""
+    const appleApiKeyIssuer = process.env.APPLE_API_KEY_ISSUER_ID ?? ""
     const appName = context.packager.appInfo.productFilename
 
-    if (appleId && applePassword) {
+    if (appleApiKey && appleApiKeyIssuer) {
       return await notarize({
         appBundleId: "com.fractalcomputers.fractal",
         appPath: path.join(appOutDir, `${appName}.app`),
-        appleId: appleId,
-        appleIdPassword: applePassword,
+        appleApiKey: appleApiKey,
+        appleApiIssuer: appleApiKeyIssuer,
       })
+    } else {
+      console.error(
+        "Error: Attempted to notarize, but Apple API key environment not set."
+      )
+      process.exit(-1)
     }
   }
 }
