@@ -22,11 +22,6 @@ export const eventWindowCreated = fromEvent(
 )
 
 // Set custom app data folder based on environment
-// TODO: In this PR, we must resolve the race condition! When we compute config,
-// we depend on knowing app.getPath("userData"), and yet we only properly set that
-// path here, in code that depends on config! This causes our log files to be written
-// into the default userData path, but everything else to be written into the modified
-// userData path.
 const { deployEnv } = config
 const appPath = app.getPath("userData")
 const newPath = path.join(appPath, deployEnv)
