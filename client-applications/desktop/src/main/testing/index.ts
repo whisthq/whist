@@ -28,8 +28,8 @@ const getMockArgs = () => process.env.WITH_MOCKS?.split(",") ?? []
 const getMocks = () => {
   const args = getMockArgs()
   return args.reduce((result, value) => {
-    const schema = get(schemas, value)
-    if (schema) return { ...result, ...schema }
+    const schema = get(schemas, value) ?? undefined
+    if (schema !== undefined) return { ...result, ...schema }
     return result
   }, {})
 }
@@ -62,8 +62,8 @@ export const withMocking = <
 
   // Search the map of mockFns for the name of this flow
   // Return channels unchanged if not found
-  const mockFn = get(getMocks(), name)
-  if (!mockFn) return channels
+  const mockFn = get(getMocks(), name) ?? undefined
+  if (mockFn === undefined) return channels
 
   // We want any channels that are not defined in the DebugSchema to be
   // empty observables, so we don't cause errors for subscribers.

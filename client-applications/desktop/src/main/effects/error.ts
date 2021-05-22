@@ -12,7 +12,7 @@ import {
   containerCreateErrorNoAccess,
   containerCreateErrorUnauthorized,
 } from "@app/utils/container"
-import { closeWindows } from "@app/utils/windows"
+import { closeWindows, createErrorWindow } from "@app/utils/windows"
 import {
   NoAccessError,
   UnauthorizedError,
@@ -21,7 +21,7 @@ import {
   AuthError,
   FractalError,
 } from "@app/utils/error"
-import { createErrorWindow } from "@app/utils/windows"
+
 import { protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
 
