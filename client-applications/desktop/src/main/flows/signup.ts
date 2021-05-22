@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest, Observable } from "rxjs"
+import { from, combineLatest } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -21,9 +21,10 @@ import {
 } from "@app/utils/signup"
 import { createConfigToken, encryptConfigToken } from "@app/utils/crypto"
 import { loadingFrom } from "@app/utils/observables"
-import { flow, fork } from "@app/utils/flows"
+import { flow, fork, createTrigger } from "@app/utils/flows"
+import { merge } from "lodash"
 
-const signupGates = flow("signupGates", (_name, trigger: Observable<any>) =>
+const signupRequest = flow<any>("signupRequest", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(({ email, password, configToken }) =>
@@ -39,33 +40,31 @@ const signupGates = flow("signupGates", (_name, trigger: Observable<any>) =>
   )
 )
 
-export const generateConfigTokenGate = flow(
-  "generateConfigTokenGate",
-  (_name, trigger: Observable<any>) =>
-    fork(
-      trigger.pipe(
-        switchMap(({ password }) =>
-          from(
-            createConfigToken().then(
-              async (token) => await encryptConfigToken(token, password)
-            )
+const generateConfigToken = flow<any>("generateConfigToken", (trigger) =>
+  fork(
+    trigger.pipe(
+      switchMap(({ password }) =>
+        from(
+          createConfigToken().then(
+            async (token) => await encryptConfigToken(token, password)
           )
         )
-      ),
-      {
-        success: () => true,
-      }
-    )
+      )
+    ),
+    {
+      success: () => true,
+    }
+  )
 )
 
-export const signupFlow = flow("signupFlow", (name, trigger) => {
+export default flow("signupFlow", (trigger) => {
   const input = combineLatest({
     email: trigger.pipe(pluck("email")),
     password: trigger.pipe(pluck("password")),
-    configToken: generateConfigTokenGate(name, trigger).success,
+    configToken: generateConfigToken(trigger).success,
   })
 
-  const signup = signupGates(name, input)
+  const signup = signupRequest(input)
 
   const tokens = signup.success.pipe(
     map((response) => ({
@@ -75,11 +74,12 @@ export const signupFlow = flow("signupFlow", (name, trigger) => {
   )
 
   const result = combineLatest([input, tokens]).pipe(
-    map(([...args]) => ({ ...args }))
+    map(([...args]) => merge(...args))
   )
+
   return {
-    success: result,
-    failure: signup.failure,
+    success: createTrigger("signupFlowSuccess", result),
+    failure: createTrigger("signupFlowFailure", signup.failure),
     warning: signup.warning,
     loading: loadingFrom(trigger, result, signup.failure, signup.warning),
   }

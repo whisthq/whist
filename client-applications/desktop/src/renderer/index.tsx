@@ -7,30 +7,15 @@ import ReactDOM from "react-dom"
 import Auth from "@app/renderer/pages/auth"
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
+import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
 import {
-  AuthErrorTitle,
-  AuthErrorText,
-  ContainerCreateErrorTitleInternal,
-  ContainerCreateErrorTextInternal,
-  ContainerCreateErrorTitleNoAccess,
-  ContainerCreateErrorTextNoAccess,
-  ContainerCreateErrorTitleUnauthorized,
-  ContainerCreateErrorTextUnauthorized,
-  containerPollingErrorTitle,
-  containerPollingErrorText,
-  ProtocolErrorTitle,
-  ProtocolErrorText,
-  WindowHashAuth,
-  WindowHashUpdate,
-  WindowHashAuthError,
-  WindowHashCreateContainerErrorNoAccess,
-  WindowHashCreateContainerErrorUnauthorized,
-  WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError,
-  WindowHashProtocolError,
-  NavigationErrorTitle,
-  NavigationErrorText,
-} from "@app/utils/constants"
+  NoAccessError,
+  UnauthorizedError,
+  ProtocolError,
+  ContainerError,
+  AuthError,
+  NavigationError,
+} from "@app/utils/error"
 
 import { browserHistory } from "@app/utils/history"
 import { useMainState } from "@app/utils/ipc"
@@ -53,7 +38,8 @@ const show = chain(window.location.search.substring(1))
 const RootComponent = () => {
   const [, setMainState] = useMainState()
 
-  const errorContinue = () => setMainState({ errorRelaunchRequest: Date.now() })
+  const errorContinue = () =>
+    setMainState({ trigger: { name: "relaunch", payload: Date.now() } })
 
   if (show === WindowHashAuth) {
     return (
@@ -65,64 +51,55 @@ const RootComponent = () => {
     )
   }
   if (show === WindowHashUpdate) return <Update />
-  if (show === WindowHashAuthError) {
+  if (show === AuthError.hash) {
     return (
       <Error
-        title={AuthErrorTitle}
-        text={AuthErrorText}
+        title={AuthError.title}
+        text={AuthError.text}
         onClick={errorContinue}
       />
     )
   }
-  if (show === WindowHashCreateContainerErrorNoAccess) {
+  if (show === NoAccessError.hash) {
     return (
       <Error
-        title={ContainerCreateErrorTitleNoAccess}
-        text={ContainerCreateErrorTextNoAccess}
+        title={NoAccessError.title}
+        text={NoAccessError.text}
         onClick={errorContinue}
       />
     )
   }
-  if (show === WindowHashCreateContainerErrorUnauthorized) {
+  if (show === UnauthorizedError.hash) {
     return (
       <Error
-        title={ContainerCreateErrorTitleUnauthorized}
-        text={ContainerCreateErrorTextUnauthorized}
+        title={UnauthorizedError.title}
+        text={UnauthorizedError.text}
         onClick={errorContinue}
       />
     )
   }
-  if (show === WindowHashCreateContainerErrorInternal) {
+  if (show === ContainerError.hash) {
     return (
       <Error
-        title={ContainerCreateErrorTitleInternal}
-        text={ContainerCreateErrorTextInternal}
+        title={ContainerError.title}
+        text={ContainerError.text}
         onClick={errorContinue}
       />
     )
   }
-  if (show === WindowHashAssignContainerError) {
+  if (show === ProtocolError.hash) {
     return (
       <Error
-        title={containerPollingErrorTitle}
-        text={containerPollingErrorText}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === WindowHashProtocolError) {
-    return (
-      <Error
-        title={ProtocolErrorTitle}
-        text={ProtocolErrorText}
+        title={ProtocolError.title}
+        text={ProtocolError.text}
         onClick={errorContinue}
       />
     )
   }
   return (
     <Error
-      title={NavigationErrorTitle}
-      text={NavigationErrorText}
+      title={NavigationError.title}
+      text={NavigationError.text}
       onClick={errorContinue}
     />
   )

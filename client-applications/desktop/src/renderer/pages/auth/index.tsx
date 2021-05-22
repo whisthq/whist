@@ -4,7 +4,6 @@ import { Route } from "react-router-dom"
 import Login from "@app/renderer/pages/auth/login"
 import Signup from "@app/renderer/pages/auth/signup"
 import { useMainState } from "@app/utils/ipc"
-import { RendererAction } from "@app/@types/actions"
 
 const Auth = () => {
   /*
@@ -13,9 +12,9 @@ const Auth = () => {
     */
 
   const [mainState, setMainState] = useMainState()
-  const [email, setEmail] = useState("neil@fractal.co")
-  const [password, setPassword] = useState("Password1234")
-  const [confirmPassword, setConfirmPassword] = useState("Password1234")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
 
   const clearPassword = () => {
     setPassword("")
@@ -25,8 +24,8 @@ const Auth = () => {
   const onLogin = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.LOGIN,
+      trigger: {
+        name: "login",
         payload: {
           email,
           password,
@@ -38,8 +37,8 @@ const Auth = () => {
   const onSignup = () => {
     setMainState({
       email,
-      action: {
-        type: RendererAction.SIGNUP,
+      trigger: {
+        name: "signup",
         payload: {
           email,
           password,

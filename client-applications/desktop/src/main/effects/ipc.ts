@@ -3,17 +3,13 @@
  * @file ipc.ts
  * @brief This file contains subscriptions to Observables related to state persistence.
  */
-import { eventIPC } from "@app/main/events/ipc"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, mapTo, withLatestFrom, startWith } from "rxjs/operators"
+import { map, withLatestFrom, startWith } from "rxjs/operators"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 import { getWindows } from "@app/utils/windows"
-import { SubscriptionMap, objectCombine } from "@app/utils/observables"
-import { loginLoading, loginWarning } from "@app/main/observables/login"
-import { signupLoading, signupWarning } from "@app/main/observables/signup"
-import { eventDownloadProgress } from "@app/main/events/autoupdate"
+import { objectCombine } from "@app/utils/observables"
+import { fromTrigger } from "@app/utils/flows"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
@@ -30,16 +26,18 @@ import { eventDownloadProgress } from "@app/main/events/autoupdate"
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
 
-const subscribed: SubscriptionMap = {
-  loginLoading: loginLoading,
-  loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
-  updateInfo: eventDownloadProgress.pipe(map((obj) => JSON.stringify(obj))),
-  signupLoading: signupLoading,
-  signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
+const subscribed = {
+  // loginLoading: loginLoading,
+  // loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
+  updateInfo: fromTrigger("downloadProgress").pipe(
+    map((obj) => JSON.stringify(obj))
+  ),
+  // signupLoading: signupLoading,
+  // signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
 
 objectCombine(subscribed)
-  .pipe(withLatestFrom(eventIPC.pipe(startWith({}))))
+  .pipe(withLatestFrom(fromTrigger("eventIPC").pipe(startWith({}))))
   .subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
     ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
   })
