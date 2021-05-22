@@ -47,7 +47,7 @@ jobs:
               with:
                   python-version: 3.8
 
-            - name: Install requirements
+            - name: Install Requirements
               working-directory: .github/workflows/helpers
               run: pip install -r requirements.txt -r aws/requirements.txt -r notifications/requirements.txt
 
