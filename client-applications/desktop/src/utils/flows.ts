@@ -21,14 +21,14 @@ const logFormat = (...args: any[]) => {
     value = title
     title = undefined
   }
-  title = title ? `${title} -- ` : ""
-  message = message ? `${message} -- ` : ""
+  title = `${(title as string) ?? ""} -- `
+  message = `${(message as string) ?? ""} -- `
 
   const output = truncate(stringify(value, null, 2), {
     length: 1000,
     omission: "...**only printing 1000 characters per log**",
   })
-  return `${title}${message}${output}`
+  return `${title as string}${message as string}${output}`
 }
 
 const logDebug = (...args: any[]) => {
@@ -75,5 +75,4 @@ export const fromTrigger = (name: string): Observable<any> => {
     // Flatten the trigger so that it can be consumed by a subscriber without transforms
     map((x: Trigger) => x.payload)
   )
- 
 }

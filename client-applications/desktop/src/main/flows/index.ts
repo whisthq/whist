@@ -1,5 +1,5 @@
-import { merge, zip, fromEvent, of, combineLatest } from "rxjs"
-import { map, mergeMap, take, tap, sample, switchMapTo } from "rxjs/operators"
+import { merge, zip, fromEvent, of } from "rxjs"
+import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
@@ -8,18 +8,15 @@ import signupFlow from "@app/main/flows/signup"
 import containerFlow from "@app/main/flows/container"
 import protocolLaunchFlow from "@app/main/flows/launch"
 import protocolCloseFlow from "@app/main/flows/close"
-
 import { fromTrigger } from "@app/utils/flows"
+import { fromSignal } from "@app/utils/observables"
 
 // Auth flows
 loginFlow(fromTrigger("loginAction"))
 signupFlow(fromTrigger("signupAction"))
 
 const launchTrigger = merge(
-  combineLatest([
-    fromTrigger("persisted"),
-    fromTrigger("updateNotAvailable"),
-  ]).pipe(map(([a]) => a)),
+  fromSignal(fromTrigger("persisted"), fromTrigger("updateNotAvailable")),
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess")
 ).pipe(take(1))

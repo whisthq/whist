@@ -34,7 +34,10 @@ export const serializePorts = (ps: {
   port_32273: number
 }) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
 
-export const writeStream = (process: ChildProcess | undefined, message: string) => {
+export const writeStream = (
+  process: ChildProcess | undefined,
+  message: string
+) => {
   process?.stdin?.write?.(message)
   process?.stdin?.write?.("\n")
 }

@@ -1,16 +1,24 @@
 import {
   Observable,
-  ObservedValueOf,
   ObservableInput,
-  Subject,
   merge,
   race,
   interval,
   from,
   EMPTY,
+  combineLatest,
 } from "rxjs"
-import { map, mapTo, switchMap, filter, takeLast, share } from "rxjs/operators"
-import { toPairs, identity } from "lodash"
+import {
+  map,
+  mapTo,
+  switchMap,
+  filter,
+  takeLast,
+  share,
+  take,
+} from "rxjs/operators"
+import { toPairs, identity, isEmpty } from "lodash"
+import { debugObservables } from "@app/utils/logging"
 
 export const loadingFrom = (
   /*
@@ -224,37 +232,40 @@ export const factory = <T, A>(
   }
 }
 
-export const objectSplit = <T extends Record<any, Observable<any>>>(
-  source: Observable<T>
-) => {
-  const cache: { [P in keyof T]?: Subject<ObservedValueOf<T[P]>> } = {}
-  const cacheInit = (key: keyof T) => {
-    if (!(key in cache)) cache[key] = new Subject<ObservedValueOf<T[keyof T]>>()
-  }
-  const handler = {
-    get: (
-      target: { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
-      key: keyof T
-    ) => {
-      if (!(key in target)) {
-        cacheInit(key)
-        target[key] = cache[key]!.asObservable()
-      }
-      return target[key]
-    },
-  }
+// export const objectSplit = <T extends Record<any, Observable<any>>>(
+//   source: Observable<T>
+// ) => {
+//   const cache: { [P in keyof T]?: Subject<ObservedValueOf<T[P]>> } = {}
+//   const cacheInit = (key: keyof T) => {
+//     if (!(key in cache)) cache[key] = new Subject<ObservedValueOf<T[keyof T]>>()
+//   }
+//   const handler = {
+//     get: (
+//       target: { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
+//       key: keyof T
+//     ) => {
+//       if (!(key in target)) {
+//         cacheInit(key)
+//         target[key] = cache[key]!.asObservable()
+//       }
+//       return target[key]
+//     },
+//   }
 
-  source.subscribe((map) => {
-    Object.entries(map).forEach(([key, obs]) => {
-      obs.subscribe((value) => {
-        cacheInit(key)
-        cache[key]!.next(value)
-      })
-    })
-  })
+//   source.subscribe((map: any) => {
+//     Object.entries(map).forEach(([key, obs]) => {
+//       obs.subscribe((value: any) => {
+//         cacheInit(key)
+//         cache[key]!.next(value)
+//       })
+//     })
+//   })
 
-  return new Proxy(
-    {} as { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
-    handler
-  )
-}
+//   return new Proxy(
+//     {} as { [P in keyof T]: Observable<ObservedValueOf<T[P]>> },
+//     handler
+//   )
+// }
+
+export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
+  combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))
