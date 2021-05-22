@@ -7,7 +7,7 @@ import path from "path"
 import fs from "fs"
 import { spawn, ChildProcess } from "child_process"
 import config, {
-  loggingBaseFilePath,
+  getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 
@@ -48,6 +48,7 @@ export const protocolLaunch = async () => {
   if (process.platform !== "win32") spawn("chmod", ["+x", protocolPath])
 
   // Create a pipe to the protocol logs file
+  const loggingBaseFilePath = getLoggingBaseFilePath()
   fs.mkdirSync(loggingBaseFilePath, { recursive: true })
   const protocolLogFile = fs.createWriteStream(
     path.join(loggingBaseFilePath, loggingFiles.protocol)

@@ -10,7 +10,7 @@ import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
 import config, {
-  loggingBaseFilePath,
+  getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 
@@ -20,6 +20,7 @@ const sessionID = new Date().getTime()
 // Open a file handle to append to the logs file.
 // Create the loggingBaseFilePath directory if it does not exist.
 const openLogFile = () => {
+  const loggingBaseFilePath = getLoggingBaseFilePath()
   fs.mkdirSync(loggingBaseFilePath, { recursive: true })
   const logPath = path.join(loggingBaseFilePath, loggingFiles.client)
   return fs.createWriteStream(logPath)
@@ -142,7 +143,7 @@ export const uploadToS3 = async (email: string) => {
     })
   }
 
-  const logLocation = path.join(loggingBaseFilePath, loggingFiles.protocol)
+  const logLocation = path.join(getLoggingBaseFilePath(), loggingFiles.protocol)
 
   if (fs.existsSync(logLocation)) {
     await uploadHelper(logLocation)
