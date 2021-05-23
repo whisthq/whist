@@ -94,8 +94,8 @@ void init_cursors();
 /**
  * @brief                          Returns the current cursor image
  *
- * @returns                        Current FractalCursorImage
+ * @param image                    FractalCursorImage buffer to write to
  */
-FractalCursorImage get_current_cursor();
+void get_current_cursor(FractalCursorImage* image);
 
 #endif  // CURSOR_H

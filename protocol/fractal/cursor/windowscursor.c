@@ -146,7 +146,7 @@ void init_cursors() {
     load_cursors();
 }
 
-FractalCursorImage get_current_cursor() {
+void get_current_cursor(FractalCursorImage* image) {
     /*
         Returns the current cursor image
 
@@ -158,10 +158,7 @@ FractalCursorImage get_current_cursor() {
     pci.cbSize = sizeof(CURSORINFO);
     GetCursorInfo(&pci);
 
-    FractalCursorImage image = {0};
-    image = get_cursor_image(&pci);
+    *image = get_cursor_image(&pci);
 
-    image.cursor_state = pci.flags;
-
-    return image;
+    image->cursor_state = pci.flags;
 }
