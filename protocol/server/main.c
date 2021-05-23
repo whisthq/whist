@@ -563,18 +563,24 @@ int32_t send_video(void* opaque) {
                     frame->height = encoder->out_height;
                     frame->codec_type = encoder->codec_type;
 
-                    static int last_cursor_id = -1;
-                    FractalCursorImage cursor = get_current_cursor();
-                    if (cursor.using_bmp || ((int)cursor.cursor_id != last_cursor_id)) {
-                        set_fractal_cursor_image(frame, &cursor);
-                    } else {
+                    static FractalCursorImage cursor_cache[2];
+                    static int last_cursor_id = 0;
+                    int current_cursor_id = (last_cursor_id + 1) % 2;
+
+                    FractalCursorImage* last_cursor = &cursor_cache[last_cursor_id];
+                    FractalCursorImage* current_cursor = &cursor_cache[current_cursor_id];
+
+                    get_current_cursor(current_cursor);
+
+                    // If the current cursor is the same as the last cursor,
+                    // just don't send any cursor
+                    if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
                         set_fractal_cursor_image(frame, NULL);
-                    }
-                    if (cursor.using_bmp) {
-                        last_cursor_id = -1;
                     } else {
-                        last_cursor_id = cursor.cursor_id;
+                        set_fractal_cursor_image(frame, current_cursor);
                     }
+
+                    last_cursor_id = current_cursor_id;
 
                     // frame is an iframe if this frame does not require previous frames to
                     // render
