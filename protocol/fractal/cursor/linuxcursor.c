@@ -25,8 +25,6 @@ Includes
 
 static Display* disp;
 
-static uint32_t last_cursor[MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT] = {0};
-
 /*
 ============================
 Public Function Implementations
@@ -41,7 +39,7 @@ void init_cursors() {
     disp = XOpenDisplay(NULL);
 }
 
-FractalCursorImage get_current_cursor() {
+void get_current_cursor(FractalCursorImage* image) {
     /*
         Returns the current cursor image
 
@@ -49,9 +47,9 @@ FractalCursorImage get_current_cursor() {
             (FractalCursorImage): Current FractalCursorImage
     */
 
-    FractalCursorImage image = {0};
-    image.cursor_id = FRACTAL_CURSOR_ARROW;
-    image.cursor_state = CURSOR_STATE_VISIBLE;
+    memset(image, 0, sizeof(FractalCursorImage));
+    image->cursor_id = FRACTAL_CURSOR_ARROW;
+    image->cursor_state = CURSOR_STATE_VISIBLE;
     if (disp) {
         XLockDisplay(disp);
         XFixesCursorImage* ci = XFixesGetCursorImage(disp);
@@ -64,27 +62,20 @@ FractalCursorImage get_current_cursor() {
                 ci->width, ci->height, MAX_CURSOR_WIDTH, MAX_CURSOR_HEIGHT);
         }
 
-        image.bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
-        image.bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
-        image.bmp_hot_x = ci->xhot;
-        image.bmp_hot_y = ci->yhot;
+        image->using_bmp = true;
+        image->bmp_width = min(MAX_CURSOR_WIDTH, ci->width);
+        image->bmp_height = min(MAX_CURSOR_HEIGHT, ci->height);
+        image->bmp_hot_x = ci->xhot;
+        image->bmp_hot_y = ci->yhot;
 
-        for (int k = 0; k < image.bmp_width * image.bmp_height; ++k) {
+        // memcpy(image->bmp, ci->pixels, image->bmp_width * image->bmp_height * sizeof(uint32_t));
+
+        for (int k = 0; k < image->bmp_width * image->bmp_height; ++k) {
             // we need to do this in case ci->pixels uses 8 bytes per pixel
             uint32_t argb = (uint32_t)ci->pixels[k];
-            image.bmp[k] = argb;
-        }
-
-        if (memcmp(image.bmp, last_cursor,
-                   sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT)) {
-            image.using_bmp = true;
-            memcpy(last_cursor, image.bmp, sizeof(uint32_t) * MAX_CURSOR_WIDTH * MAX_CURSOR_HEIGHT);
-        } else {
-            image.using_bmp = false;
+            image->bmp[k] = argb;
         }
 
         XFree(ci);
     }
-
-    return image;
 }
