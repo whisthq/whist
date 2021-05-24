@@ -7,12 +7,7 @@ import {
   from,
   combineLatest,
 } from "rxjs"
-import {
-  map,
-  mapTo,
-  switchMap,
-  take,
-} from "rxjs/operators"
+import { map, mapTo, switchMap, take } from "rxjs/operators"
 import { toPairs } from "lodash"
 
 export const loadingFrom = (

@@ -11,4 +11,7 @@ import { createTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/main/triggers/constants"
 
 createTrigger(TRIGGER.persisted, fromEvent(persistEvent, "data-persisted"))
-createTrigger(TRIGGER.notPersisted, fromEvent(persistEvent, "data-not-persisted"))
+createTrigger(
+  TRIGGER.notPersisted,
+  fromEvent(persistEvent, "data-not-persisted")
+)
