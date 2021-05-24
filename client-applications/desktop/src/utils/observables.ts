@@ -17,8 +17,7 @@ import {
   share,
   take,
 } from "rxjs/operators"
-import { toPairs, identity, isEmpty } from "lodash"
-import { debugObservables } from "@app/utils/logging"
+import { toPairs, identity } from "lodash"
 
 export const loadingFrom = (
   /*
