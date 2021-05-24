@@ -281,7 +281,7 @@ int render_video() {
 
         // Cast to Frame* because this variable is not volatile in this section
         Frame* frame = (Frame*)render_context.frame_buffer;
-        PeerUpdateMessage* peer_update_msgs = get_peer_messages(frame);
+        PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
 #if LOG_VIDEO
@@ -319,8 +319,8 @@ int render_video() {
         clock decode_timer;
         start_timer(&decode_timer);
 
-        if (!video_decoder_decode(video_context.decoder, get_compressed_frame(frame),
-                                  frame->compressed_frame_size)) {
+        if (!video_decoder_decode(video_context.decoder, get_frame_videodata(frame),
+                                  frame->videodata_length)) {
             LOG_WARNING("Failed to video_decoder_decode!");
             // Since we're done, we free the frame buffer
             free_block(frame_buffer_allocator, render_context.frame_buffer);
@@ -402,7 +402,7 @@ int render_video() {
         }
 
         // Set cursor to frame's desired cursor type
-        FractalCursorImage* cursor = get_fractal_cursor_image(frame);
+        FractalCursorImage* cursor = get_frame_cursor_image(frame);
         // Only update the cursor, if a cursor image is even embedded in the frame at all.
         if (cursor) {
             if ((FractalCursorID)cursor->cursor_id != last_cursor || cursor->using_bmp) {

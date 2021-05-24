@@ -126,7 +126,6 @@ Defines
 #define MINIMUM_BITRATE 2000000
 #define ACK_REFRESH_MS 50
 
-#define LARGEST_FRAME_SIZE 1000000
 #define STARTING_BITRATE 10400000
 #define STARTING_BURST_BITRATE 31800000
 
@@ -196,23 +195,6 @@ typedef enum CodecType {
     CODEC_TYPE_H265 = 265,
     CODEC_TYPE_MAKE_32 = 0x7FFFFFFF
 } CodecType;
-
-/**
- * @brief   Frame struct.
- * @details Video frame to be rendered.
- */
-typedef struct Frame {
-    int width;
-    int height;
-    CodecType codec_type;
-    bool is_iframe;
-    int num_peer_update_msgs;
-
-    bool has_cursor;
-    int compressed_frame_size;
-
-    unsigned char data[];
-} Frame;
 
 /**
  * @brief   Keycodes.
@@ -719,13 +701,6 @@ bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
  */
 int get_fmsg_size(FractalClientMessage* fmsg);
 
-void set_fractal_cursor_image(Frame* frame, FractalCursorImage* cursor);
-void set_compressed_frame(Frame* frame, unsigned char* compressed_frame, int compressed_frame_size);
-FractalCursorImage* get_fractal_cursor_image(Frame* frame);
-unsigned char* get_compressed_frame(Frame* frame);
-PeerUpdateMessage* get_peer_messages(Frame* frame);
-int get_total_frame_size(Frame* frame);
-
 /**
  * @brief                          Terminates the protocol
  */
@@ -769,5 +744,7 @@ bool safe_strncpy(char* destination, const char* source, size_t num);
  * @returns                        The git commit
  */
 char* fractal_git_revision();
+
+#include "fractal_frame.h"
 
 #endif  // FRACTAL_H
