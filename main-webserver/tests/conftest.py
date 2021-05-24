@@ -16,7 +16,7 @@ from flask_jwt_extended import create_access_token
 from app.celery_utils import CELERY_CONFIG, celery_params
 from app.maintenance.maintenance_manager import maintenance_init_redis_conn
 from app.factory import create_app
-from app.models import ClusterInfo, db, InstanceInfo, User, UserContainer
+from app.models import ClusterInfo, ContainerInfo, db, InstanceInfo, User, UserContainer
 import app.constants.env_names as env_names
 from app.flask_handlers import set_web_requests_status
 from app.signals import WebSignalHandler
@@ -239,38 +239,67 @@ def bulk_instance():
         row whose columns are set as arguments to the function.
     """
     instances = []
+    containers = []
 
-    def _instance(instance_name=None, location=None, auth_token=None, **kwargs):
+    def _instance(
+        associated_containers=0,
+        instance_name=None,
+        location=None,
+        auth_token=None,
+        max_containers=None,
+        **kwargs,
+    ):
         """Create a dummy instance for testing.
 
         Arguments:
+            associated_containers (int): How many containers should be made running
+                on this instance
             instance_name (Optional[str]): what to call the instance
                     defaults to random name
             location (Optional[str]): what region to put the instance in
                     defaults to us-east-1
+            auth_token (Optional[str]): what the instance's auth token with the webserver
+                should be, defaults to 'test-auth'
+            max_containers (Optional[int]): how many containers can the instance hold?
+                defaults to 10
 
         Yields:
             An instance of the InstanceInfo model.
         """
-        c = InstanceInfo(
+        new_instance = InstanceInfo(
             instance_id=instance_name
             if instance_name is not None
             else f"instance-{os.urandom(16).hex()}",
             location=location if location is not None else "us-east-1",
             auth_token=auth_token if auth_token is not None else "test-auth",
+            maxContainers=max_containers if max_containers is not None else 10,
             ip="1.1.1.1",
             ami_id=kwargs.get("ami_id", "test"),
             instance_type=kwargs.get("instance_type", "test_type"),
             **kwargs,
         )
 
-        db.session.add(c)
+        db.session.add(new_instance)
         db.session.commit()
-        instances.append(c)
+        for _ in range(associated_containers):
+            new_container = ContainerInfo(
+                container_id=f"container-{os.urandom(16).hex()}",
+                instance_id=new_instance.instance_id,
+                user_id="test-user",
+                status="Running",
+            )
+            db.session.add(new_container)
+            db.session.commit()
+            containers.append(new_container)
 
-        return c
+        instances.append(new_instance)
+
+        return new_instance
 
     yield _instance
+
+    for container in containers:
+        db.session.delete(container)
 
     for instance in instances:
         db.session.delete(instance)
