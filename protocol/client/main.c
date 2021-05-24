@@ -113,6 +113,9 @@ bool rgui_pressed = false;
 // Mouse motion state
 MouseMotionAccumulation mouse_state = {0};
 
+// Whether a pinch is currently active - set in sdl_event_handler.c
+extern bool active_pinch;
+
 // Window resizing state
 SDL_mutex* window_resize_mutex;  // protects pending_resize_message
 clock window_resize_timer;
@@ -575,35 +578,37 @@ int sync_keyboard_state(void) {
     int num_keys;
     const Uint8* state = SDL_GetKeyboardState(&num_keys);
 #if defined(_WIN32)
-    fmsg.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = (short)min(NUM_KEYCODES, num_keys);
 #else
-    fmsg.num_keycodes = fmin(NUM_KEYCODES, num_keys);
+    fmsg.keyboard_state.num_keycodes = fmin(NUM_KEYCODES, num_keys);
 #endif
 
     // Copy keyboard state, but using scancodes of the keys in the current keyboard layout.
     // Must convert to/from the name of the key so SDL returns the scancode for the key in the
     // current layout rather than the scancode for the physical key.
-    for (int i = 0; i < fmsg.num_keycodes; i++) {
+    for (int i = 0; i < fmsg.keyboard_state.num_keycodes; i++) {
         if (state[i]) {
             int scancode = SDL_GetScancodeFromName(SDL_GetKeyName(SDL_GetKeyFromScancode(i)));
-            if (0 <= scancode && scancode < (int)sizeof(fmsg.keyboard_state)) {
-                fmsg.keyboard_state[scancode] = 1;
+            if (0 <= scancode && scancode < (int)sizeof(fmsg.keyboard_state.keyboard_state)) {
+                fmsg.keyboard_state.keyboard_state[scancode] = 1;
             }
         }
     }
 
     // Also send caps lock and num lock status for syncronization
 #ifdef __APPLE__
-    fmsg.keyboard_state[FK_LCTRL] = ctrl_pressed;
-    fmsg.keyboard_state[FK_LGUI] = false;
-    fmsg.keyboard_state[FK_RGUI] = false;
+    fmsg.keyboard_state.keyboard_state[FK_LCTRL] = ctrl_pressed;
+    fmsg.keyboard_state.keyboard_state[FK_LGUI] = false;
+    fmsg.keyboard_state.keyboard_state[FK_RGUI] = false;
 #else
-    fmsg.keyboard_state[FK_LGUI] = lgui_pressed;
-    fmsg.keyboard_state[FK_RGUI] = rgui_pressed;
+    fmsg.keyboard_state.keyboard_state[FK_LGUI] = lgui_pressed;
+    fmsg.keyboard_state.keyboard_state[FK_RGUI] = rgui_pressed;
 #endif
 
-    fmsg.caps_lock = SDL_GetModState() & KMOD_CAPS;
-    fmsg.num_lock = SDL_GetModState() & KMOD_NUM;
+    fmsg.keyboard_state.caps_lock = SDL_GetModState() & KMOD_CAPS;
+    fmsg.keyboard_state.num_lock = SDL_GetModState() & KMOD_NUM;
+
+    fmsg.keyboard_state.active_pinch = active_pinch;
 
     send_fmsg(&fmsg);
 

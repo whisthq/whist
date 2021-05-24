@@ -383,6 +383,12 @@ InputDevice* create_input_device() {
     input_device->num_lock = false;
     input_device->mouse_has_moved = false;
 
+    // Get DPI
+    char* dpi_string;
+    runcmd("xrdb -display :10 -query dpi", &dpi_string);
+    input_device->dpi = atoi(strchr(dpi_string, '\t'));
+    free(dpi_string);
+
     return input_device;
 }
 
@@ -434,6 +440,27 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode) {
     return input_device->keyboard_state[fractal_keycode];
     return -1;
+}
+
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+    /*
+        Determine whether to ignore the client key state
+
+        Argument:
+            input_device (InputDevice*): The initialized input device to query
+            fractal_keycode (FractalKeycode): The Fractal keycode to query
+            active_pinch (bool): Whether the client has an active pinch gesture
+
+        Returns:
+            (int): 1 if we ignore the client key state, 0 if we take the client key state
+    */
+
+    // If there is an active pinch happening, we preserve the server LCTRL state
+    if (fractal_keycode == FK_LCTRL && active_pinch) {
+        return 1;
+    }
+
+    return 0;
 }
 
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
@@ -492,6 +519,40 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     emit_input_event(input_device->fd_relmouse, EV_REL, REL_HWHEEL_HI_RES,
                      x * LIBINPUT_WHEEL_DELTA);
     emit_input_event(input_device->fd_relmouse, EV_SYN, SYN_REPORT, 0);
+    return 0;
+}
+
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
+                            FractalMultigestureType gesture_type, bool active_gesture) {
+    /*
+        Emit a trackpad multigesture event. Only handles pinch events
+        for now by holding the LCTRL key and scrolling.
+
+        Arguments:
+            input_device (InputDevice*): The initialized input device to write
+            d_theta (float): How much the fingers rotated during this motion
+            d_dist (float): How much the fingers pinched during this motion
+            gesture_type (FractalMultigestureType): The gesture type (rotate, pinch open, pinch
+                close)
+            active_gesture (bool): Whether this event happened mid-multigesture
+
+        Returns:
+            (int): 0 on success, -1 on failure
+    */
+
+    if (gesture_type == PINCH_OPEN || gesture_type == PINCH_CLOSE) {
+        // If the gesture is not active yet, then start holding the LCTRL key
+        if (!active_gesture) {
+            emit_key_event(input_device, FK_LCTRL, true);
+        }
+
+        // Pass a scroll event equivalent to the pinch distance
+        emit_high_res_mouse_wheel_event(input_device, d_dist * sin(d_theta), d_dist * cos(d_theta));
+    } else if (gesture_type == CANCEL) {
+        // When the pinch action has been changed, then release the lctrl key
+        emit_key_event(input_device, FK_LCTRL, false);
+    }
+
     return 0;
 }
 

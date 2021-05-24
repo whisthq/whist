@@ -464,15 +464,29 @@ typedef struct FractalMouseMotionMessage {
 } FractalMouseMotionMessage;
 
 /**
+ * @brief   Multigesture type.
+ * @details The type of multigesture.
+ */
+typedef enum FractalMultigestureType {
+    NONE = 0,
+    PINCH_OPEN = 1,
+    PINCH_CLOSE = 2,
+    ROTATE = 3,
+    CANCEL = 4,
+} FractalMultigestureType;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
 typedef struct FractalMultigestureMessage {
-    float d_theta;         ///< The amount the fingers rotated.
-    float d_dist;          ///< The amount the fingers pinched.
-    float x;               ///< Normalized gesture x-axis center.
-    float y;               ///< Normalized gesture y-axis center.
-    uint16_t num_fingers;  ///< Number of fingers used in the gesture.
+    float d_theta;                         ///< The amount the fingers rotated.
+    float d_dist;                          ///< The amount the fingers pinched.
+    float x;                               ///< Normalized gesture x-axis center.
+    float y;                               ///< Normalized gesture y-axis center.
+    uint16_t num_fingers;                  ///< Number of fingers used in the gesture.
+    bool active_gesture;                   ///< Whether this multigesture is already active.
+    FractalMultigestureType gesture_type;  ///< Multigesture type
 } FractalMultigestureMessage;
 
 /**
@@ -579,7 +593,8 @@ typedef struct FractalClientMessage {
             bool caps_lock;
             bool num_lock;
             char keyboard_state[NUM_KEYCODES];
-        };
+            bool active_pinch;
+        } keyboard_state;
 
         // MESSAGE_IFRAME_REQUEST
         bool reinitialize_encoder;
