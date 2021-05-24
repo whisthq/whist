@@ -2,7 +2,7 @@ export default {
   // App triggers
   appReady: "appReady",
   windowCreated: "windowCreated",
-  
+
   // Update triggers
   updateAvailable: "updateAvailable",
   updateNotAvailable: "updateNotAvailable",
