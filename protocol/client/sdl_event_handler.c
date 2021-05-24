@@ -50,6 +50,8 @@ extern MouseMotionAccumulation mouse_state;
 
 extern bool audio_refresh;
 
+bool active_pinch = false;
+
 /*
 ============================
 Private Functions
@@ -63,6 +65,7 @@ int handle_mouse_motion(SDL_Event *event);
 int handle_mouse_wheel(SDL_Event *event);
 int handle_mouse_button_up_down(SDL_Event *event);
 int handle_multi_gesture(SDL_Event *event);
+int handle_pinch(SDL_Event *event);
 
 /*
 ============================
@@ -319,12 +322,55 @@ int handle_mouse_wheel(SDL_Event *event) {
             (int): 0 on success
     */
 
+    // If a pinch is active, don't send a scroll event
+    if (active_pinch) {
+        return 0;
+    }
+
     FractalClientMessage fmsg = {0};
     fmsg.type = MESSAGE_MOUSE_WHEEL;
     fmsg.mouseWheel.x = event->wheel.x;
     fmsg.mouseWheel.y = event->wheel.y;
     fmsg.mouseWheel.precise_x = event->wheel.preciseX;
     fmsg.mouseWheel.precise_y = event->wheel.preciseY;
+    send_fmsg(&fmsg);
+
+    return 0;
+}
+
+int handle_pinch(SDL_Event *event) {
+    /*
+        Handle the SDL pinch event
+
+        Arguments:
+            event (SDL_Event*): SDL event for touchpad pinch event
+
+        Result:
+            (int): 0 on success
+    */
+
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_MULTIGESTURE;
+    fmsg.multigesture = (FractalMultigestureMessage){.d_theta = 0,
+                                                     .d_dist = event->pinch.scroll_amount,
+                                                     .x = 0,
+                                                     .y = 0,
+                                                     .num_fingers = 2,
+                                                     .active_gesture = active_pinch};
+
+    fmsg.multigesture.gesture_type = NONE;
+    if (event->pinch.magnification < 0) {
+        fmsg.multigesture.gesture_type = PINCH_CLOSE;
+        active_pinch = true;
+    } else if (event->pinch.magnification > 0) {
+        fmsg.multigesture.gesture_type = PINCH_OPEN;
+        active_pinch = true;
+    } else if (active_pinch) {
+        // 0 magnification means that the pinch gesture is complete
+        fmsg.multigesture.gesture_type = CANCEL;
+        active_pinch = false;
+    }
+
     send_fmsg(&fmsg);
 
     return 0;
@@ -337,7 +383,8 @@ int handle_multi_gesture(SDL_Event *event) {
                                                      .d_dist = event->mgesture.dDist,
                                                      .x = event->mgesture.x,
                                                      .y = event->mgesture.y,
-                                                     .num_fingers = event->mgesture.numFingers};
+                                                     .num_fingers = event->mgesture.numFingers,
+                                                     .gesture_type = NONE};
     send_fmsg(&fmsg);
 
     return 0;
@@ -375,7 +422,7 @@ int handle_sdl_event(SDL_Event *event) {
     */
 
     switch (event->type) {
-        case SDL_WINDOWEVENT:
+        case SDL_WINDOWEVENT: {
             if (event->window.event == SDL_WINDOWEVENT_SIZE_CHANGED) {
                 if (handle_window_size_changed(event) != 0) {
                     return -1;
@@ -386,13 +433,15 @@ int handle_sdl_event(SDL_Event *event) {
                 }
             }
             break;
+        }
         case SDL_AUDIODEVICEADDED:
-        case SDL_AUDIODEVICEREMOVED:
+        case SDL_AUDIODEVICEREMOVED: {
             // Refresh the audio device
             set_audio_refresh();
             break;
+        }
         case SDL_KEYDOWN:
-        case SDL_KEYUP:
+        case SDL_KEYUP: {
 #ifdef __APPLE__
             // On Mac, map cmd to ctrl
             if (event->key.keysym.scancode == FK_LGUI) {
@@ -409,31 +458,43 @@ int handle_sdl_event(SDL_Event *event) {
                 return -1;
             }
             break;
-        case SDL_MOUSEMOTION:
+        }
+        case SDL_MOUSEMOTION: {
             if (handle_mouse_motion(event) != 0) {
                 return -1;
             }
             break;
+        }
         case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEBUTTONUP: {
             if (handle_mouse_button_up_down(event) != 0) {
                 return -1;
             }
             break;
-        case SDL_MOUSEWHEEL:
+        }
+        case SDL_MOUSEWHEEL: {
             if (handle_mouse_wheel(event) != 0) {
                 return -1;
             }
             break;
-        case SDL_MULTIGESTURE:
+        }
+        case SDL_MULTIGESTURE: {
             if (handle_multi_gesture(event) != 0) {
                 return -1;
             }
             break;
-        case SDL_QUIT:
+        }
+        case SDL_PINCH: {
+            if (handle_pinch(event) != 0) {
+                return -1;
+            }
+            break;
+        }
+        case SDL_QUIT: {
             LOG_INFO("Forcefully Quitting...");
             exiting = true;
             break;
+        }
     }
     return 0;
 }

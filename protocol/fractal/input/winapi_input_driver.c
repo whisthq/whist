@@ -313,6 +313,10 @@ int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_key
     return (KEYPRESS_MASK & GetAsyncKeyState(GetWindowsKeyCode(fractal_keycode))) >> 15;
 }
 
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch) {
+    return 0;
+}
+
 int emit_key_event(InputDevice* input_device, FractalKeycode fractal_keycode, int pressed) {
     UNUSED(input_device);
 
@@ -483,6 +487,18 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     LOG_WARNING(
         "High resolution scroll not implemented for Windows servers! "
         "Falling back to low-resolution scroll.");
+    return -1;
+}
+
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
+                            FractalMultigestureType gesture_type, bool active_gesture) {
+    UNUSED(input_device);
+    UNUSED(d_theta);
+    UNUSED(d_dist);
+    UNUSED(gesture_type);
+    UNUSED(active_gesture);
+
+    LOG_WARNING("Multigesture events not implemented for Windows servers! ");
     return -1;
 }
 

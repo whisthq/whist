@@ -84,6 +84,20 @@ int get_keyboard_modifier_state(InputDevice* input_device, FractalKeycode fracta
 int get_keyboard_key_state(InputDevice* input_device, FractalKeycode fractal_keycode);
 
 /**
+ * @brief                          Determine whether to ignore the client key state
+ *
+ * @param input_device             The initialized input device to query
+ *
+ * @param fractal_keycode          The Fractal keycode to query
+ *
+ * @param active_pinch             Whether the client has an active pinch gesture
+ *
+ * @returns                        1 if we ignore the client key state,
+ *                                 0 if we take the client key state
+ */
+int ignore_key_state(InputDevice* input_device, FractalKeycode fractal_keycode, bool active_pinch);
+
+/**
  * @brief                          Emit a keyboard press/unpress event
  *
  * @param input_device             The initialized input device to write
@@ -157,5 +171,23 @@ int emit_low_res_mouse_wheel_event(InputDevice* input_device, int32_t x, int32_t
  * @returns                        0 on success, -1 on failure
  */
 int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y);
+
+/**
+ * @brief                          Emit a trackpad multigesture event (e.g. pinch)
+ *
+ * @param input_device             The initialized input device to write
+ *
+ * @param d_theta                  How much the fingers rotated during this motion
+ *
+ * @param d_dist                   How much the fingers pinched during this motion
+ *
+ * @param gesture_type             The gesture type (rotate, pinch open, pinch close)
+ *
+ * @param active_gesture           Whether this event happened mid-multigesture
+ *
+ * @returns                        0 on success, -1 on failure
+ */
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
+                            FractalMultigestureType gesture_type, bool active_gesture);
 
 #endif  // INPUT_DRIVER_H
