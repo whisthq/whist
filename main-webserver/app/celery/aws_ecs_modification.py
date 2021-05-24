@@ -189,8 +189,12 @@ def update_region(
     all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
 
     if not current_app.testing:
+
+        def _helper(name):
+            return ("base" in name) or "dev" in name or "stag" in name or "prod" in name
+
         # we don't want to update people's personal test clusters
-        all_clusters = [cluster for cluster in all_clusters if "test" not in cluster.cluster]
+        all_clusters = [cluster for cluster in all_clusters if _helper(cluster.cluster)]
 
     if len(all_clusters) == 0:
         fractal_logger.warning(
