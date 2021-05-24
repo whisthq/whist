@@ -22,13 +22,14 @@ To set up your Fractal development instance:
 
 - SSH/SSM into your instance and install `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
 
-- Set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
+- If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
 - Then, run the following commands (adding the `-o` flag to shell scripts if you want to see output, see the README for each individual repository):
 
 ```
 # clones `dev` by default
-git clone git@github.com:fractal/fractal.git
+git clone git@github.com:fractal/fractal.git # via SSH
+git clone https://github.com/fractal/fractal.git # via HTTPS
 
 # set up the EC2 host for development
 cd ~/fractal/ecs-host-setup
