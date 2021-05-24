@@ -21,13 +21,3 @@ createTrigger(
     fromEvent(autoUpdater as EventEmitter, "update-not-available")
   )
 )
-// Fires if autoupdate is downloading, returns object with download speed, size, etc.
-createTrigger(
-  TRIGGER.downloadProgress,
-  fromEvent(autoUpdater as EventEmitter, "download-progress")
-)
-// Fires if autoupdate is downloaded successfully
-createTrigger(
-  TRIGGER.updateDownloaded,
-  fromEvent(autoUpdater as EventEmitter, "update-downloaded")
-)

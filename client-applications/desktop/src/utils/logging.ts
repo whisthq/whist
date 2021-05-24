@@ -65,12 +65,8 @@ const localLog = (
   logFile.write(logs)
 }
 
-const amplitudeLog = async (
-  title: string,
-  data: object,
-  userID: string | undefined
-) => {
-  if (userID !== undefined) {
+const amplitudeLog = async (title: string, data: object, userID: string) => {
+  if (userID !== "") {
     await amplitude.logEvent({
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
@@ -84,7 +80,7 @@ export const logBase = async (
   title: string,
   data: object,
   level: LogLevel,
-  userID?: string
+  userID: string
 ) => {
   /*
   Description:

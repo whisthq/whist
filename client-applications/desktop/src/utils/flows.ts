@@ -1,7 +1,8 @@
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map } from "rxjs/operators"
-import { mapValues } from "lodash"
+import { mapValues, values } from "lodash"
 import { withMocking } from "@app/main/testing"
+import TRIGGER from "@app/main/triggers/constants"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
@@ -89,6 +90,9 @@ export const fromTrigger = (name: string): Observable<any> => {
     Returns: 
       Observable
   */
+
+  if (!values(TRIGGER).includes(name))
+    throw new Error(`Trigger ${name} does not exist`)
 
   return TriggerChannel.pipe(
     // Filter out triggers by name. Note this allows for partial, case-insensitive string matching,
