@@ -1309,7 +1309,7 @@ jobs:
 
             - name: Deploy changes to the Auth0 tenant
               env:
-                  AUTH0_CLIENT_SECRET: ${{ secrets[format('{0}_AUTH0_CLIENT_SECRET', needs.fractal-publish-build-config.outputs.branch)] }}
+                  AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
               run: npm run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
 
     # Create GitHub Tag
