@@ -27,13 +27,9 @@ import { fromTrigger } from "@app/utils/flows"
 // constrained to observables that emit serializable values.
 
 const subscribed = {
-  // loginLoading: loginLoading,
-  // loginWarning: loginWarning.pipe(mapTo(WarningLoginInvalid)),
   updateInfo: fromTrigger("downloadProgress").pipe(
     map((obj) => JSON.stringify(obj))
   ),
-  // signupLoading: signupLoading,
-  // signupWarning: signupWarning.pipe(mapTo(WarningSignupInvalid)),
 }
 
 objectCombine(subscribed)

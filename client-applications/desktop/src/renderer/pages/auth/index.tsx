@@ -11,7 +11,7 @@ const Auth = () => {
             Router for auth-related pages (e.g. login and signup)
     */
 
-  const [mainState, setMainState] = useMainState()
+  const [, setMainState] = useMainState()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -56,8 +56,8 @@ const Auth = () => {
           <Login
             email={email}
             password={password}
-            warning={mainState?.loginWarning}
-            loading={mainState?.loginLoading}
+            warning={""}
+            loading={false}
             onLogin={onLogin}
             onNavigate={clearPassword}
             onChangeEmail={setEmail}
@@ -73,8 +73,8 @@ const Auth = () => {
             email={email}
             password={password}
             confirmPassword={confirmPassword}
-            warning={mainState?.signupWarning}
-            loading={mainState?.signupLoading}
+            warning={""}
+            loading={false}
             onSignup={onSignup}
             onNavigate={clearPassword}
             onChangeEmail={setEmail}

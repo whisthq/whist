@@ -1,37 +1,38 @@
-// App triggers
-export const appReady = "appReady"
-export const windowCreated = "windowCreated"
+export default {
+  // App triggers
+  appReady: "appReady",
+  windowCreated: "windowCreated",
+  // Update triggers
+  updateAvailable: "updateAvailable",
+  updateNotAvailable: "updateNotAvailable",
+  downloadProgress: "downloadProgress",
+  updateDownloaded: "updateDownloaded",
 
-// Update triggers
-export const updateAvailable = "updateAvailable"
-export const updateNotAvailable = "updateNotAvailable"
-export const downloadProgress = "downloadProgress"
-export const updateDownloaded = "updateDownloaded"
+  // IPC triggers
+  eventIPC: "eventIPC",
 
-// IPC triggers
-export const eventIPC = "eventIPC"
+  // Persist triggers
+  persisted: "persisted",
+  notPersisted: "notPersisted",
 
-// Persist triggers
-export const persisted = "persisted"
-export const notPersisted = "notPersisted"
+  // Renderer triggers
+  loginAction: "loginAction",
+  signupAction: "signupAction",
+  relaunchAction: "relaunchAction",
 
-// Renderer triggers
-export const loginAction = "loginAction"
-export const signupAction = "signupAction"
-export const relaunchAction = "relaunchAction"
+  // Tray triggers
+  signoutAction: "signoutAction",
+  quitAction: "quitAction",
 
-// Tray triggers
-export const signoutAction = "signoutAction"
-export const quitAction = "quitAction"
-
-// Flow triggers
-export const protocolLaunchFlowSuccess = "protocolLaunchFlowSuccess"
-export const protocolLaunchFlowFailure = "protocolLaunchFlowFailure"
-export const containerFlowSuccess = "containerFlowSuccess"
-export const containerFlowFailure = "containerFlowFailure"
-export const loginFlowSuccess = "loginFlowSuccess"
-export const loginFlowFailure = "loginFlowFailure"
-export const signupFlowSuccess = "signupFlowSuccess"
-export const signupFlowFailure = "signupFlowFailure"
-export const protocolCloseFlowSuccess = "protocolCloseFlowSuccess"
-export const protocolCloseFlowFailure = "protocolCloseFlowFailure"
+  // Flow triggers
+  protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",
+  protocolLaunchFlowFailure: "protocolLaunchFlowFailure",
+  containerFlowSuccess: "containerFlowSuccess",
+  containerFlowFailure: "containerFlowFailure",
+  loginFlowSuccess: "loginFlowSuccess",
+  loginFlowFailure: "loginFlowFailure",
+  signupFlowSuccess: "signupFlowSuccess",
+  signupFlowFailure: "signupFlowFailure",
+  protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
+  protocolCloseFlowFailure: "protocolCloseFlowFailure",
+}
