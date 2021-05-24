@@ -28,7 +28,7 @@ import {
   containerPollingSuccess,
   containerPollingPending,
 } from "@app/utils/container"
-import { ContainerPollingTimeout } from "@app/utils/constants"
+import { containerPollingTimeout } from "@app/utils/constants"
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/utils/flows"
 
@@ -63,7 +63,7 @@ const containerPollingInner = flow<{
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
 
-  const limit = trigger.pipe(delay(ContainerPollingTimeout))
+  const limit = trigger.pipe(delay(containerPollingTimeout))
 
   const poll = containerPollingRequest(tick)
 

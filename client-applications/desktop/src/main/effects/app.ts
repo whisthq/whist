@@ -20,8 +20,8 @@ import {
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
-import env from "@app/utils/env"
-import config, { FractalCIEnvironment } from "@app/config/environment"
+import { appEnvironment, FractalEnvironments } from "../../../config/configs"
+import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
 
@@ -42,11 +42,11 @@ fromTrigger("appReady")
     // In dev and staging, the file containing the version is called {channel}-mac.yml, so we need to set the
     // channel down below. In prod, the file is called latest-mac.yml, which channel defaults to, so
     // we don't need to set it.
-    switch (env.PACKAGED_ENV) {
-      case FractalCIEnvironment.STAGING:
+    switch (appEnvironment) {
+      case FractalEnvironments.STAGING:
         autoUpdater.channel = "staging-rc"
         break
-      case FractalCIEnvironment.DEVELOPMENT:
+      case FractalEnvironments.DEVELOPMENT:
         autoUpdater.channel = "dev-rc"
         break
       default:
