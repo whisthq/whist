@@ -15,7 +15,9 @@ add_library(fractalCore STATIC
         fractal.h
         fractal.c
         fractalgetopt.h
-        fractalgetopt.c)
+        fractalgetopt.c
+        fractal_frame.h
+        fractal_frame.c)
 # Ensure that fractal.v is updated prior to compiling fractalCore
 add_dependencies(fractalCore git_revision)
 

@@ -315,48 +315,6 @@ int get_fmsg_size(FractalClientMessage* fmsg) {
     }
 }
 
-void set_fractal_cursor_image(Frame* frame, FractalCursorImage* cursor) {
-    if (cursor == NULL) {
-        frame->has_cursor = false;
-    } else {
-        frame->has_cursor = true;
-        memcpy(frame->data, cursor, sizeof(FractalCursorImage));
-    }
-}
-void set_compressed_frame(Frame* frame, unsigned char* compressed_frame,
-                          int compressed_frame_size) {
-    unsigned char* buf = frame->data;
-    if (frame->has_cursor) {
-        buf += sizeof(FractalCursorImage);
-    }
-    memcpy(buf, compressed_frame, compressed_frame_size);
-    frame->compressed_frame_size = compressed_frame_size;
-}
-FractalCursorImage* get_fractal_cursor_image(Frame* frame) {
-    if (frame->has_cursor) {
-        return (FractalCursorImage*)frame->data;
-    } else {
-        return NULL;
-    }
-}
-unsigned char* get_compressed_frame(Frame* frame) {
-    unsigned char* ret = frame->data;
-    if (frame->has_cursor) {
-        ret += sizeof(FractalCursorImage);
-    }
-    return ret;
-}
-PeerUpdateMessage* get_peer_messages(Frame* frame) {
-    return (PeerUpdateMessage*)(get_compressed_frame(frame) + frame->compressed_frame_size);
-}
-int get_total_frame_size(Frame* frame) {
-    int ret = frame->compressed_frame_size;
-    if (frame->has_cursor) {
-        ret += sizeof(FractalCursorImage);
-    }
-    return sizeof(Frame) + ret + sizeof(PeerUpdateMessage) * frame->num_peer_update_msgs;
-}
-
 void terminate_protocol() {
     /*
         Terminates the protocol
