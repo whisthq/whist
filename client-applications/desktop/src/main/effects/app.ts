@@ -133,7 +133,7 @@ fromTrigger("updateAvailable").subscribe(() => {
 zip(
   merge(
     fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowfailure")
+    fromTrigger("protocolCloseFlowFailure")
   ),
   fromTrigger("protocolLaunchFlowSuccess").pipe(mapTo(true))
 ).subscribe(([, success]: [any, boolean]) => {
