@@ -490,6 +490,18 @@ int emit_high_res_mouse_wheel_event(InputDevice* input_device, float x, float y)
     return -1;
 }
 
+int emit_multigesture_event(InputDevice* input_device, float d_theta, float d_dist,
+                            FractalMultigestureType gesture_type, bool active_gesture) {
+    UNUSED(input_device);
+    UNUSED(d_theta);
+    UNUSED(d_dist);
+    UNUSED(gesture_type);
+    UNUSED(active_gesture);
+
+    LOG_WARNING("Multigesture events not implemented for Windows servers! ");
+    return -1;
+}
+
 void enter_win_string(enum FractalKeycode* keycodes, int len) {
     // get screen width and height for mouse cursor
     int i, index = 0;
