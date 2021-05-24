@@ -1,6 +1,9 @@
 from functools import wraps
 
-from auth0 import scope_required
+from flask_jwt_extended import get_jwt, verify_jwt_in_request
+
+from _stripe import ensure_subscribed
+from auth0 import has_scope, scope_required
 
 developer_required = scope_required("admin")
 
@@ -22,7 +25,10 @@ def payment_required(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        # TODO: Ensure that the authenticated user is a paying user.
+        if not has_scope("admin"):
+            verify_jwt_in_request()
+            ensure_subscribed(get_jwt()["https://api.fractal.co/stripe_customer_id"])
+
         return func(*args, **kwargs)
 
     return wrapper

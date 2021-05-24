@@ -83,6 +83,13 @@ class ClusterNotFoundException(_FractalError):
     message = "cluster_id: {cluster_id}"
 
 
+class PaymentRequired(_FractalError):
+    """Raised by the @payment_required decorator when a user must pay to access a resource."""
+
+    params = ()
+    message = "Only Fractal subscribers may access that resource"
+
+
 class TemplateNotFound(_FractalError):
     """This exception is raised when an email template ID is requested that does not exist
     Args:

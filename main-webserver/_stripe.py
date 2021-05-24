@@ -44,5 +44,8 @@ def ensure_subscribed(customer_id: str) -> None:
 
     customer = stripe.Customer.retrieve(customer_id, expand=("subscriptions",))
 
-    if not any(subscription["status"] in ("active", "trialing") for subscription in customer["subscriptions"]):
+    if not any(
+        subscription["status"] in ("active", "trialing")
+        for subscription in customer["subscriptions"]
+    ):
         raise PaymentRequired
