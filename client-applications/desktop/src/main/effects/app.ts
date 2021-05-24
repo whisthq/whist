@@ -33,6 +33,7 @@ fromTrigger("appReady").subscribe(() => {
   app.setPath("userData", newPath)
 })
 
+// Apply autoupdate config
 fromTrigger("appReady")
   .pipe(take(1))
   .subscribe(() => {
@@ -58,6 +59,7 @@ fromTrigger("appReady")
     autoUpdater.checkForUpdatesAndNotify().catch((err) => console.error(err))
   })
 
+// Check Electron store for persisted data
 fromTrigger("appReady").subscribe(() => emitCache())
 
 // appReady only fires once, at the launch of the application.

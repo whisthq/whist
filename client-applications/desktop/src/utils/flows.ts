@@ -1,5 +1,5 @@
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, tap, map } from "rxjs/operators"
+import { filter, share, map } from "rxjs/operators"
 import { mapValues } from "lodash"
 import { withMocking } from "@app/main/testing"
 

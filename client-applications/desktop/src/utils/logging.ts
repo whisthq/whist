@@ -1,11 +1,9 @@
 import { app } from "electron"
-import { tap } from "rxjs/operators"
 import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
 import AWS from "aws-sdk"
-import { merge, Observable, zip, of } from "rxjs"
 import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
@@ -50,7 +48,12 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(debugLog)} \n`
 }
 
-const localLog = (title: string, data: object, level: LogLevel, userID: string) => {
+const localLog = (
+  title: string,
+  data: object,
+  level: LogLevel,
+  userID: string
+) => {
   const logs = formatLogs(`${title} -- ${userID}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
@@ -155,5 +158,3 @@ export const uploadToS3 = async (email: string) => {
 
   await Promise.all(uploadPromises)
 }
-
-

@@ -25,7 +25,6 @@ import { fromTrigger } from "@app/utils/flows"
 //
 // We can only send serializable values over IPC, so the subscribed map is
 // constrained to observables that emit serializable values.
-
 const subscribed = {
   updateInfo: fromTrigger("downloadProgress").pipe(
     map((obj) => JSON.stringify(obj))
