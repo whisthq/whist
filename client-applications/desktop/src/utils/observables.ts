@@ -5,19 +5,15 @@ import {
   race,
   interval,
   from,
-  EMPTY,
   combineLatest,
 } from "rxjs"
 import {
   map,
   mapTo,
   switchMap,
-  filter,
-  takeLast,
-  share,
   take,
 } from "rxjs/operators"
-import { toPairs, identity } from "lodash"
+import { toPairs } from "lodash"
 
 export const loadingFrom = (
   /*
@@ -97,4 +93,15 @@ export const objectCombine = <T extends { [key: string]: Observable<any> }>(
   )
 
 export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
+  /*
+        Description:
+            A helper that allows one observable to fire only when another observable
+            has fired.
+
+        Arguments:
+            obs (Observable<any>): The observable that you want to fire
+            signal (Observable<any>): The observable that you are waiting for to fire first
+        Returns:
+            An observable that fires only when the "signal" observable has fired.
+    */
   combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))

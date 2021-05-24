@@ -1,39 +1,16 @@
 import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, tap, map } from "rxjs/operators"
-import { mapValues, truncate } from "lodash"
-import stringify from "json-stringify-safe"
+import { mapValues } from "lodash"
 import { withMocking } from "@app/main/testing"
 
+// A Trigger is emitted by an Observable. Every Trigger has a name and payload.
 export interface Trigger {
   name: string
   payload: any
 }
 
+// This is the observable that emits Triggers.
 export const TriggerChannel = new ReplaySubject<Trigger>()
-
-const logFormat = (...args: any[]) => {
-  let [title, message, value] = args
-  if (value === undefined) {
-    value = message
-    message = undefined
-  }
-  if (value === undefined && message === undefined) {
-    value = title
-    title = undefined
-  }
-  title = `${(title as string) ?? ""} -- `
-  message = `${(message as string) ?? ""} -- `
-
-  const output = truncate(stringify(value, null, 2), {
-    length: 1000,
-    omission: "...**only printing 1000 characters per log**",
-  })
-  return `${title as string}${message as string}${output}`
-}
-
-const logDebug = (...args: any[]) => {
-  console.log(`DEBUG: ${logFormat(...args)}`)
-}
 
 export const fork = <T>(
   source: Observable<T>,
@@ -52,10 +29,7 @@ export const flow =
     const channels = fn(trigger)
 
     return mapValues(withMocking(name, trigger, channels), (obs, key) =>
-      obs.pipe(
-        tap((value) => logDebug(`${name}.${key}`, value)),
-        share()
-      )
+      obs.pipe(share())
     )
   }
 

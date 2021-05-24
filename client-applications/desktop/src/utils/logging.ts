@@ -50,8 +50,8 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(debugLog)} \n`
 }
 
-const localLog = (title: string, data: object, level: LogLevel) => {
-  const logs = formatLogs(title, data, level)
+const localLog = (title: string, data: object, level: LogLevel, userID: string) => {
+  const logs = formatLogs(`${title} -- ${userID}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
 
@@ -89,7 +89,7 @@ export const logBase = async (
   */
 
   await amplitudeLog(title, data, userID)
-  localLog(title, data, level)
+  localLog(title, data, level, userID)
 }
 
 export const uploadToS3 = async (email: string) => {
@@ -99,7 +99,7 @@ export const uploadToS3 = async (email: string) => {
   Arguments:
       email (string): user email of the logged in user
   Returns:
-      response from the s3 upload
+      Response from the s3 upload
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
@@ -156,37 +156,4 @@ export const uploadToS3 = async (email: string) => {
   await Promise.all(uploadPromises)
 }
 
-export const logObservable = (level: LogLevel, title: string) => {
-  /*
-    Description:
-        Returns a custom operator that logs values emitted by an observable
-    Arguments:
-        level (LogLevel): Level of log
-        title (string): Name of observable, written to log
-    Returns:
-        MonoTypeOperatorFunction: logging operator
-    */
 
-  return tap((args: [object, string]) => {
-    logBase(title, args[0], level, args[1]).catch((err) => console.error(err))
-  })
-}
-
-// Log level wrapper functions
-const debug = logObservable.bind(null, LogLevel.DEBUG)
-const warning = logObservable.bind(null, LogLevel.WARNING)
-const error = logObservable.bind(null, LogLevel.ERROR)
-
-const logObservables = (
-  func: typeof debug,
-  ...args: Array<[Observable<any>, Observable<string>, string]>
-) =>
-  merge(
-    ...args.map(([obs, userID, title]) =>
-      zip(obs, userID ?? of(undefined)).pipe(func(title))
-    )
-  ).subscribe()
-
-export const debugObservables = logObservables.bind(null, debug)
-export const warningObservables = logObservables.bind(null, warning)
-export const errorObservables = logObservables.bind(null, error)
