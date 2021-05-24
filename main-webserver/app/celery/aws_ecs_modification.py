@@ -186,7 +186,11 @@ def update_region(
     )
 
     all_clusters = list(ClusterInfo.query.filter_by(location=region_name).all())
-    all_clusters = [cluster for cluster in all_clusters if "cluster" in cluster.cluster]
+    all_clusters = [
+        cluster
+        for cluster in all_clusters
+        if "cluster" in cluster.cluster and "test" not in cluster.cluster
+    ]
 
     if len(all_clusters) == 0:
         fractal_logger.warning(
