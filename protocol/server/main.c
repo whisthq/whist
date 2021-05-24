@@ -550,14 +550,12 @@ int32_t send_video(void* opaque) {
                     }
                 }
 
-                int frame_size = sizeof(Frame) + encoder->encoded_frame_size;
-                if (frame_size > LARGEST_FRAME_SIZE) {
-                    LOG_WARNING("Frame too large: %d", frame_size);
+                if (encoder->encoded_frame_size > (int)MAX_FRAME_VIDEODATA_SIZE) {
+                    LOG_ERROR("Frame videodata too large: %d", encoder->encoded_frame_size);
                 } else {
                     // Create frame struct with compressed frame data and
                     // metadata
-                    static char
-                        buf[LARGEST_FRAME_SIZE + sizeof(PeerUpdateMessage) * MAX_NUM_CLIENTS];
+                    static char buf[LARGEST_FRAME_SIZE];
                     Frame* frame = (Frame*)buf;
                     frame->width = encoder->out_width;
                     frame->height = encoder->out_height;
@@ -575,9 +573,9 @@ int32_t send_video(void* opaque) {
                     // If the current cursor is the same as the last cursor,
                     // just don't send any cursor
                     if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
-                        set_fractal_cursor_image(frame, NULL);
+                        set_frame_cursor_image(frame, NULL);
                     } else {
-                        set_fractal_cursor_image(frame, current_cursor);
+                        set_frame_cursor_image(frame, current_cursor);
                     }
 
                     last_cursor_id = current_cursor_id;
@@ -586,14 +584,14 @@ int32_t send_video(void* opaque) {
                     // render
                     frame->is_iframe = encoder->is_iframe;
 
-                    frame->compressed_frame_size = encoder->encoded_frame_size;
-                    video_encoder_write_buffer(encoder, (void*)get_compressed_frame(frame));
+                    frame->videodata_length = encoder->encoded_frame_size;
+                    video_encoder_write_buffer(encoder, (void*)get_frame_videodata(frame));
 
                     // LOG_INFO("Sent video packet %d (Size: %d) %s", id,
                     // encoder->encoded_frame_size, frame->is_iframe ?
                     // "(I-frame)" :
                     // "");
-                    PeerUpdateMessage* peer_update_msgs = get_peer_messages(frame);
+                    PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
 
                     size_t num_msgs;
                     read_lock(&is_active_rwlock);
