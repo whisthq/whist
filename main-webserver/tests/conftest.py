@@ -283,7 +283,7 @@ def bulk_instance():
         db.session.commit()
         for _ in range(associated_containers):
             new_container = ContainerInfo(
-                container_id=randint(0, 1000),
+                container_id=randint(0, 100000),
                 instance_id=new_instance.instance_id,
                 user_id="test-user",
                 status="Running",
