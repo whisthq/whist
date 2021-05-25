@@ -4,7 +4,7 @@
 **List of PRs that made it into this promotion**
 
 
-**Testing Checklist**
+**Testing Checklist Before Approving**
 
 - [ ] Fractal successfully auto-updates
 - [ ] Fractal successfully launches
