@@ -279,6 +279,13 @@ CREATE TABLE hardware.instance_info (
 );
 
 
+ALTER TABLE ONLY hardware.instance_info
+    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_id);
+
+
+ALTER TABLE ONLY hardware.container_info
+    ADD CONSTRAINT instance_id_fk FOREIGN KEY (instance_id) REFERENCES hardware.instance_info(instance_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
 --
 -- TOC entry 249 (class 1259 OID 16800)
 -- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
@@ -307,7 +314,6 @@ CREATE VIEW hardware.instance_sorted AS
   WHERE sub_with_running.running_containers < sub_with_running."maxContainers"
   ORDER BY sub_with_running.location, sub_with_running.running_containers DESC;
 
-);
 
 
 --

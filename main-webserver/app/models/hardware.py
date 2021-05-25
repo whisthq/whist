@@ -154,9 +154,7 @@ class InstanceInfo(db.Model):
         memoryRemainingPerInstance (float): RAM not in use
         maxContainers (int): how many containers can run at once?
         last_pinged (int): when did this instance last tell us it existed?
-        ami_id (str): what image is this machine based on?
-        containers (Iterable[ContainerInfo]):  which containers are running on this instance?
-    """
+        ami_id (str): what image is this machine based on?"""
 
     __tablename__ = "instance_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
@@ -171,12 +169,6 @@ class InstanceInfo(db.Model):
     maxContainers = db.Column(db.Integer, nullable=False, default=0)
     last_pinged = db.Column(db.Integer)
     ami_id = db.Column(db.String(250), nullable=False)
-    containers = relationship(
-        "ContainerInfo",
-        back_populates="parent_instance",
-        lazy="dynamic",
-        passive_deletes=True,
-    )
 
 
 class InstanceSorted(db.Model):
@@ -209,7 +201,6 @@ class ContainerInfo(db.Model):
         instance_id (string): which instance is it on?
         user_id (string): who's running it?
         status (string): is it running?
-        parent_instance (InstanceInfo): what instance is this on?
     """
 
     __tablename__ = "container_info"
@@ -218,7 +209,6 @@ class ContainerInfo(db.Model):
     instance_id = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
-    parent_instance = relationship("InstanceInfo", back_populates="containers")
 
 
 class RegionToAmi(db.Model):
