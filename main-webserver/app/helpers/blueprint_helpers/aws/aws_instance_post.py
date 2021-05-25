@@ -1,5 +1,6 @@
 from typing import Optional
 from app.models.hardware import InstanceSorted
+from app.helpers.utils.db.db_utils import set_local_lock_timeout
 
 bundled_region = {
     "us-east-1": ["us-east-2"],
@@ -19,6 +20,7 @@ def find_instance(region: str) -> Optional[str]:
     Returns: either a good instance ID or None
 
     """
+    set_local_lock_timeout(5)
     avail_instance: Optional[InstanceSorted] = (
         InstanceSorted.query.filter_by(location=region)
         .limit(1)

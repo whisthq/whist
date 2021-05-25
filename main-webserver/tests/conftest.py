@@ -5,7 +5,7 @@ import subprocess
 import uuid
 
 from contextlib import contextmanager
-from random import getrandbits as randbits
+from random import getrandbits as randbits, randint
 import platform
 import subprocess
 import signal
@@ -287,6 +287,7 @@ def bulk_instance():
         db.session.commit()
         for _ in range(associated_containers):
             new_container = ContainerInfo(
+                container_id=randint(0, 1000),
                 instance_id=new_instance.instance_id,
                 user_id="test-user",
                 status="Running",
