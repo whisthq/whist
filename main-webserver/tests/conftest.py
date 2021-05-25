@@ -2,7 +2,7 @@ import os
 import uuid
 
 from contextlib import contextmanager
-from random import getrandbits as randbits, randint
+from random import getrandbits as randbits
 import platform
 import subprocess
 import signal
