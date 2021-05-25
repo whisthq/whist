@@ -199,7 +199,7 @@ class ContainerInfo(db.Model):
 
     __tablename__ = "container_info"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
-    container_id = db.Column(db.Integer, primary_key=True, unique=True)
+    container_id = db.Column(db.BigInteger, primary_key=True, unique=True)
     instance_id = db.Column(db.String(250), nullable=False)
     user_id = db.Column(db.String(250), nullable=False)
     status = db.Column(db.String(250), nullable=False)
