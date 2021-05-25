@@ -1,5 +1,5 @@
-import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map } from "rxjs/operators"
+import { Observable, ReplaySubject, BehaviorSubject, Subject } from "rxjs"
+import { filter, share, map, scan } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/main/testing"
 import { withLogging } from "@app/main/logging"
@@ -13,6 +13,19 @@ export interface Trigger {
 
 // This is the observable that emits Triggers.
 export const TriggerChannel = new ReplaySubject<Trigger>()
+
+// Some rather messy state management. We shouldn't try and use this anywhere
+// in the app, it's intended right now to help give some contextual information
+// to FlowEffects like logging, which needs information like user email.
+//
+// We'll add things to the StateChannel in main/effects/state, and then
+// we can getValue() from the state BehaviorSubject when we need it.
+// The only consumer of this state should be the "flow" function.
+const state = new BehaviorSubject<object>({})
+export const StateChannel = new Subject<object>()
+StateChannel.pipe(scan((acc, val) => ({ ...acc, ...val }))).subscribe((value) =>
+  state.next(value)
+)
 
 export const fork = <T>(
   source: Observable<T>,
@@ -55,8 +68,10 @@ export const flow =
   (trigger: Observable<T>) => {
     const channels = fn(trigger)
 
-    const mocked = withMocking(name, trigger, channels)
-    const logged = withLogging(name, trigger, mocked)
+    const mocked = withMocking(state, name, trigger, channels)
+    const logged = withLogging(state, name, trigger, mocked)
+    // const mocked = withMocking({}, name, trigger, channels)
+    // const logged = withLogging({}, name, trigger, mocked)
 
     console.log("LOGGING", name)
 

@@ -8,7 +8,7 @@ import {
   combineLatest,
 } from "rxjs"
 import { map, mapTo, switchMap, take } from "rxjs/operators"
-import { toPairs } from "lodash"
+import { toPairs, fromPairs, isFunction } from "lodash"
 
 export const loadingFrom = (
   /*
@@ -100,3 +100,32 @@ export const fromSignal = (obs: Observable<any>, signal: Observable<any>) =>
             An observable that fires only when the "signal" observable has fired.
     */
   combineLatest(obs, signal.pipe(take(1))).pipe(map(([x]) => x))
+
+// This doesn't have anything to do with observables, but it's too useful to
+// delete.
+const pickMap = <
+  T extends Record<string, any>,
+  K extends { [P in keyof T]?: ((v: T[P]) => any) | K }
+>(
+  /*
+    Description:
+      Recursively flattens json objects into a single level of key-value pairs
+
+    Arguments:
+      obj: A Record of type String, any to be spreaded to a new object
+      fmap: Map of functions to apply to key value pairs in obj
+
+    Returns:
+      JSON object from flattend obj and fmap
+  */
+  obj: T,
+  fmap: K
+): T => ({
+  ...obj,
+  ...fromPairs(
+    toPairs(fmap).map(([key, value]) => [
+      key,
+      isFunction(value) ? value(obj[key]) : pickMap(obj[key], value),
+    ])
+  ),
+})

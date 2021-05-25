@@ -1,5 +1,6 @@
-import { Observable, EMPTY } from "rxjs"
+import { EMPTY } from "rxjs"
 import { get, set, keys } from "lodash"
+import { FlowEffect } from "@app/@types/schema"
 import * as schemas from "@app/main/testing/schemas"
 
 // This test should check for an enviroment variable, or some indicator
@@ -42,21 +43,14 @@ const emptyFlow = (keys: string[]) =>
     return result
   }, {})
 
-export const withMocking = <
-  T extends Observable<any>,
-  U extends { [key: string]: Observable<any> }
->(
-  /*
+/*
     Hijacks flow observables with mock observables if running on test mode
-    Arguments: 
-      name (str): name of the flow, ex. loginFlow, signupFlow, authFlow 
-      trigger (obs): observable trigger to mock 
+    Arguments:
+      name (str): name of the flow, ex. loginFlow, signupFlow, authFlow
+      trigger (obs): observable trigger to mock
       channels (obj): map of key-observable pairs to replace with mock schema
   */
-  name: string,
-  trigger: T,
-  channels: U
-): { [P in keyof U]: Observable<any> } => {
+export const withMocking: FlowEffect = (_context, name, trigger, channels) => {
   // Return early if we're not in testing mode.
   if (!isMockingEnabled()) return channels
 

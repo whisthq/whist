@@ -1,16 +1,10 @@
 import { get, mapValues, identity } from "lodash"
-import { Observable } from "rxjs"
-import { logFormat } from "@app/main/logging/utils"
+import { zip } from "rxjs"
+import { consoleLog, amplitudeLog, fileLog } from "@app/main/logging/utils"
 import schema from "@app/main/logging/schema"
+import { FlowEffect } from "@app/@types/schema"
 
-export const withLogging = <
-  T extends Observable<any>,
-  U extends { [key: string]: Observable<any> }
->(
-  name: string,
-  _trigger: T,
-  channels: U
-): { [P in keyof U]: Observable<any> } => {
+export const withLogging: FlowEffect = (context, name, _trigger, channels) => {
   // Search the map of mockFns for the name of this flow
   // Return channels unchanged if not found
   const logFunctions = get(schema, name, {})
@@ -22,11 +16,15 @@ export const withLogging = <
     // If the key is undefined/doesn't exist, log with identity fn
     const [message = "", fn = identity] = get(logFunctions, key, [])
 
+    const title = `${name}.key`
+
     // We'll do this as a subscription for now, but really we should
     // "tap" this output. We'll want to switch this as we move the app towards
     // a more disciplined approach to subscriptions.
-    obs.subscribe((value) => {
-      console.log(logFormat(`${name}.${key}`, message, fn(value)))
+    zip([context, obs]).subscribe(([_, value]) => {
+      consoleLog(context, title, message, fn(value))
+      amplitudeLog(context, title, message, value) //unformatted for amplitude
+      fileLog(context, title, message, value)
     })
 
     return obs

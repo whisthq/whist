@@ -16,7 +16,7 @@
     "@amplitude/utils" "^1.6.1"
     tslib "^1.9.3"
 
-"@amplitude/node@^1.6.1":
+"@amplitude/node@^1.6.0":
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.6.1.tgz#d5dc1f40c1ffa24c3ab3a52cc4d35f0db4ce49f2"
   integrity sha512-6mTVLJ4g7usNIMBKAkbBAIn3y2Y7rrI0DGHg8IFL0zLYaeYVJjvaOixqpGgPTFmiu1PO+NfHba8gk6/SWs879A==
@@ -601,11 +601,6 @@
   version "7.0.7"
   resolved "https://registry.yarnpkg.com/@types/json-schema/-/json-schema-7.0.7.tgz#98a993516c859eb0d5c4c8f098317a9ea68db9ad"
   integrity sha512-cxWFQVseBm6O9Gbw1IWb8r6OS4OhSt3hPZLkFApLjM8TEXROBuQGLAH2i2gZpcXdLBIrpXuTDhH7Vbm1iXmNGA==
-
-"@types/json-stringify-safe@^5.0.0":
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/@types/json-stringify-safe/-/json-stringify-safe-5.0.0.tgz#df34d054419d39323a3730966bacba02ac5e474e"
-  integrity sha512-UUA1sH0RSRROdInuDOA1yoRzbi5xVFD1RHCoOvNRPTNwR8zBkJ/84PZ6NhKVDtKp0FTeIccJCdQz1X2aJPr4uw==
 
 "@types/json5@^0.0.29":
   version "0.0.29"

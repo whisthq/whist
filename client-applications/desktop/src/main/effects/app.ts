@@ -9,7 +9,6 @@ import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip, combineLatest } from "rxjs"
 import { mapTo, take, concatMap, pluck } from "rxjs/operators"
 import path from "path"
-import { ChildProcess } from "child_process"
 
 import {
   closeWindows,
@@ -19,7 +18,6 @@ import {
   hideAppDock,
 } from "@app/utils/windows"
 import { createTray } from "@app/utils/tray"
-import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
@@ -86,21 +84,6 @@ merge(
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
-
-// When the protocol closes, upload protocol logs to S3
-combineLatest([
-  merge(
-    fromTrigger("persisted"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ).pipe(pluck("email")),
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowSuccess")
-  ),
-]).subscribe(([email]: [string, ChildProcess]) => {
-  uploadToS3(email).catch((err) => console.error(err))
-})
 
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
