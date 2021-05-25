@@ -24,6 +24,7 @@ import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
+import { AWSRegion } from "@app/@types/aws"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -140,7 +141,7 @@ zip(
     fromTrigger("containerFlowFailure").pipe(mapTo(false))
   )
 ).subscribe(([, success]: [any, boolean]) => {
-  // if (success) app.quit()
+  if (success) app.quit()
 })
 
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
