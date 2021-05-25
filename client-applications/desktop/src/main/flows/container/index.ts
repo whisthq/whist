@@ -6,12 +6,14 @@ import containerPollingFlow from "@app/main/flows/container/polling"
 import hostServiceFlow from "@app/main/flows/container/host"
 import { flow, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
+import { AWSRegion } from "@app/@types/aws"
 
 export default flow("containerFlow", (trigger) => {
   const create = containerCreateFlow(
     combineLatest({
       email: trigger.pipe(pluck("email")) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
+      region: trigger.pipe(pluck("region")) as Observable<AWSRegion>
     })
   )
 

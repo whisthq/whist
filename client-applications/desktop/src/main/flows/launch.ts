@@ -12,15 +12,9 @@ import { protocolLaunch } from "@app/utils/protocol"
 import { flow, fork, createTrigger } from "@app/utils/flows"
 
 export default flow("protocolLaunchFlow", (trigger) => {
-  const launch = fork<ChildProcess>(
-    trigger.pipe(
-      take(1),
-      map(() => protocolLaunch())
-    ),
-    {
-      success: () => true,
-    }
-  )
+  const launch = fork<ChildProcess>(trigger.pipe(map(() => protocolLaunch())), {
+    success: () => true,
+  })
 
   return {
     success: createTrigger("protocolLaunchFlowSuccess", launch.success),

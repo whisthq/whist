@@ -24,7 +24,17 @@ const launchTrigger = merge(
   fromSignal(fromTrigger("persisted"), fromTrigger("updateNotAvailable")),
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess")
-).pipe(take(1))
+).pipe(
+  map((x: object) =>
+    process.argv.length < 3
+      ? x
+      : {
+          ...x,
+          region: process.argv[2],
+        }
+  ),
+  take(1)
+)
 
 // Container creation flow
 containerFlow(launchTrigger)

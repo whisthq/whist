@@ -11,3 +11,4 @@ import TRIGGER from "@app/utils/triggers"
 
 createTrigger(TRIGGER.signoutAction, fromEvent(trayEvent, "signout"))
 createTrigger(TRIGGER.quitAction, fromEvent(trayEvent, "quit"))
+createTrigger(TRIGGER.regionAction, fromEvent(trayEvent, "region"))

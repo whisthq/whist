@@ -11,14 +11,15 @@ import { map, switchMap } from "rxjs/operators"
 
 import { containerCreate, containerCreateSuccess } from "@app/utils/container"
 import { fork, flow } from "@app/utils/flows"
+import { AWSRegion } from "@app/@types/aws"
 
-export default flow<{ email: string; accessToken: string }>(
+export default flow<{ email: string; accessToken: string, region?: AWSRegion }>(
   "containerCreateFlow",
   (trigger) => {
     const create = fork(
       trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(containerCreate(email, accessToken))
+        switchMap(({ email, accessToken, region }) =>
+          from(containerCreate(email, accessToken, region))
         )
       ),
       {

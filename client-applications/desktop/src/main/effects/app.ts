@@ -140,7 +140,7 @@ zip(
     fromTrigger("containerFlowFailure").pipe(mapTo(false))
   )
 ).subscribe(([, success]: [any, boolean]) => {
-  if (success) app.quit()
+  // if (success) app.quit()
 })
 
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
@@ -150,3 +150,8 @@ merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
     app.exit()
   }
 )
+
+fromTrigger("regionAction").subscribe((region: AWSRegion) => {
+  app.relaunch({ args: process.argv.slice(1).concat([region]) })
+  app.exit()
+})
