@@ -316,6 +316,12 @@ CREATE VIEW hardware.instance_sorted AS
 
 
 
+ CREATE VIEW hardware.instance_allocation AS
+    SELECT instance_id, location from hardware.instance_info
+    WHERE instance_id IN (select instance_id from hardware.instance_sorted);
+
+
+
 --
 -- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
 -- NOTE:  the complex OR condition is to handle both clusters that are

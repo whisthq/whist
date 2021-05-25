@@ -179,19 +179,13 @@ class InstanceSorted(db.Model):
 
     Attributes:
         instance_id (string): instance id from AWS console
-        instance_type (string): what hardware is the instance running on?
         location (string): where is the instance?
-        max_containers (int): how many containers
-        running_containers (int): how many containers are running?
     """
 
-    __tablename__ = "instance_info"
+    __tablename__ = "instance_allocation"
     __table_args__ = {"extend_existing": True, "schema": "hardware"}
     instance_id = db.Column(db.String(250), primary_key=True, unique=True)
-    max_containers = db.Column(db.Integer, nullable=False)
-    instance_type = db.Column(db.String(250), nullable=False)
     location = db.Column(db.String(250), nullable=False)
-    running_containers = db.Column(db.Integer, nullable=False)
 
 
 class ContainerInfo(db.Model):
