@@ -24,7 +24,7 @@ export const withLogging: FlowEffect = (context, name, _trigger, channels) => {
     zip([context, obs]).subscribe(([_, value]) => {
       consoleLog(context, title, message, fn(value))
       amplitudeLog(context, title, message, value) //unformatted for amplitude
-      fileLog(context, title, message, value)
+      fileLog(context, title, message, fn(value))
     })
 
     return obs
