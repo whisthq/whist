@@ -2,6 +2,7 @@ import { Observable, ReplaySubject } from "rxjs"
 import { filter, share, map } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/main/testing"
+import { withLogging } from "@app/main/logging"
 import TRIGGER from "@app/main/triggers/constants"
 
 // A Trigger is emitted by an Observable. Every Trigger has a name and payload.
@@ -54,9 +55,10 @@ export const flow =
   (trigger: Observable<T>) => {
     const channels = fn(trigger)
 
-    return mapValues(withMocking(name, trigger, channels), (obs, key) =>
-      obs.pipe(share())
-    )
+    const mocked = withMocking(name, trigger, channels)
+    const logged = withLogging(name, trigger, mocked)
+
+    return mapValues(logged, (obs) => obs.pipe(share()))
   }
 
 export const createTrigger = <A>(name: string, obs: Observable<A>) => {
