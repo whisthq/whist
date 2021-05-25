@@ -16,7 +16,7 @@ export const withLogging: FlowEffect = (context, name, _trigger, channels) => {
     // If the key is undefined/doesn't exist, log with identity fn
     const [message = "", fn = identity] = get(logFunctions, key, [])
 
-    const title = `${name}.key`
+    const title = `${name}.${key}`
 
     // We'll do this as a subscription for now, but really we should
     // "tap" this output. We'll want to switch this as we move the app towards
