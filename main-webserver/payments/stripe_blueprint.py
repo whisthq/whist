@@ -1,5 +1,5 @@
 from flask import Blueprint
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import get_jwt, jwt_required
 
 from app import fractal_pre_process
 from app.constants.http_codes import BAD_REQUEST
@@ -21,7 +21,6 @@ def customer_portal(**kwargs):
     Returns billing portal url.
 
     Args:
-        customer_id (str): the stripe id of the user
         return_url (str): the url to redirect to upon leaving the billing portal
 
     Returns:
@@ -41,11 +40,11 @@ def customer_portal(**kwargs):
 
     body = kwargs["body"]
     try:
-        customer_id = body["customer_id"]
+        customer_id = get_jwt()["https://api.fractal.co/stripe_customer_id"]
         return_url = body["return_url"]
     except:
-        return {"error": "The request body is incorrectly formatted."}, BAD_REQUEST
-
-    # TODO: use jwt _+ Auth0 to figure out a user's stripe customer_id
+        return {
+            "error": "The request body is incorrectly formatted, or the user is not authorized."
+        }, BAD_REQUEST
 
     return get_billing_portal_url(customer_id, return_url)

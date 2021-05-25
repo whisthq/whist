@@ -1,10 +1,11 @@
 import os
 
+from http import HTTPStatus
 from urllib.parse import urlunsplit
 
 import stripe
 
-from flask import current_app, Flask
+from flask import current_app, Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_jwt_extended.default_callbacks import default_unauthorized_callback
@@ -17,7 +18,9 @@ from app.config import CONFIG_MATRIX
 from app.sentry import init_and_ensure_sentry_connection
 from app.helpers.utils.metrics.flask_view import register_flask_view_metrics_monitor
 import app.constants.env_names as env_names
+
 from auth0 import ScopeError
+from payments import PaymentRequired
 
 jwtManager = JWTManager()
 ma = Marshmallow()
@@ -109,6 +112,13 @@ def register_handlers(app: Flask):
     @app.errorhandler(ScopeError)
     def _handle_scope_error(e):
         return default_unauthorized_callback(str(e))
+
+    @app.errorhandler(PaymentRequired)
+    def _handle_payment_required(_error):
+        return (
+            jsonify(error="That resource is only available to Fractal subscribers"),
+            HTTPStatus.PAYMENT_REQUIRED,
+        )
 
 
 def register_blueprints(app):
