@@ -1,10 +1,10 @@
 import { combineLatest, merge, Observable } from "rxjs"
-import { pluck } from "rxjs/operators"
+import { pluck, take } from "rxjs/operators"
 
 import containerCreateFlow from "@app/main/flows/container/create"
 import containerPollingFlow from "@app/main/flows/container/polling"
 import hostServiceFlow from "@app/main/flows/container/host"
-import { flow, createTrigger, fromTrigger } from "@app/utils/flows"
+import { flow, createTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 
 export default flow("containerFlow", (trigger) => {
@@ -22,7 +22,7 @@ export default flow("containerFlow", (trigger) => {
       ) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
     })
-  ).takeUntil(fromTrigger("protocolLaunchFlowSuccess"))
+  )
 
   const host = hostServiceFlow(
     fromSignal(
@@ -35,8 +35,11 @@ export default flow("containerFlow", (trigger) => {
     )
   )
 
+  // const success = polling.success.pipe(take(1))
+  const success = polling.success.pipe(take(1))
+
   return {
-    success: createTrigger("containerFlowSuccess", polling.success),
+    success: createTrigger("containerFlowSuccess", success),
     failure: createTrigger(
       "containerFlowFailure",
       merge(create.failure, polling.failure, host.failure)

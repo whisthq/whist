@@ -22,9 +22,9 @@ export const withLogging: FlowEffect = (context, name, _trigger, channels) => {
     // "tap" this output. We'll want to switch this as we move the app towards
     // a more disciplined approach to subscriptions.
     zip([context, obs]).subscribe(([_, value]) => {
-      consoleLog(context, title, message, fn(value))
-      amplitudeLog(context, title, message, value) //unformatted for amplitude
-      fileLog(context, title, message, fn(value))
+      consoleLog(context.getValue(), title, message, fn(value))
+      amplitudeLog(context.getValue(), title, message, value) //unformatted for amplitude
+      fileLog(context.getValue(), title, message, fn(value))
     })
 
     return obs

@@ -1,8 +1,6 @@
-import { merge, zip } from "rxjs"
+import { merge } from "rxjs"
 import { pluck } from "rxjs/operators"
-// import { logBase, LogLevel } from "@app/utils/logging"
 import { fromTrigger, StateChannel } from "@app/utils/flows"
-// import TRIGGER from "@app/main/triggers/constants"
 
 // Add email to state
 merge(
@@ -17,4 +15,6 @@ merge(
 merge(
   fromTrigger("protocolCloseFlowSuccess"),
   fromTrigger("protocolCloseFlowSuccess")
-).subscribe(() => StateChannel.next({ closing: true }))
+).subscribe(() => {
+  StateChannel.next({ closing: true })
+})

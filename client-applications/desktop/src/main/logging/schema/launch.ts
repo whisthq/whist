@@ -59,6 +59,9 @@ const schema: LoggingSchema = {
     success: outputStatus,
     pending: outputJson,
   },
+  hostInfoFlow: {
+    pending: outputStatus,
+  },
   hostConfigFlow: {
     success: [
       "only json and status",

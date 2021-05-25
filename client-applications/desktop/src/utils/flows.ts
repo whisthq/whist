@@ -1,5 +1,5 @@
 import { Observable, ReplaySubject, BehaviorSubject, Subject } from "rxjs"
-import { filter, share, map, scan } from "rxjs/operators"
+import { filter, share, map, scan, tap } from "rxjs/operators"
 import { mapValues, values } from "lodash"
 import { withMocking } from "@app/main/testing"
 import { withLogging } from "@app/main/logging"
@@ -117,3 +117,7 @@ export const fromTrigger = (name: string): Observable<any> => {
     map((x: Trigger) => x.payload)
   )
 }
+
+TriggerChannel.subscribe((x) => {
+  console.log("Firing trigger:", x.name)
+})

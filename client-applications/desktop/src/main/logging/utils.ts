@@ -4,7 +4,6 @@ import { truncate, isEmpty, split, includes } from "lodash"
 import chalk from "chalk"
 import fs from "fs"
 import path from "path"
-import AWS from "aws-sdk"
 import * as Amplitude from "@amplitude/node"
 import config, { loggingBaseFilePath } from "@app/config/environment"
 
@@ -89,59 +88,6 @@ const openLogFile = (filePath: string) => {
 
 const logFile = openLogFile(loggingBaseFilePath)
 
-// Upload a local file to s3.
-const uploadToS3 = async (s3FileName: string, localFilePath: string) => {
-  const s3 = new AWS.S3({
-    accessKeyId: config.keys.AWS_ACCESS_KEY,
-    secretAccessKey: config.keys.AWS_SECRET_KEY,
-  })
-  // Set up S3 upload parameters
-  const params = {
-    Bucket: "fractal-protocol-logs",
-    Key: s3FileName,
-    Body: fs.readFileSync(localFilePath),
-  }
-  // Upload files to the bucket
-  return await new Promise((resolve, reject) => {
-    s3.upload(params, (err: Error, data: any) => {
-      if (err !== null) reject(err)
-      else resolve(data)
-    })
-  })
-}
-
-// Given a s3 file name, upload local logs to s3.
-export const uploadLogsToS3 = async (s3FileName: string) => {
-  const logLocations = [
-    path.join(loggingBaseFilePath, "log-dev.txt"),
-    path.join(loggingBaseFilePath, "log-staging.txt"),
-    path.join(loggingBaseFilePath, "log.txt"),
-  ]
-
-  const uploadPromises = logLocations
-    .filter(fs.existsSync)
-    .map((filePath: string) => uploadToS3(s3FileName, filePath))
-
-  await Promise.all(uploadPromises)
-}
-
-export const fileLog: LoggingSink = (context, title, message, data) => {
+export const fileLog: LoggingSink = (_context, title, message, data) => {
   logFile.write(logFormat(title, message, data))
-  if (!context.closing) return
-
-  const email = context.email
-  const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
-  const s3Title = "Logs uploaded to S3."
-  const s3Message = ""
-  const s3Data = { email, s3FileName }
-
-  uploadLogsToS3(s3FileName)
-    .then(() => {
-      consoleLog(context, s3Title, s3Message, s3Data)
-      logFile.write(logFormat(s3Title, s3Message, s3Data))
-    })
-    .catch((err) => {
-      console.log("ERROR uploading logs to AWS S3:")
-      console.log(err)
-    })
 }
