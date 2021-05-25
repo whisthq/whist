@@ -405,8 +405,6 @@ Note that all conftest files contain test fixtures for their respective director
     ├── helpers
     │   └── general
     │       └── progress.py
-    ├── mail
-    │   └── test_mail.py
     ├── maintenance
     │   └── test_webserver_maintenance.py --> integration tests for webserver maintenance mode
     ├── misc
