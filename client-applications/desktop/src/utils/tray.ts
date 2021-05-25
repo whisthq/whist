@@ -40,36 +40,13 @@ export const createTray = () => {
     ...rootMenu,
     {
       label: "Region",
-      submenu: [
-        {
-          label: AWSRegion.CA_CENTRAL_1,
-          type: "radio",
-          click: () => {
-            trayEvent.emit("region", AWSRegion.CA_CENTRAL_1)
-          },
+      submenu: values(defaultAllowedRegions).map((region: AWSRegion) => ({
+        label: region,
+        type: "radio",
+        click: () => {
+          trayEvent.emit("region", region)
         },
-        {
-          label: AWSRegion.US_EAST_1,
-          type: "radio",
-          click: () => {
-            trayEvent.emit("region", AWSRegion.US_EAST_1)
-          },
-        },
-        {
-          label: AWSRegion.US_WEST_1,
-          type: "radio",
-          click: () => {
-            trayEvent.emit("region", AWSRegion.US_WEST_1)
-          },
-        },
-        {
-          label: AWSRegion.EU_CENTRAL_1,
-          type: "radio",
-          click: () => {
-            trayEvent.emit("region", AWSRegion.EU_CENTRAL_1)
-          },
-        },
-      ],
+      })),
     },
   ])
   tray.setContextMenu(menu)
