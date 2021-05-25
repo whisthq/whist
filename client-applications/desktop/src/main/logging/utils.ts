@@ -1,7 +1,6 @@
 import { app } from "electron"
 import { inspect } from "util"
 import { truncate, isEmpty, split, includes } from "lodash"
-import stringify from "json-stringify-safe"
 import chalk from "chalk"
 import fs from "fs"
 import path from "path"
