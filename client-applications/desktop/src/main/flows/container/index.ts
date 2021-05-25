@@ -4,7 +4,7 @@ import { pluck } from "rxjs/operators"
 import containerCreateFlow from "@app/main/flows/container/create"
 import containerPollingFlow from "@app/main/flows/container/polling"
 import hostServiceFlow from "@app/main/flows/container/host"
-import { flow, createTrigger } from "@app/utils/flows"
+import { flow, createTrigger, fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 
 export default flow("containerFlow", (trigger) => {
@@ -22,7 +22,7 @@ export default flow("containerFlow", (trigger) => {
       ) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
     })
-  )
+  ).takeUntil(fromTrigger("protocolLaunchFlowSuccess"))
 
   const host = hostServiceFlow(
     fromSignal(

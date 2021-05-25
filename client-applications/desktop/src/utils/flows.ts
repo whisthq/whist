@@ -70,10 +70,6 @@ export const flow =
 
     const mocked = withMocking(state, name, trigger, channels)
     const logged = withLogging(state, name, trigger, mocked)
-    // const mocked = withMocking({}, name, trigger, channels)
-    // const logged = withLogging({}, name, trigger, mocked)
-
-    console.log("LOGGING", name)
 
     return mapValues(logged, (obs) => obs.pipe(share()))
   }
