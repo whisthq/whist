@@ -31,6 +31,7 @@ Includes
 #include "network.h"
 
 #define USE_HARDWARE true
+#define SKIP_RENDERING false
 
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
@@ -73,6 +74,10 @@ static enum AVPixelFormat sws_input_fmt;
 // on macOS, we must initialize the renderer in `init_sdl()` instead of video.c
 extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
+
+// number of frames ahead we can receive packets for before asking for iframe
+#define MAX_UNSYNCED_FRAMES 10
+#define MAX_UNSYNCED_FRAMES_RENDER 12 // not sure if i need this
 
 #define LOG_VIDEO false
 
@@ -586,10 +591,11 @@ void nack(int id, int index) {
             id (int): missing packet ID
             index (int): missing packet index
     */
-
+#ifdef NO_NACKS_DURING_IFRAME
     if (video_data.is_waiting_for_iframe) {
         return;
     }
+#endif
     video_data.num_nacked++;
     LOG_INFO("Missing Video Packet ID %d Index %d, NACKing...", id, index);
     FractalClientMessage fmsg = {0};
@@ -990,7 +996,7 @@ void update_video() {
                 int next_frame_render_id = next_render_id + 1;
                 int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
                 FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
-
+		if (SKIP_RENDERING) {
                 // If the next frame has been received,
                 // lets skip the rendering so we can render the next frame faster
                 if (next_frame_ctx->id == next_frame_render_id &&
@@ -1000,7 +1006,7 @@ void update_video() {
                 } else {
                     skip_render = false;
                 }
-
+		}
                 rendering = true;
             } else {
                 if ((get_timer(ctx->last_packet_timer) > latency) &&
@@ -1043,13 +1049,13 @@ void update_video() {
             // If we're not even rendering anything, and we're 3 frames behind, we're too far behind
             // and we need to catch up
             if (video_data.max_id >
-                video_data.last_rendered_id + 3)  // || (cur_ctx->id == VideoData.last_rendered_id
+                video_data.last_rendered_id + MAX_UNSYNCED_FRAMES)  // || (cur_ctx->id == VideoData.last_rendered_id
                                                   // && get_timer( cur_ctx->last_packet_timer )
                                                   // > 96.0 / 1000.0) )
             {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is 3 frames ahead of the most recent rendered frame, "
+                        "The most recent ID is 10 frames ahead of the most recent rendered frame, "
                         "and there is no available frame to render. I-Frame is now being requested "
                         "to catch-up.");
                 }
@@ -1057,7 +1063,7 @@ void update_video() {
         } else {
             // If we're rendering, then even if we're 3 frames behind we might catch up in a bit, so
             // we're more lenient and will only i-frame if we're 5 frames behind.
-            if (video_data.max_id > video_data.last_rendered_id + 5) {
+            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is 5 frames ahead of the most recent rendered frame. "
