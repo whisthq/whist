@@ -54,15 +54,15 @@ def test_no_find_full_small_instance(bulk_instance):
 def test_assignment_replacement_code(bulk_instance):
     """
     generates a function which, given a region, returns a multistage test
-    of the unassigned container finding code
+    of the instance finding code
     """
 
     def _test_find_unassigned(location):
         """
         tests 4 properties of our find unassigned algorithm:
-        1) we don't return an assigned container in the requested region
-        2) we don't return an assigned container in a replacement region
-        3) we return an unassigned container in a replacement region
+        1) we don't return an overfull instance in the requested region
+        2) we don't return an overfull instance in a replacement region
+        3) we return an available instance in a replacement region
         4) if available, we use the requested region rather than a replacement one
         these properties are tested in order
         """
