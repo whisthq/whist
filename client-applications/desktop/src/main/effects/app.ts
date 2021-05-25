@@ -135,7 +135,10 @@ zip(
     fromTrigger("protocolCloseFlowSuccess"),
     fromTrigger("protocolCloseFlowFailure")
   ),
-  fromTrigger("protocolLaunchFlowSuccess").pipe(mapTo(true))
+  merge(
+    fromTrigger("protocolLaunchFlowSuccess").pipe(mapTo(true)),
+    fromTrigger("protocolLaunchFlowFailure").pipe(mapTo(false))
+  )
 ).subscribe(([, success]: [any, boolean]) => {
   if (success) app.quit()
 })
