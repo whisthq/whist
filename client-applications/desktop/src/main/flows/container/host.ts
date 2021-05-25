@@ -84,7 +84,7 @@ const hostInfoFlow = flow<{
       map((response) => ({
         containerIP: hostServiceInfoIP(response),
         containerPort: hostServiceInfoPort(response),
-        contianerSecret: hostServiceInfoSecret(response),
+        containerSecret: hostServiceInfoSecret(response),
       }))
     ),
     failure,
