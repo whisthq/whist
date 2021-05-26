@@ -2,7 +2,7 @@ import { Observable } from "rxjs"
 import { filter, map, pluck } from "rxjs/operators"
 
 import { createTrigger, fromTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 const filterByName = (
   observable: Observable<{ name: string; payload: any }>,

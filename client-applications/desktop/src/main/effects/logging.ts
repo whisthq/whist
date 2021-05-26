@@ -4,7 +4,7 @@ import { pluck, startWith, withLatestFrom } from "rxjs/operators"
 
 import { logBase, LogLevel } from "@app/utils/logging"
 import { fromTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 // Gets the email from either persisted state or a successful auth
 const email = merge(

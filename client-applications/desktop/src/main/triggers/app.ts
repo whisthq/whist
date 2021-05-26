@@ -9,7 +9,7 @@ import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 // Fires when Electron starts; this is the first event to fire
 createTrigger(TRIGGER.appReady, fromEvent(app as EventEmitter, "ready"))
