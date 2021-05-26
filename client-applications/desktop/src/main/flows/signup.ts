@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, zip } from "rxjs"
+import { from, zip, Observable } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
@@ -57,37 +57,38 @@ const generateConfigToken = flow<any>("generateConfigToken", (trigger) =>
   )
 )
 
-export default flow("signupFlow", (trigger) => {
-  const input = zip(
-    trigger.pipe(pluck("email")),
-    trigger.pipe(pluck("password")),
-    generateConfigToken(trigger).success
-  ).pipe(
-    map(([email, password, configToken]) => ({
-      email,
-      password,
-      configToken,
-    }))
-  )
+export default flow(
+  "signupFlow",
+  (trigger: Observable<{ email: string; password: string }>) => {
+    const config = generateConfigToken(trigger)
 
-  const signup = signupRequest(input)
+    const input = zip([trigger, config.success]).pipe(
+      map(([{ email, password }, configToken]) => ({
+        email,
+        password,
+        configToken,
+      }))
+    )
 
-  const tokens = signup.success.pipe(
-    map((response) => ({
-      accessToken: emailSignupAccessToken(response),
-      refreshToken: emailSignupRefreshToken(response),
-    }))
-  )
+    const signup = signupRequest(input)
 
-  const result = zip([input, tokens]).pipe(map(([...args]) => merge(...args)))
+    const tokens = signup.success.pipe(
+      map((response) => ({
+        accessToken: emailSignupAccessToken(response),
+        refreshToken: emailSignupRefreshToken(response),
+      }))
+    )
 
-  return {
-    success: createTrigger("signupFlowSuccess", result),
-    failure: createTrigger("signupFlowFailure", signup.failure),
-    warning: createTrigger("signupFlowWarning", signup.warning),
-    loading: createTrigger(
-      "signupFlowLoading",
-      loadingFrom(trigger, result, signup.failure, signup.warning)
-    ),
+    const result = zip([input, tokens]).pipe(map(([...args]) => merge(...args)))
+
+    return {
+      success: createTrigger("signupFlowSuccess", result),
+      failure: createTrigger("signupFlowFailure", signup.failure),
+      warning: createTrigger("signupFlowWarning", signup.warning),
+      loading: createTrigger(
+        "signupFlowLoading",
+        loadingFrom(trigger, result, signup.failure, signup.warning)
+      ),
+    }
   }
-})
+)

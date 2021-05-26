@@ -1,45 +1,46 @@
-import { combineLatest, merge, Observable } from "rxjs"
-import { pluck } from "rxjs/operators"
+import { merge, Observable, zip } from "rxjs"
+import { map } from "rxjs/operators"
 
 import containerCreateFlow from "@app/main/flows/container/create"
 import containerPollingFlow from "@app/main/flows/container/polling"
 import hostServiceFlow from "@app/main/flows/container/host"
 import { flow, createTrigger } from "@app/utils/flows"
-import { fromSignal } from "@app/utils/observables"
+import { pick } from "lodash"
 
-export default flow("containerFlow", (trigger) => {
-  const create = containerCreateFlow(
-    combineLatest({
-      email: trigger.pipe(pluck("email")) as Observable<string>,
-      accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
-    })
-  )
-
-  const polling = containerPollingFlow(
-    combineLatest({
-      containerID: create.success.pipe(
-        pluck("containerID")
-      ) as Observable<string>,
-      accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
-    })
-  )
-
-  const host = hostServiceFlow(
-    fromSignal(
-      combineLatest({
-        email: trigger.pipe(pluck("email")) as Observable<string>,
-        accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
-        configToken: trigger.pipe(pluck("configToken")) as Observable<string>,
-      }),
-      create.success
+export default flow(
+  "containerFlow",
+  (
+    trigger: Observable<{
+      email: string
+      accessToken: string
+      configToken: string
+    }>
+  ) => {
+    const create = containerCreateFlow(
+      trigger.pipe(map((t) => pick(t, ["email", "accessToken"])))
     )
-  )
 
-  return {
-    success: createTrigger("containerFlowSuccess", polling.success),
-    failure: createTrigger(
-      "containerFlowFailure",
-      merge(create.failure, polling.failure, host.failure)
-    ),
+    const polling = containerPollingFlow(
+      zip(create.success, trigger).pipe(
+        map(([c, t]) => ({
+          ...pick(c, ["containerID"]),
+          ...pick(t, ["accessToken"]),
+        }))
+      )
+    )
+
+    const host = hostServiceFlow(
+      zip([trigger, create.success]).pipe(
+        map(([t, _c]) => pick(t, ["email", "accessToken", "configToken"]))
+      )
+    )
+
+    return {
+      success: createTrigger("containerFlowSuccess", polling.success),
+      failure: createTrigger(
+        "containerFlowFailure",
+        merge(create.failure, polling.failure, host.failure)
+      ),
+    }
   }
-})
+)

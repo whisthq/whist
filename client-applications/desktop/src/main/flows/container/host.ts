@@ -12,7 +12,7 @@ import {
   HostServiceInfoResponse,
   HostServiceConfigResponse,
 } from "@app/utils/host"
-import { from, interval, of, merge, combineLatest, Observable } from "rxjs"
+import { from, interval, of, merge, zip, Observable } from "rxjs"
 import {
   map,
   share,
@@ -23,7 +23,7 @@ import {
   pluck,
 } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
-import { some } from "lodash"
+import { some, pick } from "lodash"
 
 const hostServiceInfoRequest = flow<{
   email: string
@@ -132,19 +132,12 @@ export default flow<{
   const info = hostInfoFlow(trigger)
 
   const config = hostConfigFlow(
-    combineLatest({
-      email: trigger.pipe(pluck("email")),
-      configToken: trigger.pipe(pluck("configToken")),
-      containerIP: info.success.pipe(
-        pluck("containerIP")
-      ) as Observable<string>,
-      containerPort: info.success.pipe(
-        pluck("containerPort")
-      ) as Observable<number>,
-      containerSecret: info.success.pipe(
-        pluck("containerSecret")
-      ) as Observable<string>,
-    })
+    zip(trigger, info.success).pipe(
+      map(([t, i]) => ({
+        ...pick(t, ["email", "configToken"]),
+        ...pick(i, ["containerIP", "containerPort", "containerSecret"]),
+      }))
+    )
   )
 
   return {

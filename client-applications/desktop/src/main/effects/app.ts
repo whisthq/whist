@@ -6,7 +6,7 @@
 
 import { app, IpcMainEvent } from "electron"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip, combineLatest } from "rxjs"
+import { fromEvent, merge, zip } from "rxjs"
 import { mapTo, take, concatMap, pluck } from "rxjs/operators"
 import path from "path"
 import { ChildProcess } from "child_process"
@@ -88,7 +88,7 @@ merge(
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
-combineLatest([
+zip([
   merge(
     fromTrigger("persisted"),
     fromTrigger("loginFlowSuccess"),

@@ -10,7 +10,7 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
+import { from, zip } from "rxjs"
 import { switchMap, map, pluck } from "rxjs/operators"
 import { merge } from "lodash"
 
@@ -84,7 +84,7 @@ export default flow<{ email: string; password: string }>(
     const login = loginRequest(trigger)
 
     const configToken = configTokenRequest(
-      combineLatest([login.success, trigger.pipe(pluck("password"))])
+      zip([login.success, trigger.pipe(pluck("password"))])
     )
 
     const jwt = jwtRequest(login.success)
@@ -92,8 +92,8 @@ export default flow<{ email: string; password: string }>(
     return {
       success: createTrigger(
         "loginFlowSuccess",
-        combineLatest([trigger, jwt.success, configToken.success]).pipe(
-          map((args: [any, any, any]) => merge(...args))
+        zip([trigger, jwt.success, configToken.success]).pipe(
+          map((args) => merge(...args))
         )
       ),
       failure: createTrigger("loginFlowFailure", login.failure),
