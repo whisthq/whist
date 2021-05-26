@@ -1338,8 +1338,8 @@ int main(int argc, char* argv[]) {
     WSACleanup();
 #endif
 
-    error_monitor_shutdown();
     destroy_logger();
+    error_monitor_shutdown();
     destroy_clients();
 
     return 0;
