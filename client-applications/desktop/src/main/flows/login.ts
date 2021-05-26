@@ -97,8 +97,8 @@ export default flow<{ email: string; password: string }>(
         )
       ),
       failure: createTrigger("loginFlowFailure", login.failure),
-      warning: login.warning,
-      loading: login.loading,
+      warning: createTrigger("loginFlowWarning", login.warning),
+      loading: createTrigger("loginFlowLoading", login.loading),
     }
   }
 )

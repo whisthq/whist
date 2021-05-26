@@ -11,7 +11,7 @@
 // storage changes.
 
 import { from, combineLatest } from "rxjs"
-import { switchMap, map, pluck } from "rxjs/operators"
+import { switchMap, map, pluck, tap } from "rxjs/operators"
 import {
   emailSignup,
   emailSignupValid,
@@ -35,7 +35,7 @@ const signupRequest = flow<any>("signupRequest", (trigger) =>
       success: (result: any) => emailSignupValid(result),
       failure: (result: any) => emailSignupError(result),
       warning: (result: any) =>
-        !emailSignupError(result) && !emailSignupError(result),
+        !emailSignupError(result) && !emailSignupValid(result),
     }
   )
 )
@@ -80,7 +80,10 @@ export default flow("signupFlow", (trigger) => {
   return {
     success: createTrigger("signupFlowSuccess", result),
     failure: createTrigger("signupFlowFailure", signup.failure),
-    warning: signup.warning,
-    loading: loadingFrom(trigger, result, signup.failure, signup.warning),
+    warning: createTrigger("signupFlowWarning", signup.warning),
+    loading: createTrigger(
+      "signupFlowLoading",
+      loadingFrom(trigger, result, signup.failure, signup.warning)
+    ),
   }
 })

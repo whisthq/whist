@@ -7,5 +7,9 @@ export interface StateIPC {
   email: string
   password: string
   updateInfo: string
+  loginWarning: string
+  signupWarning: string
+  loginLoading: boolean
+  signupLoading: boolean
   trigger: Trigger
 }

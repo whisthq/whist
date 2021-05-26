@@ -32,8 +32,12 @@ export default {
   containerFlowFailure: "containerFlowFailure",
   loginFlowSuccess: "loginFlowSuccess",
   loginFlowFailure: "loginFlowFailure",
+  loginFlowWarning: "loginFlowWarning",
+  loginFlowLoading: "loginFlowLoading",
   signupFlowSuccess: "signupFlowSuccess",
   signupFlowFailure: "signupFlowFailure",
+  signupFlowWarning: "signupFlowWarning",
+  signupFlowLoading: "signupFlowLoading",
   protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
   protocolCloseFlowFailure: "protocolCloseFlowFailure",
 }
