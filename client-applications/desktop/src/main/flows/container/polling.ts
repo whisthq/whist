@@ -72,7 +72,10 @@ const containerPollingInner = flow<{
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
     success: poll.success.pipe(take(1)),
-    failure: merge(timeout, poll.failure.pipe(take(1))),
+    failure: merge(
+      timeout.pipe(takeUntil(poll.success)),
+      poll.failure.pipe(take(1))
+    ),
   }
 })
 

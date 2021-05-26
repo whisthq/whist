@@ -9,7 +9,7 @@ export const WarningSignupInvalid =
 export const WarningLoginInvalid = "Invalid email or password"
 
 // poll for a container for 12 seconds max
-export const containerPollingTimeout = 120000
+export const containerPollingTimeout = 12000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
@@ -17,61 +17,6 @@ export const containerPollingTimeout = 120000
 export const WindowHashAuth = "AUTH"
 
 export const WindowHashUpdate = "UPDATE"
-
-export const WindowHashAuthError = "AUTH_ERROR"
-
-export const WindowHashCreateContainerErrorNoAccess =
-  "CREATE_CONTAINER_ERROR_NO_ACCESS"
-
-export const WindowHashCreateContainerErrorUnauthorized =
-  "CREATE_CONTAINER_ERROR_UNAUTHORIZED"
-
-export const WindowHashCreateContainerErrorInternal =
-  "CREATE_CONTAINER_ERROR_INTERNAL"
-
-export const WindowHashAssignContainerError = "ASSIGN_CONTAINER_ERROR"
-
-export const WindowHashProtocolError = "PROTOCOL_ERROR"
-
-export const AuthErrorTitle = "There was an error logging you in."
-
-export const AuthErrorText =
-  "Try again in a few minutes, or contact support@fractal.co for help."
-
-// Various container create error messages
-export const ContainerCreateErrorTitleInternal =
-  "There was an error connecting to the Fractal servers."
-
-export const ContainerCreateErrorTextInternal =
-  "Try again in a few minutes, or contact support@fractal.co for help."
-
-export const ContainerCreateErrorTitleNoAccess =
-  "Your account does not have access to Fractal."
-
-export const ContainerCreateErrorTextNoAccess =
-  "Access to Fractal is currently invite-only. Please contact support@fractal.co for help."
-
-export const ContainerCreateErrorTitleUnauthorized =
-  "There was an error authenticating you with the Fractal servers."
-
-export const ContainerCreateErrorTextUnauthorized =
-  "Please try logging in again."
-
-export const ContainerPollingErrorTitle =
-  "Fractal servers experienced an unexpected error."
-
-export const ContainerPollingErrorText =
-  "Try again in a few minutes, or contact support@fractal.co for help."
-
-export const ProtocolErrorTitle = "The Fractal browser encountered an error."
-
-export const ProtocolErrorText =
-  "Try again in a few minutes, or contact support@fractal.co for help."
-
-export const NavigationErrorTitle = "There was an error loading this window."
-
-export const NavigationErrorText =
-  "Restart the Fractal application, or email support@fractal.co for help. "
 
 export const StateChannel = "MAIN_STATE_CHANNEL"
 
