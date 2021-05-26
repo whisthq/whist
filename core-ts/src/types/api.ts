@@ -8,7 +8,7 @@ export class FractalAPI {
 
     static CONTAINER = {
         CREATE: "/container/create",
-        ASSIGN: "/container/assign",
+        ASSIGN: "/app/assign",
         TEST_CREATE: "/aws_container/create_container",
     }
 

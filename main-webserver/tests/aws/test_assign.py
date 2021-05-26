@@ -1,4 +1,4 @@
-"""Tests for the /container/assign endpoint."""
+"""Tests for the /app/assign endpoint."""
 
 from http import HTTPStatus
 
@@ -20,21 +20,21 @@ from tests.patches import function
 
 @pytest.mark.usefixtures("authorized")
 def test_bad_app(client):
-    response = client.post("/container/assign", json=dict(app="Bad App"))
+    response = client.post("/app/assign", json=dict(app="Bad App"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
 def test_no_app(client):
-    response = client.post("/container/assign")
+    response = client.post("/app/assign")
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 @pytest.mark.usefixtures("authorized")
 def test_no_region(client):
-    response = client.post("/container/assign", json=dict(app="VSCode"))
+    response = client.post("/app/assign", json=dict(app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -388,7 +388,7 @@ def test_assignment_logic(test_assignment_replacement_code, location):
 def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
     user = make_user()
     response = client.post(
-        "/container/assign",
+        "/app/assign",
         json={
             "username": user,
             "app": "Google Chrome",

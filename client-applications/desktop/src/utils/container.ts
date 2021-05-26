@@ -87,7 +87,7 @@ const containerRequest = async (
   dpi: number
 ) =>
   post({
-    endpoint: "/container/assign",
+    endpoint: "/app/assign",
     accessToken,
     body: {
       username,

@@ -226,7 +226,7 @@ def test_endpoint(action, **kwargs):
 
     if action == "assign_container":
         try:
-            # TODO: do request validation like in /container/assign
+            # TODO: do request validation like in /app/assign
             (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
@@ -352,7 +352,7 @@ def aws_container_ping(**kwargs):
     return response
 
 
-@aws_container_bp.route("/container/assign", methods=("POST",))
+@aws_container_bp.route("/app/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()
