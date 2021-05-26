@@ -5,7 +5,7 @@
 // Many of these observables emit the protocol ChildProcess object, which
 // carries important data about the state of the protocol process.
 
-import { map, take } from "rxjs/operators"
+import { map } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
 import { protocolLaunch } from "@app/utils/protocol"

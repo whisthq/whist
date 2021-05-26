@@ -23,8 +23,12 @@ export const regionGet = async (email: string, accessToken: string) => {
   }
 }
 
-export const containerCreate = async (email: string, accessToken: string, region?: AWSRegion) => {
-  region = region ?? await regionGet(email, accessToken)
+export const containerCreate = async (
+  email: string,
+  accessToken: string,
+  region?: AWSRegion
+) => {
+  region = region ?? (await regionGet(email, accessToken))
   const response = await containerRequest(email, accessToken, region, getDPI())
   return response
 }

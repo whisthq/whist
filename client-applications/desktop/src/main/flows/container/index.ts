@@ -13,7 +13,7 @@ export default flow("containerFlow", (trigger) => {
     combineLatest({
       email: trigger.pipe(pluck("email")) as Observable<string>,
       accessToken: trigger.pipe(pluck("accessToken")) as Observable<string>,
-      region: trigger.pipe(pluck("region")) as Observable<AWSRegion>
+      region: trigger.pipe(pluck("region")) as Observable<AWSRegion>,
     })
   )
 

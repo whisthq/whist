@@ -26,6 +26,12 @@ import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
 import { AWSRegion } from "@app/@types/aws"
 
+const email = merge(
+  fromTrigger("persisted"),
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess")
+).pipe(pluck("email"))
+
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
   const { deployEnv } = config
@@ -80,8 +86,6 @@ merge(
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess"),
   fromTrigger("updateAvailable"),
-  fromTrigger("protocolLaunchFlowFailure"),
-  fromTrigger("containerFlowFailure"),
   fromTrigger("loginFlowFailure"),
   fromTrigger("signupFlowFailure")
 )
@@ -90,11 +94,7 @@ merge(
 
 // When the protocol closes, upload protocol logs to S3
 combineLatest([
-  merge(
-    fromTrigger("persisted"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ).pipe(pluck("email")),
+  email,
   merge(
     fromTrigger("protocolCloseFlowSuccess"),
     fromTrigger("protocolCloseFlowSuccess")
@@ -108,14 +108,17 @@ combineLatest([
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(
-  fromTrigger("protocolLaunchFlowSuccess"),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess")
-).subscribe(() => {
+combineLatest([
+  email,
+  merge(
+    fromTrigger("protocolLaunchFlowSuccess"),
+    fromTrigger("loginFlowSuccess"),
+    fromTrigger("signupFlowSuccess")
+  ),
+]).subscribe(([email]: [string, any]) => {
   closeWindows()
   hideAppDock()
-  createTray()
+  createTray(email)
 })
 
 fromTrigger("windowCreated").subscribe(() => showAppDock())
