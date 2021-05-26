@@ -1108,12 +1108,10 @@ void update_video() {
                 }
             }
         }
-        // if we haven't requested an iframe, we should be asking for our missing out-of-order
-        // frames the below if check is here to make sure that at the beginning, we don't request a
-        // bunch of frames. there must be a better way to resolve that though. I still want to be
-        // able to nack for missing frames when I'm waiting for an iframe.
-        if (!video_data.is_waiting_for_iframe) {
-            // check for any out-of-order frames
+	// if the max_id and last_rendered_id are not too far apart (they can be very far apart during startup)
+	// we should check for frames being received out-of-order
+	// that probably means all the packets for the frame got dropped
+        if (video_data.max_id < video_data.last_rendered_id + 2 * MAX_UNSYNCED_FRAMES) {
             // currently, checks if the ring buffer has an old frame
             if (get_timer(video_data.missing_frame_nack_timer) > latency) {
                 for (int i = next_render_id; i < video_data.max_id; i++) {
