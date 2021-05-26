@@ -2,6 +2,7 @@ import { merge, zip, fromEvent, of } from "rxjs"
 import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
+import { values } from "lodash"
 
 import loginFlow from "@app/main/flows/login"
 import signupFlow from "@app/main/flows/signup"
@@ -11,6 +12,7 @@ import protocolCloseFlow from "@app/main/flows/close"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
+import { AWSRegion } from "@app/@types/aws"
 
 // Autoupdate flow
 autoUpdateFlow(fromTrigger("updateAvailable"))
@@ -27,10 +29,11 @@ const launchTrigger = merge(
 ).pipe(
   map((x: object) => ({
     ...x,
-    region:
-      process.argv.length < 3
-        ? undefined
-        : process.argv[process.argv.length - 1],
+    region: (values(AWSRegion) as string[]).includes(
+      process.argv[process.argv.length - 1]
+    )
+      ? process.argv[process.argv.length - 1]
+      : undefined,
   })),
   take(1)
 )

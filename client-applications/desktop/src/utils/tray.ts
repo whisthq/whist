@@ -51,10 +51,9 @@ export const createTray = (email: string) => {
 
   tray = new Tray(createNativeImage())
   // If the user is a dev user, then allow them to toggle regions for testing
-  const template =
-    email.includes("fractal.co")
-      ? [...rootMenu, ...regionMenu]
-      : [...rootMenu]
+  const template = email.includes("fractal.co")
+    ? [...rootMenu, ...regionMenu]
+    : [...rootMenu]
   const menu = Menu.buildFromTemplate(template)
   tray.setContextMenu(menu)
 }

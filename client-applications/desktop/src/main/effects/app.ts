@@ -83,8 +83,6 @@ fromTrigger("notPersisted").subscribe(() => {
 // to quit.
 merge(
   fromTrigger("protocolLaunchFlowSuccess"),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess"),
   fromTrigger("updateAvailable"),
   fromTrigger("loginFlowFailure"),
   fromTrigger("signupFlowFailure")
@@ -110,11 +108,7 @@ combineLatest([
 // can launch.
 combineLatest([
   email,
-  merge(
-    fromTrigger("protocolLaunchFlowSuccess"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ),
+  merge(fromTrigger("protocolLaunchFlowSuccess")),
 ]).subscribe(([email]: [string, any]) => {
   closeWindows()
   hideAppDock()
