@@ -4,7 +4,6 @@ import fs from "fs"
 import path from "path"
 import util from "util"
 import AWS from "aws-sdk"
-import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
 import config, {

@@ -7,7 +7,8 @@ export interface FractalError {
 export const NoAccessError: FractalError = {
   hash: "CREATE_CONTAINER_ERROR_NO_ACCESS",
   title: "Your account does not have access to Fractal.",
-  text: "Access to Fractal is currently invite-only. Please contact support@fractal.co for help.",
+  text:
+    "Access to Fractal is currently invite-only. Please contact support@fractal.co for help.",
 }
 
 export const UnauthorizedError: FractalError = {
@@ -19,13 +20,15 @@ export const UnauthorizedError: FractalError = {
 export const ProtocolError: FractalError = {
   hash: "PROTOCOL_ERROR",
   title: "The Fractal browser encountered an unexpected error.",
-  text: "Please try again in a few minutes or contact support@fractal.co for help.",
+  text:
+    "Please try again in a few minutes or contact support@fractal.co for help.",
 }
 
 export const ContainerError: FractalError = {
   hash: "CREATE_CONTAINER_ERROR_INTERNAL",
   title: "There was an error connecting to the Fractal servers.",
-  text: "Please try again in a few minutes or contact support@fractal.co for help.",
+  text:
+    "Please try again in a few minutes or contact support@fractal.co for help.",
 }
 
 export const AuthError: FractalError = {

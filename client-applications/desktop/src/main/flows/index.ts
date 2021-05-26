@@ -1,5 +1,5 @@
-import { merge, zip, fromEvent, of } from "rxjs"
-import { map, mergeMap, take, withLatestFrom, tap } from "rxjs/operators"
+import { merge, fromEvent } from "rxjs"
+import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
