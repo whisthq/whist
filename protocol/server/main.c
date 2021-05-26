@@ -573,9 +573,9 @@ int32_t send_video(void* opaque) {
                     // If the current cursor is the same as the last cursor,
                     // just don't send any cursor
                     if (memcmp(last_cursor, current_cursor, sizeof(FractalCursorImage)) == 0) {
-                        set_fractal_cursor_image(frame, NULL);
+                        set_frame_cursor_image(frame, NULL);
                     } else {
-                        set_fractal_cursor_image(frame, current_cursor);
+                        set_frame_cursor_image(frame, current_cursor);
                     }
 
                     last_cursor_id = current_cursor_id;
