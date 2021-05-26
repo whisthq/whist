@@ -387,12 +387,6 @@ def test_assignment_logic(test_assignment_replacement_code, location):
 @pytest.mark.usefixtures("celery_worker")
 def test_payment(admin, client, make_user, monkeypatch, status_code, subscribed):
     user = make_user()
-
-    client.login(user.user_id, admin=admin)
-    monkeypatch.delattr(User, "subscribed")
-    monkeypatch.setattr(assign_container, "run", function())
-    monkeypatch.setattr(user, "subscribed", subscribed, raising=False)
-
     response = client.post(
         "/container/assign",
         json={
