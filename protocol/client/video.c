@@ -78,7 +78,7 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 10
-#define MAX_UNSYNCED_FRAMES_RENDER 12 // not sure if i need this
+#define MAX_UNSYNCED_FRAMES_RENDER 12  // not sure if i need this
 
 #define LOG_VIDEO false
 
@@ -286,11 +286,11 @@ int render_video() {
                      frame->is_iframe ? "(I-Frame)" : "");
         }
 #if LOG_VIDEO
-	else {
-        LOG_INFO("Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
-                 get_timer(render_context.frame_creation_timer), render_context.num_packets,
-                 frame->is_iframe ? "(I-Frame)" : "");
-	}
+        else {
+            LOG_INFO("Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
+                     get_timer(render_context.frame_creation_timer), render_context.num_packets,
+                     frame->is_iframe ? "(I-Frame)" : "");
+        }
 #endif
 
         if ((int)(get_total_frame_size(frame)) != render_context.frame_size) {
@@ -1051,15 +1051,17 @@ void update_video() {
             // If we're not even rendering anything, and we're 3 frames behind, we're too far behind
             // and we need to catch up
             if (video_data.max_id >
-                video_data.last_rendered_id + MAX_UNSYNCED_FRAMES)  // || (cur_ctx->id == VideoData.last_rendered_id
-                                                  // && get_timer( cur_ctx->last_packet_timer )
-                                                  // > 96.0 / 1000.0) )
+                video_data.last_rendered_id +
+                    MAX_UNSYNCED_FRAMES)  // || (cur_ctx->id == VideoData.last_rendered_id
+                                          // && get_timer( cur_ctx->last_packet_timer )
+                                          // > 96.0 / 1000.0) )
             {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame, "
                         "and there is no available frame to render. I-Frame is now being requested "
-                        "to catch-up.", MAX_UNSYNCED_FRAMES);
+                        "to catch-up.",
+                        MAX_UNSYNCED_FRAMES);
                 }
             }
         } else {
@@ -1069,7 +1071,8 @@ void update_video() {
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame. "
-                        "I-Frame is now being requested to catch-up.", MAX_UNSYNCED_FRAMES_RENDER);
+                        "I-Frame is now being requested to catch-up.",
+                        MAX_UNSYNCED_FRAMES_RENDER);
                 }
             }
         }
