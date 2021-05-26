@@ -32,6 +32,7 @@ Includes
 
 #define USE_HARDWARE true
 #define SKIP_RENDERING false
+#define NO_NACKS_DURING_IFRAME false
 
 #define MAX_SCREEN_WIDTH 8192
 #define MAX_SCREEN_HEIGHT 4096
@@ -279,17 +280,18 @@ int render_video() {
         PeerUpdateMessage* peer_update_msgs = get_frame_peer_messages(frame);
         size_t num_peer_update_msgs = frame->num_peer_update_msgs;
 
-#if LOG_VIDEO
-        LOG_INFO("Rendering ID %d (Age %f) (Packets %d) %s", renderContext.id,
-                 get_timer(renderContext.frame_creation_timer), renderContext.num_packets,
-                 frame->is_iframe ? "(I-Frame)" : "");
-#endif
-
         if (get_timer(render_context.frame_creation_timer) > 25.0 / 1000.0) {
             LOG_INFO("Late! Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
                      get_timer(render_context.frame_creation_timer), render_context.num_packets,
                      frame->is_iframe ? "(I-Frame)" : "");
         }
+#if LOG_VIDEO
+	else {
+        LOG_INFO("Rendering ID %d (Age %f) (Packets %d) %s", render_context.id,
+                 get_timer(render_context.frame_creation_timer), render_context.num_packets,
+                 frame->is_iframe ? "(I-Frame)" : "");
+	}
+#endif
 
         if ((int)(get_total_frame_size(frame)) != render_context.frame_size) {
             LOG_INFO("Incorrect Frame Size! %d instead of %d", get_total_frame_size(frame),
@@ -491,8 +493,8 @@ int render_video() {
         safe_SDL_UnlockMutex(render_mutex);
 
 #if LOG_VIDEO
-        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", renderContext.id, renderContext.frame_size,
-                  get_timer(renderContext.frame_creation_timer));
+        LOG_DEBUG("Rendered %d (Size: %d) (Age %f)", render_context.id, render_context.frame_size,
+                  get_timer(render_context.frame_creation_timer));
 #endif
 
         if (frame->is_iframe) {
@@ -591,7 +593,7 @@ void nack(int id, int index) {
             id (int): missing packet ID
             index (int): missing packet index
     */
-#ifdef NO_NACKS_DURING_IFRAME
+#if NO_NACKS_DURING_IFRAME
     if (video_data.is_waiting_for_iframe) {
         return;
     }
@@ -996,7 +998,7 @@ void update_video() {
                 int next_frame_render_id = next_render_id + 1;
                 int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
                 FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
-		if (SKIP_RENDERING) {
+#if SKIP_RENDERING
                 // If the next frame has been received,
                 // lets skip the rendering so we can render the next frame faster
                 if (next_frame_ctx->id == next_frame_render_id &&
@@ -1006,7 +1008,7 @@ void update_video() {
                 } else {
                     skip_render = false;
                 }
-		}
+#endif
                 rendering = true;
             } else {
                 if ((get_timer(ctx->last_packet_timer) > latency) &&
