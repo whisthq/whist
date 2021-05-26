@@ -10,8 +10,8 @@
 // "listen" to local storage, and update their values based on local
 // storage changes.
 
-import { from, combineLatest } from "rxjs"
-import { switchMap, map, pluck, tap } from "rxjs/operators"
+import { from, zip } from "rxjs"
+import { switchMap, map, pluck } from "rxjs/operators"
 import {
   emailSignup,
   emailSignupValid,
@@ -58,11 +58,17 @@ const generateConfigToken = flow<any>("generateConfigToken", (trigger) =>
 )
 
 export default flow("signupFlow", (trigger) => {
-  const input = combineLatest({
-    email: trigger.pipe(pluck("email")),
-    password: trigger.pipe(pluck("password")),
-    configToken: generateConfigToken(trigger).success,
-  })
+  const input = zip(
+    trigger.pipe(pluck("email")),
+    trigger.pipe(pluck("password")),
+    generateConfigToken(trigger).success
+  ).pipe(
+    map(([email, password, configToken]) => ({
+      email,
+      password,
+      configToken,
+    }))
+  )
 
   const signup = signupRequest(input)
 
@@ -73,9 +79,7 @@ export default flow("signupFlow", (trigger) => {
     }))
   )
 
-  const result = combineLatest([input, tokens]).pipe(
-    map(([...args]) => merge(...args))
-  )
+  const result = zip([input, tokens]).pipe(map(([...args]) => merge(...args)))
 
   return {
     success: createTrigger("signupFlowSuccess", result),
