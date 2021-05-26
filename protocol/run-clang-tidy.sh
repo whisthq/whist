@@ -50,7 +50,7 @@ declare -a includeFolders=(
 # set clang-tidy-fixes file
 yamlFolder="$BUILD_DIR/fixes"
 rm -rf "$yamlFolder" # -f to silence "no file found" error
-mkdir $yamlFolder
+mkdir "$yamlFolder"
 fixesFilename=clang-tidy-fixes.yaml
 fixesFile="$yamlFolder/$fixesFilename"
 
@@ -119,4 +119,4 @@ else
 fi
 
 # cleanup
-rm -r $yamlFolder
+rm -r "$yamlFolder"
