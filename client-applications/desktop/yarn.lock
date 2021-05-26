@@ -5839,19 +5839,6 @@ yargs@^16.2.0:
     y18n "^5.0.5"
     yargs-parser "^20.2.2"
 
-yargs@^17.0.0-candidate.13:
-  version "17.0.0-candidate.13"
-  resolved "https://registry.yarnpkg.com/yargs/-/yargs-17.0.0-candidate.13.tgz#91f3394d45fb282127d6d5a35109de44d2da0664"
-  integrity sha512-DClGCPA+Q7l0fKuqdAE6+YETxsC6rbp0NLA8lOzipOFokG3Pvr5e8SaZJv1wQcfICnJnlbcF2OoPaqC6nNHwfA==
-  dependencies:
-    cliui "^7.0.2"
-    escalade "^3.1.1"
-    get-caller-file "^2.0.5"
-    require-directory "^2.1.1"
-    string-width "^4.2.0"
-    y18n "^5.0.5"
-    yargs-parser "^20.2.2"
-
 yauzl@^2.10.0:
   version "2.10.0"
   resolved "https://registry.yarnpkg.com/yauzl/-/yauzl-2.10.0.tgz#c7eb17c93e112cb1086fa6d8e51fb0667b79a5f9"
