@@ -10,7 +10,7 @@ The `setup_ubuntu20_host.sh` script lets you set up a general EC2 instance host 
 
 To set up your Fractal development instance:
 
-- Create an Ubuntu Server 20.04 g3s.xlarge or g3.4xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image). Note that the **g3** EC2 instance type is required for GPU compatibility with our containers and streaming technology.
+- Create an Ubuntu Server 20.04 g3s.xlarge EC2 instance on AWS region **us-east-1**, with at least 32 GB of storage (else you will run out of storage for the Fractal protocol and base container image). Note that the **g3** EC2 instance type is required for GPU compatibility with our containers and streaming technology. Also, note that the `g3s.xlarge` instance type only exists on `us-east-1`, which is why we require personal instances to be in that region.
 
 - Add your EC2 instance to the security group **container-tester**, to enable proper networking rules. If you decide to set up your EC2 instance in a different AWS region, you will need to add it to the appropriate security group for that region, which may vary per region.
 
