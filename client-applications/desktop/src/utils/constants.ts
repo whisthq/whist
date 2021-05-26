@@ -8,8 +8,8 @@ export const WarningSignupInvalid =
 
 export const WarningLoginInvalid = "Invalid email or password"
 
-// poll for a container for 12 seconds max
-export const containerPollingTimeout = 12000
+// poll for a container for 30 seconds max
+export const containerPollingTimeout = 30000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to

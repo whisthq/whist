@@ -12,6 +12,9 @@ import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 
+const region =
+  process.argv.length < 3 ? undefined : process.argv[process.argv.length - 1]
+
 // Autoupdate flow
 autoUpdateFlow(fromTrigger("updateAvailable"))
 
@@ -20,19 +23,16 @@ loginFlow(fromTrigger("loginAction"))
 signupFlow(fromTrigger("signupAction"))
 
 // Observable that fires when Fractal is ready to be launched
+
 const launchTrigger = merge(
   fromSignal(fromTrigger("persisted"), fromTrigger("updateNotAvailable")),
   fromTrigger("loginFlowSuccess"),
   fromTrigger("signupFlowSuccess")
 ).pipe(
-  map((x: object) =>
-    process.argv.length < 3
-      ? x
-      : {
-          ...x,
-          region: process.argv[2],
-        }
-  ),
+  map((x: object) => ({
+    ...x,
+    region: region,
+  })),
   take(1)
 )
 
