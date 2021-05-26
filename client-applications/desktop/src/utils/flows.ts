@@ -1,6 +1,7 @@
+import { inspect } from "util"
 import { Observable, ReplaySubject } from "rxjs"
-import { filter, share, map } from "rxjs/operators"
-import { mapValues, values } from "lodash"
+import { filter, share, map, tap } from "rxjs/operators"
+import { mapValues, values, truncate } from "lodash"
 import { withMocking } from "@app/testing"
 import TRIGGER from "@app/utils/triggers"
 
@@ -55,7 +56,16 @@ export const flow =
     const channels = fn(trigger)
 
     return mapValues(withMocking(name, trigger, channels), (obs, key) =>
-      obs.pipe(share())
+      obs.pipe(
+        tap((value) =>
+          console.log(
+            truncate(`DEBUG: ${name}.${key} -- ${inspect(value)}`, {
+              length: 1000,
+            })
+          )
+        ),
+        share()
+      )
     )
   }
 
