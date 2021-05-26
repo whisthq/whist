@@ -7,11 +7,15 @@ import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { FractalError } from "@app/utils/error"
+import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
 
 const { buildRoot } = config
 
 export const base = {
-  webPreferences: { preload: path.join(buildRoot, "preload.js") },
+  webPreferences: {
+    preload: path.join(buildRoot, "preload.js"),
+    partition: "auth0",
+  },
   resizable: false,
   titleBarStyle: "hidden",
 }
@@ -29,7 +33,7 @@ export const width = {
 export const height = {
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
-  md: { height: 16 * 40 },
+  md: { height: 16 * 44 },
   lg: { height: 16 * 56 },
   xl: { height: 16 * 64 },
   xl2: { height: 16 * 80 },
@@ -39,7 +43,7 @@ export const height = {
 export const getWindows = () => BrowserWindow.getAllWindows()
 
 export const closeWindows = () => {
-  BrowserWindow.getAllWindows().forEach((win) => win.close())
+  getWindows().forEach((win) => win.close())
 }
 
 export const showAppDock = () => {
@@ -68,6 +72,7 @@ export const getWindowTitle = () => {
 export const createWindow = (
   show: string,
   options: Partial<BrowserWindowConstructorOptions>,
+  customUrl?: string,
   onReady?: (win: BrowserWindow) => any,
   onClose?: (win: BrowserWindow) => any
 ) => {
@@ -81,20 +86,18 @@ export const createWindow = (
   // which React component to render into the window. We're forced to do this
   // using query parameters in the URL that we pass. The alternative would
   // be to use separate index.html files for each window, which we want to avoid.
-  const params = "?show=" + show
+  const params = `?show=${show}`
 
-  // We need to load index.html differently if we're developing. We want to
-  // use Snowpack's development server to manage our reload, so we load from
-  // the server's localhost port as opposed to our build folder.
-  // Electron's API for passing query parameters is inconsistent, so we must
-  // be careful to pass them correctly for each environment.
-  if (app.isPackaged) {
+  if (app.isPackaged && customUrl === undefined) {
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
-      .loadURL("http://localhost:8080" + params)
+      .loadURL(
+        customUrl !== undefined ? customUrl : `http://localhost:8080${params}`,
+        { userAgent: "Fractal" }
+      )
       .then(() => {
         // We manually open devTools, because we want to make sure that
         // both the main/renderer processes are in a "ready" state before we
@@ -111,17 +114,37 @@ export const createWindow = (
   )
   win.on("close", () => onClose?.(win))
 
-  win.show()
-
   return win
 }
 
-export const createAuthWindow = () =>
-  createWindow(WindowHashAuth, {
-    ...base,
-    ...width.sm,
-    ...height.md,
-  } as BrowserWindowConstructorOptions)
+export const createAuthWindow = () => {
+  const win = createWindow(
+    WindowHashAuth,
+    {
+      ...base,
+      ...width.sm,
+      ...height.md,
+    } as BrowserWindowConstructorOptions,
+    authenticationURL
+  )
+
+  // Authentication
+  const {
+    session: { webRequest },
+  } = win.webContents
+
+  const filter = {
+    urls: ["http://localhost/callback*"],
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  webRequest.onBeforeRequest(filter, async ({ url }) => {
+    const data = await authInfo(url)
+    auth0Event.emit("auth-info", data)
+  })
+
+  return win
+}
 
 export const createUpdateWindow = () =>
   createWindow(WindowHashUpdate, {

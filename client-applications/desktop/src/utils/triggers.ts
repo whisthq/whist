@@ -3,6 +3,9 @@ export default {
   appReady: "appReady",
   windowCreated: "windowCreated",
 
+  // Auth triggers
+  authInfo: "authInfo",
+
   // Update triggers
   updateAvailable: "updateAvailable",
   updateNotAvailable: "updateNotAvailable",
@@ -30,14 +33,8 @@ export default {
   protocolLaunchFlowFailure: "protocolLaunchFlowFailure",
   containerFlowSuccess: "containerFlowSuccess",
   containerFlowFailure: "containerFlowFailure",
-  loginFlowSuccess: "loginFlowSuccess",
-  loginFlowFailure: "loginFlowFailure",
-  loginFlowWarning: "loginFlowWarning",
-  loginFlowLoading: "loginFlowLoading",
-  signupFlowSuccess: "signupFlowSuccess",
-  signupFlowFailure: "signupFlowFailure",
-  signupFlowWarning: "signupFlowWarning",
-  signupFlowLoading: "signupFlowLoading",
   protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
   protocolCloseFlowFailure: "protocolCloseFlowFailure",
+  authFlowSuccess: "authFlowSuccess",
+  authFlowFailure: "authFlowFailure",
 }

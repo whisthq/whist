@@ -11,13 +11,13 @@ export default flow(
   "containerFlow",
   (
     trigger: Observable<{
-      email: string
+      sub: string
       accessToken: string
       configToken: string
     }>
   ) => {
     const create = containerCreateFlow(
-      trigger.pipe(map((t) => pick(t, ["email", "accessToken"])))
+      trigger.pipe(map((t) => pick(t, ["sub", "accessToken"])))
     )
 
     const polling = containerPollingFlow(
@@ -31,7 +31,7 @@ export default flow(
 
     const host = hostServiceFlow(
       zip([trigger, create.success]).pipe(
-        map(([t, _c]) => pick(t, ["email", "accessToken", "configToken"]))
+        map(([t, _c]) => pick(t, ["sub", "accessToken", "configToken"]))
       )
     )
 

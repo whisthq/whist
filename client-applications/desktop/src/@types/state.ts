@@ -5,11 +5,11 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
 
 export interface StateIPC {
   email: string
+  sub: string
   password: string
+  refreshToken: string
+  accessToken: string
+  userConfigToken: string
   updateInfo: string
-  loginWarning: string
-  signupWarning: string
-  loginLoading: boolean
-  signupLoading: boolean
   trigger: Trigger
 }

@@ -18,7 +18,7 @@ const FractalNodeEnvironments = {
 // Webserver URLs
 const FractalWebservers = {
   local: "http://127.0.0.1:7730",
-  dev: "http://dev-server.fractal.co",
+  dev: "https://fractal.owenniles.com",
   staging: "https://staging-server.fractal.co",
   production: "https://prod-server.fractal.co",
 }

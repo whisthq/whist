@@ -4,7 +4,7 @@
  * @brief This file contains subscriptions to Electron app event emitters observables.
  */
 
-import { app, IpcMainEvent } from "electron"
+import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip } from "rxjs"
 import { mapTo, take, concatMap, pluck } from "rxjs/operators"
@@ -18,7 +18,7 @@ import {
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
-import { createTray } from "@app/utils/tray"
+import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
@@ -76,24 +76,20 @@ fromTrigger("notPersisted").subscribe(() => {
 // to quit.
 merge(
   fromTrigger("protocolLaunchFlowSuccess"),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess"),
+  fromTrigger("authFlowSuccess"),
+  fromTrigger("authFlowFailure"),
   fromTrigger("updateAvailable"),
   fromTrigger("protocolLaunchFlowFailure"),
-  fromTrigger("containerFlowFailure"),
-  fromTrigger("loginFlowFailure"),
-  fromTrigger("signupFlowFailure")
+  fromTrigger("containerFlowFailure")
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
 
 // When the protocol closes, upload protocol logs to S3
 zip([
-  merge(
-    fromTrigger("persisted"),
-    fromTrigger("loginFlowSuccess"),
-    fromTrigger("signupFlowSuccess")
-  ).pipe(pluck("email")),
+  merge(fromTrigger("persisted"), fromTrigger("authFlowSuccess")).pipe(
+    pluck("email")
+  ),
   merge(
     fromTrigger("protocolCloseFlowSuccess"),
     fromTrigger("protocolCloseFlowSuccess")
@@ -109,8 +105,7 @@ zip([
 // can launch.
 merge(
   fromTrigger("protocolLaunchFlowSuccess"),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess")
+  fromTrigger("authFlowSuccess")
 ).subscribe(() => {
   closeWindows()
   hideAppDock()
@@ -141,11 +136,13 @@ zip(
   )
 ).subscribe(([, success]: [any, boolean]) => {
   if (success) app.quit()
+  destroyTray()
 })
 
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
   () => {
     persistClear()
+    session.fromPartition("auth0").clearStorageData()
     app.relaunch()
     app.exit()
   }
