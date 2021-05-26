@@ -79,9 +79,8 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
 // number of frames ahead we can receive packets for before asking for iframe
-// THESE ARE REALLY BIG, I JUST WANT TO SEE WHAT HAPPENS
-#define MAX_UNSYNCED_FRAMES 30
-#define MAX_UNSYNCED_FRAMES_RENDER 50  // not sure if i need this
+#define MAX_UNSYNCED_FRAMES 20
+#define MAX_UNSYNCED_FRAMES_RENDER 25  // not sure if i need this
 
 #define LOG_VIDEO false
 
@@ -1004,11 +1003,10 @@ void update_video() {
                 render_context = *ctx;
                 // So we make sure that ctx->frame_buffer no longer owns the memory block
                 ctx->frame_buffer = NULL;
-
+#if SKIP_RENDERING
                 // Get the FrameData for the next frame
                 int next_frame_render_id = next_render_id + 1;
                 int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
-#if SKIP_RENDERING
                 FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
 
                 // If the next frame has been received,
