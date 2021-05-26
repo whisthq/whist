@@ -972,7 +972,17 @@ int main(int argc, char* argv[]) {
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();
-    error_monitor_shutdown();
     destroy_logger();
-    return (try_amount < 3 && !failed) ? 0 : -1;
+
+    // We must call this after destroying the logger so that all
+    // error monitor breadcrumbs and events can finish being reported
+    // before we close the error monitor.
+    error_monitor_shutdown();
+
+    if (try_amount >= 3 || failed) {
+        // We failed, so return a non-zero error code
+        return -1;
+    }
+
+    return 0;
 }

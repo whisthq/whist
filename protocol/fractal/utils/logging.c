@@ -183,9 +183,9 @@ void flush_logs() {
         // Log to the error monitor
         const char* tag = logger_queue_cache[i].tag;
         if (tag == WARNING_TAG) {
-            error_monitor_log_breadcrumb(tag, (const char*)logger_queue[i].buf);
+            error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
         } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
-            error_monitor_log_error((const char*)logger_queue[i].buf);
+            error_monitor_log_error((const char*)logger_queue_cache[i].buf);
         }
 
         // Log to the logger history buffer

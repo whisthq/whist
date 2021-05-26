@@ -29,17 +29,16 @@ void error_monitor_set_username(char *username) {
     // If we haven't set the environment, we don't want our error manager.
     if (!error_monitor_initialized) return;
 
-    sentry_value_t user = sentry_value_new_object();
-
-    // Set the user to username, or None as a default.
-    if (username) {
+    // Set the user to username, or remove the user as a default.
+    // Also remove the user if the username is "None".
+    if (username && strcmp(username, "None")) {
+        sentry_value_t user = sentry_value_new_object();
         sentry_value_set_by_key(user, "email", sentry_value_new_string(username));
+        // Sentry doesn't document it, but this will free user.
+        sentry_set_user(user);
     } else {
-        sentry_value_set_by_key(user, "email", sentry_value_new_string("None"));
+        sentry_remove_user();
     }
-
-    // Sentry doesn't document it, but this will free user.
-    sentry_set_user(user);
 }
 
 void error_monitor_set_connection_id(int id) {
@@ -82,6 +81,13 @@ void error_monitor_initialize(bool is_client) {
     // Set the environment that was set by error_monitor_set_environment();
     sentry_options_set_environment(options, error_monitor_environment);
 
+    // Set this to true to enable verbose Sentry debugging.
+    sentry_options_set_debug(options, true);
+
+    // For GDPR, etc., we will need to eventually prompt the user to give/revoke consent.
+    // If user is set and consent is required but not given, sentry will drop all events.
+    sentry_options_set_require_user_consent(options, false);
+
     // Sentry doesn't document it, but this will free options.
     sentry_init(options);
 
@@ -103,6 +109,7 @@ void error_monitor_initialize(bool is_client) {
     LOG_INFO("Error monitor initialized!");
 }
 
+// Can only be safely called after logging has been shut down with destroy_logger()
 void error_monitor_shutdown() {
     // If we haven't set the environment, we don't want our error manager.
     if (!error_monitor_initialized) return;
@@ -135,7 +142,6 @@ void error_monitor_log_error(const char *message) {
 
     sentry_value_t event =
         sentry_value_new_message_event(SENTRY_LEVEL_ERROR, "protocol-errors", message);
-
     // Sentry doesn't document it, but this will free user.
     sentry_capture_event(event);
 }

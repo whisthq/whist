@@ -328,6 +328,7 @@ int parse_args(int argc, char *argv[]) {
 
     // default user email
     safe_strncpy(user_email, "None", sizeof(user_email));
+
     // default icon filename
     safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
 
@@ -604,7 +605,7 @@ int alloc_parsed_args(void) {
         Return:
             (int): 0 on success, -1 on failure
     */
-    server_ip = malloc(MAX_IP_LEN);
+    server_ip = safe_malloc(MAX_IP_LEN);
 
     if (!server_ip) {
         return -1;
