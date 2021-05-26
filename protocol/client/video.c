@@ -81,6 +81,8 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 20
 #define MAX_UNSYNCED_FRAMES_RENDER 25  // not sure if i need this
+// number of packets we are allowed to miss before asking for iframe
+#define MAX_MISSING_PACKETS 20
 
 #define LOG_VIDEO false
 
@@ -497,6 +499,7 @@ int render_video() {
             if (render_peers(renderer, peer_update_msgs, num_peer_update_msgs) != 0) {
                 LOG_ERROR("Failed to render peers.");
             }
+	    // this call takes up to 16 ms: takes 8 ms on average.
             SDL_RenderPresent(renderer);
         }
 
@@ -603,6 +606,7 @@ void nack(int id, int index) {
             id (int): missing packet ID
             index (int): missing packet index
     */
+  // If we can get the server to generate iframes quickly (i.e. about 60 ms), flip NO_NACKS_DURING_IFRAME to true
 #if NO_NACKS_DURING_IFRAME
     if (video_data.is_waiting_for_iframe) {
         return;
@@ -984,7 +988,7 @@ void update_video() {
             video_data.last_rendered_id = video_data.most_recent_iframe - 1;
         }
 
-        int next_render_id = video_data.last_rendered_id + 1;
+	int next_render_id = video_data.last_rendered_id + 1;
 
         int index = next_render_id % RECV_FRAMES_BUFFER_SIZE;
 
@@ -1058,8 +1062,7 @@ void update_video() {
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
-            // If we're not even rendering anything, and we're 3 frames behind, we're too far behind
-            // and we need to catch up
+	  // if we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
             if (video_data.max_id >
                 video_data.last_rendered_id +
                     MAX_UNSYNCED_FRAMES)  // || (cur_ctx->id == VideoData.last_rendered_id
@@ -1073,7 +1076,28 @@ void update_video() {
                         "to catch-up.",
                         MAX_UNSYNCED_FRAMES);
                 }
-            }
+            } else {
+	      int missing_packets = 0;
+	      for (int i = video_data.last_rendered_id + 1; i < video_data.last_rendered_id + MAX_UNSYNCED_FRAMES; i++) {
+		int index = i % RECV_FRAMES_BUFFER_SIZE;
+		if (receiving_frames[index].id == i) {
+		  for (int j = 0; j < receiving_frames[index].num_packets; j++) {
+		    if (!receiving_frames[index].received_indicies[j]) {
+		      missing_packets++;
+		    }
+		  }
+		}
+	      }
+	      if (missing_packets > MAX_MISSING_PACKETS) {
+		if (request_iframe()) {
+		  LOG_INFO(
+			"Missing %d packets in the %d frames ahead of the most recently rendered frame,"
+                        "and there is no available frame to render. I-Frame is now being requested "
+                        "to catch-up.",
+                        MAX_MISSING_PACKETS, MAX_UNSYNCED_FRAMES);
+		}
+	      }
+	    }
         } else {
             // If we're rendering, then even if we're 3 frames behind we might catch up in a bit, so
             // we're more lenient and will only i-frame if we're 5 frames behind.
