@@ -120,12 +120,15 @@ jobs:
                       # install Linux protocol dependencies
                       ./setup-linux-build-environment.sh
 
-                      # install clang-tidy, coreutils for realpath, and perl
-                      # we must hardcode this version, else we will install the overaggressive recent version
-                      sudo apt-get install -y clang-tidy-6.0 coreutils perl cppcheck doxygen
-
-                      # we also need to symlink it so it can be called as clang-tidy
+                      # install clang-tidy. We must hardcode this version, else
+                      # we will install the overaggressive recent version, and
+                      # we need to symlink it to be able to call it as
+                      # "clang-tidy".
+                      sudo apt-get install -y clang-tidy-6.0
                       sudo ln -s "/usr/bin/clang-tidy-6.0" "/usr/bin/clang-tidy"
+
+                      # install coreutils for realpath, and perl
+                      sudo apt-get install -y coreutils perl cppcheck
                   else
                       # llvm for clang-tidy, coreutils for realpath
                       brew install llvm coreutils perl
@@ -203,13 +206,6 @@ jobs:
                   cd build
                   ninja clang-tidy || EXIT /B 1
 
-            - name: Build documentation
-              if: runner.os == 'Linux'
-              working-directory: protocol
-              run: |
-                  cd build
-                  make docs -j
-
             # This tests building the protocol in a container, the same way we do it in production
             - name: Build Protocol Server in Docker Container
               if: runner.os == 'Linux'
@@ -221,3 +217,41 @@ jobs:
               if: runner.os == 'Linux'
               working-directory: container-images
               run: ./helper_scripts/copy_protocol_build.sh
+
+    protocol-build-doxygen:
+        name: Build documentation for Protocol
+        runs-on: ubuntu-20.04
+        container: ubuntu:21.04
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            # Necessary for downloading protocol libs and base Dockerfile NVIDIA GRID drivers from AWS S3
+            - name: Configure AWS S3 CLI
+              uses: aws-actions/configure-aws-credentials@v1
+              with:
+                  aws-access-key-id: ${{ secrets.AWS_S3_ACCESS_KEY_ID }}
+                  aws-secret-access-key: ${{ secrets.AWS_S3_SECRET_ACCESS_KEY }}
+                  aws-region: us-east-1
+
+            - name: Set up dependencies for building Protocol documentation
+              working-directory: protocol
+              env:
+                  DEBIAN_FRONTEND: noninteractive
+              run: |
+                  # update apt before installing packages to avoid package not found errors
+                  apt-get update -y
+                  apt-get install -y sudo make cmake doxygen
+                  apt-get install -y wget apt-utils curl awscli gcc g++
+
+                  # install Linux protocol dependencies
+                  ./setup-linux-build-environment.sh
+
+                  mkdir build
+                  cd build
+                  cmake .. -DCMAKE_BUILD_TYPE=Debug -DCI=TRUE
+
+            # We need to run on a newer Ubuntu version to get a newer version of doxygen than is available on Ubuntu 20.04.
+            - name: Build Protocol documentation inside a Ubuntu 21.04 container
+              working-directory: protocol/build
+              run: make docs -j
