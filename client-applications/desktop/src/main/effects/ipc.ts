@@ -6,15 +6,13 @@
 import { combineLatest, concat, of } from "rxjs"
 import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
-import { map, withLatestFrom, startWith } from "rxjs/operators"
+import { map, startWith } from "rxjs/operators"
 
 import { getWindows } from "@app/utils/windows"
-import { objectCombine } from "@app/utils/observables"
 import { fromTrigger } from "@app/utils/flows"
 import { mapValues } from "lodash"
 
-import { WarningLoginInvalid } from "@app/utils/constants"
-import { WarningSignupInvalid } from "@app/utils/constants"
+import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
