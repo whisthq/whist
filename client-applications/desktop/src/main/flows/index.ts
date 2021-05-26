@@ -1,5 +1,5 @@
 import { merge, zip, fromEvent, of } from "rxjs"
-import { map, mergeMap, take } from "rxjs/operators"
+import { map, mergeMap, take, withLatestFrom, tap } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
@@ -33,11 +33,13 @@ containerFlow(launchTrigger)
 protocolLaunchFlow(launchTrigger)
 
 // Protocol close flow
-protocolCloseFlow(
+const close = protocolCloseFlow(
   fromTrigger("protocolLaunchFlowSuccess").pipe(
     mergeMap((protocol: ChildProcess) =>
-      zip(of(protocol), fromEvent(protocol as EventEmitter, "close"))
-    ),
-    map(([protocol]) => protocol)
+      fromEvent(protocol as EventEmitter, "close").pipe(map(() => protocol))
+    )
   )
 )
+
+close.success.subscribe()
+close.failure.subscribe()
