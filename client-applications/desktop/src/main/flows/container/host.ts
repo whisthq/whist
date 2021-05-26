@@ -60,7 +60,7 @@ const hostPollingInner = flow<{
   return {
     pending: poll.pending.pipe(takeUntil(merge(poll.success, poll.failure))),
     success: poll.success.pipe(take(1)),
-    failure: poll.failure.pipe(take(1)),
+    failure: poll.failure.pipe(takeUntil(poll.success), take(1)),
   }
 })
 

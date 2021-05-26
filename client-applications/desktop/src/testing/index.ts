@@ -1,6 +1,6 @@
 import { Observable, EMPTY } from "rxjs"
 import { get, set, keys } from "lodash"
-import * as schemas from "@app/main/testing/schemas"
+import * as schemas from "@app/testing/schemas"
 
 // This test should check for an enviroment variable, or some indicator
 // that we're in "testing mode". We'll just set to true for now.
