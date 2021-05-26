@@ -12,16 +12,8 @@ import {
   HostServiceInfoResponse,
   HostServiceConfigResponse,
 } from "@app/utils/host"
-import { from, interval, of, merge, zip, Observable } from "rxjs"
-import {
-  map,
-  share,
-  takeUntil,
-  switchMap,
-  mapTo,
-  take,
-  pluck,
-} from "rxjs/operators"
+import { from, interval, of, merge, zip } from "rxjs"
+import { map, share, takeUntil, switchMap, mapTo, take } from "rxjs/operators"
 import { flow, fork } from "@app/utils/flows"
 import { some, pick } from "lodash"
 

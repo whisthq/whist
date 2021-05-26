@@ -11,7 +11,7 @@
 // storage changes.
 
 import { from, zip, Observable } from "rxjs"
-import { switchMap, map, pluck } from "rxjs/operators"
+import { switchMap, map, withLatestFrom } from "rxjs/operators"
 import {
   emailSignup,
   emailSignupValid,
@@ -79,7 +79,10 @@ export default flow(
       }))
     )
 
-    const result = zip([input, tokens]).pipe(map(([...args]) => merge(...args)))
+    const result = tokens.pipe(
+      withLatestFrom(input),
+      map(([...args]) => merge(...args))
+    )
 
     return {
       success: createTrigger("signupFlowSuccess", result),
