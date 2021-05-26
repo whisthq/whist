@@ -76,8 +76,8 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
 // number of frames ahead we can receive packets for before asking for iframe
-#define MAX_UNSYNCED_FRAMES 20
-#define MAX_UNSYNCED_FRAMES_RENDER 25  // not sure if i need this
+#define MAX_UNSYNCED_FRAMES 10
+#define MAX_UNSYNCED_FRAMES_RENDER 12  // not sure if i need this
 // number of packets we are allowed to miss before asking for iframe
 #define MAX_MISSING_PACKETS 20
 
@@ -133,6 +133,7 @@ struct VideoData {
 
     double target_mbps;
     int num_nacked;
+    clock missing_frame_nack_timer;
     int bucket;  // = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     int nack_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
     double seconds_by_bitrate[MAXIMUM_BITRATE / BITRATE_BUCKET_SIZE + 5];
@@ -827,6 +828,7 @@ int init_video_renderer() {
     video_data.last_rendered_id = 0;
     video_data.max_id = 0;
     video_data.most_recent_iframe = -1;
+    start_timer(&video_data.missing_frame_nack_timer);
     video_data.num_nacked = 0;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
     start_timer(&video_data.last_iframe_request_timer);
@@ -1103,6 +1105,27 @@ void update_video() {
                         "The most recent ID is %d frames ahead of the most recent rendered frame. "
                         "I-Frame is now being requested to catch-up.",
                         MAX_UNSYNCED_FRAMES_RENDER);
+                }
+            }
+        }
+        // if we haven't requested an iframe, we should be asking for our missing out-of-order
+        // frames the below if check is here to make sure that at the beginning, we don't request a
+        // bunch of frames. there must be a better way to resolve that though. I still want to be
+        // able to nack for missing frames when I'm waiting for an iframe.
+        if (!video_data.is_waiting_for_iframe) {
+            // check for any out-of-order frames
+            // currently, checks if the ring buffer has an old frame
+            if (get_timer(video_data.missing_frame_nack_timer) > latency) {
+                for (int i = next_render_id; i < video_data.max_id; i++) {
+                    int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
+                    if (receiving_frames[buffer_index].id != i) {
+                        // we just didn't receive any packets for a frame
+                        // though we did receive packets for future frames
+                        // we should nack the index 0 packet for said frame
+                        LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
+                        start_timer(&video_data.missing_frame_nack_timer);
+                        nack(i, 0);
+                    }
                 }
             }
         }
