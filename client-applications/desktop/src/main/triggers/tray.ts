@@ -7,7 +7,7 @@ import { fromEvent } from "rxjs"
 
 import { trayEvent } from "@app/utils/tray"
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 createTrigger(TRIGGER.signoutAction, fromEvent(trayEvent, "signout"))
 createTrigger(TRIGGER.quitAction, fromEvent(trayEvent, "quit"))

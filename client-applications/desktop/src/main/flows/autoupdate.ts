@@ -3,7 +3,7 @@ import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
 import { createTrigger, flow } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 export default flow("autoUpdateFlow", () => {
   return {

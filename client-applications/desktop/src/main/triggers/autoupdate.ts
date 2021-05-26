@@ -5,7 +5,7 @@ import { fromEvent, merge, of } from "rxjs"
 import { takeWhile } from "rxjs/operators"
 
 import { createTrigger } from "@app/utils/flows"
-import TRIGGER from "@app/main/triggers/constants"
+import TRIGGER from "@app/utils/triggers"
 
 // Fires if autoupdate is available
 createTrigger(
