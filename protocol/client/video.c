@@ -1067,9 +1067,9 @@ void update_video() {
             {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is 10 frames ahead of the most recent rendered frame, "
+                        "The most recent ID is %d frames ahead of the most recent rendered frame, "
                         "and there is no available frame to render. I-Frame is now being requested "
-                        "to catch-up.");
+                        "to catch-up.", MAX_UNSYNCED_FRAMES);
                 }
             }
         } else {
@@ -1078,8 +1078,8 @@ void update_video() {
             if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES_RENDER) {
                 if (request_iframe()) {
                     LOG_INFO(
-                        "The most recent ID is 5 frames ahead of the most recent rendered frame. "
-                        "I-Frame is now being requested to catch-up.");
+                        "The most recent ID is %d frames ahead of the most recent rendered frame. "
+                        "I-Frame is now being requested to catch-up.", MAX_UNSYNCED_FRAMES_RENDER);
                 }
             }
         }
