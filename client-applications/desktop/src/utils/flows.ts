@@ -30,7 +30,7 @@ export const fork = <T>(
   */
 
   const shared = source.pipe(share())
-  return mapValues(filters, (fn) => shared.pipe(filter(fn)))
+  return mapValues(filters, (fn) => shared.pipe(filter(fn), share()))
 }
 
 export const flow =
