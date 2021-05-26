@@ -40,9 +40,9 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   // structure. This is normal NodeJS behavior, but it can cause a runtime error
   // if you blindly try to turn these objects into JSON. Our special stringify
   // function strips these circular references from the object.
-  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${
-    data !== undefined ? stringify(data, null, 2) : ""
-  }`
+  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${util.inspect(
+    data
+  )}`
 
   const debugLog = truncate(template, {
     length: 1000,
@@ -71,7 +71,7 @@ const amplitudeLog = async (title: string, data: object, userID: string) => {
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
       user_id: userID,
-      event_properties: data,
+      event_properties: { data: util.inspect(data) },
     })
   }
 }
