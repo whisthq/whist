@@ -4,6 +4,8 @@ import (
 	"os"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 func (c *containerData) WriteResourcesForProtocol() error {
@@ -61,7 +63,7 @@ func (c *containerData) MarkReady() error {
 }
 
 func (c *containerData) getResourceMappingDir() string {
-	return logger.Sprintf("%s%s/containerResourceMappings/", logger.FractalDir, c.fractalID)
+	return logger.Sprintf("%s%s/containerResourceMappings/", utils.FractalDir, c.fractalID)
 }
 
 func (c *containerData) createResourceMappingDir() error {
