@@ -131,7 +131,7 @@ class LoadTestUser(locust.HttpUser):
 
     def try_assign_request(self):
         """
-        Makes a request to webserver /app/assign.
+        Makes a request to webserver /mandelbox/assign.
         See the deleted code at
         https://github.com/fractal/fractal/pull/1455/commits/d3e80ea78b12d817e00a811d9f172fa64d488e2a
         for how to do this but by choosing a specific cluster instead of letting webserver decide.
@@ -141,7 +141,7 @@ class LoadTestUser(locust.HttpUser):
             "app": "Google Chrome",
             "region": LOAD_TEST_CLUSTER_REGION,
         }
-        return make_post_request(WEB_URL, "/app/assign", payload, ADMIN_TOKEN)
+        return make_post_request(WEB_URL, "/mandelbox/assign", payload, ADMIN_TOKEN)
 
     def try_get_host_service_info(self):
         """

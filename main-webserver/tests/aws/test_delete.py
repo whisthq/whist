@@ -1,4 +1,4 @@
-"""Tests for the /container/delete endpoint."""
+"""Tests for the /mandelbox/delete endpoint."""
 
 import uuid
 
@@ -16,13 +16,13 @@ from ..patches import function, Object
 
 
 def test_no_container_id(client):
-    response = client.post("/container/delete", json=dict(private_key="garbage!"))
+    response = client.post("/mandelbox/delete", json=dict(private_key="garbage!"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
-    response = client.post("/container/delete", json=dict(container_id="mycontainerid123"))
+    response = client.post("/mandelbox/delete", json=dict(container_id="mycontainerid123"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -34,7 +34,7 @@ def test_successful(client, authorized, monkeypatch):
     monkeypatch.setattr(obj, "id", str(uuid.uuid4()))
 
     response = client.post(
-        "/container/delete", json=dict(container_id="mycontainerid123", private_key="garbage!")
+        "/mandelbox/delete", json=dict(container_id="mycontainerid123", private_key="garbage!")
     )
 
     assert response.status_code == HTTPStatus.ACCEPTED

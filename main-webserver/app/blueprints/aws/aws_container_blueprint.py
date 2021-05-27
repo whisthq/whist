@@ -144,7 +144,7 @@ def test_endpoint(action, **kwargs):
         (which is an int like 200, 400, ...).
     """
     # check for maintenance-related things
-    if action in ["create_cluster", "assign_container"]:
+    if action in ["create_cluster", "assign_mandelbox"]:
         if check_if_maintenance():
             # server cannot be in maintenance mode to do this
             return (
@@ -224,9 +224,9 @@ def test_endpoint(action, **kwargs):
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
 
-    if action == "assign_container":
+    if action == "assign_mandelbox":
         try:
-            # TODO: do request validation like in /app/assign
+            # TODO: do request validation like in /mandelbox/assign
             (username, cluster_name, region_name, task_definition_arn, task_version) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
@@ -270,7 +270,7 @@ def test_endpoint(action, **kwargs):
     return jsonify({"error": NOT_FOUND}), NOT_FOUND
 
 
-@aws_container_bp.route("/container/delete", methods=("POST",))
+@aws_container_bp.route("/mandelbox/delete", methods=("POST",))
 @fractal_pre_process
 def aws_container_delete(**kwargs):
     """
@@ -293,7 +293,7 @@ def aws_container_delete(**kwargs):
     return response
 
 
-@aws_container_bp.route("/container/protocol_info", methods=("POST",))
+@aws_container_bp.route("/mandelbox/protocol_info", methods=("POST",))
 @fractal_pre_process
 def aws_container_info(**kwargs):
     """
@@ -323,7 +323,7 @@ def aws_container_info(**kwargs):
     return response
 
 
-@aws_container_bp.route("/container/ping", methods=("POST",))
+@aws_container_bp.route("/mandelbox/ping", methods=("POST",))
 @fractal_pre_process
 def aws_container_ping(**kwargs):
     """
@@ -352,7 +352,7 @@ def aws_container_ping(**kwargs):
     return response
 
 
-@aws_container_bp.route("/app/assign", methods=("POST",))
+@aws_container_bp.route("/mandelbox/assign", methods=("POST",))
 @limiter.limit(RATE_LIMIT_PER_MINUTE)
 @fractal_pre_process
 @jwt_required()

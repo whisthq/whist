@@ -87,7 +87,7 @@ const containerRequest = async (
   dpi: number
 ) =>
   post({
-    endpoint: "/app/assign",
+    endpoint: "/mandelbox/assign",
     accessToken,
     body: {
       username,
