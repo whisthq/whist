@@ -7,10 +7,6 @@ name: "Workflows: Linting"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - ".github/workflows/**"
             - "!.github/workflows/README.md"
