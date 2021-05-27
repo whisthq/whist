@@ -141,8 +141,6 @@ Defines
 
 #define MOUSE_SCALING_FACTOR 100000
 
-#define WRITE_MPRINTF_TO_LOG true
-
 // MAXLENs are the max length of the string they represent, _without_ the null character.
 // Therefore, whenever arrays are created or length of the string is compared, we should be
 // comparing to *MAXLEN + 1
@@ -493,8 +491,6 @@ typedef struct FractalDiscoveryReplyMessage {
     int TCP_port;
     int connection_id;
     int audio_sample_rate;
-    char filename[300];
-    char username[50];
 } FractalDiscoveryReplyMessage;
 
 /**

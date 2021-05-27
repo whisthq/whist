@@ -22,6 +22,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/clock.h>
 #include <fractal/utils/logging.h>
+#include <fractal/utils/error_monitor.h>
 #include "client.h"
 #include "handle_client_message.h"
 #include "network.h"
@@ -29,8 +30,6 @@ Includes
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
 #endif
-
-#include <sentry.h>
 
 extern Client clients[MAX_NUM_CLIENTS];
 
@@ -56,8 +55,6 @@ extern volatile bool update_encoder;
 extern InputDevice *input_device;
 
 extern int host_id;
-
-extern bool using_sentry;
 
 /*
 ============================
@@ -547,21 +544,11 @@ static int handle_init_message(FractalClientMessage *cfmsg, int client_id, bool 
     // Handle time
     set_time_data(&fmsg.time_data);
 
-    // Handle init email email
-    if (using_sentry) {
-        if (client_id == host_id) {
-            sentry_value_t user = sentry_value_new_object();
-            sentry_value_set_by_key(user, "email", sentry_value_new_string(fmsg.user_email));
-            sentry_set_user(user);
-        } else {
-            char breadcrumb_msg_buf[512];
-            if (strlen(fmsg.user_email) < sizeof(breadcrumb_msg_buf) / 2) {
-                LOG_ERROR("Fmsg user_email is too long! Size of %d", strlen(fmsg.user_email));
-            }
-            snprintf(breadcrumb_msg_buf, sizeof(breadcrumb_msg_buf), "Non host email: %s",
-                     fmsg.user_email);
-            sentry_send_bread_crumb(INFO_TAG, breadcrumb_msg_buf);
-        }
+    // Handle init message email
+    if (client_id == host_id) {
+        error_monitor_set_username(fmsg.user_email);
+    } else {
+        LOG_WARNING("Non-host user joined: %s", fmsg.user_email);
     }
 
     return 0;

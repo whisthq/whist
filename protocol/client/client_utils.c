@@ -29,10 +29,8 @@ Includes
 #include "client_utils.h"
 #include "network.h"
 #include <fractal/utils/logging.h>
+#include <fractal/utils/error_monitor.h>
 #include <fractal/core/fractalgetopt.h>
-
-// For setting connection_id
-#include <sentry.h>
 
 extern volatile char binary_aes_private_key[16];
 extern volatile char hex_aes_private_key[33];
@@ -44,14 +42,11 @@ extern volatile CodecType output_codec_type;
 extern volatile SDL_Window *window;
 
 extern volatile int max_bitrate;
-extern volatile int running_ci;
 
 // This variables should stay as arrays - we call sizeof() on them
 extern char user_email[FRACTAL_ARGS_MAXLEN + 1];
-extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
 extern char icon_png_filename[FRACTAL_ARGS_MAXLEN + 1];
 
-extern bool using_sentry;
 extern bool skip_taskbar;
 
 extern volatile CodecType codec_type;
@@ -73,7 +68,6 @@ const struct option cmd_options[] = {{"width", required_argument, NULL, 'w'},
                                      {"icon", required_argument, NULL, 'i'},
                                      {"connection-method", required_argument, NULL, 'z'},
                                      {"ports", required_argument, NULL, 'p'},
-                                     {"use_ci", no_argument, NULL, 'x'},
                                      {"name", required_argument, NULL, 'n'},
                                      {"read-pipe", no_argument, NULL, 'r'},
                                      {"loading", required_argument, NULL, 'l'},
@@ -87,7 +81,7 @@ const char *usage;
 
 #define MAX_INCOMING_LENGTH 128
 // Syntax: "a" for no_argument, "a:" for required_argument, "a::" for optional_argument
-#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:xn:rl:s"
+#define OPTION_STRING "w:h:b:c:k:u:e:i:z:p:n:rl:s"
 
 /*
 ============================
@@ -188,8 +182,8 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
             }
             break;
         }
-        case 'e': {  // sentry environment
-            using_sentry = init_sentry(optarg, "client");
+        case 'e': {  // environment
+            error_monitor_set_environment(optarg);
             break;
         }
         case 'i': {  // protocol window icon
@@ -228,10 +222,6 @@ int evaluate_arg(int eval_opt, char *eval_optarg) {
                 // Progress the string forwards
                 str += bytes_read;
             }
-            break;
-        }
-        case 'x': {  // use CI
-            running_ci = 1;
             break;
         }
         case 'z': {  // first connection method to try
@@ -315,11 +305,10 @@ int parse_args(int argc, char *argv[]) {
         "                                  hexadecimal string\n"
         "  -u, --user=EMAIL              Tell Fractal the user's email. Default: None \n"
         "  -e, --environment=ENV         The environment the protocol is running in,\n"
-        "                                  e.g prod, staging, dev. Default: none\n"
+        "                                  e.g production, staging, development. Default: none\n"
         "  -i, --icon=PNG_FILE           Set the protocol window icon from a 64x64 pixel png file\n"
         "  -p, --ports=PORTS             Pass in custom port:port mappings, period-separated.\n"
         "                                  Default: identity mapping\n"
-        "  -x, --use_ci                  Launch the protocol in CI mode\n"
         "  -z, --connection_method=CM    Which connection method to try first,\n"
         "                                  either STUN or DIRECT\n"
         "  -n, --name=NAME               Set the window title. Default: Fractal\n"
@@ -339,6 +328,7 @@ int parse_args(int argc, char *argv[]) {
 
     // default user email
     safe_strncpy(user_email, "None", sizeof(user_email));
+
     // default icon filename
     safe_strncpy(icon_png_filename, "", sizeof(icon_png_filename));
 
@@ -574,97 +564,6 @@ int read_piped_arguments(bool *keep_waiting) {
     return 0;
 }
 
-#ifndef _WIN32
-static char *append_path_to_home(char *path) {
-    /*
-        Generate full path from relative path
-
-        Arguments:
-            path (char*): the relative path
-
-        Return:
-            (static char*): the full path, from the home directory, as a new pointer
-    */
-
-    char *home, *new_path;
-    int len;
-
-    home = getenv("HOME");
-
-    len = strlen(home) + strlen(path) + 2;
-    new_path = safe_malloc(len * sizeof *new_path);
-
-    if (sprintf(new_path, "%s/%s", home, path) < 0) {
-        free(new_path);
-        return NULL;
-    }
-
-    return new_path;
-}
-#endif
-
-char *get_log_dir(void) {
-    /*
-        Get directory of Fractal log
-
-        Return:
-            (char*): Log directory string
-    */
-
-#ifdef _WIN32
-    return dupstring(".");
-#else
-    return append_path_to_home(".fractal");
-#endif
-}
-
-int log_connection_id(int connection_id) {
-    /*
-        Write connection id to connection_id log file
-
-        Arguments:
-            connection_id (int): connection ID
-
-        Return:
-            (int): 0 on success, -1 on failure
-    */
-
-    // itoa is not portable
-    char *str_connection_id = safe_malloc(sizeof(char) * 100);
-    sprintf(str_connection_id, "%d", connection_id);
-    // send connection id to sentry as a tag, server also does this
-    if (using_sentry) {
-        sentry_set_tag("connection_id", str_connection_id);
-    }
-
-    // path of connection id file
-    char *path;
-#ifdef _WIN32
-    path = dupstring("connection_id.txt");
-#else
-    path = append_path_to_home(".fractal/connection_id.txt");
-#endif
-    if (path == NULL) {
-        LOG_ERROR("Failed to get connection log path.");
-        return -1;
-    }
-
-    // open connection id file and write connection id to file
-    FILE *f = fopen(path, "w");
-    free(path);
-    if (f == NULL) {
-        LOG_ERROR("Failed to open connection id log file.");
-        return -1;
-    }
-    if (fprintf(f, "%d", connection_id) < 0) {
-        LOG_ERROR("Failed to write connection id to log file.");
-        fclose(f);
-        return -1;
-    }
-    fclose(f);
-    return 0;
-}
-
 int init_socket_library(void) {
     /*
         Initialize the Windows socket library
@@ -706,7 +605,7 @@ int alloc_parsed_args(void) {
         Return:
             (int): 0 on success, -1 on failure
     */
-    server_ip = malloc(MAX_IP_LEN);
+    server_ip = safe_malloc(MAX_IP_LEN);
 
     if (!server_ip) {
         return -1;
@@ -728,31 +627,6 @@ int free_parsed_args(void) {
         free((char *)server_ip);
     }
 
-    return 0;
-}
-
-int configure_cache(void) {
-    /*
-        Configure the cache folder for non-Windows:
-        files can't be written to a macos app bundle, so they need to be
-        cached in /Users/USERNAME/.APPNAME, here .fractal directory
-        attempt to create fractal cache directory, it will fail if it
-        already exists, which is fine
-        for Linux, this is in /home/USERNAME/.fractal, the cache is also needed
-        for the same reason
-        the mkdir command won't do anything if the folder already exists, in
-        which case we make sure to clear the previous logs and connection id
-
-        Return:
-            (int): 0 on success
-    */
-
-#ifndef _WIN32
-    runcmd("mkdir -p ~/.fractal", NULL);
-    runcmd("chmod 0755 ~/.fractal", NULL);
-    runcmd("rm -f ~/.fractal/log*.txt", NULL);
-    runcmd("rm -f ~/.fractal/connection_id.txt", NULL);
-#endif
     return 0;
 }
 

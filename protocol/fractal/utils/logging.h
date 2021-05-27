@@ -120,8 +120,6 @@ Public Functions
 ============================
 */
 
-void sentry_send_bread_crumb(const char* tag, const char* sentry_str);
-
 /**
  * @brief                          Print the stacktrace of the calling function to stdout
  *                                 This will be registered as if it was logged as well
@@ -129,30 +127,10 @@ void sentry_send_bread_crumb(const char* tag, const char* sentry_str);
 void print_stacktrace();
 
 /**
- * @brief                          Initialize the logger
- *
- * @param log_directory            The directory to store the log files in. Pass
- *                                 NULL to not store the logs in a log file
+ * @brief                          Initialize the logger.
  *
  */
-void init_logger(char* log_directory);
-
-/**
- * @brief                          Initialize the sentry logger
- *
- * @param environment              Sentry environment
- *
- * @param runner_type              Whether it is client or server
- *
- * @returns                        Whether sentry was set up or not
- *
- */
-bool init_sentry(char* environment, const char* runner_type);
-
-/**
- * @brief                          Rename the file that logs are being written to
- */
-void rename_log_file();
+void init_logger();
 
 /**
  * @brief                          Log the given format string
@@ -178,20 +156,6 @@ void flush_logs();
 void destroy_logger();
 
 /**
- * @brief                          Set the logger to categorize all logs from now
- *                                  on as a new connection. Only these will be sent
- *                                  on a sendConnectionHistory call.
- */
-void start_connection_log();
-
-/**
- * @brief                          Save the current connection id into the log history
- *
- * @param connection_id            The connection id to use
- */
-void save_connection_id(int connection_id);
-
-/**
  * @brief                          Tell the server the WinLogon and connection
  *                                 status
  *
@@ -205,12 +169,5 @@ void save_connection_id(int connection_id);
  */
 void update_server_status(bool is_connected, char* host, char* identifier,
                           char* hex_aes_private_key);
-
-/**
- * @brief                          Get the current server's version number
- *
- * @returns                        A 16-character hexadecimal version number
- */
-char* get_version();
 
 #endif  // LOGGING_H

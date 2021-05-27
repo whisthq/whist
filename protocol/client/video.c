@@ -53,8 +53,6 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
-extern volatile int running_ci;
-
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
@@ -253,14 +251,6 @@ int render_video() {
     }
 
     SDL_Renderer* renderer = video_context.renderer;
-
-//    Windows GHA VM cannot render, it just segfaults on creating the renderer
-// TODO test rendering in windows CI.
-#if _WIN32
-    if (running_ci) {
-        return 0;
-    }
-#endif
 
     if (rendering) {
         // Stop loading animation once rendering occurs
