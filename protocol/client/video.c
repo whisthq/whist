@@ -81,7 +81,7 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #define MAX_UNSYNCED_FRAMES 10
 #define MAX_UNSYNCED_FRAMES_RENDER 12  // not sure if i need this
 // number of packets we are allowed to miss before asking for iframe
-#define MAX_MISSING_PACKETS 20
+#define MAX_MISSING_PACKETS 50
 
 #define LOG_VIDEO false
 
