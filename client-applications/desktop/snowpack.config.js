@@ -81,7 +81,13 @@ module.exports = {
   // handle that. This is Snowpack's default behavior, but we're being explicit
   // in this exclude list. We also exclude "**/src/main/**", because we want to
   // separately compile our main process files using the commands above.
-  exclude: ["**/node_modules/**/*", "**/src/main/**/*"],
+  exclude: [
+    "**/node_modules/**/*",
+    "**/src/main/**/*",
+    "**/src/utils/container.ts",
+    "**/src/utils/protocol.ts",
+    "**/src/utils/host.ts",
+  ],
   // This needs to match the "paths" mapping in ts.config.json. We choose to
   // prefix all our source code imports with "@app".
   alias: {
