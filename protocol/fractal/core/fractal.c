@@ -258,10 +258,10 @@ int runcmd(const char* cmdline, char** response) {
 bool read_hexadecimal_private_key(char* hex_string, char* binary_private_key,
                                   char* hex_private_key) {
     /*
-        Reads a 16-byte hexidecimal string and copies it into private_key
+        Reads a 16-byte hexadecimal string and copies it into private_key
 
         Arguments:
-            hex_string (char*): The hexidecimal string to copy
+            hex_string (char*): The hexadecimal string to copy
             binary_private_key (char*): The 16-byte buffer to copy the bytes into
             hex_private_key (char*): The 33-byte buffer to fill with a hex string
                 representation of the private key.
