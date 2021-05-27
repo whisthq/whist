@@ -1,23 +1,3 @@
 ## Fractal Windows/Linux Ubuntu Servers
 
-This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu. See below for basic build instructions, and the folder's README for build and development details.
-
-### Development
-
-You can run `server.bat` (Windows) or `./server` to restart your dev environment.
-
-To compile, you should first run `cmake .` (MacOS/Linux) or `cmake -G "NMake Makefiles"` (Windows) from the root directory, `/protocol/`. You can then cd into this folder and run `make` (MacOS/Linux) or `nmake` (Windows).
-
-If you're having trouble compiling, make sure that you followed the instructions in the root-level README. If still having issue, you should delete the CmakeCache or start from a fresh repository.
-
-### Running
-
-From this directory, `/server`, you can simply run:
-
-```
-Windows:
-FractalServer
-
-MacOS/Linux:
-./FractalServer
-```
+This folder builds a server to stream via Fractal. It supports Windows and Linux Ubuntu.
