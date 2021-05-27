@@ -37,7 +37,6 @@ export const persist = (key: string, value: string) => {
 
 export const persistClear = () => {
   keys(cache).forEach((key) => {
-    console.log("DELETING", key)
     store.delete(key)
   })
 }
