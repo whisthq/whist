@@ -142,7 +142,10 @@ zip(
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
   () => {
     persistClear()
-    session.fromPartition("auth0").clearStorageData()
+    session
+      .fromPartition("auth0")
+      .clearStorageData()
+      .catch((err) => console.error(err))
     app.relaunch()
     app.exit()
   }
