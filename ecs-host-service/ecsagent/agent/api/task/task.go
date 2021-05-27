@@ -1943,9 +1943,7 @@ func (task *Task) dockerHostBinds(container *apicontainer.Container) ([]string, 
 		// container-create command. This lets us create a container-specific
 		// directory for each fractal container we start.
 		FRACTAL_ID_PLACEHOLDER := "%%FRACTAL_ID_PLACEHOLDER%%"
-		seelog.Infof("Task.dockerHostBinds(): old bind: %s", bind)
 		bind = strings.ReplaceAll(bind, FRACTAL_ID_PLACEHOLDER, string(container.FractalContainer.GetFractalID()))
-		seelog.Infof("Task.dockerHostBinds(): new bind: %s", bind)
 
 		binds[i] = bind
 	}
