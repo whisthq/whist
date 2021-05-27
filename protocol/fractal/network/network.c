@@ -290,6 +290,9 @@ bool handshake_private_key(SocketContext* context) {
     }
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
@@ -339,6 +342,9 @@ int send_tcp_packet(SocketContext* context, FractalPacketType type, void* data, 
     return failed ? -1 : 0;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int send_udp_packet(SocketContext* context, FractalPacketType type, void* data, int len, int id,
                     int burst_bitrate, FractalPacket* packet_buffer, int* packet_len_buffer) {
     if (id <= 0) {
@@ -589,6 +595,9 @@ int recvp(SocketContext* context, void* buf, int len) {
     return recv(context->socket, buf, len, 0);
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int sendp(SocketContext* context, void* buf, int len) {
     if (context == NULL) {
         LOG_WARNING("Context is NULL");
