@@ -2,11 +2,13 @@ add_library(fractalUtils STATIC
         aes.h
         clock.h
         logging.h
+        error_monitor.h
         json.h
         window_name.h
         aes.c
         clock.c
         logging.c
+        error_monitor.c
         json.c
         window_name.c
         sysinfo.c

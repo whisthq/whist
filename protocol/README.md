@@ -75,7 +75,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   ├── clipboard
 │   │   ├── clipboard.c <- Wrappers for get_clipboard/set_clipboard
 │   │   ├── clipboard_synchronizer.c <- Multithreaded wrapper for get/set clipboard,
-|   |   |                               this is what actually gets used
+│   │   │                                 this is what actually gets used
 │   │   ├── mac_clipboard.c <- Mac implementation of {get,set}_clipboard
 │   │   ├── win_clipboard.c <- Windows implementation of {get,set}_clipboard
 │   │   └── x11_clipboard.c <- Linux implementation of {get,set}_clipboard
@@ -88,7 +88,7 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   └── windowscursor.c <- get_current_cursor for Windows
 │   ├── input
 │   │   ├── input.c <- Trigger keyboard/mouse press and sync, wraps raw input_driver.h calls
-|   |   ├── input_driver.h -> The following three c files share this h file
+│   │   ├── input_driver.h -> The following three c files share this h file
 │   │   ├── winapi_input_driver.c <- Windows keyboard/mouse-press code
 │   │   ├── uinput_input_driver.c <- Linux uinput keyboard/mouse-press/touchpad code
 │   │   └── xtest_input_driver.c <- Linux X11 keyoard/mouse-press code
@@ -98,9 +98,10 @@ Of course, input must also be sent from client to server. This is handled in the
 │   │   ├── aes.c <- Generic encrypt/decrypt of network packets
 │   │   ├── clock.c <- Clock
 │   │   ├── color.c <- RGB/YUV conversation, and other color helpers
+│   │   ├── error_monitor.c <- our interface submitting breadcrumbs and events to Sentry
 │   │   ├── json.c <- JSON reader implementation
 │   │   ├── lodepng.c <- LodePNG external dependency
-│   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc, along with sentry breadcrumbs
+│   │   ├── logging.c <- LOG_INFO/LOG_ERROR/etc.
 │   │   ├── mac_utils.c <- Mac wrappers
 │   │   ├── mouse.c <- Mutliclient cursor colors
 │   │   ├── png.c <- Functions to encode/decode bitmap's as png's

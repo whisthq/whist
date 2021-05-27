@@ -46,6 +46,7 @@ Includes
 #include <fractal/network/network.h>
 #include <fractal/utils/aes.h>
 #include <fractal/utils/logging.h>
+#include <fractal/utils/error_monitor.h>
 #include <fractal/video/transfercapture.h>
 #include <fractal/video/screencapture.h>
 #include <fractal/video/videoencode.h>
@@ -56,9 +57,6 @@ Includes
 #ifdef _WIN32
 #include <fractal/utils/windows_utils.h>
 #endif
-
-// For setting connection_id
-#include <sentry.h>
 
 #ifdef _WIN32
 #pragma comment(lib, "ws2_32.lib")
@@ -93,8 +91,6 @@ volatile int client_dpi = -1;
 volatile CodecType client_codec_type = CODEC_TYPE_UNKNOWN;
 volatile bool update_device = true;
 InputDevice* input_device = NULL;
-extern char sentry_environment[FRACTAL_ARGS_MAXLEN + 1];
-extern bool using_sentry;
 
 #define VIDEO_BUFFER_SIZE 25
 #define MAX_VIDEO_INDEX 500
@@ -808,22 +804,12 @@ int do_discovery_handshake(SocketContext* context, int* client_id) {
     reply_msg->UDP_port = clients[*client_id].UDP_port;
     reply_msg->TCP_port = clients[*client_id].TCP_port;
 
-    // Save connection ID
-    save_connection_id(connection_id);
+    // Set connection ID in error monitor.
+    error_monitor_set_connection_id(connection_id);
 
     // Send connection ID to client
     reply_msg->connection_id = connection_id;
     reply_msg->audio_sample_rate = sample_rate;
-    char* server_username = "Fractal";
-    memcpy(reply_msg->username, server_username, strlen(server_username) + 1);
-#ifdef _WIN32
-    reply_msg->filename[0] = '\0';
-    strcat(reply_msg->filename, "C:\\ProgramData\\FractalCache");
-#else  // Linux
-    char* cwd = getcwd(NULL, 0);
-    memcpy(reply_msg->filename, cwd, strlen(cwd) + 1);
-    free(cwd);
-#endif
 
     LOG_INFO("Sending discovery packet");
     LOG_INFO("Fsmsg size is %d", (int)fsmsg_size);
@@ -849,7 +835,6 @@ int multithreaded_manage_clients(void* opaque) {
     start_timer(&last_update_timer);
 
     connection_id = rand();
-    start_connection_log();
 
     double nongraceful_grace_period = 600.0;  // 10 min after nongraceful disconn to reconn
     bool first_client_connected = false;      // set to true once the first client has connected
@@ -873,7 +858,6 @@ int multithreaded_manage_clients(void* opaque) {
 
         if (saved_num_active_clients == 0) {
             connection_id = rand();
-            start_connection_log();
 
             // container exit logic -
             //  * clients have connected before but now none are connected
@@ -1001,8 +985,8 @@ int parse_args(int argc, char* argv[]) {
         "                                  the protocol code\n"
         "  -i, --identifier=ID           Pass in the unique identifier for this\n"
         "                                  server as a hexadecimal string\n"
-        "  -e, --environment=ENV         The sentry environment the protocol is running in,\n"
-        "                                  e.g prod, staging. Default: none\n"
+        "  -e, --environment=ENV         The environment the protocol is running in,\n"
+        "                                  e.g production, staging, development. Default: none\n"
         "  -w, --webserver=WS_URL        Pass in the webserver url for this\n"
         "                                  server's requests\n"
         "  -t, --timeout=TIME            Tell the server to give up after TIME seconds. If TIME\n"
@@ -1052,7 +1036,7 @@ int parse_args(int argc, char* argv[]) {
                 break;
             }
             case 'e': {
-                using_sentry = init_sentry(optarg, "server");
+                error_monitor_set_environment(optarg);
                 break;
             }
             case 't': {
@@ -1101,11 +1085,8 @@ int parse_args(int argc, char* argv[]) {
 }
 
 int main(int argc, char* argv[]) {
-#ifdef _WIN32
-    init_logger("C:\\ProgramData\\FractalCache");
-#else
-    init_logger(".");
-#endif
+    fractal_init_multithreading();
+    init_logger();
 
     int ret = parse_args(argc, argv);
     if (ret == -1) {
@@ -1115,8 +1096,11 @@ int main(int argc, char* argv[]) {
         // --help or --version
         return 0;
     }
-    rename_log_file();
+
     LOG_INFO("Server protocol started.");
+
+    // Initialize the error monitor, and tell it we are the server.
+    error_monitor_initialize(false);
 
     init_networking();
 
@@ -1128,14 +1112,7 @@ int main(int argc, char* argv[]) {
     srand((unsigned int)time(NULL));
     connection_id = rand();
 
-    if (using_sentry) {
-        sentry_set_tag("connection_id", "no connection yet");
-    }
-
-    LOG_INFO("Version Number: %s", get_version());
     LOG_INFO("Fractal server revision %s", fractal_git_revision());
-
-    fractal_init_multithreading();
 
 // initialize the windows socket library if this is a windows client
 #ifdef _WIN32
@@ -1362,6 +1339,7 @@ int main(int argc, char* argv[]) {
 #endif
 
     destroy_logger();
+    error_monitor_shutdown();
     destroy_clients();
 
     return 0;

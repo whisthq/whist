@@ -53,8 +53,6 @@ Defines
 
 #define MS_IN_SECOND 1000
 
-extern char filename[300];
-extern char username[50];
 volatile bool updating_set_clipboard;  // set to true when SetClipboard() needs to be called
 volatile bool updating_get_clipboard;  // set to true when GetClipboard() needs to be called
 volatile bool updating_clipboard;  // acts as a mutex to prevent clipboard activity from overlapping
