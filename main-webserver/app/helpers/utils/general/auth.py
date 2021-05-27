@@ -1,11 +1,6 @@
 from functools import wraps
 
-from flask import jsonify, request
-from flask_jwt_extended import get_jwt_identity
-
-from app.constants.http_codes import UNAUTHORIZED
-from app.helpers.utils.general.logs import fractal_logger
-from auth0 import has_scope, scope_required
+from auth0 import scope_required
 
 developer_required = scope_required("admin")
 
