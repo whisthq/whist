@@ -38,7 +38,7 @@ sudo reboot
 
 # build the Fractal protocol server
 cd ~/fractal/protocol/
-./build_protocol.sh
+./build_server_protocol.sh
 
 # build the Fractal base container image
 cd ~/fractal/container-images
