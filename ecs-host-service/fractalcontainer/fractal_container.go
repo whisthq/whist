@@ -64,6 +64,7 @@ type FractalContainer interface {
 	AssignToUser(UserID)
 	GetUserID() UserID
 
+	GetHostPort(containerPort uint16, protocol portbindings.TransportProtocol) (uint16, error)
 	GetIdentifyingHostPort() (uint16, error)
 
 	InitializeTTY() error
@@ -125,6 +126,10 @@ type FractalContainer interface {
 	// container as ready.
 	CompleteContainerSetup(userID UserID, clientAppAccessToken ClientAppAccessToken, callerFunction SetupEndpoint) error
 
+	// GetContext provides the context corresponding to this specific container.
+	GetContext() context.Context
+	// Close cancels the container-specific context, triggering the cleanup of
+	// all associated resources.
 	Close()
 }
 
@@ -266,17 +271,22 @@ func (c *containerData) SetClientAppAccessToken(token ClientAppAccessToken) {
 	c.clientAppAccessToken = token
 }
 
-func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
+func (c *containerData) GetHostPort(containerPort uint16, protocol portbindings.TransportProtocol) (uint16, error) {
 	// Don't lock ourselves, since `c.GetPortBindings()` will lock for us.
 
 	binds := c.GetPortBindings()
 	for _, b := range binds {
-		if b.Protocol == portbindings.TransportProtocolTCP && b.ContainerPort == 32262 {
+		if b.Protocol == protocol && b.ContainerPort == containerPort {
 			return b.HostPort, nil
 		}
 	}
 
-	return 0, logger.MakeError("Couldn't getIdentifyingHostPort() for container with FractalID %s", c.GetFractalID())
+	return 0, logger.MakeError("Couldn't GetHostPort(%v, %v) for container with FractalID %s", containerPort, protocol, c.GetFractalID())
+}
+
+func (c *containerData) GetIdentifyingHostPort() (uint16, error) {
+	// Don't lock ourselves, since `c.GetHostPort()` will lock for us.
+	return c.GetHostPort(32262, portbindings.TransportProtocolTCP)
 }
 
 func (c *containerData) InitializeTTY() error {
@@ -433,6 +443,10 @@ func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessTok
 	}
 
 	return nil
+}
+
+func (c *containerData) GetContext() context.Context {
+	return c.ctx
 }
 
 func (c *containerData) Close() {

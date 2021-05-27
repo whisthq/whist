@@ -62,10 +62,10 @@ var udpPortMap protocolSpecificHostPortMap = make(map[uint16]portStatus)
 var portMapsLock = new(sync.Mutex)
 
 // allocateSinglePort allocates a single port given a desired binding. It
-// requires that `portMapsLock` is held throughout. Just like
-// `AllocatePortBindings()`, it interprets a zero value for
-// `desiredBind.HostPort` as a request to allocate any host port, and a nonzero
-// value as a request to allocate that specific host port.
+// requires that `portMapsLock` is held throughout. Just like `Allocate()`, it
+// interprets a zero value for `desiredBind.HostPort` as a request to allocate
+// any host port, and a nonzero value as a request to allocate that specific
+// host port.
 func allocateSinglePort(desiredBind PortBinding) (PortBinding, error) {
 	mapToUse, err := getProtocolSpecificHostPortMap(desiredBind.Protocol)
 	if err != nil {
@@ -149,7 +149,10 @@ func Free(binds []PortBinding) {
 }
 
 // Allocate allocates the desired port bindings atomically. In other words, it
-// will either successfully allocate all of them, or none of them.
+// will either successfully allocate all of them, or none of them. It
+// interprets a zero value for `desiredBind.HostPort` as a request to allocate
+// any host port, and a nonzero value as a request to allocate that specific
+// host port.
 func Allocate(desiredBinds []PortBinding) ([]PortBinding, error) {
 	portMapsLock.Lock()
 	defer portMapsLock.Unlock()

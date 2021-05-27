@@ -15,7 +15,7 @@ import (
 
 // We optimize for the eventual case of needing to look up containers by
 // `fractalID` _only_, not IdentifyingHostPort.
-var tracker map[FractalID]FractalContainer = make(map[FractalID]FractalContainer)
+var tracker = make(map[FractalID]FractalContainer)
 var trackerLock sync.RWMutex
 
 func trackContainer(fc FractalContainer) {
