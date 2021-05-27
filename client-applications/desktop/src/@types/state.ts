@@ -1,4 +1,4 @@
-import { Action } from "@app/@types/actions"
+import { Trigger } from "@app/utils/flows"
 
 export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
   T extends (...args: any) => Promise<infer R> ? R : any
@@ -6,11 +6,10 @@ export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
 export interface StateIPC {
   email: string
   password: string
-  loginWarning: string
-  loginLoading: boolean
-  signupWarning: string
-  signupLoading: boolean
-  errorRelaunchRequest: number
   updateInfo: string
-  action: Action
+  loginWarning: string
+  signupWarning: string
+  loginLoading: boolean
+  signupLoading: boolean
+  trigger: Trigger
 }

@@ -4,28 +4,38 @@
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
 import { zip, merge } from "rxjs"
+import { ChildProcess } from "child_process"
 
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
-import {
-  protocolLaunchProcess,
-  protocolLaunchSuccess,
-} from "@app/main/observables/protocol"
-import { errorWindowRequest } from "@app/main/observables/error"
-import { quitAction, signoutAction } from "@app/main/events/actions"
+import { fromTrigger } from "@app/utils/flows"
 
 // The current implementation of the protocol process shows its own loading
 // screen while a container is created and configured. To do this, we need it
 // the protocol to start and appear before its mandatory arguments are available.
-//
+
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful container status response.
-zip(protocolLaunchProcess, protocolLaunchSuccess).subscribe(
-  ([protocol, info]) => protocolStreamInfo(protocol, info)
+zip(
+  fromTrigger("protocolLaunchFlowSuccess"),
+  fromTrigger("containerFlowSuccess")
+).subscribe(
+  ([protocol, response]: [
+    ChildProcess,
+    {
+      containerIP: string
+      containerSecret: string
+      containerPorts: {
+        port_32262: number
+        port_32263: number
+        port_32273: number
+      }
+    }
+  ]) => protocolStreamInfo(protocol, response)
 )
 
 // If we have an error, close the protocol. We expect that an effect elsewhere
 // this application will take care of showing an appropriate error message.
 zip(
-  protocolLaunchProcess,
-  merge(signoutAction, quitAction, errorWindowRequest)
-).subscribe(([protocol]) => protocolStreamKill(protocol))
+  fromTrigger("protocolLaunchFlowSuccess"),
+  merge(fromTrigger("signoutAction"), fromTrigger("quitAction"))
+).subscribe(([protocol]: [ChildProcess, any]) => protocolStreamKill(protocol))

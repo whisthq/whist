@@ -1,12 +1,9 @@
 import { app } from "electron"
-import { tap } from "rxjs/operators"
 import { truncate } from "lodash"
 import fs from "fs"
 import path from "path"
 import util from "util"
 import AWS from "aws-sdk"
-import { merge, Observable, zip, of } from "rxjs"
-import stringify from "json-stringify-safe"
 import * as Amplitude from "@amplitude/node"
 
 import config, {
@@ -42,9 +39,9 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   // structure. This is normal NodeJS behavior, but it can cause a runtime error
   // if you blindly try to turn these objects into JSON. Our special stringify
   // function strips these circular references from the object.
-  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${
-    data !== undefined ? stringify(data, null, 2) : ""
-  }`
+  const template = `${level}: ${title} -- ${sessionID.toString()} -- \n ${util.inspect(
+    data
+  )}`
 
   const debugLog = truncate(template, {
     length: 1000,
@@ -54,25 +51,26 @@ const formatLogs = (title: string, data: object, level: LogLevel) => {
   return `${util.format(debugLog)} \n`
 }
 
-const localLog = (title: string, data: object, level: LogLevel) => {
-  const logs = formatLogs(title, data, level)
+const localLog = (
+  title: string,
+  data: object,
+  level: LogLevel,
+  userID: string
+) => {
+  const logs = formatLogs(`${title} -- ${userID}`, data, level)
 
   if (!app.isPackaged) console.log(logs)
 
   logFile.write(logs)
 }
 
-const amplitudeLog = async (
-  title: string,
-  data: object,
-  userID: string | undefined
-) => {
-  if (userID !== undefined) {
+const amplitudeLog = async (title: string, data: object, userID: string) => {
+  if (userID !== "") {
     await amplitude.logEvent({
       event_type: `[${(config.appEnvironment as string) ?? "LOCAL"}] ${title}`,
       session_id: sessionID,
       user_id: userID,
-      event_properties: data,
+      event_properties: { data: util.inspect(data) },
     })
   }
 }
@@ -81,7 +79,7 @@ export const logBase = async (
   title: string,
   data: object,
   level: LogLevel,
-  userID?: string
+  userID: string
 ) => {
   /*
   Description:
@@ -93,7 +91,7 @@ export const logBase = async (
   */
 
   await amplitudeLog(title, data, userID)
-  localLog(title, data, level)
+  localLog(title, data, level, userID)
 }
 
 export const uploadToS3 = async (email: string) => {
@@ -103,7 +101,7 @@ export const uploadToS3 = async (email: string) => {
   Arguments:
       email (string): user email of the logged in user
   Returns:
-      response from the s3 upload
+      Response from the s3 upload
   */
   const s3FileName = `CLIENT_${email}_${new Date().getTime()}.txt`
 
@@ -149,38 +147,3 @@ export const uploadToS3 = async (email: string) => {
     await uploadHelper(logLocation)
   }
 }
-
-export const logObservable = (level: LogLevel, title: string) => {
-  /*
-    Description:
-        Returns a custom operator that logs values emitted by an observable
-    Arguments:
-        level (LogLevel): Level of log
-        title (string): Name of observable, written to log
-    Returns:
-        MonoTypeOperatorFunction: logging operator
-    */
-
-  return tap((args: [object, string]) => {
-    logBase(title, args[0], level, args[1]).catch((err) => console.error(err))
-  })
-}
-
-// Log level wrapper functions
-const debug = logObservable.bind(null, LogLevel.DEBUG)
-const warning = logObservable.bind(null, LogLevel.WARNING)
-const error = logObservable.bind(null, LogLevel.ERROR)
-
-const logObservables = (
-  func: typeof debug,
-  ...args: Array<[Observable<any>, Observable<string>, string]>
-) =>
-  merge(
-    ...args.map(([obs, userID, title]) =>
-      zip(obs, userID ?? of(undefined)).pipe(func(title))
-    )
-  ).subscribe()
-
-export const debugObservables = logObservables.bind(null, debug)
-export const warningObservables = logObservables.bind(null, warning)
-export const errorObservables = logObservables.bind(null, error)

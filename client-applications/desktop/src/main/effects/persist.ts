@@ -1,53 +1,17 @@
-/**
- * Copyright Fractal Computers, Inc. 2021
- * @file app.ts
- * @brief This file contains subscriptions to Observables related to state persistence.
- */
+import { merge } from "rxjs"
 
-import { mapValues } from "lodash"
-import { persist, persistClear } from "@app/utils/persist"
-import { StateIPC } from "@app/@types/state"
-import { combineLatest, merge } from "rxjs"
-import { startWith } from "rxjs/operators"
-import {
-  userEmail,
-  userConfigToken,
-  userAccessToken,
-  userRefreshToken,
-} from "@app/main/observables/user"
+import { fromTrigger } from "@app/utils/flows"
+import { persist } from "@app/utils/persist"
 
-import { loginFailure } from "@app/main/observables/login"
-import { signupFailure } from "@app/main/observables/signup"
-import { containerCreateFailure } from "@app/main/observables/container"
-import { protocolLaunchFailure } from "@app/main/observables/protocol"
-import { signoutAction } from "@app/main/events/actions"
-
-// We create observables for each piece of state we want to persist.
-// Each observable subscribes to the parts of the application that provide
-// state updates.
-
-const subscribed = {
-  userEmail,
-  userConfigToken,
-  userAccessToken,
-  userRefreshToken,
-}
-
-// We combined the "subscribed" observables into a dictionary, using their names
-// as the dictionary keys. This is the object that is persisted to local storage.
-combineLatest(
-  mapValues(subscribed, (o: any): any => o.pipe(startWith(undefined)))
-).subscribe((state) => persist(state as Partial<StateIPC>))
-
-// On certain kinds of failures (or on signout), we clear persistence to force the user
-// to login again.
+// On a successful auth, store the email and tokens in Electron store
+// so the user is remembered
 merge(
-  loginFailure,
-  signupFailure,
-  containerCreateFailure,
-  protocolLaunchFailure,
-  signoutAction
-).subscribe(() => persistClear())
-
-// Uncomment this line to clear credentials in development.
-// persistClear()
+  fromTrigger("loginFlowSuccess"),
+  fromTrigger("signupFlowSuccess")
+).subscribe(
+  (args: { email: string; accessToken: string; configToken: string }) => {
+    persist("email", args.email)
+    persist("accessToken", args.accessToken)
+    persist("configToken", args.configToken)
+  }
+)

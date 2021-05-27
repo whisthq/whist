@@ -1,24 +1,21 @@
+import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
 import { trayIconPath } from "@app/config/files"
 
 // We create the tray here so that it persists throughout the application
 let tray: Tray | null = null
 
-export const createTray = (eventActionTypes: {
-  signout: () => any
-  quit: () => any
-}) => {
-  /*
-    Description:
-        Creates a tray for the application.
-    Arguments:
-        signout (function): function that triggers the signout action in the app
-        quit (function): function that triggers the quit action in the app
-    Returns:
-        None
-  */
+const createNativeImage = () => {
+  let image = nativeImage.createFromPath(trayIconPath)
+  image = image.resize({ width: 16 })
+  image.setTemplateImage(true)
+  return image
+}
 
-  // we should only have one tray at any given time
+export const trayEvent = new events.EventEmitter()
+
+export const createTray = () => {
+  // We should only have one tray at any given time
   if (tray != null) {
     tray.destroy()
   }
@@ -27,13 +24,13 @@ export const createTray = (eventActionTypes: {
     {
       label: "Sign out",
       click: () => {
-        eventActionTypes.signout()
+        trayEvent.emit("signout")
       },
     },
     {
       label: "Quit",
       click: () => {
-        eventActionTypes.quit()
+        trayEvent.emit("quit")
       },
     },
   ])
@@ -42,20 +39,4 @@ export const createTray = (eventActionTypes: {
 
 export const doesTrayExist = () => {
   return tray != null && !tray.isDestroyed()
-}
-
-// Process the image to the right size + set as template image (as a template image, Mac will automatically change the icon colors to match the mode)
-const createNativeImage = () => {
-  /*
-    Description:
-        Creates a tray icon based on the user's OS. Resizes the image and sets it as template image (as a template image, Mac will automatically change the icon colors to match the mode)
-    Arguments:
-        None
-    Returns:
-       (NativeImage): the tray icon
-  */
-  let image = nativeImage.createFromPath(trayIconPath)
-  image = image.resize({ width: 16 })
-  image.setTemplateImage(true)
-  return image
 }

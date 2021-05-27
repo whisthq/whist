@@ -9,37 +9,30 @@
 // Only serializable data can be persisted. Essentially, anything that can be
 // converted to JSON.
 import Store from "electron-store"
-import { get } from "lodash"
-
-import { StateIPC } from "@app/@types/state"
+import events from "events"
+import { isEmpty, pickBy } from "lodash"
 
 export const store = new Store({ watch: true })
+export const persisted = new events.EventEmitter()
 
-// This is the function that should most often be used to persist data.
-// Just pass it an object, and as long as its values are serializable to JSON
-// it will save.
-export const persist = (obj: Partial<StateIPC>) => {
-  for (const key in obj) {
-    const value = get(obj, key, "")
-    if (value !== "" && value !== store.get(key)) store.set(key, value)
+const cache = {
+  accessToken: store.get("accessToken") ?? "",
+  configToken: store.get("configToken") ?? "",
+  email: store.get("email") ?? "",
+}
+
+export const emitCache = () => {
+  if (isEmpty(pickBy(cache, (x) => x === ""))) {
+    persisted.emit("data-persisted", cache)
+  } else {
+    persisted.emit("data-not-persisted")
   }
 }
 
-// This is a helper function to use when you want to save only a subset of an
-// object. It's useful when dealing with an object that may have null or
-// undefined values. electron-store prefers that you delete keys instead of
-// assigning them to undefined.
-export const persistKeys = (obj: Partial<StateIPC>, ...keys: string[]) => {
-  for (const key of keys) {
-    const value = get(obj, key, "")
-    if (value !== "" && value !== store.get(key)) {
-      store.set(key, value)
-    }
-  }
+export const persist = (key: string, value: string) => {
+  store.set(key, value)
 }
 
-// With no arguments, delete everything in persistence. We should extend this
-// function to accept arguments so that we can delete specific keys.
 export const persistClear = () => {
   store.clear()
 }
