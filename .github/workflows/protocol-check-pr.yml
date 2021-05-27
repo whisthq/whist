@@ -7,10 +7,6 @@ name: "Protocol: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "protocol/**"
             - "!protocol/README.md"

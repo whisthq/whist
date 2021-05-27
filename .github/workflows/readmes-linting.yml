@@ -7,10 +7,6 @@ name: "READMEs: Linting"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "README.md"
             - "**/README.md"

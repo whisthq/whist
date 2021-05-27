@@ -9,10 +9,6 @@ name: "Main Webserver: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "main-webserver/**"
             - "!main-webserver/README.md"
