@@ -24,10 +24,10 @@ echo "================================================"
 
 # Attempt to remove potentially oudated Docker runtime
 # Allow failure with ||:, in case they're not installed yet
-sudo apt-get remove docker docker-engine docker.io containerd runc ||:
-sudo apt-get clean
-sudo apt-get upgrade
-sudo apt-get update
+sudo apt-get remove -y docker docker-engine docker.io containerd runc ||:
+sudo apt-get clean -y
+sudo apt-get upgrade -y
+sudo apt-get update -y
 
 # Install latest Docker runtime and dependencies
 sudo apt-get install -y apt-transport-https ca-certificates curl wget gnupg-agent software-properties-common
@@ -90,7 +90,7 @@ curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
 curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
 
 # Install nvidia-docker via apt
-sudo apt-get update
+sudo apt-get update -y
 sudo apt-get install -y nvidia-docker2
 
 echo "================================================"
