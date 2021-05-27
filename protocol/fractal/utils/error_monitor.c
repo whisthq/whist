@@ -1,6 +1,6 @@
 /**
  * Copyright Fractal Computers, Inc. 2021
- * @file error_monitor.h
+ * @file error_monitor.c
  * @brief This file contains the functions to configure and report breadcrumbs
  *        and error events to tools such as Sentry.
 ============================
@@ -11,10 +11,10 @@ started up. This environment should be development/staging/production, and is
 passed in as a command-line parameter. Once the value is known, we may call
 `error_monitor_set_environment()` to configure it.
 
-If no environment is set, the error monitor will silently fail to initialize.
-This is because we don't want it to complain in personal setups and manual
-connections when developing, but it's important to note the side-effect that we
-will not report to the error monitoring service if environment isn't passed in.
+If no environment is set, the error monitor will fail to initialize. This is
+because we don't want it to complain in personal setups and manual connections
+when developing, but it's important to note the side-effect that we will not
+report to the error monitoring service if environment isn't passed in.
 
 To initialize the error monitor, we call `error_monitor_initialize()`. After
 doing so, we can configure the error logging metadata with
@@ -101,7 +101,7 @@ void error_monitor_set_username(char *username) {
             `error_monitor_initialize()`.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
+    // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
     // Set the user to username, or remove the user as a default.
@@ -131,7 +131,7 @@ void error_monitor_set_connection_id(int id) {
             `error_monitor_initialize()`.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
+    // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
     char connection_id[50];
@@ -159,8 +159,11 @@ void error_monitor_initialize(bool is_client) {
         Note: This will do nothing if the environment has not already been set.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
-    if (!error_monitor_environment_set) return;
+    // If we haven't set the environment, we don't want our error monitor.
+    if (!error_monitor_environment_set) {
+        LOG_INFO("Environment not set... not initializing error monitor");
+        return;
+    }
 
     if (error_monitor_initialized) {
         LOG_WARNING("Error monitor already initialized!");
@@ -224,7 +227,7 @@ void error_monitor_shutdown() {
             `destroy_logger()`. See the "Usage" section above for details.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
+    // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
     sentry_shutdown();
@@ -249,7 +252,7 @@ void error_monitor_log_breadcrumb(const char *tag, const char *message) {
             risk entering an infinite recursion loop.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
+    // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
         // In the current sentry-native beta version, breadcrumbs can only be logged
@@ -280,7 +283,7 @@ void error_monitor_log_error(const char *message) {
             risk entering an infinite recursion loop.
     */
 
-    // If we haven't set the environment, we don't want our error manager.
+    // If we haven't set the environment, we don't want our error monitor.
     if (!error_monitor_initialized) return;
 
     sentry_value_t event =
