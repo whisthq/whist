@@ -1271,15 +1271,13 @@ func (engine *DockerTaskEngine) createContainer(task *apitask.Task, container *a
 	}
 
 	createContainerBegin := time.Now()
+
+	seelog.Infof("Creating container using config %+v", config)
+	seelog.Infof("Creating container using hostConfig %+v", hostConfig)
+
 	metadata := client.CreateContainer(engine.ctx, config, hostConfig,
 		dockerContainerName, engine.cfg.ContainerCreateTimeout)
 
-	seelog.Infof("Created container using container.Ports: %v", container.Ports)
-	seelog.Infof("Created container using config %v", config)
-	seelog.Infof("Created container using hostConfig %v", hostConfig)
-	seelog.Infof("Created container using hostConfig.Binds %v", hostConfig.Binds)
-	seelog.Infof("Created container using hostConfig.PortBindings %v", hostConfig.PortBindings)
-	seelog.Infof("Created container using config.Env %v", config.Env)
 	seelog.Infof("Created container with resulting metadata %v", metadata)
 
 	if metadata.DockerID != "" {
