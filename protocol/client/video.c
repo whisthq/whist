@@ -54,6 +54,8 @@ extern volatile int output_height;
 extern volatile CodecType output_codec_type;
 extern volatile double latency;
 
+extern volatile int running_ci;
+
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 extern volatile FractalRGBColor* native_window_color;
 extern volatile bool native_window_color_update;
@@ -259,6 +261,14 @@ int render_video() {
     }
 
     SDL_Renderer* renderer = video_context.renderer;
+
+//    Windows GHA VM cannot render, it just segfaults on creating the renderer
+// TODO test rendering in windows CI.
+#if _WIN32
+    if (running_ci) {
+        return 0;
+    }
+#endif
 
     if (rendering) {
         // Stop loading animation once rendering occurs
@@ -1108,9 +1118,9 @@ void update_video() {
                 }
             }
         }
-	// if the max_id and last_rendered_id are not too far apart (they can be very far apart during startup)
-	// we should check for frames being received out-of-order
-	// that probably means all the packets for the frame got dropped
+        // if the max_id and last_rendered_id are not too far apart (they can be very far apart
+        // during startup) we should check for frames being received out-of-order that probably
+        // means all the packets for the frame got dropped
         if (video_data.max_id < video_data.last_rendered_id + 2 * MAX_UNSYNCED_FRAMES) {
             // currently, checks if the ring buffer has an old frame
             if (get_timer(video_data.missing_frame_nack_timer) > latency) {
