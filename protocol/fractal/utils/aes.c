@@ -95,6 +95,9 @@ bool verify_hmac(void* hash, void* buf, int len, void* key) {
     (sizeof(((FractalPacket*)0)->hash) + sizeof(((FractalPacket*)0)->cipher_len) + \
      sizeof(((FractalPacket*)0)->iv))
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int encrypt_packet(FractalPacket* plaintext_packet, int packet_len, FractalPacket* encrypted_packet,
                    unsigned char* private_key) {
     char* plaintext_buf = (char*)plaintext_packet + CRYPTO_HEADER_LEN;

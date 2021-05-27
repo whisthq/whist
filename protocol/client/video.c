@@ -129,6 +129,7 @@ struct VideoData {
     int last_rendered_id;
     int max_id;
     int most_recent_iframe;
+    int last_received_id;
 
     clock last_iframe_request_timer;
     bool is_waiting_for_iframe;
@@ -597,6 +598,9 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
     gif_frame_index %= NUMBER_LOADING_FRAMES;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 void nack(int id, int index) {
     /*
         Send a negative acknowledgement to the server if a video
@@ -838,6 +842,7 @@ int init_video_renderer() {
     video_data.last_rendered_id = 0;
     video_data.max_id = 0;
     video_data.most_recent_iframe = -1;
+    video_data.last_received_id = -1;
     start_timer(&video_data.missing_frame_nack_timer);
     video_data.num_nacked = 0;
     video_data.bucket = STARTING_BITRATE / BITRATE_BUCKET_SIZE;
@@ -1118,25 +1123,6 @@ void update_video() {
                 }
             }
         }
-        // if the max_id and last_rendered_id are not too far apart (they can be very far apart
-        // during startup) we should check for frames being received out-of-order that probably
-        // means all the packets for the frame got dropped
-        if (video_data.max_id < video_data.last_rendered_id + 2 * MAX_UNSYNCED_FRAMES) {
-            // currently, checks if the ring buffer has an old frame
-            if (get_timer(video_data.missing_frame_nack_timer) > latency) {
-                for (int i = next_render_id; i < video_data.max_id; i++) {
-                    int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
-                    if (receiving_frames[buffer_index].id != i) {
-                        // we just didn't receive any packets for a frame
-                        // though we did receive packets for future frames
-                        // we should nack the index 0 packet for said frame
-                        LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
-                        start_timer(&video_data.missing_frame_nack_timer);
-                        nack(i, 0);
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -1158,7 +1144,7 @@ int32_t receive_video(FractalPacket* packet) {
     // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
-    // Find frame in linked list that matches the id
+    // Find frame in ring buffer that matches the id
     video_data.bytes_transferred += packet->payload_size;
 
     int index = packet->id % RECV_FRAMES_BUFFER_SIZE;
@@ -1239,6 +1225,10 @@ int32_t receive_video(FractalPacket* packet) {
     video_data.max_id = max(video_data.max_id, ctx->id);
 
     ctx->received_indicies[packet->index] = true;
+
+    // nack both for missing packets in this frame, and missing previous frames
+
+    // check if we have jumped 5 indices abruptly - if so, nack the missing packets
     if (packet->index > 0 && get_timer(ctx->last_nacked_timer) > 6.0 / 1000) {
         int to_index = packet->index - 5;
         for (int i = max(0, ctx->last_nacked_index + 1); i <= to_index; i++) {
@@ -1252,6 +1242,23 @@ int32_t receive_video(FractalPacket* packet) {
             }
         }
     }
+
+    // check if we have jumped a whole frame - if so, we should nack for index 0 on the missing
+    // frame
+    if (video_data.last_received_id != -1 &&
+        get_timer(video_data.missing_frame_nack_timer) > latency &&
+        video_data.last_received_id < ctx->id - 1) {
+        for (int i = video_data.last_received_id + 1; i < ctx->id; i++) {
+            int buffer_index = i % RECV_FRAMES_BUFFER_SIZE;
+            if (receiving_frames[buffer_index].id != i) {
+                LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
+                start_timer(&video_data.missing_frame_nack_timer);
+                nack(i, 0);
+            }
+        }
+    }
+
+    video_data.last_received_id = ctx->id;
     ctx->packets_received++;
 
     // Copy packet data
