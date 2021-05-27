@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 func (c *containerData) PopulateUserConfigs() error {
@@ -157,7 +159,7 @@ func (c *containerData) cleanUserConfigDir() {
 }
 
 func (c *containerData) getUserConfigDir() string {
-	return logger.Sprintf("%s%s/userConfigs/", logger.FractalDir, c.fractalID)
+	return logger.Sprintf("%s%s/userConfigs/", utils.FractalDir, c.fractalID)
 }
 
 func (c *containerData) getS3ConfigPath() string {

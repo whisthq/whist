@@ -8,10 +8,12 @@ import (
 	"context"
 	"sync"
 
+	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
-	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	dockercontainer "github.com/docker/docker/api/types/container"
 )
@@ -363,7 +365,7 @@ func (c *containerData) InitializeUinputDevices(goroutineTracker *sync.WaitGroup
 	go func() {
 		defer goroutineTracker.Done()
 
-		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, logger.TempDir+string(c.fractalID)+"/sockets/uinput.sock")
+		err := uinputdevices.SendDeviceFDsOverSocket(c.ctx, goroutineTracker, devices, utils.TempDir+string(c.fractalID)+"/sockets/uinput.sock")
 		if err != nil {
 			logger.Errorf("SendDeviceFDsOverSocket returned for FractalID %s with error: %s", c.fractalID, err)
 		} else {
