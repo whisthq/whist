@@ -20,7 +20,7 @@ To set up your Fractal development instance:
 
 - Set the keypair permissions to owner-readonly by running `chmod 400 your-keypair.pem`.
 
-- SSH/SSM into your instance and install `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
+- SSH/SSM into your instance and install the latest stable version of `Go` via the following ([instructions](https://linuxize.com/post/how-to-install-go-on-ubuntu-20-04/)).
 
 - If you use Github with SSH, set up a new SSH key and add it to Github ([Github instructions](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh))
 
@@ -55,7 +55,7 @@ cd ~/fractal/container-images
 
 - If `./setup_ubuntu20_host.sh` fails with the error `Unable to locate credentials`, run `aws configure` and then rerun the script. Enter your AWS credentials for the access key and secret key; for the region, use **us-east-1**.
 
-- If you are on a high-DPI screen, you can optionally prepend the final line of the above code block with `FRACTAL_DPI=250` (or any other value) to override the default DPI value of 96 for the container.
+If you are on a high-DPI screen, you can optionally append the above code block with `--dpi=250` (or any other value) to override the default DPI value of 96 for the container.
 
 - Start a Fractal protocol client to connect to the Fractal protocol server running on your instance by following the instructions in [`protocol/client/README.md`](https://github.com/fractal/fractal/blob/dev/protocol/client/README.md). If a window pops up that streams the Fractal base application, which is currently **xterm**, then you are all set!
 
