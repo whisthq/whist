@@ -7,10 +7,6 @@ name: "Website: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "website/**"
             - "!website/README.md"

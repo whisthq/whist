@@ -7,10 +7,6 @@ name: "Container Images: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "container-images/**"
             - "!container-images/README.md"

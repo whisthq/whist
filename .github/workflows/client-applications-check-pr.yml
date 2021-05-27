@@ -7,10 +7,6 @@ name: "Client Applications: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "client-applications/**"
             - "!client-applications/README.md"

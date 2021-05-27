@@ -7,10 +7,6 @@ name: "ECS Host Setup: Check PR"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "ecs-host-setup/**"
             - "!ecs-host-setup/README.md"

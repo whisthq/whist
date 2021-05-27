@@ -7,10 +7,6 @@ name: "Shell Scripts: Linting"
 
 on:
     pull_request:
-        branches:
-            - prod
-            - staging
-            - dev
         paths:
             - "**/*.sh"
             - ".github/workflows/shell-scripts-linting.yml"
