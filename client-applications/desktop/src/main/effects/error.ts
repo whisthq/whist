@@ -4,24 +4,64 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { app } from "electron"
-import { closeWindows } from "@app/utils/windows"
+import { merge, Observable, combineLatest } from "rxjs"
+import { skipUntil, startWith, tap, map } from "rxjs/operators"
+import { ChildProcess } from "child_process"
 
 import {
-  errorRelaunchRequest,
-  errorWindowRequest,
-} from "@app/main/observables/error"
+  containerCreateErrorNoAccess,
+  containerCreateErrorUnauthorized,
+} from "@app/utils/container"
+import { closeWindows, createErrorWindow } from "@app/utils/windows"
+import {
+  NoAccessError,
+  UnauthorizedError,
+  ProtocolError,
+  ContainerError,
+  AuthError,
+  FractalError,
+} from "@app/utils/error"
 
-// Other parts of the application need to know that an error has happened,
-// which is why we have observables like "errorWindowRequest" defined outside
-// of the Effects module of the application.
+import { protocolStreamKill } from "@app/utils/protocol"
+import { fromTrigger } from "@app/utils/flows"
 
-errorRelaunchRequest.subscribe(() => {
-  app.relaunch()
-  app.exit()
+// Wrapper function that waits for Electron to have loaded (so the error window can appear)
+// and kills the protocol (so the protocol isn't still running if there's an error)
+const onError = (obs: Observable<any>) =>
+  combineLatest(
+    obs,
+    fromTrigger("protocolLaunchFlowSuccess").pipe(startWith(undefined))
+  ).pipe(
+    skipUntil(fromTrigger("appReady")),
+    tap(([, protocol]: [any, ChildProcess]) => {
+      protocolStreamKill(protocol)
+    }),
+    map(([x]: [any, ChildProcess]) => x)
+  )
+
+// Closees all windows and creates the error window
+const handleError = (error: FractalError) => {
+  closeWindows()
+  createErrorWindow(error)
+}
+
+// For any failure, close all windows and display error window
+onError(fromTrigger("containerFlowFailure")).subscribe((x) => {
+  if (containerCreateErrorNoAccess(x)) {
+    handleError(NoAccessError)
+  } else if (containerCreateErrorUnauthorized(x)) {
+    handleError(UnauthorizedError)
+  } else {
+    handleError(ContainerError)
+  }
 })
 
-errorWindowRequest.subscribe((windowFunction) => {
-  closeWindows()
-  windowFunction()
+onError(fromTrigger("protocolLaunchFlowFailure")).subscribe(() => {
+  handleError(ProtocolError)
+})
+
+onError(
+  merge(fromTrigger("loginFlowFailure"), fromTrigger("signupFlowFailure"))
+).subscribe(() => {
+  handleError(AuthError)
 })

@@ -34,13 +34,12 @@ export const serializePorts = (ps: {
   port_32273: number
 }) => `32262:${ps.port_32262}.32263:${ps.port_32263}.32273:${ps.port_32273}`
 
-export const writeStream = (process: ChildProcess, message: string) => {
-  process.stdin?.write(message)
-  process.stdin?.write("\n")
-}
-
-export const endStream = (process: ChildProcess, message: string) => {
-  process.stdin?.end(message)
+export const writeStream = (
+  process: ChildProcess | undefined,
+  message: string
+) => {
+  process?.stdin?.write?.(message)
+  process?.stdin?.write?.("\n")
 }
 
 // Spawn the child process with the initial arguments passed in
@@ -79,6 +78,7 @@ export const protocolLaunch = async () => {
         cwd: path.join(protocolFolder, "../.."),
       }),
   })
+
   return protocol
 }
 
@@ -86,22 +86,23 @@ export const protocolLaunch = async () => {
 export const protocolStreamInfo = (
   protocol: ChildProcess,
   info: {
-    ports: {
+    containerIP: string
+    containerSecret: string
+    containerPorts: {
       port_32262: number
       port_32263: number
       port_32273: number
     }
-    secret_key: string
-    ip: string
   }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.ports)}`)
-  writeStream(protocol, `private-key?${info.secret_key}`)
-  writeStream(protocol, `ip?${info.ip}`)
+  writeStream(protocol, `ports?${serializePorts(info.containerPorts)}`)
+  writeStream(protocol, `private-key?${info.containerSecret}`)
+  writeStream(protocol, `ip?${info.containerIP}`)
   writeStream(protocol, "finished?0")
 }
 
-export const protocolStreamKill = (protocol: ChildProcess) => {
+export const protocolStreamKill = (protocol: ChildProcess | undefined) => {
   writeStream(protocol, "kill?0")
-  protocol.kill("SIGINT")
+  // We send SIGINT just in case
+  protocol?.kill?.("SIGINT")
 }

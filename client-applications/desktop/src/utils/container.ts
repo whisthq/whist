@@ -29,6 +29,10 @@ export const containerCreate = async (email: string, accessToken: string) => {
   return response
 }
 
+export const containerCreateSuccess = (
+  response: AsyncReturnType<typeof containerCreate>
+) => [200, 202].includes(response.status as number)
+
 export const containerCreateErrorNoAccess = (
   response: AsyncReturnType<typeof containerCreate>
 ) => response.status === 402
@@ -40,34 +44,35 @@ export const containerCreateErrorUnauthorized = (
 export const containerCreateErrorInternal = (
   response: AsyncReturnType<typeof containerCreate>
 ) =>
-  ![402, 422].includes(response.status as number) ||
-  (response?.json?.ID ?? "") === ""
+  (response?.json?.ID ?? "") === "" &&
+  !containerCreateErrorNoAccess(response) &&
+  !containerCreateErrorUnauthorized(response)
 
-export const containerInfo = async (taskID: string, accessToken: string) =>
+export const containerPolling = async (taskID: string, accessToken: string) =>
   await taskStatus(taskID, accessToken)
 
-export const containerInfoError = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingError = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => (response?.json?.state ?? "") === ""
 
-export const containerInfoSuccess = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingSuccess = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => response?.json?.state === "SUCCESS"
 
-export const containerInfoPending = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingPending = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => response?.json?.state !== "SUCCESS" && response?.json?.state !== "FAILURE"
 
-export const containerInfoPorts = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingPorts = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
 
-export const containerInfoIP = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingIP = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => response?.json?.output?.ip
 
-export const containerInfoSecretKey = (
-  response: AsyncReturnType<typeof containerInfo>
+export const containerPollingSecretKey = (
+  response: AsyncReturnType<typeof containerPolling>
 ) => response?.json?.output?.secret_key
 
 // Helper functions

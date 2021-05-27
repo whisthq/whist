@@ -3,32 +3,20 @@
 // Electron renderer windows.
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
-import {
-  WindowHashAuth,
-  WindowHashUpdate,
-  WindowHashAuthError,
-  WindowHashProtocolError,
-  WindowHashCreateContainerErrorNoAccess,
-  WindowHashCreateContainerErrorUnauthorized,
-  WindowHashCreateContainerErrorInternal,
-  WindowHashAssignContainerError,
-} from "@app/utils/constants"
-import config, { FractalEnvironments } from "@app/config/environment"
+import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
+import config from "@app/config/environment"
+import { FractalEnvironments } from "../../config/configs"
+import { FractalError } from "@app/utils/error"
 
 const { buildRoot } = config
 
-// Because we need to make windows of all kinds of shapes and sizes, we're
-// predefining some sizes here to help with consistency. The actual windows that
-// we create will be compositions of the "base" config + "width" and "height"
-// values. There's no particular reason why we multiply these values by 16,
-// it just makes the sizing scale a little more readable.
-const base = {
+export const base = {
   webPreferences: { preload: path.join(buildRoot, "preload.js") },
   resizable: false,
   titleBarStyle: "hidden",
 }
 
-const width = {
+export const width = {
   xs: { width: 16 * 24 },
   sm: { width: 16 * 32 },
   md: { width: 16 * 40 },
@@ -38,7 +26,7 @@ const width = {
   xl3: { width: 16 * 96 },
 }
 
-const height = {
+export const height = {
   xs: { height: 16 * 20 },
   sm: { height: 16 * 32 },
   md: { height: 16 * 40 },
@@ -47,11 +35,6 @@ const height = {
   xl2: { height: 16 * 80 },
   xl3: { height: 16 * 96 },
 }
-
-type CreateWindowFunction = (
-  onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any
-) => BrowserWindow
 
 export const getWindows = () => BrowserWindow.getAllWindows()
 
@@ -128,70 +111,29 @@ export const createWindow = (
   )
   win.on("close", () => onClose?.(win))
 
+  win.show()
+
   return win
 }
 
-// These functions below are the ones we'll actually use to create windows in
-// the application. They're preconfigured with sizing settings, as well as the
-// parameters required to render the correct React component. We pass params
-// through the "WindowHash..." objects that we've imported in this file.
-// This allows us to contain the complexity of window configuration to this file.
-// The rest of the application doesn't need to know anything about how to
-// configure an Electron window.
-
-export const createAuthWindow: CreateWindowFunction = () =>
+export const createAuthWindow = () =>
   createWindow(WindowHashAuth, {
     ...base,
     ...width.sm,
     ...height.md,
   } as BrowserWindowConstructorOptions)
 
-export const createAuthErrorWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAuthError, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-export const createContainerErrorWindowNoAccess: CreateWindowFunction = () =>
-  createWindow(WindowHashCreateContainerErrorNoAccess, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-export const createContainerErrorWindowUnauthorized: CreateWindowFunction =
-  () =>
-    createWindow(WindowHashCreateContainerErrorUnauthorized, {
-      ...base,
-      ...width.md,
-      ...height.xs,
-    } as BrowserWindowConstructorOptions)
-
-export const createContainerErrorWindowInternal: CreateWindowFunction = () =>
-  createWindow(WindowHashCreateContainerErrorInternal, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-export const assignContainerErrorWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashAssignContainerError, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-export const createProtocolErrorWindow: CreateWindowFunction = () =>
-  createWindow(WindowHashProtocolError, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-export const createUpdateWindow: CreateWindowFunction = () =>
+export const createUpdateWindow = () =>
   createWindow(WindowHashUpdate, {
     ...base,
     ...width.sm,
     ...height.md,
   } as BrowserWindowConstructorOptions)
+
+export const createErrorWindow = (error: FractalError) => {
+  createWindow(error.hash, {
+    ...base,
+    ...width.md,
+    ...height.xs,
+  } as BrowserWindowConstructorOptions)
+}

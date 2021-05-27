@@ -8,7 +8,7 @@ export const emailLogin = async (username: string, password: string) =>
     body: { username, password },
   })
 
-type ResponseAuth = AsyncReturnType<typeof emailLogin>
+export type ResponseAuth = AsyncReturnType<typeof emailLogin>
 
 export const emailLoginValid = (response: ResponseAuth) =>
   (response?.json?.access_token ?? "") !== ""
