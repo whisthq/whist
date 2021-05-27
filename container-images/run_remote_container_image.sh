@@ -7,6 +7,8 @@
 # Arguments:
 #    $1 - app name, including deploy environment (e.g. dev/browsers/chrome)
 #    $2 - remote tag, i.e. git hash you wanna use
+#    ...- any remaining arguments are passed to `run_container_image.sh`. Pass
+#           in `--help` to see some helpful usage text.
 
 set -Eeuo pipefail
 
@@ -20,7 +22,6 @@ cd "$DIR"
 app_path=${1%/}
 repo_name=fractal/$app_path
 remote_tag=$2
-mount=${3:-}
 ghcr_uri=ghcr.io
 image=$ghcr_uri/$repo_name:$remote_tag
 
@@ -30,5 +31,5 @@ echo "$GH_PAT" | docker login --username "$GH_USERNAME" --password-stdin $ghcr_u
 # Download the container image from GHCR
 docker pull "$image"
 
-# Run the container image retrieved from GHCR
-./helper_scripts/run_container_image.sh "$image" "$mount"
+# Run the container image retrieved from GHCR, with the first two arguments (app_path and remote_tag) removed.
+./helper_scripts/run_container_image.sh "$image" "${@:3}"

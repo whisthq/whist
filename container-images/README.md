@@ -49,7 +49,8 @@ A tree structure is provided below:
 │   ├── build_container_image.py <- Helper script to build a/many Docker image(s)
 │   ├── copy_protocol_build.sh <- Helper script to copy the compiled Fractal server protocol between folders
 │   ├── find_images_in_git_repo.sh <- Helper script to find all Dockerfiles in this folder tree
-│   └── run_container_image.sh <- Helper script to run a build container image
+│   └── run_container_image.sh <- Helper script to run a container image
+│   └── run_container_image.py <- Helper script to run a container image
 ├── push_container_image.sh <- Helper script to push a built container image to GHCR
 ├── run_local_container_image.sh <- Helper script to run a locally-built container image
 ├── run_remote_container_image.sh <- Helper script to fetch and run a container image stored on GHCR
@@ -117,17 +118,21 @@ You first need to build the protocol and then build the base image before you ca
 
 ### Running Local Images
 
+Before you can run container images (local or remote), make sure you have the host service running in a separate terminal with `cd ../ecs-host-service && make run`.
+
 Once an image with tag `current-build` has been built locally via `build_container_images.sh`, it may be run locally by calling:
 
 ```
-[FRACTAL_DPI=96] ./run_local_container_image.sh APP [MOUNT]
+./run_local_container_image.sh APP [OPTIONS...]
 ```
 
-As usual, `APP` is the path to the app folder. Meanwhile, `MOUNT` is an optional argument specifying whether to facilitate server protocol development by mounting and live-updating the `base/protocol` submodule. If `MOUNT=mount`, then the submodule is mounted; else, it is not. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
+As usual, `APP` is the path to the app folder. Note that this script should be used on EC2 instances as an Nvidia GPU is required for our containers and our protocol to function properly.
 
-You can optionally override the default value of `96` for `FRACTAL_DPI` by setting the eponymous environment variable prior to running the container image. This might be useful if you are testing on a high-DPI screen. Likewise, you can override the default value of `60` seconds for `FRACTAL_TIMEOUT`, in case you don't want the protocol server to auto-shutdown after 60 seconds. Set it to any positive number for the timeout to be that number of seconds, or set it to `-1` to remove the timeout completely.
+There are some other options available to control properties of the resulting container, like DPI, or whether the server protocol should be replaced with the locally-built version. Run `./run_local_container_image.sh --help` to see all the other configuration options.
 
 ### Running Remote-Pushed Images
+
+Before you can run container images (local or remote), make sure you have the host service running in a separate terminal with `cd ../ecs-host-service && make run`.
 
 If an image has been pushed to GHCR and you wish to test it, you first need to authenticate Docker to allow you to pull the relevant image. To do this, run the following:
 
@@ -135,21 +140,19 @@ If an image has been pushed to GHCR and you wish to test it, you first need to a
 echo <PAT> | docker login --username <GH_USERNAME> --password-stdin ghcr.io
 ```
 
-Replace `<PAT>` with a [Github Personal Access Token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) with at least the `package` scope. Also, replace `<GH_USERNAME>` with your GitHub username.
+Replace `<PAT>` with a [GitHub Personal Access Token](https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token) with at least the `package` scope. Also, replace `<GH_USERNAME>` with your GitHub username.
 
 Then, retrieve the tag you wish to run by grabbing the relevant (full) Git commit hash from this repository, and run:
 
 ```
-[FRACTAL_DPI=96] ./run_remote_container_image.sh APP_WITH_ENVIRONMENT TAG [MOUNT]
+./run_remote_container_image.sh APP_WITH_ENVIRONMENT TAG [OPTIONS...]
 ```
 
-The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIRONMENT` is something like `dev/browsers/chrome`, for instance. All other configuration is the same as the local case.
+The argument `TAG` is the full Git commit hash to run. Note that `APP_WITH_ENVIRONMENT` is something like `dev/browsers/chrome`, for instance. All other configuration is the same as the local case, and the `--help` argument works with this script too.
 
 ### Connecting to Images
 
-Before connecting to the server protocol that runs in the container, the host service needs to receive a `set_container_start_values` request in order to allow the container to run. For now, this request automatically made by `run_container_image.sh`. This request sets the DPI and User ID.
-
-If you are using a high-DPI screen, you may want to pass in the optional DPI argument by setting the `FRACTAL_DPI` environment variable on your host. If you want to save your configs between sessions, then set the `FRACTAL_USER_ID` environment variable on your host. Additionally, you can set the `FRACTAL_TIMEOUT` environment variable, in case you don't want the protocol server to auto-shutdown after 60 seconds.
+If you are using a high-DPI screen, you may want to pass in the optional DPI argument to the above scripts. If you want to save your configs between sessions, then pass in a user ID and config encryption token as well. In case you don't want the server protocol to auto-shutdown after 60 seconds, you can set the timeout with another argument. As mentioned above, pass in `--help` to one of the container image-running scripts to see all the available options.
 
 Currently, it is important to wait 5-10 seconds after making the cURL request before connecting to the container via `./FractalClient -w [width] -h [height] [ec2-ip-address]`. This is due to a race condition between the `fractal-audio.service` and the protocol audio capturing code: (See issue [#360](https://github.com/fractal/fractal/issues/360)).
 
@@ -182,3 +185,9 @@ If the error messages seem to be related to fetching archives, try `docker syste
 We use [Hadolint](https://github.com/hadolint/hadolint) to format the Dockerfiles in this project. Your first need to install Hadolint via your local package manager, i.e. `brew install hadolint`, and have the Docker daemon running before linting a specific file by running `hadolint <file-path>`.
 
 We also have [pre-commit hooks](https://pre-commit.com/) with Hadolint support installed on this project, which you can initialize by first installing pre-commit via `pip install pre-commit` and then running `pre-commit install` in the project folder, to instantiate the hooks for Hadolint. Dockerfile improvements will be printed to the terminal for all Dockerfiles specified under `args` in `.pre-commit-config.yaml`. If you need/want to add other Dockerfiles, you need to specify them there. If you have issues with Hadolint tracking non-Docker files, you can commit with `git commit -m [MESSAGE] --no-verify` to skip the pre-commit hook for files you don't want to track.
+
+## FAQ
+
+### I have the correct IP and ports for a container on my EC2 dev instance to connect to, but it looks like my protocol server and client aren't seeing each other!
+
+Make sure your dev instance has a security group that has at least the ports [1025, 49151) open for incoming TCP and UDP connections.
