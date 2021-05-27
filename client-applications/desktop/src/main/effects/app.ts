@@ -135,8 +135,8 @@ zip(
     fromTrigger("containerFlowFailure").pipe(mapTo(false))
   )
 ).subscribe(([, success]: [any, boolean]) => {
-  if (success) app.quit()
   destroyTray()
+  if (success) app.quit()
 })
 
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
