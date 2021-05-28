@@ -20,7 +20,7 @@ require (
 	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/docker/go-units v0.4.0 // indirect
+	github.com/docker/go-units v0.4.0
 	github.com/getsentry/sentry-go v0.10.0
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/godbus/dbus v4.1.0+incompatible // indirect

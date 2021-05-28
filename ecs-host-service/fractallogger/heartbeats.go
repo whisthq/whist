@@ -48,10 +48,10 @@ type heartbeatRequest struct {
 	IsDyingHeartbeat bool   // Whether this heartbeat is sent by the host service during its death
 }
 
-// Get the appropriate webserver based on whether we're running in
-// production, staging or development. Since `GetAppEnvironment()` caches its
-// result, we don't need to cache this.
-func getFractalWebserver() string {
+// GetFractalWebserver returns the appropriate webserver URL based on whether
+// we're running in production, staging or development. Since
+// `GetAppEnvironment()` caches its result, we don't need to cache this.
+func GetFractalWebserver() string {
 	switch GetAppEnvironment() {
 	case EnvStaging:
 		return stagingFractalWebserver
@@ -84,7 +84,7 @@ func initializeHeartbeat() error {
 		return nil
 	}
 
-	Infof("Initializing webserver heartbeats, communicating with webserver at %s", getFractalWebserver())
+	Infof("Initializing webserver heartbeats, communicating with webserver at %s", GetFractalWebserver())
 
 	resp, err := handshake()
 	if err != nil {
@@ -170,7 +170,7 @@ func handshake() (handshakeResponse, error) {
 		return resp, MakeError("handshake(): Couldn't get AWS amiID. Error: %v", err)
 	}
 
-	requestURL := getFractalWebserver() + fractalWebserverAuthEndpoint
+	requestURL := GetFractalWebserver() + fractalWebserverAuthEndpoint
 	requestBody, err := json.Marshal(handshakeRequest{
 		InstanceID:   instanceID,
 		InstanceType: instanceType,
@@ -225,7 +225,7 @@ func sendHeartbeat(isDying bool) {
 	freeRAM, _ := GetFreeMemoryInKB()
 	availRAM, _ := GetAvailableMemoryInKB()
 
-	requestURL := getFractalWebserver() + fractalWebserverHeartbeatEndpoint
+	requestURL := GetFractalWebserver() + fractalWebserverHeartbeatEndpoint
 	requestBody, err := json.Marshal(heartbeatRequest{
 		AuthToken:        authToken,
 		Timestamp:        Sprintf("%s", time.Now()),

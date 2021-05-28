@@ -2,6 +2,7 @@ package main
 
 import (
 	"math"
+	"regexp"
 	"strings"
 
 	// NOTE: The "fmt" or "log" packages should never be imported!!! This is so
@@ -30,9 +31,13 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 
 	dockertypes "github.com/docker/docker/api/types"
+	dockercontainer "github.com/docker/docker/api/types/container"
 	dockerevents "github.com/docker/docker/api/types/events"
 	dockerfilters "github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/strslice"
 	dockerclient "github.com/docker/docker/client"
+	dockernat "github.com/docker/go-connections/nat"
+	dockerunits "github.com/docker/go-units"
 )
 
 func init() {
@@ -77,132 +82,180 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 // Container event handlers
 // ------------------------------------
 
-// SpinUpContainer will only be called in the localdev environment. It is also
-// currently only used in `run_container_image.sh`. Eventually, as we move off
-// ECS, this endpoint will become the canonical way to start containers.  Also
-// creates a file containing the protocol server timeout assigned to a specific
-// container, and makes it accessible to that container.
-func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, req *httpserver.SpinUpContainerRequest) {
+// SpinUpContainer is currently only used in the localdev environment, but
+// should now be "production-ready", i.e. create containers with the same (or
+// equivalent) configurations as the ecsagent with our task definitions.
+func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpContainerRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("handleStartValuesRequest(): "+fmt, v...)
+		err := logger.MakeError("SpinUpContainer(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
 
-	fc := fractalcontainer.New(globalCtx, goroutineTracker, "abcdefabcdefabcdefabcdefabcdef")
+	// We begin by creating the container.
+
+	fractalID := fractalcontainer.FractalID(utils.RandHex(30))
+	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
 	logger.Infof("SpinUpContainer(): created FractalContainer object %s", fc.GetFractalID())
 
-	// We just fix the ports we want
+	// If the creation of the container fails, we want to clean up after it. We
+	// do this by setting `createFailed` to true until all steps are done, and
+	// closing the container's context on function exit if `createFailed` is
+	// still set to true.
+	var createFailed bool = true
+	defer func() {
+		if createFailed {
+			fc.Close()
+		}
+	}()
+
+	// Request port bindings for the container.
 	if err := fc.AssignPortBindings([]portbindings.PortBinding{
-		{ContainerPort: 32262, HostPort: 32262, BindIP: "", Protocol: "tcp"},
-		{ContainerPort: 32263, HostPort: 32263, BindIP: "", Protocol: "udp"},
-		{ContainerPort: 32273, HostPort: 32273, BindIP: "", Protocol: "tcp"},
+		{ContainerPort: 32262, HostPort: 0, BindIP: "", Protocol: "tcp"},
+		{ContainerPort: 32263, HostPort: 0, BindIP: "", Protocol: "udp"},
+		{ContainerPort: 32273, HostPort: 0, BindIP: "", Protocol: "tcp"},
 	}); err != nil {
-		logAndReturnError("SpinUpContainer(): error assigning port bindings: %s", err)
+		logAndReturnError("Error assigning port bindings: %s", err)
 		return
 	}
 	logger.Infof("SpinUpContainer(): successfully assigned port bindings %v", fc.GetPortBindings())
-	portBindings := fc.GetPortBindings()
 
+	hostPortForTCP32262, err32262 := fc.GetHostPort(32262, portbindings.TransportProtocolTCP)
+	hostPortForUDP32263, err32263 := fc.GetHostPort(32263, portbindings.TransportProtocolUDP)
+	hostPortForTCP32273, err32273 := fc.GetHostPort(32273, portbindings.TransportProtocolTCP)
+	if err32262 != nil || err32263 != nil || err32273 != nil {
+		logAndReturnError("Couldn't return host port bindings.")
+		return
+	}
+
+	// Initialize Uinput devices for the container
 	if err := fc.InitializeUinputDevices(goroutineTracker); err != nil {
-		logAndReturnError("SpinUpContainer(): error initializing uinput devices: %s", err)
+		logAndReturnError("Error initializing uinput devices: %s", err)
 		return
 	}
 	logger.Infof("SpinUpContainer(): successfully initialized uinput devices.")
 	devices := fc.GetDeviceMappings()
 
+	// Allocate a TTY for the container
 	if err := fc.InitializeTTY(); err != nil {
-		logAndReturnError("SpinUpContainer(): error initializing TTY: %s", err)
+		logAndReturnError("Error initializing TTY: %s", err)
 		return
 	}
 	logger.Infof("SpinUpContainer(): successfully initialized TTY.")
 
-	// Get AppName, appImage, and mountCommand from the request sent by
-	// run_container_image.sh
-	appName := fractalcontainer.AppName(req.AppName)
+	appName := fractalcontainer.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
-	logger.Infof(`SpinUpContainer(): app name: "%s"`, req.AppName)
+	logger.Infof(`SpinUpContainer(): app name: "%s"`, appName)
 	logger.Infof(`SpinUpContainer(): app image: "%s"`, req.AppImage)
-	logger.Infof(`SpinUpContainer(): mount command: "%s"`, req.MountCommand)
 
-	// Actually create the container using `docker create`. Yes, this could be
-	// done with the docker CLI, but that would take some effort to convert.
-	// This was "quick" and dirty. Also, once we're off ECS we'll be able to
-	// test running containers on any Linux machine without hackery like this,
-	// so this is temporary in any case.
+	// We now create the underlying docker container.
+	exposedPorts := make(dockernat.PortSet)
+	exposedPorts[dockernat.Port("32262/tcp")] = struct{}{}
+	exposedPorts[dockernat.Port("32263/udp")] = struct{}{}
+	exposedPorts[dockernat.Port("32273/tcp")] = struct{}{}
 
-	dockerCmdArgs := []string{
-		"create", "-it",
-		`-v`, `/sys/fs/cgroup:/sys/fs/cgroup:ro`,
-		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/containerResourceMappings:/fractal/resourceMappings:ro`,
-		`-v`, `/fractal/temp/` + string(fc.GetFractalID()) + `/sockets:/tmp/sockets`,
-		`-v`, `/run/udev/data:/run/udev/data:ro`,
-		`-v`, `/fractal/` + string(fc.GetFractalID()) + `/userConfigs/unpacked_configs:/fractal/userConfigs:rshared`,
-		logger.Sprintf(`--device=%s:%s:%s`, devices[0].PathOnHost, devices[0].PathInContainer, devices[0].CgroupPermissions),
-		logger.Sprintf(`--device=%s:%s:%s`, devices[1].PathOnHost, devices[1].PathInContainer, devices[1].CgroupPermissions),
-		logger.Sprintf(`--device=%s:%s:%s`, devices[2].PathOnHost, devices[2].PathInContainer, devices[2].CgroupPermissions),
+	// TODO: refactor client app to no longer use webserver's AES KEY
+	// https://github.com/fractal/fractal/issues/2478
+	aesKey := utils.RandHex(16)
+	envs := []string{
+		logger.Sprintf("FRACTAL_AES_KEY=%s", aesKey),
+		logger.Sprintf("WEBSERVER_URL=%s", logger.GetFractalWebserver()),
+		"NVIDIA_DRIVER_CAPABILITIES=all",
+		"NVIDIA_VISIBLE_DEVICES=all",
+		logger.Sprintf("SENTRY_ENV=%s", logger.GetAppEnvironment()),
 	}
-	if req.MountCommand != "" {
-		dockerCmdArgs = append(dockerCmdArgs, strings.Split(req.MountCommand, " ")...)
+	config := dockercontainer.Config{
+		ExposedPorts: exposedPorts,
+		Env:          envs,
+		Image:        req.AppImage,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		Tty:          true,
 	}
-	dockerCmdArgs = append(dockerCmdArgs, []string{
-		`--tmpfs`, `/run`,
-		`--tmpfs`, `/run/lock`,
-		`--gpus`, `all`,
-		`-e`, `NVIDIA_CONTAINER_CAPABILITIES=all`,
-		`-e`, `NVIDIA_VISIBLE_DEVICES=all`,
-		`--shm-size=8g`,
-		`--cap-drop`, `ALL`,
-		`--cap-add`, `CAP_SETPCAP`,
-		`--cap-add`, `CAP_MKNOD`,
-		`--cap-add`, `CAP_AUDIT_WRITE`,
-		`--cap-add`, `CAP_CHOWN`,
-		`--cap-add`, `CAP_NET_RAW`,
-		`--cap-add`, `CAP_DAC_OVERRIDE`,
-		`--cap-add`, `CAP_FOWNER`,
-		`--cap-add`, `CAP_FSETID`,
-		`--cap-add`, `CAP_KILL`,
-		`--cap-add`, `CAP_SETGID`,
-		`--cap-add`, `CAP_SETUID`,
-		`--cap-add`, `CAP_NET_BIND_SERVICE`,
-		`--cap-add`, `CAP_SYS_CHROOT`,
-		`--cap-add`, `CAP_SETFCAP`,
-		// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
-		`--cap-add`, `CAP_SYS_NICE`,
-		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[0].HostPort, portBindings[0].ContainerPort, portBindings[0].Protocol),
-		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[1].HostPort, portBindings[1].ContainerPort, portBindings[1].Protocol),
-		`-p`, logger.Sprintf(`%v:%v/%s`, portBindings[2].HostPort, portBindings[2].ContainerPort, portBindings[2].Protocol),
-		req.AppImage,
-	}...)
+	natPortBindings := make(dockernat.PortMap)
+	natPortBindings[dockernat.Port("32262/tcp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForTCP32262)}}
+	natPortBindings[dockernat.Port("32263/udp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForUDP32263)}}
+	natPortBindings[dockernat.Port("32273/tcp")] = []dockernat.PortBinding{{HostPort: logger.Sprintf("%v", hostPortForTCP32273)}}
 
-	cmd := exec.CommandContext(globalCtx, "docker", dockerCmdArgs...)
-	logger.Infof("SpinUpContainer(): Running `docker create` command:\n%s\n\n", cmd)
-	output, err := cmd.CombinedOutput()
+	tmpfs := make(map[string]string)
+	tmpfs["/run"] = "size=52428800"
+	tmpfs["/run/lock"] = "size=52428800"
+
+	hostConfig := dockercontainer.HostConfig{
+		Binds: []string{
+			"/sys/fs/cgroup:/sys/fs/cgroup:ro",
+			logger.Sprintf("/fractal/%s/containerResourceMappings:/fractal/resourceMappings:ro", fc.GetFractalID()),
+			logger.Sprintf("/fractal/temp/%s/sockets:/tmp/sockets", fc.GetFractalID()),
+			"/run/udev/data:/run/udev/data:ro",
+			logger.Sprintf("/fractal/%s/userConfigs/unpacked_configs:/fractal/userConfigs:rshared", fc.GetFractalID()),
+		},
+		PortBindings: natPortBindings,
+		CapDrop:      strslice.StrSlice{"ALL"},
+		CapAdd: strslice.StrSlice([]string{
+			"SETPCAP",
+			"MKNOD",
+			"AUDIT_WRITE",
+			"CHOWN",
+			"NET_RAW",
+			"DAC_OVERRIDE",
+			"FOWNER",
+			"FSETID",
+			"KILL",
+			"SETGID",
+			"SETUID",
+			"NET_BIND_SERVICE",
+			"SYS_CHROOT",
+			"SETFCAP",
+			// NOTE THAT CAP_SYS_NICE IS NOT ENABLED BY DEFAULT BY DOCKER --- THIS IS OUR DOING
+			"SYS_NICE",
+		}),
+		ShmSize: 2147483648,
+		Tmpfs:   tmpfs,
+		Resources: dockercontainer.Resources{
+			CPUShares: 2,
+			Memory:    6552550944,
+			NanoCPUs:  0,
+			// Don't need to set CgroupParent, since each container is its own task.
+			// We're not using anything like AWS services, where we'd want to put
+			// several containers under one limit.
+			Devices:            devices,
+			KernelMemory:       0,
+			KernelMemoryTCP:    0,
+			MemoryReservation:  0,
+			MemorySwap:         0,
+			Ulimits:            []*dockerunits.Ulimit{},
+			CPUCount:           0,
+			CPUPercent:         0,
+			IOMaximumIOps:      0,
+			IOMaximumBandwidth: 0,
+		},
+	}
+	// TODO: investigate whether putting all GPUs in all containers (i.e. the default here) is beneficial.
+	containerName := logger.Sprintf("%s-%s", req.AppImage, fractalID)
+	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
+	containerName = re.ReplaceAllString(containerName, "-")
+
+	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, containerName)
 	if err != nil {
-		logAndReturnError("SpinUpContainer(): Error running `docker create` for %s:\n%s", fc.GetFractalID(), output)
+		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetFractalID(), err)
 		return
 	}
-	dockerID := fractalcontainer.DockerID(strings.TrimSpace(string(output)))
+
+	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
+	dockerID := fractalcontainer.DockerID(dockerBody.ID)
+
 	logger.Infof("SpinUpContainer(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
 
 	err = fc.RegisterCreation(dockerID, appName)
 	if err != nil {
-		logAndReturnError("SpinUpContainer(): error registering container creation with DockerID %s and AppName %s: %s", dockerID, req.AppName, err)
+		logAndReturnError("Error registering container creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
 		return
 	}
 	logger.Infof("SpinUpContainer(): Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
 
-	cmd = exec.CommandContext(globalCtx, "docker", "start", string(dockerID))
-	logger.Infof("SpinUpContainer(): Running `docker start` command.")
-	output, err = cmd.CombinedOutput()
-	if err != nil {
-		logAndReturnError("SpinUpContainer(): Error running `docker start`: %s", output)
-		return
-	}
-	logger.Infof("SpinUpContainer(): Successfully started container.")
-
 	if err := fc.WriteResourcesForProtocol(); err != nil {
-		logAndReturnError("SpinUpContainer(): error writing resources for protocol: %s", err)
+		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
 	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
@@ -213,8 +266,25 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		return
 	}
 
-	// Return dockerID of newly created container
-	req.ReturnResult(string(dockerID), nil)
+	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
+	if err != nil {
+		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, fractalID, err)
+		return
+	}
+	logger.Infof("SpinUpContainer(): Successfully started container %s", containerName)
+
+	result := httpserver.SpinUpContainerRequestResult{
+		HostPortForTCP32262: hostPortForTCP32262,
+		HostPortForUDP32263: hostPortForUDP32263,
+		HostPortForTCP32273: hostPortForTCP32273,
+		AesKey:              aesKey,
+	}
+
+	// Mark container creation as successful, preventing cleanup on function
+	// termination.
+	createFailed = false
+
+	req.ReturnResult(result, nil)
 	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
 }
 
@@ -478,7 +548,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 		defer goroutineTracker.Done()
 
 		// Create docker client
-		cli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv)
+		dockerClient, err := dockerclient.NewClientWithOpts(dockerclient.WithAPIVersionNegotiation())
 		if err != nil {
 			logger.Panicf(globalCancel, "Error creating new Docker client: %v", err)
 		}
@@ -494,14 +564,14 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 		// Docker event stream. This is necessary because the Docker event stream
 		// needs to be reopened after any error is sent over the error channel.
 		needToReinitDockerEventStream := false
-		dockerevents, dockererrs := cli.Events(globalCtx, eventOptions)
+		dockerevents, dockererrs := dockerClient.Events(globalCtx, eventOptions)
 		logger.Info("Initialized docker event stream.")
 		logger.Info("Entering event loop...")
 
 		// The actual event loop
 		for {
 			if needToReinitDockerEventStream {
-				dockerevents, dockererrs = cli.Events(globalCtx, eventOptions)
+				dockerevents, dockererrs = dockerClient.Events(globalCtx, eventOptions)
 				needToReinitDockerEventStream = false
 				logger.Info("Re-initialized docker event stream.")
 			}
@@ -540,11 +610,12 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				}
 
 			// It may seem silly to just launch goroutines to handle these
-			// serverevents, but keeping the high-level flow control and handling in
-			// this package, and the low-level authentication, parsing, etc. of
-			// requests in `httpserver` provides code quality benefits.
+			// serverevents, but we aim to keep the high-level flow control and handling
+			// in this package, and the low-level authentication, parsing, etc. of
+			// requests in `httpserver`.
 			case serverevent := <-httpServerEvents:
 				switch serverevent.(type) {
+				// TODO: actually handle panics in these goroutines
 				case *httpserver.SetContainerStartValuesRequest:
 					go handleStartValuesRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetContainerStartValuesRequest))
 
@@ -552,7 +623,7 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
 
 				case *httpserver.SpinUpContainerRequest:
-					go SpinUpContainer(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SpinUpContainerRequest))
+					go SpinUpContainer(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpContainerRequest))
 
 				default:
 					if serverevent != nil {
