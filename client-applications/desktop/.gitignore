@@ -58,3 +58,6 @@ release/
 build/
 yarn-error.log.*
 env_overrides.json
+
+# Sentry
+.sentry-native/
