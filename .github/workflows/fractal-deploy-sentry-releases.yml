@@ -90,7 +90,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}"
-                  BODY = ":rotating_light: @releases Failed to deploy Fractal Sentry Releases for Environment `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`."
+                  BODY = "@releases Failed to deploy `$SENTRY_PROJECT` Sentry release on branch: `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
@@ -115,6 +115,7 @@ jobs:
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
                   SLACK_CHANNEL = "#alerts-${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}"
-                  BODY = "Fractal Sentry Releases for Environment `${{ needs.fractal-deploy-sentry-releases-main.outputs.sentry-deploy-environment }}` Deployed to Sentry."
+                  TITLE = ":sentry: Sentry releases deployed :sentry:"
+                  BODY = "A PR was merged and triggered automatic Sentry releases for Fractal Sentry projects on branch: `${{ steps.detect-sentry-environment.outputs.sentry-deploy-environment }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
-                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
