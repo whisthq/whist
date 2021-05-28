@@ -122,8 +122,8 @@ export const createAuthWindow = () => {
     WindowHashAuth,
     {
       ...base,
-      ...width.sm,
-      ...height.md,
+      ...width.xs,
+      height: 16 * 37,
     } as BrowserWindowConstructorOptions,
     authenticationURL
   )
