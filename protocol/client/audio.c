@@ -91,6 +91,10 @@ static int last_nacked_id = -1;
 static int most_recent_audio_id = -1;
 static int last_played_id = -1;
 
+// TODO: rename this to something that makes more sense
+// TODO: make this constant less hardcoded
+static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
+
 // END AUDIO VARIABLES
 
 // START AUDIO FUNCTIONS
@@ -229,7 +233,7 @@ void render_audio() {
         configure @global audio_render_context to contain the latest audio packet to render.
         This function simply decodes and renders it.
     */
-  // 
+    //
     if (rendering_audio) {
         // if audio frequency is too high, don't play it
         if (audio_frequency > MAX_FREQ) {
@@ -270,7 +274,6 @@ void render_audio() {
                 memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
                 encoded_packet.size += packet->size;
             }
-	    int encoded_size = encoded_packet.size;
 
             // Decode encoded audio
             int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
@@ -283,9 +286,15 @@ void render_audio() {
 
                 // Get decoded data
                 audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
-                // TODO: record the size of the encoded packet vs the size of the decoded packet
-		int decoded_size = audio_decoder_get_frame_data_size(audio_context.audio_decoder);
-		LOG_INFO("Encoded %d-byte file decoded to %d bytes, ratio %.2f", encoded_size, decoded_size, (float)decoded_size / (float)encoded_size);
+                /*
+                int decoded_size = audio_decoder_get_frame_data_size(audio_context.audio_decoder);
+                if (compression_factor == 1) {
+                  compression_factor = (double)decoded_size / (MAX_NUM_AUDIO_INDICES *
+                (double)MAX_PAYLOAD_SIZE);
+                }
+                LOG_DEBUG("Compression factor %.2f", compression_factor);
+                */
+
                 // Play decoded audio
                 res =
                     SDL_QueueAudio(audio_context.dev, decoded_data,
@@ -368,7 +377,7 @@ void update_audio() {
     // MAX_PAYLOAD_SIZE is in compressed bytes
     // need to give these the same units
     int bytes_until_no_more_audio =
-        (most_recent_audio_id - last_played_id) * MAX_PAYLOAD_SIZE + audio_device_queue;
+      (int)((most_recent_audio_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
     if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
@@ -443,9 +452,10 @@ void update_audio() {
             }
             // tell renderer thread to render the audio
             rendering_audio = true;
+            // Update last_played_id, which will advance either because it was skipped or queued up
+            // to
+            // render
         }
-        // Update last_played_id, which will advance either because it was skipped or queued up to
-        // render
         last_played_id += MAX_NUM_AUDIO_INDICES;
     }
 
@@ -508,12 +518,10 @@ int32_t receive_audio(FractalPacket* packet) {
 
     if (audio_id == buffer_pkt->id) {
         // check if we've already received the audio packet
-        // Serina: why is this warning commented out?
-        //         LOG_WARNING("Already received audio packet: %d", audio_id);
+        LOG_WARNING("Already received audio packet: %d", audio_id);
     } else if (audio_id < buffer_pkt->id || audio_id <= last_played_id) {
         // check if we've gotten an old packet
-        // LOG_INFO("Old audio packet received: %d, last played id is %d",
-        // audio_id, last_played_id);
+        LOG_INFO("Old audio packet received: %d, last played id is %d", audio_id, last_played_id);
     }
     // audio_id > buffer_pkt->id && audio_id > last_played_id
     else {
@@ -567,8 +575,8 @@ int32_t receive_audio(FractalPacket* packet) {
         buffer_pkt->nacked_for = -1;
 
 #if LOG_AUDIO
-        LOG_DEBUG("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id,
-                  packet->payload_size, last_played_id + 1, audio_device_queue);
+        LOG_DEBUG("Receiving Audio Packet %d (%d), trying to render %d\n", audio_id,
+                  packet->payload_size, last_played_id + 1);
 #endif
         // set the buffer slot to the data of the audio ID
         buffer_pkt->id = audio_id;
@@ -581,6 +589,7 @@ int32_t receive_audio(FractalPacket* packet) {
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
+                most_recent_audio_id = max(most_recent_audio_id, i);
             }
         }
     }
