@@ -718,7 +718,6 @@ jobs:
                   # Try to start maintenance. Fails if could not succeed after a predefined number of attempts.
                   start_maintenance(WEBSERVER_URL, TOKEN)
 
-
             - name: Notify Slack that Maintenance Mode has started
               if: always() && steps.start-maintenance-mode.outcome == 'success'
               shell: python3 {0}
@@ -1208,8 +1207,6 @@ jobs:
                   # These two environment variables must be set as per https://www.npmjs.com/package/electron-builder-notarize#api-key
                   APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
                   APPLE_API_KEY_ISSUER_ID: ${{ secrets.APPLE_API_KEY_ISSUER_ID }}
-
-              working-directory: client-applications/desktop
               run: |
                   # Explicitly retrieve macOS 10.14 SDK
                   wget -nv https://github.com/phracker/MacOSX-SDKs/releases/download/10.15/MacOSX10.14.sdk.tar.xz
