@@ -115,7 +115,7 @@ const configs = {
     },
     auth0: {
       auth0Domain: "fractal-prod.us.auth0.com",
-      clientId: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv",
+      clientId: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv", // public; not a secret
       apiIdentifier: "https://prod-server.fractal.co",
     },
     deployEnv: "prod",

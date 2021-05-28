@@ -4,7 +4,7 @@
 export const HostServicePort = 4678
 
 // poll for a container for 30 seconds max
-export const containerPollingTimeout = 60000
+export const containerPollingTimeout = 30000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to
