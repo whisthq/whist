@@ -37,15 +37,15 @@ func init() {
 // that we can implement the top-level event handlers in parent packages. They
 // simply return the result and any error message via ReturnResult.
 type ServerRequest interface {
-	ReturnResult(result string, err error)
+	ReturnResult(result interface{}, err error)
 	createResultChan()
 }
 
 // A requestResult represents the result of a request that was successfully
 // authenticated, parsed, and processed by the consumer.
 type requestResult struct {
-	Result string `json:"-"`
-	Err    error  `json:"error"`
+	Result interface{} `json:"-"`
+	Err    error       `json:"error"`
 }
 
 // send is called to send an HTTP response
@@ -59,8 +59,8 @@ func (r requestResult) send(w http.ResponseWriter) {
 		status = http.StatusNotAcceptable
 		buf, err = json.Marshal(
 			struct {
-				Result string `json:"result"`
-				Error  string `json:"error"`
+				Result interface{} `json:"result"`
+				Error  string      `json:"error"`
 			}{r.Result, r.Err.Error()},
 		)
 	} else {
@@ -68,7 +68,7 @@ func (r requestResult) send(w http.ResponseWriter) {
 		status = http.StatusOK
 		buf, err = json.Marshal(
 			struct {
-				Result string `json:"result"`
+				Result interface{} `json:"result"`
 			}{r.Result},
 		)
 	}
@@ -92,7 +92,7 @@ type SetContainerStartValuesRequest struct {
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
-func (s *SetContainerStartValuesRequest) ReturnResult(result string, err error) {
+func (s *SetContainerStartValuesRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
@@ -136,7 +136,7 @@ type SetConfigEncryptionTokenRequest struct {
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
-func (s *SetConfigEncryptionTokenRequest) ReturnResult(result string, err error) {
+func (s *SetConfigEncryptionTokenRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
@@ -175,16 +175,23 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
 type SpinUpContainerRequest struct {
-	AppName         string             `json:"app_name"`
 	AppImage        string             `json:"app_image"`
-	MountCommand    string             `json:"mount_command"`
 	ProtocolTimeout int                `json:"protocol_timeout"` // number of seconds the protocol server will be up for
 	resultChan      chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
+// SpinUpContainerRequestResult defines the data returned by the
+// `spin_up_container` endpoint.
+type SpinUpContainerRequestResult struct {
+	HostPortForTCP32262 uint16 `json:"port_32262"`
+	HostPortForUDP32263 uint16 `json:"port_32263"`
+	HostPortForTCP32273 uint16 `json:"port_32273"`
+	AesKey              string `json:"aes_key"`
+}
+
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
-func (s *SpinUpContainerRequest) ReturnResult(result string, err error) {
+func (s *SpinUpContainerRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
@@ -341,9 +348,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
 	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
-	if logger.GetAppEnvironment() == logger.EnvLocalDev {
-		mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
-	}
+	mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
 
 	// Create the server itself
 	server := &http.Server{

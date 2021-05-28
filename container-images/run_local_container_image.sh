@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# This script runs a container image that exists locally on the machine where the script is run. For
-# it to work with the Fractal containers, this script needs to be run directly on a Fractal-enabled (see /ecs-host-setup)
-# AWS EC2 instance, via SSH, after the container image was locally built.
+# This script runs a container image that exists locally on the machine where
+# the script is run. For it to work with the Fractal containers, this script
+# needs to be run directly on a Fractal-enabled (see /ecs-host-setup) AWS EC2
+# instance, via SSH, after the container image was locally built.
 
 set -Eeuo pipefail
 
@@ -12,10 +13,9 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 # Working directory is fractal/container-images/
 cd "$DIR"
 
-# Parameters of the local container image to run
+# We add the `fractal/` prefix and `:current-build` tag to the image name, then
+# call `run_container_image.sh` with that image name and any other arguments
+# provided.
 app_path=${1%/}
 image=fractal/$app_path:current-build
-mount="mount" # Mount fractal build binaries rather than copying them
-
-# Run the container image stored locally
-./helper_scripts/run_container_image.sh $image $mount
+./helper_scripts/run_container_image.sh "$image" --update-protocol=True "${@:2}"

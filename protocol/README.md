@@ -216,6 +216,8 @@ MacOS/Linux:
 
 For the specific option flags for the client, see the [client-specific README](./client/README.md). If you want to see the specific option flags for the server, you're straight out of luck.
 
+For a useful workflow for server development on Linux, see the [server-specific README](./server/README.md).
+
 #### Sentry
 
 The sentry-native SDK gets automatically built by our CMake build system.
