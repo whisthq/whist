@@ -18,14 +18,14 @@ import { flow, fork } from "@app/utils/flows"
 import { some, pick } from "lodash"
 
 const hostServiceInfoRequest = flow<{
-  email: string
+  sub: string
   accessToken: string
   configToken: string
 }>("hostServiceInfoRequest", (trigger) =>
   fork(
     trigger.pipe(
-      switchMap(({ email, accessToken }) =>
-        from(hostServiceInfo(email, accessToken))
+      switchMap(({ sub, accessToken }) =>
+        from(hostServiceInfo(sub, accessToken))
       )
     ),
     {
@@ -40,7 +40,7 @@ const hostServiceInfoRequest = flow<{
 )
 
 const hostPollingInner = flow<{
-  email: string
+  sub: string
   accessToken: string
   configToken: string
 }>("hostPollingInner", (trigger) => {
@@ -57,7 +57,7 @@ const hostPollingInner = flow<{
 })
 
 const hostInfoFlow = flow<{
-  email: string
+  sub: string
   accessToken: string
   configToken: string
 }>("hostInfoFlow", (trigger) => {
@@ -89,19 +89,19 @@ const hostConfigFlow = flow<{
   containerIP: string
   containerPort: number
   containerSecret: string
-  email: string
+  sub: string
   configToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(
-        ({ containerIP, containerPort, containerSecret, email, configToken }) =>
+        ({ containerIP, containerPort, containerSecret, sub, configToken }) =>
           from(
             hostServiceConfig(
               containerIP,
               containerPort,
               containerSecret,
-              email,
+              sub,
               configToken
             )
           )
@@ -117,7 +117,7 @@ const hostConfigFlow = flow<{
 )
 
 export default flow<{
-  email: string
+  sub: string
   accessToken: string
   configToken: string
 }>("hostServiceFlow", (trigger) => {
@@ -126,7 +126,7 @@ export default flow<{
   const config = hostConfigFlow(
     zip(trigger, info.success).pipe(
       map(([t, i]) => ({
-        ...pick(t, ["email", "configToken"]),
+        ...pick(t, ["sub", "configToken"]),
         ...pick(i, ["containerIP", "containerPort", "containerSecret"]),
       }))
     )

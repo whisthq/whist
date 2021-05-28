@@ -39,6 +39,11 @@ const configs = {
       WEBSERVER_URL: FractalWebservers.local,
       FRONTEND_URL: "http://localhost:3000",
     },
+    auth0: {
+      auth0Domain: "fractal-dev.us.auth0.com",
+      clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
+      apiIdentifier: "https://api.fractal.co",
+    },
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
@@ -59,6 +64,11 @@ const configs = {
       WEBSERVER_URL: FractalWebservers.dev,
       FRONTEND_URL: "https://dev.fractal.co",
     },
+    auth0: {
+      auth0Domain: "fractal-dev.us.auth0.com",
+      clientId: "j1toifpKVu5WA6YbhEqBnMWN0fFxqw5I", // public; not a secret
+      apiIdentifier: "https://api.fractal.co",
+    },
     deployEnv: "dev",
     sentryEnv: "development",
     clientDownloadURLs: {
@@ -77,6 +87,11 @@ const configs = {
     url: {
       WEBSERVER_URL: FractalWebservers.staging,
       FRONTEND_URL: "https://staging.fractal.co",
+    },
+    auth0: {
+      auth0Domain: "fractal-staging.us.auth0.com",
+      clientId: "iCSxaFGY9gO866H9yJ4Jy05APFyfMTSk", // public; not a secret
+      apiIdentifier: "https://staging-server.fractal.co",
     },
     deployEnv: "staging",
     sentryEnv: "staging",
@@ -97,6 +112,11 @@ const configs = {
     url: {
       WEBSERVER_URL: FractalWebservers.production,
       FRONTEND_URL: "https://fractal.co",
+    },
+    auth0: {
+      auth0Domain: "fractal-prod.us.auth0.com",
+      clientId: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv", // public; not a secret
+      apiIdentifier: "https://prod-server.fractal.co",
     },
     deployEnv: "prod",
     sentryEnv: "production",

@@ -10,7 +10,7 @@
 // converted to JSON.
 import Store from "electron-store"
 import events from "events"
-import { isEmpty, pickBy } from "lodash"
+import { isEmpty, pickBy, keys } from "lodash"
 
 export const store = new Store({ watch: true })
 export const persisted = new events.EventEmitter()
@@ -18,7 +18,9 @@ export const persisted = new events.EventEmitter()
 const cache = {
   accessToken: store.get("accessToken") ?? "",
   configToken: store.get("configToken") ?? "",
+  refreshToken: store.get("refreshToken") ?? "",
   email: store.get("email") ?? "",
+  sub: store.get("sub") ?? "",
 }
 
 export const emitCache = () => {
@@ -34,5 +36,7 @@ export const persist = (key: string, value: string) => {
 }
 
 export const persistClear = () => {
-  store.clear()
+  keys(cache).forEach((key) => {
+    store.delete(key)
+  })
 }
