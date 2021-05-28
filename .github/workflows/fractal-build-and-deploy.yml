@@ -997,7 +997,12 @@ jobs:
         runs-on: ${{ matrix.config.os }}
         outputs:
             release_version: ${{ steps.generate-release-version.outputs.release_version }}
-        needs: [fractal-publish-build-config]
+        needs:
+            [
+                fractal-publish-build-config,
+                main-webserver-deploy-heroku,
+                main-webserver-update-fractal-services,
+            ]
         if: >
             contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
 
