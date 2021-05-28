@@ -48,7 +48,7 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define SDL_AUDIO_BUFFER_SIZE 1024
 
-#define MAX_FREQ 128000 // in Hertz
+#define MAX_FREQ 128000  // in Hertz
 
 #define MAX_NACKED 1
 
@@ -163,21 +163,21 @@ void reinit_audio_device() {
 }
 
 void nack(int id, int index) {
-      /*
-        Send a negative acknowledgement to the server if an audio
-        packet is missing
+    /*
+      Send a negative acknowledgement to the server if an audio
+      packet is missing
 
-        Arguments:
-            id (int): missing packet ID
-            index (int): missing packet index
-    */
-  LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", id, index);
-  // Initialize and populate a FractalClientMessage
-  FractalClientMessage fmsg = {0};
-  fmsg.type = MESSAGE_AUDIO_NACK;
-  fmsg.nack_data.id = id;
-  fmsg.nack_data.index = index;
-  send_fmsg(&fmsg);
+      Arguments:
+          id (int): missing packet ID
+          index (int): missing packet index
+  */
+    LOG_INFO("Missing Audio Packet ID %d, Index %d. NACKing...", id, index);
+    // Initialize and populate a FractalClientMessage
+    FractalClientMessage fmsg = {0};
+    fmsg.type = MESSAGE_AUDIO_NACK;
+    fmsg.nack_data.id = id;
+    fmsg.nack_data.index = index;
+    send_fmsg(&fmsg);
 }
 
 // END AUDIO FUNCTIONS
@@ -224,7 +224,7 @@ void render_audio() {
         This function simply decodes and renders it.
     */
     if (rendering_audio) {
-      // if audio frequency is too high, don't play it
+        // if audio frequency is too high, don't play it
         if (audio_frequency > MAX_FREQ) {
             LOG_ERROR("Frequency received was too large: %d, silencing audio now.",
                       audio_frequency);
@@ -251,13 +251,13 @@ void render_audio() {
         }
 
         if (audio_render_context.encoded) {
-	  	// decode the audio frame
-	  // setup the frame
+            // decode the audio frame
+            // setup the frame
             AVPacket encoded_packet;
             av_init_packet(&encoded_packet);
             encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
             encoded_packet.size = 0;
-                // reconstruct the audio frame from the indices.
+            // reconstruct the audio frame from the indices.
             for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
                 AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
                 memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
@@ -275,7 +275,7 @@ void render_audio() {
 
                 // Get decoded data
                 audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
-		// TODO: record the size of the encoded packet vs the size of the decoded packet
+                // TODO: record the size of the encoded packet vs the size of the decoded packet
                 // Play decoded audio
                 res =
                     SDL_QueueAudio(audio_context.dev, decoded_data,
@@ -350,7 +350,8 @@ void update_audio() {
         return;
     }
 
-    // Buffering audio controls whether or not we're trying to accumulate an audio buffer; ideally, we want about 30ms of audio in the buffer
+    // Buffering audio controls whether or not we're trying to accumulate an audio buffer; ideally,
+    // we want about 30ms of audio in the buffer
     static bool buffering_audio = false;
 
     // TODO: audio_device_queue is in decompressed bytes,
@@ -393,11 +394,12 @@ void update_audio() {
 
     // Audio flush happens when the audio buffer gets too large, and we need to clear it out
     static bool audio_flush_triggered = false;
-    
+
     if (valid) {
         // If an audio flush is triggered,
         // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
-        // Otherwise, we trigger an audio flush when the audio queue surpasses AUDIO_QUEUE_UPPER_LIMIT
+        // Otherwise, we trigger an audio flush when the audio queue surpasses
+        // AUDIO_QUEUE_UPPER_LIMIT
         int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
         if (audio_device_queue > real_limit) {
@@ -429,10 +431,11 @@ void update_audio() {
                 packet->id = -1;
                 packet->nacked_amount = 0;
             }
-	    // tell renderer thread to render the audio
+            // tell renderer thread to render the audio
             rendering_audio = true;
         }
-        // Update last_played_id, which will advance either because it was skipped or queued up to render
+        // Update last_played_id, which will advance either because it was skipped or queued up to
+        // render
         last_played_id += MAX_NUM_AUDIO_INDICES;
     }
 
@@ -443,18 +446,18 @@ void update_audio() {
     int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
         last_nacked_id = max(last_played_id, last_nacked_id);
-	// nack up to MAX_NACKED packets from last_nacked_id to most_recent_audio_id - 4
-	// since packets can arrive out of order
+        // nack up to MAX_NACKED packets from last_nacked_id to most_recent_audio_id - 4
+        // since packets can arrive out of order
         for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < MAX_NACKED;
              i++) {
             int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
             AudioPacket* i_packet = &receiving_audio[i_buffer_index];
             if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
-	      // check if we never received this packet
+                // check if we never received this packet
                 i_packet->nacked_amount++;
-		int id = i / MAX_NUM_AUDIO_INDICES;
-		int index = i % MAX_NUM_AUDIO_INDICES;
-		nack(id, index);
+                int id = i / MAX_NUM_AUDIO_INDICES;
+                int index = i % MAX_NUM_AUDIO_INDICES;
+                nack(id, index);
                 num_nacked++;
 
                 start_timer(&nack_timer);
@@ -494,11 +497,11 @@ int32_t receive_audio(FractalPacket* packet) {
     AudioPacket* buffer_pkt = &receiving_audio[audio_id % RECV_AUDIO_BUFFER_SIZE];
 
     if (audio_id == buffer_pkt->id) {
-      // check if we've already received the audio packet
-      // Serina: why is this warning commented out?
+        // check if we've already received the audio packet
+        // Serina: why is this warning commented out?
         //         LOG_WARNING("Already received audio packet: %d", audio_id);
     } else if (audio_id < buffer_pkt->id || audio_id <= last_played_id) {
-      // check if we've gotten an old packet
+        // check if we've gotten an old packet
         // LOG_INFO("Old audio packet received: %d, last played id is %d",
         // audio_id, last_played_id);
     }
@@ -531,7 +534,7 @@ int32_t receive_audio(FractalPacket* packet) {
         }
 
         if (packet->is_a_nack) {
-	  // check if this is packet we nacked for
+            // check if this is packet we nacked for
             if (buffer_pkt->nacked_for == audio_id) {
                 LOG_INFO("NACK for Audio ID %d, Index %d Received!", packet->id, packet->index);
             } else if (buffer_pkt->nacked_for == -1) {
@@ -557,7 +560,7 @@ int32_t receive_audio(FractalPacket* packet) {
         LOG_DEBUG("Receiving Audio Packet %d (%d), trying to render %d (Queue: %d)\n", audio_id,
                   packet->payload_size, last_played_id + 1, audio_device_queue);
 #endif
-	// set the buffer slot to the data of the audio ID
+        // set the buffer slot to the data of the audio ID
         buffer_pkt->id = audio_id;
         most_recent_audio_id = max(buffer_pkt->id, most_recent_audio_id);
         buffer_pkt->size = packet->payload_size;
