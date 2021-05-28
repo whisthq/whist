@@ -1327,7 +1327,7 @@ jobs:
               run: npm install -g auth0-deploy-cli
 
             - name: Build Auth0 hooks
-              run: npm run-script build
+              run: yarn install && yarn build
 
             - name: Deploy changes to the Auth0 tenant
               env:
