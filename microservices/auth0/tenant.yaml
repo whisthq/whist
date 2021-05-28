@@ -1,0 +1,293 @@
+rules: []
+rulesConfigs: []
+hooks:
+  - name: post-user-registration-hook
+    script: ./hooks/post-user-registration-hook.js
+    dependencies:
+      stripe: 8.145.0
+      lodash: 4.17.21
+      node-fetch: 2.6.1
+      browser-or-node: 1.3.0
+    enabled: true
+    secrets:
+      STRIPE_PRICE_ID: _VALUE_NOT_SHOWN_
+      STRIPE_KEY: _VALUE_NOT_SHOWN_
+    triggerId: post-user-registration
+pages:
+  - name: login
+    enabled: false
+    html: ./pages/login.html
+resourceServers:
+  - name: Fractal API
+    identifier: "##API_IDENTIFIER##"
+    allow_offline_access: true
+    enforce_policies: true
+    scopes:
+      - value: admin
+        description: Administrative resources
+    signing_alg: RS256
+    skip_consent_for_verifiable_first_party_clients: true
+    token_dialect: access_token
+    token_lifetime: 86400
+    token_lifetime_for_web: 7200
+clients:
+  - name: Fractal
+    allowed_clients: []
+    app_type: native
+    callbacks: @@APP_CALLBACKS@@
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: The Fractal desktop application.
+    grant_types:
+      - authorization_code
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: expiring
+      leeway: 0
+      infinite_token_lifetime: false
+      infinite_idle_token_lifetime: true
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      rotation_type: rotating
+    sso_disabled: false
+    token_endpoint_auth_method: none
+  - name: GHA
+    allowed_clients: []
+    app_type: non_interactive
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: A service that performs administrative operations on the fractal
+      webservers on behalf of Fractal developers.
+    grant_types:
+      - password
+      - http://auth0.com/oauth/grant-type/password-realm
+      - refresh_token
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://github.githubassets.com/images/modules/logos_page/Octocat.png
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: My App
+    app_type: non_interactive
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 31557600
+      idle_token_lifetime: 2592000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: client_secret_post
+  - name: Postman
+    allowed_clients: []
+    app_type: native
+    callbacks: []
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    description: A tool that developers use to test Fractal's APIs.
+    grant_types:
+      - password
+      - http://auth0.com/oauth/grant-type/password-realm
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    logo_uri: https://www.postman.com/assets/logos/postman-logo-stacked.svg
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      expiration_type: non-expiring
+      leeway: 0
+      infinite_token_lifetime: true
+      infinite_idle_token_lifetime: true
+      token_lifetime: 2592000
+      idle_token_lifetime: 1296000
+      rotation_type: non-rotating
+    sso_disabled: false
+    token_endpoint_auth_method: none
+databases:
+  - name: Username-Password-Authentication
+    strategy: auth0
+    enabled_clients:
+      - GHA
+      - Postman
+    is_domain_connection: false
+    options:
+      mfa:
+        active: true
+        return_enroll_settings: true
+      passwordPolicy: good
+      strategy_version: 2
+      brute_force_protection: true
+    realms:
+      - Username-Password-Authentication
+connections:
+  - name: apple
+    strategy: apple
+    enabled_clients:
+      - Fractal
+    is_domain_connection: false
+    options:
+      kid: D3T9SSLTY5
+      name: true
+      email: true
+      scope: name email
+      team_id: 757Z8TDNJL
+      client_id: com.fractalcomputers.fractalauth
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - Fractal
+    is_domain_connection: false
+    options:
+      email: true
+      gmail: false
+      orkut: false
+      scope:
+        - email
+        - profile
+      sites: false
+      tasks: false
+      blogger: false
+      profile: true
+      youtube: false
+      calendar: false
+      contacts: false
+      analytics: false
+      client_id: 581514545734-4r65pae9m63dci2rq6isstvaapuqp85l.apps.googleusercontent.com
+      moderator: false
+      coordinate: false
+      picasa_web: false
+      google_plus: false
+      google_books: false
+      google_drive: false
+      spreadsheets: false
+      document_list: false
+      latitude_best: false
+      latitude_city: false
+      url_shortener: false
+      webmaster_tools: false
+      chrome_web_store: false
+      allowed_audiences: ""
+      adsense_management: false
+      google_drive_files: false
+      coordinate_readonly: false
+      google_cloud_storage: false
+      content_api_for_shopping: false
+      google_affiliate_network: false
+tenant:
+  default_audience: ""
+  default_directory: Username-Password-Authentication
+  enabled_locales:
+    - en
+  flags:
+    new_universal_login_experience_enabled: true
+    universal_login: true
+    revoke_refresh_token_grant: false
+    disable_clickjack_protection_headers: false
+  friendly_name: ""
+  picture_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+  support_email: support@fractal.co
+  support_url: ""
+  universal_login:
+    colors:
+      page_background: "#ebf2ff"
+      primary: "#4f35de"
+emailProvider: {}
+emailTemplates: []
+clientGrants:
+  - client_id: GHA
+    audience: https://fractal-dev.us.auth0.com/api/v2/
+    scope: []
+guardianFactors:
+  - name: duo
+    enabled: false
+  - name: email
+    enabled: false
+  - name: otp
+    enabled: false
+  - name: push-notification
+    enabled: false
+  - name: sms
+    enabled: false
+  - name: webauthn-platform
+    enabled: false
+  - name: webauthn-roaming
+    enabled: false
+guardianFactorProviders: []
+guardianFactorTemplates: []
+guardianPolicies:
+  policies: []
+guardianPhoneFactorSelectedProvider:
+  provider: auth0
+guardianPhoneFactorMessageTypes:
+  message_types: []
+roles:
+  - name: Developer
+    description: A Fractal developer
+    permissions:
+      - permission_name: admin
+        resource_server_identifier: "##API_IDENTIFIER##"
+branding:
+  colors:
+    page_background: "#ebf2ff"
+    primary: "#4f35de"
+  logo_url: https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png
+prompts:
+  universal_login_experience: new
+  identifier_first: true
+migrations: {}
