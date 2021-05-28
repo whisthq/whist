@@ -236,6 +236,9 @@ int send_server_quit_messages(int num_messages) {
     return retval;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 int send_fmsg(FractalClientMessage *fmsg) {
     /*
         We send large fmsg's over TCP. At the moment, this is only CLIPBOARD;
