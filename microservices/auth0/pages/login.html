@@ -9,8 +9,15 @@
     :root {
       --logo-url: url("https://fractal-brand-assets.s3.amazonaws.com/png/icon+logo/icon_color2.png");
     }
-    .auth0-lock-center {
-      padding: 0 !important;
+    .auth0-loading {
+    	position: fixed !important;
+      top: 0%;
+      margin-top: 200px;
+    }
+    .auth0-lock-content-wrapper{
+      padding: 0px !important;
+      margin: auto;
+      max-width: 400px;
     }
     .auth0-lock-header > * {
       display: none !important;
@@ -25,13 +32,22 @@
       background-position: center !important;
       background-size: contain !important;
     }
+    .auth0-lock-content-body-wrapper {
+      text-align: center;
+      color: gray;
+    }
+    .auth0-lock-content-body-wrapper > * {
+      padding-top: 12px;
+    }
+    .auth0-lock-content-body-wrapper:before {
+      content: "Meet the next-generation browser.";
+    }
     .auth0-lock-overlay{
         background-color: white !important;
     }
     .auth0-lock-widget{
         box-shadow: 0 0 0 0 !important;
         height: 100% !important;
-        width: 100% !important;
     }
     .auth0-lock-widget-container {
       height: 100% !important;
@@ -39,9 +55,8 @@
     .auth0-lock-cred-pane-internal-wrapper {
       height: 100% !important;
     }
-
-    .auth0-lock-tabs-container {
-      margin-bottom: 40px !important;
+    .auth0-lock-form {
+      padding: 0px !important;
     }
 
   </style>
