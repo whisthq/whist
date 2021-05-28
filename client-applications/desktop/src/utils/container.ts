@@ -12,8 +12,8 @@ import { AsyncReturnType } from "@app/@types/state"
 // consistent with their low-resolution counterparts.
 const getDPI = () => screen.getPrimaryDisplay().scaleFactor * 96
 
-export const regionGet = async (email: string, accessToken: string) => {
-  const regions: Record<string, any> = await regionRequest(email, accessToken)
+export const regionGet = async (sub: string, accessToken: string) => {
+  const regions: Record<string, any> = await regionRequest(sub, accessToken)
   const allowedRegions = (regions?.json as AWSRegion[]) ?? []
 
   if (allowedRegions.length === 0) {
@@ -23,9 +23,9 @@ export const regionGet = async (email: string, accessToken: string) => {
   }
 }
 
-export const containerCreate = async (email: string, accessToken: string) => {
-  const region = await regionGet(email, accessToken)
-  const response = await containerRequest(email, accessToken, region, getDPI())
+export const containerCreate = async (sub: string, accessToken: string) => {
+  const region = await regionGet(sub, accessToken)
+  const response = await containerRequest(sub, accessToken, region, getDPI())
   return response
 }
 

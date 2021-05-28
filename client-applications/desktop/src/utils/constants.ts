@@ -3,11 +3,6 @@
 
 export const HostServicePort = 4678
 
-export const WarningSignupInvalid =
-  "Email already registered, please log in instead"
-
-export const WarningLoginInvalid = "Invalid email or password"
-
 // poll for a container for 30 seconds max
 export const containerPollingTimeout = 30000
 

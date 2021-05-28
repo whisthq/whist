@@ -37,6 +37,6 @@ export const createTray = () => {
   tray.setContextMenu(menu)
 }
 
-export const doesTrayExist = () => {
-  return tray != null && !tray.isDestroyed()
+export const destroyTray = () => {
+  tray?.destroy()
 }

@@ -12,8 +12,6 @@ import { getWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { mapValues } from "lodash"
 
-import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
-
 // This file is responsible for broadcasting state to all renderer windows.
 // We use a single object and IPC channel for all windows, so here we set up a
 // single observable subscription that calls ipcBroadcast whenever it emits.
@@ -31,14 +29,6 @@ import { WarningLoginInvalid, WarningSignupInvalid } from "@app/utils/constants"
 const subscribed = combineLatest(
   mapValues(
     {
-      loginWarning: fromTrigger("loginFlowWarning").pipe(
-        map(() => WarningLoginInvalid)
-      ),
-      loginLoading: fromTrigger("loginFlowLoading"),
-      signupWarning: fromTrigger("signupFlowWarning").pipe(
-        map(() => WarningSignupInvalid)
-      ),
-      signupLoading: fromTrigger("signupFlowLoading"),
       updateInfo: fromTrigger("downloadProgress").pipe(
         map((obj) => JSON.stringify(obj))
       ),

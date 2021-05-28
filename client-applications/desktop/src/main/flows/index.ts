@@ -3,8 +3,7 @@ import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
-import loginFlow from "@app/main/flows/login"
-import signupFlow from "@app/main/flows/signup"
+import authFlow from "@app/main/flows/auth"
 import containerFlow from "@app/main/flows/container"
 import protocolLaunchFlow from "@app/main/flows/launch"
 import protocolCloseFlow from "@app/main/flows/close"
@@ -15,15 +14,17 @@ import { fromSignal } from "@app/utils/observables"
 // Autoupdate flow
 autoUpdateFlow(fromTrigger("updateAvailable"))
 
-// Auth flows
-loginFlow(fromTrigger("loginAction"))
-signupFlow(fromTrigger("signupAction"))
+// Auth flow
+authFlow(
+  merge(
+    fromSignal(fromTrigger("authInfo"), fromTrigger("notPersisted")),
+    fromTrigger("persisted")
+  )
+)
 
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = merge(
-  fromSignal(fromTrigger("persisted"), fromTrigger("updateNotAvailable")),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess")
+  fromSignal(fromTrigger("authFlowSuccess"), fromTrigger("updateNotAvailable"))
 ).pipe(take(1))
 
 // Container creation flow
