@@ -23,7 +23,6 @@
   },
   "dependencies": {
     "@amplitude/node": "^1.6.0",
-    "@esbuild-plugins/node-resolve": "^0.1.4",
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
     "@fortawesome/free-solid-svg-icons": "^5.15.3",
     "@fortawesome/react-fontawesome": "^0.1.14",
