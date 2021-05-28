@@ -48,8 +48,6 @@ extern volatile CodecType output_codec_type;
 
 extern MouseMotionAccumulation mouse_state;
 
-extern bool audio_refresh;
-
 bool active_pinch = false;
 
 /*

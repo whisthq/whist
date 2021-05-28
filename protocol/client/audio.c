@@ -103,7 +103,6 @@ Private Functions
 
 void destroy_audio_device();
 void reinit_audio_device();
-// TODO: is it better to call this audio_nack and video.c's nack video_nack?
 static void nack(int id, int index);
 
 /*
@@ -213,16 +212,24 @@ void destroy_audio() {
     destroy_audio_device();
 }
 
+// possibly rename this function
 void set_audio_refresh() { audio_refresh = true; }
 
 void set_audio_frequency(int new_audio_frequency) { audio_frequency = new_audio_frequency; }
 
+// TODO: get_next_audio_frame()
+// check for device updates
+// decode always (can always assume audio is encoded now)
+// TODO: in render_audio:
+// get next frame
+// tell SDL to render it
 void render_audio() {
     /*
         Actually renders audio frames. Called in multithreaded_renderer. update_audio should
         configure @global audio_render_context to contain the latest audio packet to render.
         This function simply decodes and renders it.
     */
+  // 
     if (rendering_audio) {
         // if audio frequency is too high, don't play it
         if (audio_frequency > MAX_FREQ) {
@@ -263,6 +270,7 @@ void render_audio() {
                 memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
                 encoded_packet.size += packet->size;
             }
+	    int encoded_size = encoded_packet.size;
 
             // Decode encoded audio
             int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
@@ -276,6 +284,8 @@ void render_audio() {
                 // Get decoded data
                 audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
                 // TODO: record the size of the encoded packet vs the size of the decoded packet
+		int decoded_size = audio_decoder_get_frame_data_size(audio_context.audio_decoder);
+		LOG_INFO("Encoded %d-byte file decoded to %d bytes, ratio %.2f", encoded_size, decoded_size, (float)decoded_size / (float)encoded_size);
                 // Play decoded audio
                 res =
                     SDL_QueueAudio(audio_context.dev, decoded_data,
