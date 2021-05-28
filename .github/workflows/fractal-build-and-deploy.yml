@@ -1295,6 +1295,33 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
+    microservices-deploy-auth0:
+        name: "Deploy Auth0 hooks"
+        runs-on: ubuntu-20.04
+        defaults:
+            run:
+                working-directory: ./microservices/auth0
+        needs: [fractal-publish-build-config]
+        steps:
+            - name: Download files from the current repository
+              uses: actions/checkout@v2
+
+            - name: Install Node.js
+              uses: actions/setup-node@v1
+              with:
+                  node-version: "14.x"
+
+            - name: Install the auth0-deploy-cli
+              run: npm install -g auth0-deploy-cli
+
+            - name: Build Auth0 hooks
+              run: npm run-script build
+
+            - name: Deploy changes to the Auth0 tenant
+              env:
+                  AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
+              run: npm run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
+
     # Create GitHub Tag
     # Create a GitHub Tag when promoting to the `prod` branch
     # Runs if the entire deployment succeeds and the promotion is running on `prod`
