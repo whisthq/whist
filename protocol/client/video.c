@@ -75,12 +75,18 @@ static enum AVPixelFormat sws_input_fmt;
 extern volatile SDL_Renderer* init_sdl_renderer;
 #endif
 
+#define LOG_VIDEO false
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 10
 #define MAX_UNSYNCED_FRAMES_RENDER 12
 // control whether we ask for iframes on missing too many packets - turned off for now
 #define REQUEST_IFRAME_ON_MISSING_PACKETS false
 
+#define BITRATE_BUCKET_SIZE 500000
+#define NUMBER_LOADING_FRAMES 50
+
+#define CURSORIMAGE_A 0xff000000
+#define CURSORIMAGE_R 0x00ff0000
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
