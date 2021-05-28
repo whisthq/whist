@@ -22,6 +22,7 @@ if [[ "$mount" == "mount" ]]; then
     fi
 else
     # Otherwise, we copy_protocol_build.sh directly into the docker file
+    rm -rf "base/build-temp"
 
     # If copying the protocol build fails,
     # try compiling first and then copying again
@@ -35,10 +36,9 @@ else
 fi
 
 # Download and extract nvidia-drivers
-mkdir -p "base/build-temp/nvidia-driver"
-../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
+if [[ ! -d "base/build-temp/nvidia-driver" ]]; then
+    mkdir "base/build-temp/nvidia-driver"
+    ../ecs-host-setup/get-nvidia-driver-installer.sh && mv nvidia-driver-installer.run base/build-temp/nvidia-driver
+fi
 
 python3 ./helper_scripts/build_container_image.py "$@"
-
-echo "Cleaning up..."
-rm -rf "base/build-temp"
