@@ -77,7 +77,7 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 10
-#define MAX_UNSYNCED_FRAMES_RENDER 12  // not sure if i need this
+#define MAX_UNSYNCED_FRAMES_RENDER 12
 // number of packets we are allowed to miss before asking for iframe
 #define MAX_MISSING_PACKETS 50
 
@@ -1009,10 +1009,10 @@ void update_video() {
                 int next_frame_index = next_frame_render_id % RECV_FRAMES_BUFFER_SIZE;
                 FrameData* next_frame_ctx = &receiving_frames[next_frame_index];
 
-                // If the next frame has been received,
-                // lets skip the rendering so we can render the next frame faster
-                // we do this because rendering is synced with screen refresh
-                // so rendering the backlogged frames requires the client to wait
+                // If the next frame has been received, let's skip the rendering so we can render
+                // the next frame faster. We do this because rendering is synced with screen
+                // refresh, so rendering the backlogged frames requires the client to wait until the
+                // screen refreshes N more times, causing it to fall behind the server.
                 if (next_frame_ctx->id == next_frame_render_id &&
                     next_frame_ctx->packets_received == next_frame_ctx->num_packets) {
                     skip_render = true;
@@ -1059,13 +1059,12 @@ void update_video() {
             // &receiving_frames[VideoData.last_rendered_id %
             // RECV_FRAMES_BUFFER_SIZE];
 
-            // if we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
-            if (video_data.max_id >
-                video_data.last_rendered_id +
-                    MAX_UNSYNCED_FRAMES)  // || (cur_ctx->id == VideoData.last_rendered_id
-                                          // && get_timer( cur_ctx->last_packet_timer )
-                                          // > 96.0 / 1000.0) )
-            {
+            // If we are more than MAX_UNSYNCED_FRAMES behind, we should request an iframe.
+
+            if (video_data.max_id > video_data.last_rendered_id + MAX_UNSYNCED_FRAMES) {
+                // old condition, which only checked if we hadn't received any packets in a while:
+                // || (cur_ctx->id == VideoData.last_rendered_id && get_timer(
+                // cur_ctx->last_packet_timer ) > 96.0 / 1000.0) )
                 if (request_iframe()) {
                     LOG_INFO(
                         "The most recent ID is %d frames ahead of the most recent rendered frame, "
@@ -1074,9 +1073,8 @@ void update_video() {
                         MAX_UNSYNCED_FRAMES);
                 }
             } else {
-                // we should also request an iframe if we are missing a lot of packets
-                // in case frames are large.
-                // Serina: I am not sure what's a good number here, I put 20 to start
+                // We should also request an iframe if we are missing a lot of packets in case
+                // frames are large.
                 int missing_packets = 0;
                 for (int i = video_data.last_rendered_id + 1;
                      i < video_data.last_rendered_id + MAX_UNSYNCED_FRAMES; i++) {
