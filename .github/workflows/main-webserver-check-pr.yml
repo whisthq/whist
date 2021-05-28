@@ -258,7 +258,7 @@ jobs:
                       "staging": os.environ["SERVER_STAGING"],
                       "prod":  os.environ["SERVER_PROD"]
                   }
-                  app = appnames.get(base_ref, "dev")
+                  app = appnames.get(base_ref, appnames.get("dev"))
 
                   config = heroku_config(app)
                   db_url = config[os.environ["HEROKU_DB_KEY"]]
