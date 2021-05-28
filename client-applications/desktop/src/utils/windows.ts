@@ -98,12 +98,6 @@ export const createWindow = (
         customUrl !== undefined ? customUrl : `http://localhost:8080${params}`,
         { userAgent: "Fractal" }
       )
-      .then(() => {
-        // We manually open devTools, because we want to make sure that
-        // both the main/renderer processes are in a "ready" state before we
-        // show.
-        win.webContents.openDevTools({ mode: "undocked" })
-      })
       .catch((err) => console.error(err))
   }
 
