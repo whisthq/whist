@@ -16,7 +16,8 @@
     "update-tenant": "node ./scripts/update-tenant.js dev",
     "deploy:dev": "a0deploy import --input_file tenant.yaml --config_file ./config/dev.json",
     "deploy:staging": "a0deploy import --input_file tenant.yaml --config_file ./config/staging.json",
-    "deploy:prod": "a0deploy import --input_file tenant.yaml --config_file ./config/prod.json"
+    "deploy:prod": "a0deploy import --input_file tenant.yaml --config_file ./config/prod.json",
+    "postinstall": "node ./scripts/postinstall.js"
   },
   "devDependencies": {
     "yaml": "^1.10.2"
