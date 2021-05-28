@@ -1083,6 +1083,11 @@ int32_t receive_video(FractalPacket* packet) {
             (int32_t): -1 if failed to receive packet into video frame, else 0
     */
 
+    // The next two lines are commented out, but left in the codebase to be
+    // easily toggled back and forth during development. We considered putting
+    // this under the LOG_VIDEO ifdef, but decided not to, since these lines
+    // log every single packet, which is too verbose for standard video
+    // logging.
     // LOG_INFO("Video Packet ID %d, Index %d (Packets: %d) (Size: %d)",
     // packet->id, packet->index, packet->num_indices, packet->payload_size);
 
