@@ -1,6 +1,6 @@
 {
   "AUTH0_DOMAIN": "fractal-dev.us.auth0.com",
-  "AUTH0_CLIENT_ID": "fGW4p3PX3zpOqOlMbszV4pdxD7V29bxZ",
+  "AUTH0_CLIENT_ID": "6cd4nskyIHQOePVM6q7FU3x7i5sZLwl1",
   "AUTH0_ALLOW_DELETE": true,
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "APP_CALLBACKS": ["http://localhost/callback"],
