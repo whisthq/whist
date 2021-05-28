@@ -9,11 +9,11 @@ export const hostConfigFailure = hostConfigProcess.pipe(
 
 export const protocolLaunchFailure = merge(
   hostConfigFailure,
-  containerPollingFailure
+  mandelboxPollingFailure
 )
 
 Protocol launch failure is tirggered as a result of a merge between 
-host config failure and contaiener polling failure. The output of this
+host config failure and mandelbox polling failure. The output of this
 failure needs to be edited to reflect this functionality. 
 */
 

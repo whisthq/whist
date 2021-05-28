@@ -84,7 +84,7 @@ module.exports = {
   exclude: [
     "**/node_modules/**/*",
     "**/src/main/**/*",
-    "**/src/utils/container.ts",
+    "**/src/utils/mandelbox.ts",
     "**/src/utils/protocol.ts",
     "**/src/utils/host.ts",
   ],

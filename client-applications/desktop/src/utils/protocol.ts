@@ -86,18 +86,18 @@ export const protocolLaunch = async () => {
 export const protocolStreamInfo = (
   protocol: ChildProcess,
   info: {
-    containerIP: string
-    containerSecret: string
-    containerPorts: {
+    mandelboxIP: string
+    mandelboxSecret: string
+    mandelboxPorts: {
       port_32262: number
       port_32263: number
       port_32273: number
     }
   }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.containerPorts)}`)
-  writeStream(protocol, `private-key?${info.containerSecret}`)
-  writeStream(protocol, `ip?${info.containerIP}`)
+  writeStream(protocol, `ports?${serializePorts(info.mandelboxPorts)}`)
+  writeStream(protocol, `private-key?${info.mandelboxSecret}`)
+  writeStream(protocol, `ip?${info.mandelboxIP}`)
   writeStream(protocol, "finished?0")
 }
 

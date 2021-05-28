@@ -4,7 +4,7 @@ import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
 
 import authFlow from "@app/main/flows/auth"
-import containerFlow from "@app/main/flows/container"
+import mandelboxFlow from "@app/main/flows/mandelbox"
 import protocolLaunchFlow from "@app/main/flows/launch"
 import protocolCloseFlow from "@app/main/flows/close"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
@@ -27,8 +27,8 @@ const launchTrigger = merge(
   fromSignal(fromTrigger("authFlowSuccess"), fromTrigger("updateNotAvailable"))
 ).pipe(take(1))
 
-// Container creation flow
-containerFlow(launchTrigger)
+// Mandelbox creation flow
+mandelboxFlow(launchTrigger)
 
 // Protocol launch flow
 protocolLaunchFlow(launchTrigger)

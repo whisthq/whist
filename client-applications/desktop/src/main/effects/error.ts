@@ -9,15 +9,15 @@ import { skipUntil, startWith, tap, map } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
 import {
-  containerCreateErrorNoAccess,
-  containerCreateErrorUnauthorized,
-} from "@app/utils/container"
+  mandelboxCreateErrorNoAccess,
+  mandelboxCreateErrorUnauthorized,
+} from "@app/utils/mandelbox"
 import { closeWindows, createErrorWindow } from "@app/utils/windows"
 import {
   NoAccessError,
   UnauthorizedError,
   ProtocolError,
-  ContainerError,
+  MandelboxError,
   AuthError,
   FractalError,
 } from "@app/utils/error"
@@ -46,13 +46,13 @@ const handleError = (error: FractalError) => {
 }
 
 // For any failure, close all windows and display error window
-onError(fromTrigger("containerFlowFailure")).subscribe((x) => {
-  if (containerCreateErrorNoAccess(x)) {
+onError(fromTrigger("mandelboxFlowFailure")).subscribe((x) => {
+  if (mandelboxCreateErrorNoAccess(x)) {
     handleError(NoAccessError)
-  } else if (containerCreateErrorUnauthorized(x)) {
+  } else if (mandelboxCreateErrorUnauthorized(x)) {
     handleError(UnauthorizedError)
   } else {
-    handleError(ContainerError)
+    handleError(MandelboxError)
   }
 })
 

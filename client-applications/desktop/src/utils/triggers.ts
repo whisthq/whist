@@ -31,8 +31,8 @@ export default {
   // Flow triggers
   protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",
   protocolLaunchFlowFailure: "protocolLaunchFlowFailure",
-  containerFlowSuccess: "containerFlowSuccess",
-  containerFlowFailure: "containerFlowFailure",
+  mandelboxFlowSuccess: "mandelboxFlowSuccess",
+  mandelboxFlowFailure: "mandelboxFlowFailure",
   protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
   protocolCloseFlowFailure: "protocolCloseFlowFailure",
   authFlowSuccess: "authFlowSuccess",
