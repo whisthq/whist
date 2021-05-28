@@ -192,7 +192,7 @@ int32_t mulithreaded_destroy_decoder(void* opaque);
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 int32_t render_screen(SDL_Renderer* renderer);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
-void nack(int id, int index);
+static void nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
 void update_pixel_format();
