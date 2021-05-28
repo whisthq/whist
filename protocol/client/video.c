@@ -78,16 +78,9 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 // number of frames ahead we can receive packets for before asking for iframe
 #define MAX_UNSYNCED_FRAMES 10
 #define MAX_UNSYNCED_FRAMES_RENDER 12
-// number of packets we are allowed to miss before asking for iframe
-#define MAX_MISSING_PACKETS 50
+// control whether we ask for iframes on missing too many packets - turned off for now
+#define REQUEST_IFRAME_ON_MISSING_PACKETS false
 
-#define LOG_VIDEO false
-
-#define BITRATE_BUCKET_SIZE 500000
-#define NUMBER_LOADING_FRAMES 50
-
-#define CURSORIMAGE_A 0xff000000
-#define CURSORIMAGE_R 0x00ff0000
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
@@ -1073,6 +1066,8 @@ void update_video() {
                         MAX_UNSYNCED_FRAMES);
                 }
             } else {
+#if REQUEST_IFRAME_ON_MISSING_PACKETS
+#define MAX_MISSING_PACKETS 50
                 // We should also request an iframe if we are missing a lot of packets in case
                 // frames are large.
                 int missing_packets = 0;
@@ -1098,6 +1093,7 @@ void update_video() {
                             MAX_MISSING_PACKETS, MAX_UNSYNCED_FRAMES);
                     }
                 }
+#endif
             }
         } else {
             // If we're rendering, we might catch up in a bit, so we can be more lenient
