@@ -34,7 +34,7 @@ def test_no_port(client):
 
 
 def test_no_key(client):
-    response = client.post("container/ping", json=dict(available=True, identifier=0))
+    response = client.post("/mandelbox/ping", json=dict(available=True, identifier=0))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
