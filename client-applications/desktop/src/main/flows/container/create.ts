@@ -12,13 +12,13 @@ import { map, switchMap } from "rxjs/operators"
 import { containerCreate, containerCreateSuccess } from "@app/utils/container"
 import { fork, flow } from "@app/utils/flows"
 
-export default flow<{ email: string; accessToken: string }>(
+export default flow<{ sub: string; accessToken: string }>(
   "containerCreateFlow",
   (trigger) => {
     const create = fork(
       trigger.pipe(
-        switchMap(({ email, accessToken }) =>
-          from(containerCreate(email, accessToken))
+        switchMap(({ sub, accessToken }) =>
+          from(containerCreate(sub, accessToken))
         )
       ),
       {

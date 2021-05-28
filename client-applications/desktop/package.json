@@ -37,6 +37,7 @@
     "electron-updater": "^4.3.8",
     "history": "^4.1.10",
     "json-stringify-safe": "^5.0.1",
+    "jwt-decode": "^3.1.2",
     "lodash": "^4.17.21",
     "logzio-nodejs": "^2.0.2",
     "path": "^0.12.7",
@@ -48,8 +49,6 @@
     "react-flip-toolkit": "^7.0.13",
     "react-icons": "^4.2.0",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0",
-    "react-spring": "^9.1.2",
     "rxjs": "^7.0.0",
     "ts-toolbelt": "^9.6.0"
   },

@@ -10,9 +10,9 @@ import { HostServicePort } from "@app/utils/constants"
 // So we choose to just ignore the linter rule.
 /* eslint-disable @typescript-eslint/naming-convention */
 
-export const hostServiceInfo = async (username: string, accessToken?: string) =>
+export const hostServiceInfo = async (sub: string, accessToken?: string) =>
   get({
-    endpoint: `/host_service?username=${encodeURIComponent(username)}`,
+    endpoint: `/host_service?username=${encodeURIComponent(sub)}`,
     accessToken,
   })
 

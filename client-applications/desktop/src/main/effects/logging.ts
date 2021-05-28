@@ -9,8 +9,7 @@ import TRIGGER from "@app/utils/triggers"
 // Gets the email from either persisted state or a successful auth
 const email = merge(
   fromTrigger("persisted"),
-  fromTrigger("loginFlowSuccess"),
-  fromTrigger("signupFlowSuccess")
+  fromTrigger("authFlowSuccess")
 ).pipe(pluck("email"), startWith(""))
 
 // Iterates through all the triggers and logs them

@@ -4,7 +4,7 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { merge, Observable, combineLatest } from "rxjs"
+import { Observable, combineLatest } from "rxjs"
 import { skipUntil, startWith, tap, map } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
@@ -60,8 +60,6 @@ onError(fromTrigger("protocolLaunchFlowFailure")).subscribe(() => {
   handleError(ProtocolError)
 })
 
-onError(
-  merge(fromTrigger("loginFlowFailure"), fromTrigger("signupFlowFailure"))
-).subscribe(() => {
+onError(fromTrigger("authFlowFailure")).subscribe(() => {
   handleError(AuthError)
 })
