@@ -229,35 +229,16 @@ CREATE TABLE hardware.cluster_info (
 --
 
 CREATE TABLE hardware.container_info (
-    container_id bigint NOT NULL,
+    container_id character varying NOT NULL,
     user_id character varying,
     instance_id character varying NOT NULL,
     status character varying
 );
 
 
---
--- TOC entry 247 (class 1259 OID 16784)
--- Name: container_info_container_id_seq; Type: SEQUENCE; Schema: hardware; Owner: -
---
 
-CREATE SEQUENCE hardware.container_info_container_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- TOC entry 3221 (class 0 OID 0)
--- Dependencies: 247
--- Name: container_info_container_id_seq; Type: SEQUENCE OWNED BY; Schema: hardware; Owner: -
---
-
-ALTER SEQUENCE hardware.container_info_container_id_seq OWNED BY hardware.container_info.container_id;
-
-
+ALTER TABLE ONLY hardware.container_info
+    ADD CONSTRAINT container_info_pkey PRIMARY KEY (container_id);
 --
 -- TOC entry 208 (class 1259 OID 16404)
 -- Name: instance_info; Type: TABLE; Schema: hardware; Owner: -
