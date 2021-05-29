@@ -325,6 +325,9 @@ Public Function Implementations
 ============================
 */
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 void* allocate_region(size_t region_size) {
     /*
         Allocates a region of memory, of the requested size.
@@ -450,6 +453,9 @@ void* realloc_region(void* region, size_t new_region_size) {
     return new_region;
 }
 
+// NOTE that this function is in the hotpath.
+// The hotpath *must* return in under ~10000 assembly instructions.
+// Please pass this comment into any non-trivial function that this function calls.
 void deallocate_region(void* region) {
     /*
         Give the region back to the OS
