@@ -23,8 +23,8 @@ export const regionGet = async (sub: string, accessToken: string) => {
   }
 }
 
-export const mandelboxCreate = async (sub: string, accessToken: string) => {
-  const region = await regionGet(sub, accessToken)
+export const mandelboxCreate = async (sub: string, accessToken: string, region?: AWSRegion) => {
+  region = region ?? (await regionGet(sub, accessToken))
   const response = await mandelboxRequest(sub, accessToken, region, getDPI())
   return response
 }

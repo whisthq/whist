@@ -27,6 +27,7 @@ export default {
   // Tray triggers
   signoutAction: "signoutAction",
   quitAction: "quitAction",
+  regionAction: "regionAction",
 
   // Flow triggers
   protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",

@@ -10,22 +10,30 @@ import protocolCloseFlow from "@app/main/flows/close"
 import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
+import { getRegionFromArgv } from "@app/utils/region"
 
 // Autoupdate flow
 autoUpdateFlow(fromTrigger("updateAvailable"))
 
 // Auth flow
 authFlow(
-  merge(
-    fromSignal(fromTrigger("authInfo"), fromTrigger("notPersisted")),
-    fromTrigger("persisted")
+  fromSignal(
+    merge(
+      fromSignal(fromTrigger("authInfo"), fromTrigger("notPersisted")),
+      fromTrigger("persisted")
+    ),
+    fromTrigger("updateNotAvailable")
   )
 )
 
 // Observable that fires when Fractal is ready to be launched
-const launchTrigger = merge(
-  fromSignal(fromTrigger("authFlowSuccess"), fromTrigger("updateNotAvailable"))
-).pipe(take(1))
+const launchTrigger = fromTrigger("authFlowSuccess").pipe(
+  map((x: object) => ({
+    ...x,
+    region: getRegionFromArgv(process.argv),
+  })),
+  take(1)
+)
 
 // Mandelbox creation flow
 mandelboxFlow(launchTrigger)

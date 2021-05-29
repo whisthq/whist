@@ -11,6 +11,7 @@ import { mapTo, take, concatMap, pluck } from "rxjs/operators"
 import path from "path"
 import { ChildProcess } from "child_process"
 
+import { AWSRegion } from "@app/@types/aws"
 import {
   closeWindows,
   createAuthWindow,
@@ -75,11 +76,9 @@ fromTrigger("notPersisted").subscribe(() => {
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
 merge(
-  fromTrigger("protocolLaunchFlowSuccess"),
   fromTrigger("authFlowSuccess"),
   fromTrigger("authFlowFailure"),
   fromTrigger("updateAvailable"),
-  fromTrigger("protocolLaunchFlowFailure"),
   fromTrigger("mandelboxFlowFailure")
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
@@ -103,15 +102,13 @@ zip([
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
-merge(
-  fromTrigger("protocolLaunchFlowSuccess"),
-  fromTrigger("authFlowSuccess")
-).subscribe(() => {
+fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
   closeWindows()
   hideAppDock()
-  createTray()
+  createTray(x.email)
 })
 
+// Show the Fractal logo in the dock when the Electron window re-appears (e.g. error or auth window)
 fromTrigger("windowCreated").subscribe(() => showAppDock())
 
 // If the update is downloaded, quit the app and install the update
@@ -119,12 +116,15 @@ fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()
 })
 
+// If an update is available, show the update window and download the update
 fromTrigger("updateAvailable").subscribe(() => {
   closeWindows()
   createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })
 
+// When the protocol is closed, destroy the tray icon. If Fractal ran successfully,
+// also quit the application
 zip(
   merge(
     fromTrigger("protocolCloseFlowSuccess"),
@@ -139,14 +139,27 @@ zip(
   if (success) app.quit()
 })
 
+// On signout or relaunch, clear the cache (so the user can log in again) and restart
+// the app
 merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
   () => {
+    // Clear our own Electron cache
     persistClear()
+    // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
+    // a partition called "auth0", so we clear the "auth0" partition here
     session
       .fromPartition("auth0")
       .clearStorageData()
       .catch((err) => console.error(err))
+    // These two commands restart the app
     app.relaunch()
     app.exit()
   }
 )
+
+// If an admin selects a region, relaunch the app with the selected region passed
+// into argv so it can be read by flows/index.ts
+fromTrigger("regionAction").subscribe((region: AWSRegion) => {
+  app.relaunch({ args: process.argv.slice(1).concat([region]) })
+  app.exit()
+})
