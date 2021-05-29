@@ -377,7 +377,8 @@ void update_audio() {
     // MAX_PAYLOAD_SIZE is in compressed bytes
     // need to give these the same units
     int bytes_until_no_more_audio =
-      (int)((most_recent_audio_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
+        (int)((most_recent_audio_id - last_played_id) * decoded_bytes_per_packet) +
+        audio_device_queue;
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
     if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
