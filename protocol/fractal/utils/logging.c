@@ -574,7 +574,7 @@ int32_t multithreaded_update_server_status(void* data) {
              "  \"private_key\" : \"%s\"\n"
              "}",
              d->is_connected ? "false" : "true", d->identifier, d->hex_aes_private_key);
-    send_post_request(d->host, "/container/ping", json, NULL, 0);
+    send_post_request(d->host, "/mandelbox/ping", json, NULL, 0);
 
     free(d);
     return 0;

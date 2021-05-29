@@ -153,7 +153,7 @@ done
 
 echo "Done polling for logs upload to finish. Sending a container/delete request to the webserver..."
 
-# POST $WEBSERVER_URL/container/delete
+# POST $WEBSERVER_URL/mandelbox/delete
 #   Trigger the container deletion request in AWS.
 # JSON Parameters:
 #   container_id: The AWS container id for this container.
@@ -162,7 +162,7 @@ curl \
     --header "Content-Type: application/json" \
     --request POST \
     --data @- \
-    $WEBSERVER_URL/container/delete \
+    $WEBSERVER_URL/mandelbox/delete \
     << END
 {
     "container_id": "$CONTAINER_ID",
@@ -170,7 +170,7 @@ curl \
 }
 END
 
-echo "Done sending a container/delete request to the websever. Shutting down the container..."
+echo "Done sending a mandelbox/delete request to the websever. Shutting down the container..."
 
 # Once the server has exited, we should just shutdown the container so it doesn't hang
 sudo shutdown now

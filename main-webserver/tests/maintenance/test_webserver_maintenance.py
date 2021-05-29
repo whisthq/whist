@@ -59,7 +59,7 @@ def mock_endpoints(monkeypatch):
     Mock _create_new_cluster and _assign_container. MUST be done before celery threads start.
     """
     # problematic:
-    # /aws_container/create_cluster, /aws_container/assign_container, /container/assign
+    # /aws_container/create_cluster, /aws_container/assign_mandelbox, /mandelbox/assign
     monkeypatch.setattr(_create_new_cluster, "__code__", mock_create_cluster.__code__)
     monkeypatch.setattr(_assign_container, "__code__", mock_assign_container.__code__)
 
@@ -67,8 +67,8 @@ def mock_endpoints(monkeypatch):
 def try_problematic_endpoint(request, authorized, region_name: str, endpoint_type: str):
     """Send an HTTP request to an endpoint that conflicts with maintenance mode.
 
-    The endpoints that conflict with maintenance mode are /aws_container/assign_container,
-    /aws_container/create_cluster, and /container/assign. This function may be used to send a
+    The endpoints that conflict with maintenance mode are /aws_container/assign_mandelbox,
+    /aws_container/create_cluster, and /mandelbox/assign. This function may be used to send a
     request to any of those endpoints.
 
     Args:
@@ -82,9 +82,9 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
             be sent (e.g. "us-east-1").
         endpoint_type: A code name for the endpoint to which the request should be sent. A value of
             "te_ac" indicates that the request should be sent to the
-            /aws_container/assign_container endpoint, "te_cc" indicates that the request should be
+            /aws_container/assign_mandelbox endpoint, "te_cc" indicates that the request should be
             sent to /aws_container/create_cluster, and "a_c" indicates that it should be sent to
-            /container/assign.
+            /mandelbox/assign.
 
     Returns:
         An instance of the Flask HTTP Response wrapper representing the test server's response.
@@ -118,7 +118,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
             region=region_name,
             task_definition_arn="fractal-{}-browsers-chrome".format(task_def_env),
         )
-        resp = client.post("/aws_container/assign_container", json=assign_container_body)
+        resp = client.post("/aws_container/assign_mandelbox", json=assign_container_body)
 
     elif endpoint_type == "a_c":
         # aws_container_assign endpoint used by client app
@@ -128,7 +128,7 @@ def try_problematic_endpoint(request, authorized, region_name: str, endpoint_typ
             region=region_name,
         )
         resp = client.post(
-            "/container/assign",
+            "/mandelbox/assign",
             json=assign_container_body,
         )
 
@@ -147,7 +147,7 @@ def test_maintenance_mode(
     request,
 ):
     """
-    problematic task: create cluster or assign container, from /aws_container or /container/assign
+    problematic task: create cluster or assign container, from /aws_container or /mandelbox/assign
     Test this maintenance mode access pattern:
     1. run a mocked problematic task that takes 1 second
     2. start maintenance mode, which should not succeed due to existing task but stop any new ones

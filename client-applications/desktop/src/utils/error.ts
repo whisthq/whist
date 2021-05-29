@@ -5,13 +5,13 @@ export interface FractalError {
 }
 
 export const NoAccessError: FractalError = {
-  hash: "CREATE_CONTAINER_ERROR_NO_ACCESS",
+  hash: "CREATE_MANDELBOX_ERROR_NO_ACCESS",
   title: "Your account does not have access to Fractal.",
   text: "Access to Fractal is currently invite-only. Please contact support@fractal.co for help.",
 }
 
 export const UnauthorizedError: FractalError = {
-  hash: "CREATE_CONTAINER_ERROR_UNAUTHORIZED",
+  hash: "CREATE_MANDELBOX_ERROR_UNAUTHORIZED",
   title: "There was an error authenticating you with Fractal.",
   text: "Please try logging in again or contact support@fractal.co for help.",
 }
@@ -22,8 +22,8 @@ export const ProtocolError: FractalError = {
   text: "Please try again in a few minutes or contact support@fractal.co for help.",
 }
 
-export const ContainerError: FractalError = {
-  hash: "CREATE_CONTAINER_ERROR_INTERNAL",
+export const MandelboxError: FractalError = {
+  hash: "CREATE_MANDELBOX_ERROR_INTERNAL",
   title: "There was an error connecting to the Fractal servers.",
   text: "Please try again in a few minutes or contact support@fractal.co for help.",
 }

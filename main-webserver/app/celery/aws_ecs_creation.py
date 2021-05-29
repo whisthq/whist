@@ -522,7 +522,7 @@ def _assign_container(
         db.session.commit()
         current_task.update_state(
             state="PENDING",
-            meta={"msg": "Container assigned"},
+            meta={"msg": "App assigned"},
         )
     else:
         set_container_state(
@@ -534,7 +534,7 @@ def _assign_container(
         )
         current_task.update_state(
             state="PENDING",
-            meta={"msg": "No waiting container found -- creating a new one"},
+            meta={"msg": "No waiting app found -- creating a new one"},
         )
         if cluster_name is None:
             cluster_name = select_cluster(region_name)

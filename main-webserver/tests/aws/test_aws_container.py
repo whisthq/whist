@@ -80,7 +80,7 @@ def test_assign_container(client, module_user, monkeypatch, task_def_env):
     fractal_logger.info("Starting to assign container in cluster {}".format(pytest.cluster_name))
 
     resp = client.post(
-        "/aws_container/assign_container",
+        "/aws_container/assign_mandelbox",
         json=dict(
             username=module_user,
             cluster_name=pytest.cluster_name,
@@ -259,7 +259,7 @@ def test_delete_container(client, monkeypatch):
     monkeypatch.setattr(ECSClient, "set_auto_scaling_group_capacity", mock_set_capacity)
 
     resp = client.post(
-        "/container/delete",
+        "/mandelbox/delete",
         json=dict(
             private_key=container.secret_key,
             container_id=pytest.container_name,

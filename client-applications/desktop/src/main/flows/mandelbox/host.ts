@@ -74,8 +74,8 @@ const hostInfoFlow = flow<{
   return {
     success: success.pipe(
       map((response) => ({
-        containerIP: hostServiceInfoIP(response),
-        containerPort: hostServiceInfoPort(response),
+        mandelboxIP: hostServiceInfoIP(response),
+        mandelboxPort: hostServiceInfoPort(response),
         contianerSecret: hostServiceInfoSecret(response),
       }))
     ),
@@ -86,21 +86,21 @@ const hostInfoFlow = flow<{
 })
 
 const hostConfigFlow = flow<{
-  containerIP: string
-  containerPort: number
-  containerSecret: string
+  mandelboxIP: string
+  mandelboxPort: number
+  mandelboxSecret: string
   sub: string
   configToken: string
 }>("hostConfigFlow", (trigger) =>
   fork(
     trigger.pipe(
       switchMap(
-        ({ containerIP, containerPort, containerSecret, sub, configToken }) =>
+        ({ mandelboxIP, mandelboxPort, mandelboxSecret, sub, configToken }) =>
           from(
             hostServiceConfig(
-              containerIP,
-              containerPort,
-              containerSecret,
+              mandelboxIP,
+              mandelboxPort,
+              mandelboxSecret,
               sub,
               configToken
             )
@@ -127,7 +127,7 @@ export default flow<{
     zip(trigger, info.success).pipe(
       map(([t, i]) => ({
         ...pick(t, ["sub", "configToken"]),
-        ...pick(i, ["containerIP", "containerPort", "containerSecret"]),
+        ...pick(i, ["mandelboxIP", "mandelboxPort", "mandelboxSecret"]),
       }))
     )
   )

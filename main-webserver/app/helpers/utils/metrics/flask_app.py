@@ -52,7 +52,7 @@ def app_record_metrics(
             "celery.task_duration.success.ms": task_duration,
             "celery.tasks.count": -1
         }, extra_dims={
-            "task_name": "assign_container",
+            "task_name": "assign_mandelbox",
             "task_id": task_id,
         })
     """

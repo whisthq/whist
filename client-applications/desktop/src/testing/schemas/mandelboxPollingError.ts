@@ -1,14 +1,14 @@
 import { mapTo, tap, delay } from "rxjs/operators"
 import { MockSchema } from "@app/@types/schema"
 
-const containerPollingError: MockSchema = {
-  containerPollingInner: (trigger) => ({
+const mandelboxPollingError: MockSchema = {
+  mandelboxPollingInner: (trigger) => ({
     failure: trigger.pipe(
       delay(2000),
       mapTo({ response: { json: { state: "" } } }),
-      tap(() => console.log("MOCKED CONTAINER POLLING FAILURE"))
+      tap(() => console.log("MOCKED MANDELBOX POLLING FAILURE"))
     ),
   }),
 }
 
-export default containerPollingError
+export default mandelboxPollingError

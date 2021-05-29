@@ -1,4 +1,4 @@
-"""Tests for the /container/ping endpoint."""
+"""Tests for the /mandelbox/ping endpoint."""
 
 import importlib
 
@@ -16,21 +16,25 @@ from ..patches import function
 
 
 def test_no_availability(client):
-    response = client.post("/container/ping", json=dict(identifier=0, private_key="aes_secret_key"))
+    response = client.post(
+        "/mandelbox/ping",
+        json=dict(identifier=0, private_key="aes_secret_key"),
+    )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_port(client):
     response = client.post(
-        "/container/ping", json=dict(available=True, private_key="aes_secret_key")
+        "/mandelbox/ping",
+        json=dict(available=True, private_key="aes_secret_key"),
     )
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
-    response = client.post("container/ping", json=dict(available=True, identifier=0))
+    response = client.post("/mandelbox/ping", json=dict(available=True, identifier=0))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -41,7 +45,8 @@ def test_not_found(client, monkeypatch):
     monkeypatch.setattr(aws_container_post, "ping_helper", function(returns=(None, code)))
 
     response = client.post(
-        "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
+        "/mandelbox/ping",
+        json=dict(available=True, identifier=0, private_key="aes_secret_key"),
     )
 
     assert response.status_code == code
@@ -54,7 +59,8 @@ def test_successful(client, monkeypatch):
     importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
-        "/container/ping", json=dict(available=True, identifier=0, private_key="aes_secret_key")
+        "/mandelbox/ping",
+        json=dict(available=True, identifier=0, private_key="aes_secret_key"),
     )
 
     assert response.status_code == code
