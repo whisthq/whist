@@ -42,7 +42,16 @@ module.exports = () => {
       await Promise.all(
         proxies.map(async (filePath) => {
           const firstLine = await readFirstLine(filePath)
-          const relativeProxyImport = path.relative(buildDirectory, filePath)
+          const relativePath = path.relative(buildDirectory, filePath)
+
+          // The normalization here is important. Even on Windows, node imports
+          // are going to use forward slash / instead of back slash \. Hence,
+          // we are going to have to explicitly force this for proxy imports to
+          // work; else, we try to import from C:\ on Windows.
+          const relativeProxyImport = relativePath
+            .split(path.sep)
+            .join(path.posix.sep)
+
           const relativeImport = relativeProxyImport.substring(
             0,
             relativeProxyImport.length - PROXY_SUFFIX.length
