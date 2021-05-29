@@ -23,56 +23,56 @@ export const regionGet = async (sub: string, accessToken: string) => {
   }
 }
 
-export const containerCreate = async (sub: string, accessToken: string) => {
+export const mandelboxCreate = async (sub: string, accessToken: string) => {
   const region = await regionGet(sub, accessToken)
-  const response = await containerRequest(sub, accessToken, region, getDPI())
+  const response = await mandelboxRequest(sub, accessToken, region, getDPI())
   return response
 }
 
-export const containerCreateSuccess = (
-  response: AsyncReturnType<typeof containerCreate>
+export const mandelboxCreateSuccess = (
+  response: AsyncReturnType<typeof mandelboxCreate>
 ) => [200, 202].includes(response.status as number)
 
-export const containerCreateErrorNoAccess = (
-  response: AsyncReturnType<typeof containerCreate>
+export const mandelboxCreateErrorNoAccess = (
+  response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 402
 
-export const containerCreateErrorUnauthorized = (
-  response: AsyncReturnType<typeof containerCreate>
+export const mandelboxCreateErrorUnauthorized = (
+  response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 422 || response.status === 401
 
-export const containerCreateErrorInternal = (
-  response: AsyncReturnType<typeof containerCreate>
+export const mandelboxCreateErrorInternal = (
+  response: AsyncReturnType<typeof mandelboxCreate>
 ) =>
   (response?.json?.ID ?? "") === "" &&
-  !containerCreateErrorNoAccess(response) &&
-  !containerCreateErrorUnauthorized(response)
+  !mandelboxCreateErrorNoAccess(response) &&
+  !mandelboxCreateErrorUnauthorized(response)
 
-export const containerPolling = async (taskID: string, accessToken: string) =>
+export const mandelboxPolling = async (taskID: string, accessToken: string) =>
   await taskStatus(taskID, accessToken)
 
-export const containerPollingError = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingError = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => (response?.json?.state ?? "") === ""
 
-export const containerPollingSuccess = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingSuccess = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.state === "SUCCESS"
 
-export const containerPollingPending = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingPending = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.state !== "SUCCESS" && response?.json?.state !== "FAILURE"
 
-export const containerPollingPorts = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingPorts = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => pick(response?.json?.output, ["port_32262", "port_32263", "port_32273"])
 
-export const containerPollingIP = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingIP = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.output?.ip
 
-export const containerPollingSecretKey = (
-  response: AsyncReturnType<typeof containerPolling>
+export const mandelboxPollingSecretKey = (
+  response: AsyncReturnType<typeof mandelboxPolling>
 ) => response?.json?.output?.secret_key
 
 // Helper functions
@@ -80,14 +80,14 @@ export const containerPollingSecretKey = (
 const taskStatus = async (taskID: string, accessToken: string) =>
   get({ endpoint: "/status/" + taskID, accessToken })
 
-const containerRequest = async (
+const mandelboxRequest = async (
   username: string,
   accessToken: string,
   region: string,
   dpi: number
 ) =>
   post({
-    endpoint: "/container/assign",
+    endpoint: "/mandelbox/assign",
     accessToken,
     body: {
       username,

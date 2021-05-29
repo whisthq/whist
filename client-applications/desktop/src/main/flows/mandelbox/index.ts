@@ -1,14 +1,14 @@
 import { merge, Observable, zip } from "rxjs"
 import { map } from "rxjs/operators"
 
-import containerCreateFlow from "@app/main/flows/container/create"
-import containerPollingFlow from "@app/main/flows/container/polling"
-import hostServiceFlow from "@app/main/flows/container/host"
+import mandelboxCreateFlow from "@app/main/flows/mandelbox/create"
+import mandelboxPollingFlow from "@app/main/flows/mandelbox/polling"
+import hostServiceFlow from "@app/main/flows/mandelbox/host"
 import { flow, createTrigger } from "@app/utils/flows"
 import { pick } from "lodash"
 
 export default flow(
-  "containerFlow",
+  "mandelboxFlow",
   (
     trigger: Observable<{
       sub: string
@@ -16,14 +16,14 @@ export default flow(
       configToken: string
     }>
   ) => {
-    const create = containerCreateFlow(
+    const create = mandelboxCreateFlow(
       trigger.pipe(map((t) => pick(t, ["sub", "accessToken"])))
     )
 
-    const polling = containerPollingFlow(
+    const polling = mandelboxPollingFlow(
       zip(create.success, trigger).pipe(
         map(([c, t]) => ({
-          ...pick(c, ["containerID"]),
+          ...pick(c, ["mandelboxID"]),
           ...pick(t, ["accessToken"]),
         }))
       )
@@ -36,9 +36,9 @@ export default flow(
     )
 
     return {
-      success: createTrigger("containerFlowSuccess", polling.success),
+      success: createTrigger("mandelboxFlowSuccess", polling.success),
       failure: createTrigger(
-        "containerFlowFailure",
+        "mandelboxFlowFailure",
         merge(create.failure, polling.failure, host.failure)
       ),
     }

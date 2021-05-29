@@ -109,14 +109,14 @@ export const formatLogin = (
     },
   })
 
-export const formatContainer = (
+export const formatMandelbox = (
   /*
     Description: 
-      Formats output from container observables. Only returns full output if state is 
+      Formats output from mandelbox observables. Only returns full output if state is
       something other than polling, aside from the usual unecessary JSON values in omitJson
     
     Args: 
-      res: JSON object emitted from container observable 
+      res: JSON object emitted from mandelbox observable
     
     Returns: 
       Function that formats given json object, for the polling state will omit 

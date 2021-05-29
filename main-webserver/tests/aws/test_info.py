@@ -1,4 +1,4 @@
-"""Tests for the /container/protocol_info endpoint."""
+"""Tests for the /mandelbox/protocol_info endpoint."""
 
 import importlib
 
@@ -18,20 +18,20 @@ def test_not_found(client, monkeypatch):
     )
 
     response = client.post(
-        "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
+        "/mandelbox/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
     )
 
     assert response.status_code == HTTPStatus.NOT_FOUND
 
 
 def test_no_port(client):
-    response = client.post("/container/protocol_info", json=dict(private_key="aes_secret_key"))
+    response = client.post("/mandelbox/protocol_info", json=dict(private_key="aes_secret_key"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_no_key(client):
-    response = client.post("/container/protocol_info", json=dict(identifier=0))
+    response = client.post("/mandelbox/protocol_info", json=dict(identifier=0))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -41,7 +41,7 @@ def test_successful(client, monkeypatch):
     importlib.reload(app.blueprints.aws.aws_container_blueprint)
 
     response = client.post(
-        "/container/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
+        "/mandelbox/protocol_info", json=dict(identifier=0, private_key="aes_secret_key")
     )
 
     assert response.status_code == HTTPStatus.OK

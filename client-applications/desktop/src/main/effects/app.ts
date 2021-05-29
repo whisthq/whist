@@ -80,7 +80,7 @@ merge(
   fromTrigger("authFlowFailure"),
   fromTrigger("updateAvailable"),
   fromTrigger("protocolLaunchFlowFailure"),
-  fromTrigger("containerFlowFailure")
+  fromTrigger("mandelboxFlowFailure")
 )
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => (event as IpcMainEvent).preventDefault())
@@ -131,8 +131,8 @@ zip(
     fromTrigger("protocolCloseFlowFailure")
   ),
   merge(
-    fromTrigger("containerFlowSuccess").pipe(mapTo(true)),
-    fromTrigger("containerFlowFailure").pipe(mapTo(false))
+    fromTrigger("mandelboxFlowSuccess").pipe(mapTo(true)),
+    fromTrigger("mandelboxFlowFailure").pipe(mapTo(false))
   )
 ).subscribe(([, success]: [any, boolean]) => {
   destroyTray()

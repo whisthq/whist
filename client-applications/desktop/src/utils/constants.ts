@@ -1,10 +1,10 @@
 // TODO: This is getting a bit unwieldy. Let's create a way to group related errors, e.g.
-// a "container error" object.
+// a "mandelbox error" object.
 
 export const HostServicePort = 4678
 
-// poll for a container for 30 seconds max
-export const containerPollingTimeout = 30000
+// poll for a mandelbox for 30 seconds max
+export const mandelboxPollingTimeout = 30000
 
 // The Electron BrowserWindow API can be passed a hash parameter as data.
 // We use this so that renderer threads can decide which view component to

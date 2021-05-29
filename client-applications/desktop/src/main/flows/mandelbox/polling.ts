@@ -1,10 +1,10 @@
-// This file is home to observables that manage container creation.
+// This file is home to observables that manage mandelbox creation.
 // Their responsibilities are to listen for state that will trigger protocol
 // launches. These observables then communicate with the webserver and
-// poll the state of the containers while they spin up.
+// poll the state of the mandelboxs while they spin up.
 //
 // These observables are subscribed by protocol launching observables, which
-// react to success container creation emissions from here.
+// react to success mandelbox creation emissions from here.
 
 import { from, of, interval, merge } from "rxjs"
 import {
@@ -20,52 +20,52 @@ import {
 import { some } from "lodash"
 
 import {
-  containerPolling,
-  containerPollingIP,
-  containerPollingPorts,
-  containerPollingSecretKey,
-  containerPollingError,
-  containerPollingSuccess,
-  containerPollingPending,
-} from "@app/utils/container"
-import { containerPollingTimeout } from "@app/utils/constants"
+  mandelboxPolling,
+  mandelboxPollingIP,
+  mandelboxPollingPorts,
+  mandelboxPollingSecretKey,
+  mandelboxPollingError,
+  mandelboxPollingSuccess,
+  mandelboxPollingPending,
+} from "@app/utils/mandelbox"
+import { mandelboxPollingTimeout } from "@app/utils/constants"
 import { loadingFrom } from "@app/utils/observables"
 import { fork, flow } from "@app/utils/flows"
 
-const containerPollingRequest = flow<{
-  containerID: string
+const mandelboxPollingRequest = flow<{
+  mandelboxID: string
   accessToken: string
-}>("containerPollingRequest", (trigger) =>
+}>("mandelboxPollingRequest", (trigger) =>
   fork(
     trigger.pipe(
-      switchMap(({ containerID, accessToken }) =>
-        from(containerPolling(containerID, accessToken))
+      switchMap(({ mandelboxID, accessToken }) =>
+        from(mandelboxPolling(mandelboxID, accessToken))
       )
     ),
     {
-      success: (result) => containerPollingSuccess(result),
-      pending: (result) => containerPollingPending(result),
+      success: (result) => mandelboxPollingSuccess(result),
+      pending: (result) => mandelboxPollingPending(result),
       failure: (result) =>
-        containerPollingError(result) ||
+        mandelboxPollingError(result) ||
         !some([
-          containerPollingPending(result),
-          containerPollingSuccess(result),
+          mandelboxPollingPending(result),
+          mandelboxPollingSuccess(result),
         ]),
     }
   )
 )
 
-const containerPollingInner = flow<{
-  containerID: string
+const mandelboxPollingInner = flow<{
+  mandelboxID: string
   accessToken: string
-}>("containerPollingInner", (trigger) => {
+}>("mandelboxPollingInner", (trigger) => {
   const tick = trigger.pipe(
     switchMap((args) => interval(1000).pipe(mapTo(args)))
   )
 
-  const limit = trigger.pipe(delay(containerPollingTimeout))
+  const limit = trigger.pipe(delay(mandelboxPollingTimeout))
 
-  const poll = containerPollingRequest(tick)
+  const poll = mandelboxPollingRequest(tick)
 
   const timeout = poll.pending.pipe(sample(limit)).pipe(take(1))
 
@@ -79,12 +79,12 @@ const containerPollingInner = flow<{
   }
 })
 
-export default flow<{ containerID: string; accessToken: string }>(
-  "containerPollingFlow",
+export default flow<{ mandelboxID: string; accessToken: string }>(
+  "mandelboxPollingFlow",
   (trigger) => {
     const poll = trigger.pipe(
-      map((args: { containerID: string; accessToken: string }) =>
-        containerPollingInner(of(args))
+      map((args: { mandelboxID: string; accessToken: string }) =>
+        mandelboxPollingInner(of(args))
       ),
       share()
     )
@@ -103,9 +103,9 @@ export default flow<{ containerID: string; accessToken: string }>(
     return {
       success: success.pipe(
         map((response) => ({
-          containerIP: containerPollingIP(response),
-          containerSecret: containerPollingSecretKey(response),
-          containerPorts: containerPollingPorts(response),
+          mandelboxIP: mandelboxPollingIP(response),
+          mandelboxSecret: mandelboxPollingSecretKey(response),
+          mandelboxPorts: mandelboxPollingPorts(response),
         }))
       ),
       failure,

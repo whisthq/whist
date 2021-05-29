@@ -9,7 +9,7 @@ import {
   NoAccessError,
   UnauthorizedError,
   ProtocolError,
-  ContainerError,
+  MandelboxError,
   AuthError,
   NavigationError,
 } from "@app/utils/error"
@@ -65,11 +65,11 @@ const RootComponent = () => {
       />
     )
   }
-  if (show === ContainerError.hash) {
+  if (show === MandelboxError.hash) {
     return (
       <Error
-        title={ContainerError.title}
-        text={ContainerError.text}
+        title={MandelboxError.title}
+        text={MandelboxError.text}
         onClick={errorContinue}
       />
     )
