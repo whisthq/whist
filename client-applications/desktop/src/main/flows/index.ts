@@ -29,8 +29,8 @@ authFlow(
 // Observable that fires when Fractal is ready to be launched
 const launchTrigger = fromTrigger("authFlowSuccess").pipe(
   map((x: object) => ({
-    ...x,
-    region: getRegionFromArgv(process.argv),
+    ...x, // { sub, accessToken, configToken }
+    region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
   })),
   take(1)
 )
@@ -50,5 +50,7 @@ const close = protocolCloseFlow(
   )
 )
 
+// Subscribe so that the protocolCloseFlow actually emits
+// (if an observable has no subscribers it won't emit)
 close.success.subscribe()
 close.failure.subscribe()
