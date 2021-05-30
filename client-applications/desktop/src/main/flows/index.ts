@@ -1,4 +1,4 @@
-import { merge, fromEvent } from "rxjs"
+import { merge, fromEvent, Observable } from "rxjs"
 import { map, mergeMap, take } from "rxjs/operators"
 import { EventEmitter } from "events"
 import { ChildProcess } from "child_process"
@@ -11,6 +11,7 @@ import autoUpdateFlow from "@app/main/flows/autoupdate"
 import { fromTrigger } from "@app/utils/flows"
 import { fromSignal } from "@app/utils/observables"
 import { getRegionFromArgv } from "@app/utils/region"
+import { AWSRegion } from "@app/@types/aws"
 
 // Autoupdate flow
 autoUpdateFlow(fromTrigger("updateAvailable"))
@@ -33,7 +34,12 @@ const launchTrigger = fromTrigger("authFlowSuccess").pipe(
     region: getRegionFromArgv(process.argv), // AWS region, if admins want to control the region
   })),
   take(1)
-)
+) as Observable<{
+  sub: string
+  accessToken: string
+  configToken: string
+  region?: AWSRegion
+}>
 
 // Mandelbox creation flow
 mandelboxFlow(launchTrigger)
