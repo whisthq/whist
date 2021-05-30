@@ -181,6 +181,37 @@ void audio_nack(int id, int index) {
     send_fmsg(&fmsg);
 }
 
+int get_next_audio_frame(uint8_t* data) {
+    /*
+  Get the next (encoded) audio frame from the ring buffer and decode it into the data buffer
+
+  Arguments:
+  decoded_data (uint8_t*): Data buffer to receive the decoded audio data
+    */
+    // setup the frame
+    AVPacket encoded_packet;
+    av_init_packet(&encoded_packet);
+    encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
+    encoded_packet.size = 0;
+    // reconstruct the audio frame from the indices.
+    for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+        AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
+        memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
+        encoded_packet.size += packet->size;
+    }
+
+    // Decode encoded audio
+    int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
+    av_free(encoded_packet.data);
+    av_packet_unref(&encoded_packet);
+
+    if (res == 0) {
+        // Get decoded data
+        audio_decoder_packet_readout(audio_context.audio_decoder, data);
+    }
+    return res;
+}
+
 // END AUDIO FUNCTIONS
 
 /*
@@ -250,55 +281,14 @@ void render_audio() {
             audio_refresh = false;
             reinit_audio_device();
         }
+        static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+        int res = get_next_audio_frame(decoded_data);
+        if (res == 0) {
+            res = SDL_QueueAudio(audio_context.dev, decoded_data,
+                                 audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
-        if (audio_render_context.encoded) {
-            // decode the audio frame
-            // setup the frame
-            AVPacket encoded_packet;
-            av_init_packet(&encoded_packet);
-            encoded_packet.data = (uint8_t*)av_malloc(MAX_NUM_AUDIO_INDICES * MAX_PAYLOAD_SIZE);
-            encoded_packet.size = 0;
-            // reconstruct the audio frame from the indices.
-            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
-                memcpy(encoded_packet.data + encoded_packet.size, packet->data, packet->size);
-                encoded_packet.size += packet->size;
-            }
-
-            // Decode encoded audio
-            int res = audio_decoder_decode_packet(audio_context.audio_decoder, &encoded_packet);
-            av_free(encoded_packet.data);
-            av_packet_unref(&encoded_packet);
-
-            if (res == 0) {
-                // repeatedly use this buffer for holding decoded data
-                static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
-
-                // Get decoded data
-                audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
-
-                // Play decoded audio
-                res =
-                    SDL_QueueAudio(audio_context.dev, decoded_data,
-                                   audio_decoder_get_frame_data_size(audio_context.audio_decoder));
-
-                if (res < 0) {
-                    LOG_ERROR("Could not play audio!");
-                }
-            }
-        } else {
-            // Audio wasn't encoded, we can just play it
-            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                AudioPacket* packet = (AudioPacket*)&audio_render_context.audio_packets[i];
-                if (packet->size > 0) {
-#if LOG_AUDIO
-                    LOG_DEBUG("Playing Audio ID %d (Size: %d) (Queued: %d)\n", packet->id,
-                              packet->size, SDL_GetQueuedAudioSize(audio_context.dev));
-#endif
-                    if (SDL_QueueAudio(audio_context.dev, packet->data, packet->size) < 0) {
-                        LOG_ERROR("Could not play audio!\n");
-                    }
-                }
+            if (res < 0) {
+                LOG_ERROR("Could not play audio!");
             }
         }
         // No longer rendering audio
