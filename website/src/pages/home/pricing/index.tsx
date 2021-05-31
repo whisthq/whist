@@ -7,26 +7,26 @@ import { FractalPlan } from '@app/shared/types/payment'
 // TODO: This should be stored in a database and pulled via GraphQL
 // https://github.com/fractal/website/issues/337
 export const PLANS: {
-    [key: string]: {
-      price: number
-      name: FractalPlan
-      subText: string
-      details: string[]
-    }
-  } = {
-    Starter: {
-      price: 50,
-      name: FractalPlan.STARTER,
-      subText: 'Additional 7-day free trial',
-      details: ['Unlimited usage', 'Access to alpha features']
-    },
-    Pro: {
-      price: 99,
-      name: FractalPlan.PRO,
-      subText: 'Coming Soon',
-      details: ['Everything in Starter', 'Stream other browsers']
-    }
+  [key: string]: {
+    price: number
+    name: FractalPlan
+    subText: string
+    details: string[]
   }
+} = {
+  Starter: {
+    price: 50,
+    name: FractalPlan.STARTER,
+    subText: 'Additional 7-day free trial',
+    details: ['Unlimited usage', 'Access to alpha features']
+  },
+  Pro: {
+    price: 99,
+    name: FractalPlan.PRO,
+    subText: 'Coming Soon',
+    details: ['Everything in Starter', 'Stream other browsers']
+  }
+}
 
 export const Pricing = (props: { dark: boolean }) => {
   /*
