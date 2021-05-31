@@ -88,7 +88,7 @@ static bool volatile audio_refresh = false;
 static clock nack_timer;
 
 static int last_nacked_id = -1;
-static int most_recent_audio_id = -1;
+static int max_received_id = -1;
 static int last_played_id = -1;
 
 static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
@@ -181,9 +181,76 @@ void audio_nack(int id, int index) {
     send_fmsg(&fmsg);
 }
 
+void nack_missing_packets() {
+  /* 
+Nack up to MAX_NACKED packets from last_nacked_id to max_received_id - 4. The -4 accounts for the fact that packets can arrive out of order, but abrupt jumps indicate that a packet is probably missing.
+  */
+      int num_nacked = 0;
+      // make sure we're not nacking too frequently
+    if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
+        last_nacked_id = max(last_played_id, last_nacked_id);
+	// nack up to MAX_NACKED packets
+        for (int i = last_nacked_id + 1; i < max_received_id - 4 && num_nacked < MAX_NACKED;
+             i++) {
+            int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
+            AudioPacket* i_packet = &receiving_audio[i_buffer_index];
+            if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
+                // check if we never received this packet
+                i_packet->nacked_amount++;
+                int id = i / MAX_NUM_AUDIO_INDICES;
+                int index = i % MAX_NUM_AUDIO_INDICES;
+                nack(id, index);
+                num_nacked++;
+
+                start_timer(&nack_timer);
+            }
+            last_nacked_id = i;
+        }
+    }
+}
+
+void catchup_audio() {
+  /*
+Catch up to the most recently received ID if no audio has played yet and clean out the ring buffer. The logic inside the if statement should only run once: when we have received a packet, but not yet updated the rest of the audio state.
+   */
+
+      if (last_played_id == -1 && has_video_rendered_yet && max_received_id > 0) {
+      
+        last_played_id = max_received_id - 1;
+        while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
+            last_played_id++;
+        }
+
+        // Clean out the old packets
+        for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
+            if (receiving_audio[i].id <= last_played_id) {
+                receiving_audio[i].id = -1;
+                receiving_audio[i].nacked_amount = 0;
+            }
+        }
+    }
+
+    // Return if there's nothing to play
+    if (last_played_id == -1) {
+        return;
+    }
+}
+
+void flush_next_audio_frame() {
+  /*
+Skip the next audio frame in the ring buffer.
+   */
+  int next_to_play_id = last_played_id + 1;
+            for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+                AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+                packet->id = -1;
+                packet->nacked_amount = 0;
+            }
+}
+
 int get_next_audio_frame(uint8_t* data) {
     /*
-  Get the next (encoded) audio frame from the ring buffer and decode it into the data buffer
+  Get the next (encoded) audio frame from the render context and decode it into the data buffer
 
   Arguments:
   decoded_data (uint8_t*): Data buffer to receive the decoded audio data
@@ -320,33 +387,15 @@ void update_audio() {
     LOG_DEBUG("Queue: %d", audio_device_queue);
 #endif
 
-    // Catch up to most recent ID if nothing has played yet
-    if (last_played_id == -1 && has_video_rendered_yet && most_recent_audio_id > 0) {
-        last_played_id = most_recent_audio_id - 1;
-        while (last_played_id % MAX_NUM_AUDIO_INDICES != MAX_NUM_AUDIO_INDICES - 1) {
-            last_played_id++;
-        }
+    catchup_audio();
 
-        // Clean out the old packets
-        for (int i = 0; i < RECV_AUDIO_BUFFER_SIZE; i++) {
-            if (receiving_audio[i].id <= last_played_id) {
-                receiving_audio[i].id = -1;
-                receiving_audio[i].nacked_amount = 0;
-            }
-        }
-    }
-
-    // Return if there's nothing to play
-    if (last_played_id == -1) {
-        return;
-    }
-
+    // TODO: should i put buffering in a separate function? Trying to figure out how to refactor when some logic returns out of the function prematurely.
     // Buffering audio controls whether or not we're trying to accumulate an audio buffer; ideally,
     // we want about 30ms of audio in the buffer
     static bool buffering_audio = false;
 
     int bytes_until_no_more_audio =
-        (int)((most_recent_audio_id - last_played_id) * decoded_bytes_per_packet) +
+        (int)((max_received_id - last_played_id) * decoded_bytes_per_packet) +
         audio_device_queue;
 
     // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
@@ -394,13 +443,7 @@ void update_audio() {
         if (audio_device_queue > real_limit) {
             LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
                         next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
-            // Clear out audio instead of playing it
-            for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-                AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
-                packet->id = -1;
-                packet->nacked_amount = 0;
-            }
-
+	    flush_next_audio_frame();
             if (!audio_flush_triggered) {
                 audio_flush_triggered = true;
             }
@@ -408,6 +451,7 @@ void update_audio() {
             // When the audio queue is no longer full, we stop flushing the audio queue
             audio_flush_triggered = false;
 
+	    // TODO: should this be a separate function that stores the next frame into the render context?
             // Store the audio render context information
             audio_render_context.encoded = USING_AUDIO_ENCODE_DECODE;
             for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
@@ -429,6 +473,7 @@ void update_audio() {
     }
 
     // Find pending audio packets and NACK them
+<<<<<<< HEAD
     int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
         last_nacked_id = max(last_played_id, last_nacked_id);
@@ -451,6 +496,9 @@ void update_audio() {
             last_nacked_id = i;
         }
     }
+=======
+    nack_missing_packets();
+>>>>>>> 443bb8435... moved audio flushing, catching up, and missing packet nacking into separate functions
 }
 
 // NOTE that this function is in the hotpath.
@@ -546,7 +594,7 @@ int32_t receive_audio(FractalPacket* packet) {
 #endif
         // set the buffer slot to the data of the audio ID
         buffer_pkt->id = audio_id;
-        most_recent_audio_id = max(buffer_pkt->id, most_recent_audio_id);
+        max_received_id = max(buffer_pkt->id, max_received_id);
         buffer_pkt->size = packet->payload_size;
         memcpy(buffer_pkt->data, packet->data, packet->payload_size);
 
@@ -555,7 +603,7 @@ int32_t receive_audio(FractalPacket* packet) {
             for (int i = audio_id + 1; i % MAX_NUM_AUDIO_INDICES != 0; i++) {
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id = i;
                 receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].size = 0;
-                most_recent_audio_id = max(most_recent_audio_id, i);
+                max_received_id = max(max_received_id, i);
             }
         }
     }
