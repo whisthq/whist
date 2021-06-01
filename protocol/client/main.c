@@ -167,6 +167,7 @@ void init_update() {
 
     start_timer((clock*)&update_data.last_tcp_check_timer);
     start_timer((clock*)&latency_timer);
+    latency = 0;
     ping_id = 1;
     ping_failures = -2;
 
