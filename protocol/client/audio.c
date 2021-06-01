@@ -106,6 +106,11 @@ Private Functions
 void destroy_audio_device();
 void reinit_audio_device();
 void audio_nack(int id, int index);
+void nack_missing_packets();
+void catchup_audio();
+void flush_next_audio_frame();
+void update_render_context();
+int get_next_audio_frame(uint8_t* data);
 
 /*
 ============================
@@ -200,7 +205,7 @@ void nack_missing_packets() {
                 i_packet->nacked_amount++;
                 int id = i / MAX_NUM_AUDIO_INDICES;
                 int index = i % MAX_NUM_AUDIO_INDICES;
-                nack(id, index);
+                audio_nack(id, index);
                 num_nacked++;
 
                 start_timer(&nack_timer);
@@ -438,11 +443,11 @@ void update_audio() {
     int next_to_play_id = last_played_id + 1;
 
     if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
-        LOG_WARNING("NEXT TO PLAY ISN'T AT START OF AUDIO FRAME!");
+        LOG_WARNING("Next to play (ID: %d) isn't at start of audio frame", next_to_play_id);
         return;
     }
 
-    // check that we don't have any stale audio packets in the buffer
+    // check that the next frame we want to render is ready
     bool valid = true;
     for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
         if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
