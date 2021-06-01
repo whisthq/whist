@@ -6,6 +6,7 @@ import {
   generateRefreshedAuthInfo,
   generateRandomConfigToken,
 } from "@app/utils/auth"
+import { store } from "@app/utils/persist"
 
 export default flow<{
   email: string
@@ -21,7 +22,10 @@ export default flow<{
   const authInfoWithConfig = zip(refreshedAuthInfo, trigger).pipe(
     map(([authInfo, tokens]) => ({
       ...authInfo,
-      configToken: tokens.configToken ?? generateRandomConfigToken(),
+      configToken:
+        tokens.configToken ??
+        store.get("configToken") ??
+        generateRandomConfigToken(),
     }))
   )
 

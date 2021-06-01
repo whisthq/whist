@@ -141,7 +141,9 @@ zip(
 // the app
 merge(fromTrigger("clearCacheAction")).subscribe(() => {
   // Clear our own Electron cache
-  persistClear()
+  persistClear({
+    exclude: ["configToken"]
+  })
   // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
   // a partition called "auth0", so we clear the "auth0" partition here
   session
