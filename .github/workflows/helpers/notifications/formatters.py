@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 from functools import wraps
 
 MAX_COLLAPSE_LINES = 5

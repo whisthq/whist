@@ -52,7 +52,6 @@ jobs:
 
             - name: Install webserver scripting dependencies
               working-directory: main-webserver
-              # install webserver scripting dependencies
               run: pip install -r scripts/requirements.txt
 
             - name: Setup and run load test
