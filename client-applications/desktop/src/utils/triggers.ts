@@ -25,8 +25,9 @@ export default {
   relaunchAction: "relaunchAction",
 
   // Tray triggers
-  signoutAction: "signoutAction",
-  quitAction: "quitAction",
+  traySignoutAction: "traySignoutAction",
+  trayQuitAction: "trayQuitAction",
+  trayRegionAction: "trayRegionAction",
 
   // Flow triggers
   protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",

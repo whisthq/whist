@@ -2,6 +2,7 @@
   This file exists so that the client app can figure out which region is the closest to the user and connect to that cluster.
 */
 import ping from "ping"
+import { values } from "lodash"
 
 import { AWSRegion } from "@app/@types/aws"
 
@@ -71,4 +72,10 @@ export const chooseRegion = async (regions: AWSRegion[]) => {
   }
 
   return closestRegion
+}
+
+export const getRegionFromArgv = (argv: string[]) => {
+  return (values(AWSRegion) as string[]).includes(argv[argv.length - 1])
+    ? argv[argv.length - 1]
+    : undefined
 }
