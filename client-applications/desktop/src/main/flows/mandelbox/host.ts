@@ -76,7 +76,7 @@ const hostInfoFlow = flow<{
       map((response) => ({
         mandelboxIP: hostServiceInfoIP(response),
         mandelboxPort: hostServiceInfoPort(response),
-        contianerSecret: hostServiceInfoSecret(response),
+        mandelboxSecret: hostServiceInfoSecret(response),
       }))
     ),
     failure,
