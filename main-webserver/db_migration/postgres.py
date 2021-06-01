@@ -24,7 +24,7 @@ def postgres_parse_url(db_config):
     username = db_config["username"]
     password = db_config["password"]
 
-    return f"postgres://{username}:{password}@{host}:{port}/{dbname}"
+    return f"postgresql://{username}:{password}@{host}:{port}/{dbname}"
 
 
 def with_postgres_url(func):
