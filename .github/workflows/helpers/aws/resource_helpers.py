@@ -200,9 +200,7 @@ def cluster_to_asgs(cluster_arn, region):
 
     capacity_providers = response["clusters"][0]["capacityProviders"]
     if len(capacity_providers) > 0:
-        response = client.describe_capacity_providers(
-            capacityProviders=capacity_providers
-        )
+        response = client.describe_capacity_providers(capacityProviders=capacity_providers)
         asgs = [
             asg["autoScalingGroupProvider"]["autoScalingGroupArn"]
             for asg in response["capacityProviders"]
@@ -369,8 +367,7 @@ def get_hanging_tasks(urls, secrets, region):
             if len(tasks) > 0:
                 response = client.describe_tasks(cluster=cluster, tasks=tasks)
                 tasks_and_times = (
-                    (task["taskArn"], (cluster, task["createdAt"]))
-                    for task in response["tasks"]
+                    (task["taskArn"], (cluster, task["createdAt"])) for task in response["tasks"]
                 )
                 aws_tasks_and_times.update(dict(tasks_and_times))
 
@@ -417,14 +414,9 @@ def flag_instances(region):
 
             overdue, days = compare_days(launch_time)
             if overdue and state not in shutting_down_states:
-                msg += (
-                    f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days\n"
-                )
+                msg += f"     - `{name}` - id: `{instance_id}` - *UPTIME:* {days} days\n"
             elif test:
-                if (
-                    has_elapsed_hours(launch_time, 1)
-                    and state not in shutting_down_states
-                ):
+                if has_elapsed_hours(launch_time, 1) and state not in shutting_down_states:
                     msg += f"     - `{name}` - id: `{instance_id}` - *TEST INSTANCE OVERDUE*\n"
             elif len(name) == 0 and state not in shutting_down_states:
                 msg += f"     - id: `{instance_id}` - *UNTAGGED/UNNAMED*\n"
@@ -459,12 +451,7 @@ def hanging_resource(component, region, urls, secrets):
         if len(aws_clusters) > 0:
             msg += "\n     - " + "\n     - ".join(
                 [
-                    "`"
-                    + c
-                    + "`"
-                    + " in AWS but not in any DB ("
-                    + str(n)
-                    + " instances)"
+                    "`" + c + "`" + " in AWS but not in any DB (" + str(n) + " instances)"
                     for c, n in output
                 ]
             )
@@ -476,9 +463,7 @@ def hanging_resource(component, region, urls, secrets):
     elif component == "Tasks":
         tasks = get_hanging_tasks(urls, secrets, region)
         if len(tasks) > 0:
-            return "\n     - " + "\n     - ".join(
-                ["`" + str(t) + "`" + d for t, d in tasks]
-            )
+            return "\n     - " + "\n     - ".join(["`" + str(t) + "`" + d for t, d in tasks])
         return ""
     elif component == "Instances":
         msg = "\n"

@@ -2,7 +2,7 @@
 ## Constants
 ## -------------------
 
-# Dictionary of known CUDA versions and thier download URLS, which do not follow a consistent pattern :(
+# Dictionary of known CUDA versions and their download URLS, which do not follow a consistent pattern :(
 $CUDA_KNOWN_URLS = @{
     "8.0.44" = "http://developer.nvidia.com/compute/cuda/8.0/Prod/network_installers/cuda_8.0.44_win10_network-exe";
     "8.0.61" = "http://developer.nvidia.com/compute/cuda/8.0/Prod2/network_installers/cuda_8.0.61_win10_network-exe";
