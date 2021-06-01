@@ -35,9 +35,7 @@ def client(dest):
     start_time = time.time()
     while time.time() - start_time < 12.0:
         print("Sending data...")
-        test_socket.sendto(
-            current_milli_time().to_bytes(8, byteorder="big"), (dest, TEST_PORT)
-        )
+        test_socket.sendto(current_milli_time().to_bytes(8, byteorder="big"), (dest, TEST_PORT))
         time.sleep(1)
 
 
