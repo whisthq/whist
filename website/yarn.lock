@@ -267,6 +267,7 @@
     browser-or-node "^1.3.0"
     lodash "^4.17.21"
     node-fetch "^2.6.1"
+    stripe "^8.146.0"
 
 "@fullhuman/postcss-purgecss@^3.1.3":
   version "3.1.3"
@@ -554,10 +555,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/once/-/once-1.1.2.tgz#ccb91445360179a04e7fe6aff78c00ffc1eeaf82"
   integrity sha512-RbzJvlNzmRq5c3O09UipeuXno4tA1FE6ikOjxZK0tuxVv3412l64l5t1W5pj4+rJq9vpkm/kwiR07aZXnsKPxw==
 
-"@typeform/embed@^1.6.1":
-  version "1.6.1"
-  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.6.1.tgz#d73813950e8cf3350b043e3783ef3d23cebaa744"
-  integrity sha512-obJPD2HXJ9CfQ7laxGSRQGJxyI7KNTcLb6YIo8eeXgL+D6ZQKv2YxKTl0qLIyk/4Ur5yTcJlZM90raXMX91RvA==
+"@typeform/embed@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@typeform/embed/-/embed-1.7.0.tgz#14e4a2dcbe03719b1d0685e2bdc7b234a5a4df6e"
+  integrity sha512-5F0eEW6EbfBIcOJSfshjAOO2WuR8oAKhp1zNfTal4+taWgtgS2K4FT4FAF9+lvrUWvH1U7h0e/TEMrQMERPugw==
 
 "@types/classnames@^2.2.10", "@types/classnames@^2.3.1":
   version "2.3.1"
@@ -590,6 +591,11 @@
   version "4.14.169"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.169.tgz#83c217688f07a4d9ef8f28a3ebd1d318f6ff4cbb"
   integrity sha512-DvmZHoHTFJ8zhVYwCLWbQ7uAbYQEk52Ev2/ZiQ7Y7gQGeV9pjBqjnQpECMHfKS1rCYAhMI7LHVxwyZLZinJgdw==
+
+"@types/node@>=8.1.0":
+  version "15.6.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.6.1.tgz#32d43390d5c62c5b6ec486a9bc9c59544de39a08"
+  integrity sha512-7EIraBEyRHEe7CH+Fm1XvgqU6uwZN8Q7jppJGcqjROMT29qhAuuOxYB1uEY5UMYQKEmA5D+5tBnhdaPXSsLONA==
 
 "@types/node@^15.3.1":
   version "15.3.1"
@@ -3372,6 +3378,13 @@ purgecss@^3.1.3:
     postcss "^8.2.1"
     postcss-selector-parser "^6.0.2"
 
+qs@^6.6.0:
+  version "6.10.1"
+  resolved "https://registry.yarnpkg.com/qs/-/qs-6.10.1.tgz#4931482fa8d647a5aab799c5271d2133b981fb6a"
+  integrity sha512-M528Hph6wsSVOBiYUnGf+K/7w0hNshs/duGsNXPUCLH5XAqjEtiPGwNONLV0tBH8NoGb0mvD5JubnUTrujKDTg==
+  dependencies:
+    side-channel "^1.0.4"
+
 qs@~6.5.2:
   version "6.5.2"
   resolved "https://registry.yarnpkg.com/qs/-/qs-6.5.2.tgz#cb3ae806e8740444584ef154ce8ee98d403f3e36"
@@ -4022,6 +4035,14 @@ strip-json-comments@^3.1.0, strip-json-comments@^3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-3.1.1.tgz#31f1281b3832630434831c310c01cccda8cbe006"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
+
+stripe@^8.146.0:
+  version "8.150.0"
+  resolved "https://registry.yarnpkg.com/stripe/-/stripe-8.150.0.tgz#d48b9efe4d104cd65385ccc2fec6ede6cfb9bfa2"
+  integrity sha512-48YMLupzvDyVZUs37xUBd1SF0E3B77ahOTLhL7ycVwZqwjlQ30K7iHTejIAUdtEnWaNkaOz0LX6jHeR49IulRQ==
+  dependencies:
+    "@types/node" ">=8.1.0"
+    qs "^6.6.0"
 
 supports-color@^5.3.0, supports-color@^5.4.0:
   version "5.5.0"
