@@ -145,58 +145,6 @@ func NewDockerStatsEngine(cfg *config.Config, client dockerapi.DockerClient, con
 	}
 }
 
-// synchronizeState goes through all the containers on the instance to synchronize the state on agent start
-func (engine *DockerStatsEngine) synchronizeState() error {
-	listContainersResponse := engine.client.ListContainers(engine.ctx, false, dockerclient.ListContainersTimeout)
-	if listContainersResponse.Error != nil {
-		return listContainersResponse.Error
-	}
-
-	for _, containerID := range listContainersResponse.DockerIDs {
-		engine.addAndStartStatsContainer(containerID)
-	}
-
-	return nil
-}
-
-// addAndStartStatsContainer add the container into stats engine and start collecting the container stats
-func (engine *DockerStatsEngine) addAndStartStatsContainer(containerID string) {
-	engine.lock.Lock()
-	defer engine.lock.Unlock()
-	statsContainer, statsTaskContainer, err := engine.addContainerUnsafe(containerID)
-	if err != nil {
-		seelog.Debugf("Adding container to stats watch list failed, container: %s, err: %v", containerID, err)
-		return
-	}
-
-	if engine.config.DisableMetrics.Enabled() || statsContainer == nil {
-		return
-	}
-
-	statsContainer.StartStatsCollection()
-
-	task, err := engine.resolver.ResolveTask(containerID)
-	if err != nil {
-		return
-	}
-
-	dockerContainer, errResolveContainer := engine.resolver.ResolveContainer(containerID)
-	if errResolveContainer != nil {
-		seelog.Debugf("Could not map container ID to container, container: %s, err: %s", containerID, err)
-		return
-	}
-
-	if task.IsNetworkModeAWSVPC() {
-		// Start stats collector only for pause container
-		if statsTaskContainer != nil && dockerContainer.Container.Type == apicontainer.ContainerCNIPause {
-			statsTaskContainer.StartStatsCollection()
-		} else {
-			seelog.Debugf("stats task container is nil, cannot start task stats collection")
-		}
-	}
-
-}
-
 // MustInit initializes fields of the DockerStatsEngine object.
 func (engine *DockerStatsEngine) MustInit(ctx context.Context, taskEngine ecsengine.TaskEngine, cluster string, containerInstanceArn string) error {
 	derivedCtx, cancel := context.WithCancel(ctx)
@@ -218,10 +166,6 @@ func (engine *DockerStatsEngine) MustInit(ctx context.Context, taskEngine ecseng
 	err = engine.containerChangeEventStream.Subscribe(containerChangeHandler, engine.handleDockerEvents)
 	if err != nil {
 		return fmt.Errorf("Failed to subscribe to container change event stream, err %v", err)
-	}
-	err = engine.synchronizeState()
-	if err != nil {
-		seelog.Warnf("Synchronize the container state failed, err: %v", err)
 	}
 
 	go engine.waitToStop()
@@ -578,8 +522,6 @@ func (engine *DockerStatsEngine) handleDockerEvents(events ...interface{}) error
 		}
 
 		switch dockerContainerChangeEvent.Status {
-		case apicontainerstatus.ContainerRunning:
-			engine.addAndStartStatsContainer(dockerContainerChangeEvent.DockerID)
 		case apicontainerstatus.ContainerStopped:
 			engine.removeContainer(dockerContainerChangeEvent.DockerID)
 		default:
