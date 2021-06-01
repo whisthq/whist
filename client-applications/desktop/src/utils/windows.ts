@@ -17,7 +17,7 @@ export const base = {
     partition: "auth0",
   },
   resizable: false,
-  titleBarStyle: "hidden",
+  titleBarStyle: "default",
 }
 
 export const width = {
@@ -96,7 +96,10 @@ export const createWindow = (
     win
       .loadURL(
         customUrl !== undefined ? customUrl : `http://localhost:8080${params}`,
-        { userAgent: "Fractal" }
+        {
+          userAgent:
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
+        }
       )
       .catch((err) => console.error(err))
   }
