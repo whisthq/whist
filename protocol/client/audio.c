@@ -251,6 +251,7 @@ void update_render_context() {
     */
     // we always encode our audio now
     audio_render_context.encoded = USING_AUDIO_ENCODE_DECODE;
+    int next_to_play_id = last_played_id + 1;
     for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
         // move the packet into the render context
         int buffer_index = next_to_play_id + i;
