@@ -16,7 +16,6 @@ import { closeWindows, createErrorWindow } from "@app/utils/windows"
 import {
   NoAccessError,
   UnauthorizedError,
-  ProtocolError,
   MandelboxError,
   AuthError,
   FractalError,
@@ -53,10 +52,6 @@ onError(fromTrigger("mandelboxFlowFailure")).subscribe((x) => {
   } else {
     errorWindow(MandelboxError)
   }
-})
-
-onError(fromTrigger("protocolLaunchFlowFailure")).subscribe(() => {
-  errorWindow(ProtocolError)
 })
 
 onError(fromTrigger("authFlowFailure")).subscribe(() => {
