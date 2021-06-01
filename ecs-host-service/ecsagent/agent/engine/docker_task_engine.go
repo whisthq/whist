@@ -48,7 +48,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/credentialspec"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/firelens"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
 	utilsync "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/sync"
@@ -1087,27 +1086,6 @@ func (engine *DockerTaskEngine) createContainer(task *apitask.Task, container *a
 		err := task.ApplyExecutionRoleLogsAuth(hostConfig, engine.credentialsManager)
 		if err != nil {
 			return dockerapi.DockerContainerMetadata{Error: apierrors.NamedError(err)}
-		}
-	}
-
-	firelensConfig := container.GetFirelensConfig()
-	if firelensConfig != nil {
-		err := task.AddFirelensContainerBindMounts(firelensConfig, hostConfig, engine.cfg)
-		if err != nil {
-			return dockerapi.DockerContainerMetadata{Error: apierrors.NamedError(err)}
-		}
-
-		cerr := task.PopulateSecretLogOptionsToFirelensContainer(container)
-		if cerr != nil {
-			return dockerapi.DockerContainerMetadata{Error: apierrors.NamedError(cerr)}
-		}
-
-		if firelensConfig.Type == firelens.FirelensConfigTypeFluentd {
-			// For fluentd router, needs to specify FLUENT_UID to root in order for the fluentd process to access
-			// the socket created by Docker.
-			container.MergeEnvironmentVariables(map[string]string{
-				"FLUENT_UID": "0",
-			})
 		}
 	}
 
