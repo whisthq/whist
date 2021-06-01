@@ -170,6 +170,24 @@ void reinit_audio_device() {
     }
 }
 
+void sync_audio_device() {
+    /*
+  Ensures that the server's and client's audio frequencies are the same, and reinitializes the audio
+  frequency if not.
+     */
+    if (audio_context.decoder_frequency != audio_frequency) {
+        LOG_INFO("Updating audio frequency to %d!", audio_frequency);
+        audio_refresh = true;
+    }
+    // Note that because sdl_event_handler.c also sets audio_refresh to true when changing audio
+    // devices, there is a minor race condition that can lead to reinit_audio_device() being called
+    // more times than expected.
+    if (audio_refresh) {
+        audio_refresh = false;
+        reinit_audio_device();
+    }
+}
+
 void audio_nack(int id, int index) {
     /*
       Send a negative acknowledgement to the server if an audio
@@ -365,6 +383,24 @@ void update_render_context() {
     last_played_id += MAX_NUM_AUDIO_INDICES;
 }
 
+bool is_valid_audio_frequency() {
+    /*
+  Check if the audio frequency is between 0 and MAX_FREQ.
+
+  Returns:
+  (bool): true if the frequency is valid, else false.
+     */
+    if (audio_frequency > MAX_FREQ) {
+        LOG_ERROR("Frequency received was too large: %d, silencing audio now.", audio_frequency);
+        return false;
+    } else if (audio_frequency < 0) {
+        // No audio frequency received yet
+        return false;
+    } else {
+        return true;
+    }
+}
+
 int get_next_audio_frame(uint8_t* data) {
     /*
   Get the next (encoded) audio frame from the render context and decode it into the data buffer
@@ -440,34 +476,20 @@ void render_audio() {
         This function simply decodes and renders it.
     */
     if (rendering_audio) {
-        // if audio frequency is too high, don't play it
-        if (audio_frequency > MAX_FREQ) {
-            LOG_ERROR("Frequency received was too large: %d, silencing audio now.",
-                      audio_frequency);
-            audio_frequency = -1;
-        }
-
-        // If no audio frequency has been received yet, then don't render the audio
-        if (audio_frequency < 0) {
+        if (!is_valid_audio_frequency()) {
+            // if the audio frequency is bad, stop rendering
             rendering_audio = false;
             return;
         }
 
-        if (audio_context.decoder_frequency != audio_frequency) {
-            LOG_INFO("Updating audio frequency to %d!", audio_frequency);
-            audio_refresh = true;
-        }
+        sync_audio_device();
 
-        if (audio_refresh) {
-            // This gap between if audio_refresh == true and audio_refresh=false creates a minor
-            // race condition with sdl_event_handler.c trying to refresh the audio when the audio
-            // device has changed.
-            audio_refresh = false;
-            reinit_audio_device();
-        }
+        // this buffer will always hold the decoded data
         static uint8_t decoded_data[MAX_AUDIO_FRAME_SIZE];
+        // decode the frame into the buffer
         int res = get_next_audio_frame(decoded_data);
         if (res == 0) {
+            // play the audio
             res = SDL_QueueAudio(audio_context.dev, decoded_data,
                                  audio_decoder_get_frame_data_size(audio_context.audio_decoder));
 
@@ -482,15 +504,15 @@ void render_audio() {
 
 void update_audio() {
     /*
-        This function will create or reinit the audio device if needed,
-        and it will configure the @global audio_render_context to play
-        an audio packet. render_audio will actually play this packet.
+      Handle non-rendering aspects of audio: managing the size of the audio queue, nacking for
+      missing frames, and configuring the @global audio_render_context to play an audio packet.
+      render_audio will actually play this packet.
     */
 
-    // If we're currently rendering an audio packet, don't update audio
     if (rendering_audio) {
-        // Additionally, if rendering_audio == true, the audio_context struct is being used,
-        // so a race condition will occur if we call SDL_GetQueuedAudioSize at the same time
+        // If we're currently rendering an audio packet, don't update audio - the audio_context
+        // struct is being used, so a race condition will occur if we call SDL_GetQueuedAudioSize at
+        // the same time.
         return;
     }
 
@@ -511,6 +533,7 @@ void update_audio() {
         return;
     }
 
+    // Return if we are buffering audio to build up the queue.
     if (buffer_audio(audio_device_queue)) {
         return;
     }
