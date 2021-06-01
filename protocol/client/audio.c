@@ -308,6 +308,7 @@ void flush_next_audio_frame() {
         packet->id = -1;
         packet->nacked_amount = 0;
     }
+    // increment to indicate we've skipped these packets
     last_played_id += MAX_NUM_AUDIO_INDICES;
 }
 
@@ -360,7 +361,7 @@ void update_render_context() {
         packet->id = -1;
         packet->nacked_amount = 0;
     }
-    // increment to indicate that 
+    // increment to indicate that we've processed these packets
     last_played_id += MAX_NUM_AUDIO_INDICES;
 }
 
