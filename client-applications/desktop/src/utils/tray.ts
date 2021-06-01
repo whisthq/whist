@@ -1,6 +1,6 @@
 import events from "events"
 import { Menu, Tray, nativeImage } from "electron"
-import { values } from "lodash"
+import { values, endsWith } from "lodash"
 
 import { trayIconPath } from "@app/config/files"
 import { AWSRegion, defaultAllowedRegions } from "@app/@types/aws"
@@ -54,7 +54,7 @@ export const createTray = (email: string) => {
 
   tray = new Tray(createNativeImage())
   // If the user is a @fractal.co developer, then allow them to toggle regions for testing
-  const template = email.includes("@fractal.co")
+  const template = endsWith(email, "@fractal.co")
     ? [...rootMenu, ...regionMenu]
     : [...rootMenu]
   const menu = Menu.buildFromTemplate(template)

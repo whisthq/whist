@@ -9,6 +9,6 @@ import { trayEvent } from "@app/utils/tray"
 import { createTrigger } from "@app/utils/flows"
 import TRIGGER from "@app/utils/triggers"
 
-createTrigger(TRIGGER.signoutAction, fromEvent(trayEvent, "signout"))
-createTrigger(TRIGGER.quitAction, fromEvent(trayEvent, "quit"))
-createTrigger(TRIGGER.regionAction, fromEvent(trayEvent, "region"))
+createTrigger(TRIGGER.traySignoutAction, fromEvent(trayEvent, "signout"))
+createTrigger(TRIGGER.trayQuitAction, fromEvent(trayEvent, "quit"))
+createTrigger(TRIGGER.trayRegionAction, fromEvent(trayEvent, "region"))

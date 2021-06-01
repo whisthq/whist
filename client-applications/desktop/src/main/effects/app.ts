@@ -141,25 +141,26 @@ zip(
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-merge(fromTrigger("signoutAction"), fromTrigger("relaunchAction")).subscribe(
-  () => {
-    // Clear our own Electron cache
-    persistClear()
-    // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
-    // a partition called "auth0", so we clear the "auth0" partition here
-    session
-      .fromPartition("auth0")
-      .clearStorageData()
-      .catch((err) => console.error(err))
-    // These two commands restart the app
-    app.relaunch()
-    app.exit()
-  }
-)
+merge(
+  fromTrigger("traySignoutAction"),
+  fromTrigger("relaunchAction")
+).subscribe(() => {
+  // Clear our own Electron cache
+  persistClear()
+  // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
+  // a partition called "auth0", so we clear the "auth0" partition here
+  session
+    .fromPartition("auth0")
+    .clearStorageData()
+    .catch((err) => console.error(err))
+  // These two commands restart the app
+  app.relaunch()
+  app.exit()
+})
 
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
-fromTrigger("regionAction").subscribe((region: AWSRegion) => {
+fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
   app.relaunch({ args: process.argv.slice(1).concat([region]) })
   app.exit()
 })
