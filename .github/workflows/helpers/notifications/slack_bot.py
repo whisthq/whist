@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 This file contains a function `slack_post` to post messages to Slack. It is typically
-used in our Github Actions workflows and only requires the requests Python package. This
+used in our GitHub Actions workflows and only requires the requests Python package. This
 package comes pre-installed on GHA, so we can use this out-of-box with little chance
 of things going wrong.
 """
