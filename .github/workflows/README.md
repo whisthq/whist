@@ -12,13 +12,13 @@ The syntax for workflows is documented in the [GitHub Docs](https://docs.github.
 
 Since GitHub does not yet allow us to sort our workflow files into directories, we must name them in a clear and consistent manner. In particular, we name our workflows as `[subproject]-[verb]-[noun].yml`.
 
-For example, a workflow for the `webserver` project which clears protocol logs is named `webserver-clear-protocol-logs.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `fractal-push-sentry-releases.yml`.
+For example, a workflow for the `webserver` project which clears protocol logs is named `webserver-clear-protocol-logs.yml`, whereas a meta workflow (one which operates on workflows and PRs themselves) which labels pull requests is named `meta-label-pull-requests.yml`. Workflows that belong to the whole repo -- for example, for pushing Sentry releases, are instead written `fractal-deploy-sentry-releases.yml`.
 
 ### Headers
 
 Our workflow files start with a simple comment header with a description of the workflow in complete sentences.
 
-For example, this is the header and beginning of `fractal-push-sentry-releases.yml`:
+For example, this is the header and beginning of `fractal-deploy-sentry-releases.yml`:
 
 ```
 # workflows/fractal-push-sentry-releases.yml
