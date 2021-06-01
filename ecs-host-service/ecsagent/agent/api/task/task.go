@@ -32,7 +32,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/private/protocol/json/jsonutil"
 	"github.com/cihub/seelog"
-	"github.com/containernetworking/cni/libcni"
 	dockercontainer "github.com/docker/docker/api/types/container"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/acs/model/ecsacs"
 	apiappmesh "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/appmesh"
