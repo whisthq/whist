@@ -105,7 +105,7 @@ Private Functions
 
 void destroy_audio_device();
 void reinit_audio_device();
-static void nack(int id, int index);
+void audio_nack(int id, int index);
 
 /*
 ============================
@@ -163,7 +163,7 @@ void reinit_audio_device() {
     }
 }
 
-void nack(int id, int index) {
+void audio_nack(int id, int index) {
     /*
       Send a negative acknowledgement to the server if an audio
       packet is missing
@@ -453,7 +453,7 @@ void update_audio() {
                 i_packet->nacked_amount++;
                 int id = i / MAX_NUM_AUDIO_INDICES;
                 int index = i % MAX_NUM_AUDIO_INDICES;
-                nack(id, index);
+                audio_nack(id, index);
                 num_nacked++;
 
                 start_timer(&nack_timer);
