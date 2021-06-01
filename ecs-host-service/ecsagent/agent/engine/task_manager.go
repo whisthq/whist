@@ -234,8 +234,6 @@ func (mtask *managedTask) overseeTask() {
 			mtask.Arn, mtask.StopSequenceNumber)
 		mtask.taskStopWG.Done(mtask.StopSequenceNumber)
 	}
-	// TODO: make this idempotent on agent restart
-	go mtask.releaseIPInIPAM()
 	mtask.cleanupTask(mtask.cfg.TaskCleanupWaitDuration)
 }
 
