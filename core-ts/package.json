@@ -49,7 +49,7 @@
         "browser-or-node": "^1.3.0",
         "lodash": "^4.17.21",
         "node-fetch": "^2.6.1",
-        "stripe": "^8.146.0"
+        "stripe": "^8.150.0"
     },
     "scripts": {
         "compile": "tsc",
