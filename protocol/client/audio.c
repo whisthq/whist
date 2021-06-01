@@ -238,6 +238,64 @@ void catchup_audio() {
     }
 }
 
+bool is_next_frame_valid() {
+    /*
+  Check if the next frame (i.e. the next MAX_NUM_AUDIO_INDICES packets) is valid - its ring buffer
+  index is properly aligned, and the packets have the correct ID.
+
+  Returns:
+  (bool): true if the next frame is valid, else false
+     */
+    // prepare to play the next frame in the buffer
+    int next_to_play_id = last_played_id + 1;
+
+    if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
+        LOG_WARNING("Next to play (ID: %d) isn't at start of audio frame", next_to_play_id);
+        return false;
+    }
+
+    // check that the next frame we want to render is ready
+    bool valid = true;
+    for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
+        if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
+            valid = false;
+        }
+    }
+    return valid;
+}
+
+bool buffer_audio(int audio_device_queue) {
+    /*
+  Waits for audio to accumulate in the audio queue if the audio queue is too low, and returns
+  whether or not we are still buffering audio. Ideally, we want about 30ms of audio in the buffer.
+
+  Arguments:
+  audio_device_queue (int): Size in bytes of the current audio device queue
+
+  Returns:
+  (bool) true if we are still buffering audio, else false.
+     */
+
+    static bool buffering_audio = false;
+    int bytes_until_no_more_audio =
+        (int)((max_received_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
+
+    // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
+    if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
+        LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_no_more_audio);
+        buffering_audio = true;
+    }
+
+    // don't play anything until we have enough audio in the queue
+    if (buffering_audio) {
+        if (bytes_until_no_more_audio >= TARGET_AUDIO_QUEUE_LIMIT) {
+            LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_no_more_audio);
+            buffering_audio = false;
+        }
+    }
+    return buffering_audio;
+}
+
 void flush_next_audio_frame() {
     /*
   Skip the next audio frame in the ring buffer.
@@ -248,6 +306,37 @@ void flush_next_audio_frame() {
         packet->id = -1;
         packet->nacked_amount = 0;
     }
+}
+
+bool flush_audio(int audio_device_queue) {
+    /*
+  Flush the audio buffer if the device queue is too full, and return whether or not we are flushing
+  audio.
+
+  Arguments:
+  audio_device_queue (int): Size in bytes of the current audio queue
+
+  Returns:
+  (bool): true if we are still flushing audio, else false.
+     */
+    // If an audio flush is triggered,
+    // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
+    // Otherwise, we trigger an audio flush when the audio queue surpasses
+    // AUDIO_QUEUE_UPPER_LIMIT
+    static bool audio_flush_triggered = false;
+    int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
+
+    if (audio_device_queue > real_limit) {
+        LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
+                    next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
+        flush_next_audio_frame();
+        if (!audio_flush_triggered) {
+            audio_flush_triggered = true;
+        }
+    } else {
+        audio_flush_triggered = false;
+    }
+    return audio_flush_triggered;
 }
 
 void update_render_context() {
@@ -414,68 +503,13 @@ void update_audio() {
     if (last_played_id == -1) {
         return;
     }
-    // TODO: should i put buffering in a separate function? Trying to figure out how to refactor
-    // when some logic returns out of the function prematurely. Buffering audio controls whether or
-    // not we're trying to accumulate an audio buffer; ideally, we want about 30ms of audio in the
-    // buffer
-    static bool buffering_audio = false;
 
-    int bytes_until_no_more_audio =
-        (int)((max_received_id - last_played_id) * decoded_bytes_per_packet) + audio_device_queue;
-
-    // If the audio queue is under AUDIO_QUEUE_LOWER_LIMIT, we need to accumulate more in the buffer
-    if (!buffering_audio && bytes_until_no_more_audio < AUDIO_QUEUE_LOWER_LIMIT) {
-        LOG_INFO("Audio Queue too low: %d. Needs to catch up!", bytes_until_no_more_audio);
-        buffering_audio = true;
-    }
-
-    // don't play anything until we have enough audio in the queue
-    if (buffering_audio) {
-        if (bytes_until_no_more_audio < TARGET_AUDIO_QUEUE_LIMIT) {
-            return;
-        } else {
-            LOG_INFO("Done catching up! Audio Queue: %d", bytes_until_no_more_audio);
-            buffering_audio = false;
-        }
-    }
-
-    // prepare to play the next frame in the buffer
-    int next_to_play_id = last_played_id + 1;
-
-    if (next_to_play_id % MAX_NUM_AUDIO_INDICES != 0) {
-        LOG_WARNING("Next to play (ID: %d) isn't at start of audio frame", next_to_play_id);
+    if (buffer_audio(audio_device_queue)) {
         return;
     }
 
-    // check that the next frame we want to render is ready
-    bool valid = true;
-    for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
-        if (receiving_audio[i % RECV_AUDIO_BUFFER_SIZE].id != i) {
-            valid = false;
-        }
-    }
-
-    // Audio flush happens when the audio buffer gets too large, and we need to clear it out
-    static bool audio_flush_triggered = false;
-
-    if (valid) {
-        // If an audio flush is triggered,
-        // We skip audio until the buffer runs down to TARGET_AUDIO_QUEUE_LIMIT
-        // Otherwise, we trigger an audio flush when the audio queue surpasses
-        // AUDIO_QUEUE_UPPER_LIMIT
-        int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
-
-        if (audio_device_queue > real_limit) {
-            LOG_WARNING("Audio queue full, skipping ID %d (Queued: %d)",
-                        next_to_play_id / MAX_NUM_AUDIO_INDICES, audio_device_queue);
-            flush_next_audio_frame();
-            if (!audio_flush_triggered) {
-                audio_flush_triggered = true;
-            }
-        } else {
-            // When the audio queue is no longer full, we stop flushing the audio queue
-            audio_flush_triggered = false;
-
+    if (is_next_frame_valid()) {
+        if (!flush_audio(audio_device_queue)) {
             // move the next frame into the render context
             update_render_context();
             // tell renderer thread to render the audio
@@ -484,6 +518,8 @@ void update_audio() {
         // Update last_played_id, which will advance either because it was skipped or queued up to
         // render
         last_played_id += MAX_NUM_AUDIO_INDICES;
+    } else {
+        return;
     }
 
     // Find pending audio packets and NACK them
