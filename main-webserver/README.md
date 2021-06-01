@@ -37,7 +37,7 @@ All of local deployment, local testing, and CI use ephemeral DBs that are mostly
 
 If you'd like to retrieve more information from the dev db (to put in the ephemeral DBs) than the tables we currently have, open up `db_setup/fetch_db.sh` and find the _two_ lines with:
 
-```
+```shell
 (pg_dump -h $POSTGRES_REMOTE_HOST -U $POSTGRES_REMOTE_USER -d $POSTGRES_REMOTE_DB --data-only --column-inserts ... ) > db_data.sql
 ```
 
@@ -47,7 +47,9 @@ For each table you'd like to fetch from dev, add `-t schema_name.table_name` to 
 
 Luckily, there is an easy way to set all of the necessary environment variables using the script `docker/retrieve_config.sh`. To set all of the required environment variables, first make sure you have [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli) installed and configured. Then, run
 
-    bash docker/retrieve_config.sh
+```shell
+bash docker/retrieve_config.sh
+```
 
 When the `docker/retrieve_config.sh` script terminates, it will print the name of the file containing the fetched environment variables that has been written to standard error.
 
@@ -84,6 +86,17 @@ We recommend that you download several softwares to help you code and test:
 **Postman**
 
 We use Postman to send API requests to our server, to store our API endpoints, and to generate documentation. Our Postman team link is [here](https://tryfractal.postman.co/). If you are not part of the team, contact @mingy98. To better understand how Postman works, refer to our wiki [here](https://www.notion.so/tryfractal/Postman-API-Documentation-602cc6df23e04cd0a026340c406bd663).
+
+Please be very careful while using Postman. It's all we've got, but it's buggy and its contents are not effectively version controlled, so be **100% sure** _before_ you save anything or overwrite any "initial values" for environment variables. When in doubt, reach out to someone more experienced!
+
+Here are the steps to being able to use Postman to call webserver endpoints with the Auth0 integration:
+
+1. Add your desired username and password for Auth0 as Postman variables in the `dev` environment. The variables should already exist, but without "initial values". **Don't put your username/pass as "initial values"**, but rather put them as the "current value". Putting them as the "initial values" will expose them to everyone!
+2. Use the "Register New User" endpoint in Postman to register yourself an Auth0 account **using your @fractal.co e-mail address**. You shouldn't need to add or change anything, just click the "Send" button. Make sure you verify your e-mail.
+3. Ask someone with Auth0 dashboard access (currently @owenniles and @MYKatz) to sufficiently elevate your permissions to the level you need. TODO: Make all **verified** `@fractal.co` e-mail addresses automatically have developer-level privileges.
+4. Use the "Authorize Postman" endpoint in Postman to get an access token. You shouldn't need to add or change anything, just click the "Send" button.
+5. Copy the resulting `access_token` value into the "existing value" of the `access_token` environment variable in the dev environment. As before, don't update the "initial value".
+6. Call whatever other endpoints you need in Postman! You should be all set.
 
 **TablePlus**
 
