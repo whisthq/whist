@@ -4,7 +4,7 @@ black==21.5b2
 flake8==3.9.1
 moto==2.0.1
 progressbar==2.5
-pylint==2.7.4
+pylint==2.8.3
 pytest==6.2.4
 pytest-celery==0.0.0
 pytest-dotenv==0.5.2
