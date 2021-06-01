@@ -122,8 +122,7 @@ def ensure_host_service_is_running():
     listening on TCP port 4678.
     """
     running = any(
-        c.status == "LISTEN" and c.laddr.port == 4678
-        for c in psutil.net_connections(kind="tcp")
+        c.status == "LISTEN" and c.laddr.port == 4678 for c in psutil.net_connections(kind="tcp")
     )
     if not running:
         sys.exit(
