@@ -41,7 +41,7 @@ void init_audio();
  * @brief                          This will indicate to the audio file that an audio
  *                                 refresh event happened.
  */
-void set_audio_refresh();
+void enable_audio_refresh();
 
 /**
  * @brief                          This will change the audio sample rate.

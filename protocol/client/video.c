@@ -90,6 +90,10 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
+// We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
+// Increase this as our nacking becomes more accurate.
+#define MAX_NACKED 1
+
 /*
 ============================
 Custom Types
@@ -189,7 +193,7 @@ int32_t mulithreaded_destroy_decoder(void* opaque);
 void update_decoder_parameters(int width, int height, CodecType codec_type);
 int32_t render_screen(SDL_Renderer* renderer);
 void loading_sdl(SDL_Renderer* renderer, int loading_index);
-static void nack(int id, int index);
+void video_nack(int id, int index);
 bool request_iframe();
 void update_sws_context();
 void update_pixel_format();
@@ -590,7 +594,7 @@ void loading_sdl(SDL_Renderer* renderer, int loading_index) {
 // NOTE that this function is in the hotpath.
 // The hotpath *must* return in under ~10000 assembly instructions.
 // Please pass this comment into any non-trivial function that this function calls.
-void nack(int id, int index) {
+void video_nack(int id, int index) {
     /*
         Send a negative acknowledgement to the server if a video
         packet is missing
@@ -1030,8 +1034,8 @@ void update_video() {
                     int num_nacked = 0;
                     // LOG_INFO("************NACKING PACKET %d, alive for %f
                     // MS", ctx->id, get_timer(ctx->frame_creation_timer));
-                    for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
-                         i++) {
+                    for (int i = ctx->last_nacked_index + 1;
+                         i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
                         if (!ctx->received_indicies[i]) {
                             num_nacked++;
                             LOG_INFO(
@@ -1040,7 +1044,7 @@ void update_video() {
                                 ctx->id, i, ctx->num_packets,
                                 get_timer(ctx->frame_creation_timer) * MS_IN_SECOND);
                             ctx->nacked_indicies[i] = true;
-                            nack(ctx->id, i);
+                            video_nack(ctx->id, i);
                         }
                         ctx->last_nacked_index = i;
                     }
@@ -1231,7 +1235,7 @@ int32_t receive_video(FractalPacket* packet) {
             ctx->last_nacked_index = max(ctx->last_nacked_index, i);
             if (!ctx->received_indicies[i]) {
                 ctx->nacked_indicies[i] = true;
-                nack(packet->id, i);
+                video_nack(packet->id, i);
                 start_timer(&ctx->last_nacked_timer);
                 break;
             }
@@ -1248,7 +1252,7 @@ int32_t receive_video(FractalPacket* packet) {
             if (receiving_frames[buffer_index].id != i) {
                 LOG_INFO("Missing all packets for frame %d, nacking now for index 0", i);
                 start_timer(&video_data.missing_frame_nack_timer);
-                nack(i, 0);
+                video_nack(i, 0);
             }
         }
     }
