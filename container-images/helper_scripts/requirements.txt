@@ -1,5 +1,5 @@
 black==21.5b1
-pylint==2.8.2
+pylint==2.8.3
 docker==5.0.0
 psutil==5.8.0
 requests==2.25.1

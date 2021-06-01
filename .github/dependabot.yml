@@ -2,9 +2,9 @@
 #
 # Configuration file for Dependabot on the fractal/fractal monorepository.
 
-# Note: Dependabot does not support globbing as the writing of this file. As
+# Note: Dependabot does not support globbing as of the writing of this file. As
 # a result, this configuration file is structured on a per-subrepo basis and
-# dependency package manager files are provided explicitly.
+# dependency package manager files must be provided explicitly.
 
 version: 2
 
@@ -74,7 +74,7 @@ updates:
   # soon as possible, and unfortunately updating those dependencies causes the
   # host service not to compile anymore, and fixing the issues would take too
   # much energy to be worth it for now. Once the webserver refactor is done, we
-  # can revisit this.
+  # can revisit this as we will no longer have the ecs-agent as part of our host service.
 
   #  - package-ecosystem: "gomod"
   #    directory: "/ecs-host-service" # looks for go.mod and go.sum in this directory
@@ -84,12 +84,6 @@ updates:
 
   #####################################################
   ################### Main-Webserver ##################
-
-  - package-ecosystem: "pip"
-    directory: "/main-webserver" # looks for requirements.txt in this directory
-    schedule:
-      interval: "monthly" # runs on the first day of each month
-    open-pull-requests-limit: 10
 
   - package-ecosystem: "pip"
     directory: "/main-webserver/db_migration" # looks for requirements.txt in this directory
@@ -111,6 +105,12 @@ updates:
 
   - package-ecosystem: "docker"
     directory: "/main-webserver/docker" # looks for Dockerfile in this directory
+    schedule:
+      interval: "monthly" # runs on the first day of each month
+    open-pull-requests-limit: 10
+
+  - package-ecosystem: "pip"
+    directory: "/main-webserver" # looks for requirements.txt in this directory
     schedule:
       interval: "monthly" # runs on the first day of each month
     open-pull-requests-limit: 10
