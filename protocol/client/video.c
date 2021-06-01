@@ -90,6 +90,10 @@ extern volatile SDL_Renderer* init_sdl_renderer;
 #define CURSORIMAGE_G 0x0000ff00
 #define CURSORIMAGE_B 0x000000ff
 
+// We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
+// Increase this as our nacking becomes more accurate.
+#define MAX_NACKED 1
+
 /*
 ============================
 Custom Types
@@ -1030,8 +1034,8 @@ void update_video() {
                     int num_nacked = 0;
                     // LOG_INFO("************NACKING PACKET %d, alive for %f
                     // MS", ctx->id, get_timer(ctx->frame_creation_timer));
-                    for (int i = ctx->last_nacked_index + 1; i < ctx->num_packets && num_nacked < 1;
-                         i++) {
+                    for (int i = ctx->last_nacked_index + 1;
+                         i < ctx->num_packets && num_nacked < MAX_NACKED; i++) {
                         if (!ctx->received_indicies[i]) {
                             num_nacked++;
                             LOG_INFO(

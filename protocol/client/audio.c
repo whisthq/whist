@@ -50,6 +50,8 @@ AudioPacket receiving_audio[RECV_AUDIO_BUFFER_SIZE];
 
 #define MAX_FREQ 128000  // in Hertz
 
+// We only allow 1 nack in each update_audio call because we had too many false nacks in the past.
+// Increase this as our nacking becomes more accurate.
 #define MAX_NACKED 1
 
 /*
