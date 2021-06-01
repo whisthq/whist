@@ -435,7 +435,7 @@ int handle_sdl_event(SDL_Event *event) {
         case SDL_AUDIODEVICEADDED:
         case SDL_AUDIODEVICEREMOVED: {
             // Refresh the audio device
-            set_audio_refresh();
+            enable_audio_refresh();
             break;
         }
         case SDL_KEYDOWN:
