@@ -7,36 +7,36 @@
   resolved "https://registry.yarnpkg.com/7zip-bin/-/7zip-bin-5.0.3.tgz#bc5b5532ecafd923a61f2fb097e3b108c0106a3f"
   integrity sha512-GLyWIFBbGvpKPGo55JyRZAo4lVbnBiD52cKlw/0Vt+wnmKvWJkpZvsjVoaIolyBXDeAQKSicRtqFNPem9w0WYA==
 
-"@amplitude/identify@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.6.0.tgz#b5495faa1beca0586a86d6eef314b2511eb2de70"
-  integrity sha512-KgHorDe8o/OLfx7e2jIEFqvwrCZTSycTRXaIWPHypLfrF5oRrbKDK4xUSfzEi18zGBeBfjVsfGb6UxxNAlGzVw==
+"@amplitude/identify@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@amplitude/identify/-/identify-1.6.1.tgz#11bd423b4fb330a4a7b0adfb7075753b1c8d0235"
+  integrity sha512-+iT7e+Iw6XJCUvqgJRy/73bCbW6XO1j1EXtfBJ6XefGSeDpKJL651DtS848+qaf5SGji0vE934K1gShuTrouOA==
   dependencies:
-    "@amplitude/types" "^1.5.5"
-    "@amplitude/utils" "^1.5.5"
+    "@amplitude/types" "^1.6.1"
+    "@amplitude/utils" "^1.6.1"
     tslib "^1.9.3"
 
-"@amplitude/node@^1.6.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.6.0.tgz#3c10adc3d369004553d55e9a6f21a02e354d2dea"
-  integrity sha512-q7R3iXoil9f10FBCDGBvaRU7Y3OOxWYsy3qNjxBEDkOSvrlp5+oMhTe5+l5H0Ra00k49a7w64XoEZbzUkC8alg==
+"@amplitude/node@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@amplitude/node/-/node-1.6.1.tgz#d5dc1f40c1ffa24c3ab3a52cc4d35f0db4ce49f2"
+  integrity sha512-6mTVLJ4g7usNIMBKAkbBAIn3y2Y7rrI0DGHg8IFL0zLYaeYVJjvaOixqpGgPTFmiu1PO+NfHba8gk6/SWs879A==
   dependencies:
-    "@amplitude/identify" "^1.6.0"
-    "@amplitude/types" "^1.5.5"
-    "@amplitude/utils" "^1.5.5"
+    "@amplitude/identify" "^1.6.1"
+    "@amplitude/types" "^1.6.1"
+    "@amplitude/utils" "^1.6.1"
     tslib "^1.9.3"
 
-"@amplitude/types@^1.5.5":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.5.5.tgz#46d3d02ac31da14934d92b6dac8c71879aad4256"
-  integrity sha512-mn57Yj0eO/s7soJAO5HuGgEVeE3Z7W5hb8mtGojCmsejHIszkG1pTngzpgUld3Gd0LQYa9CPNtTV2+QmUPjYRQ==
+"@amplitude/types@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@amplitude/types/-/types-1.6.1.tgz#ed15be42746526d6f7087bedc916734e13be56fd"
+  integrity sha512-GSaNbROpG5gaoLQPo9crpCkB+BgfN7ZtK6SPJaQC2IX2xNqvfq/RZwYLhMZyNfZw/Nce0Z6lKYXCoNPyhdL26Q==
 
-"@amplitude/utils@^1.5.5":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.5.5.tgz#7068af2c92926a106cfb51c9a7f1b4a0b9d6b737"
-  integrity sha512-bDzHid4j4Q63dNItFzknfTpploD9xn3UB46dxhmon3qdNxOsZjquLomphkni+/enf5DuINwu4wCn31d7fkT+Kg==
+"@amplitude/utils@^1.6.1":
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@amplitude/utils/-/utils-1.6.1.tgz#fb6833bca5a35af01468e0317363520ff2377259"
+  integrity sha512-lzmjvKOkg2tbr5YvLuxBAOoCvnmAJ5mvuLYy9hth5j4dzeVfE8aoZp9PYpxOGAuonVEPJas3BH0XGTVBDn1zNA==
   dependencies:
-    "@amplitude/types" "^1.5.5"
+    "@amplitude/types" "^1.6.1"
     tslib "^1.9.3"
 
 "@babel/code-frame@7.12.11":
@@ -338,7 +338,7 @@
     browser-or-node "^1.3.0"
     lodash "^4.17.21"
     node-fetch "^2.6.1"
-    stripe "^8.146.0"
+    stripe "^8.150.0"
 
 "@fullhuman/postcss-purgecss@^3.1.3":
   version "3.1.3"
@@ -5160,7 +5160,7 @@ strip-json-comments@~2.0.1:
   resolved "https://registry.yarnpkg.com/strip-json-comments/-/strip-json-comments-2.0.1.tgz#3c531942e908c2697c0ec344858c286c7ca0a60a"
   integrity sha1-PFMZQukIwml8DsNEhYwobHygpgo=
 
-stripe@^8.146.0:
+stripe@^8.150.0:
   version "8.150.0"
   resolved "https://registry.yarnpkg.com/stripe/-/stripe-8.150.0.tgz#d48b9efe4d104cd65385ccc2fec6ede6cfb9bfa2"
   integrity sha512-48YMLupzvDyVZUs37xUBd1SF0E3B77ahOTLhL7ycVwZqwjlQ30K7iHTejIAUdtEnWaNkaOz0LX6jHeR49IulRQ==
