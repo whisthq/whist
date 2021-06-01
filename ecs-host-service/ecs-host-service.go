@@ -38,6 +38,7 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	dockernat "github.com/docker/go-connections/nat"
 	dockerunits "github.com/docker/go-units"
+	specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func init() {
@@ -236,7 +237,12 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	containerName = re.ReplaceAllString(containerName, "-")
 
-	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, containerName)
+	platform := &specs.Platform{
+		Architecture: "amd64",
+		OS:           "linux",
+	}
+
+	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, platform, containerName)
 	if err != nil {
 		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetFractalID(), err)
 		return
