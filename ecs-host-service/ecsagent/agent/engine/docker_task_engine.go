@@ -40,7 +40,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/data"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dependencygraph"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/execcmd"
@@ -71,8 +70,6 @@ const (
 	labelTaskDefinitionFamily          = labelPrefix + "task-definition-family"
 	labelTaskDefinitionVersion         = labelPrefix + "task-definition-version"
 	labelCluster                       = labelPrefix + "cluster"
-	cniSetupTimeout                    = 1 * time.Minute
-	cniCleanupTimeout                  = 30 * time.Second
 	minGetIPBridgeTimeout              = time.Second
 	maxGetIPBridgeTimeout              = 10 * time.Second
 	getIPBridgeRetryJitterMultiplier   = 0.2
@@ -137,7 +134,6 @@ type DockerTaskEngine struct {
 
 	client     dockerapi.DockerClient
 	dataClient data.Client
-	cniClient  ecscni.CNIClient
 
 	containerChangeEventStream *eventstream.EventStream
 
@@ -202,7 +198,6 @@ func NewDockerTaskEngine(cfg *config.Config,
 
 		containerChangeEventStream: containerChangeEventStream,
 		imageManager:               imageManager,
-		cniClient:                  ecscni.NewClient(cfg.CNIPluginsPath),
 
 		metadataManager:                   metadataManager,
 		taskSteadyStatePollInterval:       defaultTaskSteadyStatePollInterval,
@@ -1440,101 +1435,9 @@ func (engine *DockerTaskEngine) startContainer(task *apitask.Task, container *ap
 }
 
 func (engine *DockerTaskEngine) provisionContainerResources(task *apitask.Task, container *apicontainer.Container) dockerapi.DockerContainerMetadata {
-	seelog.Infof("Task engine [%s]: setting up container resources for container [%s]",
+	seelog.Errorf("Task engine [%s]: CANNOT SET UP container resources for container [%s]",
 		task.Arn, container.Name)
-	containerInspectOutput, err := engine.inspectContainer(task, container)
-	if err != nil {
-		return dockerapi.DockerContainerMetadata{
-			Error: ContainerNetworkingError{
-				fromError: errors.Wrap(err,
-					"container resource provisioning: cannot setup task network namespace due to error inspecting pause container"),
-			},
-		}
-	}
-
-	task.SetPausePIDInVolumeResources(strconv.Itoa(containerInspectOutput.State.Pid))
-
-	cniConfig, err := engine.buildCNIConfigFromTaskContainer(task, containerInspectOutput, true)
-	if err != nil {
-		return dockerapi.DockerContainerMetadata{
-			Error: ContainerNetworkingError{
-				fromError: errors.Wrap(err,
-					"container resource provisioning: unable to build cni configuration"),
-			},
-		}
-	}
-
-	// Invoke the libcni to config the network namespace for the container
-	result, err := engine.cniClient.SetupNS(engine.ctx, cniConfig, cniSetupTimeout)
-	if err != nil {
-		seelog.Errorf("Task engine [%s]: unable to configure pause container namespace: %v",
-			task.Arn, err)
-		return dockerapi.DockerContainerMetadata{
-			DockerID: cniConfig.ContainerID,
-			Error: ContainerNetworkingError{errors.Wrap(err,
-				"container resource provisioning: failed to setup network namespace")},
-		}
-	}
-
-	taskIP := result.IPs[0].Address.IP.String()
-	seelog.Infof("Task engine [%s]: associated with ip address '%s'", task.Arn, taskIP)
-	engine.state.AddTaskIPAddress(taskIP, task.Arn)
-	task.SetLocalIPAddress(taskIP)
-	engine.saveTaskData(task)
-	return dockerapi.DockerContainerMetadata{
-		DockerID: cniConfig.ContainerID,
-	}
-}
-
-// cleanupPauseContainerNetwork will clean up the network namespace of pause container
-func (engine *DockerTaskEngine) cleanupPauseContainerNetwork(task *apitask.Task, container *apicontainer.Container) error {
-	delay := time.Duration(engine.cfg.ENIPauseContainerCleanupDelaySeconds) * time.Second
-	if engine.handleDelay != nil && delay > 0 {
-		seelog.Infof("Task engine [%s]: waiting %s before cleaning up pause container.", task.Arn, delay)
-		engine.handleDelay(delay)
-	}
-	containerInspectOutput, err := engine.inspectContainer(task, container)
-	if err != nil {
-		return errors.Wrap(err, "engine: cannot cleanup task network namespace due to error inspecting pause container")
-	}
-
-	seelog.Infof("Task engine [%s]: cleaning up the network namespace", task.Arn)
-	cniConfig, err := engine.buildCNIConfigFromTaskContainer(task, containerInspectOutput, false)
-	if err != nil {
-		return errors.Wrapf(err,
-			"engine: failed cleanup task network namespace, task: %s", task.String())
-	}
-
-	return engine.cniClient.CleanupNS(engine.ctx, cniConfig, cniCleanupTimeout)
-}
-
-// buildCNIConfigFromTaskContainer builds a CNI config for the task and container.
-func (engine *DockerTaskEngine) buildCNIConfigFromTaskContainer(
-	task *apitask.Task,
-	containerInspectOutput *types.ContainerJSON,
-	includeIPAMConfig bool) (*ecscni.Config, error) {
-	cniConfig := &ecscni.Config{
-		BlockInstanceMetadata:  engine.cfg.AWSVPCBlockInstanceMetdata.Enabled(),
-		MinSupportedCNIVersion: config.DefaultMinSupportedCNIVersion,
-	}
-	if engine.cfg.OverrideAWSVPCLocalIPv4Address != nil &&
-		len(engine.cfg.OverrideAWSVPCLocalIPv4Address.IP) != 0 &&
-		len(engine.cfg.OverrideAWSVPCLocalIPv4Address.Mask) != 0 {
-		cniConfig.IPAMV4Address = engine.cfg.OverrideAWSVPCLocalIPv4Address
-	}
-	if len(engine.cfg.AWSVPCAdditionalLocalRoutes) != 0 {
-		cniConfig.AdditionalLocalRoutes = engine.cfg.AWSVPCAdditionalLocalRoutes
-	}
-
-	cniConfig.ContainerPID = strconv.Itoa(containerInspectOutput.State.Pid)
-	cniConfig.ContainerID = containerInspectOutput.ID
-
-	cniConfig, err := task.BuildCNIConfig(includeIPAMConfig, cniConfig)
-	if err != nil {
-		return nil, errors.Wrapf(err, "engine: failed to build cni configuration from task")
-	}
-
-	return cniConfig, nil
+	return dockerapi.DockerContainerMetadata{}
 }
 
 func (engine *DockerTaskEngine) inspectContainer(task *apitask.Task, container *apicontainer.Container) (*types.ContainerJSON, error) {
@@ -1556,16 +1459,6 @@ func (engine *DockerTaskEngine) stopContainer(task *apitask.Task, container *api
 				FromError: err,
 			},
 		}
-	}
-
-	// Cleanup the pause container network namespace before stop the container
-	if container.Type == apicontainer.ContainerCNIPause {
-		err := engine.cleanupPauseContainerNetwork(task, container)
-		if err != nil {
-			seelog.Errorf("Task engine [%s]: unable to cleanup pause container network namespace: %v",
-				task.Arn, err)
-		}
-		seelog.Infof("Task engine [%s]: cleaned pause container network namespace", task.Arn)
 	}
 
 	apiTimeoutStopContainer := container.GetStopTimeout()

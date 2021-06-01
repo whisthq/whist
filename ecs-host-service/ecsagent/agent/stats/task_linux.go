@@ -17,20 +17,13 @@ package stats
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/containernetworking/plugins/pkg/ns"
 	apitaskstatus "github.com/fractal/fractal/ecs-host-service/ecsagent/agent/api/task/status"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eni/netlinkwrapper"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/stats/resolver"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/nswrapper"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils/retry"
 
-	"github.com/cihub/seelog"
-	"github.com/docker/docker/api/types"
 	dockerstats "github.com/docker/docker/api/types"
 	netlinklib "github.com/vishvananda/netlink"
 )
@@ -79,78 +72,6 @@ func newStatsTaskContainer(taskARN string, containerPID string, numberOfContaine
 	}, nil
 }
 
-func (task *StatsTask) StartStatsCollection() {
-	queueSize := int(config.DefaultContainerMetricsPublishInterval.Seconds() * 4)
-	task.StatsQueue = NewQueue(queueSize)
-	task.StatsQueue.Reset()
-	go task.collect()
-}
-
-func (task *StatsTask) StopStatsCollection() {
-	task.Cancel()
-}
-
-func (taskStat *StatsTask) collect() {
-	taskArn := taskStat.TaskMetadata.TaskArn
-	backoff := retry.NewExponentialBackoff(time.Second*1, time.Second*10, 0.5, 2)
-
-	for {
-		err := taskStat.processStatsStream()
-		select {
-		case <-taskStat.Ctx.Done():
-			seelog.Debugf("Stopping stats collection for taskStat %s", taskArn)
-			return
-		default:
-			if err != nil {
-				d := backoff.Duration()
-				time.Sleep(d)
-				seelog.Debugf("Error querying stats for task %s: %v", taskArn, err)
-			}
-			// We were disconnected from the stats stream.
-			// Check if the task is terminal. If it is, stop collecting metrics.
-			terminal, err := taskStat.terminal()
-			if err != nil {
-				// Error determining if the task is terminal. clean-up anyway.
-				seelog.Warnf("Error determining if the task %s is terminal, stopping stats collection: %v",
-					taskArn, err)
-				taskStat.StopStatsCollection()
-			} else if terminal {
-				seelog.Infof("Task %s is terminal, stopping stats collection", taskArn)
-				taskStat.StopStatsCollection()
-			}
-		}
-	}
-}
-
-func (taskStat *StatsTask) processStatsStream() error {
-	taskArn := taskStat.TaskMetadata.TaskArn
-	awsvpcNetworkStats, errC := taskStat.getAWSVPCNetworkStats()
-
-	returnError := false
-	for {
-		select {
-		case <-taskStat.Ctx.Done():
-			seelog.Info("task context is done")
-			return nil
-		case err := <-errC:
-			seelog.Warnf("Error encountered processing metrics stream from host, this may affect "+
-				"cloudwatch metric accuracy: %s", err)
-			returnError = true
-		case rawStat, ok := <-awsvpcNetworkStats:
-			if !ok {
-				if returnError {
-					return fmt.Errorf("error encountered processing metrics stream from host")
-				}
-				return nil
-			}
-			if err := taskStat.StatsQueue.Add(rawStat); err != nil {
-				seelog.Warnf("Task [%s]: error converting stats: %v", taskArn, err)
-			}
-		}
-
-	}
-}
-
 func (taskStat *StatsTask) terminal() (bool, error) {
 	resolvedTask, err := taskStat.Resolver.ResolveTaskByARN(taskStat.TaskMetadata.TaskArn)
 	if err != nil {
@@ -175,19 +96,6 @@ func getDevicesList(linkList []netlinklib.Link) []string {
 	return deviceNames
 }
 
-func (taskStat *StatsTask) populateNIDeviceList(containerPID string) ([]string, error) {
-	var err error
-	var deviceList []string
-	netNSPath := fmt.Sprintf(ecscni.NetnsFormat, containerPID)
-	err = taskStat.nswrapperinterface.WithNetNSPath(netNSPath, func(ns.NetNS) error {
-		linksInTaskNetNS, linkErr := taskStat.netlinkinterface.LinkList()
-		deviceNames := getDevicesList(linksInTaskNetNS)
-		deviceList = append(deviceList, deviceNames...)
-		return linkErr
-	})
-	return deviceList, err
-}
-
 func linkStatsToDockerStats(netLinkStats *netlinklib.LinkStatistics, numberOfContainers uint64) dockerstats.NetworkStats {
 	networkStats := dockerstats.NetworkStats{
 		RxBytes:   netLinkStats.RxBytes / numberOfContainers,
@@ -200,58 +108,4 @@ func linkStatsToDockerStats(netLinkStats *netlinklib.LinkStatistics, numberOfCon
 		TxDropped: netLinkStats.TxDropped / numberOfContainers,
 	}
 	return networkStats
-}
-
-func (taskStat *StatsTask) getAWSVPCNetworkStats() (<-chan *types.StatsJSON, <-chan error) {
-
-	errC := make(chan error)
-	statsC := make(chan *dockerstats.StatsJSON)
-	if taskStat.TaskMetadata.NumberContainers > 0 {
-		go func() {
-			defer close(statsC)
-			statPollTicker := time.NewTicker(taskStat.metricPublishInterval)
-			defer statPollTicker.Stop()
-			for range statPollTicker.C {
-				if len(taskStat.TaskMetadata.DeviceName) == 0 {
-					var err error
-					taskStat.TaskMetadata.DeviceName, err = taskStat.populateNIDeviceList(taskStat.TaskMetadata.ContainerPID)
-					if err != nil {
-						errC <- err
-						return
-					}
-				}
-				networkStats := make(map[string]dockerstats.NetworkStats, len(taskStat.TaskMetadata.DeviceName))
-				for _, device := range taskStat.TaskMetadata.DeviceName {
-					var link netlinklib.Link
-					err := taskStat.nswrapperinterface.WithNetNSPath(fmt.Sprintf(ecscni.NetnsFormat,
-						taskStat.TaskMetadata.ContainerPID),
-						func(ns.NetNS) error {
-							var linkErr error
-							if link, linkErr = taskStat.netlinkinterface.LinkByName(device); linkErr != nil {
-								return linkErr
-							}
-							return nil
-						})
-
-					if err != nil {
-						errC <- err
-						return
-					}
-					netLinkStats := link.Attrs().Statistics
-					networkStats[link.Attrs().Name] = linkStatsToDockerStats(netLinkStats,
-						uint64(taskStat.TaskMetadata.NumberContainers))
-				}
-
-				dockerStats := &types.StatsJSON{
-					Networks: networkStats,
-					Stats: types.Stats{
-						Read: time.Now(),
-					},
-				}
-				statsC <- dockerStats
-			}
-		}()
-	}
-
-	return statsC, errC
 }

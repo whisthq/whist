@@ -31,7 +31,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dependencygraph"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eventstream"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/statechange"
@@ -129,7 +128,6 @@ type managedTask struct {
 	engine             *DockerTaskEngine
 	cfg                *config.Config
 	credentialsManager credentials.Manager
-	cniClient          ecscni.CNIClient
 	taskStopWG         *utilsync.SequentialWaitGroup
 
 	acsMessages                chan acsTransition
@@ -177,7 +175,6 @@ func (engine *DockerTaskEngine) newManagedTask(task *apitask.Task) *managedTask 
 		stateChangeEvents:             engine.stateChangeEvents,
 		containerChangeEventStream:    engine.containerChangeEventStream,
 		credentialsManager:            engine.credentialsManager,
-		cniClient:                     engine.cniClient,
 		taskStopWG:                    engine.taskStopGroup,
 		steadyStatePollInterval:       engine.taskSteadyStatePollInterval,
 		steadyStatePollIntervalJitter: engine.taskSteadyStatePollIntervalJitter,
@@ -611,29 +608,6 @@ func (mtask *managedTask) isResourceFound(res taskresource.TaskResource) bool {
 		}
 	}
 	return false
-}
-
-// releaseIPInIPAM releases the IP address used by the task in awsvpc mode.
-func (mtask *managedTask) releaseIPInIPAM() {
-	if !mtask.IsNetworkModeAWSVPC() {
-		return
-	}
-	seelog.Infof("Managed task [%s]: IPAM releasing ip for task eni", mtask.Arn)
-
-	cfg, err := mtask.BuildCNIConfig(true, &ecscni.Config{
-		MinSupportedCNIVersion: config.DefaultMinSupportedCNIVersion,
-	})
-	if err != nil {
-		seelog.Errorf("Managed task [%s]: failed to release ip; unable to build cni configuration: %v",
-			mtask.Arn, err)
-		return
-	}
-	err = mtask.cniClient.ReleaseIPResource(mtask.ctx, cfg, ipamCleanupTmeout)
-	if err != nil {
-		seelog.Errorf("Managed task [%s]: failed to release ip; IPAM error: %v",
-			mtask.Arn, err)
-		return
-	}
 }
 
 // handleStoppedToRunningContainerTransition detects a "backwards" container

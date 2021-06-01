@@ -18,13 +18,11 @@ package app
 import (
 	"strings"
 
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cihub/seelog"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/volume"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/utils"
 )
@@ -85,29 +83,6 @@ func (agent *ecsAgent) appendNvidiaDriverVersionAttribute(capabilities []*ecs.At
 		}
 	}
 	return capabilities
-}
-
-func (agent *ecsAgent) appendENITrunkingCapabilities(capabilities []*ecs.Attribute) []*ecs.Attribute {
-	if !agent.cfg.ENITrunkingEnabled.Enabled() {
-		return capabilities
-	}
-	capabilities = appendNameOnlyAttribute(capabilities, attributePrefix+taskENITrunkingAttributeSuffix)
-	return agent.appendBranchENIPluginVersionAttribute(capabilities)
-}
-
-func (agent *ecsAgent) appendBranchENIPluginVersionAttribute(capabilities []*ecs.Attribute) []*ecs.Attribute {
-	version, err := agent.cniClient.Version(ecscni.ECSBranchENIPluginName)
-	if err != nil {
-		seelog.Warnf(
-			"Unable to determine the version of the plugin '%s': %v",
-			ecscni.ECSBranchENIPluginName, err)
-		return capabilities
-	}
-
-	return append(capabilities, &ecs.Attribute{
-		Name:  aws.String(attributePrefix + branchCNIPluginVersionSuffix),
-		Value: aws.String(version),
-	})
 }
 
 func (agent *ecsAgent) appendPIDAndIPCNamespaceSharingCapabilities(capabilities []*ecs.Attribute) []*ecs.Attribute {

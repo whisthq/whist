@@ -45,7 +45,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/dockerapi"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/asmauth"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/taskresource/asmsecret"
@@ -1110,102 +1109,6 @@ func (task *Task) collectFirelensLogEnvOptions(containerToLogOptions map[string]
 		}
 	}
 	return nil
-}
-
-// AddFirelensContainerBindMounts adds config file bind mount and socket directory bind mount to the firelens
-// container's host config.
-func (task *Task) AddFirelensContainerBindMounts(firelensConfig *apicontainer.FirelensConfig, hostConfig *dockercontainer.HostConfig,
-	config *config.Config) *apierrors.HostConfigError {
-	taskID, err := task.GetID()
-	if err != nil {
-		return &apierrors.HostConfigError{Msg: err.Error()}
-	}
-
-	var configBind, s3ConfigBind, socketBind string
-	switch firelensConfig.Type {
-	case firelens.FirelensConfigTypeFluentd:
-		configBind = fmt.Sprintf(firelensConfigBindFormatFluentd, config.DataDirOnHost, taskID)
-		s3ConfigBind = fmt.Sprintf(firelensS3ConfigBindFormat, config.DataDirOnHost, taskID, firelens.S3ConfigPathFluentd)
-	case firelens.FirelensConfigTypeFluentbit:
-		configBind = fmt.Sprintf(firelensConfigBindFormatFluentbit, config.DataDirOnHost, taskID)
-		s3ConfigBind = fmt.Sprintf(firelensS3ConfigBindFormat, config.DataDirOnHost, taskID, firelens.S3ConfigPathFluentbit)
-	default:
-		return &apierrors.HostConfigError{Msg: fmt.Sprintf("encounter invalid firelens configuration type %s",
-			firelensConfig.Type)}
-	}
-	socketBind = fmt.Sprintf(firelensSocketBindFormat, config.DataDirOnHost, taskID)
-
-	hostConfig.Binds = append(hostConfig.Binds, configBind, socketBind)
-
-	// Add the s3 config bind mount if firelens container is using a config file from S3.
-	if firelensConfig.Options != nil && firelensConfig.Options[firelens.ExternalConfigTypeOption] == firelens.ExternalConfigTypeS3 {
-		hostConfig.Binds = append(hostConfig.Binds, s3ConfigBind)
-	}
-	return nil
-}
-
-// BuildCNIConfig builds a list of CNI network configurations for the task.
-// If includeIPAMConfig is set to true, the list also includes the bridge IPAM configuration.
-func (task *Task) BuildCNIConfig(includeIPAMConfig bool, cniConfig *ecscni.Config) (*ecscni.Config, error) {
-	if !task.IsNetworkModeAWSVPC() {
-		return nil, errors.New("task config: task network mode is not AWSVPC")
-	}
-
-	var netconf *libcni.NetworkConfig
-	var ifName string
-	var err error
-
-	// Build a CNI network configuration for each ENI.
-	for _, eni := range task.ENIs {
-		switch eni.InterfaceAssociationProtocol {
-		// If the association protocol is set to "default" or unset (to preserve backwards
-		// compatibility), consider it a "standard" ENI attachment.
-		case "", apieni.DefaultInterfaceAssociationProtocol:
-			cniConfig.ID = eni.MacAddress
-			ifName, netconf, err = ecscni.NewENINetworkConfig(eni, cniConfig)
-		case apieni.VLANInterfaceAssociationProtocol:
-			cniConfig.ID = eni.MacAddress
-			ifName, netconf, err = ecscni.NewBranchENINetworkConfig(eni, cniConfig)
-		default:
-			err = errors.Errorf("task config: unknown interface association type: %s",
-				eni.InterfaceAssociationProtocol)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		cniConfig.NetworkConfigs = append(cniConfig.NetworkConfigs, &ecscni.NetworkConfig{
-			IfName:           ifName,
-			CNINetworkConfig: netconf,
-		})
-	}
-
-	// Build the bridge CNI network configuration.
-	// All AWSVPC tasks have a bridge network.
-	ifName, netconf, err = ecscni.NewBridgeNetworkConfig(cniConfig, includeIPAMConfig)
-	if err != nil {
-		return nil, err
-	}
-	cniConfig.NetworkConfigs = append(cniConfig.NetworkConfigs, &ecscni.NetworkConfig{
-		IfName:           ifName,
-		CNINetworkConfig: netconf,
-	})
-
-	// Build a CNI network configuration for AppMesh if enabled.
-	appMeshConfig := task.GetAppMesh()
-	if appMeshConfig != nil {
-		ifName, netconf, err = ecscni.NewAppMeshConfig(appMeshConfig, cniConfig)
-		if err != nil {
-			return nil, err
-		}
-		cniConfig.NetworkConfigs = append(cniConfig.NetworkConfigs, &ecscni.NetworkConfig{
-			IfName:           ifName,
-			CNINetworkConfig: netconf,
-		})
-	}
-
-	return cniConfig, nil
 }
 
 // IsNetworkModeAWSVPC checks if the task is configured to use the AWSVPC task networking feature.
