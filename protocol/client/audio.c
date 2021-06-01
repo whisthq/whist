@@ -231,11 +231,6 @@ void catchup_audio() {
             }
         }
     }
-
-    // Return if there's nothing to play
-    if (last_played_id == -1) {
-        return;
-    }
 }
 
 void flush_next_audio_frame() {
@@ -245,6 +240,24 @@ void flush_next_audio_frame() {
     int next_to_play_id = last_played_id + 1;
     for (int i = next_to_play_id; i < next_to_play_id + MAX_NUM_AUDIO_INDICES; i++) {
         AudioPacket* packet = &receiving_audio[i % RECV_AUDIO_BUFFER_SIZE];
+        packet->id = -1;
+        packet->nacked_amount = 0;
+    }
+}
+
+void update_render_context() {
+    /*
+  Store the next frame to render into the audio render context.
+    */
+    // we always encode our audio now
+    audio_render_context.encoded = USING_AUDIO_ENCODE_DECODE;
+    for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
+        // move the packet into the render context
+        int buffer_index = next_to_play_id + i;
+        memcpy((AudioPacket*)&audio_render_context.audio_packets[i],
+               &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE], sizeof(AudioPacket));
+        // Reset packet in receiving audio buffer
+        AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
         packet->id = -1;
         packet->nacked_amount = 0;
     }
@@ -391,6 +404,10 @@ void update_audio() {
 
     catchup_audio();
 
+    // Return if there's nothing to play
+    if (last_played_id == -1) {
+        return;
+    }
     // TODO: should i put buffering in a separate function? Trying to figure out how to refactor
     // when some logic returns out of the function prematurely. Buffering audio controls whether or
     // not we're trying to accumulate an audio buffer; ideally, we want about 30ms of audio in the
@@ -453,24 +470,13 @@ void update_audio() {
             // When the audio queue is no longer full, we stop flushing the audio queue
             audio_flush_triggered = false;
 
-            // TODO: should this be a separate function that stores the next frame into the render
-            // context? Store the audio render context information
-            audio_render_context.encoded = USING_AUDIO_ENCODE_DECODE;
-            for (int i = 0; i < MAX_NUM_AUDIO_INDICES; i++) {
-                int buffer_index = next_to_play_id + i;
-                memcpy((AudioPacket*)&audio_render_context.audio_packets[i],
-                       &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE],
-                       sizeof(AudioPacket));
-                // Reset packet in receiving audio buffer
-                AudioPacket* packet = &receiving_audio[buffer_index % RECV_AUDIO_BUFFER_SIZE];
-                packet->id = -1;
-                packet->nacked_amount = 0;
-            }
+            // move the next frame into the render context
+            update_render_context();
             // tell renderer thread to render the audio
             rendering_audio = true;
-            // Update last_played_id, which will advance either because it was skipped or queued up
-            // to render
         }
+        // Update last_played_id, which will advance either because it was skipped or queued up to
+        // render
         last_played_id += MAX_NUM_AUDIO_INDICES;
     }
 
