@@ -91,8 +91,6 @@ static int last_nacked_id = -1;
 static int most_recent_audio_id = -1;
 static int last_played_id = -1;
 
-// TODO: rename this to something that makes more sense
-// TODO: make this constant less hardcoded
 static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
 
 // END AUDIO VARIABLES
@@ -216,24 +214,16 @@ void destroy_audio() {
     destroy_audio_device();
 }
 
-// possibly rename this function
-void set_audio_refresh() { audio_refresh = true; }
+void enable_audio_refresh() { audio_refresh = true; }
 
 void set_audio_frequency(int new_audio_frequency) { audio_frequency = new_audio_frequency; }
 
-// TODO: get_next_audio_frame()
-// check for device updates
-// decode always (can always assume audio is encoded now)
-// TODO: in render_audio:
-// get next frame
-// tell SDL to render it
 void render_audio() {
     /*
         Actually renders audio frames. Called in multithreaded_renderer. update_audio should
         configure @global audio_render_context to contain the latest audio packet to render.
         This function simply decodes and renders it.
     */
-    //
     if (rendering_audio) {
         // if audio frequency is too high, don't play it
         if (audio_frequency > MAX_FREQ) {
@@ -286,14 +276,6 @@ void render_audio() {
 
                 // Get decoded data
                 audio_decoder_packet_readout(audio_context.audio_decoder, decoded_data);
-                /*
-                int decoded_size = audio_decoder_get_frame_data_size(audio_context.audio_decoder);
-                if (compression_factor == 1) {
-                  compression_factor = (double)decoded_size / (MAX_NUM_AUDIO_INDICES *
-                (double)MAX_PAYLOAD_SIZE);
-                }
-                LOG_DEBUG("Compression factor %.2f", compression_factor);
-                */
 
                 // Play decoded audio
                 res =
@@ -373,9 +355,6 @@ void update_audio() {
     // we want about 30ms of audio in the buffer
     static bool buffering_audio = false;
 
-    // TODO: audio_device_queue is in decompressed bytes,
-    // MAX_PAYLOAD_SIZE is in compressed bytes
-    // need to give these the same units
     int bytes_until_no_more_audio =
         (int)((most_recent_audio_id - last_played_id) * decoded_bytes_per_packet) +
         audio_device_queue;
@@ -454,16 +433,12 @@ void update_audio() {
             // tell renderer thread to render the audio
             rendering_audio = true;
             // Update last_played_id, which will advance either because it was skipped or queued up
-            // to
-            // render
+            // to render
         }
         last_played_id += MAX_NUM_AUDIO_INDICES;
     }
 
-    // TODO: move MAX_NACKED to the top and put this in a separate nack function
     // Find pending audio packets and NACK them
-    // unsigned char fmsg_buffer[MAX_NACKED * sizeof(FractalClientMessage)];
-    // FractalClientMessage* fmsg[MAX_NACKED];
     int num_nacked = 0;
     if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
         last_nacked_id = max(last_played_id, last_nacked_id);
