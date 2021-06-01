@@ -306,6 +306,7 @@ void flush_next_audio_frame() {
         packet->id = -1;
         packet->nacked_amount = 0;
     }
+    last_played_id += MAX_NUM_AUDIO_INDICES;
 }
 
 bool flush_audio(int audio_device_queue) {
@@ -324,6 +325,7 @@ bool flush_audio(int audio_device_queue) {
     // Otherwise, we trigger an audio flush when the audio queue surpasses
     // AUDIO_QUEUE_UPPER_LIMIT
     static bool audio_flush_triggered = false;
+    int next_to_play_id = last_played_id + 1;
     int real_limit = audio_flush_triggered ? TARGET_AUDIO_QUEUE_LIMIT : AUDIO_QUEUE_UPPER_LIMIT;
 
     if (audio_device_queue > real_limit) {
@@ -356,6 +358,8 @@ void update_render_context() {
         packet->id = -1;
         packet->nacked_amount = 0;
     }
+    // increment to indicate that 
+    last_played_id += MAX_NUM_AUDIO_INDICES;
 }
 
 int get_next_audio_frame(uint8_t* data) {
@@ -515,9 +519,6 @@ void update_audio() {
             // tell renderer thread to render the audio
             rendering_audio = true;
         }
-        // Update last_played_id, which will advance either because it was skipped or queued up to
-        // render
-        last_played_id += MAX_NUM_AUDIO_INDICES;
     } else {
         return;
     }
