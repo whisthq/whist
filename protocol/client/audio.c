@@ -475,32 +475,7 @@ void update_audio() {
     }
 
     // Find pending audio packets and NACK them
-<<<<<<< HEAD
-    int num_nacked = 0;
-    if (last_played_id > -1 && get_timer(nack_timer) > 6.0 / MS_IN_SECOND) {
-        last_nacked_id = max(last_played_id, last_nacked_id);
-        // nack up to MAX_NACKED packets from last_nacked_id to most_recent_audio_id - 4
-        // since packets can arrive out of order
-        for (int i = last_nacked_id + 1; i < most_recent_audio_id - 4 && num_nacked < MAX_NACKED;
-             i++) {
-            int i_buffer_index = i % RECV_AUDIO_BUFFER_SIZE;
-            AudioPacket* i_packet = &receiving_audio[i_buffer_index];
-            if (i_packet->id == -1 && i_packet->nacked_amount < 2) {
-                // check if we never received this packet
-                i_packet->nacked_amount++;
-                int id = i / MAX_NUM_AUDIO_INDICES;
-                int index = i % MAX_NUM_AUDIO_INDICES;
-                audio_nack(id, index);
-                num_nacked++;
-
-                start_timer(&nack_timer);
-            }
-            last_nacked_id = i;
-        }
-    }
-=======
     nack_missing_packets();
->>>>>>> 443bb8435... moved audio flushing, catching up, and missing packet nacking into separate functions
 }
 
 // NOTE that this function is in the hotpath.
