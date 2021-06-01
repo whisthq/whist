@@ -52,7 +52,7 @@ extern volatile bool update_mbps;
 extern volatile int output_width;
 extern volatile int output_height;
 extern volatile CodecType output_codec_type;
-extern volatile double latency;
+extern volatile float latency;
 
 #if CAN_UPDATE_WINDOW_TITLEBAR_COLOR
 extern volatile FractalRGBColor* native_window_color;
@@ -1025,7 +1025,7 @@ void update_video() {
                 }
                 rendering = true;
             } else {
-                if ((get_timer(ctx->last_packet_timer) > latency) &&
+                if (get_timer(ctx->last_packet_timer) > latency &&
                     get_timer(ctx->last_nacked_timer) > latency + latency * ctx->num_times_nacked) {
                     if (ctx->num_times_nacked == -1) {
                         ctx->num_times_nacked = 0;
