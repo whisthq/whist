@@ -23,12 +23,6 @@ def db_container_add(**kwargs):
     db.session.commit()
 
 
-def choose_instance(region):
-    instances = db.instances.filter_by(region=region)
-    instances.sort(reverse=True, key=lambda x: x.containerLimit - x.containers)
-    return instances[0]
-
-
 # With pydantic, we can define our query/body datastructures with
 # "one-time use" classes like this. They need to inherit from the pydantic
 # BaseModel, but no other boilerplate after that. The type signatures are
