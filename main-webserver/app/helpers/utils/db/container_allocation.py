@@ -2,47 +2,12 @@ import uuid
 from flask.json import jsonify
 from pydantic import BaseModel
 from flask_pydantic import validate
-from sqlalchemy.orm import relationship
-from app.models import db
-from app.helpers.utils.general.sql_commands import fractal_sql_commit
+from _meta import db
+from app.models.hardware import ContainerInfo, InstanceInfo
+from app.blueprints.aws.aws_container_blueprint import aws_container_bp
 from app.constants.http_codes import (
     ACCEPTED,
 )
-from app.factory import create_app
-
-app = create_app()
-
-
-class InstanceInfo(db.Model):
-    __tablename__ = "instance_info"
-    instance_id = db.Column(db.String(250), primary_key=True, unique=True)
-    instance_type = db.Column(db.String(250), nullable=False)
-    ami_id = db.Column(db.String(250), nullable=False)
-    region = db.Column(db.String(250), nullable=False)
-    ip = db.Column(db.String(250), nullable=False)
-    containers = relationship("ContainerInfo")
-    containerLimit = db.Column(db.Integer)
-    CPURemainingInInstance = db.Column(
-        db.Float, nullable=False, default=1024.0
-    )
-    GPURemainingInInstance = db.Column(
-        db.Float, nullable=False, default=1024.0
-    )
-    memoryRemainingInInstanceInMb = db.Column(
-        db.Float, nullable=False, default=2000.0
-    )
-
-
-class ContainerInfo(db.Model):
-    __tablename__ = "container_info"
-    container_id = db.Column(db.String(250), primary_key=True, unique=True)
-    instance_id = db.Column(
-        db.ForeignKey("instance_info.instance_id"), nullable=False
-    )
-    user_id = db.Column(db.ForeignKey("users.user_id"), nullable=False)
-    status = db.Column(db.String(250), nullable=False)
-    dpi = db.Column(db.Integer, nullable=False)
-    ip = db.Column(db.String(250), nullable=False)
 
 
 def db_container_add(**kwargs):
@@ -53,7 +18,8 @@ def db_container_add(**kwargs):
         status="ALLOCATED",
         ip=InstanceInfo.query.get(kwargs["instance_id"]).ip,
     )
-    fractal_sql_commit(db, lambda db, x: db.session.add(x), obj)
+    db.session.add(obj)
+    db.session.commit()
 
 
 def choose_instance(region):
@@ -82,7 +48,23 @@ class ContainerAssignBody(BaseModel):
 # It must also have a type signature of a class thats inherited from BaseModel.
 #
 # That's it! No more boilerplate, the rest of the validation comes for free.
-@app.route("/container_assign", methods=("POST",))
+#
+# If any of the required parameters to ContainerAssignBody are missing,
+# the response will automatically 400 BAD REQUEST, and the response json
+# will be something like the following:
+#
+# {
+#    'validation_error': {
+#        'query_params': [
+#           {
+#             'loc': ['dpi'],
+#             'msg': ['field required'],
+#             'type': ['value_error.missing'],
+#           }
+#        ]
+#    }
+# }
+@aws_container_bp.route("/container_assign", methods=("POST",))
 @validate()
 def container_assign(body: ContainerAssignBody):
     region = body.get("region")
@@ -99,20 +81,3 @@ def container_assign(body: ContainerAssignBody):
     )
 
     return jsonify({"ID": instance.id}), ACCEPTED
-
-
-# If any of the required parameters to ContainerAssignBody are missing,
-# the response will automatically 400 BAD REQUEST, and the response json
-# will be something like the following:
-#
-# {
-#    'validation_error': {
-#        'query_params': [
-#           {
-#             'loc': ['dpi'],
-#             'msg': ['field required'],
-#             'type': ['value_error.missing'],
-#           }
-#        ]
-#    }
-# }
