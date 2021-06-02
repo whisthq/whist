@@ -12,6 +12,7 @@ import (
 // We implement
 
 // Fractal webserver URLs and relevant webserver endpoints
+const localdevFractalWebserver = "https://127.0.0.1:7730"
 const devFractalWebserver = "https://dev-server.fractal.co"
 const stagingFractalWebserver = "https://staging-server.fractal.co"
 const prodFractalWebserver = "https://prod-server.fractal.co"
@@ -60,7 +61,7 @@ func GetFractalWebserver() string {
 	case EnvDev:
 		fallthrough
 	case EnvLocalDev:
-		fallthrough
+		return localdevFractalWebserver
 	default:
 		return devFractalWebserver
 	}
