@@ -34,7 +34,7 @@
         "react-fade-in": "^2.0.1",
         "react-ga": "^3.3.0",
         "react-icons": "^4.2.0",
-        "react-modal": "^3.13.1",
+        "react-modal": "^3.14.2",
         "react-router": "^5.2.0",
         "react-router-dom": "^5.2.0",
         "react-router-hash-link": "^2.4.3",
