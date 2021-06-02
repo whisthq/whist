@@ -31,6 +31,14 @@ If you make changes in the Auth0 UI, make sure to run `yarn update-tenant` to do
 
 This ensures that the `tenant.yaml` in source control is the definite source-of-truth for that branch's Auth0 configuration. It also helps by minimizing the differences between our dev and prod Auth0 tenants -- so that no issues will be introduced upon promoting dev to staging to prod.
 
+## Adding a new social provider
+
+Auth0 supports the addition of new social providers. For a comprehensive list and specific instructions, you can visit [this page](https://auth0.com/docs/connections/identity-providers-social).
+
+Integrating a social provider with Auth0 includes generating an OAuth secret and supplying that to Auth0. If we're not careful, that secret can 1) leak into tenant.yaml, and 2) be overwritten in Auth0 when deploying a tenant configuration.
+
+To address these issues, a "censorMapping" is used in `scripts/update-tenant.js` that maps sensitive paths to the names of environment variables that they should be replaced with. For example, Apple's OAuth secret is replaced with "##APPLE_OAUTH_SECRET##". This value is replaced with the environment variable APPLE_OAUTH_SECRET at deploy-time. Thus, it is also important to include the `XYZ_OAUTH_SECRET`s in Github actions (or whatever environment the `yarn deploy:[env]` commands are invoked in)
+
 ## Building
 
 To build all hooks, run `yarn build` in the project's root directory. You can then add the hook to Auth0 by modifying tenant.yaml. Here's an example of a hook:
