@@ -161,7 +161,6 @@ def send_spin_up_container_request():
     payload = {
         "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
-        "protocol_timeout": args.protocol_timeout,
     }
     respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
     response = respobj.json()
@@ -185,6 +184,22 @@ def send_spin_up_container_request():
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
     )
+
+
+def write_protocol_timeout(cont):
+    """
+    Takes in a container object, and writes the protocol timeout to it.
+    """
+    fid = get_fractal_id(cont)
+    with open(f"/fractal/{fid}/containerResourceMappings/timeout", "w") as timeout_file:
+        timeout_file.write(f"{args.protocol_timeout}")
+
+
+def get_fractal_id(cont):
+    """
+    Takes in a container object, and returns its FractalID.
+    """
+    return cont.name.split("-")[-1]
 
 
 def send_start_values_request(host_port):
@@ -245,6 +260,7 @@ def send_set_config_encryption_token_request(host_port):
 
 if __name__ == "__main__":
     # pylint: disable=line-too-long
+    ensure_root_privileges()
     ensure_host_service_is_running()
     container, host_ports, aeskey = send_spin_up_container_request()
     if args.update_protocol:
@@ -252,6 +268,7 @@ if __name__ == "__main__":
 
     try:
         send_start_values_request(host_ports.host_port_32262tcp)
+        write_protocol_timeout(container)
         send_set_config_encryption_token_request(host_ports.host_port_32262tcp)
     except Exception as err:
         kill_container(container)
@@ -264,6 +281,8 @@ To connect to this container using the client protocol, run one of the following
     windows:        .\\build\\fclient.bat {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
     linux/macos:    ./fclient {get_public_ipv4_addr()} -p32262:{host_ports.host_port_32262tcp}.32263:{host_ports.host_port_32263udp}.32273:{host_ports.host_port_32273tcp} -k {aeskey}
 
+Name of resulting container:
+{container.name}
 Docker ID of resulting container:"""
     )
 
