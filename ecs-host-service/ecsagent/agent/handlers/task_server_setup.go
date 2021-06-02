@@ -71,7 +71,7 @@ func taskServerSetup(credentialsManager credentials.Manager,
 
 	v4HandlersSetup(muxRouter, state, ecsClient, statsEngine, cluster, availabilityZone, containerInstanceArn)
 
-	limiter := tollbooth.NewLimiter(int64(steadyStateRate), nil)
+	limiter := tollbooth.NewLimiter(float64(steadyStateRate), nil)
 	limiter.SetOnLimitReached(handlersutils.LimitReachedHandler(auditLogger))
 	limiter.SetBurst(burstRate)
 

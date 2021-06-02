@@ -42,7 +42,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient/sdkclientfactory"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ec2"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eni/pause"
@@ -109,7 +108,6 @@ type ecsAgent struct {
 	saveableOptionFactory       factory.SaveableOption
 	pauseLoader                 pause.Loader
 	udevMonitor                 udevwrapper.Udev
-	cniClient                   ecscni.CNIClient
 	vpc                         string
 	subnet                      string
 	mac                         string
@@ -190,7 +188,6 @@ func newAgent(globalCtx context.Context, globalCancel context.CancelFunc, blackh
 		stateManagerFactory:         factory.NewStateManager(),
 		saveableOptionFactory:       factory.NewSaveableOption(),
 		pauseLoader:                 pause.New(),
-		cniClient:                   ecscni.NewClient(cfg.CNIPluginsPath),
 		metadataManager:             metadataManager,
 		terminationHandler:          sighandlers.StartDefaultTerminationHandler,
 		mobyPlugins:                 mobypkgwrapper.NewPlugins(),
@@ -277,40 +274,6 @@ func (agent *ecsAgent) doStart(fractalGoroutineTracker *sync.WaitGroup,
 	}
 
 	var vpcSubnetAttributes []*ecs.Attribute
-	// Check if Task ENI is enabled
-	if agent.cfg.TaskENIEnabled.Enabled() {
-		// check pause container image load
-		if loadPauseErr != nil {
-			if pause.IsNoSuchFileError(loadPauseErr) || pause.UnsupportedPlatform(loadPauseErr) {
-				return exitcodes.ExitTerminal
-			} else {
-				return exitcodes.ExitError
-			}
-		}
-
-		err, terminal := agent.initializeTaskENIDependencies(state, taskEngine)
-		switch err {
-		case nil:
-			// No error, we can proceed with the rest of initialization
-			// Set vpc and subnet id attributes
-			vpcSubnetAttributes = agent.constructVPCSubnetAttributes()
-		case instanceNotLaunchedInVPCError:
-			// We have ascertained that the EC2 Instance is not running in a VPC
-			// No need to stop the ECS Agent in this case; all we need to do is
-			// to not update the config to disable the TaskENIEnabled flag and
-			// move on
-			seelog.Warnf("Unable to detect VPC ID for the Instance, disabling Task ENI capability: %v", err)
-			agent.cfg.TaskENIEnabled = config.BooleanDefaultFalse{Value: config.ExplicitlyDisabled}
-		default:
-			// Encountered an error initializing dependencies for dealing with
-			// ENIs for Tasks. Exit with the appropriate error code
-			seelog.Criticalf("Unable to initialize Task ENI dependencies: %v", err)
-			if terminal {
-				return exitcodes.ExitTerminal
-			}
-			return exitcodes.ExitError
-		}
-	}
 
 	// Register the container instance
 	err = agent.registerContainerInstance(client, vpcSubnetAttributes)

@@ -23,8 +23,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/credentials"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/engine/dockerstate"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eni/udevwrapper"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/eni/watcher"
@@ -43,15 +41,6 @@ import (
 // initPID defines the process identifier for the init process
 const initPID = 1
 
-// awsVPCCNIPlugins is a list of CNI plugins required by the ECS Agent
-// to configure the ENI for a task
-var awsVPCCNIPlugins = []string{ecscni.ECSENIPluginName,
-	ecscni.ECSBridgePluginName,
-	ecscni.ECSIPAMPluginName,
-	ecscni.ECSAppMeshPluginName,
-	ecscni.ECSBranchENIPluginName,
-}
-
 // startWindowsService is not supported on Linux
 func (agent *ecsAgent) startWindowsService() int {
 	seelog.Error("Windows Services are not supported on Linux")
@@ -59,44 +48,6 @@ func (agent *ecsAgent) startWindowsService() int {
 }
 
 var getPid = os.Getpid
-
-// initializeTaskENIDependencies initializes all of the dependencies required by
-// the Agent to support the 'awsvpc' networking mode. A non nil error is returned
-// if an error is encountered during this process. An additional boolean flag to
-// indicate if this error is considered terminal is also returned
-func (agent *ecsAgent) initializeTaskENIDependencies(state dockerstate.TaskEngineState, taskEngine engine.TaskEngine) (error, bool) {
-	// Check if the Agent process's pid  == 1, which means it's running without an init system
-	if getPid() == initPID {
-		// This is a terminal error. Bad things happen with invoking the
-		// the ENI plugin when there's no init process in the pid namespace.
-		// Specifically, the DHClient processes that are started as children
-		// of the Agent will not be reaped leading to the ENI device
-		// disappearing until the Agent is killed.
-		return errors.New("agent is not started with an init system"), true
-	}
-
-	// Set VPC and Subnet IDs for the instance
-	if err, ok := agent.setVPCSubnet(); err != nil {
-		return err, ok
-	}
-
-	// Validate that the CNI plugins exist in the expected path and that
-	// they possess the right capabilities
-	if err := agent.verifyCNIPluginsCapabilities(); err != nil {
-		// An error here is terminal as it means that the plugins
-		// do not support the ENI capability
-		return err, true
-	}
-
-	if err := agent.startUdevWatcher(state, taskEngine.StateChangeEvents()); err != nil {
-		// If udev watcher was not initialized in this run because of the udev socket
-		// file not being available etc, the Agent might be able to retry and succeed
-		// on the next run. Hence, returning a false here for terminal bool
-		return err, false
-	}
-
-	return nil, false
-}
 
 // setVPCSubnet sets the vpc and subnet ids for the agent by querying the
 // instance metadata service
@@ -132,39 +83,6 @@ func isInstanceLaunchedInVPC(err error) bool {
 		return false
 	}
 	return true
-}
-
-// verifyCNIPluginsCapabilities returns an error if there's an error querying
-// capabilities or if the required capability is absent from the capabilities
-// of the following plugins:
-// a. ecs-eni
-// b. ecs-bridge
-// c. ecs-ipam
-// d. aws-appmesh
-// e. vpc-branch-eni
-func (agent *ecsAgent) verifyCNIPluginsCapabilities() error {
-	// Check if we can get capabilities from each plugin
-	for _, plugin := range awsVPCCNIPlugins {
-		// skip verifying branch cni plugin if eni trunking is not enabled
-		if plugin == ecscni.ECSBranchENIPluginName && agent.cfg != nil && !agent.cfg.ENITrunkingEnabled.Enabled() {
-			continue
-		}
-
-		capabilities, err := agent.cniClient.Capabilities(plugin)
-		if err != nil {
-			return err
-		}
-		// appmesh plugin is not needed for awsvpc networking capability
-		if plugin == ecscni.ECSAppMeshPluginName {
-			continue
-		}
-		if !contains(capabilities, ecscni.CapabilityAWSVPCNetworkingMode) {
-			return errors.Errorf("plugin '%s' doesn't support the capability: %s",
-				plugin, ecscni.CapabilityAWSVPCNetworkingMode)
-		}
-	}
-
-	return nil
 }
 
 // startUdevWatcher starts the udev monitor and the watcher for receiving
