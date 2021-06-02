@@ -192,15 +192,15 @@ def write_protocol_timeout(cont):
     Takes in a container object, and writes the protocol timeout to it.
     """
     fid = get_fractal_id(cont)
-    with open(f'/fractal/{fid}/containerResourceMappings/timeout', 'w') as timeout_file:
-        timeout_file.write(f'{args.protocol_timeout}')
+    with open(f"/fractal/{fid}/containerResourceMappings/timeout", "w") as timeout_file:
+        timeout_file.write(f"{args.protocol_timeout}")
 
 
 def get_fractal_id(cont):
     """
     Takes in a container object, and returns its FractalID.
     """
-    return cont.name.split('-')[-1]
+    return cont.name.split("-")[-1]
 
 
 def send_start_values_request(host_port):
