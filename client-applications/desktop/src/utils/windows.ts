@@ -3,7 +3,6 @@
 // Electron renderer windows.
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
-import { WindowHashAuth, WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
@@ -38,6 +37,13 @@ export const height = {
   xl2: { height: 16 * 80 },
   xl3: { height: 16 * 96 },
 }
+
+// The Electron BrowserWindow API can be passed a hash parameter as data.
+// We use this so that renderer threads can decide which view component to
+// render as soon as a window appears.
+export const WindowHashAuth = "AUTH"
+export const WindowHashUpdate = "UPDATE"
+export const WindowHashSignout = "SIGNOUT"
 
 export const getWindows = () => BrowserWindow.getAllWindows()
 

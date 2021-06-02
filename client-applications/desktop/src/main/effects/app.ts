@@ -16,6 +16,7 @@ import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
+  createSignoutWindow,
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
@@ -139,8 +140,7 @@ zip(
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
 merge(
-  fromTrigger("traySignoutAction"),
-  fromTrigger("relaunchAction")
+  fromTrigger("clearCacheAction")
 ).subscribe(() => {
   // Clear our own Electron cache
   persistClear()
@@ -160,4 +160,14 @@ merge(
 fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
   app.relaunch({ args: process.argv.slice(1).concat([region]) })
   app.exit()
+})
+
+fromTrigger("relaunchAction").subscribe(() => {
+  app.relaunch()
+  app.exit()
+})
+
+fromTrigger("showSignoutWindow").subscribe(() => {
+  closeWindows()
+  createSignoutWindow()
 })

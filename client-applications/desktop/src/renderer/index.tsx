@@ -4,9 +4,10 @@ import ReactDOM from "react-dom"
 
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
-import { WindowHashUpdate } from "@app/utils/constants"
-import { fractalError } from "@app/utils/error"
+import Signout from "@app/renderer/pages/signout"
 
+import { WindowHashUpdate, WindowHashSignout } from "@app/utils/windows"
+import { fractalError } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 
 // Electron has no way to pass data to a newly launched browser
@@ -30,7 +31,11 @@ const RootComponent = () => {
   const errorContinue = () =>
     setMainState({ trigger: { name: "relaunch", payload: Date.now() } })
 
+  const clearCache = () =>
+    setMainState({ trigger: { name: "clearCache", payload: null } })
+
   if (show === WindowHashUpdate) return <Update />
+  if (show == WindowHashSignout) return <Signout onClick={clearCache} />
   if (keys(fractalError).includes(show))
     return (
       <Error
@@ -39,6 +44,13 @@ const RootComponent = () => {
         onClick={errorContinue}
       />
     )
+  return (
+    <Error
+      title={fractalError.NAVIGATION_ERROR.title}
+      text={fractalError.NAVIGATION_ERROR.text}
+      onClick={errorContinue}
+    />
+  )
 }
 
 // TODO: actually pass version number through IPC.

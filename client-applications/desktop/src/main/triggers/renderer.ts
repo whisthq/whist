@@ -30,3 +30,9 @@ createTrigger(
   TRIGGER.relaunchAction,
   filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "relaunch")
 )
+
+// Fires when "Signout" button is clicked on signout window popup
+createTrigger(
+  TRIGGER.clearCacheAction,
+  filterByName(fromTrigger("eventIPC").pipe(pluck("trigger")), "clearCache")
+)
