@@ -100,6 +100,7 @@ PortBindings = namedtuple(
 
 
 def ensure_root_privileges():
+    os.seteuid(0)
     if os.geteuid() != 0:
         sys.exit(
             (
@@ -244,6 +245,7 @@ def send_set_config_encryption_token_request(host_port):
 
 if __name__ == "__main__":
     # pylint: disable=line-too-long
+    ensure_root_privileges()
     ensure_host_service_is_running()
     container, host_ports, aeskey = send_spin_up_container_request()
     if args.update_protocol:
