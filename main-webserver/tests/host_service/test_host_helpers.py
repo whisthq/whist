@@ -1,9 +1,8 @@
 import time
 
-
 from app.constants.http_codes import BAD_REQUEST, NOT_FOUND, SUCCESS
 
-from app.models import InstanceInfo
+from app.models import InstanceInfo, db
 
 from app.helpers.blueprint_helpers.host_service.host_service_post import (
     instance_heartbeat_helper,
@@ -11,7 +10,7 @@ from app.helpers.blueprint_helpers.host_service.host_service_post import (
 )
 
 
-def test_initial_auth_good():
+def test_initial_auth_good(app):
     """
     Tests whether auth works on an empty db
     """
@@ -22,7 +21,10 @@ def test_initial_auth_good():
     assert "AuthToken" in resp_dict.keys()
     assert resp_code == SUCCESS
     attempted_inst = InstanceInfo.query.filter_by(instance_id="test_instance_id").one_or_none()
+
     assert attempted_inst is not None
+    db.session.delete(attempted_inst)
+    db.session.commit()
 
 
 def test_initial_auth_exists(bulk_instance):
