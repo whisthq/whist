@@ -5,7 +5,6 @@ import Lock from '@app/assets/icons/lock.svg'
 import Cloud from '@app/assets/icons/cloud.svg'
 import Rocket from '@app/assets/icons/rocket.svg'
 import FeatureBox from './featureBox'
-// import FractalPeriod from "assets/icons/fractalPeriod.svg"
 
 export const Features = () => {
   /*
