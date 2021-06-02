@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 )
@@ -182,10 +183,11 @@ type SpinUpContainerRequest struct {
 // SpinUpContainerRequestResult defines the data returned by the
 // `spin_up_container` endpoint.
 type SpinUpContainerRequestResult struct {
-	HostPortForTCP32262 uint16 `json:"port_32262"`
-	HostPortForUDP32263 uint16 `json:"port_32263"`
-	HostPortForTCP32273 uint16 `json:"port_32273"`
-	AesKey              string `json:"aes_key"`
+	HostPortForTCP32262 uint16                     `json:"port_32262"`
+	HostPortForUDP32263 uint16                     `json:"port_32263"`
+	HostPortForTCP32273 uint16                     `json:"port_32273"`
+	AesKey              string                     `json:"aes_key"`
+	FractalID           fractalcontainer.FractalID `json:"fractal_id"`
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP

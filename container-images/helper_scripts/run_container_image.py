@@ -153,8 +153,8 @@ def send_spin_up_container_request():
     """
     Sends the host service a SpinUpContainer request and returns a Container
     object corresponding to that container, along with its identifying host
-    port (i.e. host port corresponding to tcp/32262 in the container) and
-    aeskey.
+    port (i.e. host port corresponding to tcp/32262 in the container),
+    aeskey, and fractalID.
     """
     print("Sending SpinUpContainer request to host service!")
     url = HOST_SERVICE_URL + "spin_up_container"
@@ -167,12 +167,13 @@ def send_spin_up_container_request():
     print(f"Response from host service: {response}")
     respobj.raise_for_status()
 
-    # Return a Container object corresponding to the container that was just created
     host_port_32262tcp = response["result"]["port_32262"]
     host_port_32263udp = response["result"]["port_32263"]
     host_port_32273tcp = response["result"]["port_32273"]
     key = response["result"]["aes_key"]
+    fid = response["result"]["fractal_id"]
 
+    # Find the Container object corresponding to the container that was just created
     matching_containers = docker_client.containers.list(
         filters={
             "publish": f"{host_port_32262tcp}/tcp",
@@ -183,23 +184,16 @@ def send_spin_up_container_request():
         matching_containers[0],
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
+        fid,
     )
 
 
-def write_protocol_timeout(cont):
+def write_protocol_timeout(fid):
     """
-    Takes in a container object, and writes the protocol timeout to it.
+    Takes in a fractalID, and writes the protocol timeout to the corresponding container.
     """
-    fid = get_fractal_id(cont)
     with open(f"/fractal/{fid}/containerResourceMappings/timeout", "w") as timeout_file:
         timeout_file.write(f"{args.protocol_timeout}")
-
-
-def get_fractal_id(cont):
-    """
-    Takes in a container object, and returns its FractalID.
-    """
-    return cont.name.split("-")[-1]
 
 
 def send_start_values_request(host_port):
@@ -262,13 +256,13 @@ if __name__ == "__main__":
     # pylint: disable=line-too-long
     ensure_root_privileges()
     ensure_host_service_is_running()
-    container, host_ports, aeskey = send_spin_up_container_request()
+    container, host_ports, aeskey, fractal_id = send_spin_up_container_request()
     if args.update_protocol:
         copy_locally_built_protocol(container)
 
     try:
         send_start_values_request(host_ports.host_port_32262tcp)
-        write_protocol_timeout(container)
+        write_protocol_timeout(fractal_id)
         send_set_config_encryption_token_request(host_ports.host_port_32262tcp)
     except Exception as err:
         kill_container(container)
