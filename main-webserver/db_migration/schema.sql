@@ -222,24 +222,85 @@ CREATE TABLE hardware.cluster_info (
 );
 
 
+
 --
--- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
+-- TOC entry 248 (class 1259 OID 16786)
+-- Name: container_info; Type: TABLE; Schema: hardware; Owner: -
+--
+
+CREATE TABLE hardware.container_info (
+    container_id character varying NOT NULL,
+    user_id character varying NOT NULL,
+    instance_id character varying NOT NULL,
+    status character varying NOT NULL
+);
+
+
+
+ALTER TABLE ONLY hardware.container_info
+    ADD CONSTRAINT container_info_pkey PRIMARY KEY (container_id);
+--
+-- TOC entry 208 (class 1259 OID 16404)
+-- Name: instance_info; Type: TABLE; Schema: hardware; Owner: -
 --
 
 CREATE TABLE hardware.instance_info (
     instance_id character varying NOT NULL,
     auth_token character varying NOT NULL,
-    "lastHeartbeated" double precision,
-    "memoryRemainingInInstanceInMb" bigint,
-    "CPURemainingInInstance" bigint,
-    "GPURemainingInInstance" bigint,
-    "runningTasksCount" bigint,
+    "lastHeartbeated" bigint,
+    "memoryRemainingInInstanceInMb" double precision NOT NULL default 2000,
+    "CPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
+    "GPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
+    "maxContainers" bigint NOT NULL DEFAULT 0,
     last_pinged bigint,
     ip character varying NOT NULL,
     ami_id character varying NOT NULL,
     location character varying NOT NULL,
     instance_type character varying NOT NULL
 );
+
+
+ALTER TABLE ONLY hardware.instance_info
+    ADD CONSTRAINT instance_info_pkey PRIMARY KEY (instance_id);
+
+
+ALTER TABLE ONLY hardware.container_info
+    ADD CONSTRAINT instance_id_fk FOREIGN KEY (instance_id) REFERENCES hardware.instance_info(instance_id) ON UPDATE CASCADE ON DELETE CASCADE;
+
+--
+-- TOC entry 249 (class 1259 OID 16800)
+-- Name: instance_sorted; Type: VIEW; Schema: hardware; Owner: -
+--
+
+CREATE VIEW hardware.instance_sorted AS
+  SELECT sub_with_running.instance_id,
+    sub_with_running.instance_type,
+    sub_with_running.location,
+    sub_with_running."maxContainers" AS max_containers,
+    sub_with_running.running_containers
+   FROM ( SELECT base_table.instance_id,
+            base_table.instance_type,
+            base_table.location,
+            base_table."maxContainers",
+            COALESCE(base_table.count, 0::bigint) AS running_containers
+           FROM (( SELECT instance_info.instance_id,
+                    instance_info.instance_type,
+                    instance_info.location,
+                    instance_info."maxContainers"
+                   FROM hardware.instance_info) instances
+             LEFT JOIN ( SELECT count(*) AS count,
+                    container_info.instance_id AS cont_inst
+                   FROM hardware.container_info
+                  GROUP BY container_info.instance_id) containers ON instances.instance_id::text = containers.cont_inst::text) base_table) sub_with_running
+  WHERE sub_with_running.running_containers < sub_with_running."maxContainers"
+  ORDER BY sub_with_running.location, sub_with_running.running_containers DESC;
+
+
+
+ CREATE VIEW hardware.instance_allocation AS
+    SELECT instance_id, location from hardware.instance_info
+    WHERE instance_id IN (select instance_id from hardware.instance_sorted);
+
 
 
 --
@@ -1013,21 +1074,7 @@ CREATE TABLE hdb_pro_catalog.hdb_pro_state (
 );
 
 
---
--- Name: users; Type: TABLE; Schema: public; Owner: -
---
 
-CREATE TABLE public.users (
-    user_id character varying(250) NOT NULL,
-    encrypted_config_token character varying(256) NOT NULL DEFAULT ''::character varying,
-    token character varying(250),
-    name character varying(250),
-    password character varying(250) NOT NULL,
-    stripe_customer_id character varying(250),
-    reason_for_signup text,
-    verified boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
-);
 
 
 --
@@ -1302,6 +1349,7 @@ ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_config
 
 ALTER TABLE ONLY hdb_pro_catalog.hdb_pro_state
     ADD CONSTRAINT hdb_pro_state_pkey PRIMARY KEY (id);
+
 
 
 --
