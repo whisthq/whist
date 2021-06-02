@@ -263,12 +263,6 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	}
 	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
 
-	err = fc.WriteLocalDevValues(req.ProtocolTimeout)
-	if err != nil {
-		logAndReturnError(err.Error())
-		return
-	}
-
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
 		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, fractalID, err)
