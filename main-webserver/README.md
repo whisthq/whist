@@ -89,7 +89,7 @@ We use Postman to send API requests to our server, to store our API endpoints, a
 
 Please be very careful while using Postman. It's all we've got, but it's buggy and its contents are not effectively version controlled, so be **100% sure** _before_ you save anything or overwrite any "initial values" for environment variables. When in doubt, reach out to someone more experienced!
 
-Here are the steps to being able to use Postman to call webserver endpoints with the Auth0 integration:
+Here are the steps to being able to use Postman to call webserver endpoints with the Auth0 integration (If you want to see screenshots and get a little more detail, check out [this write-up by @owenniles](https://www.notion.so/tryfractal/Authorizing-Postman-b56195ac62ff4570a6b15d5c60fa3d5b):
 
 1. Add your desired username and password for Auth0 as Postman variables in the `dev` environment. The variables should already exist, but without "initial values". **Don't put your username/pass as "initial values"**, but rather put them as the "current value". Putting them as the "initial values" will expose them to everyone!
 2. Use the "Register New User" endpoint in Postman to register yourself an Auth0 account **using your @fractal.co e-mail address**. You shouldn't need to add or change anything, just click the "Send" button. Make sure you verify your e-mail.
