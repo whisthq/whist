@@ -7,7 +7,6 @@
     "API_IDENTIFIER": "https://api.fractal.co"
   },
   "EXCLUDED_PROPS": {
-    "clients": ["client_secret"],
-    "connections": ["options.client_secret", "options.app_secret"]
+    "clients": ["client_secret"]
   }
 }

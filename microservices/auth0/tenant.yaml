@@ -42,6 +42,7 @@ clients:
     grant_types:
       - authorization_code
       - refresh_token
+      - implicit
     is_first_party: true
     is_token_endpoint_ip_header_trusted: false
     jwt_configuration:
@@ -165,6 +166,7 @@ connections:
       scope: name email
       team_id: 757Z8TDNJL
       client_id: com.fractalcomputers.fractalauth
+      app_secret: "##APPLE_OAUTH_SECRET##"
   - name: google-oauth2
     strategy: google-oauth2
     enabled_clients:
@@ -193,6 +195,7 @@ connections:
       google_books: false
       google_drive: false
       spreadsheets: false
+      client_secret: "##GOOGLE_OAUTH_SECRET##"
       document_list: false
       latitude_best: false
       latitude_city: false

@@ -10,6 +10,7 @@
 const { execSync } = require('child_process')
 const fs = require('fs')
 const YAML = require('yaml')
+const _ = require('lodash')
 
 // Download up-to-date tenant.yaml config from Auth0
 execSync(
@@ -31,8 +32,19 @@ Object.keys(mappings).forEach((key) => {
   }
 });
 
+// Mappings of paths to environment variables that store their replacement
+const censorMappings = {
+  "connections[0].options.app_secret": "APPLE_OAUTH_SECRET",
+  "connections[1].options.client_secret": "GOOGLE_OAUTH_SECRET"
+}
+
 const yaml = fs.readFileSync('./tenant.yaml', 'utf8')
 let config = YAML.parse(yaml)
+
+for (key in censorMappings) {
+  _.set(config, key, `##${censorMappings[key]}##`)
+}
+
 
 const listEqual = (l1, l2) => {
   let s = new Set(l2)
