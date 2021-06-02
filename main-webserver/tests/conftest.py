@@ -280,7 +280,7 @@ def bulk_instance():
             ip="1.1.1.1",
             ami_id=kwargs.get("ami_id", "test"),
             instance_type=kwargs.get("instance_type", "test_type"),
-            **kwargs,
+            last_pinged=kwargs.get("last_pinged", 10),
         )
 
         db.session.add(new_instance)
