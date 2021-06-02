@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from flask_pydantic import validate
 from _meta import db
 from app.models.hardware import ContainerInfo, InstanceInfo
+from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.blueprints.aws.aws_container_blueprint import aws_container_bp
 from app.constants.http_codes import (
     ACCEPTED,
@@ -71,7 +72,7 @@ def container_assign(body: ContainerAssignBody):
     user_id = body.get("username")
     dpi = body.get("dpi", 96)
 
-    instance = choose_instance(region)
+    instance = find_instance(region)
 
     db_container_add(
         container_id=str(uuid.uuid4()),
