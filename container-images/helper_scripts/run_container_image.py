@@ -100,7 +100,10 @@ PortBindings = namedtuple(
 
 
 def ensure_root_privileges():
-    os.seteuid(0)
+    try:
+        os.seteuid(0)
+    except:
+        pass
     if os.geteuid() != 0:
         sys.exit(
             (
