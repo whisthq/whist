@@ -26,7 +26,7 @@ const Error = (props: { title: string; text: string; onClick: () => void }) => {
       <div className="w-full">
         <div>
           <FractalButton
-            contents="Continue"
+            contents="Try Again"
             className="mt-8 px-12 mx-aut0 py-3"
             state={FractalButtonState.DEFAULT}
             onClick={props.onClick}

@@ -1,18 +1,11 @@
 import React from "react"
-import { chain } from "lodash"
+import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
 import { WindowHashUpdate } from "@app/utils/constants"
-import {
-  NoAccessError,
-  UnauthorizedError,
-  ProtocolError,
-  MandelboxError,
-  AuthError,
-  NavigationError,
-} from "@app/utils/error"
+import { fractalError } from "@app/utils/error"
 
 import { useMainState } from "@app/utils/ipc"
 
@@ -38,58 +31,14 @@ const RootComponent = () => {
     setMainState({ trigger: { name: "relaunch", payload: Date.now() } })
 
   if (show === WindowHashUpdate) return <Update />
-  if (show === AuthError.hash) {
+  if (keys(fractalError).includes(show))
     return (
       <Error
-        title={AuthError.title}
-        text={AuthError.text}
+        title={fractalError[show].title}
+        text={fractalError[show].text}
         onClick={errorContinue}
       />
     )
-  }
-  if (show === NoAccessError.hash) {
-    return (
-      <Error
-        title={NoAccessError.title}
-        text={NoAccessError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === UnauthorizedError.hash) {
-    return (
-      <Error
-        title={UnauthorizedError.title}
-        text={UnauthorizedError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === MandelboxError.hash) {
-    return (
-      <Error
-        title={MandelboxError.title}
-        text={MandelboxError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === ProtocolError.hash) {
-    return (
-      <Error
-        title={ProtocolError.title}
-        text={ProtocolError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  return (
-    <Error
-      title={NavigationError.title}
-      text={NavigationError.text}
-      onClick={errorContinue}
-    />
-  )
 }
 
 // TODO: actually pass version number through IPC.

@@ -3,10 +3,9 @@
 // Electron renderer windows.
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
-import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
+import { WindowHashAuth, WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
-import { FractalError } from "@app/utils/error"
 import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
 
 const { buildRoot } = config
@@ -150,8 +149,16 @@ export const createUpdateWindow = () =>
     ...height.md,
   } as BrowserWindowConstructorOptions)
 
-export const createErrorWindow = (error: FractalError) => {
-  createWindow(error.hash, {
+export const createErrorWindow = (hash: string) => {
+  createWindow(hash, {
+    ...base,
+    ...width.md,
+    ...height.xs,
+  } as BrowserWindowConstructorOptions)
+}
+
+export const createSignoutWindow = () => {
+  createWindow(WindowHashSignout, {
     ...base,
     ...width.md,
     ...height.xs,
