@@ -3,6 +3,7 @@
 from ._meta import db
 from .hardware import (
     ClusterInfo,
+    ContainerInfo,
     InstanceInfo,
     UserContainer,
     RegionToAmi,
