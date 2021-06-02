@@ -75,7 +75,7 @@ volatile bool run_receive_packets;
 volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
-volatile float latency;
+volatile double latency;
 volatile int ping_id;
 volatile int ping_failures;
 

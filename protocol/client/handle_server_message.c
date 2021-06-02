@@ -33,7 +33,7 @@ Includes
 extern bool exiting;
 extern int audio_frequency;
 extern volatile bool is_timing_latency;
-extern volatile float latency;
+extern volatile double latency;
 extern volatile clock latency_timer;
 extern volatile int ping_id;
 extern volatile int ping_failures;
