@@ -59,11 +59,11 @@ func GetFractalWebserver() string {
 	case EnvProd:
 		return prodFractalWebserver
 	case EnvDev:
-		fallthrough
+		return devFractalWebserver
 	case EnvLocalDev:
 		return localdevFractalWebserver
 	default:
-		return devFractalWebserver
+		return localdevFractalWebserver
 	}
 }
 
