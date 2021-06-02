@@ -173,12 +173,12 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 	res.send(w)
 }
 
-// SpinUpContainerRequest defines the (unauthenticated) `spin_up_container`
+// SpinUpMandelboxRequest defines the (unauthenticated) `spin_up_mandelbox`
 // endpoint. For now, this endpoint is only exposed in the `localdev`
 // environment, and is used by `run_local_container_image.sh`. This endpoint
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
-type SpinUpContainerRequest struct {
+type SpinUpMandelboxRequest struct {
 	// TODO: protect this with auth somehow, this is being worked on by @MYKatz
 	AppImage              string             `json:"app_image"`               // The image to spin up
 	DPI                   int                `json:"dpi"`                     // DPI to set for the container
@@ -187,9 +187,9 @@ type SpinUpContainerRequest struct {
 	resultChan            chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
-// SpinUpContainerRequestResult defines the data returned by the
-// `spin_up_container` endpoint.
-type SpinUpContainerRequestResult struct {
+// SpinUpMandelboxRequestResult defines the data returned by the
+// `spin_up_mandelbox` endpoint.
+type SpinUpMandelboxRequestResult struct {
 	HostPortForTCP32262 uint16                     `json:"port_32262"`
 	HostPortForUDP32263 uint16                     `json:"port_32263"`
 	HostPortForTCP32273 uint16                     `json:"port_32273"`
@@ -199,27 +199,27 @@ type SpinUpContainerRequestResult struct {
 
 // ReturnResult is called to pass the result of a request back to the HTTP
 // request handler
-func (s *SpinUpContainerRequest) ReturnResult(result interface{}, err error) {
+func (s *SpinUpMandelboxRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
 // createResultChan is called to create the Go channel to pass start values setting request
 // result back to the HTTP request handler via ReturnResult
-func (s *SpinUpContainerRequest) createResultChan() {
+func (s *SpinUpMandelboxRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
 	}
 }
 
 // Process an HTTP request to spin up a container, to be handled in ecs-host-service.go
-func processSpinUpContainerRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
 	// Verify that it is an PUT request
 	if verifyRequestType(w, r, http.MethodPut) != nil {
 		return
 	}
 
 	// Verify authorization and unmarshal into the right object type
-	var reqdata SpinUpContainerRequest
+	var reqdata SpinUpMandelboxRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
@@ -356,7 +356,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.Handle("/", http.NotFoundHandler())
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
 	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
-	mux.HandleFunc("/spin_up_container", createHandler(processSpinUpContainerRequest))
+	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
 
 	// Create the server itself
 	server := &http.Server{
