@@ -236,6 +236,9 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	re := regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
 	containerName = re.ReplaceAllString(containerName, "-")
 
+	// TODO: Actually add a non-nil platform argument here once the ecsagent
+	// codebase is deleted. It's probably not necessary or important in any way,
+	// but it might be a "nice to have".
 	dockerBody, err := dockerClient.ContainerCreate(fc.GetContext(), &config, &hostConfig, nil, nil, containerName)
 	if err != nil {
 		logAndReturnError("Error running `docker create` for %s:\n%s", fc.GetFractalID(), err)
