@@ -75,7 +75,7 @@ volatile bool run_receive_packets;
 volatile bool run_send_clipboard_packets;
 volatile bool is_timing_latency;
 volatile clock latency_timer;
-volatile float latency;
+volatile double latency;
 volatile int ping_id;
 volatile int ping_failures;
 
@@ -167,6 +167,10 @@ void init_update() {
 
     start_timer((clock*)&update_data.last_tcp_check_timer);
     start_timer((clock*)&latency_timer);
+
+    // we initialize latency here because on macOS, latency would not initialize properly to 0 in
+    // its declaration above.
+    latency = 0.0;
     ping_id = 1;
     ping_failures = -2;
 
