@@ -81,7 +81,8 @@ func (r requestResult) send(w http.ResponseWriter) {
 	_, _ = w.Write(buf)
 }
 
-// SetContainerStartValuesRequest defines the (unauthenticated) start values endpoint
+// SetContainerStartValuesRequest defines the (unauthenticated) start values
+// endpoint (currently called by the webserver, soon to be removed altogether).
 type SetContainerStartValuesRequest struct {
 	HostPort             int                `json:"host_port"`              // Port on the host to whose container the start values correspond
 	DPI                  int                `json:"dpi"`                    // DPI to set for the container
@@ -126,7 +127,9 @@ func processSetContainerStartValuesRequest(w http.ResponseWriter, r *http.Reques
 	res.send(w)
 }
 
-// SetConfigEncryptionTokenRequest defines the (unauthenticated) set config encryption token endpoint
+// SetConfigEncryptionTokenRequest defines the (unauthenticated) set config
+// encryption token endpoint (currently called by the client application, soon
+// to be removed altogether).
 type SetConfigEncryptionTokenRequest struct {
 	HostPort              int                `json:"host_port"`               // Port on the host to whose container this user corresponds
 	UserID                string             `json:"user_id"`                 // User to whom token belongs
@@ -176,8 +179,12 @@ func processSetConfigEncryptionTokenRequest(w http.ResponseWriter, r *http.Reque
 // returns the Docker ID of the container. Eventually, as we move off ECS, this
 // endpoint will become the canonical way to start containers.
 type SpinUpContainerRequest struct {
-	AppImage   string             `json:"app_image"`
-	resultChan chan requestResult // Channel to pass the start values setting result between goroutines
+	// TODO: protect this with auth somehow, this is being worked on by @MYKatz
+	AppImage              string             `json:"app_image"`               // The image to spin up
+	DPI                   int                `json:"dpi"`                     // DPI to set for the container
+	UserID                string             `json:"user_id"`                 // User ID of the container user
+	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
+	resultChan            chan requestResult // Channel to pass the start values setting result between goroutines
 }
 
 // SpinUpContainerRequestResult defines the data returned by the

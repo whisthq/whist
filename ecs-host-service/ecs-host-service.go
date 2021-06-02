@@ -278,6 +278,27 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		FractalID:           fractalID,
 	}
 
+	fc.WriteStartValues(req.DPI, "")
+	fc.SetConfigEncryptionToken(fractalcontainer.ConfigEncryptionToken(req.ConfigEncryptionToken))
+	fc.AssignToUser(fractalcontainer.UserID(req.UserID))
+
+	err = fc.PopulateUserConfigs()
+	// TODO: check that the config token is actually good? This might happen
+	// automatically.
+	if err != nil {
+		// Not a fatal error --- we still want to spin up a container, but without
+		// app config saving at the end of the session, so we set a blank
+		// encryption token.
+		logger.Error(err)
+		fc.SetConfigEncryptionToken("")
+	}
+
+	err = fc.MarkReady()
+	if err != nil {
+		logAndReturnError("Error marking container as ready: %s", err)
+		return
+	}
+
 	// Mark container creation as successful, preventing cleanup on function
 	// termination.
 	createFailed = false

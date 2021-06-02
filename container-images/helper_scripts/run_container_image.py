@@ -75,15 +75,6 @@ parser.add_argument(
         "by the client app, but by default we use a fake token instead."
     ),
 )
-parser.add_argument(
-    "--user-access-token",
-    default="xTt/D6bqW7wfRTCcA6dVKqROl0iadS5k",
-    help=(
-        "Access token for the user. This would normally be passed in by the "
-        "webserver and client app (and verified against each other), but by "
-        "default we use a fake token."
-    ),
-)
 args = parser.parse_args()
 
 
@@ -161,6 +152,9 @@ def send_spin_up_container_request():
     payload = {
         "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
+        "dpi": args.dpi,
+        "user_id": args.user_id,
+        "config_encryption_token": args.user_config_encryption_token,
     }
     respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
     response = respobj.json()
@@ -171,7 +165,7 @@ def send_spin_up_container_request():
     host_port_32263udp = response["result"]["port_32263"]
     host_port_32273tcp = response["result"]["port_32273"]
     key = response["result"]["aes_key"]
-    fid = response["result"]["fractal_id"]
+    resulting_fractal_id = response["result"]["fractal_id"]
 
     # Find the Container object corresponding to the container that was just created
     matching_containers = docker_client.containers.list(
@@ -184,72 +178,16 @@ def send_spin_up_container_request():
         matching_containers[0],
         PortBindings(host_port_32262tcp, host_port_32263udp, host_port_32273tcp),
         key,
-        fid,
+        resulting_fractal_id,
     )
 
 
-def write_protocol_timeout(fid):
+def write_protocol_timeout(fractalid):
     """
     Takes in a fractalID, and writes the protocol timeout to the corresponding container.
     """
-    with open(f"/fractal/{fid}/containerResourceMappings/timeout", "w") as timeout_file:
+    with open(f"/fractal/{fractalid}/containerResourceMappings/timeout", "w") as timeout_file:
         timeout_file.write(f"{args.protocol_timeout}")
-
-
-def send_start_values_request(host_port):
-    """
-    Sends the start values request to the host service running on localhost.
-    This is necessary for the Fractal server protocol to think that it is ready
-    to start. In production, the webserver would send this request to the host
-    service, but for local development we need to emulate it manually for now.
-    """
-    print(
-        (
-            "Sending mocked webserver-originating request to the container with "
-            f"identifying hostPort {host_port}!"
-        )
-    )
-    url = HOST_SERVICE_URL + "set_container_start_values"
-    payload = {
-        "auth_secret": HOST_SERVICE_AUTH_SECRET,
-        "host_port": host_port,
-        "dpi": args.dpi,
-        "user_id": args.user_id,
-        "client_app_auth_secret": args.user_access_token,
-    }
-    respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
-    response = respobj.json()
-    print(f"Response from host service: {response}")
-    respobj.raise_for_status()
-
-
-def send_set_config_encryption_token_request(host_port):
-    """
-    Send a set config encryption token request to the Fractal ECS host service
-    HTTP server running on localhost. This is also necessary for the Fractal
-    server protocol to think that it is ready to start. In production, the
-    client app would send this request to the Fractal host service, but for
-    local development we need to send it manually until our development
-    pipeline is fully built.
-    """
-    print(
-        (
-            f"Sending mocked client app-originating request to the container with "
-            f"identifying hostPort {host_port}!"
-        )
-    )
-    url = HOST_SERVICE_URL + "set_config_encryption_token"
-    payload = {
-        "auth_secret": HOST_SERVICE_AUTH_SECRET,
-        "host_port": host_port,
-        "user_id": args.user_id,
-        "config_encryption_token": args.user_config_encryption_token,
-        "client_app_auth_secret": args.user_access_token,
-    }
-    respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
-    response = respobj.json()
-    print(f"Response from host service: {response}")
-    respobj.raise_for_status()
 
 
 if __name__ == "__main__":
@@ -261,9 +199,7 @@ if __name__ == "__main__":
         copy_locally_built_protocol(container)
 
     try:
-        send_start_values_request(host_ports.host_port_32262tcp)
         write_protocol_timeout(fractal_id)
-        send_set_config_encryption_token_request(host_ports.host_port_32262tcp)
     except Exception as err:
         kill_container(container)
         raise err
