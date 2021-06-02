@@ -88,9 +88,11 @@ static bool volatile audio_refresh = false;
 
 // when the last nack was sent
 static clock nack_timer;
-
+// the last audio packet we nacked
 static int last_nacked_id = -1;
+// the largest audio packet ID we have received so far
 static int max_received_id = -1;
+// the last ID we've processed for rendering
 static int last_played_id = -1;
 
 static double decoded_bytes_per_packet = 8192.0 / MAX_NUM_AUDIO_INDICES;
