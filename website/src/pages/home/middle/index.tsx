@@ -14,7 +14,7 @@ import VerticalTemplate from './verticalTemplate'
 
 export const Middle = () => {
   /*
-        Pricing section of product page
+        Features section of product page
 
         Arguments: none
     */

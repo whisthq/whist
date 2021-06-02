@@ -22,12 +22,6 @@ export const CareersLink = (props: { className: string }) => (
   </a>
 )
 
-export const MyAccountLink = (props: { className?: string }) => (
-  <Link className={props.className} to="/dashboard">
-    My Account
-  </Link>
-)
-
 export const LogoLink = (props: { className?: string, dark?: boolean }) => (
   <Link
     className={classNames(props.className)}
@@ -60,36 +54,9 @@ export const WordmarkLink = (props: { className?: string }) => (
   </Link>
 )
 
-export const SignInLink = (props: { className?: string }) => (
-  <Link id="signin" to="/auth" className={props.className}>
-    Sign In
-  </Link>
-)
-
-export const SignOutLink = (props: {
-  className?: string
-  onClick?: Function
-}) => (
-  <button
-    className={props.className}
-    onClick={() => props?.onClick != null && props.onClick()}
-  >
-    Sign Out
-  </button>
-)
-
 export const HomeLink = (props: { className?: string, onClick?: Function }) => (
-  <Link className={props.className} to="/dashboard">
+  <Link className={props.className} to="/">
     Home
-  </Link>
-)
-
-export const SettingsLink = (props: {
-  className?: string
-  onClick?: Function
-}) => (
-  <Link to="/dashboard/settings" className={props.className}>
-    Settings
   </Link>
 )
 
