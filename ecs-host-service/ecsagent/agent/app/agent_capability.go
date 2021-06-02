@@ -23,7 +23,6 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/config"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/dockerclient"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecs_client/model/ecs"
-	"github.com/fractal/fractal/ecs-host-service/ecsagent/agent/ecscni"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/cihub/seelog"
@@ -196,7 +195,6 @@ func (agent *ecsAgent) capabilities() ([]*ecs.Attribute, error) {
 	}
 
 	capabilities = agent.appendTaskENICapabilities(capabilities)
-	capabilities = agent.appendENITrunkingCapabilities(capabilities)
 	capabilities = agent.appendDockerDependentCapabilities(capabilities, supportedVersions)
 
 	// TODO: gate this on docker api version when ecs supported docker includes
@@ -334,20 +332,7 @@ func (agent *ecsAgent) appendTaskENICapabilities(capabilities []*ecs.Attribute) 
 			Name: aws.String(attributePrefix + taskENIAttributeSuffix),
 		})
 		capabilities = agent.appendIPv6Capability(capabilities)
-		taskENIVersionAttribute, err := agent.getTaskENIPluginVersionAttribute()
-		if err != nil {
-			return capabilities
-		}
-		capabilities = append(capabilities, taskENIVersionAttribute)
-
-		// We only care about AWSVPCBlockInstanceMetdata if Task ENI is enabled
-		if agent.cfg.AWSVPCBlockInstanceMetdata.Enabled() {
-			// If the Block Instance Metadata flag is set for AWS VPC networking mode, register a capability
-			// indicating the same
-			capabilities = append(capabilities, &ecs.Attribute{
-				Name: aws.String(attributePrefix + taskENIBlockInstanceMetadataAttributeSuffix),
-			})
-		}
+		return capabilities
 	}
 
 	return capabilities
@@ -471,27 +456,6 @@ func defaultPathExists(path string, shouldBeDirectory bool) (bool, error) {
 
 	isDirectory := fileInfo.IsDir()
 	return (isDirectory && shouldBeDirectory) || (!isDirectory && !shouldBeDirectory), nil
-}
-
-// getTaskENIPluginVersionAttribute returns the version information of the ECS
-// CNI plugins. It just executes the ENI plugin as the assumption is that these
-// plugins are packaged with the ECS Agent, which means all of the other plugins
-// should also emit the same version information. Also, the version information
-// doesn't contribute to placement decisions and just serves as additional
-// debugging information
-func (agent *ecsAgent) getTaskENIPluginVersionAttribute() (*ecs.Attribute, error) {
-	version, err := agent.cniClient.Version(ecscni.ECSENIPluginName)
-	if err != nil {
-		seelog.Warnf(
-			"Unable to determine the version of the plugin '%s': %v",
-			ecscni.ECSENIPluginName, err)
-		return nil, err
-	}
-
-	return &ecs.Attribute{
-		Name:  aws.String(attributePrefix + cniPluginVersionSuffix),
-		Value: aws.String(version),
-	}, nil
 }
 
 func appendNameOnlyAttribute(attributes []*ecs.Attribute, name string) []*ecs.Attribute {
