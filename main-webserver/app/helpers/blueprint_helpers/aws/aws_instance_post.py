@@ -20,6 +20,7 @@ def find_instance(region: str) -> Optional[str]:
     Returns: either a good instance ID or None
 
     """
+    # 5sec arbitrarily decided as sufficient timeout when using with_for_update
     set_local_lock_timeout(5)
     avail_instance: Optional[InstanceSorted] = (
         InstanceSorted.query.filter_by(location=region)
@@ -30,7 +31,8 @@ def find_instance(region: str) -> Optional[str]:
     if avail_instance is None:
         # check each replacement region for available containers
         for bundlable_region in bundled_region.get(region, []):
-            # 30sec arbitrarily decided as sufficient timeout when using with_for_update
+            # 5sec arbitrarily decided as sufficient timeout when using with_for_update
+            set_local_lock_timeout(5)
             avail_instance = (
                 InstanceSorted.query.filter_by(location=bundlable_region)
                 .limit(1)
