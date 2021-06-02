@@ -9,8 +9,7 @@ import {
   CareersLink,
   LogoLink,
   WordmarkLink,
-  HomeLink,
-  SettingsLink
+  HomeLink
 } from '@app/shared/components/links'
 import {
   JustifyStartEndRow,
@@ -46,7 +45,6 @@ const AboutLinkStyled = withClass(AboutLink, startButtonClasses)
 const SupportLinkStyled = withClass(SupportLink, startButtonClasses)
 const CareersLinkStyled = withClass(CareersLink, startButtonClasses)
 const HomeLinkStyled = withClass(HomeLink, startButtonClasses)
-const SettingsLinkStyled = withClass(SettingsLink, startButtonClasses)
 
 const StartHeaderRow = (props: { children?: ReactNode[] }) => (
     <div className="flex items-center space-x-6">{props.children}</div>
@@ -108,7 +106,6 @@ const Header = (props: {
                                   ? (
                                     <>
                                         <HomeLinkStyled />
-                                        <SettingsLinkStyled />
                                     </>
                                     )
                                   : (
