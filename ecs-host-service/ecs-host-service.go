@@ -275,6 +275,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
 		AesKey:              aesKey,
+		FractalID:           fractalID,
 	}
 
 	// Mark container creation as successful, preventing cleanup on function
