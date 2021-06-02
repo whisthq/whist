@@ -168,6 +168,5 @@ fromTrigger("relaunchAction").subscribe(() => {
 })
 
 fromTrigger("showSignoutWindow").subscribe(() => {
-  closeWindows()
   createSignoutWindow()
 })

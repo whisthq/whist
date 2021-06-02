@@ -16,15 +16,15 @@ const Signout = (props: { onClick: () => void }) => {
     <div
       className={classNames(
         "flex flex-col h-screen items-center",
-        "justify-center font-body text-center"
+        "justify-center font-body text-center px-12"
       )}
     >
       <div className="font-semibold text-2xl">
         Are you sure you want to sign out?
       </div>
       <div className="mt-2 mb-4">
-        To protect your privacy, signing out will <i>permanently</i> clear your
-        entire Fractal browsing session data, including any saved passwords,
+        To protect your privacy, signing out will <i>permanently</i> delete your
+        Fractal browsing session data, including any saved passwords,
         cookies, history, etc.
       </div>
       <div className="w-full">

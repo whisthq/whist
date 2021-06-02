@@ -6,7 +6,7 @@ import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
 import Signout from "@app/renderer/pages/signout"
 
-import { WindowHashUpdate, WindowHashSignout } from "@app/utils/windows"
+import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
 import { fractalError } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 
