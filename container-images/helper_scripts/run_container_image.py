@@ -161,7 +161,6 @@ def send_spin_up_container_request():
     payload = {
         "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
-        "protocol_timeout": args.protocol_timeout,
     }
     respobj = requests.put(url=url, json=payload, verify=HOST_SERVICE_CERT_PATH)
     response = respobj.json()
