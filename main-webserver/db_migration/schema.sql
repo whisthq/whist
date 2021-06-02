@@ -230,9 +230,9 @@ CREATE TABLE hardware.cluster_info (
 
 CREATE TABLE hardware.container_info (
     container_id character varying NOT NULL,
-    user_id character varying,
+    user_id character varying NOT NULL,
     instance_id character varying NOT NULL,
-    status character varying
+    status character varying NOT NULL
 );
 
 
@@ -248,10 +248,10 @@ CREATE TABLE hardware.instance_info (
     instance_id character varying NOT NULL,
     auth_token character varying NOT NULL,
     "lastHeartbeated" bigint,
-    "memoryRemainingInInstanceInMb" double precision default 2000,
-    "CPURemainingInInstance" double precision DEFAULT 1024,
-    "GPURemainingInInstance" double precision DEFAULT 1024,
-    "maxContainers" bigint DEFAULT 0,
+    "memoryRemainingInInstanceInMb" double precision NOT NULL default 2000,
+    "CPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
+    "GPURemainingInInstance" double precision NOT NULL DEFAULT 1024,
+    "maxContainers" bigint NOT NULL DEFAULT 0,
     last_pinged bigint,
     ip character varying NOT NULL,
     ami_id character varying NOT NULL,
