@@ -17,6 +17,7 @@ import {
   createProtocolWindow,
   closeAllWindows,
   relaunch,
+  createPaymentWindow,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -148,3 +149,5 @@ fromTrigger("relaunchAction").subscribe(() => {
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
 })
+
+fromTrigger("trayPaymentAction").subscribe(() => createPaymentWindow())

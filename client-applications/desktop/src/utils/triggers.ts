@@ -30,7 +30,7 @@ export default {
   showSignoutWindow: "showSignoutWindow",
   trayQuitAction: "trayQuitAction",
   trayRegionAction: "trayRegionAction",
-  trayBillingPortalAction: "trayBillingPortalAction",
+  trayPaymentAction: "trayPaymentAction",
 
   // Flow triggers
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
