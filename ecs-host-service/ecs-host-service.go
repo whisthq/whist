@@ -574,6 +574,13 @@ func main() {
 
 	// Initialize the database driver
 	dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker)
+	// TODO: use false in localdev, true everywhere else (?) --- maybe there
+	// needs to be a version without _any_ DB interaction at all for protocol
+	// development, e.g.
+	err := dbdriver.RegisterInstance(globalCtx, false)
+	if err != nil {
+		logger.Errorf("Error registering instance: %s", err)
+	}
 
 	instanceName, err := logger.GetInstanceName()
 	if err != nil {

@@ -2,11 +2,14 @@ package dbdriver // import "github.com/fractal/fractal/ecs-host-service/dbdriver
 
 import (
 	"context"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
 // Fractal database connection strings
@@ -56,9 +59,86 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}()
 }
 
-func RegisterInstance() {
-	// Get row for instance, etc.
+// If requireExistingRow is true, then the host service will return an error if
+// the database doesn't already contain a row for it (i.e. the webserver wasn't
+// expecting this host to spin up).
+// TODO: add environment variable configuration for that
+func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
+	if dbpool == nil {
+		return logger.MakeError("RegisterInstance() called but dbdriver is not initialized!")
+	}
 
+	instanceName, err := logger.GetInstanceName()
+	if err != nil {
+		return logger.MakeError("Couldn't register instance: couldn't get instance name: %s", err)
+	}
+	publicIP4, err := logger.GetAwsPublicIpv4()
+	if err != nil {
+		return logger.MakeError("Couldn't register instance: couldn't get public IPv4: %s", err)
+	}
+	amiID, err := logger.GetAwsAmiID()
+	if err != nil {
+		return logger.MakeError("Couldn't register instance: couldn't get AMI ID: %s", err)
+	}
+	region, err := logger.GetAwsPlacementRegion()
+	if err != nil {
+		return logger.MakeError("Couldn't register instance: couldn't get AWS Placement Region: %s", err)
+	}
+	instanceType, err := logger.GetAwsInstanceType()
+	if err != nil {
+		return logger.MakeError("Couldn't register container instance: couldn't get AWS Instance type: %s", err)
+	}
+	cpustr, err := logger.GetNumLogicalCPUs()
+	if err != nil {
+		return logger.MakeError("Couldn't register container instance: couldn't get number of logical CPUs: %s", err)
+	}
+	cpus, err := strconv.Atoi(cpustr)
+	if err != nil {
+		return logger.MakeError("Couldn't register container instance: couldn't get number of logical CPUs: %s", err)
+	}
+	memoryRemaining, err := logger.GetAvailableMemoryInKB()
+	if err != nil {
+		return logger.MakeError("Couldn't register container instance: couldn't get amount of memory remaining: %s", err)
+	}
+
+	// Check if there's a row for us in the database already
+	// TODO: factor our `hardware.instance_info` into a variable
+	rows, err := dbpool.Query(ctx,
+		`SELECT * FROM hardware.instance_info
+		WHERE instance_id = $1`,
+		instanceName,
+	)
+	if err != nil {
+		return logger.MakeError("RegisterInstance(): Error running query: %s", err)
+	}
+	defer rows.Close()
+
+	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
+	// know that `rows` will contain either 0 or 1 results.
+	if !rows.Next() {
+		if requireExistingRow {
+			return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistinRow` set to `true`.")
+		}
+
+		// We want to add a row for this instance.
+		result, err := dbpool.Exec(ctx,
+			`INSERT INTO hardware.instance_info
+			(instance_id, auth_token, created_at, "memoryRemainingInInstanceInMb", "CPURemainingInInstance", "GPURemainingInInstance", "maxContainers", last_pinged, ip, ami_id, location, instance_type)
+			VALUES
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		`,
+			instanceName, utils.RandHex(10), time.Now().UTC().UnixNano(), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
+		// TODO: switch some of these field names, and bug Leor about it
+		)
+		if err != nil {
+			return logger.MakeError("Couldn't register instance: error inserting new row into table `hardware.instance_info`: %s", err)
+		}
+		logger.Infof("Result of inserting new row into table `hardware.instance_info`: %v", result)
+	}
+
+	return nil
+
+	// There is already an existing row --- we will now double-check it and then update it.
 }
 
 func RegisterContainer() {
