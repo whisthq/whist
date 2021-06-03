@@ -125,8 +125,7 @@ func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
 			`INSERT INTO hardware.instance_info
 			(instance_id, auth_token, created_at, "memoryRemainingInInstanceInMb", "CPURemainingInInstance", "GPURemainingInInstance", "maxContainers", last_pinged, ip, ami_id, location, instance_type)
 			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-		`,
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 			instanceName, utils.RandHex(10), time.Now().UTC().UnixNano(), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
 		// TODO: switch some of these field names, and bug Leor about it
 		)
@@ -134,11 +133,23 @@ func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
 			return logger.MakeError("Couldn't register instance: error inserting new row into table `hardware.instance_info`: %s", err)
 		}
 		logger.Infof("Result of inserting new row into table `hardware.instance_info`: %v", result)
+		return nil
 	}
 
+	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
+	result, err := dbpool.Exec(ctx,
+		`UPDATE hardware.instance_info SET
+		(instance_id, auth_token, "memoryRemainingInInstanceInMb", "CPURemainingInInstance", "GPURemainingInInstance", "maxContainers", last_pinged, ip, ami_id, location, instance_type)
+		=
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+		WHERE instance_id = $1`,
+		instanceName, utils.RandHex(10), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
+	)
+	if err != nil {
+		return logger.MakeError("Couldn't register instance: error updating existing row in table `hardware.instance_info`: %s", err)
+	}
+	logger.Infof("Result of updating existing row in table `hardware.instance_info`: %v", result)
 	return nil
-
-	// There is already an existing row --- we will now double-check it and then update it.
 }
 
 func RegisterContainer() {
