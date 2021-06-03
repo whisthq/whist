@@ -575,6 +575,12 @@ func main() {
 	// Initialize the database driver
 	dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker)
 
+	instanceName, err := logger.GetInstanceName()
+	if err != nil {
+		logger.Panic(globalCancel, err)
+	}
+	logger.Infof("Found instance name: %s", instanceName)
+
 	// Now we start all the goroutines that actually do work.
 
 	// Start the HTTP server and listen for events
