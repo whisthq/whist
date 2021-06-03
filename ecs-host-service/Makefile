@@ -79,6 +79,9 @@ endif
 
 runlocaldevwithdb: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
+ifeq ("$(wildcard /root/.aws/*)","")
+	sudo ln -sf /home/ubuntu/.aws /root/.aws
+endif
 	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
