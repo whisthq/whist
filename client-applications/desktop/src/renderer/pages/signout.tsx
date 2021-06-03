@@ -24,8 +24,8 @@ const Signout = (props: { onClick: () => void }) => {
       </div>
       <div className="mt-2 mb-4">
         To protect your privacy, signing out will <i>permanently</i> delete your
-        Fractal browsing session data, including any saved passwords,
-        cookies, history, etc.
+        Fractal browsing session data, including any saved passwords, cookies,
+        history, etc.
       </div>
       <div className="w-full">
         <div>

@@ -22,8 +22,15 @@ export const hostServiceConfig = async (
   client_app_auth_secret: string,
   sub: string,
   config_encryption_token: string
-) => {  
-  console.log("HOST SERVICE CONFIG!", ip, host_port, client_app_auth_secret, sub, config_encryption_token)
+) => {
+  console.log(
+    "HOST SERVICE CONFIG!",
+    ip,
+    host_port,
+    client_app_auth_secret,
+    sub,
+    config_encryption_token
+  )
   return (await apiPut(
     "/set_config_encryption_token",
     `https://${ip}:${HostServicePort}`,

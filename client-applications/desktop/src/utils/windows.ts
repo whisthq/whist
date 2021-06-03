@@ -6,7 +6,11 @@ import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
 import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
-import { WindowHashAuth, WindowHashSignout, WindowHashUpdate } from "@app/utils/constants"
+import {
+  WindowHashAuth,
+  WindowHashSignout,
+  WindowHashUpdate,
+} from "@app/utils/constants"
 
 const { buildRoot } = config
 
@@ -17,6 +21,7 @@ export const base = {
   },
   resizable: false,
   titleBarStyle: "default",
+  backgroundColor: "#111111",
 }
 
 export const width = {
@@ -105,9 +110,10 @@ export const createWindow = (
 
   // We accept some callbacks in case the caller needs to run some additional
   // functions on open/close.
-  win.webContents.on("did-finish-load", () =>
+  win.once("ready-to-show", () => {
     onReady != null ? onReady(win) : win.show()
-  )
+    // app?.dock?.hide()
+  })
   win.on("close", () => onClose?.(win))
 
   return win
@@ -147,6 +153,7 @@ export const createUpdateWindow = () =>
     ...base,
     ...width.sm,
     ...height.md,
+    skipTaskbar: true,
   } as BrowserWindowConstructorOptions)
 
 export const createErrorWindow = (hash: string) => {

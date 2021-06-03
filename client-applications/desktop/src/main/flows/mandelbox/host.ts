@@ -132,6 +132,8 @@ export default flow<{
     )
   )
 
+  config.success.subscribe((x: any) => console.log("HOST CONFIG FLOW", x))
+
   return {
     success: config.success,
     failure: merge(info.failure, config.failure),
