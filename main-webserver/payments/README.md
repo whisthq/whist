@@ -1,15 +1,14 @@
-#Payments
+# Payments
 
-The spec as this interface was being written: https://www.notion.so/tryfractal/The-Fractal-Payments-Interface-eaa14ff337f94dd68ce9f812f748217f
+Take a look at [this spec](https://www.notion.so/tryfractal/The-Fractal-Payments-Interface-eaa14ff337f94dd68ce9f812f748217f) for our thoughts as this was being written. The main takeaway is that we don't want to have to maintain our own payments service, so we use Stripe to process payments. One of our focuses is to have Stripe do most of the work for us; for example, all subscription status information is stored on the Stripe side, and if we need that information we pull it from Stripe directly.
 
-This folder in the webserver repo contains all the code involving user payments (all except the tests).
+This folder in the webserver repo contains all the server-side code involving user payments (all except the tests). This mini-"library" for payments is called by the webserver (with the helper function `get_customer_status`) as well as in client-applications (to create the billing/checkout portals).
 
 ```
 .
 ├── README.md
 ├── __init__.py
 ├── stripe_blueprint.py <- contains HTTP endpoints for the payments interface
-├── stripe_client.py <- a Stripe client class, to consolidate our stripe actions into one file
 └── stripe_helpers.py <- helper functions that help process the information coming through the HTTP endpoints
 ```
 
@@ -17,6 +16,12 @@ Note that each file has a very specific role:
 
 `stripe_blueprint.py` is responsible for processing HTTP requests that come through, and returns `400 BAD REQUEST` is the body is incorrectly formed.
 
-`stripe_helpers.py` is responsible for performing any business logic on the Fractal side, and other than a malformed body, responsible for formatting the response that the interface returns.
+`stripe_helpers.py` is responsible for performing any business logic on the Fractal side. It interacts with the Stripe API, and is responsible for returning a correctly formatted response to `stripe_blueprint.py`.
 
-`stripe_client.py` is the only part of our interface that interacts with the Stripe API, and any exceptions that are thrown here we `raise`. This is so that they are passed along to `stripe_helpers.py`, and can be dealt with there instead.
+## How To Contribute [incomplete]
+
+To contribute, first make sure you're added to the Fractal account on Stripe (ask ming@fractal.co or phil@fractal.co for access). This'll give you access to the live and test keys that we use to talk with Stripe.
+
+## How To Test [incomplete]
+
+To test, we have unit tests written in `tests/payment` that test our endpoints + outward facing helper functions. Stripe also has a command line interface, which, when installed, can be used to do anything the library can do.
