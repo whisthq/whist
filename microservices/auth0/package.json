@@ -20,6 +20,7 @@
     "postinstall": "node ./scripts/postinstall.js"
   },
   "devDependencies": {
+    "lodash": "^4.17.21",
     "yaml": "^1.10.2"
   }
 }
