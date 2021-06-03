@@ -5,10 +5,7 @@ from flask import current_app
 
 import stripe
 
-from pyzipcode import ZipCodeDatabase
-
-from app.models import db, User
-from app.serializers.public import UserSchema
+from app.models import db
 
 import json
 
@@ -55,10 +52,6 @@ class StripeClient:
         # also we do not need it
         stripe.api_key = api_key
 
-        self.zipcode_db = ZipCodeDatabase()
-
-        self.user_schema = UserSchema()
-
     @staticmethod
     def refresh_key(api_key: str) -> None:
         """Reset the stripe api key.
@@ -73,7 +66,7 @@ class StripeClient:
         stripe.api_key = api_key
 
     @staticmethod
-    def validate_customer_id(stripe_customer_id: str, user: Optional[User] = None) -> bool:
+    def validate_customer_id(stripe_customer_id: str) -> bool:
         """Confirms that a stripe customer id that we store is valid and is not
         deleted, for example. The use case is when we manually delete people from
         the stripe dashboard, we don't want to break the code (the db isn't updated immediately).
