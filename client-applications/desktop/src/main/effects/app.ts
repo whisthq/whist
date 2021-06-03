@@ -16,6 +16,7 @@ import {
   closeWindows,
   createAuthWindow,
   createUpdateWindow,
+  createSignoutWindow,
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
@@ -75,7 +76,7 @@ fromTrigger("notPersisted").subscribe(() => {
 // to close. We don't want this behavior for certain observables. For example,
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
-merge(fromTrigger("updateAvailable"))
+merge(fromTrigger("updateAvailable"), fromTrigger("authFlowSuccess"))
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => {
     ;(event as IpcMainEvent).preventDefault()
@@ -138,10 +139,7 @@ zip(
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
 // the app
-merge(
-  fromTrigger("traySignoutAction"),
-  fromTrigger("relaunchAction")
-).subscribe(() => {
+merge(fromTrigger("clearCacheAction")).subscribe(() => {
   // Clear our own Electron cache
   persistClear()
   // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
@@ -160,4 +158,14 @@ merge(
 fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
   app.relaunch({ args: process.argv.slice(1).concat([region]) })
   app.exit()
+})
+
+fromTrigger("relaunchAction").subscribe(() => {
+  app.relaunch()
+  app.exit()
+})
+
+fromTrigger("showSignoutWindow").subscribe(() => {
+  createSignoutWindow()
+  hideAppDock()
 })

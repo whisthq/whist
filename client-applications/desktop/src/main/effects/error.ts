@@ -14,11 +14,10 @@ import {
 } from "@app/utils/mandelbox"
 import { closeWindows, createErrorWindow } from "@app/utils/windows"
 import {
-  NoAccessError,
-  UnauthorizedError,
-  MandelboxError,
-  AuthError,
-  FractalError,
+  NO_PAYMENT_ERROR,
+  UNAUTHORIZED_ERROR,
+  MANDELBOX_INTERNAL_ERROR,
+  AUTH_ERROR,
 } from "@app/utils/error"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
@@ -38,22 +37,22 @@ const onError = (obs: Observable<any>) =>
   )
 
 // Closees all windows and creates the error window
-const errorWindow = (error: FractalError) => {
+const errorWindow = (hash: string) => {
   closeWindows()
-  createErrorWindow(error)
+  createErrorWindow(hash)
 }
 
 // For any failure, close all windows and display error window
 onError(fromTrigger("mandelboxFlowFailure")).subscribe((x) => {
   if (mandelboxCreateErrorNoAccess(x)) {
-    errorWindow(NoAccessError)
+    errorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
-    errorWindow(UnauthorizedError)
+    errorWindow(UNAUTHORIZED_ERROR)
   } else {
-    errorWindow(MandelboxError)
+    errorWindow(MANDELBOX_INTERNAL_ERROR)
   }
 })
 
 onError(fromTrigger("authFlowFailure")).subscribe(() => {
-  errorWindow(AuthError)
+  errorWindow(AUTH_ERROR)
 })

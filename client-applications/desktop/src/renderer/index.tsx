@@ -1,20 +1,15 @@
 import React from "react"
-import { chain } from "lodash"
+import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
 
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
-import { WindowHashUpdate } from "@app/utils/constants"
-import {
-  NoAccessError,
-  UnauthorizedError,
-  ProtocolError,
-  MandelboxError,
-  AuthError,
-  NavigationError,
-} from "@app/utils/error"
+import Signout from "@app/renderer/pages/signout"
 
+import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
+import { fractalError } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
+import TRIGGER from "@app/utils/triggers"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -35,59 +30,35 @@ const RootComponent = () => {
   const [, setMainState] = useMainState()
 
   const errorContinue = () =>
-    setMainState({ trigger: { name: "relaunch", payload: Date.now() } })
+    setMainState({
+      trigger: { name: TRIGGER.relaunchAction, payload: Date.now() },
+    })
+
+  const clearCache = () =>
+    setMainState({ trigger: { name: TRIGGER.clearCacheAction, payload: null } })
+
+  const showSignoutWindow = () =>
+    setMainState({
+      trigger: { name: TRIGGER.showSignoutWindow, payload: null },
+    })
 
   if (show === WindowHashUpdate) return <Update />
-  if (show === AuthError.hash) {
+  if (show === WindowHashSignout) return <Signout onClick={clearCache} />
+  if (keys(fractalError).includes(show))
     return (
       <Error
-        title={AuthError.title}
-        text={AuthError.text}
-        onClick={errorContinue}
+        title={fractalError[show].title}
+        text={fractalError[show].text}
+        onContinue={errorContinue}
+        onSignout={showSignoutWindow}
       />
     )
-  }
-  if (show === NoAccessError.hash) {
-    return (
-      <Error
-        title={NoAccessError.title}
-        text={NoAccessError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === UnauthorizedError.hash) {
-    return (
-      <Error
-        title={UnauthorizedError.title}
-        text={UnauthorizedError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === MandelboxError.hash) {
-    return (
-      <Error
-        title={MandelboxError.title}
-        text={MandelboxError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
-  if (show === ProtocolError.hash) {
-    return (
-      <Error
-        title={ProtocolError.title}
-        text={ProtocolError.text}
-        onClick={errorContinue}
-      />
-    )
-  }
   return (
     <Error
-      title={NavigationError.title}
-      text={NavigationError.text}
-      onClick={errorContinue}
+      title={fractalError.NAVIGATION_ERROR.title}
+      text={fractalError.NAVIGATION_ERROR.text}
+      onContinue={errorContinue}
+      onSignout={clearCache}
     />
   )
 }

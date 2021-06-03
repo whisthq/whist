@@ -1,41 +1,35 @@
-export interface FractalError {
-  hash: string
-  title: string
-  text: string
-}
+export const NO_PAYMENT_ERROR = "NO_PAYMENT_ERROR"
+export const UNAUTHORIZED_ERROR = "UNAUTHORIZED_ERROR"
+export const PROTOCOL_ERROR = "PROTOCOL_ERROR"
+export const MANDELBOX_INTERNAL_ERROR = "MANDELBOX_INTERNAL_ERROR"
+export const AUTH_ERROR = "AUTH_ERROR"
+export const NAVIGATION_ERROR = "NAVIGATION_ERROR"
 
-export const NoAccessError: FractalError = {
-  hash: "CREATE_MANDELBOX_ERROR_NO_ACCESS",
-  title: "Your account does not have access to Fractal.",
-  text: "Access to Fractal is currently invite-only. Please contact support@fractal.co for help.",
-}
-
-export const UnauthorizedError: FractalError = {
-  hash: "CREATE_MANDELBOX_ERROR_UNAUTHORIZED",
-  title: "There was an error authenticating you with Fractal.",
-  text: "Please try logging in again or contact support@fractal.co for help.",
-}
-
-export const ProtocolError: FractalError = {
-  hash: "PROTOCOL_ERROR",
-  title: "The Fractal browser encountered an unexpected error.",
-  text: "Please try again in a few minutes or contact support@fractal.co for help.",
-}
-
-export const MandelboxError: FractalError = {
-  hash: "CREATE_MANDELBOX_ERROR_INTERNAL",
-  title: "There was an error connecting to the Fractal servers.",
-  text: "Please try again in a few minutes or contact support@fractal.co for help.",
-}
-
-export const AuthError: FractalError = {
-  hash: "AUTH_ERROR",
-  title: "There was an error logging you in",
-  text: "Please try logging in again or contact support@fractal.co for help.",
-}
-
-export const NavigationError: FractalError = {
-  hash: "NAVIGATION_ERROR",
-  title: "There was an error loading the Fractal window.",
-  text: "Please try logging in again or contact support@fractal.co for help.",
+export const fractalError = {
+  [NO_PAYMENT_ERROR]: {
+    title: "Your free trial has expired.",
+    text: "To continue receiving access to Fractal, please contact support@fractal.co for help.",
+  },
+  [UNAUTHORIZED_ERROR]: {
+    title: "There was an error authenticating you with Fractal.",
+    text: "Please try logging in again or contact support@fractal.co for help.",
+  },
+  [PROTOCOL_ERROR]: {
+    title: "The Fractal browser encountered an unexpected error.",
+    text: "Please try again in a few minutes or contact support@fractal.co for help.",
+  },
+  [MANDELBOX_INTERNAL_ERROR]: {
+    title: "There was an error connecting to the Fractal servers.",
+    text: "Please try again in a few minutes or contact support@fractal.co for help.",
+  },
+  [AUTH_ERROR]: {
+    title: "There was an error logging you in",
+    text: "Please try logging in again or contact support@fractal.co for help.",
+  },
+  [NAVIGATION_ERROR]: {
+    title: "There was an error loading the Fractal window.",
+    text: "Please try logging in again or contact support@fractal.co for help.",
+  },
+} as {
+  [key: string]: { title: string; text: string }
 }

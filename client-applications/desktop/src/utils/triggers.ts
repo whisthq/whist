@@ -23,9 +23,10 @@ export default {
   loginAction: "loginAction",
   signupAction: "signupAction",
   relaunchAction: "relaunchAction",
+  clearCacheAction: "clearCacheAction",
 
   // Tray triggers
-  traySignoutAction: "traySignoutAction",
+  showSignoutWindow: "showSignoutWindow",
   trayQuitAction: "trayQuitAction",
   trayRegionAction: "trayRegionAction",
 
