@@ -137,11 +137,11 @@ zip(
   if (success) app.quit()
 })
 
-// On signout or relaunch, clear the cache (so the user can log in again) and restart
-// the app
-merge(fromTrigger("clearCacheAction")).subscribe(() => {
+const signout = (clearAppConfigToken: boolean) => {
   // Clear our own Electron cache
-  persistClear()
+  persistClear({
+    exclude: clearAppConfigToken ? [] : ["configToken"],
+  })
   // Clear the Auth0 cache. In window.ts, we tell Auth0 to store session info in
   // a partition called "auth0", so we clear the "auth0" partition here
   session
@@ -151,6 +151,15 @@ merge(fromTrigger("clearCacheAction")).subscribe(() => {
   // These two commands restart the app
   app.relaunch()
   app.exit()
+}
+
+// On signout or relaunch, clear the cache (so the user can log in again) and restart
+// the app
+fromTrigger("relaunchAction").subscribe(() => {
+  signout(false) // Does not clear app config token from storage
+})
+fromTrigger("clearCacheAction").subscribe(() => {
+  signout(true) // Clears app config token from storage
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed

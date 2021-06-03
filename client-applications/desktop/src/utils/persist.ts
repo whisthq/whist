@@ -35,8 +35,12 @@ export const persist = (key: string, value: string) => {
   store.set(key, value)
 }
 
-export const persistClear = () => {
+export const persistClear = (args?: { exclude?: string[] }) => {
+  const excludedSet = new Set(args?.exclude)
   keys(cache).forEach((key) => {
-    store.delete(key)
+    if (!excludedSet.has(key)) {
+      // Delete key if not in excluded
+      store.delete(key)
+    }
   })
 }
