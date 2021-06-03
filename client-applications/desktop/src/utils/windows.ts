@@ -110,7 +110,7 @@ export const createWindow = (
 
   // We accept some callbacks in case the caller needs to run some additional
   // functions on open/close.
-  // Electron recommends showing the window on the ready-to-show event: 
+  // Electron recommends showing the window on the ready-to-show event:
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
     onReady != null ? onReady(win) : win.show()
