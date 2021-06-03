@@ -14,9 +14,6 @@ import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
 import { StripeProvider } from "@app/renderer/context/payment"
 
-import { browserHistory } from "@app/utils/history"
-import { useMainState } from "@app/utils/ipc"
-import { StripeProvider } from "@app/renderer/context/payment"
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
 // each kind of window, we pass a constant across to the renderer
