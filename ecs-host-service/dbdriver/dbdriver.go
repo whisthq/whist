@@ -117,7 +117,7 @@ func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
 	// know that `rows` will contain either 0 or 1 results.
 	if !rows.Next() {
 		if requireExistingRow {
-			return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistinRow` set to `true`.")
+			return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
 		}
 
 		// We want to add a row for this instance.
@@ -127,6 +127,8 @@ func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
 			VALUES
 			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 			instanceName, utils.RandHex(10), time.Now().UTC().UnixNano(), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
+			// TODO: milliseconds or nanoseconds?
+			// TODO: divide memory remaining?
 		// TODO: switch some of these field names, and bug Leor about it
 		)
 		if err != nil {
@@ -170,8 +172,28 @@ func MarkDraining() {
 
 }
 
-func UnregisterInstance() {
+// UnregisterInstance removes the row for the instance from the
+// `hardware.instance_info` table.
+func UnregisterInstance(ctx context.Context) error {
+	if dbpool == nil {
+		return logger.MakeError("UnregisterInstance() called but dbdriver is not initialized!")
+	}
 
+	instanceName, err := logger.GetInstanceName()
+	if err != nil {
+		return logger.MakeError("Couldn't unregister instance: couldn't get instance name: %s", err)
+	}
+
+	result, err := dbpool.Exec(ctx,
+		`DELETE FROM hardware.instance_info
+		WHERE instance_id = $1`,
+		instanceName,
+	)
+	if err != nil {
+		return logger.MakeError("UnregisterInstance(): Error running delete command: %s", err)
+	}
+	logger.Infof("UnregisterInstance(): Output from delete command: %s", result)
+	return nil
 }
 
 func SampleQuery(globalContext context.Context) {
