@@ -17,6 +17,8 @@ from app.models import SupportedAppImages
 
 from tests.patches import function
 
+from types import SimpleNamespace
+
 
 @pytest.mark.usefixtures("authorized")
 def test_bad_app(client):
@@ -27,7 +29,7 @@ def test_bad_app(client):
 
 @pytest.mark.usefixtures("authorized")
 def test_no_app(client):
-    response = client.post("/mandelbox/assign")
+    response = client.post("/mandelbox/assign", json=dict())
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
 
@@ -37,6 +39,24 @@ def test_no_region(client):
     response = client.post("/mandelbox/assign", json=dict(app="VSCode"))
 
     assert response.status_code == HTTPStatus.BAD_REQUEST
+
+
+@pytest.mark.usefixtures("authorized")
+def test_assign(client, monkeypatch):
+    def patched_find(*args, **kwargs):
+        return SimpleNamespace(
+            instance_id="mock_instance_id", ip="123.456.789"
+        )
+
+    monkeypatch.setattr(
+        "app.blueprints.aws.aws_container_blueprint.find_instance",
+        patched_find,
+    )
+
+    args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
+    response = client.post("/mandelbox/assign", json=args)
+
+    assert response.json.IP == patched_find().ip
 
 
 def test_get_num_extra_empty(task_def_env):
