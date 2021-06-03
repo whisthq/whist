@@ -1,8 +1,6 @@
 import React from "react"
 import { chain, keys } from "lodash"
 import ReactDOM from "react-dom"
-import { loadStripe } from "@stripe/stripe-js"
-import { Elements } from "@stripe/react-stripe-js"
 
 import Update from "@app/renderer/pages/update"
 import Error from "@app/renderer/pages/error"
@@ -12,7 +10,6 @@ import { WindowHashUpdate, WindowHashSignout } from "@app/utils/constants"
 import { fractalError } from "@app/utils/error"
 import { useMainState } from "@app/utils/ipc"
 import TRIGGER from "@app/utils/triggers"
-import { StripeProvider } from "@app/renderer/context/payment"
 
 // Electron has no way to pass data to a newly launched browser
 // window. To avoid having to maintain multiple .html files for
@@ -82,15 +79,10 @@ const WindowBackground = (props: any) => {
     </div>
   )
 }
-const stripePromise = loadStripe("pk_test_7y07LrJWC5LzNu17sybyn9ce004CLPaOXb")
 
 ReactDOM.render(
-  <Elements stripe={stripePromise}>
     <WindowBackground>
-      <StripeProvider>
-        <RootComponent />
-      </StripeProvider>
-    </WindowBackground>
-  </Elements>,
+      <RootComponent />
+    </WindowBackground>,
   document.getElementById("root")
 )

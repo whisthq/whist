@@ -17,6 +17,7 @@ import {
   createAuthWindow,
   createUpdateWindow,
   createSignoutWindow,
+  createPaymentWindow,
   showAppDock,
   hideAppDock,
 } from "@app/utils/windows"
@@ -172,3 +173,5 @@ fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
   hideAppDock()
 })
+
+fromTrigger("trayPaymentAction").subscribe(() => createPaymentWindow())

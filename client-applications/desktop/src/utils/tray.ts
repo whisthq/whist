@@ -29,6 +29,12 @@ const rootMenu = [
       trayEvent.emit("quit")
     },
   },
+  {
+    label: "Billing Information",
+    click: () => {
+      trayEvent.emit("payment")
+    },
+  },
 ]
 
 const regionMenu = [
