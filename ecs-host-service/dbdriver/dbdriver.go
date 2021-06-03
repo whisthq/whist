@@ -56,12 +56,35 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}()
 }
 
-func main() {
-	var greeting string
-	err := dbpool.QueryRow(context.Background(), "select 'Hello, world!'").Scan(&greeting)
+func SampleQuery(globalContext context.Context) {
+	logger.Infof("started testquery")
+	rows, err := dbpool.Query(globalContext,
+		`SELECT schemaname, tablename FROM pg_catalog.pg_tables
+		WHERE schemaname != $1 AND
+		schemaname != $2`,
+		"information_schema",
+		"pg_catalog",
+	)
 	if err != nil {
-		logger.Errorf("QueryRow failed: %v\n", err)
+		logger.Error(err)
+		return
+	}
+	logger.Infof("got rows")
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var schemaname string
+		var tablename string
+		err = rows.Scan(&schemaname, &tablename)
+		if err != nil {
+			logger.Error(err)
+			return
+		}
+		logger.Infof("schemaname: %s \t tablename: %s", schemaname, tablename)
 	}
 
-	logger.Info(greeting)
+	if rows.Err() != nil {
+		logger.Errorf("rows error: %s", rows.Err())
+	}
 }
