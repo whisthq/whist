@@ -29,6 +29,7 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/metadata/aws"
 	"github.com/fractal/fractal/ecs-host-service/metrics"
 
+	"github.com/fractal/fractal/ecs-host-service/dbdriver"
 	"github.com/fractal/fractal/ecs-host-service/ecsagent"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/fctypes"
@@ -570,6 +571,8 @@ func main() {
 	logger.Infof("Running on instance name: %s", instanceName)
 
 	initializeFilesystem(globalCancel)
+
+	dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker)
 
 	// Now we start all the goroutines that actually do work.
 

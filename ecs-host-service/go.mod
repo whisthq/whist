@@ -34,6 +34,7 @@ require (
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/websocket v1.4.2
+	github.com/jackc/pgx/v4 v4.11.0
 	github.com/kr/text v0.2.0 // indirect
 	github.com/logzio/logzio-go v0.0.0-20200316143903-ac8fc0e2910e
 	github.com/moby/sys/mount v0.2.0 // indirect
