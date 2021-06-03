@@ -56,6 +56,33 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}()
 }
 
+func RegisterInstance() {
+	// Get row for instance, etc.
+
+}
+
+func RegisterContainer() {
+	// Check if container exists, etc.
+
+}
+
+func KillContainer() {
+
+}
+
+func Heartbeat() {
+	// Equivalent of existing heartbeats
+
+}
+
+func MarkDraining() {
+
+}
+
+func UnregisterInstance() {
+
+}
+
 func SampleQuery(globalContext context.Context) {
 	logger.Infof("started testquery")
 	rows, err := dbpool.Query(globalContext,

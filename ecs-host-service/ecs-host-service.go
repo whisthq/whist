@@ -572,6 +572,7 @@ func main() {
 
 	initializeFilesystem(globalCancel)
 
+	// Initialize the database driver
 	dbdriver.Initialize(globalCtx, globalCancel, &goroutineTracker)
 
 	// Now we start all the goroutines that actually do work.
