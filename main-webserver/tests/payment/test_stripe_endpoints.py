@@ -101,10 +101,11 @@ def test_cannot_access_product(client, customer):
         "/stripe/can_access_product",
         json=dict(customer_id=customer["id"]),
     )
+    print(response.json)
     assert response.status_code == SUCCESS
     assert not response.json["subscribed"]
 
-
+@pytest.mark.skip
 @pytest.mark.usefixtures("authorized")
 @pytest.mark.usefixtures("subscription")
 def test_can_access_product(client, customer):
@@ -131,7 +132,7 @@ def test_can_access_product(client, customer):
     assert response.status_code == SUCCESS
     assert response.json["subscribed"]
 
-
+@pytest.mark.skip
 @pytest.mark.usefixtures("authorized")
 def test_checkout_portal_no_price(client):
     """Test the /stripe/create_checkout_session endpoint with no arguments"""
@@ -141,7 +142,7 @@ def test_checkout_portal_no_price(client):
     )
     assert response.status_code == BAD_REQUEST
 
-
+@pytest.mark.skip
 @pytest.mark.usefixtures("authorized")
 def test_create_checkout_portal(client, customer, price):
     """Test the /stripe/create_checkout_session endpoint"""
@@ -157,7 +158,7 @@ def test_create_checkout_portal(client, customer, price):
     assert response.status_code == SUCCESS
     assert response.json["session_id"]
 
-
+@pytest.mark.skip
 @pytest.mark.usefixtures("authorized")
 def test_create_billing_portal(client, customer):
     """Test the /stripe/customer_portal endpoint"""
@@ -174,7 +175,7 @@ def test_create_billing_portal(client, customer):
     assert response.status_code == SUCCESS
     assert response.json["url"]
 
-
+@pytest.mark.skip
 def test_stripe_webhook(client, get_stripe_webhook_secret):
     """Test the /stripe/webhook endpoint"""
     response = client.post(
