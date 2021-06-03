@@ -22,7 +22,7 @@ func getFractalDBConnString() string {
 	}
 }
 
-var dbpool pgxpool.Pool
+var dbpool *pgxpool.Pool
 
 func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
 	connStr := getFractalDBConnString()
@@ -36,7 +36,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	pgxConfig.MinConns = 1
 	pgxConfig.LazyConnect = false
 
-	dbpool, err := pgxpool.ConnectConfig(globalCtx, pgxConfig)
+	dbpool, err = pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
 		logger.Panicf(globalCancel, "Unable to connect to the database: %s", err)
 		return
