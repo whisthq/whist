@@ -174,7 +174,8 @@ void reinit_audio_device() {
 
 void sync_audio_device() {
     /*
-      Ensure that the server's and client's audio frequencies are the same, and reinitializes the audio frequency if not.
+      Ensure that the server's and client's audio frequencies are the same, and reinitializes the
+      audio frequency if not.
      */
     if (audio_context.decoder_frequency != audio_frequency) {
         LOG_INFO("Updating audio frequency to %d!", audio_frequency);
@@ -209,7 +210,9 @@ void audio_nack(int id, int index) {
 
 void nack_missing_packets() {
     /*
-      Nack up to MAX_NACKED packets from last_nacked_id to max_received_id - 4. The -4 accounts for the fact that packets can arrive out of order, but abrupt jumps indicate that a packet is probably missing.
+      Nack up to MAX_NACKED packets from last_nacked_id to max_received_id - 4. The -4 accounts for
+      the fact that packets can arrive out of order, but abrupt jumps indicate that a packet is
+      probably missing.
     */
     int num_nacked = 0;
     // make sure we're not nacking too frequently
@@ -236,7 +239,9 @@ void nack_missing_packets() {
 
 void catchup_audio() {
     /*
-      Catch up to the most recently received ID if no audio has played yet and clean out the ring buffer. The logic inside the if statement should only run once: when we have received a packet, but not yet updated the rest of the audio state.
+      Catch up to the most recently received ID if no audio has played yet and clean out the ring
+      buffer. The logic inside the if statement should only run once: when we have received a
+      packet, but not yet updated the rest of the audio state.
      */
 
     if (last_played_id == -1 && has_video_rendered_yet && max_received_id > 0) {
@@ -257,7 +262,8 @@ void catchup_audio() {
 
 bool is_next_frame_valid() {
     /*
-      Check if the next frame (i.e. the next MAX_NUM_AUDIO_INDICES packets) is valid - its ring buffer index is properly aligned, and the packets have the correct ID.
+      Check if the next frame (i.e. the next MAX_NUM_AUDIO_INDICES packets) is valid - its ring
+      buffer index is properly aligned, and the packets have the correct ID.
 
       Returns:
           (bool): true if the next frame is valid, else false
@@ -282,13 +288,15 @@ bool is_next_frame_valid() {
 
 bool buffer_audio(int audio_device_queue) {
     /*
-      Waits for audio to accumulate in the audio queue if the audio queue is too low, and returns whether or not we are still buffering audio. Ideally, we want about 30ms of audio in the buffer.
+      Waits for audio to accumulate in the audio queue if the audio queue is too low, and returns
+      whether or not we are still buffering audio. Ideally, we want about 30ms of audio in the
+      buffer.
 
       Arguments:
           audio_device_queue (int): Size in bytes of the current audio device queue
 
       Returns:
-	  (bool) true if we are still buffering audio, else false.
+          (bool) true if we are still buffering audio, else false.
      */
 
     static bool buffering_audio = false;
@@ -327,7 +335,8 @@ void flush_next_audio_frame() {
 
 bool flush_audio(int audio_device_queue) {
     /*
-      Flush the audio buffer if the device queue is too full, and return whether or not we are flushing audio.
+      Flush the audio buffer if the device queue is too full, and return whether or not we are
+      flushing audio.
 
       Arguments:
           audio_device_queue (int): Size in bytes of the current audio queue
