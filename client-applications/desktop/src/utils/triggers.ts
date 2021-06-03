@@ -29,6 +29,7 @@ export default {
   showSignoutWindow: "showSignoutWindow",
   trayQuitAction: "trayQuitAction",
   trayRegionAction: "trayRegionAction",
+  trayBillingPortalAction: "trayBillingPortalAction",
 
   // Flow triggers
   protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",

@@ -8,7 +8,7 @@ import {
   stripeCheckoutCreate,
   stripeCheckoutValid,
   stripeCheckoutError,
-  stripePortalCreate,
+  stripeBillingPortalCreate,
   stripePortalValid,
   stripePortalError,
 } from "@app/utils/payment"
@@ -55,7 +55,7 @@ export const stripePortalRequest = stripePortalAction.pipe(
 // Waits for a webserver call to get the customer portal URL to send
 // back to the renderer thread.
 export const stripePortalProcess = stripePortalRequest.pipe(
-  map(async ([returnUrl]) => await stripePortalCreate(returnUrl)),
+  map(async ([returnUrl]) => await stripeBillingPortalCreate(returnUrl)),
   exhaustMap((req) => from(req)),
   share()
 )
