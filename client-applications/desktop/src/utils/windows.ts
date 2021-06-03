@@ -3,11 +3,14 @@
 // Electron renderer windows.
 import path from "path"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
-import { WindowHashAuth, WindowHashUpdate } from "@app/utils/constants"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
-import { FractalError } from "@app/utils/error"
 import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
+import {
+  WindowHashAuth,
+  WindowHashSignout,
+  WindowHashUpdate,
+} from "@app/utils/constants"
 
 const { buildRoot } = config
 
@@ -18,6 +21,7 @@ export const base = {
   },
   resizable: false,
   titleBarStyle: "default",
+  backgroundColor: "#111111",
 }
 
 export const width = {
@@ -106,9 +110,11 @@ export const createWindow = (
 
   // We accept some callbacks in case the caller needs to run some additional
   // functions on open/close.
-  win.webContents.on("did-finish-load", () =>
+  // Electron recommends showing the window on the ready-to-show event:
+  // https://www.electronjs.org/docs/api/browser-window
+  win.once("ready-to-show", () => {
     onReady != null ? onReady(win) : win.show()
-  )
+  })
   win.on("close", () => onClose?.(win))
 
   return win
@@ -148,10 +154,19 @@ export const createUpdateWindow = () =>
     ...base,
     ...width.sm,
     ...height.md,
+    skipTaskbar: true,
   } as BrowserWindowConstructorOptions)
 
-export const createErrorWindow = (error: FractalError) => {
-  createWindow(error.hash, {
+export const createErrorWindow = (hash: string) => {
+  createWindow(hash, {
+    ...base,
+    ...width.md,
+    ...height.xs,
+  } as BrowserWindowConstructorOptions)
+}
+
+export const createSignoutWindow = () => {
+  createWindow(WindowHashSignout, {
     ...base,
     ...width.md,
     ...height.xs,
