@@ -33,6 +33,8 @@ Object.keys(mappings).forEach((key) => {
 });
 
 // Mappings of paths to environment variables that store their replacement
+// This is done to remove social provider OAuth secrets that get pulled from Auth0
+// The corresponding secrets should be stored in Github and are replaced at deploy-time
 const censorMappings = {
   "connections[0].options.app_secret": "APPLE_OAUTH_SECRET",
   "connections[1].options.client_secret": "GOOGLE_OAUTH_SECRET"
