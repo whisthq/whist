@@ -6,17 +6,20 @@ import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
+import { FractalCallbackUrls } from "@app/config/urls"
 import { authenticationURL, authInfo, auth0Event } from "@app/utils/auth"
 import {
   WindowHashAuth,
   WindowHashSignout,
   WindowHashUpdate,
+  WindowHashPayment,
 } from "@app/utils/constants"
 import {
   protocolLaunch,
   childProcess,
   protocolStreamKill,
 } from "@app/utils/protocol"
+import { billingPortalURL } from "@app/utils/payment"
 
 const { buildRoot } = config
 
@@ -168,7 +171,7 @@ export const createAuthWindow = () => {
   } = win.webContents
 
   const filter = {
-    urls: ["http://localhost/callback*"],
+    urls: [FractalCallbackUrls.authCallBack],
   }
 
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -177,6 +180,31 @@ export const createAuthWindow = () => {
     auth0Event.emit("auth-info", data)
   })
 
+  return win
+}
+
+export const createPaymentWindow = () => {
+  const win = createWindow({
+    show: WindowHashPayment,
+    options: {
+      ...base,
+      ...width.lg,
+      ...height.md,
+    } as BrowserWindowConstructorOptions,
+    customURL: billingPortalURL,
+  })
+
+  const {
+    session: { webRequest },
+  } = win.webContents
+
+  const filter = {
+    urls: [FractalCallbackUrls.paymentCallBack],
+  }
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  webRequest.onBeforeRequest(filter, async ({ url }) => {
+    win.close()
+  })
   return win
 }
 
