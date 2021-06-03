@@ -139,4 +139,5 @@ def register_blueprints(app):
     app.register_blueprint(mail_bp)
     app.register_blueprint(newsletter_bp)
     app.register_blueprint(logs_bp)
+    app.register_blueprint(stripe_bp)
     app.register_blueprint(host_service_bp)
