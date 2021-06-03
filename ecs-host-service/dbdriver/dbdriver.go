@@ -34,6 +34,7 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	// TODO: investigate and optimize the pgxConfig settings
 	// We always want to have at least one connection open.
 	pgxConfig.MinConns = 1
+	pgxConfig.LazyConnect = false
 
 	dbpool, err := pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
