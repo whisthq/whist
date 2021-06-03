@@ -1,6 +1,6 @@
 {
   "AUTH0_DOMAIN": "fractal-staging.us.auth0.com",
-  "AUTH0_CLIENT_ID": "NlZUVirxFse3vO2u5Pfu7PiMNW3QH6ki",
+  "AUTH0_CLIENT_ID": "2VZTg2ZT1DNUr6JquMfeezRXCc8V1nC5",
   "AUTH0_ALLOW_DELETE": false,
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
     "APP_CALLBACKS": ["http://localhost/callback"],
