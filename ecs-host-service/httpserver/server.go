@@ -443,12 +443,11 @@ func initializeTLS() error {
 		"-out",
 		certPath,
 	)
-	logger.Infof("Openssl command: %s", cmd.String())
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return utils.MakeError("Unable to create x509 private key/certificate pair. Error: %v, Command output: %s", err, output)
 	}
 
-	logger.Info("Successfully created TLS certificate/private key pair.")
+	logger.Info("Successfully created TLS certificate/private key pair. Certificate path: %s", certPath)
 	return nil
 }
