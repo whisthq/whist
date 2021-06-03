@@ -260,7 +260,7 @@ void catchup_audio() {
     }
 }
 
-bool is_next_frame_valid() {
+bool is_next_audio_frame_valid() {
     /*
       Check if the next frame (i.e. the next MAX_NUM_AUDIO_INDICES packets) is valid - its ring
       buffer index is properly aligned, and the packets have the correct ID.
@@ -541,7 +541,7 @@ void update_audio() {
         return;
     }
 
-    if (is_next_frame_valid()) {
+    if (is_next_audio_frame_valid()) {
         if (!flush_audio(audio_device_queue)) {
             // move the next frame into the render context
             update_render_context();
