@@ -25,7 +25,7 @@ export const stripeCheckoutCreate = async (
     },
   })
 
-export const stripePortalCreate = async (
+export const stripeBillingPortalCreate = async (
   /*
     Description: 
       Makes a webserver call to get a stripe customer portal url 
@@ -55,7 +55,7 @@ export const stripeCheckoutError = (response: CheckoutResponseAuth) =>
   response.status !== 200
 
 // Error checking for customer portal creation
-type PortalResponseAuth = AsyncReturnType<typeof stripePortalCreate>
+type PortalResponseAuth = AsyncReturnType<typeof stripeBillingPortalCreate>
 
 export const stripePortalValid = (response: PortalResponseAuth) =>
   (response?.json?.url ?? "") !== ""
