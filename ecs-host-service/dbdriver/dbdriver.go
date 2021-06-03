@@ -25,7 +25,17 @@ func getFractalDBConnString() string {
 var dbpool pgxpool.Pool
 
 func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
-	dbpool, err := pgxpool.Connect(globalCtx, getFractalDBConnString())
+	connStr := getFractalDBConnString()
+	pgxConfig, err := pgxpool.ParseConfig(connStr)
+	if err != nil {
+		logger.Panicf(globalCancel, "Unable to parse database connection string! Error: %s", err)
+		return
+	}
+	// TODO: investigate and optimize the pgxConfig settings
+	// We always want to have at least one connection open.
+	pgxConfig.MinConns = 1
+
+	dbpool, err := pgxpool.ConnectConfig(globalCtx, pgxConfig)
 	if err != nil {
 		logger.Panicf(globalCancel, "Unable to connect to the database: %s", err)
 		return
