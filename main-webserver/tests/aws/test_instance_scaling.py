@@ -1,4 +1,5 @@
 from random import randint
+from sys import maxsize
 import pytest
 
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
@@ -109,7 +110,7 @@ def test_scale_down_single_wrong_region(
     assert len(call_list) == 0
 
 
-def test_scale_down_single_wrong_AMI(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
+def test_scale_down_single_wrong_ami(hijack_ec2_calls, mock_get_num_new_instances, bulk_instance):
     """
     Tests that we don't scale down an instance with a different AMI
     """
@@ -167,29 +168,108 @@ def test_scale_down_multiple_partial_available(
     assert set(call_list[0]["args"][1]) == set(instance_list)
 
 
-def test_buffer_wrong_region(bulk_instance):
-    pass
+def test_buffer_wrong_region():
+    """
+    checks that we return -sys.maxsize when we ask about a nonexistent region
+    """
+    assert aws_funcs._get_num_new_instances("fake_region", "fake-AMI") == -maxsize
 
 
-def test_buffer_wrong_ami(bulk_instance):
-    pass
+def test_buffer_wrong_ami():
+    """
+    checks that we return -sys.maxsize when we ask about a nonexistent ami
+    """
+    assert aws_funcs._get_num_new_instances("us-east-1", "fake-AMI") == -maxsize
 
 
-def test_buffer_empty(bulk_instance):
-    pass
+def test_buffer_empty(region_to_ami_map):
+    """
+    Tests that we ask for a new instance when the buffer is empty
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 1
 
 
-def test_buffer_part_full(bulk_instance):
-    pass
+def test_buffer_part_full(region_to_ami_map, bulk_instance):
+    """
+    Tests that we ask for a new instance when there's only a full instance running
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=10, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 1
 
 
-def test_buffer_good(bulk_instance):
-    pass
+def test_buffer_good(region_to_ami_map, bulk_instance):
+    """
+    Tests that we don't ask for a new instance when there's an empty instance running
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
-def test_buffer_overfull(bulk_instance):
-    pass
+def test_buffer_with_multiple(region_to_ami_map, bulk_instance):
+    """
+    Tests that we don't ask for a new instance when we have enough space in multiple instances
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=5, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=5, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
 
 
-def test_buffer_region_sensitive(bulk_instance):
-    pass
+def test_buffer_overfull(region_to_ami_map, bulk_instance):
+    """
+    Tests that we ask to scale down an instance when we have too much free space
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=0, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=0, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == -1
+
+
+def test_buffer_not_too_full(region_to_ami_map, bulk_instance):
+    """
+    Tests that we don't ask to scale down an instance when we have some free space
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=5, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=0, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
+
+
+def test_buffer_overfull_split(region_to_ami_map, bulk_instance):
+    """
+    Tests that we ask to scale down an instance when we have too much free space
+    over several separate instances
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=9, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=1, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=0, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == -1
+
+
+def test_buffer_not_too_full_split(region_to_ami_map, bulk_instance):
+    """
+    Tests that we don't ask to scale down an instance when we have some free space
+    over several separate instances
+    """
+    good_ami = region_to_ami_map["us-east-1"]
+    bulk_instance(ami_id=good_ami, associated_containers=9, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=4, max_containers=10)
+    bulk_instance(ami_id=good_ami, associated_containers=0, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami) == 0
+
+
+def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
+    """
+    Tests that our buffer is based on region
+    """
+    good_ami_1 = region_to_ami_map["us-east-1"]
+    good_ami_2 = region_to_ami_map["us-east-2"]
+    bulk_instance(ami_id=good_ami_1, associated_containers=9, max_containers=10)
+    bulk_instance(ami_id=good_ami_1, associated_containers=1, max_containers=10)
+    bulk_instance(ami_id=good_ami_1, associated_containers=0, max_containers=10)
+    assert aws_funcs._get_num_new_instances("us-east-1", good_ami_1) == -1
+    assert aws_funcs._get_num_new_instances("us-east-2", good_ami_2) == 1

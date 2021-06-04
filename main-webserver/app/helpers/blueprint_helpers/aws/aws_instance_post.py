@@ -121,9 +121,9 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     """
 
     # If the region is invalid or the AMI is not current, we want no buffer
-    if region not in {x.region for x in RegionToAmi.query.all()}:
+    if region not in {x.region_name for x in RegionToAmi.query.all()}:
         return -maxsize
-    if ami_id != RegionToAmi.query.filter_by(region).get().ami_id:
+    if ami_id != RegionToAmi.query.filter_by(region_name=region).one_or_none().ami_id:
         return -maxsize
     # Now, we want to get the average number of containers per instance in that region
     # and the number of free containers
@@ -136,7 +136,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         InstancesWithContainers.query.filter_by(location=region, ami_id=ami_id).all()
     )
     num_free_containers = sum(
-        instance.maxContainers - instance.running_containers for instance in all_free_instances
+        instance.max_containers - instance.running_containers for instance in all_free_instances
     )
     avg_max_containers = sum(instance.maxContainers for instance in all_instances) / len(
         all_instances
@@ -148,7 +148,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     if num_free_containers < desired_free_containers:
         return 1
 
-    if num_free_containers > (desired_free_containers + avg_max_containers):
+    if num_free_containers >= (desired_free_containers + avg_max_containers):
         return -1
 
     return 0
