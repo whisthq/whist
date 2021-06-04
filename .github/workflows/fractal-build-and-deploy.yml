@@ -1324,15 +1324,15 @@ jobs:
                   node-version: "14.x"
 
             - name: Install the auth0-deploy-cli
-              working-directory: ./microservices/auth0
+              working-directory: microservices/auth0
               run: npm install -g auth0-deploy-cli
 
             - name: Build Auth0 hooks
-              working-directory: ./microservices/auth0
+              working-directory: microservices/auth0
               run: yarn install && yarn build
 
             - name: Deploy changes to the Auth0 tenant
-              working-directory: ./microservices/auth0
+              working-directory: microservices/auth0
               env:
                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
                   GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
