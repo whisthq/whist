@@ -1,6 +1,11 @@
 #include "threads.h"
 #include <fractal/utils/logging.h>
 
+#ifdef __linux__
+// Manual pthread control
+#include <pthread.h>
+#endif
+
 void fractal_init_multithreading() {
     SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
     SDL_SetHint(SDL_HINT_THREAD_FORCE_REALTIME_TIME_CRITICAL, "1");
@@ -21,8 +26,32 @@ void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
 void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
 
 void fractal_set_thread_priority(FractalThreadPriority priority) {
+#ifdef __linux__
+    if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
+        char err[1024];
+        pthread_t this_thread = pthread_self();
+        struct sched_param params;
+        errno = 0;
+        params.sched_priority = sched_get_priority_max(SCHED_RR);
+        if (params.sched_priority == -1 && errno != 0) {
+            strerror_r(errno, err, sizeof(err));
+            LOG_ERROR("Failure calling sched_get_priority_max(): %s", err);
+            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+            return;
+        }
+        if (pthread_setschedparam(this_thread, SCHED_RR, &params) != 0) {
+            LOG_ERROR("Failure calling pthread_setschedparam()");
+            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+            return;
+        }
+        return;
+    }
+#endif
     if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
-        LOG_FATAL("Failure setting thread priority: %s", SDL_GetError());
+        LOG_ERROR("Failure setting thread priority: %s", SDL_GetError());
+        if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
+            fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+        }
     }
 }
 
