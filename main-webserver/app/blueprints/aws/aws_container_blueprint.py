@@ -1,7 +1,10 @@
+import uuid
 from flask import abort, Blueprint
 from flask.json import jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from sqlalchemy.orm.exc import NoResultFound
+from flask_pydantic import validate
+from app.validation import MandelboxAssignBody
 
 from app import fractal_pre_process, log_request
 from app.maintenance.maintenance_manager import (
@@ -13,7 +16,9 @@ from app.celery.aws_ecs_creation import (
     assign_container,
     create_new_cluster,
 )
-from app.helpers.blueprint_helpers.aws.container_state import set_container_state
+from app.helpers.blueprint_helpers.aws.container_state import (
+    set_container_state,
+)
 from app.celery.aws_ecs_deletion import delete_cluster, delete_container
 from app.celery.aws_ecs_modification import (
     update_region,
@@ -28,15 +33,15 @@ from app.constants.http_codes import (
     WEBSERVER_MAINTENANCE,
 )
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
-    BadAppError,
     ping_helper,
-    preprocess_task_info,
     protocol_info,
 )
 from app.helpers.utils.general.auth import developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
-from app.models import ClusterInfo, RegionToAmi
+from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
+from app.models import ClusterInfo, RegionToAmi, db
+from app.models.hardware import ContainerInfo
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -118,7 +123,10 @@ def aws_cluster_delete(**kwargs):
     try:
         cluster = ClusterInfo.query.filter_by(cluster=cluster_name, location=region).one()
     except NoResultFound:
-        return jsonify({"error": f"The cluster {cluster_name} does not exist."}), 400
+        return (
+            jsonify({"error": f"The cluster {cluster_name} does not exist."}),
+            400,
+        )
 
     task = delete_cluster.delay(cluster, force=force)
 
@@ -172,7 +180,7 @@ def test_endpoint(action, **kwargs):
     # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
-            cluster_name, instance_type, ami, region_name, max_size, min_size = (
+            (cluster_name, instance_type, ami, region_name, max_size, min_size,) = (
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["instance_type"],
                 kwargs["body"].get("ami", None),
@@ -227,7 +235,7 @@ def test_endpoint(action, **kwargs):
     if action == "assign_mandelbox":
         try:
             # TODO: do request validation like in /mandelbox/assign
-            (username, cluster_name, region_name, task_definition_arn, task_version) = (
+            (username, cluster_name, region_name, task_definition_arn, task_version,) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
@@ -357,51 +365,17 @@ def aws_container_ping(**kwargs):
 @fractal_pre_process
 @jwt_required()
 @payment_required
-def aws_container_assign(**kwargs):
-    """
-    Assigns aws container. Needs:
-    - username (str): username
-    - config_encryption_token (str): the encryption token for app config
-    - app (str): name of app that user is trying to use
-    - region (str): region in which to host in AWS
-    - dpi (int): dots per inch
+@validate()
+def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
+    instance = find_instance(body.region)
 
-    Returns container status
-    """
-    body = kwargs.pop("body")
-    response = jsonify({"status": NOT_FOUND}), NOT_FOUND
-    user = get_jwt_identity()
+    obj = ContainerInfo(
+        container_id=str(uuid.uuid4()),
+        instance_id=instance.instance_id,
+        user_id=body.username,
+        status="ALLOCATED",
+    )
+    db.session.add(obj)
+    db.session.commit()
 
-    try:
-        app = body.pop("app")
-        region = body.pop("region")
-        dpi = body.get("dpi", 96)
-        if check_if_maintenance():
-            return (
-                jsonify(
-                    {
-                        "error": "Webserver is in maintenance mode.",
-                    }
-                ),
-                WEBSERVER_MAINTENANCE,
-            )
-    except KeyError:
-        response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-    else:
-        # assign a container.
-        try:
-            task_arn, task_version, _, _ = preprocess_task_info(app)
-        except BadAppError:
-            response = jsonify({"status": BAD_REQUEST}), BAD_REQUEST
-        else:
-            task = assign_container.delay(
-                user,
-                task_arn,
-                task_version,
-                region_name=region,
-                webserver_url=kwargs["webserver_url"],
-                dpi=dpi,
-            )
-            response = jsonify({"ID": task.id}), ACCEPTED
-
-    return response
+    return jsonify({"IP": instance.ip}), ACCEPTED
