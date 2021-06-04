@@ -121,9 +121,7 @@ def aws_cluster_delete(**kwargs):
     force = body.get("force", False)
 
     try:
-        cluster = ClusterInfo.query.filter_by(
-            cluster=cluster_name, location=region
-        ).one()
+        cluster = ClusterInfo.query.filter_by(cluster=cluster_name, location=region).one()
     except NoResultFound:
         return (
             jsonify({"error": f"The cluster {cluster_name} does not exist."}),
@@ -182,14 +180,7 @@ def test_endpoint(action, **kwargs):
     # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
-            (
-                cluster_name,
-                instance_type,
-                ami,
-                region_name,
-                max_size,
-                min_size,
-            ) = (
+            (cluster_name, instance_type, ami, region_name, max_size, min_size,) = (
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["instance_type"],
                 kwargs["body"].get("ami", None),
@@ -220,9 +211,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["region_name"],
             kwargs["webserver_url"],
         )
-        task = update_region.delay(
-            webserver_url=webserver_url, region_name=region_name, ami=ami
-        )
+        task = update_region.delay(webserver_url=webserver_url, region_name=region_name, ami=ami)
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -238,9 +227,7 @@ def test_endpoint(action, **kwargs):
             kwargs["body"].get("app_id", None),
             kwargs["body"].get("task_version", None),
         )
-        task = update_task_definitions.delay(
-            app_id=app_id, task_version=task_version
-        )
+        task = update_task_definitions.delay(app_id=app_id, task_version=task_version)
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
@@ -248,13 +235,7 @@ def test_endpoint(action, **kwargs):
     if action == "assign_mandelbox":
         try:
             # TODO: do request validation like in /mandelbox/assign
-            (
-                username,
-                cluster_name,
-                region_name,
-                task_definition_arn,
-                task_version,
-            ) = (
+            (username, cluster_name, region_name, task_definition_arn, task_version,) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
@@ -263,11 +244,7 @@ def test_endpoint(action, **kwargs):
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
-        region_name = (
-            region_name
-            if region_name
-            else get_loc_from_ip(kwargs["received_from"])
-        )
+        region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
 
         task = assign_container.delay(
             username=username,
