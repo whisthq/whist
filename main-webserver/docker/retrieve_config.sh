@@ -27,8 +27,6 @@ function fetch {
         | tr -d \'
     heroku config:get DATABASE_URL --app=fractal-dev-server \
         | python3 "$DIR"/pgparse.py
-
-    echo "HOT_RELOAD="
 }
 
 fetch | tee "$outfile" && echo "Wrote $outfile" >&2
