@@ -2,10 +2,11 @@
 
 from http import HTTPStatus
 
+from types import SimpleNamespace
+
 import pytest
 
 from app.celery.aws_ecs_creation import (
-    assign_container,
     bundled_region,
     create_new_cluster,
     find_available_container,
@@ -14,10 +15,6 @@ from app.celery.aws_ecs_creation import (
 )
 
 from app.models import SupportedAppImages
-
-from tests.patches import function
-
-from types import SimpleNamespace
 
 
 @pytest.mark.usefixtures("authorized")
@@ -42,7 +39,9 @@ def test_no_region(client):
 
 
 @pytest.mark.usefixtures("authorized")
-def test_assign(client, monkeypatch):
+def test_assign(client, bulk_instance, monkeypatch):
+    bulk_instance(instance_name="mock_instance_id")
+
     def patched_find(*args, **kwargs):
         return SimpleNamespace(instance_id="mock_instance_id", ip="123.456.789")
 
@@ -54,7 +53,7 @@ def test_assign(client, monkeypatch):
     args = {"region": "us-east-1", "username": "neil@fractal.co", "dpi": 96}
     response = client.post("/mandelbox/assign", json=args)
 
-    assert response.json.IP == patched_find().ip
+    assert response.json["IP"] == patched_find().ip
 
 
 def test_get_num_extra_empty(task_def_env):
