@@ -44,9 +44,7 @@ def test_no_region(client):
 @pytest.mark.usefixtures("authorized")
 def test_assign(client, monkeypatch):
     def patched_find(*args, **kwargs):
-        return SimpleNamespace(
-            instance_id="mock_instance_id", ip="123.456.789"
-        )
+        return SimpleNamespace(instance_id="mock_instance_id", ip="123.456.789")
 
     monkeypatch.setattr(
         "app.blueprints.aws.aws_container_blueprint.find_instance",
