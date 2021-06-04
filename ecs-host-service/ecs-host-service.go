@@ -82,12 +82,12 @@ func startECSAgent(globalCtx context.Context, globalCancel context.CancelFunc, g
 // Container event handlers
 // ------------------------------------
 
-// SpinUpContainer is currently only used in the localdev environment, but
+// SpinUpMandelbox is currently only used in the localdev environment, but
 // should now be "production-ready", i.e. create containers with the same (or
 // equivalent) configurations as the ecsagent with our task definitions.
-func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpContainerRequest) {
+func SpinUpMandelbox(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup, dockerClient *dockerclient.Client, req *httpserver.SpinUpMandelboxRequest) {
 	logAndReturnError := func(fmt string, v ...interface{}) {
-		err := logger.MakeError("SpinUpContainer(): "+fmt, v...)
+		err := logger.MakeError("SpinUpMandelbox(): "+fmt, v...)
 		logger.Error(err)
 		req.ReturnResult("", err)
 	}
@@ -96,7 +96,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 
 	fractalID := fractalcontainer.FractalID(utils.RandHex(30))
 	fc := fractalcontainer.New(globalCtx, goroutineTracker, fractalID)
-	logger.Infof("SpinUpContainer(): created FractalContainer object %s", fc.GetFractalID())
+	logger.Infof("SpinUpMandelbox(): created FractalContainer object %s", fc.GetFractalID())
 
 	// If the creation of the container fails, we want to clean up after it. We
 	// do this by setting `createFailed` to true until all steps are done, and
@@ -118,7 +118,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error assigning port bindings: %s", err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): successfully assigned port bindings %v", fc.GetPortBindings())
+	logger.Infof("SpinUpMandelbox(): successfully assigned port bindings %v", fc.GetPortBindings())
 
 	hostPortForTCP32262, err32262 := fc.GetHostPort(32262, portbindings.TransportProtocolTCP)
 	hostPortForUDP32263, err32263 := fc.GetHostPort(32263, portbindings.TransportProtocolUDP)
@@ -133,7 +133,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error initializing uinput devices: %s", err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): successfully initialized uinput devices.")
+	logger.Infof("SpinUpMandelbox(): successfully initialized uinput devices.")
 	devices := fc.GetDeviceMappings()
 
 	// Allocate a TTY for the container
@@ -141,12 +141,12 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 		logAndReturnError("Error initializing TTY: %s", err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): successfully initialized TTY.")
+	logger.Infof("SpinUpMandelbox(): successfully initialized TTY.")
 
 	appName := fractalcontainer.AppName(utils.FindSubstringBetween(req.AppImage, "fractal/", ":"))
 
-	logger.Infof(`SpinUpContainer(): app name: "%s"`, appName)
-	logger.Infof(`SpinUpContainer(): app image: "%s"`, req.AppImage)
+	logger.Infof(`SpinUpMandelbox(): app name: "%s"`, appName)
+	logger.Infof(`SpinUpMandelbox(): app image: "%s"`, req.AppImage)
 
 	// We now create the underlying docker container.
 	exposedPorts := make(dockernat.PortSet)
@@ -248,29 +248,29 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	logger.Infof("Value returned from ContainerCreate: %#v", dockerBody)
 	dockerID := fractalcontainer.DockerID(dockerBody.ID)
 
-	logger.Infof("SpinUpContainer(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
+	logger.Infof("SpinUpMandelbox(): Successfully ran `docker create` command and got back DockerID %s", dockerID)
 
 	err = fc.RegisterCreation(dockerID, appName)
 	if err != nil {
 		logAndReturnError("Error registering container creation with DockerID %s and AppName %s: %s", dockerID, appName, err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
+	logger.Infof("SpinUpMandelbox(): Successfully registered container creation with DockerID %s and AppName %s", dockerID, appName)
 
 	if err := fc.WriteResourcesForProtocol(); err != nil {
 		logAndReturnError("Error writing resources for protocol: %s", err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): Successfully wrote resources for protocol.")
+	logger.Infof("SpinUpMandelbox(): Successfully wrote resources for protocol.")
 
 	err = dockerClient.ContainerStart(fc.GetContext(), string(dockerID), dockertypes.ContainerStartOptions{})
 	if err != nil {
 		logAndReturnError("Error start container with dockerID %s and FractalID %s: %s", dockerID, fractalID, err)
 		return
 	}
-	logger.Infof("SpinUpContainer(): Successfully started container %s", containerName)
+	logger.Infof("SpinUpMandelbox(): Successfully started container %s", containerName)
 
-	result := httpserver.SpinUpContainerRequestResult{
+	result := httpserver.SpinUpMandelboxRequestResult{
 		HostPortForTCP32262: hostPortForTCP32262,
 		HostPortForUDP32263: hostPortForUDP32263,
 		HostPortForTCP32273: hostPortForTCP32273,
@@ -304,7 +304,7 @@ func SpinUpContainer(globalCtx context.Context, globalCancel context.CancelFunc,
 	createFailed = false
 
 	req.ReturnResult(result, nil)
-	logger.Infof("SpinUpContainer(): Finished starting up container %s", fc.GetFractalID())
+	logger.Infof("SpinUpMandelbox(): Finished starting up container %s", fc.GetFractalID())
 }
 
 // Handles the set config encryption token request from the client app. Takes
@@ -641,8 +641,8 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				case *httpserver.SetConfigEncryptionTokenRequest:
 					go handleSetConfigEncryptionTokenRequest(globalCtx, globalCancel, goroutineTracker, serverevent.(*httpserver.SetConfigEncryptionTokenRequest))
 
-				case *httpserver.SpinUpContainerRequest:
-					go SpinUpContainer(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpContainerRequest))
+				case *httpserver.SpinUpMandelboxRequest:
+					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
 				default:
 					if serverevent != nil {

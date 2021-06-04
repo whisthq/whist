@@ -13,7 +13,7 @@ import requests
 
 
 DESCRIPTION = """
-This script runs a Fractal container by calling the `SpinUpContainer` endpoint
+This script runs a Fractal container by calling the `SpinUpMandelbox` endpoint
 on the host service and emulating the client-app (but not the client protocol).
 It is used by the scripts `run_local_container_image.sh` and
 `run_remote_container_image.sh` and is usually not called directly.
@@ -140,15 +140,15 @@ def copy_locally_built_protocol(cont):
     cont.put_archive(container_server_path, fileobj.getvalue())
 
 
-def send_spin_up_container_request():
+def send_spin_up_mandelbox_request():
     """
-    Sends the host service a SpinUpContainer request and returns a Container
+    Sends the host service a SpinUpMandelbox request and returns a Container
     object corresponding to that container, along with its identifying host
     port (i.e. host port corresponding to tcp/32262 in the container),
     aeskey, and fractalID.
     """
-    print("Sending SpinUpContainer request to host service!")
-    url = HOST_SERVICE_URL + "spin_up_container"
+    print("Sending SpinUpMandelbox request to host service!")
+    url = HOST_SERVICE_URL + "spin_up_mandelbox"
     payload = {
         "auth_secret": HOST_SERVICE_AUTH_SECRET,
         "app_image": args.image,
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     # pylint: disable=line-too-long
     ensure_root_privileges()
     ensure_host_service_is_running()
-    container, host_ports, aeskey, fractal_id = send_spin_up_container_request()
+    container, host_ports, aeskey, fractal_id = send_spin_up_mandelbox_request()
     if args.update_protocol:
         copy_locally_built_protocol(container)
 
