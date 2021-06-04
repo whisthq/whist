@@ -26,12 +26,12 @@ on:
             job-name:
                 description: "Name of the job to trigger, or 'all' to trigger all jobs."
                 required: true
-                default: "" # Avoid accidental mistakes by making the default an invalid job name
+                default: "all" # Default to triggering all jobs, for a clean rebuild
             # Name of the branch to simulate merging against
             branch-name:
                 description: "Branch to run the job as"
                 required: true
-                default: "dev"
+                default: "dev" # Avoid accidental production mistakes by making the default deploy on `dev`
             # If true, this will deploy the build to our infrastructure
             publish:
                 description: "'true' if the job(s) being run should publish, or 'false' to do a test run without publishing."
@@ -187,7 +187,8 @@ jobs:
                   job_dependencies[containers-and-ami-publish-ghcr-and-aws]="ecs-host-setup ecs-host-service protocol container-images ecs-task-definitions"
                   job_dependencies[main-webserver-update-fractal-services]=" "
                   job_dependencies[main-webserver-deploy-heroku]="main-webserver"
-                  job_dependencies[client-applications-publish-build-s3]="protocol client-applications"
+                  job_dependencies[client-applications-publish-build-s3]="protocol client-applications core-ts"
+                  job_dependencies[microservices-deploy-auth0-hooks]="microservices"
                   # Files that all jobs depend on
                   universal_dependencies=".github/workflows/fractal-build-and-deploy.yml"
 
@@ -280,8 +281,7 @@ jobs:
             task-definitions-apps-json: ${{ steps.package-matrix.outputs.task-definitions-apps-json }}
             region_names: ${{ steps.build-new-amis.outputs.region_names }}
             amis: ${{ steps.build-new-amis.outputs.amis }}
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|containers-and-ami-publish-ghcr-and-aws|')
 
         env:
             aws_new_ami_source_region: us-east-1 # The AWS region our new AMI gets built in, our initial AWS supported region
@@ -597,8 +597,7 @@ jobs:
                 fractal-publish-build-config,
                 ecs-task-definitions-deploy-task-definitions-ecs,
             ]
-        if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+        if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
         runs-on: ubuntu-20.04
         steps:
             - name: Checkout Git Repository
@@ -879,8 +878,7 @@ jobs:
         name: "Main Webserver: Deploy to Heroku"
         runs-on: ubuntu-20.04
         needs: [fractal-publish-build-config]
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|main-webserver-deploy-heroku|')
 
         steps:
             - name: Checkout Git Repository
@@ -1003,8 +1001,7 @@ jobs:
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
             ]
-        if: >
-            contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|')
+        if: always() && (contains(needs.fractal-publish-build-config.outputs.jobs, '|client-applications-publish-build-s3|'))
 
         strategy:
             matrix:
@@ -1307,15 +1304,18 @@ jobs:
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
-    microservices-deploy-auth0:
+    # Auth0 Hooks: Build & Deploy Auth0 Hooks to Auth0 Tenant
+    # Build and deploy the Auth0 hooks to the Fractal Auth0 Tenant platform, with
+    # which our client-application interfaces with authenticating users through Auth0
+    # Runs if config succeeds and branch is in ["prod", "staging", "dev"]
+    microservices-deploy-auth0-hooks:
         name: "Deploy Auth0 hooks"
         runs-on: ubuntu-20.04
-        defaults:
-            run:
-                working-directory: ./microservices/auth0
         needs: [fractal-publish-build-config]
+        if: contains(needs.fractal-publish-build-config.outputs.jobs, '|microservices-deploy-auth0-hooks|')
+
         steps:
-            - name: Download files from the current repository
+            - name: Checkout Git Repository
               uses: actions/checkout@v2
 
             - name: Install Node.js
@@ -1324,17 +1324,46 @@ jobs:
                   node-version: "14.x"
 
             - name: Install the auth0-deploy-cli
+              working-directory: microservices/auth0
               run: npm install -g auth0-deploy-cli
 
             - name: Build Auth0 hooks
+              working-directory: microservices/auth0
               run: yarn install && yarn build
 
             - name: Deploy changes to the Auth0 tenant
+              working-directory: microservices/auth0
               env:
                   AUTH0_CLIENT_SECRET: ${{ secrets[format('AUTH0_GHA_CLIENT_SECRET_{0}', needs.fractal-publish-build-config.outputs.branch)] }}
                   GOOGLE_OAUTH_SECRET: ${{ secrets.GOOGLE_OAUTH_SECRET }}
                   APPLE_OAUTH_SECRET: ${{ secrets.APPLE_OAUTH_SECRET }}
               run: npm run deploy:${{ needs.fractal-publish-build-config.outputs.branch }}
+
+            - name: Notify Slack on successful deploy
+              if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish)
+              shell: python3 {0}
+              run: |
+                  import os
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  TITLE = ":auth0: Auth0 Hooks Deployed to Auth0 Tenant :auth0:"
+                  BODY = f"A PR was merged and triggered automatic build and deployment of Auth0 Hooks to Auth0 Tenant on branch: `${{ needs.fractal-publish-build-config.outputs.branch }}`. (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY, title=TITLE)
+
+            - name: Notify Slack if error
+              if: failure()
+              shell: python3 {0}
+              run: |
+                  from notifications.slack_bot import slack_post
+
+                  SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
+                  BODY = "@releases :rotating_light: Deployment failed: could not deploy Auth0 Hooks in `microservices-deploy-auth0-hooks` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
+
+                  slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
 
     # Create GitHub Tag
     # Create a GitHub Tag when promoting to the `prod` branch
@@ -1349,8 +1378,7 @@ jobs:
                 main-webserver-deploy-heroku,
                 main-webserver-update-fractal-services,
             ]
-        if: >
-            contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
+        if: contains(fromJSON('["true"]'), needs.fractal-publish-build-config.outputs.publish) && contains(fromJSON('["prod", "staging"]'), needs.fractal-publish-build-config.outputs.branch)
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
