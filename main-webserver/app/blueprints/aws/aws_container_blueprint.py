@@ -33,9 +33,7 @@ from app.constants.http_codes import (
     WEBSERVER_MAINTENANCE,
 )
 from app.helpers.blueprint_helpers.aws.aws_container_post import (
-    BadAppError,
     ping_helper,
-    preprocess_task_info,
     protocol_info,
 )
 from app.helpers.utils.general.auth import developer_required, payment_required
@@ -43,7 +41,7 @@ from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
 from app.helpers.blueprint_helpers.aws.aws_instance_post import find_instance
 from app.models import ClusterInfo, RegionToAmi, db
-from app.models.hardware import ContainerInfo, InstanceInfo
+from app.models.hardware import ContainerInfo
 
 aws_container_bp = Blueprint("aws_container_bp", __name__)
 
@@ -123,9 +121,14 @@ def aws_cluster_delete(**kwargs):
     force = body.get("force", False)
 
     try:
-        cluster = ClusterInfo.query.filter_by(cluster=cluster_name, location=region).one()
+        cluster = ClusterInfo.query.filter_by(
+            cluster=cluster_name, location=region
+        ).one()
     except NoResultFound:
-        return jsonify({"error": f"The cluster {cluster_name} does not exist."}), 400
+        return (
+            jsonify({"error": f"The cluster {cluster_name} does not exist."}),
+            400,
+        )
 
     task = delete_cluster.delay(cluster, force=force)
 
@@ -179,7 +182,14 @@ def test_endpoint(action, **kwargs):
     # are the only actions that run synchronously.
     if action == "create_cluster":
         try:
-            cluster_name, instance_type, ami, region_name, max_size, min_size = (
+            (
+                cluster_name,
+                instance_type,
+                ami,
+                region_name,
+                max_size,
+                min_size,
+            ) = (
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["instance_type"],
                 kwargs["body"].get("ami", None),
@@ -210,7 +220,9 @@ def test_endpoint(action, **kwargs):
             kwargs["body"]["region_name"],
             kwargs["webserver_url"],
         )
-        task = update_region.delay(webserver_url=webserver_url, region_name=region_name, ami=ami)
+        task = update_region.delay(
+            webserver_url=webserver_url, region_name=region_name, ami=ami
+        )
 
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
@@ -226,7 +238,9 @@ def test_endpoint(action, **kwargs):
             kwargs["body"].get("app_id", None),
             kwargs["body"].get("task_version", None),
         )
-        task = update_task_definitions.delay(app_id=app_id, task_version=task_version)
+        task = update_task_definitions.delay(
+            app_id=app_id, task_version=task_version
+        )
         if not task:
             return jsonify({"ID": None}), BAD_REQUEST
         return jsonify({"ID": task.id}), ACCEPTED
@@ -234,7 +248,13 @@ def test_endpoint(action, **kwargs):
     if action == "assign_mandelbox":
         try:
             # TODO: do request validation like in /mandelbox/assign
-            (username, cluster_name, region_name, task_definition_arn, task_version) = (
+            (
+                username,
+                cluster_name,
+                region_name,
+                task_definition_arn,
+                task_version,
+            ) = (
                 kwargs["body"]["username"],
                 kwargs["body"]["cluster_name"],
                 kwargs["body"]["region_name"],
@@ -243,7 +263,11 @@ def test_endpoint(action, **kwargs):
             )
         except KeyError:
             return jsonify({"ID": None}), BAD_REQUEST
-        region_name = region_name if region_name else get_loc_from_ip(kwargs["received_from"])
+        region_name = (
+            region_name
+            if region_name
+            else get_loc_from_ip(kwargs["received_from"])
+        )
 
         task = assign_container.delay(
             username=username,
@@ -365,7 +389,7 @@ def aws_container_ping(**kwargs):
 @jwt_required()
 @payment_required
 @validate()
-def aws_container_assign(body: MandelboxAssignBody, **kwargs):
+def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     instance = find_instance(body.region)
 
     obj = ContainerInfo(
