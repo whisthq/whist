@@ -40,7 +40,6 @@ services:
       AWS_SHARED_CREDENTIALS_FILE: /.aws/credentials
       DATABASE_URL: ${DATABASE_URL}
       REDIS_URL: redis://redis
-      HOT_RELOAD: ${HOT_RELOAD}
       PORT: 7730
       APP_GIT_BRANCH: ${APP_GIT_BRANCH}
       APP_GIT_COMMIT: ${APP_GIT_COMMIT}
