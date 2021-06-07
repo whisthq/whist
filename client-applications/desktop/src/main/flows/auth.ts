@@ -5,6 +5,7 @@ import { flow, fork, createTrigger } from "@app/utils/flows"
 import {
   generateRefreshedAuthInfo,
   generateRandomConfigToken,
+  authInfoValid,
 } from "@app/utils/auth"
 import { store } from "@app/utils/persist"
 
@@ -32,8 +33,8 @@ export default flow<{
   )
 
   const auth = fork(authInfoWithConfig, {
-    success: (result: any) => (result?.sub ?? "") !== "",
-    failure: (result: any) => (result?.sub ?? "") === "",
+    success: (result: any) => authInfoValid(result),
+    failure: (result: any) => !authInfoValid(result),
   })
 
   return {
