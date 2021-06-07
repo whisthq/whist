@@ -253,3 +253,18 @@ def scale_down_all() -> None:
     ]
     for region, ami in region_and_ami_list:
         do_scale_down(region, ami)
+
+
+def repeated_scale_harness(time_delay: int) -> None:
+    """
+    checks scaling every time_delay seconds.
+    NOTE:  this function keeps recursively calling itself and will
+    not stop manually.
+    Only run in background threads.
+
+    Args:
+        time_delay (int):  how often to run the scaling
+    """
+    scale_down_all()
+    time.sleep(time_delay)
+    repeated_scale_harness(time_delay)
