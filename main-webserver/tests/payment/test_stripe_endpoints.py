@@ -11,16 +11,6 @@ from app.constants.http_codes import SUCCESS, BAD_REQUEST
 
 
 @pytest.fixture(scope="session")
-def get_stripe_webhook_secret(app):
-    """Makes a mail client with an api key (setting the global api key).
-
-    Returns:
-        (str): client with api key initialized.
-    """
-    return app.config["STRIPE_WEBHOOK_SECRET"]
-
-
-@pytest.fixture(scope="session")
 def customer():
     """Creates a Stripe customer"""
     stripe_customer = stripe.Customer.create(
@@ -94,44 +84,46 @@ def subscription(customer, price, trial_end):
     stripe.Subscription.delete(subscription["id"])
 
 
-@pytest.mark.usefixtures("authorized")
-def test_cannot_access_product(client, customer):
-    """Test the /stripe/can_access_product endpoint"""
-    response = client.post(
-        "/stripe/can_access_product",
-        json=dict(customer_id=customer["id"]),
-    )
-    print(response.json)
-    assert response.status_code == SUCCESS
-    assert not response.json["subscribed"]
+# TODO: Replace the following with tests testing the get_customer_status helper
+
+# @pytest.mark.usefixtures("authorized")
+# def test_cannot_access_product(client, customer):
+#     """Test the /stripe/can_access_product endpoint"""
+#     response = client.post(
+#         "/stripe/can_access_product",
+#         json=dict(customer_id=customer["id"]),
+#     )
+#     print(response.json)
+#     assert response.status_code == SUCCESS
+#     assert not response.json["subscribed"]
 
 
-@pytest.mark.skip
-@pytest.mark.usefixtures("authorized")
-@pytest.mark.usefixtures("subscription")
-def test_can_access_product(client, customer):
-    """Test the /stripe/can_access_product endpoint
+# @pytest.mark.skip
+# @pytest.mark.usefixtures("authorized")
+# @pytest.mark.usefixtures("subscription")
+# def test_can_access_product(client, customer):
+#     """Test the /stripe/can_access_product endpoint
 
-    This is different than the other because it uses the subscription fixture.
-    """
-    response = client.post(
-        "/stripe/can_access_product",
-        json=dict(),
-    )
-    assert response.status_code == BAD_REQUEST
+#     This is different than the other because it uses the subscription fixture.
+#     """
+#     response = client.post(
+#         "/stripe/can_access_product",
+#         json=dict(),
+#     )
+#     assert response.status_code == BAD_REQUEST
 
-    response = client.post(
-        "/stripe/can_access_product",
-        json=dict(customer_id=""),
-    )
-    assert response.status_code == BAD_REQUEST
+#     response = client.post(
+#         "/stripe/can_access_product",
+#         json=dict(customer_id=""),
+#     )
+#     assert response.status_code == BAD_REQUEST
 
-    response = client.post(
-        "/stripe/can_access_product",
-        json=dict(customer_id=customer["id"]),
-    )
-    assert response.status_code == SUCCESS
-    assert response.json["subscribed"]
+#     response = client.post(
+#         "/stripe/can_access_product",
+#         json=dict(customer_id=customer["id"]),
+#     )
+#     assert response.status_code == SUCCESS
+#     assert response.json["subscribed"]
 
 
 @pytest.mark.skip
@@ -178,32 +170,3 @@ def test_create_billing_portal(client, customer):
     )
     assert response.status_code == SUCCESS
     assert response.json["url"]
-
-
-@pytest.mark.skip
-def test_stripe_webhook(client, get_stripe_webhook_secret):
-    """Test the /stripe/webhook endpoint"""
-    response = client.post(
-        "/stripe/webhook",
-        json=dict(type="invoice.created"),
-        headers={
-            "HTTP_STRIPE_SIGNATURE": get_stripe_webhook_secret,
-        },
-    )
-    assert response.status_code == SUCCESS
-
-    response = client.post(
-        "/stripe/webhook",
-        json=dict(),
-        headers={
-            "HTTP_STRIPE_SIGNATURE": get_stripe_webhook_secret,
-        },
-    )
-    assert response.status_code == BAD_REQUEST
-
-    response = client.post(
-        "/stripe/webhook",
-        json=dict(type="invoice.created"),
-        headers={},
-    )
-    assert response.status_code == BAD_REQUEST
