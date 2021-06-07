@@ -506,11 +506,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     if (!frame_info.bIsNewFrame) {
         return 0;
     }
-    // If the frame is new, missed frames should be positive
-    if (frame_info.dwMissedFrames == 0) {
-        LOG_ERROR("We were told that this is a new frame, but yet 0 missed frames were reported");
-        return 0;
-    }
 
     /*
     * Map the frame for use by the encoder.
@@ -584,7 +579,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
              frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long)(t2 - t1));
 #endif
 
-    return frame_info.dwMissedFrames;
+    return frame_info.dwMissedFrames + 1;
 }
 
 void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
