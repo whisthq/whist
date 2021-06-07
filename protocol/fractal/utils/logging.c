@@ -149,58 +149,60 @@ int multi_threaded_printf(void* opaque) {
 }
 
 void flush_logs() {
-    // Clear the queue into the cache,
-    // And then let go of the mutex so that printf can continue accumulating
-    fractal_lock_mutex((FractalMutex)logger_queue_mutex);
-    int cache_size = 0;
-    cache_size = logger_queue_size;
-    for (int i = 0; i < logger_queue_size; i++) {
-        safe_strncpy((char*)logger_queue_cache[i].buf,
-                     (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
-        logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
-        logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
-        logger_queue[logger_queue_index].buf[0] = '\0';
-        logger_queue_index++;
-        logger_queue_index %= LOGGER_QUEUE_SIZE;
-        if (i != 0) {
-            fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
-        }
-    }
-    logger_queue_size = 0;
-    fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
-
-    // Print all of the data into the cache
-    for (int i = 0; i < cache_size; i++) {
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
-        logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
-
-        // Log to stdout
-        fprintf(stdout, "%s", logger_queue_cache[i].buf);
-
-        // Log to the error monitor
-        const char* tag = logger_queue_cache[i].tag;
-        if (tag == WARNING_TAG) {
-            error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
-        } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
-            error_monitor_log_error((const char*)logger_queue_cache[i].buf);
-        }
-
-        // Log to the logger history buffer
-        int chars_written =
-            sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
-        logger_history_len += chars_written;
-
-        // Shift buffer over if too large;
-        if ((unsigned long)logger_history_len >
-            sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
-            int new_len = sizeof(logger_history) / 3;
-            for (i = 0; i < new_len; i++) {
-                logger_history[i] = logger_history[logger_history_len - new_len + i];
+    if (run_multithreaded_printf) {
+        // Clear the queue into the cache,
+        // And then let go of the mutex so that printf can continue accumulating
+        fractal_lock_mutex((FractalMutex)logger_queue_mutex);
+        int cache_size = 0;
+        cache_size = logger_queue_size;
+        for (int i = 0; i < logger_queue_size; i++) {
+            safe_strncpy((char*)logger_queue_cache[i].buf,
+                         (const char*)logger_queue[logger_queue_index].buf, LOGGER_BUF_SIZE);
+            logger_queue_cache[i].tag = logger_queue[logger_queue_index].tag;
+            logger_queue_cache[i].id = logger_queue[logger_queue_index].id;
+            logger_queue[logger_queue_index].buf[0] = '\0';
+            logger_queue_index++;
+            logger_queue_index %= LOGGER_QUEUE_SIZE;
+            if (i != 0) {
+                fractal_wait_semaphore((FractalSemaphore)logger_semaphore);
             }
-            logger_history_len = new_len;
+        }
+        logger_queue_size = 0;
+        fractal_unlock_mutex((FractalMutex)logger_queue_mutex);
+
+        // Print all of the data into the cache
+        for (int i = 0; i < cache_size; i++) {
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 5] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 4] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 3] = '.';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 2] = '\n';
+            logger_queue_cache[i].buf[LOGGER_BUF_SIZE - 1] = '\0';
+
+            // Log to stdout
+            fprintf(stdout, "%s", logger_queue_cache[i].buf);
+
+            // Log to the error monitor
+            const char* tag = logger_queue_cache[i].tag;
+            if (tag == WARNING_TAG) {
+                error_monitor_log_breadcrumb(tag, (const char*)logger_queue_cache[i].buf);
+            } else if (tag == ERROR_TAG || tag == FATAL_ERROR_TAG) {
+                error_monitor_log_error((const char*)logger_queue_cache[i].buf);
+            }
+
+            // Log to the logger history buffer
+            int chars_written =
+                sprintf(&logger_history[logger_history_len], "%s", logger_queue_cache[i].buf);
+            logger_history_len += chars_written;
+
+            // Shift buffer over if too large;
+            if ((unsigned long)logger_history_len >
+                sizeof(logger_history) - sizeof(logger_queue_cache[i].buf) - 10) {
+                int new_len = sizeof(logger_history) / 3;
+                for (i = 0; i < new_len; i++) {
+                    logger_history[i] = logger_history[logger_history_len - new_len + i];
+                }
+                logger_history_len = new_len;
+            }
         }
     }
 
@@ -541,10 +543,9 @@ void init_backtrace_handler() {
     sa.sa_flags = SA_SIGINFO;
     for (int i = 1; i < NSIG; i++) {
         // TODO: We should gracefully exit on SIGTERM
-        // We do nothing on SIGCHLD
-        // We ignore SIGPIPE
+        // We do nothing on SIGCHLD, SIGPIPE, and SIGWINCH
         // We crash on anything else
-        if (i != SIGTERM && i != SIGCHLD && i != SIGPIPE) {
+        if (i != SIGTERM && i != SIGCHLD && i != SIGPIPE && i != SIGWINCH) {
             sigaction(i, &sa, NULL);
         }
     }
