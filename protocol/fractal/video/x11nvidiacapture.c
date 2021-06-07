@@ -507,6 +507,10 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         return 0;
     }
 
+    // Set the device to use the newly captured width/height
+    device->width = frame_info.dwWidth;
+    device->height = frame_info.dwHeight;
+
     /*
     * Map the frame for use by the encoder.
     */
@@ -566,9 +570,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     device->size = lock_params.bitstreamSizeInBytes;
     device->frame = lock_params.bitstreamBufferPtr;
     device->is_iframe = force_iframe || device->frame_idx == 0;
-
-    device->width = frame_info.dwWidth;
-    device->height = frame_info.dwHeight;
 
 #if SHOW_DEBUG_FRAMES
     t2 = NvFBCUtilsGetTimeInMillis();
