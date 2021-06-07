@@ -64,6 +64,7 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
     }
 
     LOG_INFO("%s", supported_formats);
+    LOG_INFO("Match Pix Fmt %s", av_get_pix_fmt_name(match_pix_fmt));
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
         if (*p == match_pix_fmt) {
@@ -84,11 +85,23 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
 enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix_fmts) {
     VideoDecoder* decoder = ctx->opaque;
 
+    LOG_DEBUG("decoder match fmt: %s", av_get_pix_fmt_name(decoder->match_fmt));
     enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
-
+/*
+    if (decoder->match_fmt == AV_PIX_FMT_VIDEOTOOLBOX) {
+      ctx->hw_frames_ctx = av_hwframe_ctx_alloc(ctx->hw_device_ctx);
+      AVHWFramesContext *frames_ctx = (AVHWFramesContext *)ctx->hw_frames_ctx->data;
+      frames_ctx->format = AV_PIX_FMT_VIDEOTOOLBOX;
+      frames_ctx->sw_format = ctx->sw_pix_fmt;
+      frames_ctx->width = decoder->width;
+      frames_ctx->height = decoder->height;
+      if (av_hwframe_ctx_init(ctx->hw_frames_ctx) < 0) {
+        LOG_WARNING("Failed to initialize VideoToolbox frames context");
+      }
+    }
     // Create an AV_HWDEVICE_TYPE_QSV so that QSV occurs over a hardware frame
     // False, because this seems to slow down QSV for me
-    if (decoder->match_fmt == AV_PIX_FMT_QSV) {
+    else */if (decoder->match_fmt == AV_PIX_FMT_QSV) {
         int ret;
 
         ret = av_hwdevice_ctx_create(&decoder->ref, AV_HWDEVICE_TYPE_QSV, "auto", NULL, 0);
@@ -220,6 +233,13 @@ int try_setup_video_decoder(VideoDecoder* decoder) {
         decoder->match_fmt = AV_PIX_FMT_VAAPI;
 #endif
 
+        // SERINA'S TESTING
+        const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(decoder->match_fmt);
+        for (int i = 0; i < 4; i++) {
+          int h, shift = (i == 1 || i == 2) ? desc->log2_chroma_h : 0;
+          h = (height + (1 << shift) - 1) >> shift;
+          LOG_DEBUG("h %d, shift %d\n", h, shift);
+        }
         // get the appropriate hardware device
         if (decoder->device_type == AV_HWDEVICE_TYPE_NONE) {
             LOG_WARNING("Device type %s is not supported.",
