@@ -258,13 +258,13 @@ def scale_down_all() -> None:
 def repeated_scale_harness(time_delay: int) -> None:
     """
     checks scaling every time_delay seconds.
-    NOTE:  this function keeps recursively calling itself and will
+    NOTE:  this function keeps looping and will
     not stop manually.
     Only run in background threads.
 
     Args:
         time_delay (int):  how often to run the scaling
     """
-    scale_down_all()
-    time.sleep(time_delay)
-    repeated_scale_harness(time_delay)
+    while True:
+        scale_down_all()
+        time.sleep(time_delay)
