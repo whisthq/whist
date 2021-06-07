@@ -23,7 +23,7 @@ export const fractalError = {
     text: "Please try again in a few minutes or contact support@fractal.co for help.",
   },
   [AUTH_ERROR]: {
-    title: "We've added security changes to our login system.",
+    title: "We've added extra security measures to our login system.",
     text: "Please sign out and sign back in. If this doesn't work, please contact support@fractal.co to report a bug.",
   },
   [NAVIGATION_ERROR]: {
