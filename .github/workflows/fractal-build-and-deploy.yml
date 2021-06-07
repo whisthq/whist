@@ -46,12 +46,17 @@ jobs:
         name: "Configure Jobs"
         runs-on: ubuntu-20.04
         outputs:
-            branch: ${{ steps.detect-branch.outputs.branch }}
+            # Deployable branch names are the same as environment names
+            branch: ${{ steps.set-deploy-environment.outputs.environment }}
             jobs: ${{ steps.detect-jobs.outputs.jobs }}
             publish: ${{ steps.detect-publish.outputs.publish }}
-            deploy_environment: ${{ steps.set-deploy-environment.outputs.deploy_environment }}
+            deploy_environment: ${{ steps.set-deploy-environment.outputs.environment }}
             sentry_environment: ${{ steps.set-sentry-environment.outputs.sentry_environment }}
             webserver_url: ${{ steps.set-webserver-url.outputs.webserver_url }}
+            auth0-domain: ${{ steps.set-deploy-environment.outputs.auth0-domain }}
+            auth0-client-id: ${{ steps.set-deploy-environment.outputs.auth0-client-id }}
+            auth0-client-secret-key: ${{ steps.set-deploy-environment.outputs.auth0-client-secret-key }}
+            auth0-refresh-token-key: ${{ steps.set-deploy-environment.outputs.auth0-refresh-token-key }}
         steps:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
@@ -78,55 +83,17 @@ jobs:
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-            - name: Detect Branch
-              id: detect-branch
-              run: |
-                  # Grab branch_name from workflow_dispatch inputs
-                  BRANCH_NAME="${{ github.event.inputs.branch-name }}"
-
-                  # If no workflow_dispatch input was received, then we use the git branch name
-                  if [[ -z "$BRANCH_NAME" ]]; then
-                      if [[ ${{ github.ref }} =~ ^refs/heads/prod$ ]]; then
-                          BRANCH_NAME=prod
-                      elif [[ ${{ github.ref }} =~ ^refs/heads/staging$ ]]; then
-                          BRANCH_NAME=staging
-                      elif [[ ${{ github.ref }} =~ ^refs/heads/dev$ ]]; then
-                          BRANCH_NAME=dev
-                      fi
-                  fi
-
-                  # Verify that a valid branch name was set
-                  if [[ ! "$BRANCH_NAME" =~ (dev|staging|prod) ]]; then
-                      echo "branch name \"$BRANCH_NAME\" is an invalid branch name, only dev/staging/prod is allowed"
-                      exit 1
-                  fi
-
-                  echo "branch is set to: $BRANCH_NAME"
-                  echo "::set-output name=branch::$BRANCH_NAME"
-
-            - name: Set deploy environment based on Git Branch
+            - name: Set deploy environment
               id: set-deploy-environment
-              run: |
-                  # Grab branch_name from detect-branch
-                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
-
-                  if [ "$BRANCH_NAME" == "prod" ]; then
-                      DEPLOY_ENVIRONMENT=prod
-                  elif [ "$BRANCH_NAME" == "staging" ]; then
-                      DEPLOY_ENVIRONMENT=staging
-                  elif [ "$BRANCH_NAME" == "dev" ]; then
-                      DEPLOY_ENVIRONMENT=dev
-                  else
-                      DEPLOY_ENVIRONMENT=null
-                  fi
-                  echo "deploy_environment is set to: $DEPLOY_ENVIRONMENT"
-                  echo "::set-output name=deploy_environment::$DEPLOY_ENVIRONMENT"
+              uses: ./.github/actions/set-environment
+              with:
+                  deploy: true
 
             - name: Set Sentry environment based on Git Branch
               id: set-sentry-environment
               run: |
-                  # Grab branch_name from detect-branch
-                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+                  # Grab the name of the deployment environment from set-deploy-environment
+                  BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
 
                   # on dev branch, we don't set Sentry environment as we don't want to
                   # log to Sentry in development
@@ -143,8 +110,8 @@ jobs:
             - name: Set webserver URL based on Git Branch (prod, staging, dev)
               id: set-webserver-url
               run: |
-                  # Grab branch_name from detect-branch
-                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+                  # Grab the name of the deployment environment from set-deploy-environment
+                  BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
                   if [ "$BRANCH_NAME" == "prod" ]; then
                     WEBSERVER_URL=https://prod-server.fractal.co
                   elif [ "$BRANCH_NAME" == "staging" ]; then
@@ -159,8 +126,8 @@ jobs:
             - name: Detect Job(s)
               id: detect-jobs
               run: |
-                  # Grab branch_name from detect-branch
-                  BRANCH_NAME=${{ steps.detect-branch.outputs.branch }}
+                  # Grab the name of the deployment environment from set-deploy-environment
+                  BRANCH_NAME=${{ steps.set-deploy-environment.outputs.environment }}
 
                   if [[ "${{ github.event_name }}" == 'push' ]]; then
                     if [[ "$BRANCH_NAME" =~ "(staging|prod)" ]]; then
@@ -689,18 +656,14 @@ jobs:
             - name: Checkout Git Repository
               uses: actions/checkout@v2
 
-            - name: Configure GHA to communicate with Auth0
-              id: configure-client
-              uses: ./.github/actions/configure-auth0-client
-
             - name: Obtain a Fractal access token
               id: get-token
               uses: ./.github/actions/refresh-auth0-token
               with:
-                  domain: ${{ steps.configure-client.outputs.domain }}
-                  client-id: ${{ steps.configure-client.outputs.client-id }}
-                  client-secret: ${{ secrets[steps.configure-client.outputs.client-secret-key] }}
-                  refresh-token: ${{ secrets[steps.configure-client.outputs.refresh-token-key] }}
+                  domain: ${{ needs.fractal-publish-build-config.outputs.auth0-domain }}
+                  client-id: ${{ needs.fractal-publish-build-config.outputs.auth0-client-id }}
+                  client-secret: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-client-secret-key] }}
+                  refresh-token: ${{ secrets[needs.fractal-publish-build-config.outputs.auth0-refresh-token-key] }}
 
             - name: Setup Python-based notifications
               working-directory: .github/workflows/helpers
@@ -981,7 +944,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"                  
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   BODY = "@releases :rotating_light: Deployment failed: could not deploy Webserver in `main-webserver-deploy-heroku` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
@@ -1424,7 +1387,7 @@ jobs:
                   from notifications.slack_bot import slack_post
 
                   SLACK_WEBHOOK = "${{ secrets.SLACK_HOOKS_ENDPOINT }}"
-                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"                  
+                  SLACK_CHANNEL = "#alerts-${{ needs.fractal-publish-build-config.outputs.deploy_environment }}"
                   BODY = "@releases :rotating_light: Deployment failed: could not create GitHub Release in `fractal-create-github-release-tag` job, investigate immediately. :rotating_light: (<https://github.com/fractal/fractal/actions/runs/${{ github.run_id }} | see logs>)"
 
                   slack_post(slack_webhook=SLACK_WEBHOOK, channel=SLACK_CHANNEL, body=BODY)
