@@ -76,7 +76,11 @@ fromTrigger("notPersisted").subscribe(() => {
 // to close. We don't want this behavior for certain observables. For example,
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
-merge(fromTrigger("updateAvailable"), fromTrigger("authFlowSuccess"))
+merge(
+  fromTrigger("updateAvailable"),
+  fromTrigger("authFlowSuccess"),
+  fromTrigger("authFlowFailure")
+)
   .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
   .subscribe((event: any) => {
     ;(event as IpcMainEvent).preventDefault()

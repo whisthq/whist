@@ -23,7 +23,7 @@ const Error = (props: {
     <div
       className={classNames(
         "flex flex-col h-screen items-center",
-        "justify-center font-body text-center"
+        "justify-center font-body text-center px-8"
       )}
     >
       <div className="font-semibold text-2xl">{props.title}</div>
