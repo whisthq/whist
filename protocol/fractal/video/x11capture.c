@@ -182,7 +182,7 @@ int capture_screen(CaptureDevice* device) {
             device->frame_data = device->nvidia_capture_device.frame;
             device->width = device->nvidia_capture_device.width;
             device->height = device->nvidia_capture_device.height;
-            device->pitch = device->nvidia_capture_device.size / device->height;
+            device->pitch = device->width * 4;
             device->capture_is_on_nvidia = true;
             return ret;
         }
