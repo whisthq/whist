@@ -40,14 +40,22 @@ const extractTokens = (response: Record<string, string>) => {
   Returns:
     {email, sub, accessToken, refreshToken}
   */
-
-  const profile: Record<string, string> = jwtDecode(response.id_token)
-  const { sub, email } = profile
-  return {
-    sub,
-    email,
-    refreshToken: response.refresh_token,
-    accessToken: response.access_token,
+  try {
+    const profile: Record<string, string> = jwtDecode(response.id_token)
+    const { sub, email } = profile
+    return {
+      sub,
+      email,
+      refreshToken: response.refresh_token,
+      accessToken: response.access_token,
+    }
+  } catch {
+    return {
+      sub: null,
+      email: null,
+      refreshToken: null,
+      accessToken: null,
+    }
   }
 }
 

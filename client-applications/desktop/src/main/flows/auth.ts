@@ -16,7 +16,9 @@ export default flow<{
   configToken?: string
 }>("authFlow", (trigger) => {
   const refreshedAuthInfo = trigger.pipe(
-    switchMap((tokens) => from(generateRefreshedAuthInfo(tokens.refreshToken)))
+    switchMap((tokens: { refreshToken: string }) =>
+      from(generateRefreshedAuthInfo(tokens.refreshToken))
+    )
   )
 
   const authInfoWithConfig = zip(refreshedAuthInfo, trigger).pipe(
