@@ -75,6 +75,7 @@ jobs:
 
             - name: Obtain a Fractal access token
               id: get-token
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               uses: ./.github/actions/refresh-auth0-token
               with:
                   domain: ${{ steps.set-environment.outputs.auth0-domain }}
@@ -83,10 +84,12 @@ jobs:
                   refresh-token: ${{ secrets[steps.set-environment.outputs.auth0-refresh-token-key] }}
 
             - name: Install webserver scripting dependencies
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
               run: pip install -r scripts/requirements.txt
 
             - name: Start Local Deploy
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
               shell: bash -e {0}
               env:
@@ -100,6 +103,7 @@ jobs:
 
             - name: Ensure Containers Launch and Exit Properly
               id: ensure-containers-work
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
               shell: python3 {0}
               run: |
@@ -130,6 +134,7 @@ jobs:
                   docker logs docker_celery_1
 
             - name: End Local Deploy
+              if: ${{ steps.set-environment.outputs.environment == 'dev' }}
               working-directory: main-webserver
               shell: bash -e {0}
               env:
