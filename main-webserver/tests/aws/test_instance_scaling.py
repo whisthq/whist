@@ -273,3 +273,31 @@ def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
     bulk_instance(ami_id=good_ami_1, associated_containers=0, max_containers=10)
     assert aws_funcs._get_num_new_instances("us-east-1", good_ami_1) == -1
     assert aws_funcs._get_num_new_instances("us-east-2", good_ami_2) == 1
+
+
+def test_scale_down_harness(monkeypatch, bulk_instance):
+    """
+    tests that scale_down_all actually runs on every region/AMI pair in our db
+    """
+    call_list = []
+
+    def _helper(*args, **kwargs):
+        nonlocal call_list
+        call_list.append({"args": args, "kwargs": kwargs})
+
+    monkeypatch.setattr(aws_funcs, "do_scale_down", _helper)
+    bulk_instance(location="us-east-1", ami_id="test-ami-1")
+    bulk_instance(location="us-east-1", ami_id="test-ami-1")
+    bulk_instance(location="us-east-1", ami_id="test-ami-1")
+    bulk_instance(location="us-east-1", ami_id="test-ami-2")
+    bulk_instance(location="us-east-2", ami_id="test-ami-1")
+    bulk_instance(location="us-east-2", ami_id="test-ami-2")
+    aws_funcs.scale_down_all()
+    assert len(call_list) == 4
+    args = [called["args"] for called in call_list]
+    assert set(args) == {
+        ("us-east-1", "test-ami-1"),
+        ("us-east-1", "test-ami-2"),
+        ("us-east-2", "test-ami-1"),
+        ("us-east-2", "test-ami-2"),
+    }

@@ -224,3 +224,16 @@ def do_scale_down(region: str, ami: str) -> None:
                 return
             client = EC2Client(region_name=region)
             client.stop_instances(list(instance.instance_id for instance in free_instances))
+
+
+def scale_down_all() -> None:
+    """
+    Runs do_scale_down on every region/AMI pair in our db
+
+    """
+    region_and_ami_list = [
+        (region.location, region.ami_id)
+        for region in InstanceInfo.query.distinct(InstanceInfo.location, InstanceInfo.ami_id).all()
+    ]
+    for region, ami in region_and_ami_list:
+        do_scale_down(region, ami)
