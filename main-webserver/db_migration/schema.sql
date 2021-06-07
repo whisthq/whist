@@ -277,12 +277,12 @@ CREATE VIEW hardware.instance_sorted AS
     sub_with_running.ami_id,
     sub_with_running.location,
     sub_with_running."maxContainers" AS max_containers
-    sub_with_running.running_containers as num_running_containers,
+    sub_with_running.num_running_containers,
    FROM ( SELECT base_table.instance_id,
             base_table.ami_id,
             base_table.location,
             base_table."maxContainers",
-            COALESCE(base_table.count, 0::bigint) AS running_containers
+            COALESCE(base_table.count, 0::bigint) AS num_running_containers
            FROM (( SELECT instance_info.instance_id,
                     instance_info.ami_id,
                     instance_info.location,
@@ -292,8 +292,8 @@ CREATE VIEW hardware.instance_sorted AS
                     container_info.instance_id AS cont_inst
                    FROM hardware.container_info
                   GROUP BY container_info.instance_id) containers ON instances.instance_id::text = containers.cont_inst::text) base_table) sub_with_running
-  WHERE sub_with_running.running_containers < sub_with_running."maxContainers"
-  ORDER BY sub_with_running.location, sub_with_running.running_containers DESC;
+  WHERE sub_with_running.num_running_containers < sub_with_running."maxContainers"
+  ORDER BY sub_with_running.location, sub_with_running.num_running_containers DESC;
 
 
 
