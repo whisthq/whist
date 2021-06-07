@@ -64,7 +64,6 @@ enum AVPixelFormat match_format(AVCodecContext* ctx, const enum AVPixelFormat* p
     }
 
     LOG_INFO("%s", supported_formats);
-    LOG_INFO("Match Pix Fmt %s", av_get_pix_fmt_name(match_pix_fmt));
 
     for (const enum AVPixelFormat* p = pix_fmts; *p != -1; p++) {
         if (*p == match_pix_fmt) {
@@ -88,6 +87,7 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
     LOG_DEBUG("decoder match fmt: %s", av_get_pix_fmt_name(decoder->match_fmt));
     enum AVPixelFormat match = match_format(ctx, pix_fmts, decoder->match_fmt);
 
+    // Make a HWFramesContext if we are using hardware decoding
     if (decoder->match_fmt == AV_PIX_FMT_VIDEOTOOLBOX) {
         ctx->hw_frames_ctx = av_hwframe_ctx_alloc(ctx->hw_device_ctx);
         AVHWFramesContext* frames_ctx = (AVHWFramesContext*)ctx->hw_frames_ctx->data;
@@ -100,6 +100,7 @@ enum AVPixelFormat get_format(AVCodecContext* ctx, const enum AVPixelFormat* pix
         }
     }
     // Create an AV_HWDEVICE_TYPE_QSV so that QSV occurs over a hardware frame
+    // Apparently, QSV requires extra work so we need to also set the frame type
     // False, because this seems to slow down QSV for me
     else if (decoder->match_fmt == AV_PIX_FMT_QSV) {
         int ret;
