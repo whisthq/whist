@@ -111,7 +111,16 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     This function, given a region and an AMI ID, returns the number of new instances
     that we want to have spun up in that region with that AMI.  Returns
      -sys.maxsize for cases of "that AMI is inactive and we want to get rid of
-     all instances running it when possible"
+     all instances running it when possible", since in that case
+     we want to remove every instance of that type (and -sys.maxsize functions as
+     negative infinity)
+
+     At the moment, our scaling algorithm is
+     'if we have less than 10 containers in a valid AMI/region pair,
+     make a new instance'
+     'Else, if we have a full instance of extra space more than 10, try to
+     stop an instance'
+     'Else, we're fine'.
     Args:
         region: which region we care about
         ami_id: which AMI ID we're checking
@@ -163,6 +172,9 @@ scale_mutex = defaultdict(threading.Lock)
 def do_scale_up(region: str, ami: str) -> None:
     """
     Scales up new instances as needed, given a region and AMI to check
+    Specifically, if we want to add X instances (_get_num_new_instances
+    returns X), we generate X new names and spin up new instances with those
+    names.
     Args:
         region: which region to check for scaling
         ami: which AMI to scale with
@@ -176,6 +188,7 @@ def do_scale_up(region: str, ami: str) -> None:
             client = EC2Client(region_name=region)
             base_name = generate_name(starter_name=region)
             # TODO: test that we actually get 16 containers per instance
+            # Which is savvy's guess as to g3.4xlarge capacity
             base_number_free_containers = 16
             for index in range(num_new):
                 client.start_instances(
@@ -203,6 +216,9 @@ def do_scale_up(region: str, ami: str) -> None:
 def do_scale_down(region: str, ami: str) -> None:
     """
     Scales down new instances as needed, given a region and AMI to check
+    Specifically, if we want to remove X instances (_get_num_new_instances
+    returns -X), we get as many inactive instances as we can (up to X)
+    and stop them.
     Args:
         region: which region to check for scaling
         ami: which AMI to scale with

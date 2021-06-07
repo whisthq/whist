@@ -1,47 +1,7 @@
 from random import randint
 from sys import maxsize
-import pytest
 
 import app.helpers.blueprint_helpers.aws.aws_instance_post as aws_funcs
-from app.helpers.utils.aws.base_ec2_client import EC2Client
-from app.models import db
-
-
-@pytest.fixture
-def hijack_ec2_calls(monkeypatch):
-    call_list = []
-
-    def _helper(*args, **kwargs):
-        call_list.append({"args": args, "kwargs": kwargs})
-
-    monkeypatch.setattr(EC2Client, "start_instances", _helper)
-    monkeypatch.setattr(EC2Client, "stop_instances", _helper)
-    yield call_list
-
-
-@pytest.fixture
-def mock_get_num_new_instances(monkeypatch):
-    def _patcher(return_value):
-        monkeypatch.setattr(
-            aws_funcs, "_get_num_new_instances", (lambda *args, **kwargs: return_value)
-        )
-
-    yield _patcher
-
-
-@pytest.fixture
-def hijack_db(monkeypatch):
-    call_list = []
-
-    def _helper(*args, **kwargs):
-        call_list.append({"args": args, "kwargs": kwargs})
-
-    def _empty():
-        return
-
-    monkeypatch.setattr(db.session, "add", _helper)
-    monkeypatch.setattr(db.session, "commit", _empty)
-    yield call_list
 
 
 def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db):

@@ -141,7 +141,7 @@ class SortedClusters(db.Model):
 
 class InstanceInfo(db.Model):
     """
-    compute instance information
+    General information about our EC2 instances
 
     Attributes:
         instance_id (string): instance id from AWS console
@@ -175,7 +175,8 @@ class InstanceInfo(db.Model):
 
 class InstanceSorted(db.Model):
     """
-    compute instance information
+    A sorted list of instance IDs and info, for selecting where
+    we deploy incoming tasks to.
 
     Attributes:
         instance_id (string): instance id from AWS console
@@ -192,7 +193,9 @@ class InstanceSorted(db.Model):
 
 class InstancesWithContainers(db.Model):
     """
-    compute instance information
+    A map linking instance information to general container information
+    i.e. 'how many containers are running on this instance',
+    'how many can be', etc.
 
     Attributes:
         instance_id (string): instance id from AWS console
@@ -213,7 +216,8 @@ class InstancesWithContainers(db.Model):
 
 class ContainerInfo(db.Model):
     """
-    compute instance information
+    Information about individual containers, namely
+    who's running them and where they're running.
 
     Attributes:
         container_id (int):  which container is this?
