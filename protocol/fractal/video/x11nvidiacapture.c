@@ -95,7 +95,7 @@ static NVFBC_BOOL gl_init(void)
 typedef NVENCSTATUS (NVENCAPI *p_fbc_fnNVENCODEAPICREATEINSTANCEPROC)(NV_ENCODE_API_FUNCTION_LIST *);
 
 int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType requested_codec, NVFBC_TOGL_SETUP_PARAMS* p_setup_params) {
-    NVENCSTATUS status = NV_ENC_SUCCESS;
+    NVENCSTATUS status;
 
     /*
      * Dynamically load the NvEncodeAPI library.
@@ -260,6 +260,9 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
 
 int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
                                  CodecType requested_codec) {
+    // 0-initialize everything in the NvidiaCaptureDevice
+    memset(device, 0, sizeof(NvidiaCaptureDevice));
+
     char output_name[NVFBC_OUTPUT_NAME_LEN];
     uint32_t output_id = 0;
 
@@ -411,8 +414,7 @@ int create_nvidia_capture_device(NvidiaCaptureDevice* device, int bitrate,
 
 #define SHOW_DEBUG_FRAMES false
 
-int nvidia_capture_screen(NvidiaCaptureDevice* device) {
-    NVFBCSTATUS fbc_status;
+void try_free_frame(NvidiaCaptureDevice* device) {
     NVENCSTATUS enc_status;
 
     // If there was a previous frame, we should free it first
@@ -437,6 +439,15 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
         }
         device->frame = NULL;
     }
+
+}
+
+int nvidia_capture_screen(NvidiaCaptureDevice* device) {
+    NVFBCSTATUS fbc_status;
+    NVENCSTATUS enc_status;
+
+    // Try to free the device frame
+    try_free_frame(device);
 
     bool force_iframe = false;
 
@@ -572,16 +583,62 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     return 1;
 }
 
+void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
+    NVENCSTATUS enc_status;
+
+    NV_ENC_PIC_PARAMS enc_params = {0};
+    enc_params.version = NV_ENC_PIC_PARAMS_VER;
+    enc_params.encodePicFlags = NV_ENC_PIC_FLAG_EOS;
+
+    enc_status = device->p_enc_fn.nvEncEncodePicture(device->encoder, &enc_params);
+    if (enc_status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to flush the encoder, status = %d", enc_status);
+    }
+
+    if (device->output_buffer) {
+        enc_status = device->p_enc_fn.nvEncDestroyBitstreamBuffer(device->encoder, device->output_buffer);
+        if (enc_status != NV_ENC_SUCCESS) {
+            LOG_ERROR("Failed to destroy buffer, status = %d", enc_status);
+        }
+        device->output_buffer = NULL;
+    }
+
+    /*
+     * Unregister all the resources that we had registered earlier with the
+     * encoder.
+     */
+    for (int i = 0; i < NVFBC_TOGL_TEXTURES_MAX; i++) {
+        if (registered_resources[i]) {
+            enc_status = device->p_enc_fn.nvEncUnregisterResource(device->encoder, registered_resources[i]);
+            if (enc_status != NV_ENC_SUCCESS) {
+                LOG_ERROR("Failed to unregister resource, status = %d", enc_status);
+            }
+            registered_resources[i] = NULL;
+        }
+    }
+
+    /*
+     * Destroy the encode session
+     */
+    enc_status = device->p_enc_fn.nvEncDestroyEncoder(device->encoder);
+    if (enc_status != NV_ENC_SUCCESS) {
+        LOG_ERROR("Failed to destroy encoder, status = %d", enc_status);
+    }
+}
+
 void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbc_status;
-    NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params;
-    NVFBC_DESTROY_HANDLE_PARAMS destroy_handle_params;
+
+    // Try to free a device frame
+    try_free_frame(device);
+
+    // Destroy the encoder first
+    destroy_nvidia_encoder(device);
 
     /*
      * Destroy capture session, tear down resources.
      */
-    memset(&destroy_capture_params, 0, sizeof(destroy_capture_params));
-
+    NVFBC_DESTROY_CAPTURE_SESSION_PARAMS destroy_capture_params = {0};
     destroy_capture_params.dwVersion = NVFBC_DESTROY_CAPTURE_SESSION_PARAMS_VER;
 
     fbc_status = device->p_fbc_fn.nvFBCDestroyCaptureSession(device->fbc_handle, &destroy_capture_params);
@@ -593,8 +650,7 @@ void destroy_nvidia_capture_device(NvidiaCaptureDevice* device) {
     /*
      * Destroy session handle, tear down more resources.
      */
-    memset(&destroy_handle_params, 0, sizeof(destroy_handle_params));
-
+    NVFBC_DESTROY_HANDLE_PARAMS destroy_handle_params = {0};
     destroy_handle_params.dwVersion = NVFBC_DESTROY_HANDLE_PARAMS_VER;
 
     fbc_status = device->p_fbc_fn.nvFBCDestroyHandle(device->fbc_handle, &destroy_handle_params);
