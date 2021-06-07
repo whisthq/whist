@@ -90,8 +90,8 @@ const configs = {
     },
     auth0: {
       auth0Domain: "fractal-staging.us.auth0.com",
-      clientId: "iCSxaFGY9gO866H9yJ4Jy05APFyfMTSk", // public; not a secret
-      apiIdentifier: "https://staging-server.fractal.co",
+      clientId: "WXO2cphPECuDc7DkDQeuQzYUtCR3ehjz", // public; not a secret
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "staging",
     sentryEnv: "staging",
@@ -115,8 +115,8 @@ const configs = {
     },
     auth0: {
       auth0Domain: "fractal-prod.us.auth0.com",
-      clientId: "yFTT8kQbFAB8Lp0YokOW4OeV2BXxLYnv", // public; not a secret
-      apiIdentifier: "https://prod-server.fractal.co",
+      clientId: "Ulk5B2RfB7mM8BVjA3JtkrZT7HhWIBLD", // public; not a secret
+      apiIdentifier: "https://api.fractal.co",
     },
     deployEnv: "prod",
     sentryEnv: "production",
