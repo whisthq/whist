@@ -382,11 +382,10 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     db.session.add(obj)
     db.session.commit()
     if not current_app.testing:
-        """
-        If we're not testing, we want to scale new instances in the background.
-        Specifically, we want to scale in the region/AMI pair where we know
-        there's usage -- so we call do_scale_up with the location and AMI of the instance
-        """
+        # If we're not testing, we want to scale new instances in the background.
+        # Specifically, we want to scale in the region/AMI pair where we know
+        # there's usage -- so we call do_scale_up with the location and AMI of the instance
+
         scaling_thread = Thread(target=do_scale_up, args=(instance.location, instance.ami_id))
         scaling_thread.start()
 
