@@ -145,7 +145,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         InstancesWithContainers.query.filter_by(location=region, ami_id=ami_id).all()
     )
     num_free_containers = sum(
-        instance.max_containers - instance.running_containers for instance in all_free_instances
+        instance.max_containers - instance.num_running_containers for instance in all_free_instances
     )
     avg_max_containers = sum(instance.maxContainers for instance in all_instances) / len(
         all_instances
@@ -231,7 +231,7 @@ def do_scale_down(region: str, ami: str) -> None:
         if num_new < 0:
             free_instances = list(
                 InstancesWithContainers.query.filter_by(
-                    location=region, ami_id=ami, running_containers=0
+                    location=region, ami_id=ami, num_running_containers=0
                 )
                 .limit(abs(num_new))
                 .all()

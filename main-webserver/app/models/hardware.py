@@ -202,7 +202,7 @@ class InstancesWithContainers(db.Model):
         location (string): where is the instance?
         ami_id (string):  What image is the instance running?
         max_containers (int): How many containers can the instance have?
-        running_containers (int): and how many does it have?
+        num_running_containers (int): and how many does it have?
     """
 
     __tablename__ = "instance_sorted"
@@ -211,7 +211,7 @@ class InstancesWithContainers(db.Model):
     location = db.Column(db.String(250), nullable=False)
     ami_id = db.Column(db.String(250), nullable=False)
     max_containers = db.Column(db.Integer)
-    running_containers = db.Column(db.Integer)
+    num_running_containers = db.Column(db.Integer)
 
 
 class ContainerInfo(db.Model):
