@@ -1,6 +1,7 @@
 import jwtDecode from "jwt-decode"
 import events from "events"
 import { URL } from "url"
+import { isEmpty, pickBy } from "lodash"
 
 import { config } from "@app/config/environment"
 import { randomBytes } from "crypto"
@@ -40,14 +41,22 @@ const extractTokens = (response: Record<string, string>) => {
   Returns:
     {email, sub, accessToken, refreshToken}
   */
-
-  const profile: Record<string, string> = jwtDecode(response.id_token)
-  const { sub, email } = profile
-  return {
-    sub,
-    email,
-    refreshToken: response.refresh_token,
-    accessToken: response.access_token,
+  try {
+    const profile: Record<string, string> = jwtDecode(response.id_token ?? "")
+    const { sub, email } = profile
+    return {
+      sub,
+      email,
+      refreshToken: response.refresh_token,
+      accessToken: response.access_token,
+    }
+  } catch {
+    return {
+      sub: null,
+      email: null,
+      refreshToken: null,
+      accessToken: null,
+    }
   }
 }
 
@@ -113,4 +122,13 @@ export const generateRandomConfigToken = () => {
 
   const buffer = randomBytes(48)
   return buffer.toString("base64")
+}
+
+export const authInfoValid = (authInfo: {
+  sub: string
+  email: string
+  accessToken: string
+  refreshToken: string
+}) => {
+  return isEmpty(pickBy(authInfo, (x) => (x ?? "") === ""))
 }

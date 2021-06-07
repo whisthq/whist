@@ -23,8 +23,8 @@ export const fractalError = {
     text: "Please try again in a few minutes or contact support@fractal.co for help.",
   },
   [AUTH_ERROR]: {
-    title: "There was an error logging you in",
-    text: "Please try logging in again or contact support@fractal.co for help.",
+    title: "We've added extra security measures to our login system.",
+    text: "Please sign out and sign back in. If this doesn't work, please contact support@fractal.co to report a bug.",
   },
   [NAVIGATION_ERROR]: {
     title: "There was an error loading the Fractal window.",
