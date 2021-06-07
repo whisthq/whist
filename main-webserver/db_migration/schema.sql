@@ -276,8 +276,8 @@ CREATE VIEW hardware.instance_sorted AS
   SELECT sub_with_running.instance_id,
     sub_with_running.ami_id,
     sub_with_running.location,
-    sub_with_running."maxContainers" AS max_containers
-    sub_with_running.num_running_containers,
+    sub_with_running."maxContainers" AS max_containers,
+    sub_with_running.num_running_containers
    FROM ( SELECT base_table.instance_id,
             base_table.ami_id,
             base_table.location,
