@@ -439,7 +439,6 @@ void try_free_frame(NvidiaCaptureDevice* device) {
         }
         device->frame = NULL;
     }
-
 }
 
 int nvidia_capture_screen(NvidiaCaptureDevice* device) {
@@ -505,6 +504,11 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 
     // If the frame isn't new, just return 0
     if (!frame_info.bIsNewFrame) {
+        return 0;
+    }
+    // If the frame is new, missed frames should be positive
+    if (frame_info.dwMissedFrames == 0) {
+        LOG_ERROR("We were told that this is a new frame, but yet 0 missed frames were reported");
         return 0;
     }
 
@@ -580,7 +584,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
              frameInfo.bIsNewFrame ? " (new frame)" : "", (unsigned long long)(t2 - t1));
 #endif
 
-    return 1;
+    return frame_info.dwMissedFrames;
 }
 
 void destroy_nvidia_encoder(NvidiaCaptureDevice* device) {
