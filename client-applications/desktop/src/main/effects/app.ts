@@ -7,7 +7,7 @@
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
 import { fromEvent, merge, zip } from "rxjs"
-import { mapTo, take, concatMap, pluck } from "rxjs/operators"
+import { mapTo, take, pluck } from "rxjs/operators"
 import path from "path"
 import { ChildProcess } from "child_process"
 
@@ -76,15 +76,9 @@ fromTrigger("notPersisted").subscribe(() => {
 // to close. We don't want this behavior for certain observables. For example,
 // when the protocol launches, we close all the windows, but we don't want the app
 // to quit.
-merge(
-  fromTrigger("updateAvailable"),
-  fromTrigger("authFlowSuccess"),
-  fromTrigger("authFlowFailure")
-)
-  .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
-  .subscribe((event: any) => {
-    ;(event as IpcMainEvent).preventDefault()
-  })
+fromEvent(app, "window-all-closed").subscribe((event: any) => {
+  ;(event as IpcMainEvent).preventDefault()
+})
 
 // When the protocol closes, upload protocol logs to S3
 zip([

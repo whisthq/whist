@@ -115,7 +115,10 @@ export const createWindow = (
   win.once("ready-to-show", () => {
     onReady != null ? onReady(win) : win.show()
   })
-  win.on("close", () => onClose?.(win))
+
+  win.on("close", () => {
+    if (getWindows().length === 1) app.quit()
+  })
 
   return win
 }
