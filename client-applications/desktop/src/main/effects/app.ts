@@ -74,7 +74,9 @@ fromTrigger("notPersisted").subscribe(() => {
 
 // By default, the window-all-closed Electron event will cause the application
 // to close. We want to have full control over when Electron quits, so we disable
-// this behavior.
+// this behavior. The only exception is if an update available, in which case we 
+// can't preventDefault() because electron-updater's quitAndInstall() function relies
+// on the app quitting by default.
 combineLatest(
   fromTrigger("windowsAllClosed"),
   fromTrigger("updateNotAvailable")
