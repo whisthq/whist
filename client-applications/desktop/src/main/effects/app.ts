@@ -80,7 +80,7 @@ fromTrigger("notPersisted").subscribe(() => {
 combineLatest(
   fromTrigger("windowsAllClosed"),
   fromTrigger("updateNotAvailable")
-).subscribe((event: any) => {
+).subscribe(([event]: [any, any]) => {
   ;(event as IpcMainEvent).preventDefault()
 })
 
