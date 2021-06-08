@@ -55,6 +55,8 @@ int get_focused_window_name(char* name_return) {
      *      ret (int): 0 on success, other integer on failure
      */
 
+    return 1;
+
     Window w;
     int revert;
     XGetInputFocus(display, &w, &revert);
