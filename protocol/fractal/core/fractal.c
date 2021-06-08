@@ -320,7 +320,7 @@ void terminate_protocol(FractalExitCode exit_code) {
     LOG_INFO("Terminating Protocol");
     destroy_logger();
 
-    if (exit_code != 0) {
+    if (exit_code != FRACTAL_EXIT_SUCCESS) {
         print_stacktrace();
     }
 
