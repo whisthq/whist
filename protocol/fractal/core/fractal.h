@@ -458,6 +458,15 @@ typedef enum FractalMultigestureType {
 } FractalMultigestureType;
 
 /**
+ * @brief   Integer exit code.
+ * @details So the parent process of the protocol can receive the exit code.
+ */
+typedef enum FractalExitCode {
+    FRACTAL_EXIT_SUCCESS = 0,
+    FRACTAL_EXIT_ERROR = 1,
+} FractalExitCode;
+
+/**
  * @brief   Multigesture message.
  * @details Message from multigesture event on touchpad.
  */
@@ -700,7 +709,7 @@ int get_fmsg_size(FractalClientMessage* fmsg);
 /**
  * @brief                          Terminates the protocol
  */
-NORETURN void terminate_protocol();
+NORETURN void terminate_protocol(FractalExitCode exit_code);
 
 /**
  * @brief                          Safely copy a string from source to destination.

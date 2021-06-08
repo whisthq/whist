@@ -18,6 +18,7 @@ import {
   UNAUTHORIZED_ERROR,
   MANDELBOX_INTERNAL_ERROR,
   AUTH_ERROR,
+  PROTOCOL_ERROR,
 } from "@app/utils/error"
 import { protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
@@ -55,4 +56,8 @@ onError(fromTrigger("mandelboxFlowFailure")).subscribe((x) => {
 
 onError(fromTrigger("authFlowFailure")).subscribe(() => {
   errorWindow(AUTH_ERROR)
+})
+
+onError(fromTrigger("protocolCloseFlowSuccess")).subscribe((code: number) => {
+  if (code !== 0) errorWindow(PROTOCOL_ERROR)
 })

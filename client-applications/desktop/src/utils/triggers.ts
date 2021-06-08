@@ -35,7 +35,6 @@ export default {
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
   mandelboxFlowFailure: "mandelboxFlowFailure",
   protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
-  protocolCloseFlowFailure: "protocolCloseFlowFailure",
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
 }

@@ -15,8 +15,8 @@ export const fractalError = {
     text: "Please try logging in again or contact support@fractal.co for help.",
   },
   [PROTOCOL_ERROR]: {
-    title: "The Fractal browser encountered an unexpected error.",
-    text: "Please try again in a few minutes or contact support@fractal.co for help.",
+    title: "The Fractal browser lost connection.",
+    text: "This could be due to inactivity or poor Internet connectivity.",
   },
   [MANDELBOX_INTERNAL_ERROR]: {
     title: "There was an error connecting to the Fractal servers.",

@@ -5,17 +5,10 @@
 // Many of these observables emit the protocol ChildProcess object, which
 // carries important data about the state of the protocol process.
 
-import { ChildProcess } from "child_process"
-import { flow, fork, createTrigger } from "@app/utils/flows"
+import { flow, createTrigger } from "@app/utils/flows"
 
-export default flow<ChildProcess>("protocolCloseFlow", (trigger) => {
-  const close = fork<ChildProcess>(trigger, {
-    success: (protocol) => !protocol?.killed || protocol === undefined,
-    failure: (protocol) => protocol?.killed,
-  })
-
+export default flow("protocolCloseFlow", (trigger) => {
   return {
-    success: createTrigger("protocolCloseFlowSuccess", close.success),
-    failure: createTrigger("protocolCloseFlowFailure", close.failure),
+    success: createTrigger("protocolCloseFlowSuccess", trigger),
   }
 })

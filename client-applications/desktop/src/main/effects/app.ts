@@ -91,10 +91,7 @@ zip([
   merge(fromTrigger("persisted"), fromTrigger("authFlowSuccess")).pipe(
     pluck("email")
   ),
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowSuccess")
-  ),
+  fromTrigger("protocolCloseFlowSuccess"),
 ]).subscribe(([email]: [string, ChildProcess]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
@@ -128,17 +125,14 @@ fromTrigger("updateAvailable").subscribe(() => {
 // When the protocol is closed, destroy the tray icon. If Fractal ran successfully,
 // also quit the application
 zip(
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowFailure")
-  ),
+  fromTrigger("protocolCloseFlowSuccess"),
   merge(
     fromTrigger("mandelboxFlowSuccess").pipe(mapTo(true)),
     fromTrigger("mandelboxFlowFailure").pipe(mapTo(false))
   )
-).subscribe(([, success]: [any, boolean]) => {
+).subscribe(([code, success]: [number, boolean]) => {
   destroyTray()
-  if (success) app.quit()
+  if (code === 0 && success) app.quit()
 })
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart

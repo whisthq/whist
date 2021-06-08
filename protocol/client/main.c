@@ -976,7 +976,6 @@ int main(int argc, char* argv[]) {
     destroy_sdl((SDL_Window*)window);
     destroy_socket_library();
     free_parsed_args();
-    destroy_logger();
 
     // We must call this after destroying the logger so that all
     // error monitor breadcrumbs and events can finish being reported
@@ -985,8 +984,8 @@ int main(int argc, char* argv[]) {
 
     if (try_amount >= 3 || failed) {
         // We failed, so return a non-zero error code
-        return -1;
+        terminate_protocol(FRACTAL_EXIT_ERROR);
     }
 
-    return 0;
+    terminate_protocol(FRACTAL_EXIT_SUCCESS);
 }

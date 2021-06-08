@@ -51,7 +51,9 @@ protocolLaunchFlow(launchTrigger)
 const close = protocolCloseFlow(
   fromTrigger("protocolLaunchFlowSuccess").pipe(
     mergeMap((protocol: ChildProcess) =>
-      fromEvent(protocol as EventEmitter, "close").pipe(map(() => protocol))
+      fromEvent(protocol as EventEmitter, "close").pipe(
+        map(([code]: [number, string]) => code)
+      )
     )
   )
 )
@@ -59,4 +61,3 @@ const close = protocolCloseFlow(
 // Subscribe so that the protocolCloseFlow actually emits
 // (if an observable has no subscribers it won't emit)
 close.success.subscribe()
-close.failure.subscribe()
