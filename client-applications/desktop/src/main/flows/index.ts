@@ -51,8 +51,8 @@ protocolLaunchFlow(launchTrigger)
 const close = protocolCloseFlow(
   fromTrigger("protocolLaunchFlowSuccess").pipe(
     mergeMap((protocol: ChildProcess) =>
-      fromEvent(protocol as EventEmitter, "close").pipe(
-        map(([code]: [number, string]) => code)
+      fromEvent<[number, string]>(protocol as EventEmitter, "close").pipe(
+        map(([code]) => code)
       )
     )
   )
