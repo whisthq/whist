@@ -10,7 +10,6 @@ import (
 
 	logger "github.com/fractal/fractal/ecs-host-service/fractallogger"
 
-	"github.com/fractal/fractal/ecs-host-service/auth"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/portbindings"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/ttys"
 	"github.com/fractal/fractal/ecs-host-service/fractalcontainer/uinputdevices"
@@ -400,10 +399,6 @@ func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessTok
 	// If a client app access token hasn't been set that means that this function
 	//    is being called for the first time and initial values need to be set.
 	if len(c.clientAppAccessToken) == 0 {
-		_, err := auth.VerifyWithUserId(string(clientAppAccessToken), string(userID))
-		if err != nil { // invalid access token or other error
-			return err
-		}
 		c.clientAppAccessToken = clientAppAccessToken
 		c.firstCalledSetupEndpoint = SetupEndpoint(callerFunction)
 
@@ -425,14 +420,10 @@ func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessTok
 
 	c.AssignToUser(userID)
 
+	var err error
 	// Populate the user config folder for the container's app ONLY if both the client app
 	//     and webserver have passed the same client app access token to the host service
 	if clientAppAccessToken == c.GetClientAppAccessToken() {
-		_, err := auth.VerifyWithUserId(string(clientAppAccessToken), string(userID))
-		if err != nil { // invalid access token or other error
-			return err
-		}
-
 		err = c.PopulateUserConfigs()
 		if err != nil {
 			logger.Error(err)
@@ -446,7 +437,7 @@ func (c *containerData) CompleteContainerSetup(userID UserID, clientAppAccessTok
 	}
 
 	// When both endpoints have been properly called, then mark the container as ready
-	err := c.MarkReady()
+	err = c.MarkReady()
 	if err != nil {
 		return err
 	}

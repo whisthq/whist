@@ -1,4 +1,11 @@
-package auth // import "github.com/fractal/fractal/ecs-host-service/httpserver"
+/*
+Package auth provides functions for validating JWTs sent by the client app.
+
+Currently, it has been tested JWTs generated with our Auth0 configuration.
+It should work with other JWTs too, provided that they are signed with the RS256
+algorithm.
+*/
+package auth // import "github.com/fractal/fractal/ecs-host-service/auth"
 
 import (
 	"crypto/rsa"
@@ -8,11 +15,17 @@ import (
 	"fmt"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-var AUD string
-var ISS string
-var VERIFY_KEY string
+// JWT audience. Identifies the serivce that accepts the token.
+var aud string
+
+// JWT issuer. The issuing server.
+var iss string
+
+// PEM-formatted public key used to verify JWT signer.
+var verifyKey string
 
 func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	block, _ := pem.Decode([]byte(pubPEM))
@@ -33,45 +46,42 @@ func parsePubPEM(pubPEM string) (*rsa.PublicKey, error) {
 	}
 }
 
-// Checks that audience and issuer are correct, then returns the public key
-// This should not be used except as an argument to jwt's parse methods
+// Checks that audience and issuer are correct, then returns the public key.
+// This should not be used except as an argument to jwt's parse methods.
 func keyFunc(token *jwt.Token) (interface{}, error) {
-	// We only use one algorithm (RS256), so simply return the public key
-	key, err := parsePubPEM(VERIFY_KEY)
+	// Our Auth0 configuration uses RS256, so we return an rsa public key
+	key, err := parsePubPEM(verifyKey)
 	if err != nil {
 		fmt.Printf("key err %v", err)
 	}
 	return key, nil
 }
 
-func audContains(audSlice []interface{}, aud interface{}) bool {
-	for _, v := range audSlice {
-		if v == aud {
-			return true
-		}
-	}
-	return false
-}
-
 func validateClaims(claims jwt.MapClaims) error {
 	// Verify audience
 	audSlice := claims["aud"].([]interface{})
-	audValid := audContains(audSlice, AUD)
+	audValid := utils.SliceContains(audSlice, aud)
 	if !audValid {
 		return errors.New("invalid audience")
 	}
 
 	// Verify issuer
-	issValid := claims["iss"] == ISS
+	issValid := claims["iss"] == iss
 	if !issValid {
-		fmt.Printf("iss invalid")
 		return errors.New("invalid issuer")
+	}
+
+	// Verify JWT is not expired
+	err := claims.Valid()
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-// Returns claims if token verified, errors if not
+// Verify verifies that a JWT is valid.
+// If valid, the JWT's claims are returned.
 func Verify(accessToken string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(accessToken, keyFunc)
 	if err != nil {
@@ -86,14 +96,16 @@ func Verify(accessToken string) (jwt.MapClaims, error) {
 	return claims, nil
 }
 
-// Similar to verify, but additionally errors if accessToken does not correspond to the given userId
-func VerifyWithUserId(accessToken string, userId string) (jwt.MapClaims, error) {
+// VerifyWithUserID verifies that a JWT is valid and
+// corresponds to the user with userID.
+// If valid, the JWT's claims are returned.
+func VerifyWithUserID(accessToken string, userID string) (jwt.MapClaims, error) {
 	claims, err := Verify(accessToken)
 	if err != nil {
 		return claims, err
 	}
 
-	if claims["sub"] != userId {
+	if claims["sub"] != userID {
 		return claims, errors.New("userID does not match jwt")
 	}
 

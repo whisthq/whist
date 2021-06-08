@@ -66,9 +66,9 @@ build: checkCI
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretDev=$(WEBSERVER_AUTH_SECRET_DEV)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretStaging=$(WEBSERVER_AUTH_SECRET_STAGING)'\
 		-X 'github.com/fractal/fractal/ecs-host-service/httpserver.webserverAuthSecretProd=$(WEBSERVER_AUTH_SECRET_PROD)'\
-		-X 'github.com/fractal/fractal/ecs-host-service/auth.AUD=$(AUTH_AUD)'\
-		-X 'github.com/fractal/fractal/ecs-host-service/auth.ISS=$(AUTH_ISS)'\
-		-X 'github.com/fractal/fractal/ecs-host-service/auth.ISS=$(AUTH_VERIFY_KEY)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/auth.aud=$(AUTH_AUD)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/auth.iss=$(AUTH_ISS)'\
+		-X 'github.com/fractal/fractal/ecs-host-service/auth.verifyKey=$(AUTH_VERIFY_KEY)'\
 		" -o $(BUILD_FOLDER)/$(BINARY_NAME) ecs-host-service.go
 
 upload: build
