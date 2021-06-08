@@ -185,8 +185,8 @@ int create_nvidia_encoder(NvidiaCaptureDevice* device, int bitrate, CodecType re
     // Set bitrate
     preset_config.presetCfg.rcParams.rateControlMode = NV_ENC_PARAMS_RC_CBR;
     preset_config.presetCfg.rcParams.averageBitRate = bitrate;
-    // Specify the largest a single frame can be
-    preset_config.presetCfg.rcParams.vbvBufferSize = 6 * bitrate / FPS;
+    // Specify the size of the clientside buffer, 1 * bitrate is recommended
+    preset_config.presetCfg.rcParams.vbvBufferSize = bitrate;
 
     /*
      * Initialize the encode session
@@ -445,9 +445,6 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     NVFBCSTATUS fbc_status;
     NVENCSTATUS enc_status;
 
-    // Try to free the device frame
-    try_free_frame(device);
-
     bool force_iframe = false;
 
 #if SHOW_DEBUG_FRAMES
@@ -457,7 +454,7 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
 
     NVFBC_TOGL_GRAB_FRAME_PARAMS grab_params = {0};
     NVFBC_FRAME_GRAB_INFO frame_info;
-    
+
     grab_params.dwVersion = NVFBC_TOGL_GRAB_FRAME_PARAMS_VER;
 
     /*
@@ -506,6 +503,11 @@ int nvidia_capture_screen(NvidiaCaptureDevice* device) {
     if (!frame_info.bIsNewFrame) {
         return 0;
     }
+
+    // If the frame is new, then free the old frame and capture+encode the new frame
+
+    // Try to free the device frame
+    try_free_frame(device);
 
     // Set the device to use the newly captured width/height
     device->width = frame_info.dwWidth;
