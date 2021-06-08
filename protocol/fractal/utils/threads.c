@@ -26,10 +26,11 @@ void fractal_detach_thread(FractalThread thread) { SDL_DetachThread(thread); }
 void fractal_wait_thread(FractalThread thread, int *ret) { SDL_WaitThread(thread, ret); }
 
 void fractal_set_thread_priority(FractalThreadPriority priority) {
+    // Add in special case handling when trying to set specifically REALTIME on Linux,
+    // As this leads to increased performance
 #ifdef __linux__
-    // When requesting _REALTIME on linux, use pthread calls directly
-    // for the highest possible priority
-    // (SCHED_RR being higher than any standard nice value, which is SCHED_OTHER)
+    // Use the highest possible priority for _REALTIME
+    // (SCHED_RR being higher than any possible nice value, which is SCHED_OTHER)
     if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
         char err[1024];
         // Get the identifier for the thread that called this function
@@ -56,11 +57,13 @@ void fractal_set_thread_priority(FractalThreadPriority priority) {
         return;
     }
 #endif
-    // Use SDL to set the thread priority
+    // This is the general cross-platform way, so that
+    // we can set any thread priority on any operating system
     if (SDL_SetThreadPriority((SDL_ThreadPriority)priority) < 0) {
         LOG_ERROR("Failure setting thread priority: %s", SDL_GetError());
-        // Try _HIGH instead of _REALTIME on logged failure to set _REALTIME
         if (priority == FRACTAL_THREAD_PRIORITY_REALTIME) {
+            // REALTIME requires sudo/admin on unix/windows.
+            // So, if we fail to set the REALTIME priority, we should at least try _HIGH
             fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
         }
     }
