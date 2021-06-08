@@ -225,7 +225,7 @@ int32_t multithreaded_destroy_encoder(void* opaque) {
 
 int32_t send_video(void* opaque) {
     UNUSED(opaque);
-    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_REALTIME);
     fractal_sleep(500);
 
 #if defined(_WIN32)
@@ -637,7 +637,7 @@ static int sample_rate = -1;
 
 int32_t send_audio(void* opaque) {
     UNUSED(opaque);
-    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_HIGH);
+    fractal_set_thread_priority(FRACTAL_THREAD_PRIORITY_REALTIME);
     int id = 1;
 
     AudioDevice* audio_device = create_audio_device();
