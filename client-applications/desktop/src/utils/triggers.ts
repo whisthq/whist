@@ -2,6 +2,7 @@ export default {
   // App triggers
   appReady: "appReady",
   windowCreated: "windowCreated",
+  windowsAllClosed: "windowsAllClosed",
 
   // Auth triggers
   authInfo: "authInfo",

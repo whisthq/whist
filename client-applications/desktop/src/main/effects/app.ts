@@ -6,7 +6,7 @@
 
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip } from "rxjs"
+import { merge, zip } from "rxjs"
 import { mapTo, take, pluck } from "rxjs/operators"
 import path from "path"
 import { ChildProcess } from "child_process"
@@ -73,10 +73,9 @@ fromTrigger("notPersisted").subscribe(() => {
 })
 
 // By default, the window-all-closed Electron event will cause the application
-// to close. We don't want this behavior for certain observables. For example,
-// when the protocol launches, we close all the windows, but we don't want the app
-// to quit.
-fromEvent(app, "window-all-closed").subscribe((event: any) => {
+// to close. We want to have full control over when Electron quits, so we disable
+// this behavior.
+fromTrigger("windowsAllClosed").subscribe((event: any) => {
   ;(event as IpcMainEvent).preventDefault()
 })
 
