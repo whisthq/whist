@@ -6,8 +6,8 @@ rules:
     order: 1
 rulesConfigs: []
 hooks:
-  - name: post-user-registration-hook
-    script: ./hooks/post-user-registration-hook.js
+  - name: pre-user-registration-hook
+    script: ./hooks/pre-user-registration-hook.js
     dependencies:
       stripe: 8.145.0
       lodash: 4.17.21
@@ -17,7 +17,7 @@ hooks:
     secrets:
       STRIPE_PRICE_ID: _VALUE_NOT_SHOWN_
       STRIPE_KEY: _VALUE_NOT_SHOWN_
-    triggerId: post-user-registration
+    triggerId: pre-user-registration
 pages:
   - name: login
     enabled: true
