@@ -13,7 +13,6 @@ import { ChildProcess } from "child_process"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
-  closeWindows,
   createAuthWindow,
   createUpdateWindow,
   createSignoutWindow,
@@ -125,7 +124,6 @@ fromTrigger("updateDownloaded").subscribe(() => {
 
 // If an update is available, show the update window and download the update
 fromTrigger("updateAvailable").subscribe(() => {
-  closeWindows()
   createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
 })

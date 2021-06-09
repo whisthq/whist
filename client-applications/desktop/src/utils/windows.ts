@@ -47,10 +47,6 @@ export const height = {
 
 export const getWindows = () => BrowserWindow.getAllWindows()
 
-export const closeWindows = () => {
-  getWindows().forEach((win) => win.close())
-}
-
 export const showAppDock = () => {
   // On non-macOS systems, app.dock is null, so we
   // do nothing here.
@@ -76,33 +72,35 @@ export const getWindowTitle = () => {
 // This is a "base" window creation function. It won't be called directly from
 // the application, instead we'll use it to contain the common functionality
 // that we want to share between all windows.
-export const createWindow = (
-  show: string,
-  options: Partial<BrowserWindowConstructorOptions>,
-  customUrl?: string,
-  onReady?: (win: BrowserWindow) => any,
-  onClose?: (win: BrowserWindow) => any
-) => {
+export const createWindow = (args: {
+  show: string
+  options: Partial<BrowserWindowConstructorOptions>
+  customURL?: string
+  closeOtherWindows?: boolean
+}) => {
   const { title } = config
+  const currentOpenWindows = getWindows()
   // We don't want to show a new BrowserWindow right away. We should manually
   // show the window after it has finished loading.
-  const win = new BrowserWindow({ ...options, show: false, title })
+  const win = new BrowserWindow({ ...args.options, show: false, title })
 
   // Electron doesn't have a API for passing data to renderer windows. We need
   // to pass "init" data for a variety of reasons, but mainly so we can decide
   // which React component to render into the window. We're forced to do this
   // using query parameters in the URL that we pass. The alternative would
   // be to use separate index.html files for each window, which we want to avoid.
-  const params = `?show=${show}`
+  const params = `?show=${args.show}`
 
-  if (app.isPackaged && customUrl === undefined) {
+  if (app.isPackaged && args.customURL === undefined) {
     win
       .loadFile("build/index.html", { search: params })
       .catch((err) => console.log(err))
   } else {
     win
       .loadURL(
-        customUrl !== undefined ? customUrl : `http://localhost:8080${params}`,
+        args.customURL !== undefined
+          ? args.customURL
+          : `http://localhost:8080${params}`,
         {
           userAgent:
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36",
@@ -116,22 +114,27 @@ export const createWindow = (
   // Electron recommends showing the window on the ready-to-show event:
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
-    onReady != null ? onReady(win) : win.show()
+    win.show()
   })
+
+  if (args.closeOtherWindows)
+    currentOpenWindows.forEach((win: BrowserWindow) => {
+      win.close()
+    })
 
   return win
 }
 
 export const createAuthWindow = () => {
-  const win = createWindow(
-    WindowHashAuth,
-    {
+  const win = createWindow({
+    show: WindowHashAuth,
+    options: {
       ...base,
       ...width.xs,
       height: 16 * 37,
     } as BrowserWindowConstructorOptions,
-    authenticationURL
-  )
+    customURL: authenticationURL,
+  })
 
   // Authentication
   const {
@@ -152,33 +155,38 @@ export const createAuthWindow = () => {
 }
 
 export const createUpdateWindow = () =>
-  createWindow(WindowHashUpdate, {
-    ...base,
-    ...width.sm,
-    ...height.md,
-    skipTaskbar: true,
-  } as BrowserWindowConstructorOptions)
+  createWindow({
+    show: WindowHashUpdate,
+    options: {
+      ...base,
+      ...width.sm,
+      ...height.md,
+      skipTaskbar: true,
+    } as BrowserWindowConstructorOptions,
+    closeOtherWindows: true,
+  })
 
 export const createErrorWindow = (hash: string) => {
-  const windows = getWindows()
-
-  createWindow(hash, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
-
-  windows.forEach((win: BrowserWindow) => {
-    win.close()
+  createWindow({
+    show: hash,
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+    } as BrowserWindowConstructorOptions,
+    closeOtherWindows: true,
   })
 }
 
 export const createSignoutWindow = () => {
-  createWindow(WindowHashSignout, {
-    ...base,
-    ...width.md,
-    ...height.xs,
-  } as BrowserWindowConstructorOptions)
+  createWindow({
+    show: WindowHashSignout,
+    options: {
+      ...base,
+      ...width.md,
+      ...height.xs,
+    } as BrowserWindowConstructorOptions,
+  })
 }
 
 export const createProtocolWindow = () => {
