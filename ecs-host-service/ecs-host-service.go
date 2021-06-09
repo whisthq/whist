@@ -467,7 +467,7 @@ func uninitializeFilesystem() {
 
 func main() {
 	// The host service needs root permissions.
-	logger.RequireRootPermissions()
+	utils.RequireRootPermissions()
 
 	// We create a global context (i.e. for the entire host service) that can be
 	// cancelled if the entire program needs to terminate. We also create a
