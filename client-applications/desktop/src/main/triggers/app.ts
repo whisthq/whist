@@ -9,7 +9,6 @@ import EventEmitter from "events"
 import { fromEvent } from "rxjs"
 
 import { createTrigger } from "@app/utils/flows"
-import { windowEmitter } from "@app/utils/windows"
 import TRIGGER from "@app/utils/triggers"
 
 // Fires when Electron starts; this is the first event to fire

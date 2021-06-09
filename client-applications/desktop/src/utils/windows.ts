@@ -2,7 +2,6 @@
 // main process, and passes all the configuration needed to load files into
 // Electron renderer windows.
 import path from "path"
-import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
@@ -19,8 +18,6 @@ import {
 } from "@app/utils/protocol"
 
 const { buildRoot } = config
-
-export const windowEmitter = new events.EventEmitter()
 
 export const base = {
   webPreferences: {
@@ -126,10 +123,6 @@ export const createWindow = (args: {
   // https://www.electronjs.org/docs/api/browser-window
   win.once("ready-to-show", () => {
     win.show()
-  })
-
-  win.on("close", () => {
-    windowEmitter.emit("close")
   })
 
   if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
