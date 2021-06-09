@@ -89,7 +89,7 @@ func initializeSentry() (*sentrySender, error) {
 	return new(sentrySender), nil
 }
 
-// flushSentry flushes events in the Sentry queue
-func flushSentry() {
+// FlushSentry flushes events in the Sentry queue
+func FlushSentry() {
 	sentry.Flush(5 * time.Second)
 }
