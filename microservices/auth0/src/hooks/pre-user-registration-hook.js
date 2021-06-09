@@ -2,12 +2,12 @@ const { StripeClient } = require('@fractal/core-ts')
 
 const TRIAL_LENGTH_DAYS = 7
 
-module.exports = async function(user, context, cb) {
+module.exports = function(user, context, cb) {
   const client = new StripeClient(context.webtask.secrets.STRIPE_KEY);
   const priceId = context.webtask.secrets.STRIPE_PRICE_ID;
 
   const { email, phoneNumber, id, username } = user;
-  
+
   // Create Stripe customer corresponding to the newly-registered user and grant them a free trial
   client.registerWithTrial({
     priceId,
@@ -16,5 +16,13 @@ module.exports = async function(user, context, cb) {
     phone: user.phoneNumber,
     id,
     username
-  });
+  }).then((customer) => {
+    cb(null, {
+      "user": {
+        "app_metadata": {
+          "stripe_customer_id": customer.id
+        }
+      }
+    })
+  }, cb);
 };
