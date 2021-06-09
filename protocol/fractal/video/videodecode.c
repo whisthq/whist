@@ -309,9 +309,10 @@ static bool try_next_decoder(VideoDecoder* decoder) {
                 LOG_INFO("Video decoder: Failed, trying next decoder");
             } else {
                 LOG_INFO("Video decoder: Success!");
-		if (decoder->type == DECODE_TYPE_SOFTWARE) {
-		    LOG_ERROR("Video decoder: all hardware decoders failed. Now using software decoder.");
-		}
+                if (decoder->type == DECODE_TYPE_SOFTWARE) {
+                    LOG_ERROR(
+                        "Video decoder: all hardware decoders failed. Now using software decoder.");
+                }
                 return true;
             }
         }
