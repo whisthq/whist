@@ -24,6 +24,8 @@ func initializeMetadata() {
 			return EnvStaging
 		case "production", "prod":
 			return EnvProd
+		case "localdevwithdb", "localdev_with_db", "localdev_with_database":
+			return EnvLocalDevWithDB
 		default:
 			return EnvLocalDev
 		}
@@ -59,10 +61,11 @@ type EnvironmentType string
 // Constants for whether we are running in localdev (i.e. a dev instance), dev
 // (i.e. talking to the dev webserver), staging, or prod
 const (
-	EnvLocalDev EnvironmentType = "LOCALDEV"
-	EnvDev      EnvironmentType = "DEV"
-	EnvStaging  EnvironmentType = "STAGING"
-	EnvProd     EnvironmentType = "PROD"
+	EnvLocalDevWithDB EnvironmentType = "LOCALDEVWITHDB"
+	EnvLocalDev       EnvironmentType = "LOCALDEV"
+	EnvDev            EnvironmentType = "DEV"
+	EnvStaging        EnvironmentType = "STAGING"
+	EnvProd           EnvironmentType = "PROD"
 )
 
 // We compute the environment type once, at program startup, and cache it in `cachedEnvironment`

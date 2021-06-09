@@ -326,7 +326,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 
 	// Select the correct environment (dev, staging, prod)
 	switch logger.GetAppEnvironment() {
-	case logger.EnvLocalDev:
+	case logger.EnvLocalDev, logger.EnvLocalDevWithDB:
 		fallthrough
 	case logger.EnvDev:
 		webserverAuthSecret = webserverAuthSecretDev

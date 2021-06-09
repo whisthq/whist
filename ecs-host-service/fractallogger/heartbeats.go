@@ -60,7 +60,7 @@ func GetFractalWebserver() string {
 		return prodFractalWebserver
 	case EnvDev:
 		return devFractalWebserver
-	case EnvLocalDev:
+	case EnvLocalDev, EnvLocalDevWithDB:
 		return localdevFractalWebserver
 	default:
 		return localdevFractalWebserver
@@ -80,8 +80,8 @@ var heartbeatKeepAlive = make(chan interface{}, 1)
 
 // initializeHeartbeat starts the heartbeat goroutine
 func initializeHeartbeat() error {
-	if GetAppEnvironment() == EnvLocalDev {
-		Infof("Skipping initializing webserver heartbeats since running in LocalDev environment.")
+	if GetAppEnvironment() == EnvLocalDev || GetAppEnvironment() == EnvLocalDevWithDB {
+		Infof("Skipping initializing webserver heartbeats since running in %s environment.", GetAppEnvironment())
 		return nil
 	}
 
