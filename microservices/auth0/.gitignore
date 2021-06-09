@@ -4,3 +4,6 @@ node_modules
 
 # bundled hooks
 /hooks
+
+# Rules downloaded from the tenant with yarn update-tenant
+/rules
