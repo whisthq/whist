@@ -9,7 +9,7 @@ from app.models.hardware import (
     InstanceSorted,
     RegionToAmi,
     InstanceInfo,
-    InstancesWithContainers,
+    InstancesWithRoomForContainers,
 )
 from app.helpers.utils.db.db_utils import set_local_lock_timeout
 from app.helpers.utils.aws.base_ec2_client import EC2Client
@@ -95,7 +95,7 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
         # If there are no instances running, we want one.
         return 1
     all_free_instances = list(
-        InstancesWithContainers.query.filter_by(location=region, ami_id=ami_id).all()
+        InstancesWithRoomForContainers.query.filter_by(location=region, ami_id=ami_id).all()
     )
     num_free_containers = sum(
         instance.max_containers - instance.num_running_containers for instance in all_free_instances
@@ -186,7 +186,7 @@ def try_scale_down_if_necessary(region: str, ami: str) -> None:
         num_new = _get_num_new_instances(region, ami)
         if num_new < 0:
             free_instances = list(
-                InstancesWithContainers.query.filter_by(
+                InstancesWithRoomForContainers.query.filter_by(
                     location=region, ami_id=ami, num_running_containers=0
                 )
                 .limit(abs(num_new))

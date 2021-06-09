@@ -191,7 +191,7 @@ class InstanceSorted(db.Model):
     ami_id = db.Column(db.String(250), nullable=False)
 
 
-class InstancesWithContainers(db.Model):
+class InstancesWithRoomForContainers(db.Model):
     """
     A map linking instance information to general container information
     i.e. 'how many containers are running on this instance',
