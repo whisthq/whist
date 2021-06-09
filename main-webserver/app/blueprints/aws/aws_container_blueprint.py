@@ -30,6 +30,7 @@ from app.constants.http_codes import (
     ACCEPTED,
     BAD_REQUEST,
     NOT_FOUND,
+    RESOURCE_UNAVAILABLE,
     SUCCESS,
     WEBSERVER_MAINTENANCE,
 )
@@ -371,7 +372,17 @@ def aws_container_ping(**kwargs):
 def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     instance_id = find_instance(body.region)
     if instance_id is None:
-        return jsonify({"IP": "None"}), NOT_FOUND
+
+        if not current_app.testing:
+            # If we're not testing, we want to scale up a new instance to handle this load
+            # and we know what instance type we're missing from the request
+            scaling_thread = Thread(
+                target=do_scale_up_if_necessary,
+                args=(body.region, RegionToAmi.query.get(body.region).ami_id),
+            )
+            scaling_thread.start()
+        return jsonify({"IP": "None"}), RESOURCE_UNAVAILABLE
+
     instance = InstanceInfo.query.get(instance_id)
     obj = ContainerInfo(
         container_id=str(uuid.uuid4()),
