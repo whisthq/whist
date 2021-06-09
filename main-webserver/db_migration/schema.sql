@@ -1038,13 +1038,6 @@ CREATE TABLE sales.email_templates (
 ALTER TABLE ONLY hdb_catalog.remote_schemas ALTER COLUMN id SET DEFAULT nextval('hdb_catalog.remote_schemas_id_seq'::regclass);
 
 
---
--- Name: cluster_info cluster_info_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.cluster_info
-    ADD CONSTRAINT cluster_info_pkey PRIMARY KEY (cluster);
-
 
 --
 -- Name: region_to_ami region_to_ami_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
@@ -1076,14 +1069,6 @@ ALTER TABLE ONLY hardware.supported_app_images
 
 ALTER TABLE ONLY hardware.user_app_state
     ADD CONSTRAINT user_app_state_pkey PRIMARY KEY (task_id);
-
-
---
--- Name: user_containers user_containers_pkey; Type: CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_containers_pkey PRIMARY KEY (container_id);
 
 
 --
@@ -1303,32 +1288,7 @@ ALTER TABLE ONLY sales.email_templates
     ADD CONSTRAINT email_templates_pkey PRIMARY KEY (id);
 
 
---
--- Name: fki_app_id_fk; Type: INDEX; Schema: hardware; Owner: -
---
 
-CREATE INDEX fki_app_id_fk ON hardware.user_containers USING btree (task_definition);
-
-
---
--- Name: fki_cluster_name_fk; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX fki_cluster_name_fk ON hardware.user_containers USING btree (cluster);
-
-
---
--- Name: ip_and_port; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX ip_and_port ON hardware.user_containers USING btree (ip, port_32262);
-
-
---
--- Name: loc_taskdef_uid; Type: INDEX; Schema: hardware; Owner: -
---
-
-CREATE INDEX loc_taskdef_uid ON hardware.user_containers USING btree (location, task_definition, user_id);
 
 
 --
@@ -1408,20 +1368,6 @@ CREATE TRIGGER event_trigger_table_name_update_trigger AFTER UPDATE ON hdb_catal
 CREATE TRIGGER hdb_schema_update_event_notifier AFTER INSERT OR UPDATE ON hdb_catalog.hdb_schema_update_event FOR EACH ROW EXECUTE FUNCTION hdb_catalog.hdb_schema_update_event_notifier();
 
 
---
--- Name: user_containers task_definition_fk; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT task_definition_fk FOREIGN KEY (task_definition) REFERENCES hardware.supported_app_images(task_definition);
-
-
---
--- Name: user_containers user_containers_cluster_fkey; Type: FK CONSTRAINT; Schema: hardware; Owner: -
---
-
-ALTER TABLE ONLY hardware.user_containers
-    ADD CONSTRAINT user_containers_cluster_fkey FOREIGN KEY (cluster) REFERENCES hardware.cluster_info(cluster) ON UPDATE CASCADE ON DELETE CASCADE;
 
 
 --
