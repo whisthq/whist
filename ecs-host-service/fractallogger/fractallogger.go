@@ -50,7 +50,7 @@ func Close() {
 
 	// Flush buffered logging events before the program terminates.
 	Info("Flushing Sentry...")
-	flushSentry()
+	FlushSentry()
 	Info("Flushing Logzio...")
 	stopAndDrainLogzio()
 }
