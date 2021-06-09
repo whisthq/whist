@@ -3,8 +3,7 @@
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
-import { zip, merge } from "rxjs"
-import { ChildProcess } from "child_process"
+import { merge } from "rxjs"
 
 import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"

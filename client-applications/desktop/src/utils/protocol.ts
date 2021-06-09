@@ -12,7 +12,7 @@ import config, {
 } from "@app/config/environment"
 import { showAppDock, hideAppDock } from "@app/utils/dock"
 
-export let childProcess: ChildProcess | undefined = undefined
+export let childProcess: ChildProcess | undefined
 
 const { protocolName, protocolFolder } = config
 
@@ -95,17 +95,15 @@ export const protocolLaunch = async () => {
 }
 
 // Stream the rest of the info that the protocol needs
-export const protocolStreamInfo = (
-  info: {
-    mandelboxIP: string
-    mandelboxSecret: string
-    mandelboxPorts: {
-      port_32262: number
-      port_32263: number
-      port_32273: number
-    }
+export const protocolStreamInfo = (info: {
+  mandelboxIP: string
+  mandelboxSecret: string
+  mandelboxPorts: {
+    port_32262: number
+    port_32263: number
+    port_32273: number
   }
-) => {
+}) => {
   writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
   writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
   writeStream(childProcess, `ip?${info.mandelboxIP}`)

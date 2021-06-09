@@ -55,8 +55,6 @@ export const height = {
 export const getElectronWindows = () => BrowserWindow.getAllWindows()
 
 export const getNumberWindows = () => {
-  console.log("electron", getElectronWindows())
-  console.log("protocol", childProcess)
   const numElectronWindows = getElectronWindows().length
   const numProtocolWindows = childProcess === undefined ? 0 : 1
   return numElectronWindows + numProtocolWindows

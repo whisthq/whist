@@ -3,7 +3,7 @@ export default {
   appReady: "appReady",
   windowCreated: "windowCreated",
   windowClosed: "windowClosed",
-  willQuit: "willQuit",
+  beforeQuit: "beforeQuit",
 
   // Auth triggers
   authInfo: "authInfo",
