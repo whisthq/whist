@@ -309,6 +309,10 @@ static bool try_next_decoder(VideoDecoder* decoder) {
                 LOG_INFO("Video decoder: Failed, trying next decoder");
             } else {
                 LOG_INFO("Video decoder: Success!");
+                if (decoder->type == DECODE_TYPE_SOFTWARE) {
+                    LOG_ERROR(
+                        "Video decoder: all hardware decoders failed. Now using software decoder.");
+                }
                 return true;
             }
         }
@@ -453,7 +457,7 @@ bool video_decoder_decode(VideoDecoder* decoder, void* buffer, int buffer_size) 
         av_hwframe_transfer_data(decoder->sw_frame, decoder->hw_frame, 0);
     } else {
         if (decoder->type != DECODE_TYPE_SOFTWARE) {
-            LOG_INFO("Decoder cascaded from hardware to software");
+            LOG_ERROR("Decoder cascaded from hardware to software");
             decoder->type = DECODE_TYPE_SOFTWARE;
         }
 
