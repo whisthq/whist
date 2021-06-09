@@ -23,8 +23,8 @@ const snowpackLibIndex = path.join(
   "index.js"
 )
 const oldContents = fs.readFileSync(snowpackLibIndex, "utf8")
-const newContents = oldContents.replace(
-  /\\0polyfill-node:/g,
+const newContents = oldContents.replaceAll(
+  "\\0polyfill-node:",
   "\\0polyfill-node."
 )
 fs.writeFileSync(snowpackLibIndex, newContents, "utf8")
