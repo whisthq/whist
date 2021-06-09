@@ -983,6 +983,11 @@ jobs:
                   # version number into the react frontend.
                   fetch-depth: 0
 
+            - name: Install Node.js 15
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 15
+
             # Necessary for Electron to upload packaged applications to AWS S3
             - name: Configure AWS S3 CLI
               uses: aws-actions/configure-aws-credentials@v1
@@ -1286,10 +1291,10 @@ jobs:
               shell: bash
               run: ./notifications/setup_notifications.sh
 
-            - name: Install Node.js
-              uses: actions/setup-node@v1
+            - name: Install Node.js 15
+              uses: actions/setup-node@v2.1.5
               with:
-                  node-version: "14.x"
+                  node-version: 15
 
             - name: Install the auth0-deploy-cli
               working-directory: microservices/auth0
