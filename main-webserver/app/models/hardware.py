@@ -1,4 +1,3 @@
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import true
 from ._meta import db
 
@@ -141,12 +140,6 @@ class SupportedAppImages(db.Model):
     # The coefficient delineating what fraction of live users we should have
     # as a prewarmed buffer
     preboot_number = db.Column(db.Float, nullable=False)
-    containers = relationship(
-        "UserContainer",
-        back_populates="app",
-        lazy="dynamic",
-        passive_deletes=True,
-    )
 
 
 class UserContainerState(db.Model):
