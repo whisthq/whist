@@ -2,7 +2,6 @@ export default {
   // App triggers
   appReady: "appReady",
   windowCreated: "windowCreated",
-  windowClosed: "windowClosed",
   beforeQuit: "beforeQuit",
 
   // Auth triggers
