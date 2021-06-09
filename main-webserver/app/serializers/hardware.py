@@ -7,7 +7,6 @@ from app.models import (
 )
 
 
-
 class SupportedAppImagesSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = SupportedAppImages
