@@ -47,7 +47,7 @@ AudioDecoder *create_audio_decoder(int sample_rate) {
     avcodec_register_all();
 #endif
 
-    decoder->pCodec = avcodec_find_decoder(AV_CODEC_ID_AAC);
+    decoder->pCodec = avcodec_find_decoder_by_name("libfdk_aac");
     if (!decoder->pCodec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_decoder(decoder);

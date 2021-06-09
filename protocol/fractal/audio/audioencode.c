@@ -50,7 +50,7 @@ AudioEncoder* create_audio_encoder(int bit_rate, int sample_rate) {
     // allocate the packet - we will set its fields in avcodec_receive_packet.
     encoder->packet = *av_packet_alloc();
 
-    encoder->pCodec = avcodec_find_encoder(AV_CODEC_ID_AAC);
+    encoder->pCodec = avcodec_find_encoder_by_name("libfdk_aac");
     if (!encoder->pCodec) {
         LOG_WARNING("AVCodec not found.");
         destroy_audio_encoder(encoder);
