@@ -86,6 +86,7 @@ fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
 fromTrigger("willQuit")
   .pipe()
   .subscribe((evt: IpcMainEvent) => {
+    console.log("number of windows is", getNumberWindows())
     if (getNumberWindows() === 0) {
       app.quit()
     } else {

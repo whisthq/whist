@@ -8,7 +8,7 @@ import { ipcBroadcast } from "@app/utils/ipc"
 import { StateIPC } from "@app/@types/state"
 import { map, startWith } from "rxjs/operators"
 
-import { getWindows } from "@app/utils/windows"
+import { getElectronWindows } from "@app/utils/windows"
 import { fromTrigger } from "@app/utils/flows"
 import { mapValues } from "lodash"
 
@@ -41,5 +41,5 @@ combineLatest([
   subscribed,
   fromTrigger("eventIPC").pipe(startWith({})),
 ]).subscribe(([subs, state]: [Partial<StateIPC>, Partial<StateIPC>]) => {
-  ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getWindows())
+  ipcBroadcast({ ...state, ...subs } as Partial<StateIPC>, getElectronWindows())
 })

@@ -10,8 +10,10 @@ import config, {
   getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
+import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 export let childProcess: ChildProcess | undefined = undefined
+
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments
@@ -78,6 +80,15 @@ export const protocolLaunch = async () => {
       process.platform !== "darwin" && {
         cwd: path.join(protocolFolder, "../.."),
       }),
+  })
+
+  // On MacOS, hide the app dock
+  hideAppDock()
+
+  // When the protocol closes, reset the childProcess to undefined and show the app dock on MacOS
+  protocol.on("close", () => {
+    childProcess = undefined
+    showAppDock()
   })
 
   childProcess = protocol
