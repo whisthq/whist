@@ -48,16 +48,16 @@ export const height = {
 export const getWindows = () => BrowserWindow.getAllWindows()
 
 export const showAppDock = () => {
-  // On non-macOS systems, app.dock is null, so we
-  // do nothing here.
+  // On MacOS, the regular option creates an app with an app dock
   app?.setActivationPolicy("regular")
+  // In case it's hidden, show the app dock
   app?.dock?.show().catch((err) => console.error(err))
 }
 
 export const hideAppDock = () => {
-  // On non-macOS systems, app.dock is null, so we
-  // do nothing here.
+  // On MacOS, the accessory option removes the app dock
   app?.setActivationPolicy("accessory")
+  // Hide the app dock just in case
   app?.dock?.hide()
 }
 
