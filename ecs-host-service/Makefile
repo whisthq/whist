@@ -95,18 +95,22 @@ run: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with local dev (debug) configuration...)
 	# we run the built binary instead of using `go run` because otherwise signal
 	# handling for Ctrl+C does not work
-	sudo env "PATH=$(PATH) APP_ENV=localdev" $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=localdev $(BUILD_FOLDER)/$(BINARY_NAME)
+
+runlocaldevwithdb: build
+	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with localdevwithdb configuration...)
+	sudo env "PATH=$(PATH)" APP_ENV=localdevwithdb $(BUILD_FOLDER)/$(BINARY_NAME)
 
 rundev: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with dev configuration...)
-	sudo env "PATH=$(PATH) APP_ENV=development" $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=development $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runstaging: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with staging configuration...)
-	sudo env "PATH=$(PATH) APP_ENV=staging" $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=staging $(BUILD_FOLDER)/$(BINARY_NAME)
 
 runprod: build
 	$(info running $(BUILD_FOLDER)/$(BINARY_NAME) with production configuration...)
-	sudo env "PATH=$(PATH) APP_ENV=production" $(BUILD_FOLDER)/$(BINARY_NAME)
+	sudo env "PATH=$(PATH)" APP_ENV=production $(BUILD_FOLDER)/$(BINARY_NAME)
 
 .PHONY: build clean run rundev runstaging runprod format lint vet check

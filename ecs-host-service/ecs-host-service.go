@@ -551,11 +551,11 @@ func main() {
 
 	// Only start the ECS Agent if we are talking to a dev, staging, or
 	// production webserver.
-	if logger.GetAppEnvironment() != logger.EnvLocalDev {
-		logger.Infof("Talking to the %v webserver -- starting ECS Agent.", logger.GetAppEnvironment())
+	if logger.GetAppEnvironment() != logger.EnvLocalDev && logger.GetAppEnvironment() != logger.EnvLocalDevWithDB {
+		logger.Infof("Talking to the %v webserver located at %v -- starting ECS Agent.", logger.GetAppEnvironment(), logger.GetFractalWebserver())
 		startECSAgent(globalCtx, globalCancel, &goroutineTracker)
 	} else {
-		logger.Infof("Running in environment LocalDev, so not starting ecs-agent.")
+		logger.Infof("Running in environment %s, so not starting ecs-agent.", logger.GetAppEnvironment())
 	}
 
 	// Start main event loop
