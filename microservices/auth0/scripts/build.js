@@ -1,8 +1,8 @@
 const fs = require('fs')
 const path = require('path')
 
-const files = fs.readdirSync('./src')
-const paths = files.map(file => path.resolve(process.cwd(), './src', file))
+const files = fs.readdirSync('./src/hooks')
+const paths = files.map(file => path.resolve(process.cwd(), './src/hooks', file))
 
 const { NodeResolvePlugin } = require('@esbuild-plugins/node-resolve')
 
