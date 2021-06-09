@@ -97,6 +97,19 @@ fromTrigger("beforeQuit")
     }
   })
 
+fromTrigger("trayQuitAction")
+  .pipe(withLatestFrom(email))
+  .subscribe(([, email_]: [any, string]) => {
+    destroyTray()
+    uploadToS3(email_)
+      .then(() => {
+        app.quit()
+      })
+      .catch(() => {
+        app.quit()
+      })
+  })
+
 // If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded").subscribe(() => {
   autoUpdater.quitAndInstall()

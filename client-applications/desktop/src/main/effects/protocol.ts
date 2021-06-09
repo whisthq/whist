@@ -3,9 +3,7 @@
  * @file app.ts
  * @brief This file contains subscriptions to Observables related to protocol launching.
  */
-import { merge } from "rxjs"
-
-import { protocolStreamInfo, protocolStreamKill } from "@app/utils/protocol"
+import { protocolStreamInfo } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
 
 // The current implementation of the protocol process shows its own loading
@@ -25,13 +23,5 @@ fromTrigger("mandelboxFlowSuccess").subscribe(
     }
   }) => {
     protocolStreamInfo(info)
-  }
-)
-
-// If we have an error, close the protocol. We expect that an effect elsewhere
-// this application will take care of showing an appropriate error message.
-merge(fromTrigger("clearCacheAction"), fromTrigger("trayQuitAction")).subscribe(
-  () => {
-    protocolStreamKill()
   }
 )
