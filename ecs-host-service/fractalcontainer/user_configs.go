@@ -75,7 +75,7 @@ func (c *containerData) PopulateUserConfigs() error {
 		"-pass", "pass:"+string(c.configEncryptionToken), "-pbkdf2")
 	decryptConfigOutput, err := decryptConfigCmd.CombinedOutput()
 	if err != nil {
-		return logger.MakeError("Could not decrypt config: %s. Output: %s", err, decryptConfigOutput)
+		return logger.MakeError("Could not decrypt config for userID %s and fractalID %s: %s. Output: %s", c.userID, c.GetFractalID(), err, decryptConfigOutput)
 	}
 	logger.Infof("Decrypted config to %s", decTarPath)
 
