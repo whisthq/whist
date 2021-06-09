@@ -1,4 +1,9 @@
-rules: []
+rules:
+  - name: add-customer-id-claim
+    script: ./src/rules/add-customer-id-claim.js
+    stage: login_success
+    enabled: true
+    order: 1
 rulesConfigs: []
 hooks:
   - name: post-user-registration-hook
