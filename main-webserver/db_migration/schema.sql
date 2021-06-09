@@ -204,22 +204,6 @@ SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
---
--- Name: cluster_info; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.cluster_info (
-    cluster character varying NOT NULL,
-    "maxCPURemainingPerInstance" double precision,
-    "maxMemoryRemainingPerInstance" double precision,
-    "pendingTasksCount" bigint,
-    "runningTasksCount" bigint,
-    "registeredContainerInstancesCount" bigint,
-    "minContainers" bigint,
-    "maxContainers" bigint,
-    status character varying,
-    location character varying
-);
 
 
 
@@ -307,30 +291,6 @@ CREATE VIEW hardware.instance_sorted AS
 
 
 
---
--- Name: cluster_sorted; Type: VIEW; Schema: hardware; Owner: -
--- NOTE:  the complex OR condition is to handle both clusters that are
--- underloaded and clusters that have just been created
--- since AWS default returns 0 for max memory for clusters
--- early in their lifecycle
---
-
-
-CREATE VIEW hardware.cluster_sorted AS
- SELECT cluster_info.cluster,
-    cluster_info."maxCPURemainingPerInstance",
-    cluster_info."maxMemoryRemainingPerInstance",
-    cluster_info."pendingTasksCount",
-    cluster_info."runningTasksCount",
-    cluster_info."registeredContainerInstancesCount",
-    cluster_info."minContainers",
-    cluster_info."maxContainers",
-    cluster_info.status,
-    cluster_info.location
-   FROM hardware.cluster_info
-  WHERE (((cluster_info."registeredContainerInstancesCount" < cluster_info."maxContainers") OR (COALESCE(cluster_info."maxMemoryRemainingPerInstance", (0)::double precision) > (8500)::double precision) OR (cluster_info."maxMemoryRemainingPerInstance"::double precision = 0::double precision)) AND ((cluster_info.cluster)::text !~~ '%test%'::text))
-  ORDER BY cluster_info."registeredContainerInstancesCount" DESC, COALESCE(cluster_info."runningTasksCount", (0)::bigint) DESC, cluster_info."maxCPURemainingPerInstance" DESC, cluster_info."maxMemoryRemainingPerInstance" DESC;
-
 
 --
 -- Name: region_to_ami; Type: TABLE; Schema: hardware; Owner: -
@@ -376,27 +336,6 @@ CREATE TABLE hardware.user_app_state (
     state character varying(255)
 );
 
-
---
--- Name: user_containers; Type: TABLE; Schema: hardware; Owner: -
---
-
-CREATE TABLE hardware.user_containers (
-    container_id character varying NOT NULL,
-    ip character varying NOT NULL,
-    location character varying NOT NULL,
-    state character varying NOT NULL,
-    user_id character varying,
-    port_32262 bigint DEFAULT '-1'::integer NOT NULL,
-    last_updated_utc_unix_ms bigint,
-    cluster character varying,
-    port_32263 bigint DEFAULT '-1'::integer NOT NULL,
-    port_32273 bigint DEFAULT '-1'::integer NOT NULL,
-    secret_key text NOT NULL,
-    task_definition character varying,
-    task_version integer DEFAULT NULL,
-    dpi integer DEFAULT 96
-);
 
 
 --
