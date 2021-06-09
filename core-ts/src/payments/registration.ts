@@ -9,6 +9,7 @@ import { StripeClient } from './'
  * @param phone - Customer phone number
  * @param id - Customer userID
  * @param username  - Customer username
+ * @return An object representing a Stripe customer
  */
 export async function registerWithTrial(
   this: StripeClient,
@@ -38,4 +39,6 @@ export async function registerWithTrial(
       {price: priceId}
     ]
   });
+
+  return customer;
 }
