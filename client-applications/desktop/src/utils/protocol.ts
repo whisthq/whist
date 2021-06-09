@@ -5,12 +5,14 @@
 import { app } from "electron"
 import path from "path"
 import fs from "fs"
+import events from "events"
 import { spawn, ChildProcess } from "child_process"
 import config, {
   getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 
+export const childProcess = new events.EventEmitter()
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments
@@ -79,7 +81,8 @@ export const protocolLaunch = async () => {
       }),
   })
 
-  return protocol
+  childProcess.emit("spawn", protocol)
+  protocol.on("close", (code) => childProcess.emit("close", code))
 }
 
 // Stream the rest of the info that the protocol needs

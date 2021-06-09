@@ -19,7 +19,4 @@ createTrigger(
   fromEvent(app as EventEmitter, "browser-window-created")
 )
 // Fires when there are no windows left and Electron wants to quit the app
-createTrigger(
-  TRIGGER.windowsAllClosed,
-  fromEvent(app as EventEmitter, "window-all-closed")
-)
+createTrigger(TRIGGER.willQuit, fromEvent(app as EventEmitter, "will-quit"))

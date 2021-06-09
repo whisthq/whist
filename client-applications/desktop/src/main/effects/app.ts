@@ -6,8 +6,8 @@
 
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { merge, zip, combineLatest } from "rxjs"
-import { mapTo, take, pluck } from "rxjs/operators"
+import { merge, zip } from "rxjs"
+import { mapTo, take, pluck, withLatestFrom } from "rxjs/operators"
 import path from "path"
 import { ChildProcess } from "child_process"
 
@@ -17,8 +17,10 @@ import {
   createAuthWindow,
   createUpdateWindow,
   createSignoutWindow,
+  createProtocolWindow,
   showAppDock,
   hideAppDock,
+  getWindows,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -26,6 +28,8 @@ import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
+import { protocolIsRunning } from "@app/main/observables/protocol"
+import { fromSignal } from "@app/utils/observables"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -72,27 +76,12 @@ fromTrigger("notPersisted").subscribe(() => {
   createAuthWindow()
 })
 
-// By default, the window-all-closed Electron event will cause the application
-// to close. We want to have full control over when Electron quits, so we disable
-// this behavior. The only exception is if an update available, in which case we 
-// can't preventDefault() because electron-updater's quitAndInstall() function relies
-// on the app quitting by default.
-combineLatest(
-  fromTrigger("windowsAllClosed"),
-  fromTrigger("updateNotAvailable")
-).subscribe(([event]: [any, any]) => {
-  ;(event as IpcMainEvent).preventDefault()
-})
-
 // When the protocol closes, upload protocol logs to S3
 zip([
   merge(fromTrigger("persisted"), fromTrigger("authFlowSuccess")).pipe(
     pluck("email")
   ),
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowSuccess")
-  ),
+  fromTrigger("childProcessClose"),
 ]).subscribe(([email]: [string, ChildProcess]) => {
   uploadToS3(email).catch((err) => console.error(err))
 })
@@ -103,13 +92,31 @@ zip([
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
-  closeWindows()
+  createProtocolWindow()
   hideAppDock()
   createTray(x.email)
 })
 
 // Show the Fractal logo in the dock when the Electron window re-appears (e.g. error or auth window)
-fromTrigger("windowCreated").subscribe(() => showAppDock())
+fromTrigger("windowCreated")
+  .pipe(withLatestFrom(protocolIsRunning))
+  .subscribe(([, running]: [any, boolean]) => {
+    if (!running) showAppDock()
+  })
+
+fromTrigger("willQuit")
+  .pipe(
+    withLatestFrom(
+      fromSignal(protocolIsRunning, fromTrigger("updateNotAvailable"))
+    )
+  )
+  .subscribe(([evt, running]: [IpcMainEvent, boolean]) => {
+    if (!running && getWindows().length === 0) {
+      app.quit()
+    } else {
+      evt?.preventDefault()
+    }
+  })
 
 // If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded").subscribe(() => {
@@ -126,10 +133,7 @@ fromTrigger("updateAvailable").subscribe(() => {
 // When the protocol is closed, destroy the tray icon. If Fractal ran successfully,
 // also quit the application
 zip(
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowFailure")
-  ),
+  fromTrigger("childProcessClose"),
   merge(
     fromTrigger("mandelboxFlowSuccess").pipe(mapTo(true)),
     fromTrigger("mandelboxFlowFailure").pipe(mapTo(false))

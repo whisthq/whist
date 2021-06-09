@@ -11,6 +11,7 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
 } from "@app/utils/constants"
+import { protocolLaunch } from "@app/utils/protocol"
 
 const { buildRoot } = config
 
@@ -53,12 +54,14 @@ export const closeWindows = () => {
 export const showAppDock = () => {
   // On non-macOS systems, app.dock is null, so we
   // do nothing here.
+  app?.setActivationPolicy("regular")
   app?.dock?.show().catch((err) => console.error(err))
 }
 
 export const hideAppDock = () => {
   // On non-macOS systems, app.dock is null, so we
   // do nothing here.
+  app?.setActivationPolicy("accessory")
   app?.dock?.hide()
 }
 
@@ -116,10 +119,6 @@ export const createWindow = (
     onReady != null ? onReady(win) : win.show()
   })
 
-  win.on("close", () => {
-    if (getWindows().length === 1) app.quit()
-  })
-
   return win
 }
 
@@ -161,11 +160,17 @@ export const createUpdateWindow = () =>
   } as BrowserWindowConstructorOptions)
 
 export const createErrorWindow = (hash: string) => {
+  const windows = getWindows()
+
   createWindow(hash, {
     ...base,
     ...width.md,
     ...height.xs,
   } as BrowserWindowConstructorOptions)
+
+  windows.forEach((win: BrowserWindow) => {
+    win.close()
+  })
 }
 
 export const createSignoutWindow = () => {
@@ -174,4 +179,16 @@ export const createSignoutWindow = () => {
     ...width.md,
     ...height.xs,
   } as BrowserWindowConstructorOptions)
+}
+
+export const createProtocolWindow = () => {
+  const windows = getWindows()
+
+  protocolLaunch()
+    .then(() => {
+      windows.forEach((win: BrowserWindow) => {
+        win.close()
+      })
+    })
+    .catch((err) => console.error(err))
 }

@@ -5,14 +5,14 @@
  */
 
 import { Observable, combineLatest } from "rxjs"
-import { skipUntil, startWith, tap, map } from "rxjs/operators"
+import { skipUntil, tap, map } from "rxjs/operators"
 import { ChildProcess } from "child_process"
 
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
 } from "@app/utils/mandelbox"
-import { closeWindows, createErrorWindow } from "@app/utils/windows"
+import { createErrorWindow } from "@app/utils/windows"
 import {
   NO_PAYMENT_ERROR,
   UNAUTHORIZED_ERROR,
@@ -25,10 +25,7 @@ import { fromTrigger } from "@app/utils/flows"
 // Wrapper function that waits for Electron to have loaded (so the error window can appear)
 // and kills the protocol (so the protocol isn't still running if there's an error)
 const onError = (obs: Observable<any>) =>
-  combineLatest(
-    obs,
-    fromTrigger("protocolLaunchFlowSuccess").pipe(startWith(undefined))
-  ).pipe(
+  combineLatest(obs, fromTrigger("childProcessSpawn")).pipe(
     skipUntil(fromTrigger("appReady")),
     tap(([, protocol]: [any, ChildProcess]) => {
       protocolStreamKill(protocol)
@@ -36,23 +33,17 @@ const onError = (obs: Observable<any>) =>
     map(([x]: [any, ChildProcess]) => x)
   )
 
-// Closees all windows and creates the error window
-const errorWindow = (hash: string) => {
-  closeWindows()
-  createErrorWindow(hash)
-}
-
 // For any failure, close all windows and display error window
-onError(fromTrigger("mandelboxFlowFailure")).subscribe((x) => {
+onError(fromTrigger("mandelboxFlowFailure")).subscribe((x: any) => {
   if (mandelboxCreateErrorNoAccess(x)) {
-    errorWindow(NO_PAYMENT_ERROR)
+    createErrorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
-    errorWindow(UNAUTHORIZED_ERROR)
+    createErrorWindow(UNAUTHORIZED_ERROR)
   } else {
-    errorWindow(MANDELBOX_INTERNAL_ERROR)
+    createErrorWindow(MANDELBOX_INTERNAL_ERROR)
   }
 })
 
 onError(fromTrigger("authFlowFailure")).subscribe(() => {
-  errorWindow(AUTH_ERROR)
+  createErrorWindow(AUTH_ERROR)
 })
