@@ -40,6 +40,8 @@ import (
 	dockerunits "github.com/docker/go-units"
 )
 
+var shutdownInstanceOnExit bool = false
+
 func init() {
 	// Initialize random number generator for all subpackages
 	rand.Seed(time.Now().UnixNano())
@@ -484,10 +486,10 @@ func main() {
 	goroutineTracker := sync.WaitGroup{}
 	defer func() {
 		// This function cleanly shuts down the Fractal ECS host service. Note that
-		// besides the host machine itself shutting down, this deferred function
-		// from main() should be the _only_ way that the host service exits. In
-		// particular, it should be as a result of a panic() in main, the global
-		// context being cancelled, or a Ctrl+C interrupt.
+		// besides the host machine itself being forcefully shut down, this
+		// deferred function from main() should be the _only_ way that the host
+		// service exits. In particular, it should be as a result of a panic() in
+		// main, the global context being cancelled, or a Ctrl+C interrupt.
 
 		// Note that this function, while nontrivial, has intentionally been left
 		// as part of main() for the following reasons:
@@ -511,12 +513,24 @@ func main() {
 		// process.
 		goroutineTracker.Wait()
 
-		// Shut down the logging infrastructure.
-		logger.Close()
-
 		uninitializeFilesystem()
 
+		// Drain to our remote logging providers, but don't yet stop recording new
+		// events, in case the shutdown fails.
+		logger.FlushLogzio()
+		logger.FlushSentry()
+
 		logger.Info("Finished host service shutdown procedure. Finally exiting...")
+		if shutdownInstanceOnExit {
+			if err := exec.Command("shutdown", "now").Run(); err != nil {
+				// This error will not go to sentry or logz!
+				logger.Errorf("Couldn't shut down instance: %s", err)
+			}
+		}
+
+		// Shut down the logging infrastructure (including re-draining the queues).
+		logger.Close()
+
 		os.Exit(0)
 	}()
 
@@ -644,6 +658,11 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 				case *httpserver.SpinUpMandelboxRequest:
 					go SpinUpMandelbox(globalCtx, globalCancel, goroutineTracker, dockerClient, serverevent.(*httpserver.SpinUpMandelboxRequest))
 
+				case *httpserver.DrainAndShutdownRequest:
+					logger.Infof("Got a DrainAndShutdownRequest... cancelling the global context.")
+					shutdownInstanceOnExit = true
+					globalCancel()
+
 				default:
 					if serverevent != nil {
 						err := logger.MakeError("unimplemented handling of server event [type: %T]: %v", serverevent, serverevent)
@@ -651,7 +670,6 @@ func startEventLoop(globalCtx context.Context, globalCancel context.CancelFunc, 
 						serverevent.ReturnResult("", err)
 					}
 				}
-
 			}
 		}
 	}()

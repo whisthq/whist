@@ -89,17 +89,17 @@ type SetContainerStartValuesRequest struct {
 	UserID               string             `json:"user_id"`                // User ID of the container user
 	ClientAppAccessToken string             `json:"client_app_auth_secret"` // User access token for client app verification
 	ContainerARN         string             `json:"container_ARN"`          // AWS ID of the container
-	resultChan           chan requestResult // Channel to pass the start values setting result between goroutines
+	resultChan           chan requestResult // Channel to pass the request result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *SetContainerStartValuesRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
-// createResultChan is called to create the Go channel to pass start values setting request
-// result back to the HTTP request handler via ReturnResult
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
 func (s *SetContainerStartValuesRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -135,17 +135,17 @@ type SetConfigEncryptionTokenRequest struct {
 	UserID                string             `json:"user_id"`                 // User to whom token belongs
 	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
 	ClientAppAccessToken  string             `json:"client_app_auth_secret"`  // User access token for client app verification
-	resultChan            chan requestResult // Channel to pass the config encryption token setting result between goroutines
+	resultChan            chan requestResult // Channel to pass the request result between goroutines
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *SetConfigEncryptionTokenRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
-// createResultChan is called to create the Go channel to pass config encryption token setting request
-// result back to the HTTP request handler via ReturnResult
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
 func (s *SetConfigEncryptionTokenRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -184,7 +184,7 @@ type SpinUpMandelboxRequest struct {
 	DPI                   int                `json:"dpi"`                     // DPI to set for the container
 	UserID                string             `json:"user_id"`                 // User ID of the container user
 	ConfigEncryptionToken string             `json:"config_encryption_token"` // User-specific private encryption token
-	resultChan            chan requestResult // Channel to pass the start values setting result between goroutines
+	resultChan            chan requestResult // Channel to pass the request result between goroutines
 }
 
 // SpinUpMandelboxRequestResult defines the data returned by the
@@ -198,13 +198,13 @@ type SpinUpMandelboxRequestResult struct {
 }
 
 // ReturnResult is called to pass the result of a request back to the HTTP
-// request handler
+// request handler.
 func (s *SpinUpMandelboxRequest) ReturnResult(result interface{}, err error) {
 	s.resultChan <- requestResult{result, err}
 }
 
-// createResultChan is called to create the Go channel to pass start values setting request
-// result back to the HTTP request handler via ReturnResult
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
 func (s *SpinUpMandelboxRequest) createResultChan() {
 	if s.resultChan == nil {
 		s.resultChan = make(chan requestResult)
@@ -220,6 +220,47 @@ func processSpinUpMandelboxRequest(w http.ResponseWriter, r *http.Request, queue
 
 	// Verify authorization and unmarshal into the right object type
 	var reqdata SpinUpMandelboxRequest
+	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
+		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
+		return
+	}
+
+	// Send request to queue, then wait for result
+	queue <- &reqdata
+	res := <-reqdata.resultChan
+
+	res.send(w)
+}
+
+// DrainAndShutdownRequest defines the (unauthenticated) drain_and_shutdown
+// endpoint, called by the webserver as part of scaling down an instance.
+type DrainAndShutdownRequest struct {
+	resultChan chan requestResult // Channel to pass the request result between goroutines
+}
+
+// ReturnResult is called to pass the result of a request back to the HTTP
+// request handler.
+func (s *DrainAndShutdownRequest) ReturnResult(result interface{}, err error) {
+	s.resultChan <- requestResult{result, err}
+}
+
+// createResultChan is called to create the Go channel to pass the request
+// result back to the HTTP request handler via ReturnResult.
+func (s *DrainAndShutdownRequest) createResultChan() {
+	if s.resultChan == nil {
+		s.resultChan = make(chan requestResult)
+	}
+}
+
+// Process an HTTP request for setting the start values of a container, to be handled in ecs-host-service.go.
+func processDrainAndShutdownRequest(w http.ResponseWriter, r *http.Request, queue chan<- ServerRequest) {
+	// Verify that it is an POST request
+	if verifyRequestType(w, r, http.MethodPost) != nil {
+		return
+	}
+
+	// Verify authorization and unmarshal into the right object type
+	var reqdata DrainAndShutdownRequest
 	if err := authenticateAndParseRequest(w, r, &reqdata, true); err != nil {
 		logger.Errorf("Error authenticating and parsing %T: %s", reqdata, err)
 		return
@@ -357,6 +398,7 @@ func Start(globalCtx context.Context, globalCancel context.CancelFunc, goroutine
 	mux.HandleFunc("/set_container_start_values", createHandler(processSetContainerStartValuesRequest))
 	mux.HandleFunc("/set_config_encryption_token", createHandler(processSetConfigEncryptionTokenRequest))
 	mux.HandleFunc("/spin_up_mandelbox", createHandler(processSpinUpMandelboxRequest))
+	mux.HandleFunc("/drain_and_shutdown", createHandler(processDrainAndShutdownRequest))
 
 	// Create the server itself
 	server := &http.Server{
