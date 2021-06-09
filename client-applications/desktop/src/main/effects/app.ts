@@ -17,7 +17,7 @@ import {
   createProtocolWindow,
   getNumberWindows,
 } from "@app/utils/windows"
-import { createTray } from "@app/utils/tray"
+import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
 import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
@@ -86,6 +86,7 @@ fromTrigger("beforeQuit")
     if (getNumberWindows() > 0) {
       evt?.preventDefault()
     } else {
+      destroyTray()
       uploadToS3(email_)
         .then(() => {
           app.quit()
