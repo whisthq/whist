@@ -305,12 +305,13 @@ static bool try_next_decoder(VideoDecoder* decoder) {
 
         for (; i < NUM_DECODER_TYPES; i++) {
             decoder->type = decoder_precedence[i];
-	    if (decoder->type == DECODE_TYPE_SOFTWARE) {
             if (try_setup_video_decoder(decoder) < 0) {
                 LOG_INFO("Video decoder: Failed, trying next decoder");
             } else {
                 LOG_INFO("Video decoder: Success!");
-		LOG_ERROR("Video decoder: all hardware decoders failed. Now using software decoder.");
+		if (decoder->type == DECODE_TYPE_SOFTWARE) {
+		    LOG_ERROR("Video decoder: all hardware decoders failed. Now using software decoder.");
+		}
                 return true;
             }
         }
