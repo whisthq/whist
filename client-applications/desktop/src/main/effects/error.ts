@@ -4,10 +4,6 @@
  * @brief This file contains subscriptions to error Observables.
  */
 
-import { Observable, combineLatest } from "rxjs"
-import { skipUntil, tap, map } from "rxjs/operators"
-import { ChildProcess } from "child_process"
-
 import {
   mandelboxCreateErrorNoAccess,
   mandelboxCreateErrorUnauthorized,
@@ -19,22 +15,10 @@ import {
   MANDELBOX_INTERNAL_ERROR,
   AUTH_ERROR,
 } from "@app/utils/error"
-import { protocolStreamKill } from "@app/utils/protocol"
 import { fromTrigger } from "@app/utils/flows"
 
-// Wrapper function that waits for Electron to have loaded (so the error window can appear)
-// and kills the protocol (so the protocol isn't still running if there's an error)
-const onError = (obs: Observable<any>) =>
-  combineLatest(obs, fromTrigger("childProcessSpawn")).pipe(
-    skipUntil(fromTrigger("appReady")),
-    tap(([, protocol]: [any, ChildProcess]) => {
-      protocolStreamKill(protocol)
-    }),
-    map(([x]: [any, ChildProcess]) => x)
-  )
-
 // For any failure, close all windows and display error window
-onError(fromTrigger("mandelboxFlowFailure")).subscribe((x: any) => {
+fromTrigger("mandelboxFlowFailure").subscribe((x: any) => {
   if (mandelboxCreateErrorNoAccess(x)) {
     createErrorWindow(NO_PAYMENT_ERROR)
   } else if (mandelboxCreateErrorUnauthorized(x)) {
@@ -44,6 +28,6 @@ onError(fromTrigger("mandelboxFlowFailure")).subscribe((x: any) => {
   }
 })
 
-onError(fromTrigger("authFlowFailure")).subscribe(() => {
+fromTrigger("authFlowFailure").subscribe(() => {
   createErrorWindow(AUTH_ERROR)
 })

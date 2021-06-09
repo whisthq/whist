@@ -5,14 +5,13 @@
 import { app } from "electron"
 import path from "path"
 import fs from "fs"
-import events from "events"
 import { spawn, ChildProcess } from "child_process"
 import config, {
   getLoggingBaseFilePath,
   loggingFiles,
 } from "@app/config/environment"
 
-export const childProcess = new events.EventEmitter()
+export let childProcess: ChildProcess | undefined = undefined
 const { protocolName, protocolFolder } = config
 
 // Protocol arguments
@@ -81,13 +80,11 @@ export const protocolLaunch = async () => {
       }),
   })
 
-  childProcess.emit("spawn", protocol)
-  protocol.on("close", (code) => childProcess.emit("close", code))
+  childProcess = protocol
 }
 
 // Stream the rest of the info that the protocol needs
 export const protocolStreamInfo = (
-  protocol: ChildProcess,
   info: {
     mandelboxIP: string
     mandelboxSecret: string
@@ -98,14 +95,14 @@ export const protocolStreamInfo = (
     }
   }
 ) => {
-  writeStream(protocol, `ports?${serializePorts(info.mandelboxPorts)}`)
-  writeStream(protocol, `private-key?${info.mandelboxSecret}`)
-  writeStream(protocol, `ip?${info.mandelboxIP}`)
-  writeStream(protocol, "finished?0")
+  writeStream(childProcess, `ports?${serializePorts(info.mandelboxPorts)}`)
+  writeStream(childProcess, `private-key?${info.mandelboxSecret}`)
+  writeStream(childProcess, `ip?${info.mandelboxIP}`)
+  writeStream(childProcess, "finished?0")
 }
 
-export const protocolStreamKill = (protocol: ChildProcess | undefined) => {
-  writeStream(protocol, "kill?0")
+export const protocolStreamKill = () => {
+  writeStream(childProcess, "kill?0")
   // We send SIGINT just in case
-  protocol?.kill?.("SIGINT")
+  childProcess?.kill?.("SIGINT")
 }

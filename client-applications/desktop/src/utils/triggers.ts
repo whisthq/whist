@@ -2,6 +2,7 @@ export default {
   // App triggers
   appReady: "appReady",
   windowCreated: "windowCreated",
+  windowClosed: "windowClosed",
   willQuit: "willQuit",
 
   // Auth triggers
@@ -19,10 +20,6 @@ export default {
   // Persist triggers
   persisted: "persisted",
   notPersisted: "notPersisted",
-
-  // Protocol triggers
-  childProcessSpawn: "childProcessSpawn",
-  childProcessClose: "childProcessClose",
 
   // Renderer triggers
   loginAction: "loginAction",

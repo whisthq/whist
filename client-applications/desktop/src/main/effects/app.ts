@@ -17,9 +17,7 @@ import {
   createUpdateWindow,
   createSignoutWindow,
   createProtocolWindow,
-  showAppDock,
-  hideAppDock,
-  getWindows,
+  getNumberWindows,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -27,7 +25,7 @@ import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
-import { protocolIsRunning } from "@app/main/observables/protocol"
+import { email } from "@app/main/observables/user"
 import { fromSignal } from "@app/utils/observables"
 
 // Set custom app data folder based on environment
@@ -75,16 +73,6 @@ fromTrigger("notPersisted").subscribe(() => {
   createAuthWindow()
 })
 
-// When the protocol closes, upload protocol logs to S3
-zip([
-  merge(fromTrigger("persisted"), fromTrigger("authFlowSuccess")).pipe(
-    pluck("email")
-  ),
-  fromTrigger("childProcessClose"),
-]).subscribe(([email]: [string, ChildProcess]) => {
-  uploadToS3(email).catch((err) => console.error(err))
-})
-
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
 // If not, the filters on the application closing observable don't run.
@@ -92,25 +80,13 @@ zip([
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
   createProtocolWindow()
-  hideAppDock()
   createTray(x.email)
 })
 
-// Show the Fractal logo in the dock when the Electron window re-appears (e.g. error or auth window)
-fromTrigger("windowCreated")
-  .pipe(withLatestFrom(protocolIsRunning))
-  .subscribe(([, running]: [any, boolean]) => {
-    if (!running) showAppDock()
-  })
-
 fromTrigger("willQuit")
-  .pipe(
-    withLatestFrom(
-      fromSignal(protocolIsRunning, fromTrigger("updateNotAvailable"))
-    )
-  )
-  .subscribe(([evt, running]: [IpcMainEvent, boolean]) => {
-    if (!running && getWindows().length === 0) {
+  .pipe()
+  .subscribe((evt: IpcMainEvent) => {
+    if (getNumberWindows() === 0) {
       app.quit()
     } else {
       evt?.preventDefault()
@@ -126,19 +102,6 @@ fromTrigger("updateDownloaded").subscribe(() => {
 fromTrigger("updateAvailable").subscribe(() => {
   createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
-})
-
-// When the protocol is closed, destroy the tray icon. If Fractal ran successfully,
-// also quit the application
-zip(
-  fromTrigger("childProcessClose"),
-  merge(
-    fromTrigger("mandelboxFlowSuccess").pipe(mapTo(true)),
-    fromTrigger("mandelboxFlowFailure").pipe(mapTo(false))
-  )
-).subscribe(([, success]: [any, boolean]) => {
-  destroyTray()
-  if (success) app.quit()
 })
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
@@ -170,5 +133,4 @@ fromTrigger("relaunchAction").subscribe(() => {
 
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
-  hideAppDock()
 })

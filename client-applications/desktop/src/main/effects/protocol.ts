@@ -15,29 +15,24 @@ import { fromTrigger } from "@app/utils/flows"
 
 // We solve this streaming the ip, secret_key, and ports info to the protocol
 // they become available from when a successful mandelbox status response.
-zip(
-  fromTrigger("childProcessSpawn"),
-  fromTrigger("mandelboxFlowSuccess")
-).subscribe(
-  ([protocol, response]: [
-    ChildProcess,
-    {
-      mandelboxIP: string
-      mandelboxSecret: string
-      mandelboxPorts: {
-        port_32262: number
-        port_32263: number
-        port_32273: number
-      }
+fromTrigger("mandelboxFlowSuccess").subscribe(
+  (info: {
+    mandelboxIP: string
+    mandelboxSecret: string
+    mandelboxPorts: {
+      port_32262: number
+      port_32263: number
+      port_32273: number
     }
-  ]) => {
-    protocolStreamInfo(protocol, response)
+  }) => {
+    protocolStreamInfo(info)
   }
 )
 
 // If we have an error, close the protocol. We expect that an effect elsewhere
 // this application will take care of showing an appropriate error message.
-zip(
-  fromTrigger("childProcessSpawn"),
-  merge(fromTrigger("clearCacheAction"), fromTrigger("trayQuitAction"))
-).subscribe(([protocol]: [ChildProcess, any]) => protocolStreamKill(protocol))
+merge(fromTrigger("clearCacheAction"), fromTrigger("trayQuitAction")).subscribe(
+  () => {
+    protocolStreamKill()
+  }
+)

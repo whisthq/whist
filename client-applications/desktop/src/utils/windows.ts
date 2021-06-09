@@ -2,6 +2,7 @@
 // main process, and passes all the configuration needed to load files into
 // Electron renderer windows.
 import path from "path"
+import events from "events"
 import { app, BrowserWindow, BrowserWindowConstructorOptions } from "electron"
 import config from "@app/config/environment"
 import { FractalEnvironments } from "../../config/configs"
@@ -11,9 +12,16 @@ import {
   WindowHashSignout,
   WindowHashUpdate,
 } from "@app/utils/constants"
-import { protocolLaunch } from "@app/utils/protocol"
+import {
+  protocolLaunch,
+  childProcess,
+  protocolStreamKill,
+} from "@app/utils/protocol"
+import { showAppDock, hideAppDock } from "@app/utils/dock"
 
 const { buildRoot } = config
+
+export const windowEmitter = new events.EventEmitter()
 
 export const base = {
   webPreferences: {
@@ -45,20 +53,24 @@ export const height = {
   xl3: { height: 16 * 96 },
 }
 
-export const getWindows = () => BrowserWindow.getAllWindows()
+export const getElectronWindows = () => BrowserWindow.getAllWindows()
 
-export const showAppDock = () => {
-  // On MacOS, the regular option creates an app with an app dock
-  app?.setActivationPolicy("regular")
-  // In case it's hidden, show the app dock
-  app?.dock?.show().catch((err) => console.error(err))
+export const getNumberWindows = () => {
+  const numElectronWindows = getElectronWindows().length
+  const numProtocolWindows = childProcess === undefined ? 0 : 1
+  return numElectronWindows + numProtocolWindows
 }
 
-export const hideAppDock = () => {
-  // On MacOS, the accessory option removes the app dock
-  app?.setActivationPolicy("accessory")
-  // Hide the app dock just in case
-  app?.dock?.hide()
+export const closeElectronWindows = (windows?: BrowserWindow[]) => {
+  const windowsToClose = windows ?? getElectronWindows()
+  windowsToClose.forEach((win: BrowserWindow) => {
+    win.close()
+  })
+}
+
+export const closeAllWindows = (windows?: BrowserWindow[]) => {
+  closeElectronWindows(windows)
+  protocolStreamKill()
 }
 
 export const getWindowTitle = () => {
@@ -79,7 +91,7 @@ export const createWindow = (args: {
   closeOtherWindows?: boolean
 }) => {
   const { title } = config
-  const currentOpenWindows = getWindows()
+  const currentElectronWindows = getElectronWindows()
   // We don't want to show a new BrowserWindow right away. We should manually
   // show the window after it has finished loading.
   const win = new BrowserWindow({ ...args.options, show: false, title })
@@ -117,10 +129,11 @@ export const createWindow = (args: {
     win.show()
   })
 
-  if (args.closeOtherWindows)
-    currentOpenWindows.forEach((win: BrowserWindow) => {
-      win.close()
-    })
+  win.on("close", () => {
+    windowEmitter.emit("close")
+  })
+
+  if (args.closeOtherWindows ?? false) closeAllWindows(currentElectronWindows)
 
   return win
 }
@@ -190,12 +203,15 @@ export const createSignoutWindow = () => {
 }
 
 export const createProtocolWindow = () => {
-  const windows = getWindows()
+  const currentElectronWindows = getElectronWindows()
 
   protocolLaunch()
     .then(() => {
-      windows.forEach((win: BrowserWindow) => {
-        win.close()
+      hideAppDock()
+      closeElectronWindows(currentElectronWindows)
+
+      childProcess?.on("close", () => {
+        showAppDock()
       })
     })
     .catch((err) => console.error(err))
