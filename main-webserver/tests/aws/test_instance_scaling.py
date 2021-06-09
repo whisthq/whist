@@ -11,7 +11,7 @@ def test_scale_up_single(hijack_ec2_calls, mock_get_num_new_instances, hijack_db
     """
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(1)
-    aws_funcs.do_scale_up("us-east-1", "test-AMI")
+    aws_funcs.do_scale_up_if_necessary("us-east-1", "test-AMI")
     assert len(call_list) == 1
     assert call_list[0]["kwargs"]["image_id"] == "test-AMI"
 
@@ -24,7 +24,7 @@ def test_scale_up_multiple(hijack_ec2_calls, mock_get_num_new_instances, hijack_
     desired_num = randint(1, 10)
     call_list = hijack_ec2_calls
     mock_get_num_new_instances(desired_num)
-    aws_funcs.do_scale_up("us-east-1", "test-AMI")
+    aws_funcs.do_scale_up_if_necessary("us-east-1", "test-AMI")
     assert len(call_list) == desired_num
     assert all(elem["kwargs"]["image_id"] == "test-AMI" for elem in call_list)
 
@@ -36,7 +36,7 @@ def test_scale_down_single_available(hijack_ec2_calls, mock_get_num_new_instance
     call_list = hijack_ec2_calls
     bulk_instance(instance_name="test_instance", ami_id="test-AMI")
     mock_get_num_new_instances(-1)
-    aws_funcs.do_scale_down("us-east-1", "test-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert len(call_list) == 1
     assert call_list[0]["args"][1] == ["test_instance"]
 
@@ -48,7 +48,7 @@ def test_scale_down_single_unavailable(hijack_ec2_calls, mock_get_num_new_instan
     call_list = hijack_ec2_calls
     bulk_instance(instance_name="test_instance", associated_containers=1, ami_id="test-AMI")
     mock_get_num_new_instances(-1)
-    aws_funcs.do_scale_down("us-east-1", "test-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert len(call_list) == 0
 
 
@@ -66,7 +66,7 @@ def test_scale_down_single_wrong_region(
         location="us-east-2",
     )
     mock_get_num_new_instances(-1)
-    aws_funcs.do_scale_down("us-east-1", "test-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert len(call_list) == 0
 
 
@@ -82,7 +82,7 @@ def test_scale_down_single_wrong_ami(hijack_ec2_calls, mock_get_num_new_instance
         location="us-east-2",
     )
     mock_get_num_new_instances(-1)
-    aws_funcs.do_scale_down("us-east-1", "wrong-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "wrong-AMI")
     assert len(call_list) == 0
 
 
@@ -97,7 +97,7 @@ def test_scale_down_multiple_available(hijack_ec2_calls, mock_get_num_new_instan
         bulk_instance(instance_name=f"test_instance_{instance}", ami_id="test-AMI")
         instance_list.append(f"test_instance_{instance}")
     mock_get_num_new_instances(-desired_num)
-    aws_funcs.do_scale_down("us-east-1", "test-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert len(call_list[0]["args"][1]) == desired_num
     assert set(call_list[0]["args"][1]) == set(instance_list)
 
@@ -123,7 +123,7 @@ def test_scale_down_multiple_partial_available(
             associated_containers=1,
         )
     mock_get_num_new_instances(-desired_num)
-    aws_funcs.do_scale_down("us-east-1", "test-AMI")
+    aws_funcs.try_scale_down_if_necessary("us-east-1", "test-AMI")
     assert len(call_list[0]["args"][1]) == num_inactive
     assert set(call_list[0]["args"][1]) == set(instance_list)
 
@@ -237,7 +237,7 @@ def test_buffer_region_sensitive(region_to_ami_map, bulk_instance):
 
 def test_scale_down_harness(monkeypatch, bulk_instance):
     """
-    tests that scale_down_all actually runs on every region/AMI pair in our db
+    tests that try_scale_down_if_necessary_all_regions actually runs on every region/AMI pair in our db
     """
     call_list = []
 
@@ -245,14 +245,14 @@ def test_scale_down_harness(monkeypatch, bulk_instance):
         nonlocal call_list
         call_list.append({"args": args, "kwargs": kwargs})
 
-    monkeypatch.setattr(aws_funcs, "do_scale_down", _helper)
+    monkeypatch.setattr(aws_funcs, "try_scale_down_if_necessary", _helper)
     bulk_instance(location="us-east-1", ami_id="test-ami-1")
     bulk_instance(location="us-east-1", ami_id="test-ami-1")
     bulk_instance(location="us-east-1", ami_id="test-ami-1")
     bulk_instance(location="us-east-1", ami_id="test-ami-2")
     bulk_instance(location="us-east-2", ami_id="test-ami-1")
     bulk_instance(location="us-east-2", ami_id="test-ami-2")
-    aws_funcs.scale_down_all()
+    aws_funcs.try_scale_down_if_necessary_all_regions()
     assert len(call_list) == 4
     args = [called["args"] for called in call_list]
     assert set(args) == {

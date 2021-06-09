@@ -37,7 +37,7 @@ from app.helpers.blueprint_helpers.aws.aws_container_post import (
     ping_helper,
     protocol_info,
 )
-from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up
+from app.helpers.blueprint_helpers.aws.aws_instance_post import do_scale_up_if_necessary
 from app.helpers.utils.general.auth import developer_required, payment_required
 from app.helpers.utils.locations.location_helper import get_loc_from_ip
 from app.helpers.utils.general.limiter import limiter, RATE_LIMIT_PER_MINUTE
@@ -371,7 +371,7 @@ def aws_container_ping(**kwargs):
 def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
     instance_id = find_instance(body.region)
     if instance_id is None:
-        return jsonify({"IP": "None"}), BAD_REQUEST
+        return jsonify({"IP": "None"}), NOT_FOUND
     instance = InstanceInfo.query.get(instance_id)
     obj = ContainerInfo(
         container_id=str(uuid.uuid4()),
@@ -386,7 +386,9 @@ def aws_container_assign(body: MandelboxAssignBody, **_kwargs):
         # Specifically, we want to scale in the region/AMI pair where we know
         # there's usage -- so we call do_scale_up with the location and AMI of the instance
 
-        scaling_thread = Thread(target=do_scale_up, args=(instance.location, instance.ami_id))
+        scaling_thread = Thread(
+            target=do_scale_up_if_necessary, args=(instance.location, instance.ami_id)
+        )
         scaling_thread.start()
 
     return jsonify({"IP": instance.ip}), ACCEPTED

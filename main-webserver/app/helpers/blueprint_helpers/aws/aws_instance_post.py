@@ -116,11 +116,11 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
      negative infinity)
 
      At the moment, our scaling algorithm is
-     'if we have less than 10 containers in a valid AMI/region pair,
+     - 'if we have less than 10 containers in a valid AMI/region pair,
      make a new instance'
-     'Else, if we have a full instance of extra space more than 10, try to
+     - 'Else, if we have a full instance of extra space more than 10, try to
      stop an instance'
-     'Else, we're fine'.
+     - 'Else, we're fine'.
     Args:
         region: which region we care about
         ami_id: which AMI ID we're checking
@@ -163,13 +163,15 @@ def _get_num_new_instances(region: str, ami_id: str) -> int:
     return 0
 
 
-# We make a collection of mutexes, one for each region and AMI
+# We make a collection of mutexes, one for each region and AMI.
 # Defaultdict is a lazy dict, that creates default objects (in this case locks)
-# as needed
+# as needed.
+# Note that this only works if we have 1 web process,
+# Multiprocess support will require DB synchronization/locking
 scale_mutex = defaultdict(threading.Lock)
 
 
-def do_scale_up(region: str, ami: str) -> None:
+def do_scale_up_if_necessary(region: str, ami: str) -> None:
     """
     Scales up new instances as needed, given a region and AMI to check
     Specifically, if we want to add X instances (_get_num_new_instances
@@ -189,6 +191,7 @@ def do_scale_up(region: str, ami: str) -> None:
             base_name = generate_name(starter_name=region)
             # TODO: test that we actually get 16 containers per instance
             # Which is savvy's guess as to g3.4xlarge capacity
+            # TODO: Move this value to top-level config when more fleshed out
             base_number_free_containers = 16
             for index in range(num_new):
                 client.start_instances(
@@ -213,7 +216,7 @@ def do_scale_up(region: str, ami: str) -> None:
                 db.session.commit()
 
 
-def do_scale_down(region: str, ami: str) -> None:
+def try_scale_down_if_necessary(region: str, ami: str) -> None:
     """
     Scales down new instances as needed, given a region and AMI to check
     Specifically, if we want to remove X instances (_get_num_new_instances
@@ -242,9 +245,9 @@ def do_scale_down(region: str, ami: str) -> None:
             client.stop_instances(list(instance.instance_id for instance in free_instances))
 
 
-def scale_down_all() -> None:
+def try_scale_down_if_necessary_all_regions() -> None:
     """
-    Runs do_scale_down on every region/AMI pair in our db
+    Runs try_scale_down_if_necessary on every region/AMI pair in our db
 
     """
     region_and_ami_list = [
@@ -252,10 +255,10 @@ def scale_down_all() -> None:
         for region in InstanceInfo.query.distinct(InstanceInfo.location, InstanceInfo.ami_id).all()
     ]
     for region, ami in region_and_ami_list:
-        do_scale_down(region, ami)
+        try_scale_down_if_necessary(region, ami)
 
 
-def repeated_scale_harness(time_delay: int) -> None:
+def repeated_scale_down_harness(time_delay: int) -> None:
     """
     checks scaling every time_delay seconds.
     NOTE:  this function keeps looping and will
@@ -263,8 +266,8 @@ def repeated_scale_harness(time_delay: int) -> None:
     Only run in background threads.
 
     Args:
-        time_delay (int):  how often to run the scaling
+        time_delay (int):  how often to run the scaling, in seconds
     """
     while True:
-        scale_down_all()
+        try_scale_down_if_necessary_all_regions()
         time.sleep(time_delay)
