@@ -16,7 +16,9 @@ def _coerce_json(_ctx, _param, values):
     try:
         dicts = [json.loads(v) for v in values]
         if not all(isinstance(d, dict) for d in dicts):
-            raise click.BadParameter("All --secrets much be JSON dictionaries.")
+            raise click.BadParameter(
+                "All --secrets much be JSON dictionaries."
+            )
         return dicts
     except json.JSONDecodeError as err:
         raise click.BadParameter(f"{type(err).__name__}: {err.args[0]}")
@@ -53,15 +55,8 @@ def create_cli(main_fn):
                                 parsed configuration schemas.
                  -- profiles:   A list of keys to use in flattening the
                                 configuration schemas.
-
-        valid_profiles=None:    A list of profile strings. If passed and a
-                                CLI argument is given that does not exist in
-                                the list, the CLI will error.
-
-        secrets_fn=lambda x: x: A function that transforms the secrets map
-                                before it's merged with the rest of the
-                                configuration. This is useful for adding
-                                additional secret values from other sources.
+    Returns:
+        None
     """
 
     @click.command()
