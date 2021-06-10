@@ -1,28 +1,57 @@
-name: "Monorepo Config"
+# workflows/core-ts-linting.yml
+#
+# Core TypeScript Library: Check PR
+# Checks a Core-TS PR for linting and testing success.
+
+name: "Core TypeScript Library: Check PR"
 
 on:
-  workflow_dispatch:
+    pull_request:
+        paths:
+            - "core-ts/**"
+            - "!core-ts/README.md"
+            - ".github/workflows/core-ts-check-pr.yml"
+    workflow_dispatch:
 
 jobs:
-  parse_config:
-    runs-on: ubuntu-latest
-    name: Parse /config schemas
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
+    lint:
+        name: Linting
+        runs-on: ubuntu-20.04
 
-      - name: View context attributes
-        uses: actions/github-script@v4
-        with:
-          script: console.log(context)
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
 
-      - name: Parse /config schemas
-        uses: ./.github/actions/monorepo-config
-        with:
-          secrets: "${{ toJSON(secrets) }}"
+            - name: Setup Node.js
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 15
 
-      # We need to give the "uses" path relative to the monorepo root.
-      # The path also requires the leading ./
-      # These will become available to the action as env variables.
-      # Note that GitHub will automatically capitalize the variable on the
-      # action side, and prefix it with INPUT_
+            - name: Run npm install
+              working-directory: core-ts
+              run: npm install
+
+            - name: Check if Code Follows ESLint Standards
+              working-directory: core-ts
+              run: npm run lint-check
+
+    test:
+        name: Testing
+        runs-on: ubuntu-20.04
+
+        steps:
+            - name: Checkout Git Repository
+              uses: actions/checkout@v2
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v2.1.5
+              with:
+                  node-version: 15
+
+            - name: Run npm install
+              working-directory: core-ts
+              run: npm install
+
+            - name: Run core-ts test suite
+              working-directory: core-ts
+              run: npm run test
