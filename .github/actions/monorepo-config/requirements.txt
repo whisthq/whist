@@ -1,0 +1,16 @@
+attrs==21.2.0
+click==8.0.1
+colorama==0.4.4
+commonmark==0.9.1
+iniconfig==1.1.1
+json5==0.9.5
+packaging==20.9
+pluggy==0.13.1
+py==1.10.0
+Pygments==2.9.0
+pyparsing==2.4.7
+pystache==0.5.4
+pytest==6.2.4
+PyYAML==5.4.1
+rich==10.2.2
+toml==0.10.2

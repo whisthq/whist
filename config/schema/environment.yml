@@ -1,0 +1,11 @@
+# client-applications/desktop/config/contstants.js: FractalNodeEnvironments
+NODEJS:
+  dev: "development"
+  production: "production"
+
+# client-applications/desktop/config/contstants.js: FractalEnvironments
+ENV:
+  local: "local"
+  dev: "dev"
+  staging: "staging"
+  production: "prod"
