@@ -81,8 +81,8 @@ const WindowBackground = (props: any) => {
 }
 
 ReactDOM.render(
-    <WindowBackground>
-      <RootComponent />
-    </WindowBackground>,
+  <WindowBackground>
+    <RootComponent />
+  </WindowBackground>,
   document.getElementById("root")
 )

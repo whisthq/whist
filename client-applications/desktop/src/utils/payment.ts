@@ -2,7 +2,7 @@ import { post } from "@app/utils/api"
 import { FractalCallbackUrls } from "@app/config/urls"
 
 const stripeBillingPortalCreate = () =>
-/*
+  /*
     Description: 
       Makes a webserver call to get a stripe customer portal url 
     
