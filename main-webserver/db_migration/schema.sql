@@ -278,7 +278,7 @@ CREATE VIEW hardware.instance_sorted AS
     sub_with_running.aws_ami_id,
     sub_with_running.location,
     sub_with_running."container_capacity" AS container_capacity,
-    sub_with_running.running_containers as num_running_containers
+    sub_with_running.num_running_containers
    FROM ( SELECT base_table.instance_name,
             base_table.aws_ami_id,
             base_table.location,
@@ -300,8 +300,8 @@ CREATE VIEW hardware.instance_sorted AS
 
  CREATE VIEW hardware.instance_allocation AS
     SELECT instance_name, aws_ami_id, location from hardware.instance_info
-    WHERE instance_name IN (select instance_id from hardware.instance_sorted)
-    AND last_pinged != -1 AND status = 'ACTIVE';
+    WHERE instance_name IN (select instance_name from hardware.instance_sorted)
+    AND last_updated_utc_unix_ms != -1 AND status = 'ACTIVE';
 
 
 
