@@ -529,7 +529,7 @@ int read_piped_arguments(bool *keep_waiting) {
             } else if (strlen(arg_name) == 4 && !strncmp(arg_name, "kill", strlen(arg_name))) {
                 // If arg_name is `kill`, then return failure
                 LOG_INFO("Killing client app");
-                return -1;
+                return 0;
             } else if (strlen(arg_name) == 8 && !strncmp(arg_name, "finished", strlen(arg_name))) {
                 // If arg_name is `finished`, then stop reading args from pipe
                 LOG_INFO("Finished piping arguments");

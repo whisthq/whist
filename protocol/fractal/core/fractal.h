@@ -528,6 +528,16 @@ typedef enum FractalClientMessageType {
 } FractalClientMessageType;
 
 /**
+ * @brief   Integer exit code.
+ * @details So the parent process of the protocol can receive the exit code.
+ */
+typedef enum FractalExitCode {
+    FRACTAL_EXIT_SUCCESS = 0,
+    FRACTAL_EXIT_FAILURE = 1,
+    FRACTAL_EXIT_CLI = 2
+} FractalExitCode;
+
+/**
  * @brief   Client message.
  * @details Message from a Fractal client to a Fractal server.
  */
@@ -700,7 +710,7 @@ int get_fmsg_size(FractalClientMessage* fmsg);
 /**
  * @brief                          Terminates the protocol
  */
-NORETURN void terminate_protocol();
+NORETURN void terminate_protocol(FractalExitCode exit_code);
 
 /**
  * @brief                          Safely copy a string from source to destination.
