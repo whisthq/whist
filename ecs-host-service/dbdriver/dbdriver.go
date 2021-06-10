@@ -12,33 +12,42 @@ import (
 	"github.com/fractal/fractal/ecs-host-service/utils"
 )
 
-// Fractal database connection strings
-// TODO: figure out the rest of these
-const localdevFractalDB = "user=uap4ch2emueqo9 host=localhost port=9999 dbname=d9rf2k3vd6hvbm"
+// `enabled` is a flag denoting whether the functions in this package should do
+// anything, or simply be no-ops. This is necessary, since we want the database
+// operations to be meaningful in environments where we can expect the database
+// guarantees to hold (i.e. `logger.EnvLocalDevWithDB` for now) but no-ops in
+// other environments.
+var enabled = (logger.GetAppEnvironment() == logger.EnvLocalDevWithDB)
 
-func getFractalDBConnString() string {
-	switch logger.GetAppEnvironment() {
-	case logger.EnvLocalDev:
-		return "fake string to throw error if used, since EnvLocalDev should not connect to a database"
-	case logger.EnvLocalDevWithDB:
-		return localdevFractalDB
-	default:
-		return localdevFractalDB
-	}
-}
-
+// This is the connection pool for the database. It is an error for `dbpool` to
+// be non-nil if `enabled` is true.
 var dbpool *pgxpool.Pool
 
+// Initialize creates and tests a connection to the database, and registers the
+// instance in the database.
 func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goroutineTracker *sync.WaitGroup) {
+	if !enabled {
+		return
+	}
+
+	// Ensure this function is not called multiple times
+	if dbpool != nil {
+		logger.Panicf(globalCancel, "dbdriver.Initialize() called multiple times!")
+	}
+
 	connStr := getFractalDBConnString()
 	pgxConfig, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		logger.Panicf(globalCancel, "Unable to parse database connection string! Error: %s", err)
 		return
 	}
+
 	// TODO: investigate and optimize the pgxConfig settings
+
 	// We always want to have at least one connection open.
 	pgxConfig.MinConns = 1
+
+	// We want to test the connection right away and fail fast.
 	pgxConfig.LazyConnect = false
 
 	dbpool, err = pgxpool.ConnectConfig(globalCtx, pgxConfig)
@@ -47,6 +56,9 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 		return
 	}
 	logger.Infof("Successfully connected to the database.")
+
+	// Register the instance with the database
+	registerInstance(globalCtx)
 
 	// Start goroutine that closes the connection pool if the global context is cancelled
 	goroutineTracker.Add(1)
@@ -61,13 +73,15 @@ func Initialize(globalCtx context.Context, globalCancel context.CancelFunc, goro
 	}()
 }
 
-// If requireExistingRow is true, then the host service will return an error if
-// the database doesn't already contain a row for it (i.e. the webserver wasn't
-// expecting this host to spin up).
-// TODO: add environment variable configuration for that
-func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
+// registerInstance looks for and "takes over" the relevant row in the
+// database. If the expected row is not found, then it returns an error.
+func registerInstance(ctx context.Context) error {
+	if !enabled {
+		return nil
+	}
+
 	if dbpool == nil {
-		return logger.MakeError("RegisterInstance() called but dbdriver is not initialized!")
+		return logger.MakeError("registerInstance() called but dbdriver is not initialized!")
 	}
 
 	instanceName, err := logger.GetInstanceName()
@@ -118,26 +132,7 @@ func RegisterInstance(ctx context.Context, requireExistingRow bool) error {
 	// Since the `instance_id` is the primary key of `hardware.instance_info`, we
 	// know that `rows` will contain either 0 or 1 results.
 	if !rows.Next() {
-		if requireExistingRow {
-			return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
-		}
-
-		// We want to add a row for this instance.
-		result, err := dbpool.Exec(ctx,
-			`INSERT INTO hardware.instance_info
-			(instance_id, auth_token, created_at, "memoryRemainingInInstanceInMb", "CPURemainingInInstance", "GPURemainingInInstance", "maxContainers", last_pinged, ip, ami_id, location, instance_type)
-			VALUES
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-			instanceName, utils.RandHex(10), time.Now().UTC().UnixNano(), memoryRemaining, 64000 /* TODO replace this with a real value */, 64000 /* TODO replace this with a real value */, cpus/2, time.Now().UTC().UnixNano(), publicIP4, amiID, region, instanceType,
-			// TODO: milliseconds or nanoseconds?
-			// TODO: divide memory remaining?
-		// TODO: switch some of these field names, and bug Leor about it
-		)
-		if err != nil {
-			return logger.MakeError("Couldn't register instance: error inserting new row into table `hardware.instance_info`: %s", err)
-		}
-		logger.Infof("Result of inserting new row into table `hardware.instance_info`: %v", result)
-		return nil
+		return logger.MakeError("RegisterInstance(): Existing row for this instance not found in the database, but `requireExistingRow` set to `true`.")
 	}
 
 	// There is an existing row in the database for this instance --- we now "take over" and update it with the correct information.
