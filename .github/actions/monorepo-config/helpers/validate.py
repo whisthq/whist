@@ -119,7 +119,7 @@ def validate_config_folder(config_folder_path):
         ),
         must(
             has_child_path_partial("profiles.yml"),
-            "must contain profiles.yml",
+            "profiles.yml must be inside this folder",
         ),
     )
 
@@ -129,7 +129,7 @@ def validate_profiles(profiles, valid_profiles):
         profiles,
         must(
             all_items_in_set_partial(valid_profiles),
-            f"profile argument must be one of {valid_profiles}",
+            f"all profiles must be in {valid_profiles}",
         ),
     )
 
