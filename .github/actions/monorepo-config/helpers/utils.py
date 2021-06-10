@@ -162,7 +162,7 @@ def all_items_in_set_partial(lst):
     allowed = set(lst)
 
     def all_items_in_set(items):
-        return all(i in allowed for i in items)
+        return set(items).issubset(allowed)
 
     return all_items_in_set
 
