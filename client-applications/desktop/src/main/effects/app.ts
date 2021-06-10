@@ -6,19 +6,17 @@
 
 import { app, IpcMainEvent, session } from "electron"
 import { autoUpdater } from "electron-updater"
-import { fromEvent, merge, zip } from "rxjs"
-import { mapTo, take, concatMap, pluck } from "rxjs/operators"
+import { take, withLatestFrom } from "rxjs/operators"
 import path from "path"
-import { ChildProcess } from "child_process"
 
 import { AWSRegion } from "@app/@types/aws"
 import {
-  closeWindows,
   createAuthWindow,
   createUpdateWindow,
   createSignoutWindow,
-  showAppDock,
-  hideAppDock,
+  createProtocolWindow,
+  closeAllWindows,
+  relaunch,
 } from "@app/utils/windows"
 import { createTray, destroyTray } from "@app/utils/tray"
 import { uploadToS3 } from "@app/utils/logging"
@@ -26,6 +24,9 @@ import { appEnvironment, FractalEnvironments } from "../../../config/configs"
 import config from "@app/config/environment"
 import { fromTrigger } from "@app/utils/flows"
 import { emitCache, persistClear } from "@app/utils/persist"
+import { email } from "@app/main/observables/user"
+import { protocolStreamKill } from "@app/utils/protocol"
+import { fromSignal } from "@app/utils/observables"
 
 // Set custom app data folder based on environment
 fromTrigger("appReady").subscribe(() => {
@@ -72,46 +73,43 @@ fromTrigger("notPersisted").subscribe(() => {
   createAuthWindow()
 })
 
-// By default, the window-all-closed Electron event will cause the application
-// to close. We don't want this behavior for certain observables. For example,
-// when the protocol launches, we close all the windows, but we don't want the app
-// to quit.
-merge(
-  fromTrigger("updateAvailable"),
-  fromTrigger("authFlowSuccess"),
-  fromTrigger("authFlowFailure")
-)
-  .pipe(concatMap(() => fromEvent(app, "window-all-closed").pipe(take(1))))
-  .subscribe((event: any) => {
-    ;(event as IpcMainEvent).preventDefault()
-  })
-
-// When the protocol closes, upload protocol logs to S3
-zip([
-  merge(fromTrigger("persisted"), fromTrigger("authFlowSuccess")).pipe(
-    pluck("email")
-  ),
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowSuccess")
-  ),
-]).subscribe(([email]: [string, ChildProcess]) => {
-  uploadToS3(email).catch((err) => console.error(err))
-})
-
 // If we have have successfully authorized, close the existing windows.
 // It's important to put this effect after the application closing effect.
 // If not, the filters on the application closing observable don't run.
 // This causes the app to close on every loginSuccess, before the protocol
 // can launch.
 fromTrigger("authFlowSuccess").subscribe((x: { email: string }) => {
-  closeWindows()
-  hideAppDock()
+  createProtocolWindow().catch((err) => console.error(err))
   createTray(x.email)
 })
 
-// Show the Fractal logo in the dock when the Electron window re-appears (e.g. error or auth window)
-fromTrigger("windowCreated").subscribe(() => showAppDock())
+fromSignal(
+  fromTrigger("windowsAllClosed"),
+  fromTrigger("updateNotAvailable")
+).subscribe((evt: IpcMainEvent) => {
+  evt?.preventDefault()
+})
+
+fromTrigger("numberWindows")
+  .pipe(withLatestFrom(email))
+  .subscribe(([numWindows, email_]: [number, string]) => {
+    if (numWindows === 0) {
+      destroyTray()
+      protocolStreamKill()
+      uploadToS3(email_)
+        .then(() => {
+          app.quit()
+        })
+        .catch((err) => {
+          console.error(err)
+          app.quit()
+        })
+    }
+  })
+
+fromTrigger("trayQuitAction").subscribe(() => {
+  closeAllWindows()
+})
 
 // If the update is downloaded, quit the app and install the update
 fromTrigger("updateDownloaded").subscribe(() => {
@@ -120,25 +118,8 @@ fromTrigger("updateDownloaded").subscribe(() => {
 
 // If an update is available, show the update window and download the update
 fromTrigger("updateAvailable").subscribe(() => {
-  closeWindows()
   createUpdateWindow()
   autoUpdater.downloadUpdate().catch((err) => console.error(err))
-})
-
-// When the protocol is closed, destroy the tray icon. If Fractal ran successfully,
-// also quit the application
-zip(
-  merge(
-    fromTrigger("protocolCloseFlowSuccess"),
-    fromTrigger("protocolCloseFlowFailure")
-  ),
-  merge(
-    fromTrigger("mandelboxFlowSuccess").pipe(mapTo(true)),
-    fromTrigger("mandelboxFlowFailure").pipe(mapTo(false))
-  )
-).subscribe(([, success]: [any, boolean]) => {
-  destroyTray()
-  if (success) app.quit()
 })
 
 // On signout or relaunch, clear the cache (so the user can log in again) and restart
@@ -151,24 +132,20 @@ fromTrigger("clearCacheAction").subscribe(() => {
     .fromPartition("auth0")
     .clearStorageData()
     .catch((err) => console.error(err))
-  // These two commands restart the app
-  app.relaunch()
-  app.exit()
+  // Restart the app
+  relaunch()
 })
 
 // If an admin selects a region, relaunch the app with the selected region passed
 // into argv so it can be read by flows/index.ts
 fromTrigger("trayRegionAction").subscribe((region: AWSRegion) => {
-  app.relaunch({ args: process.argv.slice(1).concat([region]) })
-  app.exit()
+  relaunch({ args: process.argv.slice(1).concat([region]) })
 })
 
 fromTrigger("relaunchAction").subscribe(() => {
-  app.relaunch()
-  app.exit()
+  relaunch()
 })
 
 fromTrigger("showSignoutWindow").subscribe(() => {
   createSignoutWindow()
-  hideAppDock()
 })

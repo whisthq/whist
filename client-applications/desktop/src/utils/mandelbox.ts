@@ -45,12 +45,17 @@ export const mandelboxCreateErrorUnauthorized = (
   response: AsyncReturnType<typeof mandelboxCreate>
 ) => response.status === 422 || response.status === 401
 
+export const mandelboxCreateErrorMaintenance = (
+  response: AsyncReturnType<typeof mandelboxCreate>
+) => response.status === 512
+
 export const mandelboxCreateErrorInternal = (
   response: AsyncReturnType<typeof mandelboxCreate>
 ) =>
   (response?.json?.ID ?? "") === "" &&
   !mandelboxCreateErrorNoAccess(response) &&
-  !mandelboxCreateErrorUnauthorized(response)
+  !mandelboxCreateErrorUnauthorized(response) &&
+  !mandelboxCreateErrorMaintenance(response)
 
 export const mandelboxPolling = async (taskID: string, accessToken: string) =>
   await taskStatus(taskID, accessToken)

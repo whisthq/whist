@@ -1,7 +1,8 @@
 export default {
   // App triggers
   appReady: "appReady",
-  windowCreated: "windowCreated",
+  numberWindows: "numberWindows",
+  windowsAllClosed: "windowsAllClosed",
 
   // Auth triggers
   authInfo: "authInfo",
@@ -25,17 +26,17 @@ export default {
   relaunchAction: "relaunchAction",
   clearCacheAction: "clearCacheAction",
 
+  // Protocol triggers
+  protocolClose: "protocolClose",
+
   // Tray triggers
   showSignoutWindow: "showSignoutWindow",
   trayQuitAction: "trayQuitAction",
   trayRegionAction: "trayRegionAction",
 
   // Flow triggers
-  protocolLaunchFlowSuccess: "protocolLaunchFlowSuccess",
   mandelboxFlowSuccess: "mandelboxFlowSuccess",
   mandelboxFlowFailure: "mandelboxFlowFailure",
-  protocolCloseFlowSuccess: "protocolCloseFlowSuccess",
-  protocolCloseFlowFailure: "protocolCloseFlowFailure",
   authFlowSuccess: "authFlowSuccess",
   authFlowFailure: "authFlowFailure",
 }
